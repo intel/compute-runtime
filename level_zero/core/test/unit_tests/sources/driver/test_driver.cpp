@@ -1335,6 +1335,7 @@ using DriverExperimentalApiTest = Test<HostImportApiFixture>;
 TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPointer) {
     using pfnCommandListAppendMemoryCopyWithParameters = decltype(&zexCommandListAppendMemoryCopyWithParameters);
     using pfnCommandListAppendMemoryFillWithParameters = decltype(&zexCommandListAppendMemoryFillWithParameters);
+    using pfnCommandListSetCleanupCallback = decltype(&zexCommandListSetCleanupCallback);
 
     // experimental MCL API
     using pfnCommandListGetVariable = decltype(&zexCommandListGetVariable);
@@ -1361,6 +1362,9 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnCommandListAppendMIMath = decltype(&zexCommandListAppendMIMath);
     using pfnCommandListVerifyMemory = decltype(&zexCommandListVerifyMemory);
 
+    decltype(&::zexCommandListAppendWaitOnMemory) expectedCommandListAppendWaitOnMemory = L0::zexCommandListAppendWaitOnMemory;
+    decltype(&::zexCommandListAppendWriteToMemory) expectedCommandListAppendWriteToMemory = L0::zexCommandListAppendWriteToMemory;
+
     decltype(&zexDriverImportExternalPointer) expectedImport = zexDriverImportExternalPointer;
     decltype(&zexDriverReleaseImportedPointer) expectedRelease = zexDriverReleaseImportedPointer;
     decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = zexDriverGetHostPointerBaseAddress;
@@ -1382,11 +1386,14 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexCounterBasedEventCloseIpcHandle) expectedCounterBasedEventCloseIpcHandle = zexCounterBasedEventCloseIpcHandle;
     decltype(&zexDeviceGetAggregatedCopyOffloadIncrementValue) expectedZexDeviceGetAggregatedCopyOffloadIncrementValueHandle = zexDeviceGetAggregatedCopyOffloadIncrementValue;
 
-    decltype(&zeCommandListAppendHostFunction) expectedCommandListAppendHostFunction = zeCommandListAppendHostFunction;
+    decltype(&zeCommandListAppendHostFunction) expectedCommandListAppendHostFunction = L0::zeCommandListAppendHostFunction;
 
-    pfnCommandListAppendMemoryCopyWithParameters expectedCommandListAppendMemoryCopyWithParameters = zexCommandListAppendMemoryCopyWithParameters;
-    pfnCommandListAppendMemoryFillWithParameters expectedCommandListAppendMemoryFillWithParameters = zexCommandListAppendMemoryFillWithParameters;
+    pfnCommandListAppendMemoryCopyWithParameters expectedCommandListAppendMemoryCopyWithParameters = L0::zexCommandListAppendMemoryCopyWithParameters;
+    pfnCommandListAppendMemoryFillWithParameters expectedCommandListAppendMemoryFillWithParameters = L0::zexCommandListAppendMemoryFillWithParameters;
+    pfnCommandListSetCleanupCallback expectedCommandListSetCleanupCallback = L0::zexCommandListSetCleanupCallback;
+    pfnCommandListVerifyMemory expectedCommandListVerifyMemory = L0::zexCommandListVerifyMemory;
 
+    // mutable command list driver experimental extension
     pfnCommandListGetVariable expectedCommandListGetVariable = zexCommandListGetVariable;
     pfnKernelSetArgumentVariable expectedKernelSetArgumentVariable = zexKernelSetArgumentVariable;
     pfnVariableSetValue expectedVariableSetValue = zexVariableSetValue;
@@ -1409,9 +1416,15 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     pfnCommandListAppendMILoadRegImm expectedCommandListAppendMILoadRegImm = zexCommandListAppendMILoadRegImm;
     pfnCommandListAppendMIStoreRegMem expectedCommandListAppendMIStoreRegMem = zexCommandListAppendMIStoreRegMem;
     pfnCommandListAppendMIMath expectedCommandListAppendMIMath = zexCommandListAppendMIMath;
-    pfnCommandListVerifyMemory expectedCommandListVerifyMemory = zexCommandListVerifyMemory;
+
     // Add EXPECT_EQ tests to verify function pointers
     void *funPtr = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendWaitOnMemory", &funPtr));
+    EXPECT_EQ(expectedCommandListAppendWaitOnMemory, reinterpret_cast<decltype(&zexCommandListAppendWaitOnMemory)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendWriteToMemory", &funPtr));
+    EXPECT_EQ(expectedCommandListAppendWriteToMemory, reinterpret_cast<decltype(&zexCommandListAppendWriteToMemory)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportExternalPointer", &funPtr));
     EXPECT_EQ(expectedImport, reinterpret_cast<decltype(&zexDriverImportExternalPointer)>(funPtr));
@@ -1423,16 +1436,16 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     EXPECT_EQ(expectedGet, reinterpret_cast<decltype(&zexDriverGetHostPointerBaseAddress)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexKernelGetBaseAddress", &funPtr));
-    EXPECT_EQ(expectedKernelGetBaseAddress, reinterpret_cast<decltype(&L0::zexKernelGetBaseAddress)>(funPtr));
+    EXPECT_EQ(expectedKernelGetBaseAddress, reinterpret_cast<decltype(&zexKernelGetBaseAddress)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexKernelGetArgumentSize", &funPtr));
-    EXPECT_EQ(expectedKernelGetArgumentSize, reinterpret_cast<decltype(&L0::zexKernelGetArgumentSize)>(funPtr));
+    EXPECT_EQ(expectedKernelGetArgumentSize, reinterpret_cast<decltype(&zexKernelGetArgumentSize)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexKernelGetArgumentType", &funPtr));
-    EXPECT_EQ(expectedKernelGetArgumentType, reinterpret_cast<decltype(&L0::zexKernelGetArgumentType)>(funPtr));
+    EXPECT_EQ(expectedKernelGetArgumentType, reinterpret_cast<decltype(&zexKernelGetArgumentType)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelKernelGetBinaryExp", &funPtr));
-    EXPECT_EQ(expectedIntelKernelGetBinaryExp, reinterpret_cast<decltype(&L0::zeIntelKernelGetBinaryExp)>(funPtr));
+    EXPECT_EQ(expectedIntelKernelGetBinaryExp, reinterpret_cast<decltype(&zeIntelKernelGetBinaryExp)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelGetDriverVersionString", &funPtr));
     EXPECT_EQ(expectedIntelGetDriverVersionString, reinterpret_cast<decltype(&zeIntelGetDriverVersionString)>(funPtr));
@@ -1475,6 +1488,9 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendMemoryFillWithParameters", &funPtr));
     EXPECT_EQ(expectedCommandListAppendMemoryFillWithParameters, reinterpret_cast<pfnCommandListAppendMemoryFillWithParameters>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListSetCleanupCallback", &funPtr));
+    EXPECT_EQ(expectedCommandListSetCleanupCallback, reinterpret_cast<pfnCommandListSetCleanupCallback>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListGetVariable", &funPtr));
     EXPECT_EQ(expectedCommandListGetVariable, reinterpret_cast<pfnCommandListGetVariable>(funPtr));

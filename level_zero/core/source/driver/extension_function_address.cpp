@@ -52,9 +52,9 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexMemGetIpcHandles);
     RETURN_FUNC_PTR_IF_EXIST(zexMemOpenIpcHandles);
 
-    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory);
-    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory64);
-    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendWriteToMemory);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory64);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWriteToMemory);
 
     RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate);
     RETURN_FUNC_PTR_IF_EXIST(zexEventGetDeviceAddress);
@@ -78,11 +78,12 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
 
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceEnableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceDisableMetricsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListAppendHostFunction);
-    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMemoryCopyWithParameters);
-    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMemoryFillWithParameters);
-    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendCustomOperation);
-    RETURN_FUNC_PTR_IF_EXIST(zexCommandListVerifyMemory);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListAppendHostFunction);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendMemoryCopyWithParameters);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendMemoryFillWithParameters);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendCustomOperation);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListSetCleanupCallback);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListVerifyMemory);
 
     RETURN_FUNC_PTR_IF_EXIST(zeIntelMemMapDeviceMemToHost);
 

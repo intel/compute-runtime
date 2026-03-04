@@ -17,6 +17,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_cmdlist.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -305,7 +306,7 @@ HWTEST_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenRe
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
 
-    result = zexCommandListAppendWaitOnMemory64(commandList->toHandle(), &desc, ptr, waitMemData, nullptr);
+    result = L0::zexCommandListAppendWaitOnMemory64(commandList->toHandle(), &desc, ptr, waitMemData, nullptr);
 
     if (FamilyType::isQwordInOrderCounter) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -322,7 +323,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenInvalidCmdListWhenWaitOnMemory64Called
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
 
-    result = zexCommandListAppendWaitOnMemory64(nullptr, &desc, ptr, waitMemData, nullptr);
+    result = L0::zexCommandListAppendWaitOnMemory64(nullptr, &desc, ptr, waitMemData, nullptr);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
@@ -342,7 +343,7 @@ HWTEST_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenPr
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
 
-    zexCommandListAppendWaitOnMemory64(commandList->toHandle(), &desc, ptr, waitMemData, nullptr);
+    L0::zexCommandListAppendWaitOnMemory64(commandList->toHandle(), &desc, ptr, waitMemData, nullptr);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -384,7 +385,7 @@ HWTEST_F(CommandListAppendWaitOnMem, given64bValueAndOutEventWhenWaitOnMemory64C
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
 
-    zexCommandListAppendWaitOnMemory64(commandList->toHandle(), &desc, ptr, waitMemData, event.get());
+    L0::zexCommandListAppendWaitOnMemory64(commandList->toHandle(), &desc, ptr, waitMemData, event.get());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));

@@ -29,7 +29,7 @@ extern "C" {
 #endif
 #endif
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListAppendWaitOnMemory(
     zex_command_list_handle_t hCommandList,
     zex_wait_on_mem_desc_t *desc,
@@ -37,7 +37,7 @@ zexCommandListAppendWaitOnMemory(
     uint32_t data,
     zex_event_handle_t hSignalEvent);
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListAppendWaitOnMemory64(
     zex_command_list_handle_t hCommandList,
     zex_wait_on_mem_desc_t *desc,
@@ -45,7 +45,7 @@ zexCommandListAppendWaitOnMemory64(
     uint64_t data,
     zex_event_handle_t hSignalEvent);
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListAppendWriteToMemory(
     zex_command_list_handle_t hCommandList,
     zex_write_to_mem_desc_t *desc,
@@ -54,7 +54,7 @@ zexCommandListAppendWriteToMemory(
 
 typedef void(ZE_CALLBACK *ze_host_function_callback_t)(void *pUserData);
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,     ///< [in] handle of the command list
     ze_host_function_callback_t pHostFunction, ///< [in] host function to call
@@ -64,7 +64,7 @@ zeCommandListAppendHostFunction(
     uint32_t numWaitEvents,                    ///< [in][optional] number of events to wait on before launching
     ze_event_handle_t *phWaitEvents);          ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListAppendMemoryCopyWithParameters(
     ze_command_list_handle_t hCommandList, ///< [in] handle of the command list
     void *dstptr,                          ///< [in] destination pointer
@@ -75,7 +75,7 @@ zexCommandListAppendMemoryCopyWithParameters(
     ze_event_handle_t *phWaitEvents,       ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
     ze_event_handle_t hSignalEvent);       ///< [in][optional] handle of the event to signal on completion
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListAppendMemoryFillWithParameters(
     ze_command_list_handle_t hCommandList, ///< [in] handle of the command list
     void *ptr,                             ///< [in] pointer to memory to initialize
@@ -87,7 +87,7 @@ zexCommandListAppendMemoryFillWithParameters(
     uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
     ze_event_handle_t *phWaitEvents);      ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListAppendCustomOperation(
     ze_command_list_handle_t hCommandList, ///< [in] handle of the command list
     const void *pNext,                     ///< [in] operation parameters, there may be only a single operation defined
@@ -97,19 +97,20 @@ zexCommandListAppendCustomOperation(
 
 typedef void (*zex_command_list_cleanup_callback_fn_t)(void *pUserData);
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListSetCleanupCallback(
     ze_command_list_handle_t hCommandList,              ///< [in] handle of the command list
     zex_command_list_cleanup_callback_fn_t pfnCallback, ///< [in] host function to call
     void *pUserData,                                    ///< [in] user specific data that would be passed to function
     const void *pNext);                                 ///< [in][optional] must be null or a pointer to an extension-specific structure
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zexCommandListVerifyMemory(ze_command_list_handle_t hCommandList,
-                           const void *allocationPtr,
-                           const void *expectedData,
-                           size_t sizeOfComparison,
-                           zex_verify_memory_compare_type_t comparisonMode);
+ze_result_t ZE_APICALL
+zexCommandListVerifyMemory(
+    ze_command_list_handle_t hCommandList,
+    const void *allocationPtr,
+    const void *expectedData,
+    size_t sizeOfComparison,
+    zex_verify_memory_compare_type_t comparisonMode);
 
 #if defined(__cplusplus)
 } // extern "C"

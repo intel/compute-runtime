@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_cmdlist.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
@@ -104,18 +105,18 @@ TEST_F(CommandListCallbacksTests, givenInvalidInputParamsThenReturnError) {
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, context->createCommandList(device, &desc, &hCommandList));
 
-    auto ret = zexCommandListSetCleanupCallback(nullptr, callback, nullptr, nullptr);
+    auto ret = L0::zexCommandListSetCleanupCallback(nullptr, callback, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, ret);
 
-    ret = zexCommandListSetCleanupCallback(hCommandList, nullptr, nullptr, nullptr);
+    ret = L0::zexCommandListSetCleanupCallback(hCommandList, nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, ret);
 
-    ret = zexCommandListSetCleanupCallback(hCommandList, callback, nullptr, nullptr);
+    ret = L0::zexCommandListSetCleanupCallback(hCommandList, callback, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     zeCommandListReset(hCommandList);
 
-    ret = zexCommandListSetCleanupCallback(hCommandList, callback, &callbackCalled, nullptr);
+    ret = L0::zexCommandListSetCleanupCallback(hCommandList, callback, &callbackCalled, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     zeCommandListReset(hCommandList);
@@ -133,16 +134,16 @@ TEST_F(CommandListAppendCustomOperationTests, givenInvalidInputParamsThenReturnE
     auto result = context->createCommandList(device, &desc, &hCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zexCommandListAppendCustomOperation(nullptr, &operationDesc, nullptr, 0, nullptr);
+    result = L0::zexCommandListAppendCustomOperation(nullptr, &operationDesc, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, result);
 
-    result = zexCommandListAppendCustomOperation(hCommandList, &operationDesc, nullptr, 1, nullptr);
+    result = L0::zexCommandListAppendCustomOperation(hCommandList, &operationDesc, nullptr, 1, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, result);
 
-    result = zexCommandListAppendCustomOperation(hCommandList, &operationDesc, nullptr, 0, nullptr);
+    result = L0::zexCommandListAppendCustomOperation(hCommandList, &operationDesc, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 
-    result = zexCommandListAppendCustomOperation(hCommandList, nullptr, nullptr, 0, nullptr);
+    result = L0::zexCommandListAppendCustomOperation(hCommandList, nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
 
     L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);

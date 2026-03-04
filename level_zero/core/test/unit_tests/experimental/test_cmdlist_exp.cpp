@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -36,7 +37,7 @@ HWTEST_F(CommandListExpTest, givenCmdListWithSimulatedCsrWhenVerifyMemoryCalledT
     commandListImmediate.cmdQImmediate = &mockCommandQueue;
     void *ptr = reinterpret_cast<void *>(0x1000);
     char data[10] = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCommandListVerifyMemory(commandList->toHandle(), ptr, data, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCommandListVerifyMemory(commandList->toHandle(), ptr, data, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
     EXPECT_TRUE(mockCommandStreamReceiver.expectMemoryCalled);
 
     commandListImmediate.cmdQImmediate = oldCommandQueue;
@@ -58,10 +59,10 @@ HWTEST_F(CommandListExpTest, givenCmdListWithSimulatedCsrWhenVerifyMemoryCalledW
     commandListImmediate.cmdQImmediate = &mockCommandQueue;
     void *ptr = reinterpret_cast<void *>(0x1000);
     char data[10] = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, zexCommandListVerifyMemory(nullptr, ptr, data, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zexCommandListVerifyMemory(commandList->toHandle(), nullptr, data, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zexCommandListVerifyMemory(commandList->toHandle(), ptr, nullptr, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zexCommandListVerifyMemory(commandList->toHandle(), ptr, data, 0, zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zexCommandListVerifyMemory(nullptr, ptr, data, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zexCommandListVerifyMemory(commandList->toHandle(), nullptr, data, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zexCommandListVerifyMemory(commandList->toHandle(), ptr, nullptr, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, L0::zexCommandListVerifyMemory(commandList->toHandle(), ptr, data, 0, zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
     EXPECT_FALSE(mockCommandStreamReceiver.expectMemoryCalled);
 
     commandListImmediate.cmdQImmediate = oldCommandQueue;
@@ -72,7 +73,7 @@ HWTEST_F(CommandListExpTest, givenRegularCmdListWithSimulatedCsrWhenVerifyMemory
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0, returnValue, false));
     void *ptr = reinterpret_cast<void *>(0x1000);
     char data[10] = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zexCommandListVerifyMemory(commandList->toHandle(), ptr, data, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zexCommandListVerifyMemory(commandList->toHandle(), ptr, data, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
 }
 
 } // namespace ult
