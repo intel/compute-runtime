@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,5 @@ namespace AOT_PTL {
 inline constexpr AOT::PRODUCT_CONFIG productConfigs[] = {
     AOT::PTL_H_A0,
     AOT::PTL_H_B0,
-    AOT::PTL_U_A0,
-    AOT::PTL_U_A1};
+    AOT::PTL_U_A0};
 }
