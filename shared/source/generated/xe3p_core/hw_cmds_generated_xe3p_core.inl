@@ -9545,7 +9545,7 @@ typedef struct tagRESOURCE_BARRIER {
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 11);
             uint32_t QueueDrainMode : BITFIELD_RANGE(12, 12);
             uint32_t Reserved_13 : BITFIELD_RANGE(13, 14);
-            uint32_t DisableGoSyncWithWalkerPostSync : BITFIELD_RANGE(15, 15);
+            uint32_t DisableGOSyncWithWalkerPostSync : BITFIELD_RANGE(15, 15);
             uint32_t Reserved_16 : BITFIELD_RANGE(16, 23);
             uint32_t PredicateEnable : BITFIELD_RANGE(24, 24);
             uint32_t Reserved_25 : BITFIELD_RANGE(25, 25);
@@ -9621,7 +9621,8 @@ typedef struct tagRESOURCE_BARRIER {
         TheStructure.Common.WaitStage = WAIT_STAGE_NONE;
         TheStructure.Common.SignalStage = SIGNAL_STAGE_NONE;
         TheStructure.Common.BarrierType = BARRIER_TYPE_IMMEDIATE;
-        TheStructure.Common.QueueDrainMode = 1; // Patched
+        TheStructure.Common.QueueDrainMode = 1;                  // Patched
+        TheStructure.Common.DisableGOSyncWithWalkerPostSync = 1; // Patched
     }
     static tagRESOURCE_BARRIER sInit() {
         RESOURCE_BARRIER state;
@@ -9638,11 +9639,11 @@ typedef struct tagRESOURCE_BARRIER {
     inline bool getQueueDrainMode() const {
         return TheStructure.Common.QueueDrainMode;
     }
-    inline void setDisableGoSyncWithWalkerPostSync(const bool value) {
-        TheStructure.Common.DisableGoSyncWithWalkerPostSync = value;
+    inline void setDisableGOSyncWithWalkerPostSync(const bool value) {
+        TheStructure.Common.DisableGOSyncWithWalkerPostSync = value;
     }
-    inline bool getDisableGoSyncWithWalkerPostSync() const {
-        return TheStructure.Common.DisableGoSyncWithWalkerPostSync;
+    inline bool getDisableGOSyncWithWalkerPostSync() const {
+        return TheStructure.Common.DisableGOSyncWithWalkerPostSync;
     }
     inline void setPredicateEnable(const bool value) {
         TheStructure.Common.PredicateEnable = value;

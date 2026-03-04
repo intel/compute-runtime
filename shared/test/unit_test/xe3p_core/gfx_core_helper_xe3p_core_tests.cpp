@@ -1104,6 +1104,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenSetStallOnlyBarrier
     EXPECT_NE(nullptr, resourceBarrier);
     EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
     EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
+    EXPECT_TRUE(resourceBarrier->getDisableGOSyncWithWalkerPostSync());
 }
 
 struct GfxCoreHelperTestsXe3pCoreResourceBarrier : public GfxCoreHelperTestsXe3pCore,
