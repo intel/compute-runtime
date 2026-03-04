@@ -54,7 +54,6 @@ enum PRODUCT_CONFIG : uint32_t {
     PTL_H_A0 = 0x07800000, // 30.0.0
     PTL_H_B0 = 0x07800004, // 30.0.4
     PTL_U_A0 = 0x07804000, // 30.1.0
-    PTL_U_A1 = 0x07804001, // 30.1.1
     WCL_A0 = 0x0780c000, // 30.3.0
     WCL_A1 = 0x0780c001, // 30.3.1
     NVL_S_A0 = 0x07810000, // 30.4.0
@@ -280,7 +279,6 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
     {"ptl-h-a0", PTL_H_A0},
     {"ptl-h-b0", PTL_H_B0},
     {"ptl-u-a0", PTL_U_A0},
-    {"ptl-u-a1", PTL_U_A1},
 #endif
 #endif
 #ifdef SUPPORT_AOT_WCL
@@ -328,6 +326,6 @@ inline const std::map<PRODUCT_CONFIG, std::vector<PRODUCT_CONFIG>> compatibility
     {BMG_G21_A0, {BMG_G31_A0, LNL_B0}},
     {BMG_G21_A1_RESERVED, {BMG_G21_A0, BMG_G31_A0, LNL_B0}},
     {BMG_G21_B0_RESERVED, {BMG_G21_A0, BMG_G31_A0, LNL_B0}},
-    {PTL_H_B0, {PTL_U_A0, WCL_A1, NVL_S_B0}},
+    {PTL_H_B0, {PTL_U_A0, WCL_A1, NVL_S_B0, NVL_U_B0}},
 };
 } // namespace AOT
