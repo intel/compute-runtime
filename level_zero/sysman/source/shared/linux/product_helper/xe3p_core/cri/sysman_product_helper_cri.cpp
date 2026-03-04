@@ -460,92 +460,6 @@ RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
     return RasInterfaceType::netlink;
 }
 
-static zes_freq_throttle_reason_flags_t getAggregatedThrottleReasons(const zes_intel_freq_throttle_detailed_reason_exp_flags_t &pDetailedThrottleReasons) {
-
-    const zes_freq_throttle_reason_flags_t powerFlags =
-        static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL1 |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL2 |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL4 |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL1 |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL2 |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL4 |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_FAST_VMODE |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_ICCMAX);
-
-    const zes_freq_throttle_reason_flags_t thermalFlags =
-        static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_MEMORY |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_PROCHOT |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_RATL |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC_AVG |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_VR);
-
-    const zes_freq_throttle_reason_flags_t voltageFlags =
-        static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_VOLTAGE_P0_FREQ);
-
-    zes_freq_throttle_reason_flags_t aggregatedReasons = 0u;
-
-    if (pDetailedThrottleReasons & powerFlags) {
-        aggregatedReasons |= static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_POWER);
-    }
-    if (pDetailedThrottleReasons & thermalFlags) {
-        aggregatedReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
-    }
-    if (pDetailedThrottleReasons & voltageFlags) {
-        aggregatedReasons |= static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_VOLTAGE);
-    }
-
-    return aggregatedReasons;
-}
-
-static zes_intel_freq_throttle_detailed_reason_exp_flags_t getDetailedThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId) {
-    zes_intel_freq_throttle_detailed_reason_exp_flags_t detailedThrottleReasons = 0u;
-
-    const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
-    bool baseDirectoryExists = pSysfsAccess->directoryExists(baseDir);
-
-    uint32_t reasonStatusVal = 0;
-    std::string throttleReasonStatusFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonStatus, subdeviceId, baseDirectoryExists);
-    auto result = pSysfsAccess->read(throttleReasonStatusFile, reasonStatusVal);
-
-    if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read file %s, returning error 0x%x>\n", __func__, throttleReasonStatusFile.c_str(), result);
-        return detailedThrottleReasons;
-    }
-
-    if (reasonStatusVal == 0) {
-        return detailedThrottleReasons;
-    }
-
-    static constexpr std::pair<const char *, zes_intel_freq_throttle_detailed_reason_exp_flag_t> throttleReasonMap[] = {
-        {"freq0/throttle/reason_psys_pl1", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL1},
-        {"freq0/throttle/reason_psys_pl2", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL2},
-        {"freq0/throttle/reason_psys_crit", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL4},
-        {"freq0/throttle/reason_pl1", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL1},
-        {"freq0/throttle/reason_pl2", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL2},
-        {"freq0/throttle/reason_pl4", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL4},
-        {"freq0/throttle/reason_fastvmode", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_FAST_VMODE},
-        {"freq0/throttle/reason_iccmax", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_ICCMAX},
-        {"freq0/throttle/reason_soc_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC},
-        {"freq0/throttle/reason_soc_avg_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC_AVG},
-        {"freq0/throttle/reason_memory_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_MEMORY},
-        {"freq0/throttle/reason_vr_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_VR},
-        {"freq0/throttle/reason_ratl", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_RATL},
-        {"freq0/throttle/reason_prochot", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_PROCHOT},
-        {"freq0/throttle/reason_p0_freq", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_VOLTAGE_P0_FREQ}};
-
-    uint32_t detailedThrottleReasonVal = 0u;
-    for (const auto &reasonPair : throttleReasonMap) {
-        std::string filePath = baseDirectoryExists ? pSysmanKmdInterface->getBasePath(subdeviceId) + reasonPair.first : std::string("");
-        detailedThrottleReasonVal = 0u;
-        if ((pSysfsAccess->read(filePath, detailedThrottleReasonVal) == ZE_RESULT_SUCCESS) && detailedThrottleReasonVal) {
-            detailedThrottleReasons |= reasonPair.second;
-        }
-    }
-
-    return detailedThrottleReasons;
-}
-
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return true;
@@ -635,9 +549,97 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
     return result;
 };
 
+static zes_freq_throttle_reason_flags_t getAggregatedThrottleReasons(const zes_intel_freq_throttle_detailed_reason_exp_flags_t &pDetailedThrottleReasons) {
+
+    const zes_freq_throttle_reason_flags_t powerFlags =
+        static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL1 |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL2 |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL4 |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL1 |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL2 |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL4 |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_FAST_VMODE |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_ICCMAX);
+
+    const zes_freq_throttle_reason_flags_t thermalFlags =
+        static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_MEMORY |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_PROCHOT |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_RATL |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC_AVG |
+                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_VR);
+
+    const zes_freq_throttle_reason_flags_t voltageFlags =
+        static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_VOLTAGE_P0_FREQ);
+
+    zes_freq_throttle_reason_flags_t aggregatedReasons = 0u;
+
+    if (pDetailedThrottleReasons & powerFlags) {
+        aggregatedReasons |= static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_POWER);
+    }
+    if (pDetailedThrottleReasons & thermalFlags) {
+        aggregatedReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
+    }
+    if (pDetailedThrottleReasons & voltageFlags) {
+        aggregatedReasons |= static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_VOLTAGE);
+    }
+
+    return aggregatedReasons;
+}
+
+static ze_result_t getDetailedThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, zes_intel_freq_throttle_detailed_reason_exp_flags_t &detailedThrottleReasons) {
+
+    const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
+    bool baseDirectoryExists = pSysfsAccess->directoryExists(baseDir);
+
+    uint32_t reasonStatusVal = 0;
+    std::string throttleReasonStatusFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonStatus, subdeviceId, baseDirectoryExists);
+    auto result = pSysfsAccess->read(throttleReasonStatusFile, reasonStatusVal);
+
+    if (ZE_RESULT_SUCCESS != result || reasonStatusVal == 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Throttle reason status file %s or no throttle reasons are active, returning error 0x%x>\n", __func__, throttleReasonStatusFile.c_str(), result);
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
+    static constexpr std::pair<const char *, zes_intel_freq_throttle_detailed_reason_exp_flag_t> throttleReasonMap[] = {
+        {"reason_psys_pl1", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL1},
+        {"reason_psys_pl2", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL2},
+        {"reason_psys_crit", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL4},
+        {"reason_pl1", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL1},
+        {"reason_pl2", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL2},
+        {"reason_pl4", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL4},
+        {"reason_fastvmode", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_FAST_VMODE},
+        {"reason_iccmax", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_ICCMAX},
+        {"reason_soc_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC},
+        {"reason_soc_avg_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC_AVG},
+        {"reason_memory_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_MEMORY},
+        {"reason_vr_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_VR},
+        {"reason_ratl", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_RATL},
+        {"reason_prochot", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_PROCHOT},
+        {"reason_p0_freq", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_VOLTAGE_P0_FREQ}};
+
+    const std::string throttleReasonPath("freq0/throttle/");
+    uint32_t detailedThrottleReasonVal = 0u;
+    for (const auto &reasonPair : throttleReasonMap) {
+        const std::string filePath = baseDirectoryExists ? baseDir + throttleReasonPath + reasonPair.first : std::string("");
+        detailedThrottleReasonVal = 0u;
+        if ((pSysfsAccess->read(filePath, detailedThrottleReasonVal) == ZE_RESULT_SUCCESS) && detailedThrottleReasonVal) {
+            detailedThrottleReasons |= reasonPair.second;
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 template <>
 zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, void *pNext) {
-    zes_intel_freq_throttle_detailed_reason_exp_flags_t detailedThrottleReasons = getDetailedThrottleReasons(pSysmanKmdInterface, pSysfsAccess, subdeviceId);
+    zes_intel_freq_throttle_detailed_reason_exp_flags_t detailedThrottleReasons = 0u;
+    ze_result_t result = getDetailedThrottleReasons(pSysmanKmdInterface, pSysfsAccess, subdeviceId, detailedThrottleReasons);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Info@ %s(): Failed to get detailed throttle reasons, returning 0 reasons\n", __func__);
+        return static_cast<zes_freq_throttle_reason_flags_t>(0);
+    }
+
     zes_freq_throttle_reason_flags_t aggregatedReasons = getAggregatedThrottleReasons(detailedThrottleReasons);
     void *pCurrent = pNext;
     while (pCurrent) {
@@ -649,6 +651,13 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
         }
         pCurrent = pExpThrottleReason->pNext;
     }
+
+    // Set Utilization Limited reason flag if none of the detailed reasons are active
+    if (detailedThrottleReasons == 0u) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Info@ %s(): No detailed throttle reasons are active, setting Utilization Limited reason flag\n", __func__);
+        aggregatedReasons |= static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_UTILIZATION_LIMITED);
+    }
+
     return aggregatedReasons;
 }
 

@@ -178,6 +178,8 @@ typedef enum _zes_intel_freq_throttle_detailed_reason_exp_flag_t {
     ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_FORCE_UINT32 = 0x7fffffff      ///< Value marking end of ZES_INTEL_FREQ_THROTTLE_REASON_DETAILED_FLAG_* ENUMs
 } zes_intel_freq_throttle_detailed_reason_exp_flag_t;
 
+#define ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_UTILIZATION_LIMITED ZE_BIT(10) // Frequency utilization limit reason flag used when no specific detailed reason is available
+
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Detailed Frequency Throttle Reasons.
 /// This structure can be passed in the 'pNext' of zes_intel_freq_state_t
