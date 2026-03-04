@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
@@ -3691,6 +3692,43 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithR
     }
 
     EXPECT_TRUE(verifySplit(bcsMiFlushCount + 1u));
+}
+
+HWTEST2_F(BcsSplitInOrderCmdListTests, givenFullCmdBufferWhenAppendCalledThenAllocateNewBuffer, IsAtLeastXeHpcCore) {
+    constexpr size_t copySize = 8 * MemoryConstants::megaByte;
+    uint32_t copyData[64] = {};
+
+    auto immCmdList = createBcsSplitImmCmdList<FamilyType::gfxCoreFamily>();
+
+    immCmdList->appendMemoryCopy(copyData, copyData, copySize, nullptr, 0, nullptr, copyParams);
+
+    const auto numEvents = 1u;
+    const size_t semaphoreSize = NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
+    auto estimatedSize = commonImmediateCommandSize;
+    {
+        auto nBlits = copySize / (NEO::BlitCommandsHelper<FamilyType>::getMaxBlitWidth(this->device->getNEODevice()->getRootDeviceEnvironment()) *
+                                  NEO::BlitCommandsHelper<FamilyType>::getMaxBlitHeight(this->device->getNEODevice()->getRootDeviceEnvironment(), true));
+        auto sizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize();
+        estimatedSize += nBlits * sizePerBlit;
+    }
+
+    const auto expectedCmdsSize = numEvents * (estimatedSize + semaphoreSize);
+
+    void *cmdBuffer;
+    {
+        auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+        cmdStream->getSpace(cmdStream->getAvailableSpace() - (expectedCmdsSize + 1));
+        cmdBuffer = cmdStream->getCpuBase();
+    }
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+    immCmdList->appendMemoryCopy(copyData, copyData, copySize, nullptr, 1, &eventHandle, copyParams);
+
+    {
+        auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+        EXPECT_NE(cmdBuffer, cmdStream->getCpuBase());
+    }
 }
 
 } // namespace ult

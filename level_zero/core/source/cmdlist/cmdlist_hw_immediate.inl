@@ -663,7 +663,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize();
         estimatedSize += nBlits * sizePerBlit;
     }
-    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
+    NEO::TransferDirection direction;
+    auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size, direction);
+    const auto numSplits = isSplitNeeded ? static_cast<DeviceImp *>(this->device)->bcsSplit.getCmdQsForSplit(direction).size() : 1u;
+    checkAvailableSpace(numWaitEvents * numSplits, memoryCopyParams.relaxedOrderingDispatch, estimatedSize * numSplits, false);
 
     bool hasStallindCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
 
@@ -678,8 +681,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         }
     }
 
-    NEO::TransferDirection direction;
-    auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size, direction);
     if (isSplitNeeded) {
         memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1, false); // split generates more than 1 event
         memoryCopyParams.forceDisableCopyOnlyInOrderSignaling = true;
@@ -720,14 +721,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
         auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize();
         estimatedSize += xBlits * yBlits * zBlits * sizePerBlit;
     }
-    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
+    NEO::TransferDirection direction;
+    auto isSplitNeeded = this->isAppendSplitNeeded(dstPtr, srcPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch), direction);
+    const auto numSplits = isSplitNeeded ? static_cast<DeviceImp *>(this->device)->bcsSplit.getCmdQsForSplit(direction).size() : 1u;
+    checkAvailableSpace(numWaitEvents * numSplits, memoryCopyParams.relaxedOrderingDispatch, estimatedSize * numSplits, false);
 
     bool hasStallindCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
 
     ze_result_t ret;
 
-    NEO::TransferDirection direction;
-    auto isSplitNeeded = this->isAppendSplitNeeded(dstPtr, srcPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch), direction);
     if (isSplitNeeded) {
         memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1, false); // split generates more than 1 event
         memoryCopyParams.forceDisableCopyOnlyInOrderSignaling = true;
@@ -797,12 +799,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
                                                                                NEO::GraphicsAllocation *srcAllocation,
                                                                                size_t size, bool flushHost) {
 
-    checkAvailableSpace(0, false, commonImmediateCommandSize, false);
-
-    ze_result_t ret;
-
     NEO::TransferDirection direction;
     auto isSplitNeeded = this->isAppendSplitNeeded(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool(), size, direction);
+    const auto numSplits = isSplitNeeded ? static_cast<DeviceImp *>(this->device)->bcsSplit.getCmdQsForSplit(direction).size() : 1u;
+    checkAvailableSpace(0, false, commonImmediateCommandSize * numSplits, false);
+
+    ze_result_t ret;
 
     bool relaxedOrdering = false;
 
