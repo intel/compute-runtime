@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,8 @@ enum class TagNodeType {
     hwTimeStamps,
     hwPerfCounter,
     counter64b,
-    fillPattern
+    fillPattern,
+    inOrderIpcData
 };
 
 enum class CacheRegion : uint16_t {

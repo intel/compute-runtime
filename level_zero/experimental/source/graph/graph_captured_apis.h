@@ -88,6 +88,7 @@ struct ExternalCbEventInfoContainer {
             event->getInOrderExecEventHelper().copyData(it->inOrderExecEventHelper);
         } else {
             ExternalCbEventInfo &info = storage.emplace_back(event);
+            info.inOrderExecEventHelper.initializeLocalTempStorage();
             event->getInOrderExecEventHelper().copyData(info.inOrderExecEventHelper);
         }
     }

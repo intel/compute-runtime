@@ -190,6 +190,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     NEO::TagAllocatorBase *getDeviceInOrderCounterAllocator();
     NEO::TagAllocatorBase *getHostInOrderCounterAllocator();
     NEO::TagAllocatorBase *getInOrderTimestampAllocator();
+    NEO::TagAllocatorBase *getInOrderSharableEventDataAllocator();
     NEO::TagAllocatorBase *getFillPatternAllocator();
     NEO::GraphicsAllocation *getSyncDispatchTokenAllocation() const { return syncDispatchTokenAllocation; }
     uint32_t getNextSyncDispatchQueueId();
@@ -294,6 +295,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<NEO::TagAllocatorBase> deviceInOrderCounterAllocator;
     std::unique_ptr<NEO::TagAllocatorBase> hostInOrderCounterAllocator;
     std::unique_ptr<NEO::TagAllocatorBase> inOrderTimestampAllocator;
+    std::unique_ptr<NEO::TagAllocatorBase> inOrderSharableEventDataAllocator;
     std::unique_ptr<NEO::TagAllocatorBase> fillPatternAllocator;
     std::unique_ptr<NEO::HostFunctionAllocator> hostFunctionAllocator;
 

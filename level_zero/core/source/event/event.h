@@ -94,13 +94,9 @@ static_assert(sizeof(IpcOpaqueEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaq
 
 #pragma pack(1)
 struct IpcCounterBasedEventData {
-    uint64_t deviceHandle = 0;
-    uint64_t hostHandle = 0;
-    uint64_t counterValue = 0;
+    uint64_t communicationAllocHandle = 0;
+    size_t communicationAllocOffset = 0;
     uint32_t rootDeviceIndex = 0;
-    uint32_t counterOffset = 0;
-    uint32_t devicePartitions = 0;
-    uint32_t hostPartitions = 0;
     uint32_t counterBasedFlags = 0;
     uint32_t signalScopeFlags = 0;
     uint32_t waitScopeFlags = 0;
