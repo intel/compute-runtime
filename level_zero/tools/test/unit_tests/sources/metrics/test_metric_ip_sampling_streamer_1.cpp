@@ -297,7 +297,7 @@ HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerOpenIsSuccessfulWhenStreame
     }
 }
 
-HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsAvailableToReadWhenEventQueryStatusIsCalledThenEventIsSignalled, EuStallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsAvailableToReadWhenEventQueryStatusIsCalledThenEventIsSignalled, HasIPSamplingSupport) {
 
     for (std::size_t index = 0; index < testDevices.size(); index++) {
 
@@ -347,7 +347,7 @@ HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsAvailableToR
     }
 }
 
-HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsNotAvailableToReadWhenEventQueryStatusIsCalledThenEventIsNotSignalled, EuStallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsNotAvailableToReadWhenEventQueryStatusIsCalledThenEventIsNotSignalled, HasIPSamplingSupport) {
 
     for (std::size_t index = 0; index < testDevices.size(); index++) {
 
@@ -400,7 +400,7 @@ HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsNotAvailable
     }
 }
 
-HWTEST2_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalledOnRootDeviceThenCorrectDataIsReturned, EuStallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalledOnRootDeviceThenCorrectDataIsReturned, HasIPSamplingSupport) {
 
     auto device = testDevices[0];
 
@@ -454,7 +454,7 @@ HWTEST2_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCa
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MetricIpSamplingStreamerTest, GivenSubDeviceMetricHandleWhenCallingZetContextActivateMetricGroupsWithRootDeviceMetricGroupsThenCallFails, EuStallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenSubDeviceMetricHandleWhenCallingZetContextActivateMetricGroupsWithRootDeviceMetricGroupsThenCallFails, HasIPSamplingSupport) {
 
     auto device = testDevices[0];
 
@@ -468,7 +468,7 @@ HWTEST2_F(MetricIpSamplingStreamerTest, GivenSubDeviceMetricHandleWhenCallingZet
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), subDevice, 1, &metricGroupHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-HWTEST2_F(MetricIpSamplingStreamerTest, GivenNotEnoughMemoryWhileReadingWhenReadDataIsCalledOnRootDeviceThenCorrectDataIsReturned, EuStallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenNotEnoughMemoryWhileReadingWhenReadDataIsCalledOnRootDeviceThenCorrectDataIsReturned, HasIPSamplingSupport) {
 
     auto device = testDevices[0];
     ASSERT_FALSE(device->getNEODevice()->isSubDevice());
@@ -982,7 +982,6 @@ HWTEST2_F(MetricIpSamplingMultiDevCalcOpTest, GivenRootDeviceCreatingCalcOpWithO
     scopeProperties.pNext = nullptr;
 
     for (uint32_t i = 0; i < metricsInReportCount; i++) {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGetProperties(metricsInReport[i], &metricProperties));
         // i goes from 0 to expectedMetricsInReportCount-1, want odd indexes: 1, 3, 5, 7, 9, etc. Then repeat for second scope
         uint32_t metricIndex = (i % (expectedMetricsInGroup / 2)) * 2 + 1;
 
@@ -1024,12 +1023,13 @@ HWTEST2_F(MetricIpSamplingMultiDevCalcOpTest, GivenRootDeviceCreatingCalcOpWithO
     EXPECT_EQ(usedSize, rawDataSize);
 
     std::vector<uint64_t> expectedMetricCalculateValues = {};
-    ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::ScopeOddMetrics, expectedMetricCalculateValues);
+    ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::AllScopesOddMetrics, expectedMetricCalculateValues);
 
     for (uint32_t i = 0; i < totalMetricReportCount; i++) {
         for (uint32_t j = 0; j < metricsInReportCount; j++) {
             uint32_t resultIndex = i * metricsInReportCount + j;
             EXPECT_EQ(metricResults[resultIndex].value.ui64, expectedMetricCalculateValues[resultIndex]);
+            EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
         }
     }
 

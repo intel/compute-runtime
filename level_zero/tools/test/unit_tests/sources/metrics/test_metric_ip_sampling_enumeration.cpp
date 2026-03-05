@@ -446,7 +446,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenValidDataWhenCalculateM
             EXPECT_EQ(metricCounts[1], expectedResultCountPerSet);
 
             std::vector<uint64_t> expectedMetricCalculateValues = {};
-            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
+            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::CompleteResults, expectedMetricCalculateValues);
 
             for (uint32_t i = 0; i < totalMetricValueCount; i++) {
                 EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
@@ -508,7 +508,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataFromSingleDeviceWhe
             EXPECT_EQ(metricCounts[0], expectedResultCountPerSet);
 
             std::vector<uint64_t> expectedMetricCalculateValues = {};
-            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
+            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::CompleteResults, expectedMetricCalculateValues);
 
             for (uint32_t i = 0; i < totalMetricValueCount; i++) {
                 EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
@@ -576,7 +576,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenRootDeviceDataAndLessTh
     EXPECT_EQ(metricCounts[0], 10u);
 
     std::vector<uint64_t> expectedMetricCalculateValues = {};
-    ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
+    ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::CompleteResults, expectedMetricCalculateValues);
 
     for (uint32_t i = 0; i < totalMetricValueCount; i++) {
         EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
@@ -748,7 +748,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenSubDeviceDataWhenCalcul
             EXPECT_EQ(metricValueCount, expectedResultCount);
 
             std::vector<uint64_t> expectedMetricCalculateValues = {};
-            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
+            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::CompleteResults, expectedMetricCalculateValues);
 
             for (uint32_t i = 0; i < metricValueCount; i++) {
                 EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
@@ -799,7 +799,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenSmallValueCountWhenCalc
             EXPECT_EQ(metricValueCount, 15U);
 
             std::vector<uint64_t> expectedMetricCalculateValues = {};
-            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
+            ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::CompleteResults, expectedMetricCalculateValues);
 
             for (uint32_t i = 0; i < metricValueCount; i++) {
                 EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);
@@ -851,8 +851,9 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenBadRawDataSizeDuringCal
     }
 }
 
-// Only PVC has the overflow bit in raw data, so this test is only for PVC. This test verifies that when overflow happens and streamer read data is called, calculate will return valid metrics values with overflow warning.
-HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataOverflowOccurredWhenStreamerReadDataIscalledThenCalculateMultipleMetricsValuesExpReturnsOverflowWarning, EuStallSupportXe) {
+// Only PVC has the overflow bit in raw data, so this test is only for PVC. This test verifies that when overflow happens and streamer read data is called,
+// calculate will return valid metrics values with overflow warning.
+HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataOverflowOccurredWhenStreamerReadDataIscalledThenCalculateMultipleMetricsValuesExpReturnsOverflowWarning, IsPVC) {
     for (auto device : rootOneSubDev) {
         uint32_t expectedSetCount = 1u;
         bool isRootdevice = false;
@@ -871,7 +872,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataOverflowOccurredWhe
         // Prepare raw data with overflow bit set.
         //  NOTE: Override the default fixture SeTup() for rawReports
         std::vector<std::array<uint64_t, 8>> rawReportsOverflow;
-        ipSamplingTestProductHelper->rawElementsToRawReports(productFamily, true, &rawReportsOverflow);
+        ipSamplingTestProductHelper->rawElementsToRawReports(productFamily, IpSamplingTestProductHelper::InitReportType::OverflowType, &rawReportsOverflow);
 
         std::vector<uint8_t> rawData;
         if (isRootdevice) { // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
@@ -905,7 +906,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataOverflowOccurredWhe
         EXPECT_EQ(metricCounts[0], expectedResultCountPerSet);
 
         std::vector<uint64_t> expectedMetricCalculateValues = {};
-        ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::Legacy, expectedMetricCalculateValues);
+        ipSamplingTestProductHelper->getExpectedCalculateResults(productFamily, IpSamplingTestProductHelper::CalculationResultType::CompleteResults, expectedMetricCalculateValues);
 
         for (uint32_t i = 0; i < totalMetricValueCount; i++) {
             EXPECT_EQ(metricValues[i].type, ZET_VALUE_TYPE_UINT64);

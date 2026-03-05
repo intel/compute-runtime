@@ -115,7 +115,7 @@ void MetricIpSamplingFixture::TearDown() {
 }
 
 void MetricIpSamplingCalculateBaseFixture::initRawReports(IpSamplingTestProductHelper *ipSamplingTestProductHelper, PRODUCT_FAMILY productFamily) {
-    ipSamplingTestProductHelper->rawElementsToRawReports(productFamily, false, &rawReports);
+    ipSamplingTestProductHelper->rawElementsToRawReports(productFamily, IpSamplingTestProductHelper::InitReportType::DefaultType, &rawReports);
     rawReportsBytesSize = sizeof(rawReports[0][0]) * rawReports[0].size() * rawReports.size();
 }
 
@@ -187,12 +187,12 @@ void MetricIpSamplingCalculateOperationFixture::TearDown() {
     cleanUpHandles();
 }
 
-void MetricIpSamplingMetricsAggregationMultiDevFixture::initMultiRawReports() {
+void MetricIpSamplingMetricsAggregationMultiDevFixture::initExtendedRawReports() {
 
-    MockRawDataHelper::rawElementsToRawReports(static_cast<uint32_t>(rawDataElements2.size()), rawDataElements2, rawReports2);
+    ipSamplingTestProductHelper->rawElementsToRawReports(productFamily, IpSamplingTestProductHelper::InitReportType::SecondType, &rawReports2);
     rawReports2BytesSize = sizeof(rawReports2[0][0]) * rawReports2[0].size() * rawReports2.size();
 
-    MockRawDataHelper::rawElementsToRawReports(static_cast<uint32_t>(rawDataElementsAppend.size()), rawDataElementsAppend, rawReportsAppend);
+    ipSamplingTestProductHelper->rawElementsToRawReports(productFamily, IpSamplingTestProductHelper::InitReportType::AppendType, &rawReportsAppend);
     rawReportsAppendBytesSize = sizeof(rawReportsAppend[0][0]) * rawReportsAppend[0].size() * rawReportsAppend.size();
 }
 
@@ -200,7 +200,7 @@ void MetricIpSamplingMetricsAggregationMultiDevFixture::SetUp() {
 
     MetricIpSamplingMultiDevFixture::SetUp();
     initRawReports(ipSamplingTestProductHelper, productFamily);
-    initMultiRawReports();
+    initExtendedRawReports();
 
     rootDevice = testDevices[0];
     EXPECT_EQ(ZE_RESULT_SUCCESS, rootDevice->getMetricDeviceContext().enableMetricApi());
