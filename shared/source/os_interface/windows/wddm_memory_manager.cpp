@@ -1325,12 +1325,12 @@ void createColouredGmms(GmmHelper *gmmHelper, WddmAllocation &allocation, const 
     }
 }
 
-void fillGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *allocation, const StorageInfo &storageInfo) {
+void fillGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *allocation, const StorageInfo &storageInfo, bool preferCompressed) {
     auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
 
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
+    gmmRequirements.preferCompressed = preferCompressed;
 
     for (auto handleId = 0u; handleId < storageInfo.getNumBanks(); handleId++) {
         StorageInfo limitedStorageInfo = storageInfo;
@@ -1342,13 +1342,13 @@ void fillGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *allocation, cons
     }
 }
 
-void splitGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *wddmAllocation, size_t alignment, size_t chunkSize, StorageInfo &storageInfo) {
+void splitGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *wddmAllocation, size_t alignment, size_t chunkSize, StorageInfo &storageInfo, bool preferCompressed) {
     auto sizeRemaining = wddmAllocation->getAlignedSize();
     auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
 
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
+    gmmRequirements.preferCompressed = preferCompressed;
 
     for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
         auto size = sizeRemaining > chunkSize ? chunkSize : sizeRemaining;
@@ -1406,14 +1406,14 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
     wddmAllocation->setShareableWithoutNTHandle(allocationData.flags.shareableWithoutNTHandle);
     if (singleBankAllocation) {
         if (numGmms > 1) {
-            splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo));
+            splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo), allocationData.flags.preferCompressed);
         } else {
             wddmAllocation->setDefaultGmm(gmm.release());
         }
     } else if (allocationData.storageInfo.multiStorage) {
         createColouredGmms(gmmHelper, *wddmAllocation, allocationData.storageInfo, allocationData.flags.preferCompressed);
     } else {
-        fillGmmsInAllocation(gmmHelper, wddmAllocation.get(), allocationData.storageInfo);
+        fillGmmsInAllocation(gmmHelper, wddmAllocation.get(), allocationData.storageInfo, allocationData.flags.preferCompressed);
     }
     wddmAllocation->storageInfo = allocationData.storageInfo;
     wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
@@ -1501,14 +1501,14 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     wddmAllocation->setShareableWithoutNTHandle(allocationData.flags.shareableWithoutNTHandle);
     if (singleBankAllocation) {
         if (numGmms > 1) {
-            splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo));
+            splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo), allocationData.flags.preferCompressed);
         } else {
             wddmAllocation->setDefaultGmm(gmm.release());
         }
     } else if (allocationData.storageInfo.multiStorage) {
         createColouredGmms(gmmHelper, *wddmAllocation, allocationData.storageInfo, allocationData.flags.preferCompressed);
     } else {
-        fillGmmsInAllocation(gmmHelper, wddmAllocation.get(), allocationData.storageInfo);
+        fillGmmsInAllocation(gmmHelper, wddmAllocation.get(), allocationData.storageInfo, allocationData.flags.preferCompressed);
     }
     wddmAllocation->storageInfo = allocationData.storageInfo;
     wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);

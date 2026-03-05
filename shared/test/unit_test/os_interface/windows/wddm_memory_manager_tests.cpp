@@ -699,6 +699,7 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
         } else {
 
             DebugManagerStateRestore dbgRestore;
+            debugManager.flags.RenderCompressedBuffersEnabled.set(1);
             wddm->init();
             wddm->mapGpuVaStatus = true;
             VariableBackup<bool> restorer{&wddm->callBaseMapGpuVa, false};
@@ -708,6 +709,7 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
             allocData.allFlags = 0;
             allocData.size = static_cast<size_t>(MemoryConstants::gigaByte * 13);
             allocData.flags.allocateMemory = true;
+            allocData.flags.preferCompressed = true;
 
             MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
             auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
@@ -724,6 +726,7 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
                 EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
                 EXPECT_EQ(2 * MemoryConstants::megaByte, gmmResourceParams->BaseAlignment);
                 EXPECT_TRUE(isAligned(gmmResourceParams->BaseWidth64, gmmResourceParams->BaseAlignment));
+                EXPECT_TRUE(gmm->isCompressionEnabled());
 
                 totalSizeFromGmms += gmmResourceParams->BaseWidth64;
             }
