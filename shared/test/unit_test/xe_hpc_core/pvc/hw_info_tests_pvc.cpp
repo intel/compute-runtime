@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,6 +122,6 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcHwConfigWhenSetupHardwareInfoThenSharedS
     auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
     auto &capabilityTable = hwInfo.capabilityTable;
     PvcHwConfig::setupHardwareInfo(&hwInfo, false, releaseHelper.get());
-    uint64_t expectedSharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    uint64_t expectedSharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
     EXPECT_EQ(expectedSharedSystemMemCapabilities, capabilityTable.sharedSystemMemCapabilities);
 }
