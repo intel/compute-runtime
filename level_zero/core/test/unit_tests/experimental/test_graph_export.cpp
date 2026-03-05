@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 
+#include "level_zero/api/internal/l0_graph.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
@@ -1365,7 +1366,7 @@ TEST_F(ExtractKernelParametersTest, GivenKernelNameWhenExtractParametersIsCalled
 
 using GraphDumpApiTest = GraphDotExporterFileTest;
 TEST_F(GraphDumpApiTest, GivenNullGraphHandleWhenZeGraphDumpContentsExpIsCalledThenReturnsInvalidArgument) {
-    auto result = zeGraphDumpContentsExp(nullptr, testFilePath.c_str(), nullptr);
+    auto result = L0::zeGraphDumpContentsExp(nullptr, testFilePath.c_str(), nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1373,7 +1374,7 @@ TEST_F(GraphDumpApiTest, GivenNullFilePathWhenZeGraphDumpContentsExpIsCalledThen
     Graph testGraph{&ctx, true};
     ze_graph_handle_t graphHandle = testGraph.toHandle();
 
-    auto result = zeGraphDumpContentsExp(graphHandle, nullptr, nullptr);
+    auto result = L0::zeGraphDumpContentsExp(graphHandle, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1382,7 +1383,7 @@ TEST_F(GraphDumpApiTest, GivenUnsupportedExtensionTypeWhenZeGraphDumpContentsExp
     ze_graph_handle_t graphHandle = testGraph.toHandle();
 
     ze_base_desc_t unsupportedDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32};
-    auto result = zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &unsupportedDesc);
+    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &unsupportedDesc);
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
@@ -1400,7 +1401,7 @@ TEST_F(GraphDumpApiTest, GivenValidParametersWithNullpNextWhenZeGraphDumpContent
     setupSuccessfulWrite(testGraph);
 
     ze_graph_handle_t graphHandle = testGraph.toHandle();
-    auto result = zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), nullptr);
+    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(mockFopenCalledBefore + 1, NEO::IoFunctions::mockFopenCalled);
@@ -1430,7 +1431,7 @@ TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCa
     dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE;
 
     ze_graph_handle_t graphHandle = testGraph.toHandle();
-    auto result = zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(mockFopenCalledBefore + 1, NEO::IoFunctions::mockFopenCalled);
@@ -1460,7 +1461,7 @@ TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIs
     dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED;
 
     ze_graph_handle_t graphHandle = testGraph.toHandle();
-    auto result = zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1487,7 +1488,7 @@ TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExpIsC
     dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_FORCE_UINT32;
 
     ze_graph_handle_t graphHandle = testGraph.toHandle();
-    auto result = zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }

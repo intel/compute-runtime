@@ -133,19 +133,19 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricSupportedScopesGetExp);
 
     // Graphs
-    RETURN_FUNC_PTR_IF_EXIST(zeGraphCreateExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListBeginGraphCaptureExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListBeginCaptureIntoGraphExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListEndGraphCaptureExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListInstantiateGraphExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListAppendGraphExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeGraphDestroyExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeExecutableGraphDestroyExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListIsGraphCaptureEnabledExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeGraphIsEmptyExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeGraphDumpContentsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListGetGraphExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeGraphSetDestructionCallbackExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphCreateExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListBeginGraphCaptureExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListBeginCaptureIntoGraphExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListEndGraphCaptureExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListInstantiateGraphExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListAppendGraphExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphDestroyExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeExecutableGraphDestroyExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListIsGraphCaptureEnabledExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphIsEmptyExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphDumpContentsExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetGraphExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphSetDestructionCallbackExp);
 
     // Sysman
     RETURN_FUNC_PTR_IF_EXIST(zesIntelRasGetSupportedCategoriesExp);

@@ -1362,6 +1362,21 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnCommandListAppendMIMath = decltype(&zexCommandListAppendMIMath);
     using pfnCommandListVerifyMemory = decltype(&zexCommandListVerifyMemory);
 
+    // graph API function types
+    using pfnGraphCreateExp = decltype(&zeGraphCreateExp);
+    using pfnCommandListBeginGraphCaptureExp = decltype(&zeCommandListBeginGraphCaptureExp);
+    using pfnCommandListBeginCaptureIntoGraphExp = decltype(&zeCommandListBeginCaptureIntoGraphExp);
+    using pfnCommandListEndGraphCaptureExp = decltype(&zeCommandListEndGraphCaptureExp);
+    using pfnCommandListInstantiateGraphExp = decltype(&zeCommandListInstantiateGraphExp);
+    using pfnCommandListAppendGraphExp = decltype(&zeCommandListAppendGraphExp);
+    using pfnGraphDestroyExp = decltype(&zeGraphDestroyExp);
+    using pfnExecutableGraphDestroyExp = decltype(&zeExecutableGraphDestroyExp);
+    using pfnCommandListIsGraphCaptureEnabledExp = decltype(&zeCommandListIsGraphCaptureEnabledExp);
+    using pfnGraphIsEmptyExp = decltype(&zeGraphIsEmptyExp);
+    using pfnGraphDumpContentsExp = decltype(&zeGraphDumpContentsExp);
+    using pfnCommandListGetGraphExp = decltype(&zeCommandListGetGraphExp);
+    using pfnGraphSetDestructionCallbackExp = decltype(&zeGraphSetDestructionCallbackExp);
+
     decltype(&::zexCommandListAppendWaitOnMemory) expectedCommandListAppendWaitOnMemory = L0::zexCommandListAppendWaitOnMemory;
     decltype(&::zexCommandListAppendWriteToMemory) expectedCommandListAppendWriteToMemory = L0::zexCommandListAppendWriteToMemory;
 
@@ -1416,6 +1431,21 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     pfnCommandListAppendMILoadRegImm expectedCommandListAppendMILoadRegImm = zexCommandListAppendMILoadRegImm;
     pfnCommandListAppendMIStoreRegMem expectedCommandListAppendMIStoreRegMem = zexCommandListAppendMIStoreRegMem;
     pfnCommandListAppendMIMath expectedCommandListAppendMIMath = zexCommandListAppendMIMath;
+
+    // graph function addresses
+    pfnGraphCreateExp expectedGraphCreateExp = L0::zeGraphCreateExp;
+    pfnCommandListBeginGraphCaptureExp expectedCommandListBeginGraphCaptureExp = L0::zeCommandListBeginGraphCaptureExp;
+    pfnCommandListBeginCaptureIntoGraphExp expectedCommandListBeginCaptureIntoGraphExp = L0::zeCommandListBeginCaptureIntoGraphExp;
+    pfnCommandListEndGraphCaptureExp expectedCommandListEndGraphCaptureExp = L0::zeCommandListEndGraphCaptureExp;
+    pfnCommandListInstantiateGraphExp expectedCommandListInstantiateGraphExp = L0::zeCommandListInstantiateGraphExp;
+    pfnCommandListAppendGraphExp expectedCommandListAppendGraphExp = L0::zeCommandListAppendGraphExp;
+    pfnGraphDestroyExp expectedGraphDestroyExp = L0::zeGraphDestroyExp;
+    pfnExecutableGraphDestroyExp expectedExecutableGraphDestroyExp = L0::zeExecutableGraphDestroyExp;
+    pfnCommandListIsGraphCaptureEnabledExp expectedCommandListIsGraphCaptureEnabledExp = L0::zeCommandListIsGraphCaptureEnabledExp;
+    pfnGraphIsEmptyExp expectedGraphIsEmptyExp = L0::zeGraphIsEmptyExp;
+    pfnGraphDumpContentsExp expectedGraphDumpContentsExp = L0::zeGraphDumpContentsExp;
+    pfnCommandListGetGraphExp expectedCommandListGetGraphExp = L0::zeCommandListGetGraphExp;
+    pfnGraphSetDestructionCallbackExp expectedGraphSetDestructionCallbackExp = L0::zeGraphSetDestructionCallbackExp;
 
     // Add EXPECT_EQ tests to verify function pointers
     void *funPtr = nullptr;
@@ -1560,6 +1590,45 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListVerifyMemory", &funPtr));
     EXPECT_EQ(expectedCommandListVerifyMemory, reinterpret_cast<pfnCommandListVerifyMemory>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphCreateExp", &funPtr));
+    EXPECT_EQ(expectedGraphCreateExp, reinterpret_cast<pfnGraphCreateExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListBeginGraphCaptureExp", &funPtr));
+    EXPECT_EQ(expectedCommandListBeginGraphCaptureExp, reinterpret_cast<pfnCommandListBeginGraphCaptureExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListBeginCaptureIntoGraphExp", &funPtr));
+    EXPECT_EQ(expectedCommandListBeginCaptureIntoGraphExp, reinterpret_cast<pfnCommandListBeginCaptureIntoGraphExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListEndGraphCaptureExp", &funPtr));
+    EXPECT_EQ(expectedCommandListEndGraphCaptureExp, reinterpret_cast<pfnCommandListEndGraphCaptureExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListInstantiateGraphExp", &funPtr));
+    EXPECT_EQ(expectedCommandListInstantiateGraphExp, reinterpret_cast<pfnCommandListInstantiateGraphExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListAppendGraphExp", &funPtr));
+    EXPECT_EQ(expectedCommandListAppendGraphExp, reinterpret_cast<pfnCommandListAppendGraphExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphDestroyExp", &funPtr));
+    EXPECT_EQ(expectedGraphDestroyExp, reinterpret_cast<pfnGraphDestroyExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeExecutableGraphDestroyExp", &funPtr));
+    EXPECT_EQ(expectedExecutableGraphDestroyExp, reinterpret_cast<pfnExecutableGraphDestroyExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListIsGraphCaptureEnabledExp", &funPtr));
+    EXPECT_EQ(expectedCommandListIsGraphCaptureEnabledExp, reinterpret_cast<pfnCommandListIsGraphCaptureEnabledExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphIsEmptyExp", &funPtr));
+    EXPECT_EQ(expectedGraphIsEmptyExp, reinterpret_cast<pfnGraphIsEmptyExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphDumpContentsExp", &funPtr));
+    EXPECT_EQ(expectedGraphDumpContentsExp, reinterpret_cast<pfnGraphDumpContentsExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetGraphExp", &funPtr));
+    EXPECT_EQ(expectedCommandListGetGraphExp, reinterpret_cast<pfnCommandListGetGraphExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphSetDestructionCallbackExp", &funPtr));
+    EXPECT_EQ(expectedGraphSetDestructionCallbackExp, reinterpret_cast<pfnGraphSetDestructionCallbackExp>(funPtr));
 }
 
 TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenExpectProperBehavior) {
