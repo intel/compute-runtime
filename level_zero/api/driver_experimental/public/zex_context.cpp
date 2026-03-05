@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,16 +58,3 @@ ze_result_t ZE_APICALL zexMemFreeRegisterCallbackExt(ze_context_handle_t hContex
 }
 
 } // namespace L0
-
-extern "C" {
-ZE_APIEXPORT ze_result_t ZE_APICALL zexMemFreeRegisterCallbackExt(ze_context_handle_t hContext, zex_memory_free_callback_ext_desc_t *hFreeCallbackDesc, void *ptr) {
-    return L0::zexMemFreeRegisterCallbackExt(hContext, hFreeCallbackDesc, ptr);
-}
-ZE_APIEXPORT ze_result_t ZE_APICALL zeIntelMediaCommunicationCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_intel_media_communication_desc_t *desc, ze_intel_media_doorbell_handle_desc_t *phDoorbell) {
-    return L0::zeIntelMediaCommunicationCreate(hContext, hDevice, desc, phDoorbell);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeIntelMediaCommunicationDestroy(ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_intel_media_doorbell_handle_desc_t *phDoorbell) {
-    return L0::zeIntelMediaCommunicationDestroy(hContext, hDevice, phDoorbell);
-}
-} // extern "C"

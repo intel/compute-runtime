@@ -325,7 +325,7 @@ typedef struct _zex_memory_free_callback_ext_desc_t {
  *
  * @note The callback will be invoked when the specified memory is freed.
  */
-ZE_APIEXPORT ze_result_t ZE_APICALL zexMemFreeRegisterCallbackExt(ze_context_handle_t hContext, zex_memory_free_callback_ext_desc_t *hFreeCallbackDesc, void *ptr);
+ze_result_t ZE_APICALL zexMemFreeRegisterCallbackExt(ze_context_handle_t hContext, zex_memory_free_callback_ext_desc_t *hFreeCallbackDesc, void *ptr);
 #endif // ZEX_MEMORY_FREE_CALLBACK_EXT_NAME
 
 #ifndef ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_NAME

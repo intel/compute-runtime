@@ -1389,11 +1389,11 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&::zexKernelGetArgumentType) expectedKernelGetArgumentType = L0::zexKernelGetArgumentType;
     decltype(&::zeIntelKernelGetBinaryExp) expectedIntelKernelGetBinaryExp = L0::zeIntelKernelGetBinaryExp;
     decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = zeIntelGetDriverVersionString;
-    decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = zeIntelMediaCommunicationCreate;
-    decltype(&zeIntelMediaCommunicationDestroy) expectedIntelMediaCommunicationDestroy = zeIntelMediaCommunicationDestroy;
+    decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = L0::zeIntelMediaCommunicationCreate;
+    decltype(&zeIntelMediaCommunicationDestroy) expectedIntelMediaCommunicationDestroy = L0::zeIntelMediaCommunicationDestroy;
     decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = zexIntelAllocateNetworkInterrupt;
     decltype(&zexIntelReleaseNetworkInterrupt) expectedIntelReleaseNetworkInterrupt = zexIntelReleaseNetworkInterrupt;
-    decltype(&zexMemFreeRegisterCallbackExt) expectedIntelMemFreeRegisterCallbackExt = zexMemFreeRegisterCallbackExt;
+    decltype(&zexMemFreeRegisterCallbackExt) expectedIntelMemFreeRegisterCallbackExt = L0::zexMemFreeRegisterCallbackExt;
 
     decltype(&zexCounterBasedEventCreate2) expectedCounterBasedEventCreate2 = zexCounterBasedEventCreate2;
     decltype(&zexCounterBasedEventGetIpcHandle) expectedCounterBasedEventGetIpcHandle = zexCounterBasedEventGetIpcHandle;

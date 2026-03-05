@@ -8,5 +8,6 @@
 #pragma once
 
 #include "level_zero/api/internal/l0_cmdlist.h"
+#include "level_zero/api/internal/l0_context.h"
 #include "level_zero/api/internal/l0_graph.h"
 #include "level_zero/api/internal/l0_module.h"

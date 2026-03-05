@@ -20,6 +20,7 @@
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_context.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -3866,7 +3867,7 @@ TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallback
     callbackDesc.pUserData = const_cast<char *>(userData);
 
     // Call the ZEX API function
-    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
+    res = L0::zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     res = zeMemFree(hContext, ptr);
@@ -3891,7 +3892,7 @@ TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallback
     void *ptr = reinterpret_cast<void *>(0x1234);
 
     // Call with null context
-    ze_result_t res = zexMemFreeRegisterCallbackExt(nullptr, &callbackDesc, ptr);
+    ze_result_t res = L0::zexMemFreeRegisterCallbackExt(nullptr, &callbackDesc, ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
@@ -3904,7 +3905,7 @@ TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallback
     void *ptr = reinterpret_cast<void *>(0x1234);
 
     // Call with null descriptor
-    res = zexMemFreeRegisterCallbackExt(hContext, nullptr, ptr);
+    res = L0::zexMemFreeRegisterCallbackExt(hContext, nullptr, ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
     res = zeContextDestroy(hContext);
@@ -3926,7 +3927,7 @@ TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallback
     callbackDesc.pUserData = const_cast<char *>(userData);
 
     // Call with null pointer
-    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, nullptr);
+    res = L0::zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
     res = zeContextDestroy(hContext);
@@ -3949,7 +3950,7 @@ TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallback
 
     // Call with invalid pointer (not an SVM allocation)
     void *invalidPtr = reinterpret_cast<void *>(0x1234);
-    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, invalidPtr);
+    res = L0::zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, invalidPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
     res = zeContextDestroy(hContext);
@@ -3978,7 +3979,7 @@ TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallback
     callbackDesc.pUserData = const_cast<char *>(userData);
 
     // Call the ZEX API function
-    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
+    res = L0::zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     res = zeMemFree(hContext, ptr);
@@ -4015,7 +4016,7 @@ TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallback
     callbackDesc.pUserData = const_cast<char *>(userData);
 
     // Call the ZEX API function
-    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
+    res = L0::zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     res = zeMemFree(hContext, ptr);
@@ -4051,7 +4052,7 @@ TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallback
     callbackDesc.pUserData = const_cast<char *>(userData);
 
     // Call the ZEX API function - this should fail due to the invalid callback function pointer
-    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
+    res = L0::zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
     res = zeMemFree(hContext, ptr);
