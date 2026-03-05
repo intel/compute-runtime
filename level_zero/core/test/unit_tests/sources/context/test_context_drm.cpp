@@ -96,33 +96,6 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithValidHandleThenSuccess
     EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u, nullptr, false));
 }
 
-TEST_F(GetMemHandlePtrTest, givenExternalMemoryImportWhenGetMemHandlePtrSucceedsThenImportedFdIsClosed) {
-    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
-
-    uint64_t handle = 57;
-    fixtureMemoryManager->ntHandle = false;
-
-    VariableBackup<uint32_t> closeCalledBackup(&NEO::SysCalls::closeFuncCalled, 0u);
-
-    void *ptr = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 0u, 0, 0u, nullptr, false);
-    EXPECT_NE(nullptr, ptr);
-    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
-}
-
-TEST_F(GetMemHandlePtrTest, givenIpcMemoryImportWhenGetMemHandlePtrSucceedsThenImportedFdIsNotClosed) {
-    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
-
-    uint64_t handle = 57;
-    fixtureMemoryManager->ntHandle = false;
-    context->settings.useOpaqueHandle = 0;
-
-    VariableBackup<uint32_t> closeCalledBackup(&NEO::SysCalls::closeFuncCalled, 0u);
-
-    void *ptr = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, 1u, 0, 0u, nullptr, false);
-    EXPECT_NE(nullptr, ptr);
-    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
-}
-
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullptrIsReturned) {
     MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
 

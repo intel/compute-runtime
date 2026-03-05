@@ -206,10 +206,6 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                                                          allocDataInternal,
                                                          compressedMemory);
 
-        if (result && processId == 0) {
-            NEO::SysCalls::close(static_cast<int>(importHandle));
-        }
-
         // Store cacheID in IPC handle tracking if opaque handles are used
         if (result && settings.useOpaqueHandle && effectiveCacheID != 0) {
             auto lock = driverHandle->lockIPCHandleMap();
