@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,37 +62,3 @@ zeIntelGetDriverVersionString(
 }
 
 } // namespace L0
-
-extern "C" {
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeIntelGetDriverVersionString(
-    ze_driver_handle_t hDriver,
-    char *pDriverVersion,
-    size_t *pVersionSize) {
-    return L0::zeIntelGetDriverVersionString(hDriver, pDriverVersion, pVersionSize);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zexDriverImportExternalPointer(
-    ze_driver_handle_t hDriver,
-    void *ptr,
-    size_t size) {
-    return L0::zexDriverImportExternalPointer(hDriver, ptr, size);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zexDriverReleaseImportedPointer(
-    ze_driver_handle_t hDriver,
-    void *ptr) {
-    return L0::zexDriverReleaseImportedPointer(hDriver, ptr);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zexDriverGetHostPointerBaseAddress(
-    ze_driver_handle_t hDriver,
-    void *ptr,
-    void **baseAddress) {
-    return L0::zexDriverGetHostPointerBaseAddress(hDriver, ptr, baseAddress);
-}
-} // extern "C"

@@ -1380,15 +1380,15 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&::zexCommandListAppendWaitOnMemory) expectedCommandListAppendWaitOnMemory = L0::zexCommandListAppendWaitOnMemory;
     decltype(&::zexCommandListAppendWriteToMemory) expectedCommandListAppendWriteToMemory = L0::zexCommandListAppendWriteToMemory;
 
-    decltype(&zexDriverImportExternalPointer) expectedImport = zexDriverImportExternalPointer;
-    decltype(&zexDriverReleaseImportedPointer) expectedRelease = zexDriverReleaseImportedPointer;
-    decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = zexDriverGetHostPointerBaseAddress;
+    decltype(&zexDriverImportExternalPointer) expectedImport = L0::zexDriverImportExternalPointer;
+    decltype(&zexDriverReleaseImportedPointer) expectedRelease = L0::zexDriverReleaseImportedPointer;
+    decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = L0::zexDriverGetHostPointerBaseAddress;
 
     decltype(&::zexKernelGetBaseAddress) expectedKernelGetBaseAddress = L0::zexKernelGetBaseAddress;
     decltype(&::zexKernelGetArgumentSize) expectedKernelGetArgumentSize = L0::zexKernelGetArgumentSize;
     decltype(&::zexKernelGetArgumentType) expectedKernelGetArgumentType = L0::zexKernelGetArgumentType;
     decltype(&::zeIntelKernelGetBinaryExp) expectedIntelKernelGetBinaryExp = L0::zeIntelKernelGetBinaryExp;
-    decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = zeIntelGetDriverVersionString;
+    decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = L0::zeIntelGetDriverVersionString;
     decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = L0::zeIntelMediaCommunicationCreate;
     decltype(&zeIntelMediaCommunicationDestroy) expectedIntelMediaCommunicationDestroy = L0::zeIntelMediaCommunicationDestroy;
     decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = zexIntelAllocateNetworkInterrupt;
@@ -1637,26 +1637,26 @@ TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenEx
     size_t size = 0x100;
     void *testPtr = ptrOffset(heapPointer, offset);
 
-    auto result = zexDriverImportExternalPointer(driverHandle, testPtr, size);
+    auto result = L0::zexDriverImportExternalPointer(driverHandle, testPtr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     void *offsetPtr = ptrOffset(testPtr, offset);
 
-    result = zexDriverGetHostPointerBaseAddress(driverHandle, offsetPtr, &basePtr);
+    result = L0::zexDriverGetHostPointerBaseAddress(driverHandle, offsetPtr, &basePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(testPtr, basePtr);
 
-    result = zexDriverReleaseImportedPointer(driverHandle, testPtr);
+    result = L0::zexDriverReleaseImportedPointer(driverHandle, testPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(DriverExperimentalApiTest, givenGetVersionStringAPIExistsThenGetCurrentVersionString) {
     size_t sizeOfDriverString = 0;
-    auto result = zeIntelGetDriverVersionString(driverHandle, nullptr, &sizeOfDriverString);
+    auto result = L0::zeIntelGetDriverVersionString(driverHandle, nullptr, &sizeOfDriverString);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(sizeOfDriverString, 0u);
     char *driverVersionString = reinterpret_cast<char *>(malloc(sizeOfDriverString * sizeof(char)));
-    result = zeIntelGetDriverVersionString(driverHandle, driverVersionString, &sizeOfDriverString);
+    result = L0::zeIntelGetDriverVersionString(driverHandle, driverVersionString, &sizeOfDriverString);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE("", driverVersionString);
     free(driverVersionString);

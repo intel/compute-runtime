@@ -37,9 +37,10 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
         }                                     \
     }
 
-    RETURN_FUNC_PTR_IF_EXIST(zexDriverImportExternalPointer);
-    RETURN_FUNC_PTR_IF_EXIST(zexDriverReleaseImportedPointer);
-    RETURN_FUNC_PTR_IF_EXIST(zexDriverGetHostPointerBaseAddress);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexDriverImportExternalPointer);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexDriverReleaseImportedPointer);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexDriverGetHostPointerBaseAddress);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelGetDriverVersionString);
 
     RETURN_FUNC_PTR_IF_EXIST(zeDeviceGetPriorityLevels);
 
@@ -67,7 +68,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
 
     RETURN_FUNC_PTR_IF_EXIST(zeMemGetPitchFor2dImage);
     RETURN_FUNC_PTR_IF_EXIST(zeImageGetDeviceOffsetExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeIntelGetDriverVersionString);
 
     RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelMediaCommunicationCreate);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelMediaCommunicationDestroy);

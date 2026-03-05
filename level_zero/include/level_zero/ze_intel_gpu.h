@@ -237,7 +237,7 @@ typedef enum _ze_intel_device_block_array_exp_properties_version_t {
 ///     - Major.Minor.Patch+Optional per semver guidelines https://semver.org/#spec-item-10
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zeIntelGetDriverVersionString(
     ze_driver_handle_t hDriver, ///< [in] Driver handle whose version is being read.
     char *pDriverVersion,       ///< [in,out] pointer to driver version string.
