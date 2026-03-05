@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -747,6 +747,10 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
 }
 
 TEST_F(DrmTests, givenEnabledDebuggingAndHeaplessModeWhenDrmIsCreatedThenPerContextVMIsFalse) {
+
+    if (!mockRootDeviceEnvironment->getHelper<GfxCoreHelper>().createMemoryInfoSupported()) {
+        GTEST_SKIP();
+    }
 
     mockRootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::online);
     auto compilerHelper = std::unique_ptr<MockCompilerProductHelper>(new MockCompilerProductHelper());
