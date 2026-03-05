@@ -23,6 +23,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/mutable_cmdlist/helper.h"
 #include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
@@ -378,7 +379,40 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
     auto device = cmdList->getBase()->getDevice();
     auto &commandContainer = cmdList->getBase()->getCmdContainer();
 
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL variable %p old kernel arg buffer: value %p gpuva %" PRIu64 " alloc id %u alloc id from manager %u\n",
+                 this,
+                 desc.argValue,
+                 desc.bufferGpuAddress,
+                 desc.allocId,
+                 desc.allocIdMemoryManagerCounter);
+
     auto oldBufferAlloc = desc.bufferAlloc;
+    GpuAddress gpuAddress = 0u;
+    NEO::GraphicsAllocation *newBufferAlloc = nullptr;
+    uint32_t newAllocId = undefined<uint32_t>;
+    uint32_t newAllocIdMemoryManagerCounter = device->getDriverHandle()->getSvmAllocsManager()->allocationsCounter.load();
+
+    if (argValue != nullptr) {
+        // same arg value and alloc id is set
+        if (desc.argValue == argValue && desc.allocId != newAllocId) {
+            // if alloc id is set then compare
+            if (newAllocIdMemoryManagerCounter > 0 && desc.allocIdMemoryManagerCounter == newAllocIdMemoryManagerCounter) {
+                PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL same alloc id from manager, same arg value, alloc id set\n");
+                return ZE_RESULT_SUCCESS;
+            }
+        }
+
+        auto retVal = getBufferGpuAddress(argValue, device, newBufferAlloc, gpuAddress, newAllocId);
+        if (retVal != ZE_RESULT_SUCCESS) {
+            return retVal;
+        }
+    }
+    if (desc.argValue == argValue && desc.allocId == newAllocId) {
+        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL same alloc id, same arg value, updating alloc id from manager to new %u\n",
+                     newAllocIdMemoryManagerCounter);
+        desc.allocIdMemoryManagerCounter = newAllocIdMemoryManagerCounter;
+        return ZE_RESULT_SUCCESS;
+    }
 
     if (desc.state == State::initialized) {
         DEBUG_BREAK_IF(desc.bufferAlloc == nullptr);
@@ -387,21 +421,14 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
     }
     DEBUG_BREAK_IF(desc.bufferAlloc != nullptr);
 
-    GpuAddress gpuAddress = 0u;
-    NEO::GraphicsAllocation *newBufferAlloc = nullptr;
-
-    if (argValue != nullptr) {
-        auto retVal = getBufferGpuAddress(argValue, device, newBufferAlloc, gpuAddress);
-        if (retVal != ZE_RESULT_SUCCESS) {
-            return retVal;
-        }
-    }
     desc.bufferAlloc = newBufferAlloc;
     desc.bufferGpuAddress = gpuAddress;
     desc.argValue = argValue;
+    desc.allocId = newAllocId;
+    desc.allocIdMemoryManagerCounter = newAllocIdMemoryManagerCounter;
 
-    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel argument variable %p buffer gpuva %" PRIx64 " arg value %p from allocation %p\n",
-                 this, gpuAddress, argValue, newBufferAlloc);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel argument variable %p buffer gpuva %" PRIx64 " arg value %p from allocation %p alloc id %u alloc id from manager %u\n",
+                 this, gpuAddress, argValue, newBufferAlloc, newAllocId, newAllocIdMemoryManagerCounter);
 
     if (bufferUsages.statelessWithoutOffset.size() > 0) {
         for (const auto statelessPatch : bufferUsages.statelessWithoutOffset) {

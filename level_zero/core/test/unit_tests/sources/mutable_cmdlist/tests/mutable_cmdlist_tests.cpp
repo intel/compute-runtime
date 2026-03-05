@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
@@ -506,6 +507,114 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
     EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndHostPoolWhenMutationHostBufferOfSameAddressButDifferentIdThenPerformMutation) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+
+    debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+    debugManager.flags.EnableHostUsmAllocationPool.set(1);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+
+    uint64_t usmPatchAddressValue = 0;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    void *usm1 = nullptr, *usm2 = nullptr;
+
+    result = this->context->allocHostMem(&hostDesc, 4096, 4096, &usm1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, usm1);
+
+    result = this->context->allocHostMem(&hostDesc, 4096, 4096, &usm2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, usm2);
+
+    // set kernel arg 0 => buffer
+    this->crossThreadOffset = 8;
+    this->nextArgOffset = 16;
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
+
+    result = kernel->setArgBuffer(0, sizeof(void *), &usm1);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &bufferVarMutDesc = mutation.variables.kernelArguments[0];
+    auto &bufferInternalDesc = bufferVarMutDesc.kernelArgumentVariable->getDesc();
+    EXPECT_EQ(L0::MCL::VariableType::buffer, bufferInternalDesc.type);
+    ASSERT_NE(0u, bufferVarMutDesc.kernelArgumentVariable->getBufferUsages().commandBufferWithoutOffset.size());
+    auto gpuVaPatchFullAddress = reinterpret_cast<void *>(bufferVarMutDesc.kernelArgumentVariable->getBufferUsages().commandBufferWithoutOffset[0]);
+    memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(reinterpret_cast<uint64_t>(usm1), usmPatchAddressValue);
+
+    auto usm1AllocId = bufferInternalDesc.allocId;
+
+    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &kernelBufferArg;
+
+    kernelBufferArg.argIndex = 0;
+    kernelBufferArg.argSize = sizeof(void *);
+    kernelBufferArg.commandId = commandId;
+    kernelBufferArg.pArgValue = &usm2;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
+
+    auto usm2AllocId = bufferInternalDesc.allocId;
+    EXPECT_EQ(usm1AllocId, usm2AllocId);
+
+    auto oldUsm2 = usm2;
+
+    result = this->context->freeMem(usm2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = this->context->allocHostMem(&hostDesc, 4096, 4096, &usm2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(oldUsm2, usm2);
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
+
+    result = this->context->freeMem(usm2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = this->context->freeMem(usm1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

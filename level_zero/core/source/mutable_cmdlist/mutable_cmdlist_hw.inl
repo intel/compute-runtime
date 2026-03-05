@@ -436,6 +436,8 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                         varDescriptor.bufferAlloc = residencyContainer[index];
                         varDescriptor.argValue = kernelArgInfos[index].value;
                         varDescriptor.bufferGpuAddress = varDescriptor.bufferAlloc->getGpuAddress();
+                        varDescriptor.allocId = kernelArgInfos[index].allocId;
+                        varDescriptor.allocIdMemoryManagerCounter = kernelArgInfos[index].allocIdMemoryManagerCounter;
                         PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument buffer gpuva %" PRIx64 " ptr value %p\n", varDescriptor.bufferGpuAddress, kernelArgInfos[index].value);
                         varDescriptor.state = VariableDescriptor::State::initialized;
                     } else {

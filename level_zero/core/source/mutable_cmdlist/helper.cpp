@@ -15,15 +15,17 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 
 namespace L0::MCL {
-ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsAllocation *&outGraphicsAllocation, GpuAddress &outGpuAddress) {
+ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsAllocation *&outGraphicsAllocation, GpuAddress &outGpuAddress, uint32_t &outAllocId) {
     NEO::GraphicsAllocation *bufferAlloc = nullptr;
     GpuAddress gpuAddress = 0u;
     DriverHandle *driverHandle = device->getDriverHandle();
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(buffer);
+    uint32_t allocId = undefined<uint32_t>;
     if (allocData != nullptr) {
         bufferAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         // buffer can be offset SVM value
         gpuAddress = reinterpret_cast<GpuAddress>(buffer);
+        allocId = allocData->getAllocId();
         if (driverHandle->isRemoteResourceNeeded(bufferAlloc, allocData, device)) {
             // get GPU base value
             gpuAddress = bufferAlloc->getGpuAddress();
@@ -39,14 +41,14 @@ ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsA
         }
     } else {
         if (NEO::debugManager.flags.DisableSystemPointerKernelArgument.get() != 1) {
-            outGpuAddress = reinterpret_cast<GpuAddress>(buffer);
-            return ZE_RESULT_SUCCESS;
+            gpuAddress = reinterpret_cast<GpuAddress>(buffer);
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     }
     outGraphicsAllocation = bufferAlloc;
     outGpuAddress = gpuAddress;
+    outAllocId = allocId;
 
     return ZE_RESULT_SUCCESS;
 }

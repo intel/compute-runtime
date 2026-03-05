@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,7 +115,8 @@ ze_result_t MutableCommandListImp::tempMemSet(const void *pTempMem) {
 
     NEO::GraphicsAllocation *alloc = nullptr;
     GpuAddress gpuAddress = undefined<GpuAddress>;
-    auto result = getBufferGpuAddress(tempMemBuffor, base->getDevice(), alloc, gpuAddress);
+    uint32_t allocId = undefined<uint32_t>;
+    auto result = getBufferGpuAddress(tempMemBuffor, base->getDevice(), alloc, gpuAddress, allocId);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }

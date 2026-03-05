@@ -412,15 +412,6 @@ ze_result_t MutableCommandListImp::updateMutableCommandsExp(const ze_mutable_com
             if (kernelArgDesc.kernelArgumentVariable == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
-            if (kernelArgDesc.kernelArgumentVariable->getType() == VariableType::buffer) {
-                auto argValue = apiKernelArgumentDesc->pArgValue == nullptr ? nullptr : *reinterpret_cast<void *const *>(apiKernelArgumentDesc->pArgValue);
-                if (kernelArgDesc.kernelArgumentVariable->getDesc().argValue == argValue) {
-                    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL update kernel arg commandId: %" PRIu64 " argument idx: %u, buffer - same value: %p\n",
-                                 apiKernelArgumentDesc->commandId, apiKernelArgumentDesc->argIndex, argValue);
-                    next = extendedDesc->pNext;
-                    continue;
-                }
-            }
             result = kernelArgDesc.kernelArgumentVariable->setValue(apiKernelArgumentDesc->argSize, 0, apiKernelArgumentDesc->pArgValue);
             if (result != ZE_RESULT_SUCCESS) {
                 return result;

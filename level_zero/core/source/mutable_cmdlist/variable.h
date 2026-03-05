@@ -77,6 +77,9 @@ struct VariableDescriptor {
     NEO::GraphicsAllocation *bufferAlloc = nullptr;
     const void *argValue = reinterpret_cast<void *>(undefined<size_t>);
 
+    uint32_t allocId = undefined<uint32_t>;
+    uint32_t allocIdMemoryManagerCounter = 0;
+
     VariableType type = VariableType::none;
     State state = State::declared;
 
@@ -153,6 +156,8 @@ struct Variable : public VariableHandle {
         desc.bufferGpuAddress = undefined<GpuAddress>;
         desc.state = VariableDescriptor::State::defined;
         desc.argValue = reinterpret_cast<void *>(undefined<size_t>);
+        desc.allocId = undefined<uint32_t>;
+        desc.allocIdMemoryManagerCounter = 0;
     }
     inline void resetSlmVariable() {
         slmValue.slmOffsetValue = undefined<SlmOffset>;
