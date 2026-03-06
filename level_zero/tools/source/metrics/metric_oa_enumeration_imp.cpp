@@ -35,6 +35,7 @@ ze_result_t MetricEnumeration::metricGroupGet(uint32_t &count,
                                               zet_metric_group_handle_t *phMetricGroups) {
     ze_result_t result = initialize();
     if (result != ZE_RESULT_SUCCESS) {
+        METRICS_LOG_ERR("Failed to initialize metric enumeration. Return status received %x ", result);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -262,6 +263,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
         for (auto subDevice : device.subDevices) {
             result = subDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().cacheMetricInformation();
             if (ZE_RESULT_SUCCESS != result) {
+                METRICS_LOG_ERR("Failed to cache metric information. Return status received %x ", result);
                 return result;
             }
         }
@@ -619,6 +621,7 @@ void MetricEnumeration::updateMetricProgrammablesFromPrototypes(
 ze_result_t MetricEnumeration::metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) {
     ze_result_t result = initialize();
     if (result != ZE_RESULT_SUCCESS) {
+        METRICS_LOG_ERR("Initialization failed. Return status received %x ", result);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -1001,6 +1004,7 @@ ze_result_t OaMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronize
     if (result != ZE_RESULT_SUCCESS) {
         *globalTimestamp = 0;
         *metricTimestamp = 0;
+        METRICS_LOG_ERR("Could not fetch global timestamps. Return status received %x ", result);
     } else {
         if (synchronizedWithHost) {
             *globalTimestamp = hostTimestamp;
@@ -1033,6 +1037,7 @@ ze_result_t OaMetricGroupImp::getCalculatedMetricCount(const size_t rawDataSize,
     metricValueCount = 0;
 
     if (rawDataSize == 0) {
+        // This may not be an error condition, just no data for a given device
         return ZE_RESULT_NOT_READY;
     }
 
@@ -1040,6 +1045,7 @@ ze_result_t OaMetricGroupImp::getCalculatedMetricCount(const size_t rawDataSize,
 
     if (rawReportSize == 0 ||
         (rawDataSize % rawReportSize) != 0) {
+        METRICS_LOG_ERR("Invalid raw report or raw data size. Raw report size: %u, Raw data size: %zu", rawReportSize, rawDataSize);
         return ZE_RESULT_ERROR_INVALID_SIZE;
     }
 
