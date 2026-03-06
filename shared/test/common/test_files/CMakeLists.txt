@@ -7,12 +7,6 @@
 set(SHARED_TEST_PROJECTS_SUB_FOLDER "prepare test files")
 function(compile_kernels_gen device revision_id platform_name use_stateless use_heapless use_wide_stateless)
 
-  set(LSC_INTRINSICS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../source/built_ins/kernels)
-
-  set(TEST_KERNEL_COMMON_HEADERS
-      ${LSC_INTRINSICS_DIR}/lsc_intrinsics.h
-  )
-
   set(outputdir "${TargetDir}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/")
   set(compiled_kernels)
 
@@ -59,7 +53,6 @@ function(compile_kernels_gen device revision_id platform_name use_stateless use_
       endif()
 
       list(APPEND __ocloc__options__ ${SELECTED_KERNEL_TYPES})
-      list(APPEND __ocloc__options__ -I${LSC_INTRINSICS_DIR})
 
       if(platform_it_lower STREQUAL "bmg")
         list(APPEND __ocloc__options__ "-DUSE_LSC_INTRINSICS_WB")
@@ -69,7 +62,7 @@ function(compile_kernels_gen device revision_id platform_name use_stateless use_
                          OUTPUT ${output_files}
                          COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -heapless_mode ${heapless_mode} -internal_options ${internal_options} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${workdir}
-                         DEPENDS ${filepath} ${TEST_KERNEL_COMMON_HEADERS} ocloc copy_compiler_files
+                         DEPENDS ${filepath} ocloc copy_compiler_files
       )
 
       list(APPEND compiled_kernels_${platform_name}_${revision_id} ${output_files})

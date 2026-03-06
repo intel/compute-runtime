@@ -5,21 +5,73 @@
  *
  */
 
-#include "lsc_intrinsics.h"
+#ifdef USE_LSC_INTRINSICS_WB
+enum LSC_LDCC {
+    LSC_LDCC_DEFAULT = 0,
+    LSC_LDCC_L1UC_L3UC = 1,
+    LSC_LDCC_L1UC_L3C = 2,
+    LSC_LDCC_L1C_L3UC = 3,
+    LSC_LDCC_L1C_L3C = 4,
+    LSC_LDCC_L1S_L3UC = 5,
+    LSC_LDCC_L1S_L3C = 6,
+    LSC_LDCC_L1IAR_L3C = 7
+};
+
+enum LSC_STCC {
+    LSC_STCC_DEFAULT = 0,
+    LSC_STCC_L1UC_L3UC = 1,
+    LSC_STCC_L1UC_L3WB = 2,
+    LSC_STCC_L1WT_L3UC = 3,
+    LSC_STCC_L1WT_L3WB = 4,
+    LSC_STCC_L1S_L3UC = 5,
+    LSC_STCC_L1S_L3WB = 6,
+    LSC_STCC_L1WB_L3WB = 7
+};
+
+uint4 __builtin_IB_lsc_load_global_uint4(const __global uint4 *base, int immElemOff, enum LSC_LDCC cacheOpt);
+void __builtin_IB_lsc_store_global_uint4(__global uint4 *base, int immElemOff, uint4 val, enum LSC_STCC cacheOpt);
+#endif
 
 __kernel void fullCopy(__global const uint* src, __global uint* dst) {
     unsigned int gid = get_global_id(0);
-    uint4 loaded = vload4(gid, src);
 #ifdef USE_LSC_INTRINSICS_WB
+    const __global uint4* pSrc4 = (const __global uint4*)(src + gid * 4);
     __global uint4* pDst4 = (__global uint4*)(dst + gid * 4);
+    uint4 loaded = __builtin_IB_lsc_load_global_uint4(pSrc4, 0, LSC_LDCC_L1C_L3C);
     __builtin_IB_lsc_store_global_uint4(pDst4, 0, loaded, LSC_STCC_L1WB_L3WB);
 #else
+    uint4 loaded = vload4(gid, src);
     vstore4(loaded, gid, dst);
 #endif
 }
 
 
-#include "lsc_intrinsics.h"
+#ifdef USE_LSC_INTRINSICS_WB
+enum LSC_LDCC {
+    LSC_LDCC_DEFAULT = 0,
+    LSC_LDCC_L1UC_L3UC = 1,
+    LSC_LDCC_L1UC_L3C = 2,
+    LSC_LDCC_L1C_L3UC = 3,
+    LSC_LDCC_L1C_L3C = 4,
+    LSC_LDCC_L1S_L3UC = 5,
+    LSC_LDCC_L1S_L3C = 6,
+    LSC_LDCC_L1IAR_L3C = 7
+};
+
+enum LSC_STCC {
+    LSC_STCC_DEFAULT = 0,
+    LSC_STCC_L1UC_L3UC = 1,
+    LSC_STCC_L1UC_L3WB = 2,
+    LSC_STCC_L1WT_L3UC = 3,
+    LSC_STCC_L1WT_L3WB = 4,
+    LSC_STCC_L1S_L3UC = 5,
+    LSC_STCC_L1S_L3WB = 6,
+    LSC_STCC_L1WB_L3WB = 7
+};
+
+uint4 __builtin_IB_lsc_load_global_uint4(const __global uint4 *base, int immElemOff, enum LSC_LDCC cacheOpt);
+void __builtin_IB_lsc_store_global_uint4(__global uint4 *base, int immElemOff, uint4 val, enum LSC_STCC cacheOpt);
+#endif
 
 #define ALIGNED4(ptr) __builtin_assume(((size_t)ptr&0b11) == 0)
 
@@ -60,12 +112,14 @@ __kernel void CopyBufferToBufferMiddle(
     idx_t gid = get_global_id(0);
     pDst += dstOffsetInBytes >> 2;
     pSrc += srcOffsetInBytes >> 2;
-
-    uint4 loaded = vload4(gid, pSrc);
+    
 #ifdef USE_LSC_INTRINSICS_WB
+    const __global uint4* pSrc4 = (const __global uint4*)(pSrc + gid * 4);
     __global uint4* pDst4 = (__global uint4*)(pDst + gid * 4);
+    uint4 loaded = __builtin_IB_lsc_load_global_uint4(pSrc4, 0, LSC_LDCC_L1C_L3C);
     __builtin_IB_lsc_store_global_uint4(pDst4, 0, loaded, LSC_STCC_L1WB_L3WB);
 #else
+    uint4 loaded = vload4(gid, pSrc);
     vstore4(loaded, gid, pDst);
 #endif
 }
@@ -82,9 +136,16 @@ __kernel void CopyBufferToBufferMiddleMisaligned(
     idx_t gid = get_global_id(0);
     pDst += dstOffsetInBytes >> 2;
     pSrc += srcOffsetInBytes >> 2;
-
+    
+#ifdef USE_LSC_INTRINSICS_WB
+    const __global uint4* pSrc4_0 = (const __global uint4*)(pSrc + gid * 4);
+    const __global uint4* pSrc4_1 = (const __global uint4*)(pSrc + (gid + 1) * 4);
+    const uint4 src0 = __builtin_IB_lsc_load_global_uint4(pSrc4_0, 0, LSC_LDCC_L1C_L3C);
+    const uint4 src1 = __builtin_IB_lsc_load_global_uint4(pSrc4_1, 0, LSC_LDCC_L1C_L3C);
+#else
     const uint4 src0 = vload4(gid, pSrc);
     const uint4 src1 = vload4((gid + 1), pSrc);
+#endif
 
     uint4 result;
     result.x = (src0.x >> misalignmentInBits) | (src0.y << (32 - misalignmentInBits));
@@ -151,17 +212,34 @@ __kernel void CopyBufferToBufferMiddleRegion(
     __global uint* pDstWithOffset = (__global uint*)((__global uchar*)pDst + dstSshOffset);
     __global uint* pSrcWithOffset = (__global uint*)((__global uchar*)pSrc + srcSshOffset);
     if (gid < elems) {
-        uint4 loaded = vload4(gid, pSrcWithOffset);
 #ifdef USE_LSC_INTRINSICS_WB
+        const __global uint4* pSrc4 = (const __global uint4*)(pSrcWithOffset + gid * 4);
         __global uint4* pDst4 = (__global uint4*)(pDstWithOffset + gid * 4);
+        uint4 loaded = __builtin_IB_lsc_load_global_uint4(pSrc4, 0, LSC_LDCC_L1C_L3C);
         __builtin_IB_lsc_store_global_uint4(pDst4, 0, loaded, LSC_STCC_L1WB_L3WB);
 #else
+        uint4 loaded = vload4(gid, pSrcWithOffset);
         vstore4(loaded, gid, pDstWithOffset);
 #endif
     }
 }
 
 
+
+#ifdef USE_LSC_INTRINSICS_WB
+enum LSC_STCC {
+    LSC_STCC_DEFAULT = 0,
+    LSC_STCC_L1UC_L3UC = 1,
+    LSC_STCC_L1UC_L3WB = 2,
+    LSC_STCC_L1WT_L3UC = 3,
+    LSC_STCC_L1WT_L3WB = 4,
+    LSC_STCC_L1S_L3UC = 5,
+    LSC_STCC_L1S_L3WB = 6,
+    LSC_STCC_L1WB_L3WB = 7
+};
+
+void __builtin_IB_lsc_store_global_uint4(__global uint4 *base, int immElemOff, uint4 val, enum LSC_STCC cacheOpt);
+#endif
 
 #define ALIGNED4(ptr) __builtin_assume(((size_t)ptr&0b11) == 0)
 
@@ -224,8 +302,13 @@ __kernel void FillBufferImmediate(
 {
     ALIGNED4(ptr);
     idx_t gid = get_global_id(0);
+#ifdef USE_LSC_INTRINSICS_WB
+    __global uint4* dstPtr = (__global uint4*)(ptr + dstSshOffset + gid * 16);
+    __builtin_IB_lsc_store_global_uint4(dstPtr, 0, (uint4)(value), LSC_STCC_L1WB_L3WB);
+#else
     __global uint4* dstPtr = (__global uint4*)(ptr + dstSshOffset);
     dstPtr[gid] = value;
+#endif
 }
 
 __kernel void FillBufferImmediateLeftOver(
@@ -255,7 +338,32 @@ __kernel void FillBufferSSHOffset(
 }
 
 
-#include "lsc_intrinsics.h"
+#ifdef USE_LSC_INTRINSICS_WB
+enum LSC_LDCC {
+    LSC_LDCC_DEFAULT = 0,
+    LSC_LDCC_L1UC_L3UC = 1,
+    LSC_LDCC_L1UC_L3C = 2,
+    LSC_LDCC_L1C_L3UC = 3,
+    LSC_LDCC_L1C_L3C = 4,
+    LSC_LDCC_L1S_L3UC = 5,
+    LSC_LDCC_L1S_L3C = 6,
+    LSC_LDCC_L1IAR_L3C = 7
+};
+
+enum LSC_STCC {
+    LSC_STCC_DEFAULT = 0,
+    LSC_STCC_L1UC_L3UC = 1,
+    LSC_STCC_L1UC_L3WB = 2,
+    LSC_STCC_L1WT_L3UC = 3,
+    LSC_STCC_L1WT_L3WB = 4,
+    LSC_STCC_L1S_L3UC = 5,
+    LSC_STCC_L1S_L3WB = 6,
+    LSC_STCC_L1WB_L3WB = 7
+};
+
+uint4 __builtin_IB_lsc_load_global_uint4(const __global uint4 *base, int immElemOff, enum LSC_LDCC cacheOpt);
+void __builtin_IB_lsc_store_global_uint4(__global uint4 *base, int immElemOff, uint4 val, enum LSC_STCC cacheOpt);
+#endif
 
 __kernel void CopyBufferRectBytes2d(
     __global const char* src,
@@ -291,11 +399,13 @@ __kernel void CopyBufferRectBytesMiddle2d(
     src += LSrcOffset >> 2;
     dst += LDstOffset >> 2;
 
-    uint4 loaded = vload4(x, src);
 #ifdef USE_LSC_INTRINSICS_WB
+    const __global uint4* pSrc4 = (const __global uint4*)(src + x * 4);
     __global uint4* pDst4 = (__global uint4*)(dst + x * 4);
+    uint4 loaded = __builtin_IB_lsc_load_global_uint4(pSrc4, 0, LSC_LDCC_L1C_L3C);
     __builtin_IB_lsc_store_global_uint4(pDst4, 0, loaded, LSC_STCC_L1WB_L3WB);
 #else
+    uint4 loaded = vload4(x, src);
     vstore4(loaded, x, dst);
 #endif
 }
@@ -336,11 +446,13 @@ __kernel void CopyBufferRectBytesMiddle3d(
     src += LSrcOffset >> 2;
     dst += LDstOffset >> 2;
 
-    uint4 loaded = vload4(x, src);
 #ifdef USE_LSC_INTRINSICS_WB
+    const __global uint4* pSrc4 = (const __global uint4*)(src + x * 4);
     __global uint4* pDst4 = (__global uint4*)(dst + x * 4);
+    uint4 loaded = __builtin_IB_lsc_load_global_uint4(pSrc4, 0, LSC_LDCC_L1C_L3C);
     __builtin_IB_lsc_store_global_uint4(pDst4, 0, loaded, LSC_STCC_L1WB_L3WB);
 #else
+    uint4 loaded = vload4(x, src);
     vstore4(loaded, x, dst);
 #endif
 }
