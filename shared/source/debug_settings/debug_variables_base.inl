@@ -360,6 +360,7 @@ DECLARE_DEBUG_VARIABLE(bool, DumpZEBin, false, "Enables dumping zebin (elf) to a
 DECLARE_DEBUG_VARIABLE(bool, DumpKernels, false, "Enables dumping kernels' program source code to text files and program from binary to bin file")
 DECLARE_DEBUG_VARIABLE(bool, DumpKernelArgs, false, "Enables dumping kernels args to binary files")
 DECLARE_DEBUG_VARIABLE(bool, LogApiCalls, false, "Enables logging api function calls, inputs and outputs to file")
+DECLARE_DEBUG_VARIABLE(std::string, OverrideIgdrclLogFileName, std::string("unk"), "Overrides igdrcl logger output file name; ignored when unk")
 DECLARE_DEBUG_VARIABLE(bool, LogPatchTokens, false, "Enables logging patch tokens, inputs and outputs to file")
 DECLARE_DEBUG_VARIABLE(bool, LogZEInfo, false, "Enables logging ZE Info to file")
 DECLARE_DEBUG_VARIABLE(bool, LogTaskCounts, false, "Enables logging taskCounts and taskLevels to file")

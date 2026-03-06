@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -464,6 +464,27 @@ TEST(FileLogger, GivenFileLoggerInstanceWhenCalledMultipleTimesThenReturnsSameSi
     std::string name2 = logger2.getLogFileName();
 
     EXPECT_STREQ(name1.c_str(), name2.c_str());
+}
+
+TEST(FileLogger, givenNoFileNameOverrideWhenQueryingFileLoggerFileNameThenPidBasedNameIsReturned) {
+    DebugVariables flags;
+
+    auto logFileName = NEO::getFileLoggerFileName(flags);
+
+    auto actualPid = SysCalls::getProcessId();
+    std::stringstream expectedFileName;
+    expectedFileName << "igdrcl_" << actualPid << ".log";
+
+    EXPECT_STREQ(expectedFileName.str().c_str(), logFileName.c_str());
+}
+
+TEST(FileLogger, givenFileNameOverrideWhenQueryingFileLoggerFileNameThenOverriddenNameIsReturned) {
+    DebugVariables flags;
+    flags.OverrideIgdrclLogFileName.set("forced_igdrcl.log");
+
+    auto logFileName = NEO::getFileLoggerFileName(flags);
+
+    EXPECT_STREQ("forced_igdrcl.log", logFileName.c_str());
 }
 
 TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThenCorrectStringIsReturned) {

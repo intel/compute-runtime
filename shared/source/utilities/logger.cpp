@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,17 @@
 
 namespace NEO {
 
+std::string getFileLoggerFileName(const DebugVariables &flags) {
+    const auto &forcedLogFileName = flags.OverrideIgdrclLogFileName.get();
+    if (forcedLogFileName != "unk") {
+        return forcedLogFileName;
+    }
+
+    return "igdrcl_" + std::to_string(SysCalls::getProcessId()) + ".log";
+}
+
 FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
-    static FileLogger<globalDebugFunctionalityLevel> fileLoggerInstance("igdrcl_" + std::to_string(SysCalls::getProcessId()) + ".log", debugManager.flags);
+    static FileLogger<globalDebugFunctionalityLevel> fileLoggerInstance(getFileLoggerFileName(debugManager.flags), debugManager.flags);
     return fileLoggerInstance;
 }
 

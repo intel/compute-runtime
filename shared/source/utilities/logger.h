@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ class MemoryManager;
 static const int32_t maxErrorDescriptionSize = 1024;
 const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation);
 const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation);
+std::string getFileLoggerFileName(const DebugVariables &flags);
 
 template <DebugFunctionalityLevel debugLevel>
 class FileLogger : NEO::NonCopyableAndNonMovableClass {
