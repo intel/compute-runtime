@@ -1382,30 +1382,37 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnCommandListGetGraphExp = decltype(&zeCommandListGetGraphExp);
     using pfnGraphSetDestructionCallbackExp = decltype(&zeGraphSetDestructionCallbackExp);
 
-    decltype(&::zexCommandListAppendWaitOnMemory) expectedCommandListAppendWaitOnMemory = L0::zexCommandListAppendWaitOnMemory;
-    decltype(&::zexCommandListAppendWriteToMemory) expectedCommandListAppendWriteToMemory = L0::zexCommandListAppendWriteToMemory;
-
+    // driver
     decltype(&zexDriverImportExternalPointer) expectedImport = L0::zexDriverImportExternalPointer;
     decltype(&zexDriverReleaseImportedPointer) expectedRelease = L0::zexDriverReleaseImportedPointer;
     decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = L0::zexDriverGetHostPointerBaseAddress;
+    decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = L0::zeIntelGetDriverVersionString;
 
+    // module and kernel
     decltype(&::zexKernelGetBaseAddress) expectedKernelGetBaseAddress = L0::zexKernelGetBaseAddress;
     decltype(&::zexKernelGetArgumentSize) expectedKernelGetArgumentSize = L0::zexKernelGetArgumentSize;
     decltype(&::zexKernelGetArgumentType) expectedKernelGetArgumentType = L0::zexKernelGetArgumentType;
     decltype(&::zeIntelKernelGetBinaryExp) expectedIntelKernelGetBinaryExp = L0::zeIntelKernelGetBinaryExp;
-    decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = L0::zeIntelGetDriverVersionString;
+
+    // context
     decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = L0::zeIntelMediaCommunicationCreate;
     decltype(&zeIntelMediaCommunicationDestroy) expectedIntelMediaCommunicationDestroy = L0::zeIntelMediaCommunicationDestroy;
-    decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = zexIntelAllocateNetworkInterrupt;
-    decltype(&zexIntelReleaseNetworkInterrupt) expectedIntelReleaseNetworkInterrupt = zexIntelReleaseNetworkInterrupt;
     decltype(&zexMemFreeRegisterCallbackExt) expectedIntelMemFreeRegisterCallbackExt = L0::zexMemFreeRegisterCallbackExt;
 
-    decltype(&zexCounterBasedEventCreate2) expectedCounterBasedEventCreate2 = zexCounterBasedEventCreate2;
-    decltype(&zexCounterBasedEventGetIpcHandle) expectedCounterBasedEventGetIpcHandle = zexCounterBasedEventGetIpcHandle;
-    decltype(&zexCounterBasedEventOpenIpcHandle) expectedCounterBasedEventOpenIpcHandle = zexCounterBasedEventOpenIpcHandle;
-    decltype(&zexCounterBasedEventCloseIpcHandle) expectedCounterBasedEventCloseIpcHandle = zexCounterBasedEventCloseIpcHandle;
-    decltype(&zexDeviceGetAggregatedCopyOffloadIncrementValue) expectedZexDeviceGetAggregatedCopyOffloadIncrementValueHandle = zexDeviceGetAggregatedCopyOffloadIncrementValue;
+    // events
+    decltype(&zexEventGetDeviceAddress) expectedEventGetDeviceAddress = L0::zexEventGetDeviceAddress;
+    decltype(&zexCounterBasedEventCreate) expectedCounterBasedEventCreate = L0::zexCounterBasedEventCreate;
+    decltype(&zexCounterBasedEventCreate2) expectedCounterBasedEventCreate2 = L0::zexCounterBasedEventCreate2;
+    decltype(&zexCounterBasedEventGetIpcHandle) expectedCounterBasedEventGetIpcHandle = L0::zexCounterBasedEventGetIpcHandle;
+    decltype(&zexCounterBasedEventOpenIpcHandle) expectedCounterBasedEventOpenIpcHandle = L0::zexCounterBasedEventOpenIpcHandle;
+    decltype(&zexCounterBasedEventCloseIpcHandle) expectedCounterBasedEventCloseIpcHandle = L0::zexCounterBasedEventCloseIpcHandle;
+    decltype(&zexDeviceGetAggregatedCopyOffloadIncrementValue) expectedZexDeviceGetAggregatedCopyOffloadIncrementValueHandle = L0::zexDeviceGetAggregatedCopyOffloadIncrementValue;
+    decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = L0::zexIntelAllocateNetworkInterrupt;
+    decltype(&zexIntelReleaseNetworkInterrupt) expectedIntelReleaseNetworkInterrupt = L0::zexIntelReleaseNetworkInterrupt;
 
+    // command list extensions
+    decltype(&::zexCommandListAppendWaitOnMemory) expectedCommandListAppendWaitOnMemory = L0::zexCommandListAppendWaitOnMemory;
+    decltype(&::zexCommandListAppendWriteToMemory) expectedCommandListAppendWriteToMemory = L0::zexCommandListAppendWriteToMemory;
     decltype(&zeCommandListAppendHostFunction) expectedCommandListAppendHostFunction = L0::zeCommandListAppendHostFunction;
 
     pfnCommandListAppendMemoryCopyWithParameters expectedCommandListAppendMemoryCopyWithParameters = L0::zexCommandListAppendMemoryCopyWithParameters;
@@ -1499,6 +1506,12 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexIntelReleaseNetworkInterrupt", &funPtr));
     EXPECT_EQ(expectedIntelReleaseNetworkInterrupt, reinterpret_cast<decltype(&zexIntelReleaseNetworkInterrupt)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexEventGetDeviceAddress", &funPtr));
+    EXPECT_EQ(expectedEventGetDeviceAddress, reinterpret_cast<decltype(&zexEventGetDeviceAddress)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCounterBasedEventCreate", &funPtr));
+    EXPECT_EQ(expectedCounterBasedEventCreate, reinterpret_cast<decltype(&zexCounterBasedEventCreate)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCounterBasedEventCreate2", &funPtr));
     EXPECT_EQ(expectedCounterBasedEventCreate2, reinterpret_cast<decltype(&zexCounterBasedEventCreate2)>(funPtr));

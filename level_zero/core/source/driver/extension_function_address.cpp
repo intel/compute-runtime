@@ -57,14 +57,15 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory64);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWriteToMemory);
 
-    RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate);
-    RETURN_FUNC_PTR_IF_EXIST(zexEventGetDeviceAddress);
-
-    RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate2);
-    RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventGetIpcHandle);
-    RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventOpenIpcHandle);
-    RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventCloseIpcHandle);
-    RETURN_FUNC_PTR_IF_EXIST(zexDeviceGetAggregatedCopyOffloadIncrementValue);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexEventGetDeviceAddress);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexIntelAllocateNetworkInterrupt);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexIntelReleaseNetworkInterrupt);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate2);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventGetIpcHandle);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventOpenIpcHandle);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventCloseIpcHandle);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zexDeviceGetAggregatedCopyOffloadIncrementValue);
 
     RETURN_FUNC_PTR_IF_EXIST(zeMemGetPitchFor2dImage);
     RETURN_FUNC_PTR_IF_EXIST(zeImageGetDeviceOffsetExp);
@@ -72,9 +73,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelMediaCommunicationCreate);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelMediaCommunicationDestroy);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexMemFreeRegisterCallbackExt);
-
-    RETURN_FUNC_PTR_IF_EXIST(zexIntelAllocateNetworkInterrupt);
-    RETURN_FUNC_PTR_IF_EXIST(zexIntelReleaseNetworkInterrupt);
 
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceEnableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceDisableMetricsExp);

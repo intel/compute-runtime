@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_context.h"
 
+#include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -295,13 +296,13 @@ size_t BcsSplitEvents::createAggregatedEvent(Context *context) {
         externalStorageAllocProperties.deviceAddress = getNextAllocationForAggregatedEvent();
 
         ze_event_handle_t handle = nullptr;
-        zexCounterBasedEventCreate2(context, bcsSplit.getDevice().toHandle(), &counterBasedDesc, &handle);
+        L0::zexCounterBasedEventCreate2(context, bcsSplit.getDevice().toHandle(), &counterBasedDesc, &handle);
         UNRECOVERABLE_IF(handle == nullptr);
 
         this->eventResources.subcopy.push_back(Event::fromHandle(handle));
 
         ze_event_handle_t markerHandle = nullptr;
-        zexCounterBasedEventCreate2(context, bcsSplit.getDevice().toHandle(), &markerCounterBasedDesc, &markerHandle);
+        L0::zexCounterBasedEventCreate2(context, bcsSplit.getDevice().toHandle(), &markerCounterBasedDesc, &markerHandle);
         UNRECOVERABLE_IF(markerHandle == nullptr);
 
         auto currentIndex = this->eventResources.subcopy.size() - 1;

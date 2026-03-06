@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
@@ -122,7 +123,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
         counterBasedDesc.pNext = &externalStorageAllocProperties;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &outEvent));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &outEvent));
 
         auto eventObj = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(outEvent));
 
@@ -510,7 +511,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
         counterBasedDesc.pNext = &externalStorageAllocProperties;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &outEvent));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &outEvent));
 
         auto eventObj = static_cast<MockEvent *>(Event::fromHandle(outEvent));
 

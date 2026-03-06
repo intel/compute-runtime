@@ -10,6 +10,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
+#include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
@@ -179,7 +180,7 @@ Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalS
             counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
         }
         ze_event_handle_t eventHandle = nullptr;
-        ze_result_t ret = zexCounterBasedEventCreate2(this->context, this->device, &counterBasedDesc, &eventHandle);
+        ze_result_t ret = L0::zexCounterBasedEventCreate2(this->context, this->device, &counterBasedDesc, &eventHandle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
         if (eventHandle) {
             this->eventHandles.push_back(eventHandle);

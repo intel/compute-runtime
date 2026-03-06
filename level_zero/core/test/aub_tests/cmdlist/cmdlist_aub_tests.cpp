@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/bcs_split.h"
@@ -352,7 +353,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
             .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE,
         };
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context.get(), rootDevice, &counterBasedDesc, &outEvent));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context.get(), rootDevice, &counterBasedDesc, &outEvent));
 
         return DestroyableZeUniquePtr<Event>(Event::fromHandle(outEvent));
     }
@@ -384,7 +385,7 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSigna
     memset(dstBuffer2, 0, bufferSize);
 
     uint32_t incValue = 0;
-    zexDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
+    L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
     auto event = createAggregatedEvent(incValue, incValue * 2);
     auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecEventHelper().getBaseDeviceAddress());
     *event->getInOrderExecEventHelper().getBaseHostAddress() = 0;
@@ -524,7 +525,7 @@ HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEve
     memset(dstBuffer2, 0, bufferSize);
 
     uint32_t incValue = 0;
-    zexDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
+    L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
     auto event = createAggregatedEvent(incValue, incValue * 2);
     auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecEventHelper().getBaseDeviceAddress());
     *event->getInOrderExecEventHelper().getBaseHostAddress() = 0;

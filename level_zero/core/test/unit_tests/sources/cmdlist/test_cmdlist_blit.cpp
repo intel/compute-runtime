@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -745,7 +746,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenUninitializedBcsSplitCallingZexDeviceGet
     EXPECT_NE(0u, deviceIncValue);
     EXPECT_FALSE(bcsSplit->cmdLists.empty());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
 
     EXPECT_NE(0u, incValue);
     EXPECT_EQ(deviceIncValue, incValue);
@@ -757,7 +758,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenUninitializedBcsSplitCallingZexDeviceGet
 
     auto cachedIncValue = incValue;
     incValue = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
     EXPECT_EQ(cachedIncValue, incValue);
     EXPECT_EQ(cachedIncValue, device->getAggregatedCopyOffloadIncrementValue());
 }
@@ -766,7 +767,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenBcsSplitDisabledWhenCallingZexDeviceGetA
     uint32_t incValue = 0;
 
     debugManager.flags.SplitBcsCopy.set(0);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
     EXPECT_EQ(incValue, 1u); // single tile
 }
 
@@ -1249,7 +1250,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOffloadEnab
     auto devAddress = castToUint64(allocDeviceMem(device));
 
     uint32_t incValue = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
     EXPECT_NE(0u, incValue);
 
     auto expectedIncValue = mockCmdList->isDualStreamCopyOffloadOperation(true) ? incValue : incValue / mockCmdList->partitionCount;
@@ -1296,7 +1297,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenIncorrectNumberOfTilesWhenCreat
 HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMultiTileDeviceWhenCallingZexDeviceGetAggregatedCopyOffloadIncrementValueThenReturnCorrectValue, IsAtLeastXeHpcCore) {
     uint32_t incValue = 0;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
 
     EXPECT_NE(0u, incValue);
 
@@ -1312,7 +1313,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenBcsSplitDisabledWhenCallingZexD
 
     debugManager.flags.SplitBcsCopy.set(0);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
     EXPECT_EQ(incValue, expectedTileCount);
 }
 

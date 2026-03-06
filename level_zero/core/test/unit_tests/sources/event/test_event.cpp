@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_timestamp_packet.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -4196,7 +4197,7 @@ HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandle
     ze_event_desc_t eventDesc = {};
     ze_event_handle_t handle = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue, &eventDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue, &eventDesc, &handle));
 
     auto eventObj = Event::fromHandle(handle);
 
@@ -4210,13 +4211,13 @@ HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandle
 
 HWTEST_F(EventTests, givenOsAgnosticContextWhenAllocatingInterruptThenReturnError) {
     uint32_t interruptId = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexIntelAllocateNetworkInterrupt(nullptr, interruptId));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexIntelAllocateNetworkInterrupt(nullptr, interruptId));
 
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zexIntelAllocateNetworkInterrupt(context, interruptId));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, L0::zexIntelAllocateNetworkInterrupt(context, interruptId));
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexIntelReleaseNetworkInterrupt(nullptr, interruptId));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexIntelReleaseNetworkInterrupt(nullptr, interruptId));
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexIntelReleaseNetworkInterrupt(context, interruptId));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexIntelReleaseNetworkInterrupt(context, interruptId));
 }
 
 HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {
@@ -5465,7 +5466,7 @@ HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyIsCalledWhenCpuCopyIsUsedAndC
 TEST_F(EventTests, givenDefaultDescriptorWhenCreatingCbEvent2ThenEventWithNoProfilingAndSignalScopeHostAndDeviceScopeWaitIsCreated) {
     ze_event_handle_t handle = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &defaultIntelCounterBasedEventDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &defaultIntelCounterBasedEventDesc, &handle));
 
     auto eventObj = Event::fromHandle(handle);
     EXPECT_TRUE(eventObj->isCounterBasedExplicitlyEnabled());
@@ -5480,7 +5481,7 @@ TEST_F(EventTests, givenDefaultDescriptorWhenCreatingCbEvent2ThenEventWithNoProf
 TEST_F(EventTests, givenNullDescriptorWhenCreatingCbEvent2ThenEventWithNoProfilingAndSignalScopeHostAndDeviceScopeWaitIsCreated) {
     ze_event_handle_t handle = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, nullptr, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, nullptr, &handle));
 
     auto eventObj = Event::fromHandle(handle);
     EXPECT_TRUE(eventObj->isCounterBasedExplicitlyEnabled());
@@ -5497,7 +5498,7 @@ TEST_F(EventTests, givenDescriptorWithExternalFlagWhenCreatingCbEvent2ThenEventW
     zex_counter_based_event_desc_t desc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     desc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &desc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &desc, &handle));
 
     auto eventObj = Event::fromHandle(handle);
     EXPECT_TRUE(eventObj->isCounterBasedExplicitlyEnabled());
