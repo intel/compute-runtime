@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ extern "C" {
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
 ///         + `ptr` not known
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexMemGetIpcHandles(
     ze_context_handle_t hContext,    ///< [in] handle of the context object
     const void *ptr,                 ///< [in] pointer to the device memory allocation
@@ -79,7 +79,7 @@ zexMemGetIpcHandles(
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
 ///         + handles not known
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexMemOpenIpcHandles(
     ze_context_handle_t hContext,     ///< [in] handle of the context object
     ze_device_handle_t hDevice,       ///< [in] handle of the device to associate with the IPC memory handle
@@ -112,7 +112,7 @@ zexMemOpenIpcHandles(
 ///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
 ///     - ::ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE
 ///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zeIntelMemMapDeviceMemToHost(
     ze_context_handle_t hContext, ///< [in] handle of the context
     const void *ptr,              ///< [in] pointer to the device memory to be mapped

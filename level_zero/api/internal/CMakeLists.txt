@@ -13,6 +13,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_event.h
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_graph.h
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_internal.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/l0_memory.h
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_module.h
 )
 

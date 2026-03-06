@@ -6395,10 +6395,6 @@ TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZeIntelGetDriverVersionStri
     EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeIntelGetDriverVersionString"));
 }
 
-TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZeIntelMemMapDeviceMemToHostThenReturnCorrectValue) {
-    EXPECT_EQ(&zeIntelMemMapDeviceMemToHost, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeIntelMemMapDeviceMemToHost"));
-}
-
 template <bool blockLoad, bool blockStore>
 class Mock2DTransposeProductHelper : public MockProductHelperHw<IGFX_UNKNOWN> {
   public:

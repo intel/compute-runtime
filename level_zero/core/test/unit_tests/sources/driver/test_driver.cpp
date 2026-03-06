@@ -1338,11 +1338,7 @@ struct HostImportApiFixture : public HostPointerManagerFixure {
 using DriverExperimentalApiTest = Test<HostImportApiFixture>;
 
 TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPointer) {
-    using pfnCommandListAppendMemoryCopyWithParameters = decltype(&zexCommandListAppendMemoryCopyWithParameters);
-    using pfnCommandListAppendMemoryFillWithParameters = decltype(&zexCommandListAppendMemoryFillWithParameters);
-    using pfnCommandListSetCleanupCallback = decltype(&zexCommandListSetCleanupCallback);
-
-    // experimental MCL API
+    // experimental MCL API function types
     using pfnCommandListGetVariable = decltype(&zexCommandListGetVariable);
     using pfnKernelSetArgumentVariable = decltype(&zexKernelSetArgumentVariable);
     using pfnVariableSetValue = decltype(&zexVariableSetValue);
@@ -1382,24 +1378,34 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnCommandListGetGraphExp = decltype(&zeCommandListGetGraphExp);
     using pfnGraphSetDestructionCallbackExp = decltype(&zeGraphSetDestructionCallbackExp);
 
-    // driver
+    // memory function types
+    using pfnMemGetIpcHandles = decltype(&zexMemGetIpcHandles);
+    using pfnMemOpenIpcHandles = decltype(&zexMemOpenIpcHandles);
+    using pfnIntelMemMapDeviceMemToHost = decltype(&zeIntelMemMapDeviceMemToHost);
+
+    // command list function types
+    using pfnCommandListAppendMemoryCopyWithParameters = decltype(&zexCommandListAppendMemoryCopyWithParameters);
+    using pfnCommandListAppendMemoryFillWithParameters = decltype(&zexCommandListAppendMemoryFillWithParameters);
+    using pfnCommandListSetCleanupCallback = decltype(&zexCommandListSetCleanupCallback);
+
+    // driver function addresses
     decltype(&zexDriverImportExternalPointer) expectedImport = L0::zexDriverImportExternalPointer;
     decltype(&zexDriverReleaseImportedPointer) expectedRelease = L0::zexDriverReleaseImportedPointer;
     decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = L0::zexDriverGetHostPointerBaseAddress;
     decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = L0::zeIntelGetDriverVersionString;
 
-    // module and kernel
+    // module and kernel function addresses
     decltype(&::zexKernelGetBaseAddress) expectedKernelGetBaseAddress = L0::zexKernelGetBaseAddress;
     decltype(&::zexKernelGetArgumentSize) expectedKernelGetArgumentSize = L0::zexKernelGetArgumentSize;
     decltype(&::zexKernelGetArgumentType) expectedKernelGetArgumentType = L0::zexKernelGetArgumentType;
     decltype(&::zeIntelKernelGetBinaryExp) expectedIntelKernelGetBinaryExp = L0::zeIntelKernelGetBinaryExp;
 
-    // context
+    // context function addresses
     decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = L0::zeIntelMediaCommunicationCreate;
     decltype(&zeIntelMediaCommunicationDestroy) expectedIntelMediaCommunicationDestroy = L0::zeIntelMediaCommunicationDestroy;
     decltype(&zexMemFreeRegisterCallbackExt) expectedIntelMemFreeRegisterCallbackExt = L0::zexMemFreeRegisterCallbackExt;
 
-    // events
+    // events function addresses
     decltype(&zexEventGetDeviceAddress) expectedEventGetDeviceAddress = L0::zexEventGetDeviceAddress;
     decltype(&zexCounterBasedEventCreate) expectedCounterBasedEventCreate = L0::zexCounterBasedEventCreate;
     decltype(&zexCounterBasedEventCreate2) expectedCounterBasedEventCreate2 = L0::zexCounterBasedEventCreate2;
@@ -1410,17 +1416,21 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = L0::zexIntelAllocateNetworkInterrupt;
     decltype(&zexIntelReleaseNetworkInterrupt) expectedIntelReleaseNetworkInterrupt = L0::zexIntelReleaseNetworkInterrupt;
 
-    // command list extensions
+    // memory function addresses
+    pfnMemGetIpcHandles expectedMemGetIpcHandles = L0::zexMemGetIpcHandles;
+    pfnMemOpenIpcHandles expectedMemOpenIpcHandles = L0::zexMemOpenIpcHandles;
+    pfnIntelMemMapDeviceMemToHost expectedIntelMemMapDeviceMemToHost = L0::zeIntelMemMapDeviceMemToHost;
+
+    // command list function addresses
     decltype(&::zexCommandListAppendWaitOnMemory) expectedCommandListAppendWaitOnMemory = L0::zexCommandListAppendWaitOnMemory;
     decltype(&::zexCommandListAppendWriteToMemory) expectedCommandListAppendWriteToMemory = L0::zexCommandListAppendWriteToMemory;
     decltype(&zeCommandListAppendHostFunction) expectedCommandListAppendHostFunction = L0::zeCommandListAppendHostFunction;
-
     pfnCommandListAppendMemoryCopyWithParameters expectedCommandListAppendMemoryCopyWithParameters = L0::zexCommandListAppendMemoryCopyWithParameters;
     pfnCommandListAppendMemoryFillWithParameters expectedCommandListAppendMemoryFillWithParameters = L0::zexCommandListAppendMemoryFillWithParameters;
     pfnCommandListSetCleanupCallback expectedCommandListSetCleanupCallback = L0::zexCommandListSetCleanupCallback;
     pfnCommandListVerifyMemory expectedCommandListVerifyMemory = L0::zexCommandListVerifyMemory;
 
-    // mutable command list driver experimental extension
+    // mutable command list driver experimental extension function addresses
     pfnCommandListGetVariable expectedCommandListGetVariable = zexCommandListGetVariable;
     pfnKernelSetArgumentVariable expectedKernelSetArgumentVariable = zexKernelSetArgumentVariable;
     pfnVariableSetValue expectedVariableSetValue = zexVariableSetValue;
@@ -1647,6 +1657,15 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphSetDestructionCallbackExp", &funPtr));
     EXPECT_EQ(expectedGraphSetDestructionCallbackExp, reinterpret_cast<pfnGraphSetDestructionCallbackExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexMemGetIpcHandles", &funPtr));
+    EXPECT_EQ(expectedMemGetIpcHandles, reinterpret_cast<pfnMemGetIpcHandles>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexMemOpenIpcHandles", &funPtr));
+    EXPECT_EQ(expectedMemOpenIpcHandles, reinterpret_cast<pfnMemOpenIpcHandles>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelMemMapDeviceMemToHost", &funPtr));
+    EXPECT_EQ(expectedIntelMemMapDeviceMemToHost, reinterpret_cast<pfnIntelMemMapDeviceMemToHost>(funPtr));
 }
 
 TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenExpectProperBehavior) {

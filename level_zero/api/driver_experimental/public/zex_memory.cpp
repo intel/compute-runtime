@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,35 +40,3 @@ zeIntelMemMapDeviceMemToHost(
 }
 
 } // namespace L0
-
-extern "C" {
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zexMemGetIpcHandles(
-    ze_context_handle_t hContext,
-    const void *ptr,
-    uint32_t *numIpcHandles,
-    ze_ipc_mem_handle_t *pIpcHandles) {
-    return L0::zexMemGetIpcHandles(hContext, ptr, numIpcHandles, pIpcHandles);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zexMemOpenIpcHandles(
-    ze_context_handle_t hContext,
-    ze_device_handle_t hDevice,
-    uint32_t numIpcHandles,
-    ze_ipc_mem_handle_t *pIpcHandles,
-    ze_ipc_memory_flags_t flags,
-    void **pptr) {
-    return L0::zexMemOpenIpcHandles(hContext, hDevice, numIpcHandles, pIpcHandles, flags, pptr);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeIntelMemMapDeviceMemToHost(
-    ze_context_handle_t hContext,
-    const void *ptr,
-    void **pptr,
-    void *pNext) {
-    return L0::zeIntelMemMapDeviceMemToHost(hContext, ptr, pptr, pNext);
-}
-} // extern "C"
