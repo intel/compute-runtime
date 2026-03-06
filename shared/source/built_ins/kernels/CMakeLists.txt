@@ -33,6 +33,10 @@ endmacro()
 
 add_subdirectories()
 
+set(BUILTIN_KERNEL_COMMON_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/lsc_intrinsics.h
+)
+
 function(get_builtin_options mode_type)
   if(${mode_type} IN_LIST STATELESS_ADDRESSING_MODES)
     set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATELESS}" PARENT_SCOPE)
@@ -111,7 +115,7 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
                      COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -spv_only -device ${platform_it_lower} -heapless_mode ${heapless_mode} ${builtin_options} -${bits} -output __${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                      COMMAND ${CMAKE_COMMAND} -E rename ${TEMP_OUTPUT_FILE_SPV} ${OUTPUT_FILE_SPV}
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                     DEPENDS ${builtin} ocloc copy_compiler_files
+                     DEPENDS ${builtin} ${BUILTIN_KERNEL_COMMON_HEADERS} ocloc copy_compiler_files
   )
 
   set(stateful_address_mode "default")
@@ -216,7 +220,7 @@ function(generate_cpp_spirv builtin mode)
                        COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${GENERATED_SPV_INPUT} --output ${TEMP_OUTPUT_FILE_CPP} --array ${BASENAME}
                        COMMAND ${CMAKE_COMMAND} -E rename ${TEMP_OUTPUT_FILE_CPP} ${OUTPUT_FILE_CPP}
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                       DEPENDS ${INPUT_FILENAME} ocloc copy_compiler_files ${OUTPUT_FILES_SPIRV_PREV} cpp_generate_tool
+                       DEPENDS ${INPUT_FILENAME} ${BUILTIN_KERNEL_COMMON_HEADERS} ocloc copy_compiler_files ${OUTPUT_FILES_SPIRV_PREV} cpp_generate_tool
     )
     if(NEO_SERIALIZED_BUILTINS_COMPILATION)
       set(OUTPUT_FILES_SPIRV_PREV ${OUTPUT_FILE_CPP})
