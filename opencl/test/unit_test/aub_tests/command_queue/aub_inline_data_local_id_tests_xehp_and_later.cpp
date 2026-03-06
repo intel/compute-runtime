@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -422,7 +422,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto localId = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
+    auto &kernelAttributes = kernel->getKernelInfo().kernelDescriptor.kernelAttributes;
+
+    auto localId = kernelAttributes.localId;
     uint32_t expectedEmitLocal = 0;
     if (localId[0]) {
         expectedEmitLocal |= (1 << 0);
@@ -435,13 +437,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
     }
 
     auto walker = genCmdCast<WalkerType *>(*hwParser.itorWalker);
-    if (kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder) {
+    if (kernelAttributes.flags.requiresWorkgroupWalkOrder && kernelAttributes.numLocalIdChannels > 1) {
         EXPECT_EQ(0u, walker->getGenerateLocalId());
     } else {
-
         EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
         EXPECT_EQ(1u, walker->getGenerateLocalId());
-        EXPECT_EQ(0u, walker->getWalkOrder());
+        if (kernelAttributes.flags.requiresWorkgroupWalkOrder) {
+            EXPECT_EQ(HwWalkOrderHelper::singleDimWalkIndex, walker->getWalkOrder());
+        } else {
+            EXPECT_EQ(0u, walker->getWalkOrder());
+        }
     }
 
     pCmdQ->flush();
@@ -490,7 +495,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto localId = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
+    auto &kernelAttributes = kernel->getKernelInfo().kernelDescriptor.kernelAttributes;
+
+    auto localId = kernelAttributes.localId;
     uint32_t expectedEmitLocal = 0;
     if (localId[0]) {
         expectedEmitLocal |= (1 << 0);
@@ -505,8 +512,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
     auto walker = genCmdCast<WalkerType *>(*hwParser.itorWalker);
     EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
     EXPECT_EQ(1u, walker->getGenerateLocalId());
-    for (size_t i = 0; i < 3; i++) {
-        EXPECT_EQ(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.workgroupWalkOrder[i], HwWalkOrderHelper::compatibleDimensionOrders[walker->getWalkOrder()][i]);
+    uint32_t expectedWalkOrder = kernelAttributes.numLocalIdChannels == 1 ? HwWalkOrderHelper::singleDimWalkIndex : 0;
+    EXPECT_EQ(expectedWalkOrder, walker->getWalkOrder());
+    if (kernelAttributes.numLocalIdChannels != 1) {
+        for (size_t i = 0; i < 3; i++) {
+            EXPECT_EQ(kernelAttributes.workgroupWalkOrder[i], HwWalkOrderHelper::compatibleDimensionOrders[walker->getWalkOrder()][i]);
+        }
     }
 
     pCmdQ->finish(false);
