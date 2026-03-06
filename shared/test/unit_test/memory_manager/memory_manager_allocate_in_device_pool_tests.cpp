@@ -8,6 +8,7 @@
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
@@ -19,6 +20,7 @@
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -267,6 +269,69 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenH
     osAgnosticMemoryManager.freeGraphicsMemory(moduleDebugArea);
 }
 
+TEST(MemoryManagerTest, given2MBLocalMemAlignmentEnabledWhenAllocatingSmallBufferInDevicePoolThenAllocationIs2MBAlignedAndFromStandard2MBHeap) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.resource48Bit = true;
+    allocData.type = AllocationType::buffer;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(MemoryConstants::pageSize2M, allocation->getUnderlyingBufferSize());
+
+    auto gmmHelper = memoryManager.getGmmHelper(allocation->getRootDeviceIndex());
+    auto gpuAddress = allocation->getGpuAddress();
+    EXPECT_LE(gmmHelper->canonize(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard2MB)), gpuAddress);
+    EXPECT_GT(gmmHelper->canonize(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard2MB)), gpuAddress);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(MemoryManagerTest, given2MBLocalMemAlignmentEnabledWhenAllocatingDebugAreaInFrontWindowThenAllocationIs2MBAlignedAndInFrontWindowHeap) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MemoryManagerCreate<OsAgnosticMemoryManager> osAgnosticMemoryManager(false, true, executionEnvironment);
+
+    NEO::AllocationProperties properties{0, true, MemoryConstants::pageSize64k,
+                                         NEO::AllocationType::debugModuleArea,
+                                         false,
+                                         mockDeviceBitfield};
+    properties.flags.use32BitFrontWindow = true;
+
+    auto moduleDebugArea = osAgnosticMemoryManager.allocateGraphicsMemoryWithProperties(properties);
+    ASSERT_NE(nullptr, moduleDebugArea);
+    EXPECT_EQ(MemoryConstants::pageSize2M, moduleDebugArea->getUnderlyingBufferSize());
+
+    auto gmmHelper = osAgnosticMemoryManager.getGmmHelper(moduleDebugArea->getRootDeviceIndex());
+    auto frontWindowBase = gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapInternalDeviceFrontWindow));
+    auto frontWindowLimit = gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapInternalDeviceFrontWindow));
+    auto baseHeap = gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapInternalDeviceMemory));
+
+    EXPECT_LE(frontWindowBase, moduleDebugArea->getGpuAddress());
+    EXPECT_GT(frontWindowLimit, moduleDebugArea->getGpuAddress());
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuBaseAddress());
+    EXPECT_EQ(baseHeap, moduleDebugArea->getGpuBaseAddress());
+
+    osAgnosticMemoryManager.freeGraphicsMemory(moduleDebugArea);
+}
+
 TEST(BaseMemoryManagerTest, givenDebugVariableSetWhenCompressedBufferIsCreatedThenCreateCompressedGmm) {
     DebugManagerStateRestore restore;
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
@@ -506,6 +571,56 @@ TEST(BaseMemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocationSucceedThenRe
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(reinterpret_cast<uint64_t>(allocData.hostPtr), allocation->getGpuAddress());
     EXPECT_NE(reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()), allocation->getGpuAddress());
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(BaseMemoryManagerTest, given2MBLocalMemAlignmentEnabledWhenAllocatingSvmGpuInDevicePoolThenSizeIsAlignedUpTo2MB) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+
+    if (!executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) {
+        return;
+    }
+
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManagerBaseImplementationOfDevicePool memoryManager(false, true, executionEnvironment);
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.type = AllocationType::svmGpu;
+    allocData.hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(MemoryConstants::pageSize2M, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(reinterpret_cast<uint64_t>(allocData.hostPtr), allocation->getGpuAddress());
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(BaseMemoryManagerTest, given2MBLocalMemAlignmentEnabledAndDifferentGpuVaWhenAllocatingSvmCpuThenAllocationUses2MBAlignment) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
+
+    AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::svmCpu, mockDeviceBitfield};
+    properties.makeGPUVaDifferentThanCPUPtr = true;
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryConstants::pageSize2M, allocation->getUnderlyingBufferSize());
+
+    auto gmmHelper = memoryManager.getGmmHelper(allocation->getRootDeviceIndex());
+    auto gpuAddress = gmmHelper->decanonize(allocation->getGpuAddress());
+    EXPECT_TRUE(isAligned(gpuAddress, MemoryConstants::pageSize2M));
 
     memoryManager.freeGraphicsMemory(allocation);
 }

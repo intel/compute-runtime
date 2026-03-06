@@ -80,7 +80,14 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
     if (allocationData.type == AllocationType::svmCpu) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
         auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        alignment = alignUpNonZero<size_t>(allocationData.alignment, productHelper.getSvmCpuAlignment());
+        auto force2MBAlignmentForSharedUsmCpuAllocation = allocationData.makeGPUVaDifferentThanCPUPtr &&
+                                                          (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get() ||
+                                                           productHelper.is2MBLocalMemAlignmentEnabled());
+        if (force2MBAlignmentForSharedUsmCpuAllocation) {
+            alignment = alignUpNonZero<size_t>(allocationData.alignment, MemoryConstants::pageSize2M);
+        } else {
+            alignment = alignUpNonZero<size_t>(allocationData.alignment, productHelper.getSvmCpuAlignment());
+        }
         sizeAligned = alignUp(allocationData.size, alignment);
     }
     auto cpuAllocationSize = sizeAligned;
@@ -697,6 +704,13 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
     status = AllocationStatus::RetryInNonDevicePool;
     auto numHandles = allocationData.storageInfo.getNumBanks();
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+    auto finalAlignment = MemoryConstants::pageSize64k;
+
+    if (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get() ||
+        productHelper.is2MBLocalMemAlignmentEnabled()) {
+        finalAlignment = MemoryConstants::pageSize2M;
+    }
 
     if (!this->localMemorySupported[allocationData.rootDeviceIndex]) {
         return nullptr;
@@ -707,20 +721,24 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
     }
     bool use32Allocator = heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type);
     if (allocationData.type == AllocationType::svmGpu) {
-        auto storage = allocateSystemMemory(allocationData.size, MemoryConstants::pageSize2M);
+        auto sizeAligned = allocationData.size;
+        if (finalAlignment == MemoryConstants::pageSize2M) {
+            sizeAligned = alignUp(allocationData.size, finalAlignment);
+        }
+
+        auto storage = allocateSystemMemory(sizeAligned, MemoryConstants::pageSize2M);
         auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uint64_t>(allocationData.hostPtr));
         allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, storage, storage, canonizedGpuAddress,
-                                          allocationData.size, counter.fetch_add(1), MemoryPool::localMemory, false, allocationData.flags.flushL3, maxOsContextCount);
+                                          sizeAligned, counter.fetch_add(1), MemoryPool::localMemory, false, allocationData.flags.flushL3, maxOsContextCount);
 
         if (allocationData.flags.preferCompressed) {
-            auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
             GmmRequirements gmmRequirements{};
             gmmRequirements.allowLargePages = true;
             gmmRequirements.preferCompressed = true;
 
             auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
                                              allocationData.hostPtr,
-                                             allocationData.size,
+                                             sizeAligned,
                                              MemoryConstants::pageSize2M,
                                              CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo()),
                                              allocationData.storageInfo,
@@ -729,26 +747,25 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         }
     } else {
         std::unique_ptr<Gmm> gmm;
-        size_t sizeAligned64k = 0;
+        size_t sizeAligned = 0;
         if (allocationData.type == AllocationType::image ||
             allocationData.type == AllocationType::sharedResourceCopy) {
             allocationData.imgInfo->useLocalMemory = true;
             gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), *allocationData.imgInfo,
                                         allocationData.storageInfo, allocationData.flags.preferCompressed);
-            sizeAligned64k = alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize64k);
+            sizeAligned = alignUp(allocationData.imgInfo->size, finalAlignment);
         } else {
-            sizeAligned64k = alignUp(allocationData.size, MemoryConstants::pageSize64k);
+            sizeAligned = alignUp(allocationData.size, finalAlignment);
             if (debugManager.flags.RenderCompressedBuffersEnabled.get() &&
                 allocationData.flags.preferCompressed) {
-                auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
                 GmmRequirements gmmRequirements{};
                 gmmRequirements.allowLargePages = true;
                 gmmRequirements.preferCompressed = true;
 
                 gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
                                             allocationData.hostPtr,
-                                            sizeAligned64k,
-                                            MemoryConstants::pageSize64k,
+                                            sizeAligned,
+                                            finalAlignment,
                                             CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo()),
                                             allocationData.storageInfo,
                                             gmmRequirements);
@@ -756,7 +773,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         }
 
         auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-        auto heapIndex = HeapIndex::heapStandard64KB;
+        auto heapIndex = finalAlignment == MemoryConstants::pageSize2M ? HeapIndex::heapStandard2MB : HeapIndex::heapStandard64KB;
 
         if (use32Allocator) {
             auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
@@ -765,19 +782,27 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
             heapIndex = HeapIndex::heapExtended;
         }
 
-        auto systemMemory = allocateSystemMemory(sizeAligned64k, MemoryConstants::pageSize64k);
+        auto systemMemory = allocateSystemMemory(sizeAligned, finalAlignment);
         if (allocationData.type == AllocationType::preemption) {
-            memset(systemMemory, 0, sizeAligned64k);
+            memset(systemMemory, 0, sizeAligned);
         }
-        auto sizeOfHeapChunk = sizeAligned64k;
+        auto sizeOfHeapChunk = sizeAligned;
         auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
-        auto gpuAddrAlignment = std::max(allocationData.alignment, MemoryConstants::pageSize64k);
-        auto canonizedGpuAddress = gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(heapIndex, sizeOfHeapChunk, gpuAddrAlignment));
+        auto gpuAddrAlignment = std::max(allocationData.alignment, finalAlignment);
+        auto gpuAddress = gfxPartition->heapAllocateWithCustomAlignment(heapIndex, sizeOfHeapChunk, gpuAddrAlignment);
+
+        if (gpuAddress == 0u) {
+            alignedFreeWrapper(systemMemory);
+            status = AllocationStatus::Error;
+            return nullptr;
+        }
+
+        auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
         if (heapIndex == HeapIndex::heapExtended) {
             canonizedGpuAddress = MemoryManager::adjustToggleBitFlagForGpuVa(allocationData.type, canonizedGpuAddress);
         }
         allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, systemMemory, systemMemory,
-                                          canonizedGpuAddress, sizeAligned64k, counter.fetch_add(1),
+                                          canonizedGpuAddress, sizeAligned, counter.fetch_add(1),
                                           MemoryPool::localMemory, false, allocationData.flags.flushL3, maxOsContextCount);
 
         allocation->setDefaultGmm(gmm.release());

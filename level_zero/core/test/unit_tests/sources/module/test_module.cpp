@@ -4701,8 +4701,10 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
         EXPECT_NE(kernelImmData[0]->getIsaGraphicsAllocation(), kernelImmData[1]->getIsaGraphicsAllocation());
 
         if constexpr (localMemEnabled) {
-            EXPECT_EQ(alignUp<size_t>(maxAllocationSizeInPage, MemoryConstants::pageSize64k), kernelImmData[0]->getIsaSize());
-            EXPECT_EQ(alignUp<size_t>(tinyAllocationSize, MemoryConstants::pageSize64k), kernelImmData[1]->getIsaSize());
+            auto &productHelper = this->neoDevice->getRootDeviceEnvironment().getProductHelper();
+            auto expectedAlignment = productHelper.is2MBLocalMemAlignmentEnabled() ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
+            EXPECT_EQ(alignUp<size_t>(maxAllocationSizeInPage, expectedAlignment), kernelImmData[0]->getIsaSize());
+            EXPECT_EQ(alignUp<size_t>(tinyAllocationSize, expectedAlignment), kernelImmData[1]->getIsaSize());
         } else {
             EXPECT_EQ(this->computeKernelIsaAllocationSizeWithPadding(maxAllocationSizeInPage), kernelImmData[0]->getIsaSize());
             EXPECT_EQ(this->computeKernelIsaAllocationSizeWithPadding(tinyAllocationSize), kernelImmData[1]->getIsaSize());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,7 @@ class GfxPartition {
     static constexpr uint64_t heapGranularity64k = MemoryConstants::pageSize64k;
     static constexpr uint64_t heapGranularity2MB = 2 * MemoryConstants::megaByte;
     static constexpr size_t externalFrontWindowPoolSize = 2 * MemoryConstants::pageSize64k;
-    static constexpr size_t internalFrontWindowPoolSize = 1 * MemoryConstants::megaByte;
+    static constexpr size_t internalFrontWindowPoolSize = 4 * MemoryConstants::megaByte;
 
     static const std::array<HeapIndex, 4> heap32Names;
     static const std::array<HeapIndex, 8> heapNonSvmNames;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -145,7 +145,8 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
 
         gfxPartition.heapFree(heap, ptrSmall, sizeSmall);
 
-        uint64_t requiredStartAddress = gfxPartition.getHeapBase(heap) + MemoryConstants::pageSize2M;
+        uint64_t addressOffset = isInternalHeapType ? (GfxPartition::internalFrontWindowPoolSize + heapGranularity) : (2 * heapGranularity);
+        uint64_t requiredStartAddress = gfxPartition.getHeapBase(heap) + addressOffset;
         auto ptrSmallWithHint = gfxPartition.heapAllocateWithStartAddressHint(requiredStartAddress, heap, sizeSmall);
         EXPECT_NE(ptrSmallWithHint, 0ull);
         EXPECT_EQ(ptrSmallWithHint, requiredStartAddress);
@@ -483,7 +484,10 @@ TEST_P(GfxPartitionTestForAllHeapTypes, givenHeapIndexWhenHeapAllocateWithStartA
 
     // Allocate majority of the heap
     sizeToAllocate = allocationSize;
-    auto requiredStartAddress = gfxPartition.getHeapBase(heapIndex) + MemoryConstants::pageSize2M; // Offseting by 2MB to avoid front window
+    const bool isInternalHeapType = heapIndex == HeapIndex::heapInternal || heapIndex == HeapIndex::heapInternalDeviceMemory;
+    const auto heapGranularity = (heapIndex == HeapIndex::heapStandard2MB) ? GfxPartition::heapGranularity2MB : GfxPartition::heapGranularity;
+    uint64_t addressOffset = isInternalHeapType ? (GfxPartition::internalFrontWindowPoolSize + heapGranularity) : (2 * heapGranularity);
+    auto requiredStartAddress = gfxPartition.getHeapBase(heapIndex) + addressOffset;
     auto address = gfxPartition.heapAllocateWithStartAddressHint(requiredStartAddress, heapIndex, sizeToAllocate);
     const size_t sizeAllocated = sizeToAllocate;
     EXPECT_EQ(requiredStartAddress, address);
