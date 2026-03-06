@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@ constexpr static auto gfxProduct = IGFX_CRI;
 
 // keep files below
 #include "shared/source/os_interface/windows/product_helper_xe2_and_later_wddm.inl"
+#include "shared/source/os_interface/windows/product_helper_xe3p_and_later_wddm.inl"
 #include "shared/source/xe3p_core/cri/os_agnostic_product_helper_cri.inl"
 #include "shared/source/xe3p_core/os_agnostic_product_helper_xe3p_core.inl"
 

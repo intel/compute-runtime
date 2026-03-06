@@ -124,6 +124,12 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/wddm_features_extra.cpp
 )
 
+if(SUPPORT_XE3P_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE_WDDM
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe3p_and_later_wddm.inl
+  )
+endif()
+
 if(SUPPORT_XE2_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_WDDM
        ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later_wddm.inl
