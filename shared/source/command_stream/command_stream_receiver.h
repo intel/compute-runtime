@@ -634,6 +634,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
                                              TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
 
     void cleanupResources();
+    void releaseGlobalStatelessHeap();
     void cleanupHostFunctionWorker();
     void printDeviceIndex();
     void checkForNewResources(TaskCountType submittedTaskCount, TaskCountType allocationTaskCount, GraphicsAllocation &gfxAllocation);

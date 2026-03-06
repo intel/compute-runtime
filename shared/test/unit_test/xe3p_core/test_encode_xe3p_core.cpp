@@ -337,8 +337,7 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenUsingCsrHeapAndScratchRequiredWhe
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (ultCsr.globalStatelessHeapAllocation) {
-        pDevice->getMemoryManager()->freeGraphicsMemory(ultCsr.globalStatelessHeapAllocation);
-        ultCsr.globalStatelessHeapAllocation = nullptr;
+        ultCsr.releaseGlobalStatelessHeap();
     }
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);

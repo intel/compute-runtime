@@ -6999,6 +6999,44 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCreateDeferredFreeContextThenFie
     EXPECT_EQ(csr.getImmWritePostSyncWriteOffset(), ctx.tagOffset);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenPoolViewInGlobalStatelessHeapWhenReleasedThenViewReturnedToLinearStreamPool) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(1);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.createGlobalStatelessHeap();
+
+    auto *allocation = csr.getGlobalStatelessHeapAllocation();
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_TRUE(allocation->isView());
+    auto &poolAllocator = pDevice->getLinearStreamPoolAllocator();
+    auto *parent = allocation->getParentAllocation();
+    ASSERT_NE(nullptr, parent);
+    ASSERT_TRUE(poolAllocator.isPoolBuffer(parent));
+
+    csr.releaseGlobalStatelessHeap();
+
+    EXPECT_EQ(nullptr, csr.getGlobalStatelessHeapAllocation());
+    EXPECT_EQ(nullptr, csr.getGlobalStatelessHeap());
+
+    constexpr size_t heapSize = 16 * MemoryConstants::kiloByte;
+    ASSERT_EQ(0u, poolAllocator.getDefaultPoolSize() % heapSize);
+    std::vector<GraphicsAllocation *> allocations;
+    auto maxAllocations = poolAllocator.getDefaultPoolSize() / heapSize;
+
+    for (size_t i = 0; i < maxAllocations; i++) {
+        auto *newAllocation = poolAllocator.allocate(heapSize);
+        ASSERT_NE(nullptr, newAllocation);
+        allocations.push_back(newAllocation);
+    }
+
+    EXPECT_EQ(1u, poolAllocator.getPoolsCount());
+
+    for (auto *allocationToFree : allocations) {
+        poolAllocator.free(allocationToFree);
+    }
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenPoolViewInCommandStreamWhenCleanupResourcesThenViewReturnedToPoolAndStreamNulled) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.EnableCommandBufferPoolAllocator.set(1);

@@ -571,10 +571,7 @@ void CommandStreamReceiver::cleanupResources() {
         workPartitionAllocation = nullptr;
     }
 
-    if (globalStatelessHeapAllocation) {
-        getMemoryManager()->freeGraphicsMemory(globalStatelessHeapAllocation);
-        globalStatelessHeapAllocation = nullptr;
-    }
+    releaseGlobalStatelessHeap();
     for (auto &alloc : ownedPrivateAllocations) {
         getMemoryManager()->freeGraphicsMemory(alloc.second);
     }
@@ -1522,14 +1519,51 @@ void CommandStreamReceiver::createGlobalStatelessHeap() {
             constexpr size_t heapSize = 16 * MemoryConstants::kiloByte;
             constexpr AllocationType allocationType = AllocationType::linearStream;
 
-            AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType,
-                                            isMultiOsContextCapable(), false, osContext->getDeviceBitfield()};
+            if (device) {
+                auto &productHelper = device->getProductHelper();
+                if (LinearStreamPoolAllocator::isEnabled(productHelper)) {
+                    this->globalStatelessHeapAllocation = device->getLinearStreamPoolAllocator().allocate(heapSize);
+                }
+            }
 
-            this->globalStatelessHeapAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+            if (this->globalStatelessHeapAllocation == nullptr) {
+                AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType,
+                                                isMultiOsContextCapable(), false, osContext->getDeviceBitfield()};
 
-            this->globalStatelessHeap = std::make_unique<IndirectHeap>(this->globalStatelessHeapAllocation);
+                this->globalStatelessHeapAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+            }
+
+            if (this->globalStatelessHeapAllocation != nullptr) {
+                this->globalStatelessHeap = std::make_unique<IndirectHeap>(this->globalStatelessHeapAllocation);
+            }
         }
     }
+}
+
+void CommandStreamReceiver::releaseGlobalStatelessHeap() {
+    auto *allocation = globalStatelessHeapAllocation;
+    globalStatelessHeapAllocation = nullptr;
+    globalStatelessHeap.reset();
+
+    if (allocation == nullptr) {
+        return;
+    }
+
+    if (allocation->isView()) {
+        if (device) {
+            auto &poolAllocator = device->getLinearStreamPoolAllocator();
+            auto *parent = allocation->getParentAllocation();
+            if (parent && poolAllocator.isPoolBuffer(parent)) {
+                poolAllocator.free(allocation);
+                return;
+            }
+        }
+
+        delete allocation;
+        return;
+    }
+
+    getMemoryManager()->freeGraphicsMemory(allocation);
 }
 
 bool CommandStreamReceiver::isRayTracingStateProgramingNeeded(Device &device) const {

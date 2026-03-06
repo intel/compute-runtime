@@ -540,8 +540,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenUsingCsrHeapWithoutScratchNo
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (ultCsr.globalStatelessHeapAllocation) {
-        pDevice->getMemoryManager()->freeGraphicsMemory(ultCsr.globalStatelessHeapAllocation);
-        ultCsr.globalStatelessHeapAllocation = nullptr;
+        ultCsr.releaseGlobalStatelessHeap();
     }
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);

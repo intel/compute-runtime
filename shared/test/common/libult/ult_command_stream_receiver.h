@@ -170,6 +170,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::pipelineSupportFlags;
     using BaseClass::CommandStreamReceiver::preemptionAllocation;
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
+    using BaseClass::CommandStreamReceiver::releaseGlobalStatelessHeap;
     using BaseClass::CommandStreamReceiver::requestedPreallocationsAmount;
     using BaseClass::CommandStreamReceiver::requiredScratchSlot0Size;
     using BaseClass::CommandStreamReceiver::requiredScratchSlot1Size;
