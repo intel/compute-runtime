@@ -78,10 +78,10 @@ class MockAllocateGraphicsMemoryWithAlignmentWddm : public MemoryManagerCreate<W
 
         return true;
     }
-    size_t getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod) const override {
+    size_t getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod, bool isLocalMemory) const override {
         return hugeGfxMemoryChunkSize;
     }
-    size_t hugeGfxMemoryChunkSize = WddmMemoryManager::getHugeGfxMemoryChunkSize(preferredAllocationMethod);
+    size_t hugeGfxMemoryChunkSize = WddmMemoryManager::getHugeGfxMemoryChunkSize(preferredAllocationMethod, false);
 };
 
 class WddmMemoryManagerTests : public ::testing::Test {
@@ -712,12 +712,13 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
             allocData.flags.preferCompressed = true;
 
             MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+            memoryManager->callBaseGetHugeGfxMemoryChunkSize = true;
             auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
             EXPECT_NE(nullptr, allocation);
             EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
             EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
-            EXPECT_EQ(4u, allocation->getNumGmms());
-            EXPECT_EQ(4u, wddm->createAllocationResult.called);
+            EXPECT_EQ(52u, allocation->getNumGmms());
+            EXPECT_EQ(52u, wddm->createAllocationResult.called);
 
             uint64_t totalSizeFromGmms = 0u;
             for (uint32_t gmmId = 0u; gmmId < allocation->getNumGmms(); ++gmmId) {
@@ -3988,15 +3989,19 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequest
 
 TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenCorrectHugeGfxMemoryChunkIsSet) {
     MockWddmMemoryManager memoryManager(executionEnvironment);
-    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
-    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::useUmdSystemPtr), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
+    memoryManager.callBaseGetHugeGfxMemoryChunkSize = true;
+    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd, false), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
+    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::useUmdSystemPtr, false), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
+
+    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd, true), 256 * MemoryConstants::megaByte);
+    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::useUmdSystemPtr, true), 256 * MemoryConstants::megaByte);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenDebugOverrideWhenQueryIsDoneThenProperSizeIsReturned) {
     DebugManagerStateRestore dbgRestore;
     NEO::debugManager.flags.ForceWddmHugeChunkSizeMB.set(256);
     MockWddmMemoryManager memoryManager(executionEnvironment);
-    EXPECT_EQ(256 * MemoryConstants::megaByte, memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd));
+    EXPECT_EQ(256 * MemoryConstants::megaByte, memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd, false));
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForHostBufferAndRequestedSizeIsHugeThenResultAllocationIsSplit) {

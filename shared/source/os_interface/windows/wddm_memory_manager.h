@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,7 +106,7 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
 
-    MOCKABLE_VIRTUAL size_t getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod) const;
+    MOCKABLE_VIRTUAL size_t getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod, bool isLocalMemory) const;
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateHugeGraphicsMemory(const AllocationData &allocationData, bool sharedVirtualAddress);
 
     GraphicsAllocation *createAllocationFromHandle(const OsHandleData &osHandleData, bool requireSpecificBitness, bool ntHandle, AllocationType allocationType, uint32_t rootDeviceIndex, void *mapPointer);
