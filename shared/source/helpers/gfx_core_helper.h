@@ -219,6 +219,7 @@ class GfxCoreHelper {
     int32_t getDefaultQueuePriorityLevel() const;
     virtual uint32_t getHwQueuePriority(int32_t apiPriority) const = 0;
     virtual bool isWalkerPostSyncSkipEnabled(bool isBarrierUsedForImplicitDependency) const = 0;
+    virtual bool isPerContextDebugSipRequired() const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -485,6 +486,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool crossEngineCacheFlushRequired() const override;
 
     bool isWalkerPostSyncSkipEnabled(bool isBarrierUsedForImplicitDependency) const override;
+
+    bool isPerContextDebugSipRequired() const override;
 
     ~GfxCoreHelperHw() override = default;
 

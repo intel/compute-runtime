@@ -15,6 +15,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_builtins.h"
@@ -22,6 +23,7 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
@@ -601,6 +603,7 @@ TEST(DebugSip, givenDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
 
     EXPECT_FALSE(sipKernel.getStateSaveAreaHeader().empty());
 }
+using DebugBindlessSipTest = ::testing::Test;
 
 TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
     DebugManagerStateRestore restorer;
@@ -628,19 +631,24 @@ TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSip
     auto contextSip = builtIns->perContextSipKernels[contextId].first.get();
 
     EXPECT_NE(nullptr, contextSip);
-    EXPECT_EQ(SipKernelType::dbgBindless, contextSip->getType());
+    auto type = SipKernel::getSipKernelType(*mockDevice);
+    EXPECT_EQ(type, contextSip->getType());
     EXPECT_NE(nullptr, contextSip->getSipAllocation());
     EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
 }
 
-TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenGettingSipForContextThenCorrectSipKernelIsReturned) {
+HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeWhenGettingSipForContextThenCorrectSipKernelIsReturned) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
+
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
     MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*executionEnvironment->rootDeviceEnvironments[0u]};
+    gfxCoreHelperBackup.mockGfxCoreHelper->perContextSipRequired = true;
 
     const uint32_t contextId = 0u;
     std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
@@ -657,12 +665,13 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenGettingSipForContextThenCorr
     auto contextSip = builtIns->perContextSipKernels[contextId].first.get();
 
     EXPECT_NE(nullptr, contextSip);
-    EXPECT_EQ(SipKernelType::dbgBindless, contextSip->getType());
+    auto type = SipKernel::getSipKernelType(*mockDevice);
+    EXPECT_EQ(type, contextSip->getType());
     EXPECT_NE(nullptr, contextSip->getSipAllocation());
     EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
 }
 
-TEST(DebugSip, givenOfflineDebuggingModeAndSubdevicesWhenGettingSipForContextThenMemoryTransferGoesThroughCpuPointer) {
+HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeAndSubdevicesWhenGettingSipForContextThenMemoryTransferGoesThroughCpuPointer) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
@@ -672,6 +681,10 @@ TEST(DebugSip, givenOfflineDebuggingModeAndSubdevicesWhenGettingSipForContextThe
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
     mockDevice->deviceBitfield.set(0);
     mockDevice->deviceBitfield.set(1);
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*executionEnvironment->rootDeviceEnvironments[0u]};
+    gfxCoreHelperBackup.mockGfxCoreHelper->perContextSipRequired = true;
+
     auto memoryManager = static_cast<MockMemoryManager *>(mockDevice->getMemoryManager());
 
     const uint32_t contextId = 2u;
@@ -695,7 +708,7 @@ TEST(DebugSip, givenOfflineDebuggingModeAndSubdevicesWhenGettingSipForContextThe
     EXPECT_EQ(0, memcmp(sipBinary.data(), sipKernel.getSipAllocation()->getUnderlyingBuffer(), sipBinary.size()));
 }
 
-TEST(DebugSip, givenOfflineDebuggingModeWhenGettingSipForContextThenMemoryTransferGoesThroughCpuPointer) {
+HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeWhenGettingSipForContextThenMemoryTransferGoesThroughCpuPointer) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
@@ -703,6 +716,9 @@ TEST(DebugSip, givenOfflineDebuggingModeWhenGettingSipForContextThenMemoryTransf
     builtIns->callBaseGetSipKernel = true;
     MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*executionEnvironment->rootDeviceEnvironments[0u]};
+    gfxCoreHelperBackup.mockGfxCoreHelper->perContextSipRequired = true;
 
     auto memoryManager = static_cast<MockMemoryManager *>(mockDevice->getMemoryManager());
 
@@ -791,7 +807,6 @@ TEST(DebugBindlessSip, givenFailingSipAllocationWhenBindlessDebugSipWithContextI
     auto contextSip = builtIns->perContextSipKernels[contextId].first.get();
 
     EXPECT_NE(nullptr, contextSip);
-    EXPECT_EQ(SipKernelType::dbgBindless, contextSip->getType());
     EXPECT_EQ(nullptr, contextSip->getSipAllocation());
     EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
 }

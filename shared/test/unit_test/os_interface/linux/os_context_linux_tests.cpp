@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,12 +51,13 @@ TEST(OSContextLinux, givenOsContextLinuxWhenQueryingForOfflineDumpContextIdThenC
     MockExecutionEnvironment executionEnvironment;
     auto mock = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u, false);
-    MockOsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    MockOsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(DeviceBitfield(0b111)));
 
     osContext.drmContextIds.clear();
     osContext.drmContextIds.push_back(1u);
     osContext.drmContextIds.push_back(3u);
     osContext.drmContextIds.push_back(5u);
+    osContext.initializeOfflineDumpContextIds();
 
     const auto processId = 0xABCEDF;
     const uint64_t highBitsMask = 0xffffffff00000000;
@@ -75,6 +76,32 @@ TEST(OSContextLinux, givenOsContextLinuxWhenQueryingForOfflineDumpContextIdThenC
     EXPECT_EQ(ctxId & highBitsMask, static_cast<uint64_t>(processId) << 32);
 
     EXPECT_EQ(0u, osContext.getOfflineDumpContextId(10));
+}
+
+TEST(OSContextLinux, givenFilteredSubDevicesWhenQueryingOfflineDumpContextIdThenCorrectValueIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    auto mock = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u, false);
+    MockOsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(DeviceBitfield(0b101)));
+
+    osContext.drmContextIds.clear();
+    osContext.drmContextIds.push_back(1u);
+    osContext.drmContextIds.push_back(5u);
+    osContext.initializeOfflineDumpContextIds();
+
+    const auto processId = 0xABCEDF;
+    const uint64_t highBitsMask = 0xffffffff00000000;
+    const uint64_t lowBitsMask = 0x00000000ffffffff;
+
+    auto ctxId = osContext.getOfflineDumpContextId(0);
+    EXPECT_EQ(ctxId & lowBitsMask, static_cast<uint64_t>(1u));
+    EXPECT_EQ(ctxId & highBitsMask, static_cast<uint64_t>(processId) << 32);
+
+    ctxId = osContext.getOfflineDumpContextId(2);
+    EXPECT_EQ(ctxId & lowBitsMask, static_cast<uint64_t>(5u));
+    EXPECT_EQ(ctxId & highBitsMask, static_cast<uint64_t>(processId) << 32);
+
+    EXPECT_EQ(0u, osContext.getOfflineDumpContextId(1));
 }
 
 TEST(OSContextLinux, givenPerContextVmsAndBindNotCompleteWhenWaitForPagingFenceThenContextFenceIsPassedToWaitUserFenceIoctl) {

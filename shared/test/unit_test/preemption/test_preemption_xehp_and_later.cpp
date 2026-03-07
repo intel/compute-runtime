@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,8 +103,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, osContext.get());
     EXPECT_EQ(sizeof(STATE_SIP), cmdStream.getUsed());
 
-    auto contextSipKernel = builtIns->perContextSipKernels[contextId].first.get();
-    auto sipAllocation = contextSipKernel->getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*device, osContext.get()).getSipAllocation();
 
     auto sipCommand = genCmdCast<STATE_SIP *>(cmdStream.getCpuBase());
     auto sipAddress = sipCommand->getSystemInstructionPointer();

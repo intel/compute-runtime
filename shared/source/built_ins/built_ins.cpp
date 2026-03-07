@@ -68,7 +68,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         }
         sipBuiltIn.first.reset(new SipKernel(type, sipAllocation, std::move(stateSaveAreaHeader), std::move(sipBinary)));
 
-        if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() == DebuggingMode::offline) {
+        if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() != DebuggingMode::disabled) {
             sipBuiltIn.first->parseBinaryForContextId();
         }
 
@@ -83,7 +83,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
 const SipKernel &BuiltIns::getSipKernel(Device &device, OsContext *context) {
     const uint32_t contextId = context->getContextId();
-    const SipKernelType type = SipKernelType::dbgBindless;
+    const SipKernelType type = SipKernel::getSipKernelType(device);
 
     auto &bindlessSip = this->getSipKernel(type, device);
     auto copySuccess = false;

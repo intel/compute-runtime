@@ -302,6 +302,11 @@ bool GfxCoreHelperHw<Family>::crossEngineCacheFlushRequired() const {
     return false;
 };
 
+template <>
+bool GfxCoreHelperHw<Family>::isPerContextDebugSipRequired() const {
+    return true;
+};
+
 } // namespace NEO
 
 namespace NEO {

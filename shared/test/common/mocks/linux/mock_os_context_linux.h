@@ -15,6 +15,7 @@ class MockOsContextLinux : public OsContextLinux {
     using OsContextLinux::drmVmIds;
     using OsContextLinux::fenceVal;
     using OsContextLinux::initializeContext;
+    using OsContextLinux::initializeOfflineDumpContextIds;
     using OsContextLinux::OsContextLinux;
     using OsContextLinux::ovLoaded;
     using OsContextLinux::pagingFence;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,6 +88,7 @@ bool OsContextLinux::initializeContext(bool allocateInterrupt) {
             this->drmContextIds.push_back(drmContextId);
         }
     }
+    initializeOfflineDumpContextIds();
     return true;
 }
 
@@ -162,13 +163,27 @@ void OsContextLinux::waitForBind(uint32_t drmIterator) {
 void OsContextLinux::reInitializeContext() {}
 
 uint64_t OsContextLinux::getOfflineDumpContextId(uint32_t deviceIndex) const {
-    if (deviceIndex < drmContextIds.size()) {
-        const auto processId = SysCalls::getProcessId();
-        const auto drmContextId = drmContextIds[deviceIndex];
-        return static_cast<uint64_t>(processId) << 32 |
-               static_cast<uint64_t>(drmContextId);
+    if (deviceIndex >= offlineDumpCtxIds.size()) {
+        return 0;
     }
-    return 0;
+    return offlineDumpCtxIds[deviceIndex];
+}
+
+void OsContextLinux::initializeOfflineDumpContextIds() {
+    auto contextId = 0u;
+    const auto processId = SysCalls::getProcessId();
+    for (auto index = 0u; index < deviceBitfield.size(); index++) {
+        offlineDumpCtxIds[index] = 0;
+
+        if (deviceBitfield.test(index)) {
+            if (contextId < drmContextIds.size()) {
+
+                const auto drmContextId = drmContextIds[contextId];
+                offlineDumpCtxIds[index] = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(drmContextId);
+            }
+            contextId++;
+        }
+    }
 }
 
 OsContextLinux::~OsContextLinux() {
