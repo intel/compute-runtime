@@ -11,12 +11,9 @@ namespace NEO {
 
 const GfxMemoryAllocationMethod preferredAllocationMethod = GfxMemoryAllocationMethod::allocateByKmd;
 
-size_t WddmMemoryManager::getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod, bool isLocalMemory) const {
+size_t WddmMemoryManager::getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod) const {
     if (NEO::debugManager.flags.ForceWddmHugeChunkSizeMB.get() != -1) {
         return NEO::debugManager.flags.ForceWddmHugeChunkSizeMB.get() * MemoryConstants::megaByte;
-    }
-    if (isLocalMemory) {
-        return 256 * MemoryConstants::megaByte;
     }
     if (GfxMemoryAllocationMethod::allocateByKmd == allocationMethod) {
         return 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k;
