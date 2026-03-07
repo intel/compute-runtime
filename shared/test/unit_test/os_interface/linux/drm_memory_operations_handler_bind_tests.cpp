@@ -1436,6 +1436,36 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenCallin
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenMultipleBufferObjectsAllocationWhenDecompressCalledThenDecompressFlagsAreCleared) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+
+    BufferObjects bos;
+    MockBufferObject mockBo1(0, mock, 3, 0, 0, 1), mockBo2(0, mock, 3, 0, 0, 1);
+    mockBo1.setSize(1024);
+    mockBo2.setSize(1024);
+    mockBo1.requireResourceDecompress(true);
+    mockBo2.requireResourceDecompress(true);
+    bos.push_back(&mockBo1);
+    bos.push_back(&mockBo2);
+    GraphicsAllocation *mockDrmAllocation = new MockDrmAllocation(AllocationType::unknown, MemoryPool::localMemory, bos);
+    mockDrmAllocation->storageInfo.memoryBanks = 3;
+    EXPECT_EQ(2u, mockDrmAllocation->storageInfo.getNumBanks());
+
+    auto drmAllocation = static_cast<DrmAllocation *>(mockDrmAllocation);
+
+    auto status = operationHandler->decompress(device, *mockDrmAllocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, status);
+
+    for (uint32_t vmHandleId = 0; vmHandleId < drmAllocation->getBOs().size(); vmHandleId++) {
+        auto bo = drmAllocation->getBOs()[vmHandleId];
+        if (bo) {
+            EXPECT_FALSE(bo->isResourceDecompressRequired());
+        }
+    }
+    delete mockDrmAllocation;
+}
+
 using DrmResidencyHandlerTests = ::testing::Test;
 
 HWTEST2_F(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexThenReturnCorrectValue, IsXeCore) {

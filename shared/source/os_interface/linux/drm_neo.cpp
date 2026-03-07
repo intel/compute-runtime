@@ -15,6 +15,7 @@
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
@@ -1630,13 +1631,14 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         bool bindImmediate = bo->isImmediateBindingRequired();
         bool bindMakeResident = false;
         bool readOnlyResource = bo->isReadOnlyGpuResource();
+        bool decompressResource = bo->isResourceDecompressRequired();
 
         if (drm->useVMBindImmediate() || guaranteePagingFence) {
             bindMakeResident = bo->isExplicitResidencyRequired();
             bindImmediate = true;
         }
         bool bindLock = bo->isExplicitLockedMemoryRequired();
-        flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource);
+        flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource, decompressResource);
     }
 
     auto &bindAddresses = bo->getColourAddresses();
@@ -1675,7 +1677,15 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             } else {
                 vmBind.extensions = castToUint64(extensions.get());
             }
-            vmBind.patIndex = bo->peekPatIndex();
+
+            if (bo->isResourceDecompressRequired()) {
+                GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
+                bool compressed = false;
+                bool cacheable = false;
+                vmBind.patIndex = static_cast<uint16_t>(drm->getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cacheable));
+            } else {
+                vmBind.patIndex = bo->peekPatIndex();
+            }
         } else {
             vmBind.extensions = castToUint64(extensions.get());
         }
@@ -1827,10 +1837,12 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
 
     if (ret == 0) {
         drmVmId = ctl.vmId;
+
         if (isSharedSystemAllocEnabled()) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
             VmBindParams vmBind{};
-            vmBind.vmId = static_cast<uint32_t>(ctl.vmId);
+            vmBind.vmId = ctl.vmId;
             vmBind.flags = this->getSharedSystemBindFlags();
             vmBind.length = this->getSharedSystemAllocAddressRange();
             vmBind.sharedSystemUsmEnabled = true;
@@ -1849,6 +1861,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
                              "INFO:  Shared System USM capability not detected\n");
             }
         }
+
         if (ctl.vmId == 0) {
             // 0 is reserved for invalid/unassigned ppgtt
             return -1;

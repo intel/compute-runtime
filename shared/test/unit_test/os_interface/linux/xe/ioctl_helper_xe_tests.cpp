@@ -528,7 +528,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
 
     EXPECT_EQ(0u, xeIoctlHelper->getDirectSubmissionFlag());
 
-    EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmBind(false, false, false, false, false));
+    EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmBind(false, false, false, false, false, false));
 
     std::vector<QueryItem> queryItems;
     std::vector<DistanceInfo> distanceInfos;
@@ -697,8 +697,8 @@ TEST_F(IoctlHelperXeTest, whenGettingFlagsForVmBindThenPropertValueIsReturned) {
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
 
-    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_DUMPABLE), xeIoctlHelper->getFlagsForVmBind(true, false, false, false, false));
-    EXPECT_EQ(static_cast<uint64_t>(0), xeIoctlHelper->getFlagsForVmBind(false, false, false, false, false));
+    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_DUMPABLE), xeIoctlHelper->getFlagsForVmBind(true, false, false, false, false, false));
+    EXPECT_EQ(static_cast<uint64_t>(0), xeIoctlHelper->getFlagsForVmBind(false, false, false, false, false, false));
 }
 
 TEST_F(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) {
@@ -2784,12 +2784,14 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetFlagsForVmBindThenExpe
             for (auto &bindMakeResident : ::testing::Bool()) {
                 for (auto &bindLockedMemory : ::testing::Bool()) {
                     for (auto &readOnlyResource : ::testing::Bool()) {
-                        auto flags = xeIoctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLockedMemory, readOnlyResource);
-                        if (bindCapture) {
-                            EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_FLAG_DUMPABLE), (flags & DRM_XE_VM_BIND_FLAG_DUMPABLE));
-                        }
-                        if (flags == 0) {
-                            EXPECT_FALSE(bindCapture);
+                        for (auto &resolveResource : ::testing::Bool()) {
+                            auto flags = xeIoctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLockedMemory, readOnlyResource, resolveResource);
+                            if (bindCapture) {
+                                EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_FLAG_DUMPABLE), (flags & DRM_XE_VM_BIND_FLAG_DUMPABLE));
+                            }
+                            if (flags == 0) {
+                                EXPECT_FALSE(bindCapture);
+                            }
                         }
                     }
                 }
@@ -2823,6 +2825,7 @@ TEST_F(IoctlHelperXeTest, whenCheckingGpuHangThenBanPropertyIsQueried) {
 }
 
 TEST_F(IoctlHelperXeTest, givenImmediateAndReadOnlyBindFlagsSupportedWhenGettingFlagsForVmBindThenCorrectFlagsAreReturned) {
+#define DRM_XE_VM_BIND_FLAG_DECOMPRESS (1 << 7)
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -2832,21 +2835,26 @@ TEST_F(IoctlHelperXeTest, givenImmediateAndReadOnlyBindFlagsSupportedWhenGetting
     for (const auto &bindImmediateSupport : ::testing::Bool()) {
         for (const auto &bindReadOnlySupport : ::testing::Bool()) {
             for (const auto &bindMakeResidentSupport : ::testing::Bool()) {
-                uint64_t expectedFlags = DRM_XE_VM_BIND_FLAG_DUMPABLE;
+                for (const auto &bindResolveSupport : ::testing::Bool()) {
+                    uint64_t expectedFlags = DRM_XE_VM_BIND_FLAG_DUMPABLE;
 
-                if (bindImmediateSupport) {
-                    expectedFlags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
-                }
-                if (bindReadOnlySupport) {
-                    expectedFlags |= DRM_XE_VM_BIND_FLAG_READONLY;
-                }
-                if (bindMakeResidentSupport) {
-                    expectedFlags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
-                }
+                    if (bindImmediateSupport) {
+                        expectedFlags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
+                    }
+                    if (bindReadOnlySupport) {
+                        expectedFlags |= DRM_XE_VM_BIND_FLAG_READONLY;
+                    }
+                    if (bindMakeResidentSupport) {
+                        expectedFlags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
+                    }
+                    if (bindResolveSupport) {
+                        expectedFlags |= DRM_XE_VM_BIND_FLAG_DECOMPRESS;
+                    }
 
-                auto bindFlags = xeIoctlHelper->getFlagsForVmBind(true, bindImmediateSupport, bindMakeResidentSupport, false, bindReadOnlySupport);
+                    auto bindFlags = xeIoctlHelper->getFlagsForVmBind(true, bindImmediateSupport, bindMakeResidentSupport, false, bindReadOnlySupport, bindResolveSupport);
 
-                EXPECT_EQ(expectedFlags, bindFlags);
+                    EXPECT_EQ(expectedFlags, bindFlags);
+                }
             }
         }
     }
@@ -3923,7 +3931,7 @@ TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenCreatingPrimaryDrmContextT
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    drm->ioctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+    drm->ioctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
     drm->ioctlHelper->initialize();
     drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
@@ -3945,7 +3953,7 @@ TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenCreatingSecondaryDrmContex
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    drm->ioctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+    drm->ioctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
     drm->ioctlHelper->initialize();
     drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
@@ -3971,7 +3979,7 @@ TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenCreatingHighPriorityDrmCon
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    drm->ioctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+    drm->ioctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
     drm->ioctlHelper->initialize();
     drm->memoryInfoQueried = true;
     drm->queryEngineInfo();

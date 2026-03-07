@@ -266,7 +266,7 @@ void BufferObject::printBOBindingResult(OsContext *osContext, uint32_t vmHandleI
 int BufferObject::bind(OsContext *osContext, uint32_t vmHandleId, const bool forcePagingFence) {
     int retVal = 0;
     auto contextId = getOsContextId(osContext);
-    if (!this->bindInfo[contextId][vmHandleId]) {
+    if (!this->bindInfo[contextId][vmHandleId] || this->isResourceDecompressRequired()) {
         retVal = this->drm->bindBufferObject(osContext, vmHandleId, this, forcePagingFence);
         if (debugManager.flags.PrintBOBindingResult.get()) {
             printBOBindingResult(osContext, vmHandleId, true, retVal);

@@ -221,6 +221,11 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenFlushReturn
     EXPECT_EQ(drmMemoryOperationsHandler->evictWithinOsContextCalled, 0u);
 }
 
+TEST_F(DrmMemoryOperationsHandlerBaseTest, givenRegularAllocationWhenDecompressingAllocationThenUnsupportIsReturned) {
+    initializeAllocation(1);
+    EXPECT_EQ(drmMemoryOperationsHandler->decompress(nullptr, *allocationPtr), MemoryOperationsStatus::unsupported);
+}
+
 struct DrmMemoryOperationsHandlerBaseTestFlushDummyExec : public DrmMemoryOperationsHandlerBaseTest {
     using BaseClass = DrmMemoryOperationsHandlerBaseTest;
     void SetUp() override {
