@@ -205,12 +205,6 @@ bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *p
 }
 
 template <>
-void SysmanProductHelperHw<gfxProduct>::getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) {
-    fwTypes.clear();
-    return;
-}
-
-template <>
 int32_t SysmanProductHelperHw<gfxProduct>::getPowerMinLimit(const int32_t &defaultLimit) {
     return static_cast<int32_t>(defaultLimit * minPowerLimitFactor);
 }

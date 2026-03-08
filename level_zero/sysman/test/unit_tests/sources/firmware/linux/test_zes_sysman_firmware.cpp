@@ -106,6 +106,29 @@ TEST_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenFlashingUnkownFirmw
     delete ptestFirmwareImp;
 }
 
+TEST_F(ZesSysmanFirmwareFixture, GivenSurvivabilityModeWithNullKmdInterfaceWhenEnumeratingFirmwareThenFirmwareTypesFromFwUtilAreReturned) {
+    device->isDeviceInSurvivabilityMode = true;
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(nullptr);
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(mockSupportedFirmwareTypes.size(), count);
+
+    auto handles = getFirmwareHandles(count);
+    EXPECT_EQ(count, handles.size());
+    for (const auto &handle : handles) {
+        EXPECT_NE(nullptr, handle);
+    }
+}
+
+TEST_F(ZesSysmanFirmwareFixture, GivenNonSurvivabilityModeWithNullKmdInterfaceWhenEnumeratingFirmwareThenLateBindingTypesAreNotAdded) {
+    device->isDeviceInSurvivabilityMode = false;
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(nullptr);
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(mockSupportedFirmwareTypes.size(), count);
+}
+
 using SysmanSurvivabilityDeviceTest = ::testing::Test;
 struct dirent mockSurvivabilityDevEntries[] = {
     {0, 0, 0, 0, "0000:03:00.0"},

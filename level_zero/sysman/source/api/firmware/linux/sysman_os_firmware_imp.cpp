@@ -33,9 +33,11 @@ void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes,
     supportedFwTypes.clear();
     bool isDeviceInSurvivabilityMode = pLinuxSysmanImp->isDeviceInSurvivabilityMode();
 
-    if (isDeviceInSurvivabilityMode && pSysmanKmdInterface->isDeviceInFdoMode()) {
-        supportedFwTypes.push_back(fdoFwType);
-        return;
+    if (pSysmanKmdInterface != nullptr) {
+        if (isDeviceInSurvivabilityMode && pSysmanKmdInterface->isDeviceInFdoMode()) {
+            supportedFwTypes.push_back(fdoFwType);
+            return;
+        }
     }
 
     if (pFwInterface != nullptr) {
@@ -45,7 +47,9 @@ void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes,
             auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
             pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, supportedFwTypes);
             // get supported late binding fw handles
-            pSysmanKmdInterface->getLateBindingSupportedFwTypes(supportedFwTypes);
+            if (pSysmanKmdInterface != nullptr) {
+                pSysmanKmdInterface->getLateBindingSupportedFwTypes(supportedFwTypes);
+            }
         }
     }
 }
