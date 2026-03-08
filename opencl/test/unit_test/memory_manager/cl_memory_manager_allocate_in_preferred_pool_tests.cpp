@@ -21,7 +21,7 @@
 
 using namespace NEO;
 
-TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocatingSharedResourceCopyThenLocalMemoryAllocationIsReturnedAndGpuAddressIsInExpectedStandardHeap) {
+TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocatingSharedResourceCopyThenLocalMemoryAllocationIsReturnedAndGpuAddresIsInStandard64kHeap) {
     UltDeviceFactory deviceFactory{1, 0};
     HardwareInfo localPlatformDevice = {};
 
@@ -50,10 +50,8 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocatingSharedResourceCopyT
     EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
 
     auto gmmHelper = memoryManager.getGmmHelper(allocation->getRootDeviceIndex());
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getProductHelper();
-    auto expectedHeap = productHelper.is2MBLocalMemAlignmentEnabled() ? HeapIndex::heapStandard2MB : HeapIndex::heapStandard64KB;
-    EXPECT_LT(gmmHelper->canonize(memoryManager.getGfxPartition(allocation->getRootDeviceIndex())->getHeapBase(expectedHeap)), allocation->getGpuAddress());
-    EXPECT_GT(gmmHelper->canonize(memoryManager.getGfxPartition(allocation->getRootDeviceIndex())->getHeapLimit(expectedHeap)), allocation->getGpuAddress());
+    EXPECT_LT(gmmHelper->canonize(memoryManager.getGfxPartition(allocation->getRootDeviceIndex())->getHeapBase(HeapIndex::heapStandard64KB)), allocation->getGpuAddress());
+    EXPECT_GT(gmmHelper->canonize(memoryManager.getGfxPartition(allocation->getRootDeviceIndex())->getHeapLimit(HeapIndex::heapStandard64KB)), allocation->getGpuAddress());
     EXPECT_EQ(0llu, allocation->getGpuBaseAddress());
 
     memoryManager.freeGraphicsMemory(allocation);

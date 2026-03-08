@@ -68,7 +68,7 @@ HWTEST2_F(PvcAndLaterBufferTests, WhenAllocatingBufferThenGpuAddressIsFromHeapEx
     EXPECT_LT(gpuAddress, extendedHeapLimit);
 }
 
-HWTEST2_F(PvcAndLaterBufferTests, WhenAllocatingRtBufferThenGpuAddressFromExpectedStandardHeap, IsAtLeastXeHpcCore) {
+HWTEST2_F(PvcAndLaterBufferTests, WhenAllocatingRtBufferThenGpuAddressFromHeapStandard64Kb, IsAtLeastXeHpcCore) {
     if (is32bit || defaultHwInfo->capabilityTable.gpuAddressSpace != maxNBitValue(57)) {
         GTEST_SKIP();
     }
@@ -99,11 +99,9 @@ HWTEST2_F(PvcAndLaterBufferTests, WhenAllocatingRtBufferThenGpuAddressFromExpect
 
     auto gmmHelper = context.getDevice(0)->getGmmHelper();
     auto gpuAddress = gmmHelper->decanonize(graphicsAllocation->getGpuAddress());
-    auto &productHelper = context.getDevice(0)->getProductHelper();
-    auto expectedHeap = productHelper.is2MBLocalMemAlignmentEnabled() ? HeapIndex::heapStandard2MB : HeapIndex::heapStandard64KB;
-    auto standardHeapBase = context.memoryManager->getGfxPartition(0)->getHeapBase(expectedHeap);
-    auto standardHeapLimit = context.memoryManager->getGfxPartition(0)->getHeapLimit(expectedHeap);
+    auto standard64KbHeapBase = context.memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard64KB);
+    auto standard64KbHeapLimit = context.memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB);
 
-    EXPECT_GT(gpuAddress, standardHeapBase);
-    EXPECT_LT(gpuAddress, standardHeapLimit);
+    EXPECT_GT(gpuAddress, standard64KbHeapBase);
+    EXPECT_LT(gpuAddress, standard64KbHeapLimit);
 }

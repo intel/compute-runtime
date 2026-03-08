@@ -145,8 +145,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
 
         gfxPartition.heapFree(heap, ptrSmall, sizeSmall);
 
-        uint64_t addressOffset = isInternalHeapType ? (GfxPartition::internalFrontWindowPoolSize + heapGranularity) : (2 * heapGranularity);
-        uint64_t requiredStartAddress = gfxPartition.getHeapBase(heap) + addressOffset;
+        uint64_t requiredStartAddress = gfxPartition.getHeapBase(heap) + MemoryConstants::pageSize2M;
         auto ptrSmallWithHint = gfxPartition.heapAllocateWithStartAddressHint(requiredStartAddress, heap, sizeSmall);
         EXPECT_NE(ptrSmallWithHint, 0ull);
         EXPECT_EQ(ptrSmallWithHint, requiredStartAddress);
@@ -484,10 +483,7 @@ TEST_P(GfxPartitionTestForAllHeapTypes, givenHeapIndexWhenHeapAllocateWithStartA
 
     // Allocate majority of the heap
     sizeToAllocate = allocationSize;
-    const bool isInternalHeapType = heapIndex == HeapIndex::heapInternal || heapIndex == HeapIndex::heapInternalDeviceMemory;
-    const auto heapGranularity = (heapIndex == HeapIndex::heapStandard2MB) ? GfxPartition::heapGranularity2MB : GfxPartition::heapGranularity;
-    uint64_t addressOffset = isInternalHeapType ? (GfxPartition::internalFrontWindowPoolSize + heapGranularity) : (2 * heapGranularity);
-    auto requiredStartAddress = gfxPartition.getHeapBase(heapIndex) + addressOffset;
+    auto requiredStartAddress = gfxPartition.getHeapBase(heapIndex) + MemoryConstants::pageSize2M; // Offseting by 2MB to avoid front window
     auto address = gfxPartition.heapAllocateWithStartAddressHint(requiredStartAddress, heapIndex, sizeToAllocate);
     const size_t sizeAllocated = sizeToAllocate;
     EXPECT_EQ(requiredStartAddress, address);

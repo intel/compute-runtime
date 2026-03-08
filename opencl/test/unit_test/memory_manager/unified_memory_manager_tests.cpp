@@ -231,9 +231,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredW
     EXPECT_EQ(allocationSize, allocation->size);
     EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::localMemory);
 
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
-    auto expectedGpuAlignment = productHelper.is2MBLocalMemAlignmentEnabled() ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
-    EXPECT_EQ(alignUp(allocationSize, expectedGpuAlignment), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(AllocationType::writeCombined, gpuAllocation->getAllocationType());
 
     svmManager->freeSVMAlloc(ptr);
@@ -330,7 +328,6 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     auto allocationSize = 4096u;
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
     auto alignment = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().getSvmCpuAlignment();
-    auto force2MbAlignment = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().is2MBLocalMemAlignmentEnabled();
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -340,10 +337,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     EXPECT_EQ(allocationSize, allocation->size);
     EXPECT_EQ(mockContext.getDevice(0u), allocation->device->getSpecializedDevice<ClDevice>());
 
-    auto expectedGpuAlignment = force2MbAlignment ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
-    auto expectedCpuAlignment = force2MbAlignment ? MemoryConstants::pageSize2M : alignment;
-    EXPECT_EQ(alignUp(allocationSize, expectedGpuAlignment), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(allocationSize, expectedCpuAlignment), allocation->cpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, alignment), allocation->cpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(AllocationType::svmGpu, gpuAllocation->getAllocationType());
     EXPECT_EQ(AllocationType::svmCpu, allocation->cpuAllocation->getAllocationType());
@@ -364,7 +359,6 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     auto allocationSize = 4096u;
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
     auto alignment = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().getSvmCpuAlignment();
-    auto force2MbAlignment = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().is2MBLocalMemAlignmentEnabled();
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
@@ -373,10 +367,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     EXPECT_EQ(InternalMemoryType::sharedUnifiedMemory, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
 
-    auto expectedGpuAlignment = force2MbAlignment ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
-    auto expectedCpuAlignment = force2MbAlignment ? MemoryConstants::pageSize2M : alignment;
-    EXPECT_EQ(alignUp(allocationSize, expectedGpuAlignment), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(allocationSize, expectedCpuAlignment), allocation->cpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, alignment), allocation->cpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(AllocationType::svmGpu, gpuAllocation->getAllocationType());
     EXPECT_EQ(AllocationType::svmCpu, allocation->cpuAllocation->getAllocationType());
