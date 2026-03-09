@@ -791,9 +791,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
             EXPECT_EQ(initialCopyTaskCount + 3, copyQueueCsr->taskCount);
         }
     }
-    if (immCmdList->isWalkerPostSyncSkipEnabled) {
-        mainTaskCount++;
-    }
+
     auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
     zeDesc.type = ZE_IMAGE_TYPE_2D;

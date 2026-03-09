@@ -510,7 +510,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     } else {
         launchParams.skipInOrderNonWalkerSignaling = false;
     }
-    if (this->isWalkerPostSyncSkipEnabled && !event) {
+    if (this->isWalkerPostSyncSkipEnabled && !event && !launchParams.isKernelSplitOperation) {
         this->isPostSyncSkippedOnLatestInOrderOperation = true;
     }
 
