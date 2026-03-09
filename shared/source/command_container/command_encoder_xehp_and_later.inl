@@ -403,7 +403,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                  walkerCmd.getThreadGroupIdZDimension(),
                  idd.getThreadGroupDispatchSize());
 
-    EncodeDispatchKernel<Family>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup, threadGroupCount,
+    EncodeDispatchKernel<Family>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup,
                                                         args.dispatchInterface->getSlmTotalSize(),
                                                         args.dispatchInterface->getSlmPolicy());
 
@@ -1002,13 +1002,11 @@ uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwIn
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, const uint32_t threadGroupCount, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
+void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const uint32_t threadsPerDssCount = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
-    const uint32_t maxWorkGroupCountPerDss = threadsPerDssCount / threadsPerThreadGroup;
-    const uint32_t workGroupCountPerDssBasedOnWorkload = EncodeDispatchKernel<Family>::getThreadGroupCountPerSubslice(hwInfo, threadGroupCount);
-    const uint32_t workGroupCountPerDssRequired = std::min(workGroupCountPerDssBasedOnWorkload, maxWorkGroupCountPerDss);
+    const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
 
     slmTotalSize = EncodeDispatchKernel<Family>::alignPreferredSlmSize(slmTotalSize);
 
@@ -1020,7 +1018,7 @@ void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType
         break;
     case SlmPolicy::slmPolicyLargeSlm:
     default:
-        slmSize = slmTotalSize * workGroupCountPerDssRequired;
+        slmSize = slmTotalSize * workGroupCountPerDss;
         break;
     }
 
