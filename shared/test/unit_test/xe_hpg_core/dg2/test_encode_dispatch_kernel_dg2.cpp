@@ -36,48 +36,46 @@ DG2TEST_F(CommandEncodeStatesDg2Test, whenSelectingPreferredSlmSizePerDssThenUse
     hwInfo.gtSystemInfo.ThreadCount = 1024;
     hwInfo.gtSystemInfo.DualSubSliceCount = 8;
     hwInfo.gtSystemInfo.SubSliceCount = 2 * hwInfo.gtSystemInfo.DualSubSliceCount;
-    auto threadGroupCount = PreferredSlmTestValues<FamilyType>::defaultThreadGroupCount;
 
     {
         const uint32_t threadsPerThreadGroup = 7; // 18 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 2 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-        EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup, threadGroupCount, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
+        EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
         EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB, idd.getPreferredSlmAllocationSize());
     }
     {
         const uint32_t threadsPerThreadGroup = 8; // 16 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 2 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-        EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup, threadGroupCount, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
+        EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
         EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB, idd.getPreferredSlmAllocationSize());
     }
     {
         const uint32_t threadsPerThreadGroup = 9; // 14 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 2 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-        EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup, threadGroupCount, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
+        EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
         EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB, idd.getPreferredSlmAllocationSize());
     }
     {
         const uint32_t threadsPerThreadGroup = 50; // 2 groups will fit in one DSS
         const uint32_t slmSizePerThreadGroup = 16 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-        EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup, threadGroupCount, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
-        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB, idd.getPreferredSlmAllocationSize());
+        EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
+        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB, idd.getPreferredSlmAllocationSize());
     }
 }
 
 DG2TEST_F(CommandEncodeStatesDg2Test, GivenVariousSlmTotalSizesWhenSetPreferredSlmIsCalledThenCorrectValuesAreSet) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
-    auto threadGroupCount = PreferredSlmTestValues<FamilyType>::defaultThreadGroupCount;
     const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
-        {threadGroupCount, 0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
-        {threadGroupCount, 16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
-        {threadGroupCount, 32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
+        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
+        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
         // since we can't set 48KB as SLM size for workgroup, we need to ask for 64KB here.
-        {threadGroupCount, 64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB},
+        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64KB},
     };
 
     MockExecutionEnvironment executionEnvironment{};

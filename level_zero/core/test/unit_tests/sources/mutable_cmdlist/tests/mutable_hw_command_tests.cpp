@@ -515,7 +515,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     NEO::EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&controlIdd,
                                                                  neoDevice->getRootDeviceEnvironment(),
                                                                  walkerArgs.threadsPerThreadGroup,
-                                                                 walkerArgs.threadGroupCount,
                                                                  walkerArgs.slmTotalSize,
                                                                  static_cast<NEO::SlmPolicy>(walkerArgs.slmPolicy));
 
