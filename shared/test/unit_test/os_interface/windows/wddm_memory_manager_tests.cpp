@@ -736,6 +736,44 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
         }
     }
 
+    template <bool using32Bit>
+    void givenImageAllocationAndRequestedSizeIsHugeThenResultAllocationIsNotSplit() {
+        if constexpr (using32Bit) {
+            GTEST_SKIP();
+        } else {
+
+            DebugManagerStateRestore dbgRestore;
+            debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+            wddm->init();
+            wddm->mapGpuVaStatus = true;
+            VariableBackup<bool> restorer{&wddm->callBaseMapGpuVa, false};
+
+            memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
+            ImageDescriptor imgDesc = {};
+            imgDesc.imageWidth = 1;
+            imgDesc.imageHeight = 1;
+            imgDesc.imageType = ImageType::image2D;
+            auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+
+            AllocationData allocData;
+            allocData.allFlags = 0;
+            allocData.size = static_cast<size_t>(MemoryConstants::gigaByte * 13);
+            allocData.flags.allocateMemory = true;
+            allocData.flags.preferCompressed = true;
+            allocData.type = AllocationType::image;
+            allocData.imgInfo = &imgInfo;
+
+            MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+            auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+            EXPECT_NE(nullptr, allocation);
+            EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+            EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
+            EXPECT_EQ(1u, allocation->getNumGmms());
+            EXPECT_EQ(1u, wddm->createAllocationResult.called);
+            memoryManager->freeGraphicsMemory(allocation);
+        }
+    }
+
     DebugManagerStateRestore restore{};
     MockExecutionEnvironment executionEnvironment{};
 
@@ -2640,6 +2678,10 @@ TEST_F(WddmMemoryManagerSimpleTest, given32BitAllocationOfBufferWhenItIsAllocate
 
 TEST_F(WddmMemoryManagerSimpleTest, givenLocalMemoryAllocationAndRequestedSizeIsHugeThenResultAllocationIsSplit) {
     givenLocalMemoryAllocationAndRequestedSizeIsHugeThenResultAllocationIsSplit<is32bit>();
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenImageAllocationAndRequestedSizeIsHugeThenResultAllocationIsNotSplit) {
+    givenImageAllocationAndRequestedSizeIsHugeThenResultAllocationIsNotSplit<is32bit>();
 }
 
 HWTEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenCopyDebugSurfaceToMultiTileAllocationThenCallCopyMemoryToAllocation) {

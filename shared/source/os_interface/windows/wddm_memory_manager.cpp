@@ -1461,6 +1461,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     size_t alignment = 0;
     auto numBanks = allocationData.storageInfo.getNumBanks();
     bool singleBankAllocation = numBanks == 1;
+    bool isSplitAllowed = false;
     if (allocationData.type == AllocationType::image ||
         allocationData.type == AllocationType::sharedResourceCopy) {
         allocationData.imgInfo->useLocalMemory = true;
@@ -1470,7 +1471,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     } else {
         alignment = alignmentSelector.selectAlignment(allocationData.size, allocationData.type == AllocationType::svmGpu ? allocationData.alignment : std::numeric_limits<size_t>::max()).alignment;
         sizeAligned = alignUp(allocationData.size, alignment);
-
+        isSplitAllowed = true;
         if (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get()) {
             alignment = alignUp(alignment, MemoryConstants::pageSize2M);
             sizeAligned = alignUp(sizeAligned, MemoryConstants::pageSize2M);
@@ -1494,7 +1495,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     }
 
     const auto chunkSize = alignDown(getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd), alignment);
-    const size_t numGmms = static_cast<size_t>((static_cast<uint64_t>(sizeAligned) + chunkSize - 1) / chunkSize);
+    const size_t numGmms = isSplitAllowed ? static_cast<size_t>((static_cast<uint64_t>(sizeAligned) + chunkSize - 1) / chunkSize) : 1;
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, singleBankAllocation ? numGmms : numBanks,
                                                            allocationData.type, nullptr, 0, sizeAligned, nullptr, MemoryPool::localMemory, allocationData.flags.shareable, maxOsContextCount);
