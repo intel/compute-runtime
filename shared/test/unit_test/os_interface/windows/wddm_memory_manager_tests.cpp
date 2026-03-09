@@ -847,6 +847,23 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     EXPECT_EQ(0u, memoryManager->getUsedSystemMemorySize());
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGetCurrentUsedLocalMemorySizeThenReturnsZero) {
+    uint32_t rootDeviceIndex = 0u;
+    uint32_t deviceBitfield = 1u;
+
+    uint64_t usedMemory = memoryManager->getCurrentUsedLocalMemorySize(rootDeviceIndex, deviceBitfield);
+
+    EXPECT_EQ(0ULL, usedMemory);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGetCurrentUsedSystemSharedMemorySizeThenReturnsZero) {
+    uint32_t rootDeviceIndex = 0u;
+
+    uint64_t usedMemory = memoryManager->getCurrentUsedSystemSharedMemorySize(rootDeviceIndex);
+
+    EXPECT_EQ(0ULL, usedMemory);
+}
+
 class MockCreateWddmAllocationMemoryManager : public MockWddmMemoryManager {
   public:
     MockCreateWddmAllocationMemoryManager(NEO::ExecutionEnvironment &execEnv) : MockWddmMemoryManager(execEnv) {}

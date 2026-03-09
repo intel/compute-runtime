@@ -37,6 +37,8 @@ class OsAgnosticMemoryManager : public MemoryManager {
 
     uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override;
     uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
+    uint64_t getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
+    uint64_t getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) override;
     double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override;
 
     void turnOnFakingBigAllocations();

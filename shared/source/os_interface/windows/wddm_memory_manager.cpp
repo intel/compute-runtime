@@ -1578,6 +1578,14 @@ uint64_t WddmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_
     return singleRegionSize * DeviceBitfield(deviceBitfield).count();
 }
 
+uint64_t WddmMemoryManager::getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {
+    return 0;
+}
+
+uint64_t WddmMemoryManager::getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) {
+    return 0;
+}
+
 void WddmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()].get();
     auto debuggerL0 = static_cast<DebuggerL0 *>(rootDeviceEnvironment->debugger.get());

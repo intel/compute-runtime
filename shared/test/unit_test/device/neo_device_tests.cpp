@@ -561,6 +561,8 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
             return 0;
         };
         uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override { return 0; };
+        uint64_t getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override { return 0; };
+        uint64_t getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) override { return 0; };
         double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override { return 0; }
         AddressRange reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) override {
             return {};

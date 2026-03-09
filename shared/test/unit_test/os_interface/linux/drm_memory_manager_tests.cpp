@@ -10345,3 +10345,157 @@ TEST(DrmMemoryManagerReservedHandleDataTest, givenValidReservedHandleDataAndSucc
     EXPECT_GT(result, 0);
     EXPECT_NE(0u, mockFabric->handleToFdCalled);
 }
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenValidMemoryInfoWhenGetCurrentUsedLocalMemorySizeThenReturnsCorrectUsedMemory) {
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    auto mockIoctlHelper = new MockIoctlHelper(drm);
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    uint32_t deviceBitfield = 1;
+
+    uint64_t usedMemory = memoryManager->getCurrentUsedLocalMemorySize(mockRootDeviceIndex, deviceBitfield);
+
+    uint64_t expectedUsed = probedSizeRegionOne - unallocatedSizeRegionOne;
+    EXPECT_EQ(expectedUsed, usedMemory);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMultipleTilesWhenQueryingSpecificTileThenReturnsCorrectUsage) {
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    auto mockIoctlHelper = new MockIoctlHelper(drm);
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    uint32_t regionOneBitfield = (1 << 0);
+    uint64_t regionOneUsed = memoryManager->getCurrentUsedLocalMemorySize(mockRootDeviceIndex, regionOneBitfield);
+    EXPECT_EQ(probedSizeRegionOne - unallocatedSizeRegionOne, regionOneUsed);
+
+    uint32_t regionFourBitfield = (1 << 1);
+    uint64_t regionFourUsed = memoryManager->getCurrentUsedLocalMemorySize(mockRootDeviceIndex, regionFourBitfield);
+    EXPECT_EQ(probedSizeRegionFour - unallocatedSizeRegionFour, regionFourUsed);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenNullMemoryInfoWhenGetCurrentUsedLocalMemorySizeThenReturnsZero) {
+    // Create a custom IoctlHelper that returns nullptr for createMemoryInfo
+    class NullMemoryInfoIoctlHelper : public MockIoctlHelper {
+      public:
+        using MockIoctlHelper::MockIoctlHelper;
+
+        std::unique_ptr<MemoryInfo> createMemoryInfo() override {
+            return nullptr;
+        }
+    };
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    auto mockIoctlHelper = new NullMemoryInfoIoctlHelper(drm);
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    uint32_t deviceBitfield = 1;
+    uint64_t usedMemory = memoryManager->getCurrentUsedLocalMemorySize(mockRootDeviceIndex, deviceBitfield);
+
+    EXPECT_EQ(0ULL, usedMemory);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenValidSystemMemoryInfoWhenGetCurrentUsedSystemSharedMemorySizeThenReturnsUsedMemory) {
+    // Create a mock that simulates successful /proc/meminfo parsing
+    class MockDrmMemoryManagerWithMeminfo : public TestedDrmMemoryManager {
+      public:
+        using TestedDrmMemoryManager::TestedDrmMemoryManager;
+
+        bool getSystemMemoryUsageFromProcMeminfo(uint64_t &totalBytes, uint64_t &freeBytes) override {
+            totalBytes = 32 * MemoryConstants::gigaByte;
+            freeBytes = 16 * MemoryConstants::gigaByte;
+            return true;
+        }
+    };
+
+    auto memoryManager = std::make_unique<MockDrmMemoryManagerWithMeminfo>(true, false, false, *executionEnvironment);
+    uint64_t usedMemory = memoryManager->getCurrentUsedSystemSharedMemorySize(mockRootDeviceIndex);
+
+    EXPECT_EQ(16 * MemoryConstants::gigaByte, usedMemory);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenProcMeminfoReadFailsWhenGetCurrentUsedSystemSharedMemorySizeThenReturnsZero) {
+    // Create a mock that simulates failed /proc/meminfo reading
+    class MockDrmMemoryManagerWithMeminfoFailure : public TestedDrmMemoryManager {
+      public:
+        using TestedDrmMemoryManager::TestedDrmMemoryManager;
+
+        bool getSystemMemoryUsageFromProcMeminfo(uint64_t &totalBytes, uint64_t &freeBytes) override {
+            return false;
+        }
+    };
+
+    auto memoryManager = std::make_unique<MockDrmMemoryManagerWithMeminfoFailure>(true, false, false, *executionEnvironment);
+    uint64_t usedMemory = memoryManager->getCurrentUsedSystemSharedMemorySize(mockRootDeviceIndex);
+
+    EXPECT_EQ(0ULL, usedMemory);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenOpenFailureWhenReadingProcMeminfoThenReturnsFalse) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBackup(&SysCalls::sysCallsOpen, [](const char *, int) {
+        return -1;
+    });
+
+    const auto closeCallsBefore = SysCalls::closeFuncCalled;
+    const uint64_t usedMemory = memoryManager->getCurrentUsedSystemSharedMemorySize(mockRootDeviceIndex);
+
+    EXPECT_EQ(0ULL, usedMemory);
+    EXPECT_EQ(closeCallsBefore, SysCalls::closeFuncCalled);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenReadFailureWhenReadingProcMeminfoThenReturnsFalseAndClosesFile) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBackup(&SysCalls::sysCallsOpen, [](const char *, int) {
+        return SysCalls::fakeFileDescriptor;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsRead)> readBackup(&SysCalls::sysCallsRead, [](int, void *, size_t) {
+        return static_cast<ssize_t>(-1);
+    });
+
+    const auto closeCallsBefore = SysCalls::closeFuncCalled;
+    const uint64_t usedMemory = memoryManager->getCurrentUsedSystemSharedMemorySize(mockRootDeviceIndex);
+
+    EXPECT_EQ(0ULL, usedMemory);
+    EXPECT_EQ(closeCallsBefore + 1, SysCalls::closeFuncCalled);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenValidProcMeminfoDataWhenReadingProcMeminfoThenReturnsParsedValues) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBackup(&SysCalls::sysCallsOpen, [](const char *, int) {
+        return SysCalls::fakeFileDescriptor;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsRead)> readBackup(&SysCalls::sysCallsRead, [](int, void *buf, size_t count) {
+        static bool dataReturned = false;
+        constexpr char meminfoData[] =
+            "MemTotal:       1024 kB\n"
+            "MemAvailable:    640 kB\n"
+            "Buffers:          32 kB\n"
+            "Cached:          128 kB\n"
+            "SwapCached:        0 kB\n"
+            "MemFree:         256 kB\n"
+            "SReclaimable:     16 kB\n";
+
+        if (dataReturned) {
+            dataReturned = false;
+            return static_cast<ssize_t>(0);
+        }
+
+        const size_t dataSize = sizeof(meminfoData) - 1;
+        const size_t bytesToCopy = count < dataSize ? count : dataSize;
+        auto destination = reinterpret_cast<char *>(buf);
+        for (size_t i = 0; i < bytesToCopy; i++) {
+            destination[i] = meminfoData[i];
+        }
+        dataReturned = true;
+        return static_cast<ssize_t>(bytesToCopy);
+    });
+
+    const auto closeCallsBefore = SysCalls::closeFuncCalled;
+    const uint64_t usedMemory = memoryManager->getCurrentUsedSystemSharedMemorySize(mockRootDeviceIndex);
+
+    EXPECT_EQ((1024 - 640) * MemoryConstants::kiloByte, usedMemory);
+    EXPECT_EQ(closeCallsBefore + 1, SysCalls::closeFuncCalled);
+}

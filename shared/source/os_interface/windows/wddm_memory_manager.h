@@ -45,6 +45,8 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
 
     uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override;
     uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
+    uint64_t getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
+    uint64_t getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) override;
     double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override;
 
     bool tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle, uint32_t rootDeviceIndex, AllocationType type);

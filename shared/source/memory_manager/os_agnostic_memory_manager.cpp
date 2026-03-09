@@ -833,6 +833,14 @@ uint64_t OsAgnosticMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, u
     return (AubHelper::getPerTileLocalMemorySize(hwInfo, releaseHelper) * bitfield.count());
 }
 
+uint64_t OsAgnosticMemoryManager::getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {
+    return 0;
+}
+
+uint64_t OsAgnosticMemoryManager::getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) {
+    return 0;
+}
+
 double OsAgnosticMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) {
     return 0.8;
 }

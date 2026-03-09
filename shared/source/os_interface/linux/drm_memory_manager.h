@@ -58,6 +58,9 @@ class DrmMemoryManager : public MemoryManager {
     uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
     double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override;
 
+    uint64_t getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
+    uint64_t getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) override;
+
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
     void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
     void commonCleanup() override;
@@ -167,6 +170,9 @@ class DrmMemoryManager : public MemoryManager {
     uint32_t getDefaultDrmContextId(uint32_t rootDeviceIndex) const;
     OsContextLinux *getDefaultOsContext(uint32_t rootDeviceIndex) const;
     void makeAllocationResidentIfNeeded(GraphicsAllocation *allocation);
+
+    MOCKABLE_VIRTUAL bool getSystemMemoryUsageFromProcMeminfo(uint64_t &totalBytes, uint64_t &freeBytes);
+    static bool parseMeminfo(const std::string &content, uint64_t &totalBytes, uint64_t &freeBytes);
 
     StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties) override;
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;

@@ -122,6 +122,29 @@ TEST(MemoryManagerTest, whenGettingPreferredAllocationMethodThenNotDefinedIsRetu
     }
 }
 
+TEST(MemoryManagerTest, givenOsAgnosticMemoryManagerWhenGettingCurrentUsedLocalMemorySizeThenValidValueIsReturned) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+
+    constexpr uint32_t rootDeviceIndex = 0u;
+    constexpr uint32_t deviceBitfield = 0b1;
+
+    auto usedMemory = memoryManager.getCurrentUsedLocalMemorySize(rootDeviceIndex, deviceBitfield);
+
+    EXPECT_EQ(0u, usedMemory);
+}
+
+TEST(MemoryManagerTest, givenOsAgnosticMemoryManagerWhenGettingCurrentUsedSystemSharedMemorySizeThenValidValueIsReturned) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+
+    constexpr uint32_t rootDeviceIndex = 0u;
+
+    auto usedMemory = memoryManager.getCurrentUsedSystemSharedMemorySize(rootDeviceIndex);
+
+    EXPECT_EQ(0u, usedMemory);
+}
+
 TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivateTypesReturnTrue) {
     MockMemoryManager mockMemoryManager;
 

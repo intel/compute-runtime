@@ -48,8 +48,12 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 
+#include <array>
 #include <cstring>
+#include <fcntl.h>
 #include <memory>
+#include <sstream>
+#include <string>
 #include <sys/ioctl.h>
 namespace NEO {
 
@@ -1597,6 +1601,102 @@ double DrmMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIn
         return 0.95;
     }
     return 0.94;
+}
+
+uint64_t DrmMemoryManager::getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {
+    auto memoryInfo = getDrm(rootDeviceIndex).getIoctlHelper()->createMemoryInfo();
+    if (!memoryInfo) {
+        return 0;
+    }
+
+    // Get memory region for the specified deviceBitfield
+    const auto &region = memoryInfo->getMemoryRegion(deviceBitfield);
+
+    uint64_t usedMemory = region.probedSize - region.unallocatedSize;
+
+    return usedMemory;
+}
+
+uint64_t DrmMemoryManager::getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) {
+    uint64_t totalBytes = 0;
+    uint64_t freeBytes = 0;
+
+    if (!getSystemMemoryUsageFromProcMeminfo(totalBytes, freeBytes)) {
+        return 0;
+    }
+
+    return totalBytes - freeBytes;
+}
+
+bool DrmMemoryManager::getSystemMemoryUsageFromProcMeminfo(uint64_t &totalBytes, uint64_t &freeBytes) {
+    constexpr const char *procMemInfoPath = "/proc/meminfo";
+
+    int fileDescriptor = SysCalls::open(procMemInfoPath, O_RDONLY);
+    if (fileDescriptor < 0) {
+        return false;
+    }
+
+    std::string content;
+    std::array<char, 4096> buffer{};
+
+    ssize_t bytesRead = 0;
+    do {
+        bytesRead = SysCalls::read(fileDescriptor, buffer.data(), buffer.size());
+        if (bytesRead > 0) {
+            content.append(buffer.data(), static_cast<size_t>(bytesRead));
+        }
+    } while (bytesRead > 0);
+
+    SysCalls::close(fileDescriptor);
+
+    if (content.empty()) {
+        return false;
+    }
+
+    return parseMeminfo(content, totalBytes, freeBytes);
+}
+
+bool DrmMemoryManager::parseMeminfo(const std::string &content, uint64_t &totalBytes, uint64_t &freeBytes) {
+    constexpr size_t memTotalPrefixLen = 9;      // "MemTotal:"
+    constexpr size_t memAvailablePrefixLen = 13; // "MemAvailable:"
+    constexpr size_t unitBufferSize = 8;
+
+    bool foundTotal = false;
+    bool foundFree = false;
+    const char *contentPtr = content.c_str();
+
+    size_t pos = 0;
+    while (pos < content.length() && (!foundTotal || !foundFree)) {
+        size_t lineEnd = content.find('\n', pos);
+        if (lineEnd == std::string::npos) {
+            // Handle last line without newline
+            lineEnd = content.length();
+        }
+
+        const char *lineStart = contentPtr + pos;
+
+        if (strncmp(lineStart, "MemTotal:", memTotalPrefixLen) == 0) {
+            unsigned long long valueKb = 0;
+            char unit[unitBufferSize] = {};
+            if (sscanf(lineStart + memTotalPrefixLen, "%llu %7s", &valueKb, unit) == 2) {
+                UNRECOVERABLE_IF(strcmp(unit, "kB") != 0);
+                totalBytes = valueKb * 1024;
+                foundTotal = true;
+            }
+        } else if (strncmp(lineStart, "MemAvailable:", memAvailablePrefixLen) == 0) {
+            unsigned long long valueKb = 0;
+            char unit[unitBufferSize] = {};
+            if (sscanf(lineStart + memAvailablePrefixLen, "%llu %7s", &valueKb, unit) == 2) {
+                UNRECOVERABLE_IF(strcmp(unit, "kB") != 0);
+                freeBytes = valueKb * 1024;
+                foundFree = true;
+            }
+        }
+
+        pos = lineEnd + 1;
+    }
+
+    return foundTotal && foundFree;
 }
 
 AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {

@@ -197,6 +197,9 @@ class MemoryManager {
     virtual uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) = 0;
     virtual double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) = 0;
 
+    virtual uint64_t getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) = 0;
+    virtual uint64_t getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) = 0;
+
     uint64_t getMaxApplicationAddress() { return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress; };
     MOCKABLE_VIRTUAL uint64_t getInternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory);
     uint64_t getExternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory);
