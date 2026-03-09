@@ -1,0 +1,508 @@
+# Copyright (C) 2026 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+
+name: "[Bug Report] Windows GPU Driver Issue"
+description: "Report a GPU driver issue on Windows"
+labels: ['Type: Bug', 'OS: Windows', 'Info: Awaiting Triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > Fields marked with asterisk (*) are required.
+        > Please ensure you're using the latest driver version before submitting.
+        > For submission guidelines, see the [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/ISSUE_SUBMISSION_GUIDE.md).
+        
+        > [!NOTE]
+        > Issue titles will be updated by project maintainers to include an internal tracking number.
+        > Example: "TDR error on application launch" -> "[GSD-9582] TDR error on application launch"
+        
+        ---
+        
+  - type: checkboxes
+    id: pre-submission-checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I am using the latest GPU driver version ([download center](https://www.intel.com/content/www/us/en/search.html#sortCriteria=%40lastmodifieddt%20descending&f-downloadtype=Drivers&cf-tabfilter=Downloads&cf-downloadsppth=Graphics))
+          required: false
+        - label: I have searched for similar issues and found none
+          required: false
+          
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        # System Information
+        
+  - type: input
+    id: gpu-hardware
+    attributes:
+      label: GPU Hardware
+      description: "Specify your Intel GPU model name"
+      placeholder: "Example: Intel Arc A770, Intel Data Center GPU Max 1550"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: gpu-hardware-info
+    attributes:
+      label: GPU Detailed Information
+      description: |
+        Paste the detailed GPU information output from PowerShell command.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > Provide detailed GPU information including driver version, PCI device ID, and adapter specifications.
+        >
+        > **Command to run:**
+        > ```powershell
+        > Get-WmiObject Win32_VideoController | Where-Object {$_.Name -like "*Intel*"} | Select-Object Name, DriverVersion, DriverDate, VideoProcessor, AdapterRAM, PNPDeviceID | Format-List
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```powershell
+        PS> Get-WmiObject Win32_VideoController | Where-Object {$_.Name -like "*Intel*"} | Select-Object Name, DriverVersion, DriverDate, VideoProcessor, AdapterRAM, PNPDeviceID | Format-List
+        
+        Name          : Intel(R) Arc(TM) A770 Graphics
+        DriverVersion : 31.0.101.5333
+        DriverDate    : 20241115000000.000000-000
+        VideoProcessor: Intel Arc A770
+        AdapterRAM    : 17179869184
+        PNPDeviceID   : PCI\VEN_8086&DEV_56A0&SUBSYS_56A08086&REV_08\3&11583659&0&10
+        ```
+        
+    validations:
+      required: true
+   
+  - type: textarea
+    id: driver-installation
+    attributes:
+      label: Driver Installation Details
+      description: "Describe how you installed the GPU driver. Include installation method, commands, or guides you followed."
+      placeholder: |
+        Please specify:
+        1. Installation method (e.g., Intel Driver & Support Assistant, Manual download, Windows Update, etc.)
+        2. Specific installation steps or source
+        
+        Example:
+        
+        - Installation method: Manual download from Intel Download Center
+        - Downloaded from: https://www.intel.com/content/www/us/en/download/785597/intel-arc-graphics-windows.html
+        - Followed guide: [URL if applicable]
+        - Previous driver uninstalled with: DDU (Display Driver Uninstaller)
+    validations:
+      required: true
+      
+  - type: textarea
+    id: windows-build-info
+    attributes:
+      label: Windows Build Information
+      description: |
+        Paste the Windows version and build information.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > Provide detailed Windows version information including product name, version, and build number.
+        >
+        > **Command to run:**
+        > ```powershell
+        > Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, OsHardwareAbstractionLayer | Format-List
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```powershell
+        PS> Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, OsHardwareAbstractionLayer | Format-List
+        
+        WindowsProductName        : Windows 11 Pro
+        WindowsVersion            : 23H2
+        OsHardwareAbstractionLayer: 10.0.22631.3880
+        ```
+    validations:
+      required: true
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        ## Issue Description
+        
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: "What is currently happening? Describe the issue in detail."
+      placeholder: |
+        Example:
+        
+        The driver causes a TDR (Timeout Detection and Recovery) error when...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: "What should happen instead?"
+      placeholder: |
+        Example:
+        
+        The application should launch without crashes...
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: reproduction-rate
+    attributes:
+      label: Reproduction Rate
+      description: "How often does this issue occur?"
+      options:
+        - "Always reproduces - 100%"
+        - "Frequently reproduces ~ 75% - 99%"
+        - "Sometimes reproduces ~ 50% - 74%"
+        - "Rarely reproduces ~ 26% - 49%"
+        - "Sporadic ~ 0% - 25%"
+      default: 0
+    validations:
+      required: true
+      
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: "Provide clear, step-by-step instructions to replicate the issue"
+      placeholder: |
+        Example:
+        
+        1. Install driver version X.X.X
+        2. Launch application Y
+        3. Perform action Z
+        4. Observe the crash/error/TDR
+    validations:
+      required: true
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        ## Regression Information
+        
+  - type: markdown
+    attributes:
+      value: |
+        > **What is a regression?** A regression occurs when functionality that previously worked stops working in a newer version. Identifying when the issue first appeared helps narrow down the root cause.
+        
+  - type: checkboxes
+    id: is-regression
+    attributes:
+      label: Is this a regression?
+      description: "Check this box if this issue is a regression (previously worked, now broken)"
+      options:
+        - label: Yes, this is a regression - functionality that previously worked is now broken
+          required: false
+        
+  - type: input
+    id: last-working-version
+    attributes:
+      label: Last Known Working Driver Version
+      description: "**Required if regression:** Specify the youngest/most recent driver version that worked correctly"
+      placeholder: "Example: 31.0.101.5186"
+      
+  - type: input
+    id: first-failing-version
+    attributes:
+      label: First Known Failing Driver Version
+      description: "**Required if regression:** Specify the oldest driver version where the issue first appeared"
+      placeholder: "Example: 31.0.101.5333"
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        ## Diagnostics & Logs
+        
+  - type: textarea
+    id: api-logs
+    attributes:
+      label: API Call Logs
+      description: |
+        Attach relevant API logs (OpenCL, Level Zero). GitHub does not support all file types - if your log file is rejected, rename it to `.txt` or compress it into a `.zip` archive before attaching.
+        
+        <details>
+        <summary>Click to view tools and instructions</summary>
+        
+        <br>
+        
+        > Use these tools to capture API calls for debugging:
+        >
+        > - **For OpenCL:** [CLIntercept](https://github.com/intel/opencl-intercept-layer)
+        > - **For Level Zero and OpenCL:** [Unitrace](https://github.com/intel/pti-gpu/tree/master/tools/unitrace)
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```
+        <<<< [21183862358000] zeCommandListAppendMemoryCopy [1600 ns] -> ZE_RESULT_SUCCESS(0x0)
+        >>>> [21183862359300] zeEventHostSynchronize: hEvent = 0x6b61fd98 timeout = 0xffffffff
+        <<<< [21183862428000] zeEventHostSynchronize [67700 ns] -> ZE_RESULT_SUCCESS(0x0)
+        >>>> [21183862430000] zeMemFreeExt: hContext = 0x40f3ca8 pMemFreeDesc = 0x7e97e690 ptr = 0x8360000
+        <<<< [21183862435300] zeMemFreeExt [4100 ns] -> ZE_RESULT_SUCCESS(0x0)
+        >>>> [21183862553900] zeCommandListHostSynchronize: hCommandList = 0x51610e48 timeout = 0xffffffff
+        <<<< [21183862559000] zeCommandListHostSynchronize [600 ns] -> ZE_RESULT_SUCCESS(0x0)
+        ```
+        
+        Paste relevant excerpts above. Attaching the complete log file is strongly recommended - rename to `.txt` or compress into a `.zip` if GitHub rejects the file type.
+        
+  - type: textarea
+    id: event-viewer-logs
+    attributes:
+      label: Windows Event Viewer Logs
+      description: |
+        Paste relevant Application or System logs from Event Viewer.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > Include logs related to display driver errors, TDRs, or application crashes. Please also export and attach the complete event logs - note that `.evtx` files are not supported by GitHub; rename to `.txt` or compress into a `.zip` before attaching.
+        >
+        > **To view events manually:**
+        > 1. Open Event Viewer (Win+R -> eventvwr.msc)
+        > 2. Navigate to Windows Logs -> Application and System
+        > 3. Look for errors/warnings related to display driver, igfx, or Intel Graphics
+        >
+        > **Common Event IDs:**
+        > - 4101: Display driver stopped responding (TDR)
+        > - 1000, 1001: Application crashes
+        > - Other Intel Graphics related events
+        >
+        > **Export System events (last 12 hours):**
+        > ```powershell
+        > wevtutil epl System System_Events.evtx "/q:*[System[TimeCreated[timediff(@SystemTime) <= 43200000]]]"
+        > ```
+        >
+        > **Export Application events (last 12 hours):**
+        > ```powershell
+        > wevtutil epl Application Application_Events.evtx "/q:*[System[TimeCreated[timediff(@SystemTime) <= 43200000]]]"
+        > ```
+        >
+        > **Export logs from specific time range:**
+        > ```powershell
+        > $startTime = "2026-02-17T14:30:00"
+        > $endTime = "2026-02-17T15:45:00"
+        > wevtutil epl System System_Events.evtx "/q:*[System[TimeCreated[@SystemTime>='$startTime' and @SystemTime<='$endTime']]]"
+        > wevtutil epl Application Application_Events.evtx "/q:*[System[TimeCreated[@SystemTime>='$startTime' and @SystemTime<='$endTime']]]"
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```powershell
+        PS> wevtutil epl System System_Events.evtx "/q:*[System[TimeCreated[timediff(@SystemTime) <= 43200000]]]"
+        PS> wevtutil epl Application Application_Events.evtx "/q:*[System[TimeCreated[timediff(@SystemTime) <= 43200000]]]"
+        ```
+        
+        Paste relevant event details here (Source, Event ID, Description). Attaching the complete log file is strongly recommended - `.evtx` files are not supported by GitHub; rename to `.txt` or compress into a `.zip` before attaching.
+      
+  - type: textarea
+    id: crash-dumps
+    attributes:
+      label: Crash Dumps / Minidumps
+      description: |
+        Provide crash dump information or attach dump files if applicable. GitHub does not support `.dmp` files - compress the dump into a `.zip` archive before attaching.
+        
+        <details>
+        <summary>Click to view crash dump locations and instructions</summary>
+        
+        <br>
+        
+        > If a crash occurred, locate and attach dump files or provide analysis output. GitHub does not support `.dmp` files directly - compress into a `.zip` before attaching.
+        >
+        > **Crash dump locations:**
+        > - User dumps: `%LocalAppData%\CrashDumps`
+        > - System minidumps: `C:\Windows\Minidump`
+        > - Application-specific dumps (check application documentation)
+        >
+        > **Tip:** If you have WinDbg installed, you can analyze dumps with `!analyze -v` and provide the output.
+        
+        </details>
+      placeholder: |
+        Example:
+        
+        Provide WinDbg !analyze -v output, or attach the `.dmp` file compressed as a `.zip`.
+        
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        ## Reproducer Information
+        
+  - type: textarea
+    id: source-code
+    attributes:
+      label: Source Code / Reproducer
+      description: "Provide source code, command line for compiling, or binary reproducer"
+      placeholder: |
+        Example:
+        
+        - GitHub repository link: https://github.com/...
+        - Compilation command: cl.exe myapp.c /I"C:\path\to\OpenCL\include" /link OpenCL.lib
+        - Minimal code snippet:
+        ```c
+        #include <CL/cl.h>
+        // minimal reproducer
+        ```
+        - Link to binary reproducer: [URL]
+        
+  - type: textarea
+    id: command-line
+    attributes:
+      label: Command Line / Application Details
+      description: "How to run the reproducer or application that exhibits the issue"
+      placeholder: |
+        Example:
+        
+        ```cmd
+        myapp.exe --option1 --option2
+        ```
+        
+        Or application installation/launch steps
+        
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        ## Additional Information
+        
+  - type: textarea
+    id: oneapi-version
+    attributes:
+      label: oneAPI Version (if applicable)
+      description: |
+        Provide Intel oneAPI version information if you are using it.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > Check your Intel oneAPI DPC++/C++ Compiler version.
+        >
+        > **Command to run:**
+        > ```cmd
+        > icpx --version
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```cmd
+        C:\> icpx --version
+        Intel(R) oneAPI DPC++/C++ Compiler 2025.0.3 (2025.0.3.20241206)
+        Target: x86_64-pc-windows-msvc
+        Thread model: posix
+        ```
+        
+  - type: textarea
+    id: system-info
+    attributes:
+      label: System Configuration
+      description: |
+        Provide basic system information (CPU, RAM, motherboard).
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > Collect system hardware information including processor, memory, and motherboard details.
+        >
+        > **Command to run:**
+        > ```powershell
+        > Get-ComputerInfo | Select-Object CsProcessors, CsTotalPhysicalMemory, CsManufacturer, CsModel | Format-List
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```powershell
+        PS> Get-ComputerInfo | Select-Object CsProcessors, CsTotalPhysicalMemory, CsManufacturer, CsModel | Format-List
+        
+        CsProcessors           : {Intel(R) Core(TM) i9-13900K}
+        CsTotalPhysicalMemory : 34359738368
+        CsManufacturer        : ASUS
+        CsModel               : ROG MAXIMUS Z790 HERO
+        ```
+        
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Video
+      description: "If applicable, attach screenshots or video demonstrating the issue"
+      placeholder: |
+        Example:
+        
+        Drag and drop images or video files here
+      
+  - type: textarea
+    id: intel-ssu-report
+    attributes:
+      label: Intel System Support Utility Report
+      description: |
+        Attach Intel SSU report for comprehensive system information.
+        
+        <details>
+        <summary>Click to view instructions</summary>
+        
+        <br>
+        
+        > Intel System Support Utility generates a comprehensive system report including hardware, drivers, and configuration details (highly recommended for complex issues).
+        >
+        > **Download from:**
+        > - https://www.intel.com/content/www/us/en/support/articles/000057926/memory-and-storage.html
+        >
+        > Run the utility and attach the generated report file here. If GitHub rejects the file type, compress it into a `.zip` before attaching.
+        
+        </details>
+      placeholder: |        
+        Attach the Intel SSU generated report file here. If GitHub rejects the file type, compress it into a `.zip` before attaching.
+        
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Notes
+      description: "Any other relevant information or context"
+      placeholder: |
+        Example:
+        
+        Additional notes, workarounds attempted, related issues, etc.

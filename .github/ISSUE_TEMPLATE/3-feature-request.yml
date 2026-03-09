@@ -1,0 +1,294 @@
+# Copyright (C) 2026 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+
+name: "[Feature Request]"
+description: "Propose a new feature or enhancement"
+labels: ['Type: Feature Request', 'Info: Awaiting Triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > Fields marked with asterisk (*) are required.
+        > Please search existing issues to avoid duplicates.
+        > For submission guidelines, see the [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/ISSUE_SUBMISSION_GUIDE.md).
+        
+        > [!NOTE]
+        > Issue titles will be updated by project maintainers to include an internal tracking number.
+        > Example: "Add support for new Level Zero extension" -> "[GSD-9163] Add support for new Level Zero extension"
+        
+        ---
+        
+  - type: checkboxes
+    id: pre-submission-checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched for similar feature requests and found none
+          required: false
+        - label: This feature request includes a clear description of the proposed functionality
+          required: false
+          
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        # Feature Overview
+        
+  - type: input
+    id: feature-title
+    attributes:
+      label: Feature Title
+      description: "Provide a concise title for the feature request"
+      placeholder: "Example: Add support for ray tracing in Level Zero backend"
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: feature-category
+    attributes:
+      label: Feature Category
+      description: "Select the category that best describes this feature request"
+      options:
+        - API Support
+        - Performance
+        - Functionality
+        - Tools
+        - Documentation
+        - Other
+      default: 0
+    validations:
+      required: true
+      
+  - type: input
+    id: other-category
+    attributes:
+      label: Other Category
+      description: "Specify the category if you selected 'Other' above"
+      placeholder: "Example: Build System Improvement"
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        # System Information (if applicable)
+        
+  - type: input
+    id: gpu-hardware
+    attributes:
+      label: GPU Hardware
+      description: "Specify target Intel GPU hardware for this feature, if applicable"
+      placeholder: "Example: Intel Arc A-series, All Intel GPUs, Intel Iris Xe"
+      
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating System
+      description: "Select the target operating system for this feature"
+      options:
+        - All
+        - Windows
+        - Linux
+        - Other
+      default: 0
+      
+  - type: input
+    id: other-os
+    attributes:
+      label: Other Operating System
+      description: "Specify the operating system if you selected 'Other' above"
+      placeholder: "Example: macOS, FreeBSD"
+      
+  - type: dropdown
+    id: api-technology
+    attributes:
+      label: API
+      description: "Select the API technology this feature relates to"
+      options:
+        - Level Zero
+        - OpenCL
+        - All
+      default: 0
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        # Feature Description
+        
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: "Describe the problem this feature solves and current limitations"
+      placeholder: |
+        Example:
+        
+        Currently, users cannot...
+        This limitation prevents...
+        The absence of this feature causes...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: "Describe the feature you'd like to see implemented with expected functionality"
+      placeholder: |
+        Example:
+        
+        I propose adding...
+        The feature would work by...
+        Users would be able to...
+        Expected behavior:
+        - Capability 1
+        - Capability 2
+        - Capability 3
+    validations:
+      required: true
+      
+  - type: textarea
+    id: expected-benefits
+    attributes:
+      label: Expected Benefits
+      description: "Describe the benefits this feature would provide and who would benefit"
+      placeholder: |
+        Example:
+        
+        This feature would:
+        - Improve performance by...
+        - Enable developers to...
+        - Provide better compatibility with...
+        
+        Target users: Game developers, compute workload users, etc.
+    validations:
+      required: true
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        # Use Cases & Examples
+        
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Case Scenarios
+      description: "Provide concrete examples of how this feature would be used"
+      placeholder: |
+        Example:
+        
+        Use Case 1: A developer working on [scenario] would...
+        Use Case 2: Applications requiring [functionality] could...
+        Use Case 3: When [situation], users would benefit by...
+        
+  - type: textarea
+    id: code-examples
+    attributes:
+      label: Code Examples / API Design
+      description: "Provide example code or pseudocode showing how the feature would be used"
+      placeholder: |
+        Example:
+        
+        ```cpp
+        // Example usage:
+        zeSetNewFeature(device, ZE_NEW_FEATURE_ENABLE);
+        ```
+        
+        or
+        
+        Proposed API signature:
+        ```c
+        int newFunction(param1, param2, ...);
+        ```
+        
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        # Alternatives & Workarounds
+        
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives & Workarounds
+      description: "Describe alternative approaches or current workarounds and their limitations"
+      placeholder: |
+        Example:
+        
+        Alternative 1: [description] - limitation: [reason]
+        Current workaround: [description] - limitation: [reason]
+        
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        # Priority & Impact
+        
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority / Importance
+      description: "From your perspective, how important is this feature?"
+      options:
+        - Critical - Blocks major functionality
+        - High - Significantly improves workflow
+        - Medium - Nice to have enhancement
+        - Low - Minor convenience improvement
+      default: 2
+      
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Estimated Impact
+      description: "How many users/applications would benefit from this feature?"
+      options:
+        - Wide - Affects many users/applications
+        - Moderate - Affects a specific subset of users
+        - Narrow - Specialized use case
+        - Unknown
+      default: 3
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        # Additional Information
+        
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: "Provide related standards, specifications, links, or documentation"
+      placeholder: |
+        Example:
+        
+        - OpenCL/Level Zero extensions: [name]
+        - Related discussion/issue: [URL]
+        - Documentation: [URL]
+        
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Notes
+      description: "Provide any other relevant information, screenshots, diagrams, or context"
+      placeholder: |
+        Example:
+        
+        Additional notes, mockups, performance data, etc.

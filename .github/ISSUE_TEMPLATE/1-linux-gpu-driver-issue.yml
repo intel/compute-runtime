@@ -1,0 +1,673 @@
+# Copyright (C) 2026 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+
+name: "[Bug Report] Linux GPU Driver Issue"
+description: "Report a GPU driver issue on Linux"
+labels: ['Type: Bug', 'OS: Linux', 'Info: Awaiting Triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > Fields marked with asterisk (*) are required.
+        > Please ensure you're using the latest driver version before submitting.
+        > For submission guidelines, see the [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/ISSUE_SUBMISSION_GUIDE.md).
+        
+        > [!NOTE]
+        > Issue titles will be updated by project maintainers to include an internal tracking number.
+        > Example: "Driver crash when running clinfo" -> "[GSD-9247] Driver crash when running clinfo"
+        
+        ---
+        
+  - type: checkboxes
+    id: pre-submission-checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I am using the latest GPU driver version ([releases](https://github.com/intel/compute-runtime/releases))
+          required: false
+        - label: I have searched for similar issues and found none
+          required: false
+          
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        # System Information
+        
+  - type: input
+    id: gpu-hardware
+    attributes:
+      label: GPU Hardware
+      description: "Specify your Intel GPU model name"
+      placeholder: "Example: Intel Arc Pro B60"
+    validations:
+      required: true
+
+  - type: textarea
+    id: dri-devices
+    attributes:
+      label: DRI Devices Information
+      description: |
+        Paste the command output showing your DRI devices and PCI address mapping.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+
+        > Identify your GPU's PCI address to retrieve detailed hardware information in the next step. This command shows available DRI devices and their PCI address mapping.
+        >
+        > **Command to run:**
+        > ```bash
+        > ls -ls /dev/dri/*
+        > ```
+        >
+        > **Alternative for more details:**
+        > ```bash
+        > ls -la /dev/dri/by-path/
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```
+        $ ls -ls /dev/dri/*
+        0 crw-rw---- 1 root video  226,   0 Feb 17 08:22 /dev/dri/card0
+        0 crw-rw---- 1 root render 226, 128 Feb 17 08:22 /dev/dri/renderD128
+        
+        $ ls -la /dev/dri/by-path/
+        total 0
+        0 lrwxrwxrwx 1 root root  8 Feb 17 08:22 pci-0000:03:00.0-card -> ../card0
+        0 lrwxrwxrwx 1 root root 13 Feb 17 08:22 pci-0000:03:00.0-render -> ../renderD128
+        
+        Note: The PCI address (e.g., 0000:03:00.0) will be needed for the next field.
+        ```
+    validations:
+      required: true
+      
+  - type: textarea
+    id: gpu-hardware-info
+    attributes:
+      label: GPU Detailed Information (lspci output)
+      description: |
+        Paste the detailed GPU information output from lspci command.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > Use the PCI address from the DRI devices output above. Replace `0000:03:00.0` with your actual PCI address.
+        >
+        > **Command to run:**
+        > ```bash
+        > lspci -vvv -k -s 0000:03:00.0
+        > ```
+        >
+        > **If you need sudo to see full capabilities:**
+        > ```bash
+        > sudo lspci -vvv -k -s 0000:03:00.0
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```
+        $ lspci -vvv -k -s 0000:03:00.0
+        03:00.0 VGA compatible controller: Intel Corporation Device e211 (prog-if 00 [VGA controller])
+                Subsystem: Intel Corporation Device 1115
+                Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+                Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+                Latency: 0
+                Interrupt: pin ? routed to IRQ 202
+                IOMMU group: 19
+                Region 0: Memory at 4e0c000000 (64-bit, prefetchable) [size=16M]
+                Region 2: Memory at 4000000000 (64-bit, prefetchable) [size=32G]
+                Expansion ROM at <ignored> [disabled]
+                Capabilities: [40] Vendor Specific Information: Len=0c <?>
+                Capabilities: [70] Express (v2) Endpoint, MSI 00
+                ...
+                Kernel driver in use: xe
+                Kernel modules: xe
+        ```
+    validations:
+      required: true
+      
+  - type: input
+    id: driver-version
+    attributes:
+      label: Driver Version
+      description: "Current GPU driver version. This is critical for troubleshooting."
+      placeholder: "Example: 26.01.36711.4"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: installed-packages
+    attributes:
+      label: Installed GPU Driver Packages
+      description: |
+        List all installed packages related to Intel GPU drivers and compute runtimes.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > This information is optional but helpful for diagnosing dependency issues.
+        >
+        > **For Debian/Ubuntu systems:**
+        > ```bash
+        > sudo dpkg --list | grep -iE "igc|gmm|opencl|level-zero|fc|level_zero|ocloc|libze"
+        > ```
+        >
+        > **For RPM-based systems (RHEL/SLES/Fedora):**
+        > ```bash
+        > sudo rpm -qa | grep -iE "igc|gmm|opencl|level-zero|level_zero|ocloc|libze"
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```
+        $ sudo dpkg --list | grep -iE "igc|gmm|opencl|level-zero|fc|level_zero|ocloc|libze"
+        ii  clinfo                                                      3.0.23.01.25-1build1                     amd64        Query OpenCL system information
+        ii  intel-ocloc                                                 26.01.36711.4-1~24.04~ppa1               amd64        Tool for managing Intel Compute GPU device binary format
+        ii  intel-opencl-icd                                            26.01.36711.4-1~24.04~ppa1               amd64        Intel graphics compute runtime for OpenCL
+        ii  libigc2                                                     2.27.10-1222~24.04                       amd64        Core libraries for Intel(R) Graphics Compiler for OpenCL(TM)
+        ii  libigdfcl2                                                  2.27.10-1222~24.04                       amd64        OpenCL library for Intel(R) Graphics Compiler for OpenCL(TM)
+        ii  libigdgmm12:amd64                                           22.9.0-1~24.04~ppa1                      amd64        Intel Graphics Memory Management Library -- shared library
+        ii  libze-dev:amd64                                             1.26.2-1~24.04~ppa1                      amd64        oneAPI Level Zero -- development files
+        ii  libze-intel-gpu-raytracing                                  1.2.1-0ubuntu1~24.04~ppa1                amd64        Level Zero Ray Tracing Support library
+        ii  libze-intel-gpu1                                            26.01.36711.4-1~24.04~ppa1               amd64        Intel oneAPI L0 support implementation for Intel GPUs -- shared library
+        ii  libze1:amd64                                                1.26.2-1~24.04~ppa1                      amd64        oneAPI Level Zero -- share libraries
+        ii  ocl-icd-libopencl1:amd64                                    2.3.2-1build1                            amd64        Generic OpenCL ICD Loader
+        ```
+
+  - type: textarea
+    id: driver-installation
+    attributes:
+      label: Driver Installation Details
+      description: "Describe how you installed the GPU driver. Include installation method, commands, repository URLs, or guides you followed."
+      placeholder: |
+        Please specify:
+        1. Installation method (e.g., Official Intel repository, Distribution repository, Built from source, DKMS, Docker, Pre-installed, etc.)
+        2. Specific installation steps or commands
+        
+        Example:
+        
+        - Installation method: Official Intel repository
+        - Added Intel repository: https://apt.repos.intel.com/...
+        - Installed packages: sudo apt-get install -y libze-intel-gpu1 libze1 intel-metrics-discovery intel-opencl-icd clinfo intel-gsc
+        - Followed guide: https://dgpu-docs.intel.com/driver/client/overview.html#ubuntu-latest
+        - Custom kernel parameters: i915.enable_guc=3
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: linux-distro
+    attributes:
+      label: Linux Distribution
+      description: "Select your Linux distribution"
+      options:
+        - Ubuntu 24.04 LTS
+        - Ubuntu 22.04 LTS
+        - Fedora / RHEL
+        - SLES / openSUSE
+        - Arch Linux
+        - Other (please specify below)
+      default: 0
+    validations:
+      required: true
+      
+  - type: input
+    id: other-distro
+    attributes:
+      label: Other Linux Distribution
+      description: "If you selected 'Other', please specify your distribution and version"
+      placeholder: "Example: Debian 12, CentOS Stream 9, Rocky Linux 9.3"
+      
+  - type: textarea
+    id: kernel-version
+    attributes:
+      label: Kernel Version & Boot Parameters
+      description: |
+        Paste kernel version, boot parameters, and loaded modules information.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > Boot parameters can affect driver behavior. Collect kernel version, boot command line parameters, and loaded modules.
+        >
+        > **Kernel version:**
+        > ```bash
+        > uname -r
+        > ```
+        >
+        > **Boot command line parameters:**
+        > ```bash
+        > cat /proc/cmdline
+        > ```
+        >
+        > **Check loaded modules:**
+        > ```bash
+        > lsmod | grep -E 'i915|xe'
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```
+        $ uname -r
+        6.5.0-35-generic
+        
+        $ cat /proc/cmdline
+        BOOT_IMAGE=/boot/vmlinuz root=/dev/sda1 ro quiet splash i915.enable_guc=3
+        
+        $ lsmod | grep -E 'i915|xe'
+        xe                   3825664  3
+        drm_gpuvm              45056  1 xe
+        gpu_sched              65536  1 xe
+        drm_buddy              24576  1 xe
+        drm_ttm_helper         16384  1 xe
+        ttm                   118784  2 drm_ttm_helper,xe
+        drm_exec               12288  2 drm_gpuvm,xe
+        drm_suballoc_helper    16384  1 xe
+        drm_display_helper    282624  1 xe
+        video                  77824  1 xe
+        ```
+    validations:
+      required: true
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        ## Issue Description
+        
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: "What is currently happening? Describe the issue in detail."
+      placeholder: |
+        Example:
+        
+        The driver crashes when launching the application...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: "What should happen instead?"
+      placeholder: |
+        Example:
+        
+        The application should launch without crashes...
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: reproduction-rate
+    attributes:
+      label: Reproduction Rate
+      description: "How often does this issue occur?"
+      options:
+        - "Always reproduces - 100%"
+        - "Frequently reproduces ~ 75% - 99%"
+        - "Sometimes reproduces ~ 50% - 74%"
+        - "Rarely reproduces ~ 26% - 49%"
+        - "Sporadic ~ 0% - 25%"
+      default: 0
+    validations:
+      required: true
+      
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: "Provide clear, step-by-step instructions to replicate the issue"
+      placeholder: |
+        Example:
+        
+        1. Install driver version X.X.X
+        2. Launch application Y
+        3. Perform action Z
+        4. Observe the crash/error
+    validations:
+      required: true
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        ## Regression Information
+        
+  - type: markdown
+    attributes:
+      value: |
+        > **What is a regression?** A regression occurs when functionality that previously worked stops working in a newer version. Identifying when the issue first appeared helps narrow down the root cause.
+        
+  - type: checkboxes
+    id: is-regression
+    attributes:
+      label: Is this a regression?
+      description: "Check this box if this issue is a regression (previously worked, now broken)"
+      options:
+        - label: Yes, this is a regression - functionality that previously worked is now broken
+          required: false
+        
+  - type: input
+    id: last-working-version
+    attributes:
+      label: Last Known Working Driver Version
+      description: "**Required if regression:** Specify the youngest/most recent driver version that worked correctly"
+      placeholder: "Example: 23.40.27430.12"
+      
+  - type: input
+    id: first-failing-version
+    attributes:
+      label: First Known Failing Driver Version
+      description: "**Required if regression:** Specify the oldest driver version where the issue first appeared"
+      placeholder: "Example: 26.01.36711.4"
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        ## Diagnostics & Logs
+        
+  - type: textarea
+    id: api-logs
+    attributes:
+      label: API Call Logs
+      description: |
+        Attach relevant API logs (OpenCL, Level Zero). GitHub does not support all file types - if your log file is rejected, rename it to `.txt` or compress it into a `.zip` archive before attaching.
+        
+        <details>
+        <summary>Click to view tools and instructions</summary>
+        
+        <br>
+        
+        > Use these tools to capture API calls for debugging:
+        >
+        > - **For OpenCL:** [CLIntercept](https://github.com/intel/opencl-intercept-layer)
+        > - **For Level Zero and OpenCL:** [Unitrace](https://github.com/intel/pti-gpu/tree/master/tools/unitrace)
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```
+        <<<< [21183862358000] zeCommandListAppendMemoryCopy [1600 ns] -> ZE_RESULT_SUCCESS(0x0)
+        >>>> [21183862359300] zeEventHostSynchronize: hEvent = 0x6b61fd98 timeout = 0xffffffff
+        <<<< [21183862428000] zeEventHostSynchronize [67700 ns] -> ZE_RESULT_SUCCESS(0x0)
+        >>>> [21183862430000] zeMemFreeExt: hContext = 0x40f3ca8 pMemFreeDesc = 0x7e97e690 ptr = 0x8360000
+        <<<< [21183862435300] zeMemFreeExt [4100 ns] -> ZE_RESULT_SUCCESS(0x0)
+        >>>> [21183862553900] zeCommandListHostSynchronize: hCommandList = 0x51610e48 timeout = 0xffffffff
+        <<<< [21183862559000] zeCommandListHostSynchronize [600 ns] -> ZE_RESULT_SUCCESS(0x0)
+        ```
+        
+        Paste relevant excerpts above. Attaching the complete log file is strongly recommended - rename to `.txt` or compress into a `.zip` if GitHub rejects the file type.
+        
+  - type: textarea
+    id: strace-logs
+    attributes:
+      label: strace Logs
+      description: |
+        Provide strace logs to capture system calls and diagnose low-level issues.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > Capture system calls with strace for low-level debugging and troubleshooting driver interactions.
+        >
+        > **Basic strace with stack traces:**
+        > ```bash
+        > strace -k -f -o ./strace_k_appname_log.txt ./your_app
+        > ```
+        >
+        > **Example with clinfo:**
+        > ```bash
+        > strace -k -f -o ./strace_k_clinfo_log.txt clinfo
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```
+        $ strace -k -f -o ./strace_k_clinfo_log.txt clinfo
+        6222  execve("/usr/bin/clinfo", ["clinfo"], 0x7ffc44d22c50 /* 23 vars */) = 0
+         > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_mcount+0x1590) [0x1f540]
+        6222  brk(NULL)                         = 0x5ce38cdc7000
+         > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_mcount+0x6a1b) [0x249cb]
+        ...
+        ```
+        
+        Paste relevant excerpts above. Attaching the complete log file is strongly recommended - rename to `.txt` or compress into a `.zip` if GitHub rejects the file type.
+  - type: textarea
+    id: system-logs
+    attributes:
+      label: System Logs / dmesg Output
+      description: |
+        Paste relevant kernel logs showing driver errors or warnings.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > Include kernel logs related to GPU driver issues. Please also attach the full dmesg output as a file (rename to `.txt` or compress into a `.zip` if GitHub rejects the file type).
+        >
+        > **Recent kernel messages related to GPU:**
+        > ```bash
+        > dmesg | grep -i -E 'i915|xe|drm|gpu' | tail -n 100
+        > ```
+        >
+        > **Get dmesg logs from a specific time range:**
+        > ```bash
+        > dmesg --since "12 hours ago"
+        > ```
+        >
+        > **Or capture logs from when your workload started to when it ended:**
+        > ```bash
+        > # Note the time before starting:
+        > date
+        > # Run your workload, then get logs:
+        > dmesg --since "2026-02-17 14:30:00" --until "2026-02-17 15:45:00"
+        > ```
+        >
+        > **Get journalctl logs:**
+        > ```bash
+        > journalctl --since "12 hours ago"
+        > journalctl -k --since "12 hours ago"  # kernel messages only
+        > ```
+        >
+        > **Save complete dmesg output:**
+        > ```bash
+        > dmesg > dmesg_full.log
+        > ```
+        >
+        > **For more detailed debugging, enable verbose logging first:**
+        > ```bash
+        > sudo sh -c 'echo 0xe > /sys/module/drm/parameters/debug'
+        > # Then reproduce the issue and capture logs
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```
+        $ dmesg | grep -i -E 'i915|xe|drm|gpu' | tail -n 100
+        
+        [Paste relevant output here]
+        ```
+        
+        Paste relevant excerpts above. Attaching the complete log file is strongly recommended - rename to `.txt` or compress into a `.zip` if GitHub rejects the file type.
+      
+  - type: textarea
+    id: backtrace
+    attributes:
+      label: Backtrace (if crash or hang occurred)
+      description: |
+        Provide a backtrace from gdb or coredump analysis if applicable.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > If the application crashed or hung, generate a backtrace to diagnose the issue.
+        >
+        > **Method 1: Run application with gdb:**
+        > ```bash
+        > gdb ./myapp
+        > (gdb) run [arguments]
+        > # After crash or hang:
+        > (gdb) bt
+        > (gdb) bt full
+        > ```
+        >
+        > **Method 2: Analyze core dump:**
+        > ```bash
+        > coredumpctl list
+        > coredumpctl gdb <PID>
+        > (gdb) bt full
+        > ```
+        >
+        > **Method 3: Attach to running process (for hangs):**
+        > ```bash
+        > gdb -p <PID>
+        > (gdb) bt
+        > (gdb) bt full
+        > (gdb) thread apply all bt
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```
+        $ gdb ./myapp
+        (gdb) run
+        (gdb) bt full
+        
+        [Paste backtrace output here]
+        ```
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        ## Reproducer Information
+        
+  - type: textarea
+    id: source-code
+    attributes:
+      label: Source Code / Reproducer
+      description: "Provide source code, command line for compiling, or binary reproducer"
+      placeholder: |
+        Example:
+        
+        - GitHub repository link: https://github.com/...
+        - Compilation command: gcc -o myapp myapp.c -lOpenCL
+        - Minimal code snippet:
+        ```c
+        #include <CL/cl.h>
+        // minimal reproducer
+        ```
+        - Link to binary reproducer: [URL]
+        
+  - type: textarea
+    id: command-line
+    attributes:
+      label: Command Line / Application Details
+      description: "How to run the reproducer or application that exhibits the issue"
+      placeholder: |
+        Example:
+        
+        ./myapp --option1 --option2
+        
+        Or application installation/launch steps
+        
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        ## Additional Information
+        
+  - type: textarea
+    id: oneapi-version
+    attributes:
+      label: oneAPI Version (if applicable)
+      description: |
+        Provide Intel oneAPI version information if you are using it.
+        
+        <details>
+        <summary>Click to view commands and instructions</summary>
+        
+        <br>
+        
+        > Check your Intel oneAPI DPC++/C++ Compiler version.
+        >
+        > **Command to run:**
+        > ```bash
+        > icpx --version
+        > ```
+        
+        </details>
+      placeholder: |
+        Expected example output:
+        
+        ```
+        $ icpx --version
+        Intel(R) oneAPI DPC++/C++ Compiler 2025.0.3 (2025.0.3.20241206)
+        Target: x86_64-unknown-linux-gnu
+        Thread model: posix
+        ```
+        
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Video
+      description: "If applicable, attach screenshots or video demonstrating the issue"
+      placeholder: |
+        Example:
+        
+        Drag and drop images or video files here
+      
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Notes
+      description: "Any other relevant information or context"
+      placeholder: |
+        Example:
+        
+        Additional notes, workarounds attempted, related issues, etc.

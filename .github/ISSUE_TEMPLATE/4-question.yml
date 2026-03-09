@@ -1,0 +1,96 @@
+# Copyright (C) 2026 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+
+name: "[Question]"
+description: "Ask a question about the project"
+labels: ['Type: Question', 'Info: Awaiting Triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > For general questions, please check existing documentation and issues first.
+        > For submission guidelines, see the [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/ISSUE_SUBMISSION_GUIDE.md).
+        
+        > [!NOTE]
+        > Issue titles will be updated by project maintainers to include an internal tracking number.
+        > Example: "How to build driver on legacy Ubuntu version?" -> "[GSD-9734] How to build driver on legacy Ubuntu version?"
+        
+        ---
+        
+  - type: checkboxes
+    id: pre-submission-checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues and discussions for similar questions
+          required: false
+        - label: I have checked the documentation and [FAQ](https://github.com/intel/compute-runtime/blob/master/FAQ.md) / [programmers-guide](https://github.com/intel/compute-runtime/tree/master/programmers-guide)
+          required: false
+          
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+        # Your Question
+        
+  - type: dropdown
+    id: question-category
+    attributes:
+      label: Question Category
+      description: "What is your question related to?"
+      options:
+        - Driver / Installation
+        - API / Development
+        - Build / Compilation
+        - Performance
+        - Compatibility
+        - Other (please specify below)
+      default: 0
+    validations:
+      required: true
+      
+  - type: input
+    id: other-category
+    attributes:
+      label: Other Category
+      description: "If you selected 'Other', please specify"
+      placeholder: "Example: Licensing, Contributing, etc."
+      
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: "Ask your question clearly and concisely"
+      placeholder: |
+        Describe your question in detail. Include:
+        - What you want to know or understand
+        - Why you need this information
+        - Any specific areas of confusion
+        
+        Example:
+
+        How can I configure the i915 driver to use GuC submission on Ubuntu 22.04?
+        I've seen references to i915.enable_guc parameter but I'm not sure what value to use
+        and how to verify it's working correctly.
+    validations:
+      required: true
+      
+  - type: markdown
+    attributes:
+      value: |
+        
+        ---
+        
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Notes
+      description: "Any other relevant information or context"
+      placeholder: |
+        Example:
+        
+        Additional notes, related resources, screenshots, etc.
