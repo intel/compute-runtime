@@ -64,8 +64,7 @@ enum class TagNodeType {
     hwTimeStamps,
     hwPerfCounter,
     counter64b,
-    fillPattern,
-    inOrderIpcData
+    fillPattern
 };
 
 enum class CacheRegion : uint16_t {

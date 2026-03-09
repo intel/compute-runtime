@@ -27,9 +27,6 @@ class Device;
 class TagNodeBase;
 class CommandStreamReceiver;
 
-template <typename TagType>
-class TagNode;
-
 template <bool deviceAlloc>
 class DeviceAllocNodeType {
   public:
@@ -156,66 +153,16 @@ static_assert(NEO::NonCopyable<InOrderExecInfo>);
 // Used for IPC exchange - keep minimal set of data to share
 #pragma pack(1)
 struct InOrderExecEventData {
-    uint64_t deviceAllocIpcHandle = 0;
-    uint64_t hostAllocIpcHandle = 0;
     uint64_t counterValue = 0;
-    size_t deviceIpcAllocOffset = 0;
-    size_t hostIpcAllocOffset = 0;
+    uint64_t incrementValue = 0;
     uint32_t counterOffset = 0;
     uint32_t devicePartitions = 0;
     uint32_t hostPartitions = 0;
 };
 #pragma pack()
 
-class InOrderExecEventDataNodeType {
-  public:
-    using ValueT = uint8_t;
-
-    static constexpr AllocationType getAllocationType() { return NEO::AllocationType::internalHostMemory; }
-
-    static constexpr TagNodeType getTagNodeType() { return TagNodeType::inOrderIpcData; }
-
-    static constexpr size_t getSinglePacketSize() { return sizeof(InOrderExecEventData); }
-
-    void initialize(uint8_t initValue) { memset(data, 0, sizeof(data)); }
-
-  protected:
-    uint8_t data[sizeof(InOrderExecEventData)] = {};
-};
-
-static_assert(sizeof(InOrderExecEventData) == sizeof(InOrderExecEventDataNodeType));
-
-class SharableEventDataHelper {
-  public:
-    void releaseResources(MemoryManager &memoryManager);
-
-    // TagNode is a default mode
-    // External allocation is used in case of IPC import of TagNode (from another process)
-    // Local temp storage is used for temporary reference copy. For example, when recording a Graph
-
-    void initializeFromTagNode(TagNodeBase &node, uint32_t rootDeviceIndex);
-    void initializeFromExternalAllocation(NEO::GraphicsAllocation &newAllocation, size_t offset);
-    void initializeLocalTempStorage();
-
-    GraphicsAllocation *getAllocation() const { return allocation; }
-    size_t getAllocationOffset() const { return allocationOffset; }
-
-    InOrderExecEventData *eventDataPtr = nullptr;
-
-  protected:
-    std::unique_ptr<InOrderExecEventData> localTempStorage;
-    TagNode<InOrderExecEventDataNodeType> *eventDataNode = nullptr;
-    GraphicsAllocation *allocation = nullptr;
-    size_t allocationOffset = 0;
-};
-
 class InOrderExecEventHelper : public NonCopyableClass {
   public:
-    void initializeFromTagNode(TagNodeBase &node, uint32_t rootDeviceIndex);
-    void initializeFromExternalAllocation(NEO::GraphicsAllocation &newAllocation, size_t offset);
-    void initializeLocalTempStorage();
-
-    void releaseResources(MemoryManager &memoryManager);
     void updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t newSignalValue, uint32_t newAllocationOffset);
     void copyData(InOrderExecEventHelper &output);
 
@@ -229,10 +176,7 @@ class InOrderExecEventHelper : public NonCopyableClass {
     }
     SyncFence *getInterruptFence() const { return inOrderExecInfo.get() ? inOrderExecInfo->getInterruptFence() : nullptr; }
 
-    const InOrderExecEventData *getEventData() const { return sharableEventDataHelper.eventDataPtr; }
-
-    void setDeviceAllocIpcHandle(uint64_t handle, size_t offset);
-    void setHostAllocIpcHandle(uint64_t handle, size_t offset);
+    const InOrderExecEventData *getEventData() const { return eventData.get(); }
 
     uint64_t *getBaseHostAddress() const { return baseHostAddress; }
     uint64_t getBaseDeviceAddress() const { return baseDeviceAddress; }
@@ -242,7 +186,7 @@ class InOrderExecEventHelper : public NonCopyableClass {
     bool isHostStorageDuplicated() const { return hostStorageDuplicated; }
     bool isFromExternalMemory() const { return fromExternalMemory; }
 
-    uint64_t getIncrementValue() const { return incrementValue; }
+    uint64_t getIncrementValue() const { return eventData ? eventData->incrementValue : 0; }
 
     NEO::TagNodeBase *getLatestTimestampNode() const { return timestampNodes.back(); }
     NEO::TagNodeBase *getTimestampNode(size_t index) const { return timestampNodes[index]; }
@@ -268,23 +212,20 @@ class InOrderExecEventHelper : public NonCopyableClass {
                     NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t *baseHostAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
                     bool hostStorageDuplicated, bool fromExternalMemory);
 
-    const SharableEventDataHelper &getSharableEventDataHelper() const { return sharableEventDataHelper; }
-
   protected:
     void assignInOrderExecInfo(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo);
     void moveTimestampNodesToReleaseList(std::vector<NEO::TagNodeBase *> &nodes);
 
-    SharableEventDataHelper sharableEventDataHelper = {};
+    std::unique_ptr<InOrderExecEventData> eventData;
+
     std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
     std::vector<NEO::TagNodeBase *> timestampNodes;
     std::vector<NEO::TagNodeBase *> additionalTimestampNodes;
 
     NEO::GraphicsAllocation *deviceCounterAllocation = nullptr;
     NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
-
     uint64_t *baseHostAddress = nullptr;
     uint64_t baseDeviceAddress = 0;
-    uint64_t incrementValue = 0;
     uint64_t aggregatedEventUsageCounter = 0;
     bool hostStorageDuplicated = false;
     bool fromExternalMemory = false;

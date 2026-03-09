@@ -218,62 +218,19 @@ uint64_t InOrderExecInfo::getInitialCounterValue() const {
     return debugManager.flags.InitialCounterBasedEventValue.getIfNotDefault<uint64_t>(0);
 }
 
-void SharableEventDataHelper::releaseResources(MemoryManager &memoryManager) {
-    if (eventDataNode) {
-        eventDataNode->returnTag();
-    } else if (allocation) {
-        memoryManager.freeGraphicsMemory(allocation);
-    }
-}
-
-void SharableEventDataHelper::initializeFromTagNode(TagNodeBase &node, uint32_t rootDeviceIndex) {
-    UNRECOVERABLE_IF(eventDataNode || allocation || localTempStorage.get());
-
-    eventDataNode = static_cast<TagNode<InOrderExecEventDataNodeType> *>(&node);
-    allocation = eventDataNode->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex);
-
-    eventDataPtr = reinterpret_cast<InOrderExecEventData *>(eventDataNode->tagForCpuAccess);
-    allocationOffset = static_cast<size_t>(eventDataNode->getGpuAddress() - allocation->getGpuAddress());
-}
-
-void SharableEventDataHelper::initializeFromExternalAllocation(NEO::GraphicsAllocation &newAllocation, size_t offset) {
-    UNRECOVERABLE_IF(eventDataNode || allocation || localTempStorage.get());
-
-    allocation = &newAllocation;
-    allocationOffset = offset;
-
-    eventDataPtr = reinterpret_cast<InOrderExecEventData *>(ptrOffset(allocation->getUnderlyingBuffer(), offset));
-}
-
-void SharableEventDataHelper::initializeLocalTempStorage() {
-    UNRECOVERABLE_IF(eventDataNode || allocation || localTempStorage.get());
-
-    localTempStorage = std::make_unique<InOrderExecEventData>();
-    eventDataPtr = localTempStorage.get();
-}
-
-void InOrderExecEventHelper::releaseResources(MemoryManager &memoryManager) {
-    sharableEventDataHelper.releaseResources(memoryManager);
-}
-
 void InOrderExecEventHelper::assignData(uint64_t counterValue, uint32_t counterOffset, uint32_t devicePartitions, uint32_t hostPartitions, NEO::GraphicsAllocation *deviceCounterAllocation,
                                         NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t *baseHostAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
                                         bool hostStorageDuplicated, bool fromExternalMemory) {
+    if (!eventData) {
+        eventData = std::make_unique<InOrderExecEventData>();
+    }
 
-    UNRECOVERABLE_IF(!sharableEventDataHelper.eventDataPtr);
-    auto eventDataPtr = sharableEventDataHelper.eventDataPtr;
+    eventData->counterValue = counterValue;
+    eventData->counterOffset = counterOffset;
+    eventData->devicePartitions = devicePartitions;
+    eventData->hostPartitions = hostPartitions;
+    eventData->incrementValue = incrementValue;
 
-    eventDataPtr->counterValue = counterValue;
-    eventDataPtr->counterOffset = counterOffset;
-    eventDataPtr->devicePartitions = devicePartitions;
-    eventDataPtr->hostPartitions = hostPartitions;
-
-    eventDataPtr->deviceAllocIpcHandle = 0;
-    eventDataPtr->hostAllocIpcHandle = 0;
-    eventDataPtr->deviceIpcAllocOffset = 0;
-    eventDataPtr->hostIpcAllocOffset = 0;
-
-    this->incrementValue = incrementValue;
     this->baseHostAddress = baseHostAddress;
     this->baseDeviceAddress = baseDeviceAddress;
     this->hostStorageDuplicated = hostStorageDuplicated;
@@ -302,10 +259,9 @@ void InOrderExecEventHelper::updateInOrderExecState(std::shared_ptr<InOrderExecI
 void InOrderExecEventHelper::unsetInOrderExecInfo() {
     inOrderExecInfo.reset();
 
-    if (dataAssigned) {
-        assignData(0, 0, 0, 0, nullptr, nullptr, 0, nullptr, 0, 0, false, false);
-        dataAssigned = false;
-    }
+    assignData(0, 0, 0, 0, nullptr, nullptr, 0, nullptr, 0, 0, false, false);
+
+    dataAssigned = false;
 }
 
 void InOrderExecEventHelper::releaseNotUsedTempTimestampNodes() {
@@ -316,9 +272,8 @@ void InOrderExecEventHelper::releaseNotUsedTempTimestampNodes() {
 
 void InOrderExecEventHelper::moveTimestampNodesToReleaseList(std::vector<NEO::TagNodeBase *> &nodes) {
     if (inOrderExecInfo) {
-        auto eventDataPtr = sharableEventDataHelper.eventDataPtr;
         std::for_each(nodes.cbegin(), nodes.cend(), [&](TagNodeBase *node) {
-            inOrderExecInfo->pushTempTimestampNode(node, eventDataPtr->counterValue, eventDataPtr->counterOffset);
+            inOrderExecInfo->pushTempTimestampNode(node, eventData->counterValue, eventData->counterOffset);
         });
     } else {
         std::for_each(nodes.cbegin(), nodes.cend(), [](TagNodeBase *node) {
@@ -340,33 +295,9 @@ void InOrderExecEventHelper::moveAdditionalTimestampNodesToReleaseList() {
 void InOrderExecEventHelper::copyData(InOrderExecEventHelper &output) {
     output.assignInOrderExecInfo(inOrderExecInfo);
 
-    auto eventDataPtr = sharableEventDataHelper.eventDataPtr;
-
-    output.assignData(eventDataPtr->counterValue, eventDataPtr->counterOffset, eventDataPtr->devicePartitions, eventDataPtr->hostPartitions,
+    output.assignData(eventData->counterValue, eventData->counterOffset, eventData->devicePartitions, eventData->hostPartitions,
                       getDeviceCounterAllocation(), getHostCounterAllocation(), getBaseDeviceAddress(), getBaseHostAddress(),
-                      incrementValue, getAggregatedEventUsageCounter(), isHostStorageDuplicated(), isFromExternalMemory());
-}
-
-void InOrderExecEventHelper::initializeFromTagNode(TagNodeBase &node, uint32_t rootDeviceIndex) {
-    sharableEventDataHelper.initializeFromTagNode(node, rootDeviceIndex);
-}
-
-void InOrderExecEventHelper::initializeFromExternalAllocation(NEO::GraphicsAllocation &newAllocation, size_t offset) {
-    sharableEventDataHelper.initializeFromExternalAllocation(newAllocation, offset);
-}
-
-void InOrderExecEventHelper::initializeLocalTempStorage() {
-    sharableEventDataHelper.initializeLocalTempStorage();
-}
-
-void InOrderExecEventHelper::setDeviceAllocIpcHandle(uint64_t handle, size_t offset) {
-    sharableEventDataHelper.eventDataPtr->deviceAllocIpcHandle = handle;
-    sharableEventDataHelper.eventDataPtr->deviceIpcAllocOffset = offset;
-}
-
-void InOrderExecEventHelper::setHostAllocIpcHandle(uint64_t handle, size_t offset) {
-    sharableEventDataHelper.eventDataPtr->hostAllocIpcHandle = handle;
-    sharableEventDataHelper.eventDataPtr->hostIpcAllocOffset = offset;
+                      eventData->incrementValue, getAggregatedEventUsageCounter(), isHostStorageDuplicated(), isFromExternalMemory());
 }
 
 } // namespace NEO

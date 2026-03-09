@@ -2972,7 +2972,6 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWithBlitAdditionalPropert
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(deviceTagAllocator.getTag(), nullptr, *neoDevice, 1, false);
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
-    event->getInOrderExecEventHelper().initializeLocalTempStorage();
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
     event->resetAdditionalTimestampNode(blitTagAllocator.getTag(), 1, false);
@@ -4150,7 +4149,6 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
     *inOrderExecInfo->getBaseHostAddress() = 1;
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
-    event->getInOrderExecEventHelper().initializeLocalTempStorage();
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
@@ -4163,7 +4161,6 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
     auto event2 = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
 
     event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
-    event2->getInOrderExecEventHelper().initializeLocalTempStorage();
     event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
     syncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
     ultCsr->downloadAllocationsCalledCount = 0;
@@ -4255,7 +4252,6 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
     *inOrderExecInfo->getBaseHostAddress() = 1;
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
-    event->getInOrderExecEventHelper().initializeLocalTempStorage();
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
@@ -4269,7 +4265,6 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
     auto event2 = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
 
     event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
-    event2->getInOrderExecEventHelper().initializeLocalTempStorage();
     event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
     hostSyncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
     ultCsr->downloadAllocationsCalledCount = 0;
@@ -5262,17 +5257,14 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
 
     auto inOrderExecInfo0 = NEO::InOrderExecInfo::create(device->getDeviceInOrderCounterAllocator()->getTag(), nullptr, *device->getNEODevice(), 1);
     inOrderExecInfo0->setLastWaitedCounterValue(1, 0);
-    event0->getInOrderExecEventHelper().initializeLocalTempStorage();
     event0->updateInOrderExecState(inOrderExecInfo0, 1, 0);
 
     uint64_t counter = 2;
 
-    event1->getInOrderExecEventHelper().initializeLocalTempStorage();
     event1->getInOrderExecEventHelper().assignData(1, 0, 1, 1, nullptr, nullptr, 1, &counter, 0, 0, false, true);
 
     MockGraphicsAllocation mockAlloc(rootDeviceIndex, nullptr, 1);
 
-    event2->getInOrderExecEventHelper().initializeLocalTempStorage();
     event2->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &mockAlloc, &mockAlloc, 1, &counter, 0, 0, false, true);
 
     ultCsr0->makeResident(*inOrderExecInfo0->getDeviceCounterAllocation());

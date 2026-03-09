@@ -296,27 +296,14 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     auto neoDevice = device->getNEODevice();
     auto memoryManager = driver->getMemoryManager();
 
-    NEO::MemoryManager::OsHandleData communicationOsHandleData{ipcData.communicationAllocHandle};
-    NEO::AllocationProperties communicationMemoryProperties{ipcData.rootDeviceIndex, MemoryConstants::pageSize64k, NEO::InOrderExecEventDataNodeType::getAllocationType(), NEO::systemMemoryBitfield};
-    communicationMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
-
-    auto communicationAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(communicationOsHandleData, communicationMemoryProperties, false, true, false, nullptr);
-
-    if (!communicationAlloc) {
-        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-    }
-
-    auto inOrderExecEventData = reinterpret_cast<NEO::InOrderExecEventData *>(ptrOffset(communicationAlloc->getUnderlyingBuffer(), ipcData.communicationAllocOffset));
-
-    NEO::MemoryManager::OsHandleData deviceOsHandleData{inOrderExecEventData->deviceAllocIpcHandle};
-    NEO::MemoryManager::OsHandleData hostOsHandleData{inOrderExecEventData->hostAllocIpcHandle};
+    NEO::MemoryManager::OsHandleData deviceOsHandleData{ipcData.deviceHandle};
+    NEO::MemoryManager::OsHandleData hostOsHandleData{ipcData.hostHandle};
 
     NEO::AllocationProperties unifiedMemoryProperties{ipcData.rootDeviceIndex, MemoryConstants::pageSize64k, NEO::DeviceAllocNodeType<true>::getAllocationType(), NEO::systemMemoryBitfield};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
-    auto *deviceAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(deviceOsHandleData, unifiedMemoryProperties, false, (inOrderExecEventData->hostAllocIpcHandle == 0), false, nullptr);
+    auto *deviceAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(deviceOsHandleData, unifiedMemoryProperties, false, (ipcData.hostHandle == 0), false, nullptr);
 
     if (!deviceAlloc) {
-        memoryManager->freeGraphicsMemory(communicationAlloc);
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
@@ -325,19 +312,16 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     }
 
     NEO::GraphicsAllocation *hostAlloc = nullptr;
-    size_t hostAllocOffset = inOrderExecEventData->deviceIpcAllocOffset;
-    if (inOrderExecEventData->hostAllocIpcHandle != 0) {
+    if (ipcData.hostHandle != 0) {
         unifiedMemoryProperties.allocationType = NEO::DeviceAllocNodeType<false>::getAllocationType();
         hostAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(hostOsHandleData, unifiedMemoryProperties, false, true, false, nullptr);
         if (!hostAlloc) {
             memoryManager->freeGraphicsMemory(deviceAlloc);
-            memoryManager->freeGraphicsMemory(communicationAlloc);
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         if (neoDevice->getDefaultEngine().commandStreamReceiver->isTbxMode()) {
             hostAlloc->setWriteMemoryOnly(true);
         }
-        hostAllocOffset = inOrderExecEventData->hostIpcAllocOffset;
     } else {
         hostAlloc = deviceAlloc;
     }
@@ -362,11 +346,8 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
 
     auto event = Event::create<uint64_t>(eventDescriptor, device, result);
 
-    event->getInOrderExecEventHelper().initializeFromExternalAllocation(*communicationAlloc, ipcData.communicationAllocOffset);
-
-    event->getInOrderExecEventHelper().assignData(inOrderExecEventData->counterValue, inOrderExecEventData->counterOffset, inOrderExecEventData->devicePartitions, inOrderExecEventData->hostPartitions,
-                                                  deviceAlloc, hostAlloc, deviceAlloc->getGpuAddress() + inOrderExecEventData->deviceIpcAllocOffset,
-                                                  static_cast<uint64_t *>(ptrOffset(hostAlloc->getUnderlyingBuffer(), hostAllocOffset)), 0, 0, (deviceAlloc != hostAlloc), true);
+    event->getInOrderExecEventHelper().assignData(ipcData.counterValue, ipcData.counterOffset, ipcData.devicePartitions, ipcData.hostPartitions, deviceAlloc, hostAlloc, deviceAlloc->getGpuAddress(),
+                                                  static_cast<uint64_t *>(hostAlloc->getUnderlyingBuffer()), 0, 0, (deviceAlloc != hostAlloc), true);
 
     *eventHandle = event;
 
@@ -382,34 +363,27 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto &sharableEventDataHelper = inOrderExecHelper.getSharableEventDataHelper();
-    auto memoryManager = device->getNEODevice()->getMemoryManager();
-
-    uint64_t communicationHandle = 0;
-    if (int retCode = sharableEventDataHelper.getAllocation()->peekInternalHandle(memoryManager, communicationHandle, nullptr); retCode != 0) {
-        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-    }
-    memoryManager->registerIpcExportedAllocation(sharableEventDataHelper.getAllocation());
-
     ipcData = {};
-    ipcData.communicationAllocHandle = communicationHandle;
-    ipcData.communicationAllocOffset = sharableEventDataHelper.getAllocationOffset();
     ipcData.rootDeviceIndex = device->getRootDeviceIndex();
+    ipcData.counterValue = inOrderExecHelper.getEventData()->counterValue;
     ipcData.counterBasedFlags = this->counterBasedFlags;
     ipcData.signalScopeFlags = this->signalScope;
     ipcData.waitScopeFlags = this->waitScope;
 
+    auto memoryManager = device->getNEODevice()->getMemoryManager();
     auto deviceAlloc = inOrderExecHelper.getDeviceCounterAllocation();
 
     uint64_t handle = 0;
     if (int retCode = deviceAlloc->peekInternalHandle(memoryManager, handle, nullptr); retCode != 0) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
-
     memoryManager->registerIpcExportedAllocation(deviceAlloc);
 
-    auto deviceOffset = inOrderExecHelper.getBaseDeviceAddress() - deviceAlloc->getGpuAddress();
-    inOrderExecHelper.setDeviceAllocIpcHandle(handle, static_cast<size_t>(deviceOffset));
+    ipcData.deviceHandle = handle;
+    ipcData.devicePartitions = inOrderExecHelper.getEventData()->devicePartitions;
+    ipcData.hostPartitions = ipcData.devicePartitions;
+
+    ipcData.counterOffset = static_cast<uint32_t>(inOrderExecHelper.getBaseDeviceAddress() - deviceAlloc->getGpuAddress()) + inOrderExecHelper.getEventData()->counterOffset;
 
     if (inOrderExecHelper.isHostStorageDuplicated()) {
         auto hostAlloc = inOrderExecHelper.getHostCounterAllocation();
@@ -418,8 +392,8 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
         }
         memoryManager->registerIpcExportedAllocation(hostAlloc);
 
-        auto hostOffset = ptrDiff(inOrderExecHelper.getBaseHostAddress(), hostAlloc->getUnderlyingBuffer());
-        inOrderExecHelper.setHostAllocIpcHandle(handle, hostOffset);
+        ipcData.hostHandle = handle;
+        ipcData.hostPartitions = inOrderExecHelper.getEventData()->hostPartitions;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -582,16 +556,13 @@ ze_result_t Event::destroy() {
     resetAdditionalTimestampNode(nullptr, 0, true);
     inOrderExecHelper.releaseNotUsedTempTimestampNodes();
 
-    if (isCounterBasedExplicitlyEnabled()) {
-        if (isFromIpcPool) {
-            auto memoryManager = device->getNEODevice()->getMemoryManager();
+    if (isCounterBasedExplicitlyEnabled() && isFromIpcPool) {
+        auto memoryManager = device->getNEODevice()->getMemoryManager();
 
-            memoryManager->freeGraphicsMemory(inOrderExecHelper.getDeviceCounterAllocation());
-            if (inOrderExecHelper.isHostStorageDuplicated()) {
-                memoryManager->freeGraphicsMemory(inOrderExecHelper.getHostCounterAllocation());
-            }
+        memoryManager->freeGraphicsMemory(inOrderExecHelper.getDeviceCounterAllocation());
+        if (inOrderExecHelper.isHostStorageDuplicated()) {
+            memoryManager->freeGraphicsMemory(inOrderExecHelper.getHostCounterAllocation());
         }
-        inOrderExecHelper.releaseResources(*device->getNEODevice()->getMemoryManager());
     }
 
     delete this;

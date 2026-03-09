@@ -239,13 +239,6 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromExistingStora
 
 GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
     if (osHandleData.handle != invalidSharedHandle) {
-        if (storeIpcAllocations && mapPointer == nullptr) {
-            auto alloc = storedIpcAllocations.find(osHandleData.handle);
-            if (alloc != storedIpcAllocations.end()) {
-                mapPointer = alloc->second->getUnderlyingBuffer();
-            }
-        }
-
         auto allocation = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandleData, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
         this->capturedSharedHandle = osHandleData.handle;
         return allocation;
