@@ -569,6 +569,12 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
 
         // check if we need to follow kernel requirements
         if (activeChannels == 1) {
+            if (Math::isPow2<size_t>(lws[0])) {
+                requiredWalkOrder = HwWalkOrderHelper::linearWalkIndex;
+                return false;
+            }
+            // If single channel is active but its size is not power of 2,
+            // place that dimension as last in walk order
             requiredWalkOrder = HwWalkOrderHelper::singleDimWalkIndex;
             return false;
         }

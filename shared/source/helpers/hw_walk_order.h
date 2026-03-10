@@ -26,7 +26,9 @@ inline constexpr std::array<uint8_t, 3> compatibleDimensionOrders[walkOrderPossi
                                                                                             {z, x, y},     // 1 2 0
                                                                                             singleDimWalk, // 2 0 1
                                                                                             {z, y, x}};    // 2 1 0
+inline constexpr uint32_t linearWalkIndex = 0;
 inline constexpr uint32_t singleDimWalkIndex = 4;
+static_assert(linearWalk == compatibleDimensionOrders[linearWalkIndex], "linearWalkIndex index mismatch");
 static_assert(singleDimWalk == compatibleDimensionOrders[singleDimWalkIndex], "singleDimWalk index mismatch");
 
 inline std::pair<uint32_t, uint32_t> getActiveIndices(std::array<uint8_t, 3> walkOrder, uint8_t firstDim, uint8_t secondDim) {
