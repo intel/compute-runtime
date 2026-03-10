@@ -512,8 +512,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
     auto walker = genCmdCast<WalkerType *>(*hwParser.itorWalker);
     EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
     EXPECT_EQ(1u, walker->getGenerateLocalId());
-    uint32_t expectedWalkOrder = kernelAttributes.numLocalIdChannels == 1 ? HwWalkOrderHelper::singleDimWalkIndex : 0;
-    EXPECT_EQ(expectedWalkOrder, walker->getWalkOrder());
+    EXPECT_EQ(HwWalkOrderHelper::linearWalkIndex, walker->getWalkOrder());
     if (kernelAttributes.numLocalIdChannels != 1) {
         for (size_t i = 0; i < 3; i++) {
             EXPECT_EQ(kernelAttributes.workgroupWalkOrder[i], HwWalkOrderHelper::compatibleDimensionOrders[walker->getWalkOrder()][i]);
