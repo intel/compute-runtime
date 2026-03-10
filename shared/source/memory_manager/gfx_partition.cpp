@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/heap_allocator.h"
 
@@ -100,6 +101,15 @@ GfxPartition::~GfxPartition() {
     osMemory->releaseCpuAddressRange(reservedCpuAddressRangeForNonSvmHeaps);
     reservedCpuAddressRangeForNonSvmHeaps = {};
     osMemory->releaseCpuAddressRange(reservedCpuAddressRangeForHeapExtended);
+}
+
+void GfxPartition::setFrontWindowPoolSizes(const ProductHelper *productHelper) {
+    const bool alignTo2MB = productHelper != nullptr && productHelper->is2MBLocalMemAlignmentEnabled();
+
+    externalFrontWindowPoolSize = alignTo2MB ? alignUp(defaultExternalFrontWindowPoolSize, MemoryConstants::pageSize2M)
+                                             : defaultExternalFrontWindowPoolSize;
+    internalFrontWindowPoolSize = alignTo2MB ? alignUp(defaultInternalFrontWindowPoolSize, MemoryConstants::pageSize2M)
+                                             : defaultInternalFrontWindowPoolSize;
 }
 
 void GfxPartition::Heap::init(uint64_t base, uint64_t size, size_t allocationAlignment) {
@@ -195,10 +205,10 @@ uint64_t GfxPartition::getHeapMinimalAddress(HeapIndex heapIndex) {
         if ((heapIndex == HeapIndex::heapExternal ||
              heapIndex == HeapIndex::heapExternalDeviceMemory) &&
             (getHeapLimit(HeapAssigner::mapExternalWindowIndex(heapIndex)) != 0)) {
-            return getHeapBase(heapIndex) + GfxPartition::externalFrontWindowPoolSize;
+            return getHeapBase(heapIndex) + externalFrontWindowPoolSize;
         } else if (heapIndex == HeapIndex::heapInternal ||
                    heapIndex == HeapIndex::heapInternalDeviceMemory) {
-            return getHeapBase(heapIndex) + GfxPartition::internalFrontWindowPoolSize;
+            return getHeapBase(heapIndex) + internalFrontWindowPoolSize;
         } else if (heapIndex == HeapIndex::heapStandard2MB) {
             return getHeapBase(heapIndex) + GfxPartition::heapGranularity2MB;
         }
@@ -206,7 +216,8 @@ uint64_t GfxPartition::getHeapMinimalAddress(HeapIndex heapIndex) {
     }
 }
 
-bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool, uint64_t systemMemorySize, uint64_t gfxTop) {
+bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool, uint64_t systemMemorySize, uint64_t gfxTop, const ProductHelper *productHelper) {
+    setFrontWindowPoolSizes(productHelper);
 
     /*
      * I. 64-bit builds:
@@ -294,13 +305,13 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
     for (auto heap : GfxPartition::heap32Names) {
         if (useExternalFrontWindowPool && HeapAssigner::heapTypeExternalWithFrontWindowPool(heap)) {
             heapInitExternalWithFrontWindow(heap, gfxBase, gfxHeap32Size);
-            size_t externalFrontWindowSize = GfxPartition::externalFrontWindowPoolSize;
+            size_t externalFrontWindowSize = this->externalFrontWindowPoolSize;
             auto allocation = heapAllocate(heap, externalFrontWindowSize);
             heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), allocation,
                                             externalFrontWindowSize);
         } else if (HeapAssigner::isInternalHeap(heap)) {
-            heapInitWithFrontWindow(heap, gfxBase, gfxHeap32Size, GfxPartition::internalFrontWindowPoolSize);
-            heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), gfxBase, GfxPartition::internalFrontWindowPoolSize);
+            heapInitWithFrontWindow(heap, gfxBase, gfxHeap32Size, internalFrontWindowPoolSize);
+            heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), gfxBase, internalFrontWindowPoolSize);
         } else {
             heapInit(heap, gfxBase, gfxHeap32Size);
         }

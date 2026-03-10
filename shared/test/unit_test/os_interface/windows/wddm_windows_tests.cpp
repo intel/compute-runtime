@@ -163,10 +163,11 @@ TEST(WddmGfxPartitionTests, WhenInitializingGfxPartitionThen64KBHeapsAreUsed) {
 
     uint32_t rootDeviceIndex = 3;
     size_t numRootDevices = 5;
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
 
     MockGfxPartition gfxPartition;
     wddm->init();
-    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false);
+    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false, &productHelper);
 
     auto heapStandard64KBSize = alignDown((wddm->gfxPartition.Standard64KB.Limit - wddm->gfxPartition.Standard64KB.Base + 1) / numRootDevices, GfxPartition::heapGranularity);
     EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::heapStandard64KB));
@@ -402,7 +403,8 @@ TEST_F(WddmGfxPartitionTest, WhenInitializingGfxPartitionThenAllHeapsAreInitiali
         ASSERT_FALSE(gfxPartition.heapInitialized(heap));
     }
 
-    wddm->initGfxPartition(gfxPartition, 0, 1, false);
+    auto &productHelper = rootDeviceEnvironment->getProductHelper();
+    wddm->initGfxPartition(gfxPartition, 0, 1, false, &productHelper);
 
     for (auto heap : MockGfxPartition::allHeapNames) {
         if (!gfxPartition.heapInitialized(heap)) {
@@ -420,7 +422,8 @@ TEST_F(WddmGfxPartitionTest, GivenHeapAndAddressInGfxPartitionThenIsAddressInHea
         ASSERT_FALSE(gfxPartition.heapInitialized(heap));
     }
 
-    wddm->initGfxPartition(gfxPartition, 0, 1, false);
+    auto &productHelper = rootDeviceEnvironment->getProductHelper();
+    wddm->initGfxPartition(gfxPartition, 0, 1, false, &productHelper);
 
     for (auto heap : MockGfxPartition::allHeapNames) {
         if (!gfxPartition.heapInitialized(heap)) {

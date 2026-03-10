@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,7 +112,7 @@ class MockGfxPartitionBasic : public GfxPartition {
 
 class FailedInitGfxPartition : public MockGfxPartition {
   public:
-    bool init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useFrontWindowPool, uint64_t systemMemorySize, uint64_t gfxTop) override {
+    bool init(uint64_t, size_t, uint32_t, size_t, bool, uint64_t, uint64_t, const ProductHelper *) override {
         return false;
     }
 };

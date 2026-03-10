@@ -13,6 +13,7 @@
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 
 #include "gtest/gtest.h"
 
@@ -116,21 +117,23 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
 
         const bool isInternalHeapType = heap == HeapIndex::heapInternal || heap == HeapIndex::heapInternalDeviceMemory;
         const auto heapGranularity = (heap == HeapIndex::heapStandard2MB) ? GfxPartition::heapGranularity2MB : GfxPartition::heapGranularity;
+        const auto minimalAddress = gfxPartition.getHeapMinimalAddress(heap);
 
         if (heap == HeapIndex::heapSvm) {
-            EXPECT_EQ(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap));
+            EXPECT_EQ(minimalAddress, gfxPartition.getHeapBase(heap));
         } else if (isInternalHeapType) {
-            EXPECT_EQ(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap) + GfxPartition::internalFrontWindowPoolSize);
+            auto frontWindowHeap = heap == HeapIndex::heapInternal ? HeapIndex::heapInternalFrontWindow : HeapIndex::heapInternalDeviceFrontWindow;
+            EXPECT_EQ(minimalAddress, gfxPartition.getHeapBase(heap) + gfxPartition.getHeapSize(frontWindowHeap));
         } else {
-            EXPECT_GT(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap));
-            EXPECT_EQ(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap) + heapGranularity);
+            EXPECT_GT(minimalAddress, gfxPartition.getHeapBase(heap));
+            EXPECT_EQ(minimalAddress, gfxPartition.getHeapBase(heap) + heapGranularity);
         }
 
         auto ptrBig = gfxPartition.heapAllocate(heap, sizeBig);
         EXPECT_NE(ptrBig, 0ull);
 
         if (isInternalHeapType) {
-            EXPECT_EQ(ptrBig, gfxPartition.getHeapBase(heap) + GfxPartition::internalFrontWindowPoolSize);
+            EXPECT_EQ(ptrBig, minimalAddress);
         } else {
             EXPECT_EQ(ptrBig, gfxPartition.getHeapBase(heap) + heapGranularity);
         }
@@ -145,7 +148,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
 
         gfxPartition.heapFree(heap, ptrSmall, sizeSmall);
 
-        uint64_t requiredStartAddress = gfxPartition.getHeapBase(heap) + MemoryConstants::pageSize2M;
+        uint64_t requiredStartAddress = isInternalHeapType ? (minimalAddress + heapGranularity) : (gfxPartition.getHeapBase(heap) + (2 * heapGranularity));
         auto ptrSmallWithHint = gfxPartition.heapAllocateWithStartAddressHint(requiredStartAddress, heap, sizeSmall);
         EXPECT_NE(ptrSmallWithHint, 0ull);
         EXPECT_EQ(ptrSmallWithHint, requiredStartAddress);
@@ -156,7 +159,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
 TEST(GfxPartitionTest, GivenFullRange48BitSvmWhenTestingGfxPartitionThenAllExpectationsAreMet) {
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(48) + 1;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr);
 
     uint64_t gfxBase = MemoryConstants::maxSvmAddress + 1;
 
@@ -166,7 +169,7 @@ TEST(GfxPartitionTest, GivenFullRange48BitSvmWhenTestingGfxPartitionThenAllExpec
 TEST(GfxPartitionTest, GivenRange48BitWithoutPageWhenTestingGfxPartitionThenAllExpectationsAreMet) {
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(48) + 1 - MemoryConstants::pageSize;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr);
 
     uint64_t gfxBase = MemoryConstants::maxSvmAddress + 1;
 
@@ -175,7 +178,7 @@ TEST(GfxPartitionTest, GivenRange48BitWithoutPageWhenTestingGfxPartitionThenAllE
 
 TEST(GfxPartitionTest, GivenFullRange47BitSvmWhenTestingGfxPartitionThenAllExpectationsAreMet) {
     MockGfxPartition gfxPartition;
-    gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1, false, 0u, maxNBitValue(47) + 1);
+    gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1, false, 0u, maxNBitValue(47) + 1, nullptr);
 
     uint64_t svmTop = MemoryConstants::maxSvmAddress + 1;
     uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : (uint64_t)gfxPartition.getReservedCpuAddressRange();
@@ -187,7 +190,7 @@ TEST(GfxPartitionTest, GivenFullRange47BitSvmWhenTestingGfxPartitionThenAllExpec
 TEST(GfxPartitionTest, GivenLimitedRangeWhenTestingGfxPartitionThenAllExpectationsAreMet) {
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(47 - 1) + 1;
-    gfxPartition.init(maxNBitValue(47 - 1), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+    gfxPartition.init(maxNBitValue(47 - 1), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr);
 
     uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : 0ull;
     uint64_t svmTop = gfxBase;
@@ -202,7 +205,7 @@ TEST(GfxPartitionTest, GivenUnsupportedGpuRangeThenGfxPartitionIsNotInitialized)
 
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(48) + 1;
-    EXPECT_FALSE(gfxPartition.init(maxNBitValue(48 + 1), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop));
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(48 + 1), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr));
 }
 
 TEST(GfxPartitionTest, GivenUnsupportedCpuRangeThenGfxPartitionIsNotInitialize) {
@@ -213,7 +216,7 @@ TEST(GfxPartitionTest, GivenUnsupportedCpuRangeThenGfxPartitionIsNotInitialize) 
     CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(48 + 1);
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(48) + 1;
-    EXPECT_FALSE(gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop));
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr));
 }
 
 TEST(GfxPartitionTest, GivenFullRange48BitSvmHeap64KbSplitWhenTestingGfxPartitionThenAllExpectationsAreMet) {
@@ -222,7 +225,7 @@ TEST(GfxPartitionTest, GivenFullRange48BitSvmHeap64KbSplitWhenTestingGfxPartitio
 
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(48) + 1;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, 0u, gfxTop);
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, 0u, gfxTop, nullptr);
 
     uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : maxNBitValue(48 - 1) + 1;
 
@@ -240,7 +243,7 @@ TEST(GfxPartitionTest, GivenFullRange47BitSvmHeap64KbSplitWhenTestingGfxPartitio
     size_t numRootDevices = 5;
 
     MockGfxPartition gfxPartition;
-    gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, 0u, maxNBitValue(47) + 1);
+    gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, 0u, maxNBitValue(47) + 1, nullptr);
 
     uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : (uint64_t)gfxPartition.getReservedCpuAddressRange();
     uint64_t gfxTop = is32bit ? maxNBitValue(47) + 1 : gfxBase + gfxPartition.getReservedCpuAddressRangeSize();
@@ -300,7 +303,7 @@ TEST(GfxPartitionTest, given47bitGpuAddressSpaceWhenInitializingMultipleGfxParti
     for (int i = 0; i < 10; ++i) {
         gfxPartitions.push_back(std::make_unique<MockGfxPartition>(reservedCpuAddressRange));
         gfxPartitions[i]->osMemory.reset(new MockOsMemory);
-        gfxPartitions[i]->init(maxNBitValue(47), reservedCpuAddressRangeSize, i, 10, false, 0u, gfxTop);
+        gfxPartitions[i]->init(maxNBitValue(47), reservedCpuAddressRangeSize, i, 10, false, 0u, gfxTop, nullptr);
     }
 
     EXPECT_EQ(1u, static_cast<MockOsMemory *>(gfxPartitions[0]->osMemory.get())->getReserveCount());
@@ -313,7 +316,7 @@ TEST(GfxPartitionTest, GivenFullRange47BitSvmAndReservedCpuRangeSizeIsZeroThenGf
 
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(47) + 1;
-    EXPECT_FALSE(gfxPartition.init(maxNBitValue(47), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(47), 0, 0, 1, false, 0u, gfxTop, nullptr));
 }
 
 TEST(GfxPartitionTest, GivenFullRange47BitSvmAndReturnedReservedCpuRangeIsNullThenGfxPartitionIsNotInitialized) {
@@ -326,7 +329,7 @@ TEST(GfxPartitionTest, GivenFullRange47BitSvmAndReturnedReservedCpuRangeIsNullTh
     MockGfxPartition gfxPartition;
     gfxPartition.osMemory.reset(mockOsMemory);
     uint64_t gfxTop = maxNBitValue(47) + 1;
-    EXPECT_FALSE(gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop));
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr));
 }
 
 TEST(GfxPartitionTest, GivenFullRange47BitSvmAndReturnedReservedCpuRangeIsNotAlignedThenGfxPartitionIsNotInitialized) {
@@ -339,18 +342,18 @@ TEST(GfxPartitionTest, GivenFullRange47BitSvmAndReturnedReservedCpuRangeIsNotAli
     MockGfxPartition gfxPartition;
     gfxPartition.osMemory.reset(mockOsMemory);
     uint64_t gfxTop = maxNBitValue(47) + 1;
-    EXPECT_FALSE(gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop));
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr));
 }
 
 TEST(GfxPartitionTest, givenGfxPartitionWhenInitializedThenInternalFrontWindowHeapIsAllocatedAtInternalHeapFront) {
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(48) + 1;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr);
 
     EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::heapInternalFrontWindow), gfxPartition.getHeapBase(HeapIndex::heapInternal));
     EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceFrontWindow), gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceMemory));
 
-    auto frontWindowSize = GfxPartition::internalFrontWindowPoolSize;
+    auto frontWindowSize = gfxPartition.getInternalFrontWindowPoolSize();
     EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::heapInternalFrontWindow), frontWindowSize);
     EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::heapInternalDeviceFrontWindow), frontWindowSize);
 
@@ -366,10 +369,38 @@ TEST(GfxPartitionTest, givenGfxPartitionWhenInitializedThenInternalFrontWindowHe
               gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceMemory) + gfxPartition.getHeapSize(HeapIndex::heapInternalDeviceMemory) - 1);
 }
 
+TEST(GfxPartitionTest, given2MBLocalMemAlignmentEnabledWhenInitializingGfxPartitionThenFrontWindowPoolSizesAreAlignedUpTo2MB) {
+    MockGfxPartition gfxPartition;
+    MockProductHelper productHelper;
+    productHelper.is2MBLocalMemAlignmentEnabledResult = true;
+    uint64_t gfxTop = maxNBitValue(48) + 1;
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, true, 0u, gfxTop, &productHelper);
+
+    auto expectedInternalFrontWindowSize = gfxPartition.getInternalFrontWindowPoolSize();
+    auto expectedExternalFrontWindowSize = gfxPartition.getExternalFrontWindowPoolSize();
+    auto expectedAlignedInternalFrontWindowSize = alignUp(GfxPartition::defaultInternalFrontWindowPoolSize, MemoryConstants::pageSize2M);
+    auto expectedAlignedExternalFrontWindowSize = alignUp(GfxPartition::defaultExternalFrontWindowPoolSize, MemoryConstants::pageSize2M);
+
+    EXPECT_EQ(expectedAlignedInternalFrontWindowSize, expectedInternalFrontWindowSize);
+    EXPECT_EQ(expectedAlignedExternalFrontWindowSize, expectedExternalFrontWindowSize);
+    EXPECT_EQ(MemoryConstants::pageSize2M, expectedInternalFrontWindowSize);
+    EXPECT_EQ(MemoryConstants::pageSize2M, expectedExternalFrontWindowSize);
+
+    EXPECT_EQ(expectedInternalFrontWindowSize, gfxPartition.getHeapSize(HeapIndex::heapInternalFrontWindow));
+    EXPECT_EQ(expectedInternalFrontWindowSize, gfxPartition.getHeapSize(HeapIndex::heapInternalDeviceFrontWindow));
+    EXPECT_EQ(expectedInternalFrontWindowSize, gfxPartition.getHeapMinimalAddress(HeapIndex::heapInternal) - gfxPartition.getHeapBase(HeapIndex::heapInternal));
+    EXPECT_EQ(expectedInternalFrontWindowSize, gfxPartition.getHeapMinimalAddress(HeapIndex::heapInternalDeviceMemory) - gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceMemory));
+
+    EXPECT_EQ(expectedExternalFrontWindowSize, gfxPartition.getHeapSize(HeapIndex::heapExternalFrontWindow));
+    EXPECT_EQ(expectedExternalFrontWindowSize, gfxPartition.getHeapSize(HeapIndex::heapExternalDeviceFrontWindow));
+    EXPECT_EQ(expectedExternalFrontWindowSize, gfxPartition.getHeapMinimalAddress(HeapIndex::heapExternal) - gfxPartition.getHeapBase(HeapIndex::heapExternal));
+    EXPECT_EQ(expectedExternalFrontWindowSize, gfxPartition.getHeapMinimalAddress(HeapIndex::heapExternalDeviceMemory) - gfxPartition.getHeapBase(HeapIndex::heapExternalDeviceMemory));
+}
+
 TEST(GfxPartitionTest, givenInternalFrontWindowHeapWhenAllocatingSmallOrBigChunkThenAddressFromFrontIsReturned) {
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(48) + 1;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr);
 
     const size_t sizeSmall = MemoryConstants::pageSize64k;
     const size_t sizeBig = static_cast<size_t>(gfxPartition.getHeapSize(HeapIndex::heapInternalFrontWindow)) - MemoryConstants::pageSize64k;
@@ -395,7 +426,7 @@ TEST(GfxPartitionTest, givenInternalFrontWindowHeapWhenAllocatingSmallOrBigChunk
 TEST(GfxPartitionTest, givenInternalHeapWhenAllocatingSmallOrBigChunkThenAddressAfterFrontWindowIsReturned) {
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(48) + 1;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr);
 
     const size_t sizeSmall = MemoryConstants::pageSize64k;
     const size_t sizeBig = 4 * MemoryConstants::megaByte + MemoryConstants::pageSize64k;
@@ -408,13 +439,13 @@ TEST(GfxPartitionTest, givenInternalHeapWhenAllocatingSmallOrBigChunkThenAddress
         auto address = gfxPartition.heapAllocate(heaps[i], sizeToAlloc);
 
         EXPECT_EQ(gfxPartition.getHeapLimit(heaps[i]) + 1 - sizeToAlloc - GfxPartition::heapGranularity, address);
-        EXPECT_LE(gfxPartition.getHeapBase(heaps[i]) + GfxPartition::internalFrontWindowPoolSize, address);
+        EXPECT_LE(gfxPartition.getHeapBase(heaps[i]) + gfxPartition.getInternalFrontWindowPoolSize(), address);
         gfxPartition.heapFree(heaps[i], address, sizeToAlloc);
 
         sizeToAlloc = sizeBig;
         address = gfxPartition.heapAllocate(heaps[i], sizeToAlloc);
 
-        EXPECT_EQ(gfxPartition.getHeapBase(heaps[i]) + GfxPartition::internalFrontWindowPoolSize, address);
+        EXPECT_EQ(gfxPartition.getHeapBase(heaps[i]) + gfxPartition.getInternalFrontWindowPoolSize(), address);
         gfxPartition.heapFree(heaps[i], address, sizeToAlloc);
     }
 }
@@ -425,7 +456,7 @@ TEST_P(GfxPartitionTestForAllHeapTypes, givenHeapIndexWhenFreeGpuAddressRangeIsC
     MockGfxPartition gfxPartition;
 
     uint64_t gfxTop = maxNBitValue(48) + 1;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr);
     gfxPartition.callBasefreeGpuAddressRange = true;
     const HeapIndex heapIndex = GetParam();
     const size_t allocationSize = static_cast<size_t>(gfxPartition.getHeapSize(heapIndex)) * 3 / 4;
@@ -462,7 +493,7 @@ TEST_P(GfxPartitionTestForAllHeapTypes, givenHeapIndexWhenHeapAllocateWithStartA
     MockGfxPartition gfxPartition;
 
     uint64_t gfxTop = maxNBitValue(48) + 1;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr);
     gfxPartition.callBasefreeGpuAddressRange = true;
     const HeapIndex heapIndex = GetParam();
     const size_t allocationSize = static_cast<size_t>(gfxPartition.getHeapSize(heapIndex)) * 3 / 4;
@@ -483,7 +514,9 @@ TEST_P(GfxPartitionTestForAllHeapTypes, givenHeapIndexWhenHeapAllocateWithStartA
 
     // Allocate majority of the heap
     sizeToAllocate = allocationSize;
-    auto requiredStartAddress = gfxPartition.getHeapBase(heapIndex) + MemoryConstants::pageSize2M; // Offseting by 2MB to avoid front window
+    const bool isInternalHeapType = heapIndex == HeapIndex::heapInternal || heapIndex == HeapIndex::heapInternalDeviceMemory;
+    const auto heapGranularity = (heapIndex == HeapIndex::heapStandard2MB) ? GfxPartition::heapGranularity2MB : GfxPartition::heapGranularity;
+    auto requiredStartAddress = isInternalHeapType ? (gfxPartition.getHeapMinimalAddress(heapIndex) + heapGranularity) : (gfxPartition.getHeapBase(heapIndex) + (2 * heapGranularity));
     auto address = gfxPartition.heapAllocateWithStartAddressHint(requiredStartAddress, heapIndex, sizeToAllocate);
     const size_t sizeAllocated = sizeToAllocate;
     EXPECT_EQ(requiredStartAddress, address);
@@ -503,7 +536,7 @@ TEST_P(GfxPartitionTestForAllHeapTypes, GivenHeapAndAddressInGfxPartitionThenIsA
     MockGfxPartition gfxPartition;
 
     uint64_t gfxTop = maxNBitValue(48) + 1;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr);
 
     const HeapIndex heapIndex = GetParam();
     const size_t allocationSize = static_cast<size_t>(gfxPartition.getHeapSize(heapIndex)) * 3 / 4;
@@ -679,7 +712,7 @@ TEST_F(GfxPartitionOn57bTest, given48bitCpuAddressWidthWhenInitializingGfxPartit
 
     resetGfxPartition();
     uint64_t gfxTop = maxNBitValue(gpuAddressSpace) + 1;
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(0u, mockOsMemory->freeCounter);
     EXPECT_EQ(0u, mockOsMemory->reservationSizes.size());
     /* init HEAP_EXTENDED only on 57 bit GPU */
@@ -699,7 +732,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsNotPresentWhenIn
     resetGfxPartition();
 
     uint64_t gfxTop = maxNBitValue(gpuAddressSpace) + 1;
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(0u, mockOsMemory->freeCounter);
     EXPECT_EQ(0u, mockOsMemory->reservationSizes.size());
     /* init HEAP_EXTENDED only on 57 bit GPU */
@@ -722,7 +755,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     resetGfxPartition();
 
     uint64_t gfxTop = maxNBitValue(gpuAddressSpace) + 1;
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(0u, mockOsMemory->freeCounter);
     EXPECT_EQ(1u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reinterpret_cast<void *>(0x800000000000), mockOsMemory->validReturnAddress);
@@ -736,7 +769,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->invalidReturnAddress = nullptr;
     mockOsMemory->returnInvalidAddressFirst = true;
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(2u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[1]);
@@ -751,7 +784,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->invalidReturnAddress = reinterpret_cast<void *>(maxNBitValue(47) - reservedHighSize + 1);
     mockOsMemory->returnInvalidAddressFirst = true;
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(2u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[1]);
@@ -766,7 +799,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->invalidReturnAddress = reinterpret_cast<void *>(maxNBitValue(48) - reservedHighSize + 1);
     mockOsMemory->returnInvalidAddressFirst = true;
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(2u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[1]);
@@ -781,7 +814,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->invalidReturnAddress = reinterpret_cast<void *>(maxNBitValue(48) + 1);
     mockOsMemory->returnInvalidAddressFirst = true;
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(2u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[1]);
@@ -796,7 +829,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->forceParseMemoryMaps = true;
     mockOsMemory->memoryMaps = {};
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(0u, mockOsMemory->freeCounter);
     EXPECT_EQ(1u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(MemoryConstants::teraByte, mockOsMemory->reservationSizes[0]);
@@ -810,7 +843,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->forceParseMemoryMaps = true;
     mockOsMemory->memoryMaps = {{0x7ffff7ff3000ull, 0x7ffff7ffb000ull}, {0x7ffff7ffc000ull, 0x7ffff7ffd000ull}, {0x7ffff7ffd000ull, 0x7ffff7ffe000ull}, {0x7ffff7ffe000ull, 0x7ffff7fff000ull}, {0x7ffffffde000ull, 0x7ffffffff000ull}};
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(1u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reinterpret_cast<void *>(0x800000000000), mockOsMemory->validReturnAddress);
@@ -823,7 +856,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->forceParseMemoryMaps = true;
     mockOsMemory->memoryMaps = {{0x7ffff7ff3000ull, 0x7ffff7ffb000ull}, {0x7ffff7ffc000ull, 0x7ffff7ffd000ull}, {0x7ffff7ffd000ull, 0x7ffff7ffe000ull}, {0x7ffff7ffe000ull, 0x7ffff7fff000ull}, {0x7ffffffde000ull, 0x7ffffffff000ull}, {0xffffffffff600000ull, 0xffffffffff601000ull}};
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(1u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reinterpret_cast<void *>(0x800000000000), mockOsMemory->validReturnAddress);
@@ -836,7 +869,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->forceParseMemoryMaps = true;
     mockOsMemory->memoryMaps = {{0x7ffff7ff3000ull, 0x7ffff7ffb000ull}, {0x7ffff7ffc000ull, 0x7ffff7ffd000ull}, {0x7ffff7ffd000ull, 0x7ffff7ffe000ull}, {0x7ffff7ffe000ull, 0x7ffff7fff000ull}, {0x7ffffffde000ull, 0x7ffffffff000ull}, {0xffffff600000ull, 0xffffff601000ull}, {0xffffffffff600000ull, 0xffffffffff601000ull}};
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(1u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reinterpret_cast<void *>(0x800000000000), mockOsMemory->validReturnAddress);
@@ -849,7 +882,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->forceParseMemoryMaps = true;
     mockOsMemory->memoryMaps = {{0x7ffff7ff3000ull, 0x7ffff7ffb000ull}, {0x7ffff7ffc000ull, 0x7ffff7ffd000ull}, {0x7ffff7ffd000ull, 0x7ffff7ffe000ull}, {0x7ffff7ffe000ull, 0x7ffff7fff000ull}, {0x80000013e000ull, 0x800000141000ull}, {0x800000141000ull, 0x800000142000ull}, {0x7ffffffde000ull, 0x7ffffffff000ull}, {0xffffff600000ull, 0xffffff601000ull}, {0xffffffffff600000ull, 0xffffffffff601000ull}};
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(1u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reservedHighSize, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reinterpret_cast<void *>(0x800000142000), mockOsMemory->validReturnAddress);
@@ -863,7 +896,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->forceParseMemoryMaps = true;
     mockOsMemory->memoryMaps = {{0x7ffff7ff3000ull, 0x7ffff7ffb000ull}, {0x7ffff7ffc000ull, 0x7ffff7ffd000ull}, {0x7ffff7ffd000ull, 0x7ffff7ffe000ull}, {0x7ffff7ffe000ull, 0x7ffff7fff000ull}, {0x800000000000ull, 0x1000000000000ull}, {0xffffffffff600000ull, 0xffffffffff601000ull}};
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(1u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reservedLowSize, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reinterpret_cast<void *>(0x10000), mockOsMemory->validReturnAddress);
@@ -880,7 +913,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->invalidReturnAddress = nullptr;
     mockOsMemory->returnInvalidAddressFirst = true;
 
-    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
     EXPECT_EQ(2u, mockOsMemory->reservationSizes.size());
     EXPECT_EQ(reservedLowSize, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reservedLowSize2, mockOsMemory->reservationSizes[1]);
@@ -897,7 +930,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->invalidReturnAddress = nullptr;
     mockOsMemory->returnInvalidAddressAlways = true;
 
-    EXPECT_FALSE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_FALSE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
 }
 
 TEST_F(GfxPartitionOn57bTest, whenInitGfxPartitionThenDoubleHeapStandardAtTheCostOfStandard64AndStandard2MB) {
@@ -911,7 +944,7 @@ TEST_F(GfxPartitionOn57bTest, whenInitGfxPartitionThenDoubleHeapStandardAtTheCos
     std::vector<std::unique_ptr<MockGfxPartition>> gfxPartitions;
     gfxPartitions.push_back(std::make_unique<MockGfxPartition>(reservedCpuAddressRange));
     gfxPartitions[0]->osMemory.reset(new MockOsMemory);
-    EXPECT_TRUE(gfxPartitions[0]->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+    EXPECT_TRUE(gfxPartitions[0]->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop, nullptr));
 
     EXPECT_EQ(gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard), 4 * gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard64KB));
     EXPECT_EQ(gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard), 4 * gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard2MB));
@@ -937,7 +970,7 @@ TEST_F(GfxPartitionOn57bTest, givenSystemConfigThatWouldCauseMisalignmentWhenIni
 
     auto partition = std::make_unique<MockGfxPartition>(reservedCpuAddressRange);
     partition->osMemory.reset(new MockOsMemory);
-    EXPECT_TRUE(partition->init(maxNBitValue(gpuAddressSpace), cpuAddressRangeSizeToReserve, 0, 1, false, systemMemorySize, gfxTop));
+    EXPECT_TRUE(partition->init(maxNBitValue(gpuAddressSpace), cpuAddressRangeSizeToReserve, 0, 1, false, systemMemorySize, gfxTop, nullptr));
     auto standardBase = partition->getHeapBase(HeapIndex::heapStandard);
     auto standard64Base = partition->getHeapBase(HeapIndex::heapStandard64KB);
     auto standard2MBBase = partition->getHeapBase(HeapIndex::heapStandard2MB);
@@ -964,7 +997,7 @@ TEST_F(GfxPartitionOn57bTest, given48bitGpuAddressSpaceAnd57bitCpuAddressWidthWh
     for (int i = 0; i < numRootDevices; ++i) {
         gfxPartitions.push_back(std::make_unique<MockGfxPartition>(reservedCpuAddressRange));
         gfxPartitions[i]->osMemory.reset(new MockOsMemory);
-        EXPECT_TRUE(gfxPartitions[i]->init(maxNBitValue(gpuAddressSpace), 0, i, numRootDevices, false, 0u, gfxTop));
+        EXPECT_TRUE(gfxPartitions[i]->init(maxNBitValue(gpuAddressSpace), 0, i, numRootDevices, false, 0u, gfxTop, nullptr));
     }
 
     auto osMemory = static_cast<MockOsMemory *>(gfxPartitions[0]->osMemory.get());
@@ -991,7 +1024,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitGpuAddressSpaceAnd57bitCpuAddressWidthWh
     for (int i = 0; i < numRootDevices; ++i) {
         gfxPartitions.push_back(std::make_unique<MockGfxPartition>(reservedCpuAddressRange));
         gfxPartitions[i]->osMemory.reset(new MockOsMemory);
-        EXPECT_TRUE(gfxPartitions[i]->init(maxNBitValue(gpuAddressSpace), 0, i, numRootDevices, false, systemMemorySize, gfxTop));
+        EXPECT_TRUE(gfxPartitions[i]->init(maxNBitValue(gpuAddressSpace), 0, i, numRootDevices, false, systemMemorySize, gfxTop, nullptr));
     }
     constexpr auto expectedReserveSizeForNonSvm = numRootDevices * MemoryConstants::teraByte;
     constexpr auto expectedReserveSizeForHeapExtended = 4 * systemMemorySize;
@@ -1024,7 +1057,7 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
 
         MockGfxPartition gfxPartition;
         auto systemMemorySize = MemoryConstants::teraByte;
-        EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, systemMemorySize, gfxTop));
+        EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, systemMemorySize, gfxTop, nullptr));
 
         auto heapExtendedSize = 4 * systemMemorySize;
 
@@ -1037,7 +1070,7 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
         CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(57);
 
         MockGfxPartition gfxPartition;
-        EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, 0u, gfxTop));
+        EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, 0u, gfxTop, nullptr));
 
         auto heapExtendedTotalSize = maxNBitValue(48) + 1;
         auto heapExtendedSize = alignDown(heapExtendedTotalSize, GfxPartition::heapGranularity);
@@ -1051,7 +1084,7 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
         CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(48);
 
         MockGfxPartition gfxPartition;
-        EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, 0u, gfxTop));
+        EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, 0u, gfxTop, nullptr));
 
         auto heapExtendedTotalSize = maxNBitValue(48) + 1;
         auto heapExtendedSize = alignDown(heapExtendedTotalSize, GfxPartition::heapGranularity);

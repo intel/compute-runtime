@@ -752,7 +752,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenSuccessfullyInitiali
     EXPECT_EQ(memManager->reserveGpuAddressOnHeapResult.address, bindlessHeapHelper->reservedRanges[0].address);
     EXPECT_EQ(memManager->reserveGpuAddressOnHeapResult.size, bindlessHeapHelper->reservedRanges[0].size);
 
-    constexpr auto expectedFrontWindowSize = GfxPartition::externalFrontWindowPoolSize;
+    auto expectedFrontWindowSize = memManager->getGfxPartition(0)->getExternalFrontWindowPoolSize();
 
     {
         // heapFrontWindow

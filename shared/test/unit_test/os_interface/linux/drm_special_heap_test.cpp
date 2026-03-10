@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,10 @@ class DrmMemManagerFixture {
     struct FrontWindowMemManagerMock : public TestedDrmMemoryManager {
         using MemoryManager::allocate32BitGraphicsMemoryImpl;
         FrontWindowMemManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : TestedDrmMemoryManager(executionEnvironment) {}
-        void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), true, 0u, range + 1); }
+        void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) {
+            auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
+            getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), true, 0u, range + 1, &productHelper);
+        }
     };
 
     void setUp() {

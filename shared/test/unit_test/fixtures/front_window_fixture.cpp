@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,10 @@
 using namespace NEO;
 
 MemManagerFixture::FrontWindowMemManagerMock::FrontWindowMemManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
-void MemManagerFixture::FrontWindowMemManagerMock::forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), true, 0u, range + 1); }
+void MemManagerFixture::FrontWindowMemManagerMock::forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) {
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
+    getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), true, 0u, range + 1, &productHelper);
+}
 
 void MemManagerFixture::setUp() {
     DebugManagerStateRestore dbgRestorer;

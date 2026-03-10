@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -2226,8 +2227,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerFailInjectionPrelimTest, givenEnabledLocalMem
     mock->ioctlExpected.total = -1; // don't care
     class MockGfxPartition : public GfxPartition {
       public:
-        MockGfxPartition() : GfxPartition(reservedCpuAddressRange) {
-            init(defaultHwInfo->capabilityTable.gpuAddressSpace, getSizeToReserve(), 0, 1, false, 0u, defaultHwInfo->capabilityTable.gpuAddressSpace + 1);
+        MockGfxPartition(const ProductHelper *productHelper) : GfxPartition(reservedCpuAddressRange) {
+            init(defaultHwInfo->capabilityTable.gpuAddressSpace, getSizeToReserve(), 0, 1, false, 0u, defaultHwInfo->capabilityTable.gpuAddressSpace + 1, productHelper);
         }
         ~MockGfxPartition() override {
             for (const auto &heap : heaps) {
@@ -2242,8 +2243,9 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerFailInjectionPrelimTest, givenEnabledLocalMem
         };
         OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     };
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
     TestedDrmMemoryManager testedMemoryManager(true, false, true, *executionEnvironment);
-    testedMemoryManager.overrideGfxPartition(new MockGfxPartition);
+    testedMemoryManager.overrideGfxPartition(new MockGfxPartition(&productHelper));
 
     InjectedFunction method = [&](size_t failureIndex) {
         MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;

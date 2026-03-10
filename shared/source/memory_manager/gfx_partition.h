@@ -13,6 +13,7 @@
 
 namespace NEO {
 class HeapAllocator;
+class ProductHelper;
 
 enum class HeapIndex : uint32_t {
     heapInternalDeviceMemory = 0u,
@@ -39,7 +40,7 @@ class GfxPartition {
     GfxPartition(OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForNonSvmHeaps);
     MOCKABLE_VIRTUAL ~GfxPartition();
 
-    MOCKABLE_VIRTUAL bool init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool, uint64_t systemMemorySize, uint64_t gfxTop);
+    MOCKABLE_VIRTUAL bool init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool, uint64_t systemMemorySize, uint64_t gfxTop, const ProductHelper *productHelper);
 
     void heapInit(HeapIndex heapIndex, uint64_t base, uint64_t size) {
         getHeap(heapIndex).init(base, size, MemoryConstants::pageSize);
@@ -95,6 +96,16 @@ class GfxPartition {
         return getHeap(heapIndex).getAllocAlignment();
     }
 
+    void setFrontWindowPoolSizes(const ProductHelper *productHelper);
+
+    size_t getExternalFrontWindowPoolSize() const {
+        return externalFrontWindowPoolSize;
+    }
+
+    size_t getInternalFrontWindowPoolSize() const {
+        return internalFrontWindowPoolSize;
+    }
+
     bool isHeapInitialized(HeapIndex heapIndex) {
         return getHeap(heapIndex).isInitialized();
     }
@@ -129,8 +140,8 @@ class GfxPartition {
     static constexpr uint64_t heapGranularity = MemoryConstants::pageSize64k;
     static constexpr uint64_t heapGranularity64k = MemoryConstants::pageSize64k;
     static constexpr uint64_t heapGranularity2MB = 2 * MemoryConstants::megaByte;
-    static constexpr size_t externalFrontWindowPoolSize = 2 * MemoryConstants::pageSize64k;
-    static constexpr size_t internalFrontWindowPoolSize = 1 * MemoryConstants::megaByte;
+    static constexpr size_t defaultExternalFrontWindowPoolSize = 2 * MemoryConstants::pageSize64k;
+    static constexpr size_t defaultInternalFrontWindowPoolSize = 1 * MemoryConstants::megaByte;
 
     static const std::array<HeapIndex, 4> heap32Names;
     static const std::array<HeapIndex, 8> heapNonSvmNames;
@@ -175,5 +186,7 @@ class GfxPartition {
     OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForNonSvmHeaps;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRangeForHeapExtended{};
     std::unique_ptr<OSMemory> osMemory;
+    size_t externalFrontWindowPoolSize = defaultExternalFrontWindowPoolSize;
+    size_t internalFrontWindowPoolSize = defaultInternalFrontWindowPoolSize;
 };
 } // namespace NEO

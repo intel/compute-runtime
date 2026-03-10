@@ -104,10 +104,11 @@ void DrmMemoryManager::initialize(GemCloseWorkerMode mode) {
 
     localMemBanksCount.resize(localMemorySupported.size());
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
+        auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
         uint64_t gfxTop{};
         getDrm(rootDeviceIndex).queryGttSize(gfxTop, false);
-        if (!getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh, DrmMemoryManager::getSystemSharedMemory(rootDeviceIndex), gfxTop)) {
+        if (!getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh, DrmMemoryManager::getSystemSharedMemory(rootDeviceIndex), gfxTop, &productHelper)) {
             initialized = false;
             return;
         }
@@ -3204,6 +3205,7 @@ void DrmMemoryManager::getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32
 
 bool DrmMemoryManager::reInitDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) {
     if (gfxPartitions.at(rootDeviceIndex) == nullptr) {
+        auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
 
         gfxPartitions.at(rootDeviceIndex) = std::make_unique<GfxPartition>(reservedCpuAddressRange);
@@ -3211,7 +3213,7 @@ bool DrmMemoryManager::reInitDeviceSpecificGfxPartition(uint32_t rootDeviceIndex
         uint64_t gfxTop{};
         getDrm(rootDeviceIndex).queryGttSize(gfxTop, false);
 
-        if (getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh, DrmMemoryManager::getSystemSharedMemory(rootDeviceIndex), gfxTop)) {
+        if (getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh, DrmMemoryManager::getSystemSharedMemory(rootDeviceIndex), gfxTop, &productHelper)) {
             return true;
         }
     }

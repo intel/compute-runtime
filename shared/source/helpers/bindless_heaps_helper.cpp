@@ -31,8 +31,6 @@ constexpr size_t borderColorAlphaOffset = alignUp(4 * sizeof(float), MemoryConst
 
 constexpr HeapIndex heapIndexForPoolReservedRange = HeapIndex::heapStandard;
 constexpr size_t reservedRangeSize = static_cast<size_t>(4 * MemoryConstants::gigaByte);
-constexpr size_t heapFrontWindowSize = GfxPartition::externalFrontWindowPoolSize;
-constexpr size_t heapRegularSize = reservedRangeSize - heapFrontWindowSize;
 
 /*
  *       __________________________________ STANDARD __________________________________
@@ -121,6 +119,8 @@ bool BindlessHeapsHelper::initializeReservedMemory() {
 
     auto reservedRange = reservedRangeOpt.value();
     reservedRangeBase = rootDevice->getRootDeviceEnvironmentRef().getGmmHelper()->decanonize(reservedRange.address);
+    auto heapFrontWindowSize = memManager->getGfxPartition(rootDeviceIndex)->getExternalFrontWindowPoolSize();
+    auto heapRegularSize = reservedRangeSize - heapFrontWindowSize;
 
     heapFrontWindow = std::make_unique<HeapAllocator>(reservedRangeBase, heapFrontWindowSize, MemoryConstants::pageSize64k, 0);
     heapRegular = std::make_unique<HeapAllocator>(reservedRangeBase + heapFrontWindowSize, heapRegularSize, MemoryConstants::pageSize64k, 0);

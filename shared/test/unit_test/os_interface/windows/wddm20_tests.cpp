@@ -1420,15 +1420,16 @@ TEST(WddmGfxPartitionTests, givenGfxPartitionWhenInitializedThenInternalFrontWin
 
     uint32_t rootDeviceIndex = 0;
     size_t numRootDevices = 1;
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
 
     MockGfxPartition gfxPartition;
     wddm->init();
-    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false);
+    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false, &productHelper);
 
     EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::heapInternalFrontWindow), gfxPartition.getHeapBase(HeapIndex::heapInternal));
     EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceFrontWindow), gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceMemory));
 
-    auto frontWindowSize = GfxPartition::internalFrontWindowPoolSize;
+    auto frontWindowSize = gfxPartition.getInternalFrontWindowPoolSize();
     EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::heapInternalFrontWindow), frontWindowSize);
     EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::heapInternalDeviceFrontWindow), frontWindowSize);
 
@@ -1450,10 +1451,11 @@ TEST(WddmGfxPartitionTests, givenInternalFrontWindowHeapWhenAllocatingSmallOrBig
 
     uint32_t rootDeviceIndex = 0;
     size_t numRootDevices = 1;
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
 
     MockGfxPartition gfxPartition;
     wddm->init();
-    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false);
+    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false, &productHelper);
 
     const size_t sizeSmall = MemoryConstants::pageSize64k;
     const size_t sizeBig = static_cast<size_t>(gfxPartition.getHeapSize(HeapIndex::heapInternalFrontWindow)) - MemoryConstants::pageSize64k;

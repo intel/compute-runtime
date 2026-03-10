@@ -127,7 +127,7 @@ class Wddm : public DriverModel {
         return gfxPartition;
     }
 
-    void initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIndex, size_t numRootDevices, bool useFrontWindowPool) const;
+    void initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIndex, size_t numRootDevices, bool useFrontWindowPool, const ProductHelper *productHelper) const;
 
     const std::string &getDeviceRegistryPath() const {
         return deviceRegistryPath;

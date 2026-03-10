@@ -4384,7 +4384,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndReleaseGpuRange
     constexpr size_t reservedCpuAddressRangeSize = is64bit ? (6 * 4 * MemoryConstants::gigaByte) : 0;
     auto hwInfo = defaultHwInfo.get();
     auto mockGfxPartition = std::make_unique<MockGfxPartition>();
-    mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1, false, 0u, hwInfo->capabilityTable.gpuAddressSpace + 1);
+    mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1, false, 0u, hwInfo->capabilityTable.gpuAddressSpace + 1, nullptr);
     auto size = 2 * MemoryConstants::megaByte;
     auto gpuAddress = mockGfxPartition->heapAllocate(HeapIndex::heapStandard, size);
     auto gmmHelper = device->getGmmHelper();
@@ -5846,7 +5846,7 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenDeviceHeapIsDepletedTh
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
 
     auto mockGfxPartition = std::make_unique<MockGfxPartition>();
-    mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1, false, 0u, hwInfo->capabilityTable.gpuAddressSpace + 1);
+    mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1, false, 0u, hwInfo->capabilityTable.gpuAddressSpace + 1, nullptr);
 
     auto status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;

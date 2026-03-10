@@ -14,6 +14,7 @@
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
@@ -213,7 +214,8 @@ GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemoryImpl(const All
 }
 
 void MockMemoryManager::forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) {
-    getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), false, 0u, range + 1);
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), false, 0u, range + 1, &productHelper);
 }
 
 bool MockMemoryManager::hasPageFaultsEnabled(const Device &neoDevice) {
@@ -265,9 +267,10 @@ bool MockMemoryManager::reInitDeviceSpecificGfxPartition(uint32_t rootDeviceInde
         size_t reservedCpuAddressRangeSize = static_cast<size_t>((4 * 4 + 2 * 4)) * static_cast<size_t>(MemoryConstants::gigaByte);
         gfxPartitions.at(rootDeviceIndex) = std::make_unique<GfxPartition>(reservedCpuAddressRange);
 
+        auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
         auto gfxTop = gpuAddressSpace + 1;
-        if (getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, reservedCpuAddressRangeSize, rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh, OsAgnosticMemoryManager::getSystemSharedMemory(rootDeviceIndex), gfxTop)) {
+        if (getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, reservedCpuAddressRangeSize, rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh, OsAgnosticMemoryManager::getSystemSharedMemory(rootDeviceIndex), gfxTop, &productHelper)) {
             return true;
         }
     }
