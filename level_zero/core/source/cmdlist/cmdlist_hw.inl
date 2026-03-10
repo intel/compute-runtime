@@ -3144,7 +3144,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         return {nullptr, reinterpret_cast<uintptr_t>(ptr), 0, nullptr, true};
     }
 
-    if (!cachedHostAlloc && bufferSize) {
+    if (!cachedHostAlloc) {
         cachedHostAlloc = getHostPtrAlloc(buffer, bufferSize, hostCopyAllowed, copyOffload);
     }
 

@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/os_context.h"
 
 namespace {
@@ -83,11 +84,17 @@ std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t req
 
 GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, void *data) {
     ReusableAllocationRequirements *req = static_cast<ReusableAllocationRequirements *>(data);
+
     auto *curr = head;
     while (curr != nullptr) {
-        if ((req->allocationType == curr->getAllocationType()) &&
-            (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize) &&
-            (curr->storageInfo.systemMemoryForced == req->forceSystemMemoryFlag)) {
+        bool typeMatch = (req->allocationType == curr->getAllocationType());
+        bool sizeMatch = (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize);
+        if (typeMatch && curr->getAllocationType() == NEO::AllocationType::externalHostPtr) {
+            sizeMatch = (alignSizeWholePage(curr->getUnderlyingBuffer(), curr->getUnderlyingBufferSize()) >= req->requiredMinimalSize);
+        }
+        bool memMatch = (curr->storageInfo.systemMemoryForced == req->forceSystemMemoryFlag);
+
+        if (typeMatch && sizeMatch && memMatch) {
             if (req->csrTagAddress == nullptr) {
                 return removeOneImpl(curr, nullptr);
             }

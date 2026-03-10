@@ -1386,6 +1386,31 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerformingC
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, returnValue);
 }
 
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenObtainAllocDataWithLargerSizeWithinPageBoundaryThenCachedAllocationReused) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
+    size_t bufferSize = 220;
+    size_t requestedSize = 512;
+    auto srcAllocation = cmdList.getHostPtrAlloc(srcBuffer, bufferSize, true, false);
+    ASSERT_NE(nullptr, srcAllocation);
+    auto dstAllocation = cmdList.getHostPtrAlloc(dstBuffer, bufferSize, false, false);
+    ASSERT_NE(nullptr, dstAllocation);
+
+    CpuMemCopyInfo memCopyInfo(dstBuffer, srcBuffer, requestedSize);
+    cmdList.obtainAllocData(memCopyInfo, false);
+
+    EXPECT_TRUE(memCopyInfo.srcIsImportedHostPtr);
+    EXPECT_TRUE(memCopyInfo.dstIsImportedHostPtr);
+    EXPECT_NE(nullptr, memCopyInfo.srcAllocInfo.cachedHostAlloc);
+    EXPECT_NE(nullptr, memCopyInfo.dstAllocInfo.cachedHostAlloc);
+}
+
 HWTEST_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenSettingFillPropertiesThenAllGroupsCountEqualSizeToFill) {
     createKernel();
     ze_command_queue_desc_t queueDesc = {};
