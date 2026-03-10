@@ -64,8 +64,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"reg_PCIESS_tx_pktcount_msb", 300},
       {"MSU_BITMASK", 3688},
       {"NUM_OF_MEM_CHANNEL", 3660},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 372},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 368},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 376},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 380},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 536},
@@ -321,8 +319,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"reg_PCIESS_tx_pktcount_msb", 308},
       {"MSU_BITMASK", 3688},
       {"NUM_OF_MEM_CHANNEL", 3660},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 372},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 368},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 380},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 376},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 540},
@@ -594,8 +590,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"reg_PCIESS_tx_pktcount_msb", 300},
       {"MSU_BITMASK", 3688},
       {"NUM_OF_MEM_CHANNEL", 3660},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 372},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 368},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 376},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 380},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 536},
@@ -931,8 +925,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"reg_PCIESS_tx_pktcount_msb", 308},
       {"MSU_BITMASK", 3688},
       {"NUM_OF_MEM_CHANNEL", 3660},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 372},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 368},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 380},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 376},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 540},
@@ -1321,18 +1313,6 @@ static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::stri
 
     uint64_t txPacketCounter = packInto64Bit(txPacketCounterMsb, txPacketCounterLsb);
 
-    uint32_t timeStampLsb = 0;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 0, timeStampLsb)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    uint32_t timeStampMsb = 0;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 0, timeStampMsb)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    uint64_t timeStamp = packInto64Bit(timeStampMsb, timeStampLsb);
-
     pStats->speed.gen = -1;
     pStats->speed.width = -1;
     pStats->speed.maxBandwidth = -1;
@@ -1340,7 +1320,7 @@ static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::stri
     pStats->rxCounter = rxCounter;
     pStats->txCounter = txCounter;
     pStats->packetCounter = rxPacketCounter + txPacketCounter;
-    pStats->timestamp = timeStamp * milliSecsToMicroSecs;
+    pStats->timestamp = SysmanDevice::getSysmanTimestamp();
 
     return ZE_RESULT_SUCCESS;
 }

@@ -27,9 +27,7 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
      {"rx_pkt_count_lsb", {74, 1}},
      {"rx_pkt_count_msb", {73, 1}},
      {"tx_pkt_count_lsb", {76, 1}},
-     {"tx_pkt_count_msb", {75, 1}},
-     {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", {92, 1}},
-     {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", {93, 1}}}};
+     {"tx_pkt_count_msb", {75, 1}}}};
 
 class SysmanDevicePciFixture : public SysmanDeviceFixture {
   protected:
@@ -352,10 +350,6 @@ HWTEST2_F(SysmanDevicePciFixture, GivenValidDeviceHandleWhenGettingZesDevicePciG
             *lpBytesReturned = 4;
             *static_cast<uint32_t *>(lpOutBuffer) = mockTxPacketCounter;
             return true;
-        case 93:
-            *lpBytesReturned = 8;
-            *static_cast<uint32_t *>(lpOutBuffer) = mockTimestamp;
-            return true;
         default:
             *lpBytesReturned = 4;
             *static_cast<uint32_t *>(lpOutBuffer) = 0;
@@ -363,13 +357,14 @@ HWTEST2_F(SysmanDevicePciFixture, GivenValidDeviceHandleWhenGettingZesDevicePciG
         }
         return false;
     });
+    uint64_t initialTimestamp = SysmanDevice::getSysmanTimestamp();
     zes_pci_stats_t stats;
     ze_result_t result = zesDevicePciGetStats(pSysmanDevice->toHandle(), &stats);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(stats.rxCounter, mockRxCounter);
     EXPECT_EQ(stats.txCounter, mockTxCounter);
     EXPECT_EQ(stats.packetCounter, mockRxPacketCounter + mockTxPacketCounter);
-    EXPECT_EQ(stats.timestamp, mockTimestamp * milliSecsToMicroSecs);
+    EXPECT_GT(stats.timestamp, initialTimestamp);
 }
 
 HWTEST2_F(SysmanDevicePciFixture, GivenNullPmtHandleWhenGettingZesDevicePciGetStatsThenCallFails, IsBMG) {
@@ -380,7 +375,7 @@ HWTEST2_F(SysmanDevicePciFixture, GivenNullPmtHandleWhenGettingZesDevicePciGetSt
 }
 
 HWTEST2_F(SysmanDevicePciFixture, GivenValidPmtHandleWhenCallingZesDevicePciGetStatsAndIoctlFailsThenCallsFails, IsBMG) {
-    static int count = 10;
+    static int count = 8;
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
         return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
     });
@@ -419,14 +414,6 @@ HWTEST2_F(SysmanDevicePciFixture, GivenValidPmtHandleWhenCallingZesDevicePciGetS
             *lpBytesReturned = 4;
             *static_cast<uint32_t *>(lpOutBuffer) = mockTxPacketCounter;
             return count == 8 ? false : true;
-        case 92:
-            *lpBytesReturned = 4;
-            *static_cast<uint32_t *>(lpOutBuffer) = 0;
-            return count == 9 ? false : true;
-        case 93:
-            *lpBytesReturned = 4;
-            *static_cast<uint32_t *>(lpOutBuffer) = mockTimestamp;
-            return count == 10 ? false : true;
         }
         return false;
     });
