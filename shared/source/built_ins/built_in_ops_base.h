@@ -55,11 +55,13 @@ inline constexpr Type fillImage3dHeapless{37};
 inline constexpr Type queryKernelTimestamps{38};
 inline constexpr Type fillImage1dBuffer{39};
 inline constexpr Type fillImage1dBufferHeapless{40};
+inline constexpr Type queryKernelTimestampsStateless{41};
+inline constexpr Type queryKernelTimestampsStatelessHeapless{42};
 
 constexpr bool isStateless(Type type) {
-    constexpr std::array<Type, 10> statelessBuiltins{{copyBufferToBufferStateless, copyBufferRectStateless, fillBufferStateless, copyBufferToImage3dStateless,
+    constexpr std::array<Type, 12> statelessBuiltins{{copyBufferToBufferStateless, copyBufferRectStateless, fillBufferStateless, copyBufferToImage3dStateless,
                                                       copyImage3dToBufferStateless, copyBufferToBufferStatelessHeapless, copyBufferRectStatelessHeapless, fillBufferStatelessHeapless,
-                                                      copyBufferToImage3dStatelessHeapless, copyImage3dToBufferStatelessHeapless}};
+                                                      copyBufferToImage3dStatelessHeapless, copyImage3dToBufferStatelessHeapless, queryKernelTimestampsStateless, queryKernelTimestampsStatelessHeapless}};
     for (auto builtinType : statelessBuiltins) {
         if (type == builtinType) {
             return true;
@@ -83,7 +85,7 @@ constexpr bool isWideStateless(Type type) {
 constexpr bool isHeapless(Type type) {
     constexpr Type heaplessBuiltins[] = {copyBufferToBufferStatelessHeapless, copyBufferToBufferWideStatelessHeapless, copyBufferRectStatelessHeapless, copyBufferRectWideStatelessHeapless, fillBufferStatelessHeapless, fillBufferWideStatelessHeapless,
                                          copyBufferToImage3dStatelessHeapless, copyBufferToImage3dWideStatelessHeapless, copyImage3dToBufferStatelessHeapless, copyImage3dToBufferWideStatelessHeapless, copyImageToImage1dHeapless, copyImageToImage2dHeapless, copyImageToImage3dHeapless,
-                                         fillImage1dHeapless, fillImage2dHeapless, fillImage3dHeapless, fillImage1dBufferHeapless};
+                                         fillImage1dHeapless, fillImage2dHeapless, fillImage3dHeapless, fillImage1dBufferHeapless, queryKernelTimestampsStatelessHeapless};
 
     for (auto builtinType : heaplessBuiltins) {
         if (type == builtinType) {

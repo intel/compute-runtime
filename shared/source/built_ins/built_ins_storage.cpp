@@ -83,6 +83,8 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
     case EBuiltInOps::fillImage3dHeapless:
         return "fill_image3d.builtin_kernel";
     case EBuiltInOps::queryKernelTimestamps:
+    case EBuiltInOps::queryKernelTimestampsStateless:
+    case EBuiltInOps::queryKernelTimestampsStatelessHeapless:
         return "copy_kernel_timestamps.builtin_kernel";
     case EBuiltInOps::fillImage1dBuffer:
     case EBuiltInOps::fillImage1dBufferHeapless:

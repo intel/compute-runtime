@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,15 +26,20 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
     using BuiltinFunctionsLibImpl::BuiltinFunctionsLibImpl;
 
     void initBuiltinKernel(Builtin func) override {
+        auto builtId = static_cast<uint32_t>(func);
         switch (static_cast<Builtin>(func)) {
         case Builtin::queryKernelTimestamps:
-            if (builtins[0].get() == nullptr) {
-                builtins[0] = loadBuiltIn(NEO::EBuiltInOps::queryKernelTimestamps, "QueryKernelTimestamps");
+        case Builtin::queryKernelTimestampsStateless:
+        case Builtin::queryKernelTimestampsStatelessHeapless:
+            if (builtins[builtId].get() == nullptr) {
+                builtins[builtId] = loadBuiltIn(NEO::EBuiltInOps::queryKernelTimestamps, "QueryKernelTimestamps");
             }
             break;
         case Builtin::queryKernelTimestampsWithOffsets:
-            if (builtins[1].get() == nullptr) {
-                builtins[1] = loadBuiltIn(NEO::EBuiltInOps::queryKernelTimestamps, "QueryKernelTimestampsWithOffsets");
+        case Builtin::queryKernelTimestampsWithOffsetsStateless:
+        case Builtin::queryKernelTimestampsWithOffsetsStatelessHeapless:
+            if (builtins[builtId].get() == nullptr) {
+                builtins[builtId] = loadBuiltIn(NEO::EBuiltInOps::queryKernelTimestamps, "QueryKernelTimestampsWithOffsets");
             }
             break;
         default:
@@ -46,7 +51,8 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
     }
 
     Kernel *getFunction(Builtin func) override {
-        return func == Builtin::queryKernelTimestampsWithOffsets ? builtins[1]->func.get() : builtins[0]->func.get();
+        auto builtId = static_cast<uint32_t>(func);
+        return builtins[builtId]->func.get();
     }
 
     std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {

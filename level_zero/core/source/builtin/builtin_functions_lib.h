@@ -64,7 +64,11 @@ enum class Builtin : uint32_t {
     fillBufferRightLeftoverStatelessHeapless,
     fillBufferRightLeftoverWideStatelessHeapless,
     queryKernelTimestamps,
+    queryKernelTimestampsStateless,
+    queryKernelTimestampsStatelessHeapless,
     queryKernelTimestampsWithOffsets,
+    queryKernelTimestampsWithOffsetsStateless,
+    queryKernelTimestampsWithOffsetsStatelessHeapless,
     count
 };
 
@@ -332,6 +336,31 @@ constexpr Builtin adjustBuiltinType<Builtin::fillBufferRightLeftover>(
     }
 
     return Builtin::fillBufferRightLeftover;
+}
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::queryKernelTimestamps>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
+    if (isHeapless) {
+        return Builtin::queryKernelTimestampsStatelessHeapless;
+    } else if (isStateless) {
+        return Builtin::queryKernelTimestampsStateless;
+    }
+
+    return Builtin::queryKernelTimestamps;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::queryKernelTimestampsWithOffsets>(
+    bool isStateless, bool isHeapless, bool isWideness) {
+
+    if (isHeapless) {
+        return Builtin::queryKernelTimestampsWithOffsetsStatelessHeapless;
+    } else if (isStateless) {
+        return Builtin::queryKernelTimestampsWithOffsetsStateless;
+    }
+
+    return Builtin::queryKernelTimestampsWithOffsets;
 }
 
 template <ImageBuiltin type>

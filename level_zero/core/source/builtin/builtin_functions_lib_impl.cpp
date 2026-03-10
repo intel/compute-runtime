@@ -213,9 +213,25 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         kernelName = "QueryKernelTimestamps";
         builtin = NEO::EBuiltInOps::queryKernelTimestamps;
         break;
+    case Builtin::queryKernelTimestampsStateless:
+        kernelName = "QueryKernelTimestamps";
+        builtin = NEO::EBuiltInOps::queryKernelTimestampsStateless;
+        break;
+    case Builtin::queryKernelTimestampsStatelessHeapless:
+        kernelName = "QueryKernelTimestamps";
+        builtin = NEO::EBuiltInOps::queryKernelTimestampsStatelessHeapless;
+        break;
     case Builtin::queryKernelTimestampsWithOffsets:
         kernelName = "QueryKernelTimestampsWithOffsets";
         builtin = NEO::EBuiltInOps::queryKernelTimestamps;
+        break;
+    case Builtin::queryKernelTimestampsWithOffsetsStateless:
+        kernelName = "QueryKernelTimestampsWithOffsets";
+        builtin = NEO::EBuiltInOps::queryKernelTimestampsStateless;
+        break;
+    case Builtin::queryKernelTimestampsWithOffsetsStatelessHeapless:
+        kernelName = "QueryKernelTimestampsWithOffsets";
+        builtin = NEO::EBuiltInOps::queryKernelTimestampsStatelessHeapless;
         break;
     default:
         UNRECOVERABLE_IF(true);

@@ -89,6 +89,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::eventSignalPipeControl;
     using BaseClass::finalStreamState;
     using BaseClass::flags;
+    using BaseClass::forceStateless;
     using BaseClass::frontEndStateTracking;
     using BaseClass::getAlignedAllocationData;
     using BaseClass::getAllocationFromHostPtrMap;

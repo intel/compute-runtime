@@ -59,6 +59,7 @@ set(GENERATED_BUILTINS_STATELESS
     "copy_buffer_to_buffer"
     "copy_buffer_rect"
     "fill_buffer"
+    "copy_kernel_timestamps"
 )
 
 foreach(MODE ${ADDRESSING_MODES})

@@ -3802,17 +3802,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     auto useOnlyGlobalTimestampsValue = this->useOnlyGlobalTimestamps ? 1u : 0u;
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
+    const auto isStateless = this->forceStateless(alignedSize);
+    const bool isHeapless = this->isHeaplessModeEnabled();
     if (pOffsets == nullptr) {
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::queryKernelTimestamps);
+        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(BuiltinTypeHelper::adjustBuiltinType<Builtin::queryKernelTimestamps>(isStateless, isHeapless));
         builtinKernel->setArgumentValue(2u, sizeof(uint32_t), &useOnlyGlobalTimestampsValue);
     } else {
         auto pOffsetAllocationStruct = getAlignedAllocationData(this->device, false, pOffsets, sizeof(size_t) * numEvents, false, false, nullptr);
         if (pOffsetAllocationStruct.alloc == nullptr) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
+
         auto offsetValPtr = static_cast<uintptr_t>(pOffsetAllocationStruct.alloc->getGpuAddress());
         commandContainer.addToResidencyContainer(pOffsetAllocationStruct.alloc);
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::queryKernelTimestampsWithOffsets);
+        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(BuiltinTypeHelper::adjustBuiltinType<Builtin::queryKernelTimestampsWithOffsets>(isStateless, isHeapless));
         builtinKernel->setArgBufferWithAlloc(2, offsetValPtr, pOffsetAllocationStruct.alloc, nullptr);
         builtinKernel->setArgumentValue(3u, sizeof(uint32_t), &useOnlyGlobalTimestampsValue);
         offsetValPtr += sizeof(size_t);
