@@ -58,8 +58,13 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         return BaseClass::allocateGraphicsMemoryInDevicePool(allocationData, status);
     }
 
-    size_t hugeGfxMemoryChunkSize = BaseClass::getHugeGfxMemoryChunkSize(preferredAllocationMethod);
-    size_t getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod) const override { return hugeGfxMemoryChunkSize; }
+    size_t hugeGfxMemoryChunkSize = BaseClass::getHugeGfxMemoryChunkSize(preferredAllocationMethod, false);
+    size_t getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod, bool isLocalMemory) const override {
+        if (callBaseGetHugeGfxMemoryChunkSize) {
+            return BaseClass::getHugeGfxMemoryChunkSize(preferredAllocationMethod, isLocalMemory);
+        }
+        return hugeGfxMemoryChunkSize;
+    }
 
     MockWddmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, executionEnvironment) {
         hostPtrManager.reset(new MockHostPtrManager);
@@ -113,5 +118,6 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     bool allocationGraphicsMemory64kbCreated = false;
     bool allocateGraphicsMemoryInNonDevicePool = false;
     bool allocateHugeGraphicsMemoryCalled = false;
+    bool callBaseGetHugeGfxMemoryChunkSize = false;
 };
 } // namespace NEO
