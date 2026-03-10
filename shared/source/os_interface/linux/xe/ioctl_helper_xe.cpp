@@ -1174,6 +1174,9 @@ uint32_t IoctlHelperXe::getFlagsForVmCreate(bool disableScratch, bool enablePage
     bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
     if (enablePageFault || debuggingEnabled) {
         flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
+        if (enablePageFault) {
+            flags |= getNoVmOvercommitFlag();
+        }
     }
     if (!disableScratch) {
         flags |= DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE;

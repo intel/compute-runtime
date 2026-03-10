@@ -149,6 +149,7 @@ class IoctlHelperXe : public IoctlHelper {
     EuDebugInterfaceType getEuDebugInterfaceType() override;
     int bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataVec, uint32_t vmHandleId, VmBindExtUserFenceT *vmBindExtUserFence, bool isAdd) override;
     std::optional<std::vector<VmBindOpExtDebugData>> addDebugDataAndCreateBindOpVec(BufferObject *bo, uint32_t vmId, bool isAdd) override;
+    virtual uint32_t getNoVmOvercommitFlag() const;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
