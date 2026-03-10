@@ -359,7 +359,7 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    if (!isCounterBasedExplicitlyEnabled() || !inOrderExecHelper.isDataAssigned() || isEventTimestampFlagSet()) {
+    if (!isCounterBasedExplicitlyEnabled() || !inOrderExecHelper.isDataAssigned() || isEventTimestampFlagSet() || inOrderExecHelper.isFromExternalMemory()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
