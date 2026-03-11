@@ -2170,11 +2170,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeCont
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeControlAndAllocFlushWhenDispatchingCopyThenSignalInOrderAllocation) {
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using WalkerType = typename FamilyType::DefaultWalkerType;
-
-    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto eventPool = createEvents<FamilyType>(1, false);
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -2186,47 +2182,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeCont
     auto offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, copyParams);
 
-    auto dcFlushRequired = immCmdList->getDcFlushRequired(true);
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
     auto gpuAddress = inOrderExecInfo->getBaseDeviceAddress();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
 
-    auto miAtomicItor = find<MI_ATOMIC *>(cmdList.begin(), cmdList.end());
-    if (device->getProductHelper().isDcFlushAllowed() && inOrderExecInfo->isHostStorageDuplicated()) {
-        EXPECT_NE(cmdList.end(), miAtomicItor);
-        auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(*miAtomicItor);
-        EXPECT_EQ(gpuAddress, miAtomicCmd->getMemoryAddress());
-    } else {
-        EXPECT_EQ(cmdList.end(), miAtomicItor);
-    }
-
-    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    if (immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isSignalScope()))) {
-        EXPECT_NE(cmdList.end(), sdiItor);
-    } else {
-        if (dcFlushRequired) {
-            EXPECT_NE(cmdList.end(), sdiItor);
-            if (inOrderExecInfo->isHostStorageDuplicated()) {
-                gpuAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress());
-            }
-            auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
-            EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
-        } else {
-            EXPECT_EQ(cmdList.end(), sdiItor);
-        }
-        auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), walkerItor);
-        auto walker = genCmdCast<WalkerType *>(*walkerItor);
-
-        auto &postSync = walker->getPostSync();
-        if (dcFlushRequired) {
-            EXPECT_NE(gpuAddress, postSync.getDestinationAddress());
-        } else {
-            EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
-        }
-    }
+    auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+    auto walker = genCmdCast<WalkerType *>(*walkerItor);
+    auto &postSync = walker->getPostSync();
+    EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
 }
 
 HWCMDTEST_F(IGFX_XE_HPC_CORE, InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxedOrderingThenProgramAllDependencies) {
@@ -4098,7 +4064,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenWalkerPostSyncSkipEnabled
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAllocFlushRequiredWhenProgrammingComputeCopyThenSignalFromSdi) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -4107,8 +4072,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAllocFlushRequiredWhenPro
     auto alignedPtr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
 
     immCmdList->appendMemoryCopy(alignedPtr, alignedPtr, 1, nullptr, 0, nullptr, copyParams);
-
-    auto dcFlushRequired = immCmdList->getDcFlushRequired(true);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
@@ -4119,7 +4082,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAllocFlushRequiredWhenPro
     auto walker = genCmdCast<WalkerType *>(*walkerItor);
     auto &postSync = walker->getPostSync();
 
-    if (dcFlushRequired) {
+    if (immCmdList->isWalkerPostSyncSkipEnabled) {
         EXPECT_EQ(0u, postSync.getDestinationAddress());
     } else {
         EXPECT_NE(0u, postSync.getDestinationAddress());
@@ -4129,26 +4092,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAllocFlushRequiredWhenPro
     auto gpuAddress = inOrderExecInfo->getBaseDeviceAddress();
 
     auto miAtomicItor = find<MI_ATOMIC *>(walkerItor, cmdList.end());
-    if (device->getProductHelper().isDcFlushAllowed() && inOrderExecInfo->isHostStorageDuplicated()) {
+    if (device->getProductHelper().isDcFlushAllowed() && inOrderExecInfo->isHostStorageDuplicated() && !immCmdList->isWalkerPostSyncSkipEnabled) {
         EXPECT_NE(cmdList.end(), miAtomicItor);
         auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(*miAtomicItor);
         EXPECT_EQ(gpuAddress, miAtomicCmd->getMemoryAddress());
     } else {
         EXPECT_EQ(cmdList.end(), miAtomicItor);
-    }
-
-    auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
-    if (dcFlushRequired) {
-        EXPECT_NE(cmdList.end(), sdiItor);
-        auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-        if (inOrderExecInfo->isHostStorageDuplicated()) {
-            gpuAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress());
-        }
-
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
-        EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
-    } else {
-        EXPECT_EQ(cmdList.end(), sdiItor);
     }
 
     alignedFree(alignedPtr);
