@@ -66,7 +66,7 @@ class ImageInLocalMemoryTest : public testing::Test {
     char memory[10];
 };
 
-TEST_F(ImageInLocalMemoryTest, givenImageWithoutHostPtrWhenLocalMemoryIsEnabledThenImageAllocationIsInLocalMemoryAndGpuAddressIsInStandard64KHeap) {
+TEST_F(ImageInLocalMemoryTest, givenImageWithoutHostPtrWhenLocalMemoryIsEnabledThenImageAllocationIsInLocalMemoryAndGpuAddressIsInExpectedStandardHeap) {
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -87,7 +87,9 @@ TEST_F(ImageInLocalMemoryTest, givenImageWithoutHostPtrWhenLocalMemoryIsEnabledT
     EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
 
     auto gmmHelper = context->getDevice(0)->getGmmHelper();
-    EXPECT_LT(gmmHelper->canonize(mockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapBase(HeapIndex::heapStandard64KB)), imgGfxAlloc->getGpuAddress());
-    EXPECT_GT(gmmHelper->canonize(mockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapLimit(HeapIndex::heapStandard64KB)), imgGfxAlloc->getGpuAddress());
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    auto expectedHeap = productHelper.is2MBLocalMemAlignmentEnabled() ? HeapIndex::heapStandard2MB : HeapIndex::heapStandard64KB;
+    EXPECT_LT(gmmHelper->canonize(mockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapBase(expectedHeap)), imgGfxAlloc->getGpuAddress());
+    EXPECT_GT(gmmHelper->canonize(mockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapLimit(expectedHeap)), imgGfxAlloc->getGpuAddress());
     EXPECT_EQ(0llu, imgGfxAlloc->getGpuBaseAddress());
 }
