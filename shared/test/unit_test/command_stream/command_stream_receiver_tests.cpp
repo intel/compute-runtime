@@ -3775,6 +3775,35 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFlushPipeControlWhenFlushWithStateCac
     EXPECT_TRUE(UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(commandStreamReceiver, commandStreamReceiver.commandStream));
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenBcsWhenSubmitDependencyUpdateThenMiFlushDwWithTagAddressIsDispatched) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    MockOsContext mockOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}));
+    commandStreamReceiver.setupContext(mockOsContext);
+
+    auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
+    auto tag = mockTagAllocator->getTag();
+
+    auto usedSizeBeforeSubmit = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.submitDependencyUpdate(tag);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSizeBeforeSubmit);
+
+    auto cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    bool nodeAddressFound = false;
+    while (cmdIterator != hwParser.cmdList.end()) {
+        auto flush = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
+        if (flush->getDestinationAddress() == TimestampPacketHelper::getContextEndGpuAddress(*tag)) {
+            nodeAddressFound = true;
+            break;
+        }
+        cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(++cmdIterator, hwParser.cmdList.end());
+    }
+    EXPECT_TRUE(nodeAddressFound);
+}
+
 HWTEST2_F(CommandStreamReceiverHwTest,
           givenRayTracingAllocationPresentWhenFlushingTaskThenDispatchBtdStateCommandOnceAndResidentAlways,
           IsHeapfulRequiredAndAtLeastXeCore) {

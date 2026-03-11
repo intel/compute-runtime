@@ -2451,6 +2451,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::chainCsrWorkToTask(LinearStream 
     this->makeResident(*chainedBatchBuffer);
     EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
 }
+
 template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::submitDependencyUpdate(TagNodeBase *tag) {
     if (tag == nullptr) {
@@ -2458,20 +2459,41 @@ bool CommandStreamReceiverHw<GfxFamily>::submitDependencyUpdate(TagNodeBase *tag
     }
     auto ownership = obtainUniqueOwnership();
     PipeControlArgs args;
-    auto expectedSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), NEO::PostSyncMode::immediateData) + this->getCmdSizeForPrologue();
+    auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
+    size_t expectedSize = 0u;
+    if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+        NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
+        expectedSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment) +
+                       EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+    } else {
+        expectedSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
+    }
+    expectedSize += this->getCmdSizeForPrologue();
     auto &commandStream = getCS(expectedSize);
     auto commandStreamStart = commandStream.getUsed();
     auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tag);
     this->programEnginePrologue(commandStream);
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, this->peekRootDeviceEnvironment());
     args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
-    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-        commandStream,
-        PostSyncMode::immediateData,
-        cacheFlushTimestampPacketGpuAddress,
-        0,
-        this->peekRootDeviceEnvironment(),
-        args);
+
+    if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+        NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
+        NEO::MiFlushArgs miArgs{waArgs};
+        miArgs.commandWithPostSync = true;
+        miArgs.notifyEnable = args.notifyEnable;
+        miArgs.tlbFlush = args.tlbInvalidation;
+
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, cacheFlushTimestampPacketGpuAddress, NEO::FenceType::release, rootDeviceEnvironment);
+        EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, cacheFlushTimestampPacketGpuAddress, 0, miArgs);
+    } else {
+        MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+            commandStream,
+            PostSyncMode::immediateData,
+            cacheFlushTimestampPacketGpuAddress,
+            0,
+            rootDeviceEnvironment,
+            args);
+    }
     makeResident(*(tag->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation()));
     auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
     return submissionStatus == SubmissionStatus::success;
