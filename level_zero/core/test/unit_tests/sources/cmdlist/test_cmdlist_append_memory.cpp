@@ -1837,6 +1837,7 @@ HWTEST2_F(StagingBuffersFixture, givenAppendMemoryCopyAndRegularEventWithProfili
                 continue;
             }
             EXPECT_EQ(commandList.inOrderExecInfo->getBaseDeviceAddress(), NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_FALSE(cmd->getDcFlushEnable());
             signalCounterFound = true;
         }
         EXPECT_TRUE(signalCounterFound);
