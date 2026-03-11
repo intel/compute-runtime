@@ -575,13 +575,13 @@ static zes_freq_throttle_reason_flags_t getAggregatedThrottleReasons(const zes_i
     zes_freq_throttle_reason_flags_t aggregatedReasons = 0u;
 
     if (pDetailedThrottleReasons & powerFlags) {
-        aggregatedReasons |= static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_POWER);
+        aggregatedReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_POWER;
     }
     if (pDetailedThrottleReasons & thermalFlags) {
-        aggregatedReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
+        aggregatedReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL;
     }
     if (pDetailedThrottleReasons & voltageFlags) {
-        aggregatedReasons |= static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_VOLTAGE);
+        aggregatedReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_VOLTAGE;
     }
 
     return aggregatedReasons;
@@ -655,7 +655,7 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
     // Set Utilization Limited reason flag if none of the detailed reasons are active
     if (detailedThrottleReasons == 0u) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Info@ %s(): No detailed throttle reasons are active, setting Utilization Limited reason flag\n", __func__);
-        aggregatedReasons |= static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_UTILIZATION_LIMITED);
+        aggregatedReasons |= static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_REASON_EXP_FLAG_UTILIZATION_LIMITED);
     }
 
     return aggregatedReasons;

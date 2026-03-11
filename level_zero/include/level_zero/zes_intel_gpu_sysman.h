@@ -149,19 +149,11 @@ typedef enum _zes_intel_freq_throttle_detailed_reason_exp_version_t {
 } zes_intel_freq_throttle_detailed_reason_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Frequency Aggregated Throttle Reasons
-typedef enum _zes_intel_freq_throttle_aggregated_reason_exp_flag_t {
-    ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_POWER = ZE_BIT(7),       ///< frequency throttled due to power limits (PL1/PL2/PL4/ICC/VMode)
-    ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_VOLTAGE = ZE_BIT(8),     ///< frequency throttled due to Voltage
-    ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_FORCE_UINT32 = 0x7ffffff ///< Value marking end of ZES_INTEL_FREQ_THROTTLE_REASON_FLAG_* ENUMs
-} zes_intel_freq_throttle_aggregated_reason_flag_t;
-
-///////////////////////////////////////////////////////////////////////////////
 /// @brief Frequency Detailed Throttle Reasons
 typedef uint64_t zes_intel_freq_throttle_detailed_reason_exp_flags_t;
 typedef enum _zes_intel_freq_throttle_detailed_reason_exp_flag_t {
-    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL1 = ZE_BIT(0),    ///< frequency throttled due to Card PL1 power
-    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL2 = ZE_BIT(1),    ///< frequency throttled due to Card PL2 power
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL1 = ZE_BIT(0),    ///< frequency throttled due to CARD PL1 power
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL2 = ZE_BIT(1),    ///< frequency throttled due to CARD PL2 power
     ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL4 = ZE_BIT(2),    ///< frequency throttled due to CARD PL4 power
     ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL1 = ZE_BIT(3), ///< frequency throttled due to PACKAGE PL1 power
     ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL2 = ZE_BIT(4), ///< frequency throttled due to PACKAGE PL2 power
@@ -178,7 +170,7 @@ typedef enum _zes_intel_freq_throttle_detailed_reason_exp_flag_t {
     ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_FORCE_UINT32 = 0x7fffffff      ///< Value marking end of ZES_INTEL_FREQ_THROTTLE_REASON_DETAILED_FLAG_* ENUMs
 } zes_intel_freq_throttle_detailed_reason_exp_flag_t;
 
-#define ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_UTILIZATION_LIMITED ZE_BIT(10) // Frequency utilization limit reason flag used when no specific detailed reason is available
+#define ZES_INTEL_FREQ_THROTTLE_REASON_EXP_FLAG_UTILIZATION_LIMITED ZE_BIT(10) // Frequency utilization limit reason flag used when no specific detailed reason is available
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Detailed Frequency Throttle Reasons.
