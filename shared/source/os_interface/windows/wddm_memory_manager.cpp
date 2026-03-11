@@ -83,6 +83,7 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
         alignmentSelector.addCandidateAlignment(customAlignment, false, AlignmentSelector::anyWastage);
     }
     osMemory = OSMemory::create();
+    pdhInterface = PdhInterface::create(executionEnvironment);
 
     initialized = true;
 }
@@ -622,6 +623,20 @@ bool WddmMemoryManager::verifyHandle(osHandle handle, uint32_t rootDeviceIndex, 
 bool WddmMemoryManager::isNTHandle(osHandle handle, uint32_t rootDeviceIndex) {
     bool status = getWddm(rootDeviceIndex).verifyNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)));
     return status;
+}
+
+uint64_t WddmMemoryManager::getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, [[maybe_unused]] uint32_t deviceBitfield) {
+    if (!pdhInterface) {
+        return 0;
+    }
+    return pdhInterface->getCurrentMemoryUsage(rootDeviceIndex, true);
+}
+
+uint64_t WddmMemoryManager::getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) {
+    if (!pdhInterface) {
+        return 0;
+    }
+    return pdhInterface->getCurrentMemoryUsage(rootDeviceIndex, false);
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
@@ -1576,14 +1591,6 @@ uint64_t WddmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_
     auto singleRegionSize = getWddm(rootDeviceIndex).getDedicatedVideoMemory() / subDevicesCount;
 
     return singleRegionSize * DeviceBitfield(deviceBitfield).count();
-}
-
-uint64_t WddmMemoryManager::getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {
-    return 0;
-}
-
-uint64_t WddmMemoryManager::getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) {
-    return 0;
 }
 
 void WddmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {

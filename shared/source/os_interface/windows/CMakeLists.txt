@@ -28,6 +28,8 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/pdh_interface_win.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/pdh_interface_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}page_table_manager_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
@@ -76,6 +78,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/pdh_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sharedata_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_winmm.h
@@ -144,6 +147,7 @@ endif()
 
 if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_WDDM
+       ${CMAKE_CURRENT_SOURCE_DIR}/pdh_interface_drm_or_wddm.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_dxcore.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/power_settings_stub.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback_stub.cpp

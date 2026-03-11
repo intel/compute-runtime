@@ -44,6 +44,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::getHugeGfxMemoryChunkSize;
     using BaseClass::getPreferredAllocationMethod;
     using BaseClass::isStatelessAccessRequired;
+    using BaseClass::pdhInterface;
     using BaseClass::selectAlignmentAndHeap;
 
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override {

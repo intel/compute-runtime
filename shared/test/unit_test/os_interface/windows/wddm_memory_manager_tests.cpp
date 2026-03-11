@@ -33,6 +33,7 @@
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
+#include "shared/test/common/os_interface/windows/mock_pdh_interface.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -845,23 +846,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     memoryManager->freeGraphicsMemory(systemAllocation);
     EXPECT_EQ(0u, memoryManager->getUsedLocalMemorySize(csr->getRootDeviceIndex()));
     EXPECT_EQ(0u, memoryManager->getUsedSystemMemorySize());
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGetCurrentUsedLocalMemorySizeThenReturnsZero) {
-    uint32_t rootDeviceIndex = 0u;
-    uint32_t deviceBitfield = 1u;
-
-    uint64_t usedMemory = memoryManager->getCurrentUsedLocalMemorySize(rootDeviceIndex, deviceBitfield);
-
-    EXPECT_EQ(0ULL, usedMemory);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGetCurrentUsedSystemSharedMemorySizeThenReturnsZero) {
-    uint32_t rootDeviceIndex = 0u;
-
-    uint64_t usedMemory = memoryManager->getCurrentUsedSystemSharedMemorySize(rootDeviceIndex);
-
-    EXPECT_EQ(0ULL, usedMemory);
 }
 
 class MockCreateWddmAllocationMemoryManager : public MockWddmMemoryManager {
@@ -4012,6 +3996,48 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLoc
         EXPECT_EQ(nullptr, wddm->mapGpuVirtualAddressResult.cpuPtrPassed);
     }
     memoryManager64k.freeGraphicsMemory(galloc);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenNullPdhInterfaceWhenGettingCurrentUsedMemoryThenReturnsZero) {
+    wddm->init();
+    auto testMemoryManager = std::make_unique<MockWddmMemoryManager>(executionEnvironment);
+
+    testMemoryManager->pdhInterface.reset();
+
+    const uint32_t rootDeviceIndex = 0u;
+    const uint32_t deviceBitfield = 1u;
+
+    EXPECT_EQ(0u, testMemoryManager->getCurrentUsedLocalMemorySize(rootDeviceIndex, deviceBitfield));
+    EXPECT_EQ(0u, testMemoryManager->getCurrentUsedSystemSharedMemorySize(rootDeviceIndex));
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMockPdhInterfaceWhenGettingCurrentUsedMemoryThenExpectValidResult) {
+    wddm->init();
+    auto testMemoryManager = std::make_unique<MockWddmMemoryManager>(executionEnvironment);
+
+    auto mockPdh = std::make_unique<MockPdhInterface>();
+    auto *mockPdhPtr = mockPdh.get();
+    testMemoryManager->pdhInterface = std::move(mockPdh);
+
+    const uint32_t rootDeviceIndex = 0u;
+    const uint32_t deviceBitfield = 1u;
+
+    mockPdhPtr->mockReturnValue = 4 * MemoryConstants::gigaByte;
+    auto result = testMemoryManager->getCurrentUsedLocalMemorySize(rootDeviceIndex, deviceBitfield);
+
+    EXPECT_EQ(4 * MemoryConstants::gigaByte, result);
+    EXPECT_EQ(1u, mockPdhPtr->getCurrentMemoryUsageCallCount);
+    EXPECT_EQ(rootDeviceIndex, mockPdhPtr->lastRootDeviceIndex);
+    EXPECT_TRUE(mockPdhPtr->lastDedicatedCounter);
+
+    mockPdhPtr->mockReturnValue = 2 * MemoryConstants::gigaByte;
+    mockPdhPtr->getCurrentMemoryUsageCallCount = 0;
+
+    result = testMemoryManager->getCurrentUsedSystemSharedMemorySize(rootDeviceIndex);
+    EXPECT_EQ(2 * MemoryConstants::gigaByte, result);
+    EXPECT_EQ(1u, mockPdhPtr->getCurrentMemoryUsageCallCount);
+    EXPECT_EQ(rootDeviceIndex, mockPdhPtr->lastRootDeviceIndex);
+    EXPECT_FALSE(mockPdhPtr->lastDedicatedCounter);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequestedSizeIsHugeThenResultAllocationIsSplit) {

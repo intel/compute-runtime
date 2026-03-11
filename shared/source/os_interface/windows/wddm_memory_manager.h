@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_memory.h"
+#include "shared/source/os_interface/windows/pdh_interface.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 
 #include <d3dkmthk.h>
@@ -19,6 +20,7 @@
 namespace NEO {
 class Gmm;
 class OsContextWin;
+class PdhInterface;
 class Wddm;
 
 extern const GfxMemoryAllocationMethod preferredAllocationMethod;
@@ -124,6 +126,7 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     bool isStatelessAccessRequired(AllocationType type);
     AlignedMallocRestrictions mallocRestrictions;
     std::unique_ptr<OSMemory> osMemory;
+    std::unique_ptr<PdhInterface> pdhInterface;
 
     Wddm &getWddm(uint32_t rootDeviceIndex) const;
 };
