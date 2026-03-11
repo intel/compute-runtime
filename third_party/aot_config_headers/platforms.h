@@ -22,7 +22,6 @@ enum PRODUCT_CONFIG : uint32_t {
     ADL_P = 0x0300c000, // 12.3.0
     ADL_N = 0x03010000, // 12.4.0
     DG1 = 0x03028000, // 12.10.0
-    XEHP_SDV = 0x030c8004, // 12.50.4
     DG2_G10_A0 = 0x030dc000, // 12.55.0
     DG2_G10_A1 = 0x030dc001, // 12.55.1
     DG2_G10_B0 = 0x030dc004, // 12.55.4
@@ -70,7 +69,6 @@ enum PRODUCT_CONFIG : uint32_t {
 enum RELEASE : uint32_t {
     UNKNOWN_RELEASE = 0,
     XE_LP_RELEASE,
-    XE_HP_RELEASE,
     XE_HPG_RELEASE,
     XE_HPC_RELEASE,
     XE_HPC_VG_RELEASE,
@@ -112,9 +110,6 @@ inline const std::map<std::string, RELEASE> releaseAcronyms = {
 #ifdef SUPPORT_AOT_XE_LP
     {"xe-lp", XE_LP_RELEASE},
     {"gen12lp", XE_LP_RELEASE},
-#endif
-#ifdef SUPPORT_AOT_XE_HP
-    {"xe-hp", XE_HP_RELEASE},
 #endif
 #ifdef SUPPORT_AOT_XE_HPG
     {"xe-hpg", XE_HPG_RELEASE},
@@ -215,6 +210,7 @@ inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
     {"nvl-ul", NVL_S_B0},
     {"nvl-u", NVL_U_B0},
     {"nvl-h", NVL_U_B0},
+    {"nvl-p", NVL_P_B0},
 #endif
 #ifdef SUPPORT_AOT_CRI
     {"cri", CRI_A0},
