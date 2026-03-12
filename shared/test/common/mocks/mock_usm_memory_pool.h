@@ -15,12 +15,11 @@ class MockUsmMemAllocPool : public UsmMemAllocPool {
     using UsmMemAllocPool::allocations;
     using UsmMemAllocPool::chunkAllocator;
     using UsmMemAllocPool::device;
-    using UsmMemAllocPool::memoryOperationsIface;
     using UsmMemAllocPool::pool;
     using UsmMemAllocPool::poolEnd;
     using UsmMemAllocPool::poolInfo;
     using UsmMemAllocPool::poolMemoryType;
-    using UsmMemAllocPool::residencyCount;
+    using UsmMemAllocPool::residencyCounts;
     using UsmMemAllocPool::svmMemoryManager;
     using UsmMemAllocPool::trackResidency;
 

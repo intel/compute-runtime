@@ -52,7 +52,6 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, void *ptr, 
     this->device = svmData->device;
     if (nullptr != device) {
         allocation = svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        memoryOperationsIface = device->getRootDeviceEnvironment().memoryOperationsInterface.get();
     }
     return true;
 }
@@ -156,9 +155,10 @@ bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, bool blocking) {
             this->chunkAllocator->free(allocationInfo->address, allocationInfo->size);
             if (trackResidency) {
                 OPTIONAL_UNRECOVERABLE_IF(nullptr == device || nullptr == allocation);
-                if (allocationInfo->isResident && 1u == this->residencyCount--) {
-                    DEBUG_BREAK_IF(!isEmpty());
-                    evictPool();
+                for (const auto &[neoDevice, isResident] : allocationInfo->isResident) {
+                    if (isResident && 1u == this->residencyCounts[neoDevice]--) {
+                        evictPool(neoDevice);
+                    }
                 }
             }
             return true;
@@ -204,12 +204,14 @@ PoolInfo UsmMemAllocPool::getPoolInfo() const {
     return poolInfo;
 }
 
-MemoryOperationsStatus UsmMemAllocPool::evictPool() {
-    return memoryOperationsIface->evict(device, *allocation);
+MemoryOperationsStatus UsmMemAllocPool::evictPool(Device *targetDevice) {
+    auto memoryOperationsIface = targetDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    return memoryOperationsIface->evict(targetDevice, *allocation);
 }
 
-MemoryOperationsStatus UsmMemAllocPool::makePoolResident() {
-    return memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), true, true);
+MemoryOperationsStatus UsmMemAllocPool::makePoolResident(Device *targetDevice) {
+    auto memoryOperationsIface = targetDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    return memoryOperationsIface->makeResident(targetDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), true, true);
 }
 
 const std::array<const PoolInfo, 3> UsmMemAllocPoolsManager::getPoolInfos() {

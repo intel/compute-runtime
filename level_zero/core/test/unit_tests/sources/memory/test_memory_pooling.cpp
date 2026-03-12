@@ -689,7 +689,8 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenMultiplePooledAllocations
     EXPECT_EQ(0u, ipcHandleMap.size());
 }
 
-TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCallingResidencyOperationsThenSkipIfAllowed) {
+TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCallingResidencyOperationsThenSkipIfAllowed) {
+    initDriverImp();
     auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
     ASSERT_NE(nullptr, mockDeviceMemAllocPool);
     EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
@@ -709,11 +710,17 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCalli
     EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(secondAlloc));
 
     auto mockMemoryOperationsHandler = static_cast<MockMemoryOperations *>(l0Devices[0]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
+    auto mockMemoryOperationsHandler2 = static_cast<MockMemoryOperations *>(l0Devices[1]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
     auto expectedMakeResidentCount = mockMemoryOperationsHandler->makeResidentCalledCount;
+    auto expectedMakeResidentCount2 = mockMemoryOperationsHandler2->makeResidentCalledCount;
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[0], allocation, 1u));
     EXPECT_EQ(++expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[0], secondAlloc, 1u));
     EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[1], allocation, 1u));
+    EXPECT_EQ(++expectedMakeResidentCount2, mockMemoryOperationsHandler2->makeResidentCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[1], secondAlloc, 1u));
+    EXPECT_EQ(expectedMakeResidentCount2, mockMemoryOperationsHandler2->makeResidentCalledCount);
 
     std::unique_ptr<UsmMemAllocPool> tempPoolSwap;
     auto mockNeoDevice = reinterpret_cast<MockDevice *>(l0Devices[0]->getNEODevice());
@@ -728,10 +735,17 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCalli
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[0], nonPooledPtr, 1u));
     EXPECT_EQ(++expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[1], nonPooledPtr, 1u));
+    EXPECT_EQ(++expectedMakeResidentCount2, mockMemoryOperationsHandler2->makeResidentCalledCount);
     auto expectedEvictMemoryCallCount = mockMemoryOperationsHandler->evictCalledCount;
+    auto expectedEvictMemoryCallCount2 = mockMemoryOperationsHandler2->evictCalledCount;
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[0], nonPooledPtr, 1u));
     EXPECT_EQ(++expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
 
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[1], allocation, 1u));
+    EXPECT_EQ(expectedEvictMemoryCallCount2, mockMemoryOperationsHandler2->evictCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[1], secondAlloc, 1u));
+    EXPECT_EQ(++expectedEvictMemoryCallCount2, mockMemoryOperationsHandler2->evictCalledCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[0], secondAlloc, 1u));
     EXPECT_EQ(expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[0], allocation, 1u));
@@ -740,6 +754,8 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCalli
     // already evicted
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[0], allocation, 1u));
     EXPECT_EQ(expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[1], allocation, 1u));
+    EXPECT_EQ(expectedEvictMemoryCallCount2, mockMemoryOperationsHandler2->evictCalledCount);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(allocation));
     // not allocated pool ptr
@@ -749,6 +765,7 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCalli
     EXPECT_EQ(expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(nonPooledPtr));
+    context->destroy();
 }
 
 TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDebugFlagWhenInitializingPoolThenEnableResidencyTrackingCorrectly) {

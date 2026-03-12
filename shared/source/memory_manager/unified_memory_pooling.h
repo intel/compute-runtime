@@ -30,7 +30,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
         uint64_t address;
         size_t size;
         size_t requestedSize;
-        bool isResident = false;
+        std::unordered_map<Device *, bool> isResident;
     };
 
     enum class ResidencyOperationType {
@@ -67,17 +67,22 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
 
     template <ResidencyOperationType op>
     MemoryOperationsStatus residencyOperation(const void *ptr) {
-        OPTIONAL_UNRECOVERABLE_IF(nullptr == device || nullptr == allocation);
+        return this->residencyOperation<op>(ptr, this->device);
+    }
+
+    template <ResidencyOperationType op>
+    MemoryOperationsStatus residencyOperation(const void *ptr, Device *targetDevice) {
+        OPTIONAL_UNRECOVERABLE_IF(nullptr == targetDevice || nullptr == allocation);
         std::unique_lock<std::mutex> lock(mtx);
         auto allocationInfo = allocations.get(ptr);
         if (allocationInfo) {
             if constexpr (ResidencyOperationType::makeResident == op) {
-                if (false == std::exchange(allocationInfo->isResident, true) && 0u == this->residencyCount++) {
-                    return makePoolResident();
+                if (false == std::exchange(allocationInfo->isResident[targetDevice], true) && 0u == this->residencyCounts[targetDevice]++) {
+                    return makePoolResident(targetDevice);
                 }
             } else { // evict
-                if (true == std::exchange(allocationInfo->isResident, false) && 1u == this->residencyCount--) {
-                    return evictPool();
+                if (true == std::exchange(allocationInfo->isResident[targetDevice], false) && 1u == this->residencyCounts[targetDevice]--) {
+                    return evictPool(targetDevice);
                 }
             }
             return MemoryOperationsStatus::success;
@@ -94,8 +99,8 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     static constexpr auto poolAlignment = MemoryConstants::pageSize2M;
 
   protected:
-    MemoryOperationsStatus evictPool();
-    MemoryOperationsStatus makePoolResident();
+    MemoryOperationsStatus evictPool(Device *targetDevice);
+    MemoryOperationsStatus makePoolResident(Device *targetDevice);
     CustomCleanupFn customCleanup = nullptr;
     std::unique_ptr<HeapAllocator> chunkAllocator;
     void *pool{};
@@ -109,9 +114,8 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     InternalMemoryType poolMemoryType = InternalMemoryType::notSpecified;
     GraphicsAllocation *allocation{};
     SvmAllocationData *allocationData{};
-    MemoryOperationsHandler *memoryOperationsIface{};
     PoolInfo poolInfo{};
-    uint64_t residencyCount{};
+    std::unordered_map<Device *, uint64_t> residencyCounts;
     bool trackResidency{false};
 };
 
