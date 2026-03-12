@@ -2048,7 +2048,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         srcAllocationStruct.offset += ptrDiff(srcptr, memoryCopyParams.bcsSplitBaseSrcPtr);
     }
 
-    if ((dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) && (sharedSystemEnabled == false)) {
+    if ((dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) && (size != 0u) && (sharedSystemEnabled == false)) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
@@ -2309,7 +2309,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    if ((dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) && (sharedSystemEnabled == false)) {
+    if (((dstAllocationStruct.alloc == nullptr && dstAllocSize != 0u) || (srcAllocationStruct.alloc == nullptr && srcAllocSize != 0u)) && (sharedSystemEnabled == false)) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
@@ -3138,11 +3138,11 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         return {nullptr, alignedPtr, offset, importedHostAlloc, true};
     }
 
-    if (sharedSystemEnabled) {
+    if (sharedSystemEnabled == true || bufferSize == 0u) {
         return {nullptr, reinterpret_cast<uintptr_t>(ptr), 0, nullptr, true};
     }
 
-    if (!cachedHostAlloc) {
+    if (!cachedHostAlloc && bufferSize) {
         cachedHostAlloc = getHostPtrAlloc(buffer, bufferSize, hostCopyAllowed, copyOffload);
     }
 

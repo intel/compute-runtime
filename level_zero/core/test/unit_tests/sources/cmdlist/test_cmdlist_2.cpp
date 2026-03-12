@@ -250,40 +250,43 @@ HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledWithNullSrcPtrAn
     EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
 
-HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledWithNullSrcPtrAndDstPtrThenAppendMemoryCopyRegionReturnsError) {
+HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledWithNullSrcAndDstRegionsThenAppendMemoryCopyRegionSucceeds) {
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    void *srcPtr = nullptr;
-    void *dstPtr = nullptr;
-    ze_copy_region_t dstRegion = {};
-    ze_copy_region_t srcRegion = {};
-    ze_result_t ret = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams);
-    EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
-    EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
-}
-
-HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledWithNullSrcPtrThenAppendMemoryCopyRegionReturnsError) {
-    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    void *srcPtr = nullptr;
+    cmdList.returnBaseAllocationStruct = true;
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {};
     ze_copy_region_t srcRegion = {};
     ze_result_t ret = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams);
     EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
-    EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+    EXPECT_EQ(ret, ZE_RESULT_SUCCESS);
 }
 
-HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledWithNullDstPtrThenAppendMemoryCopyRegionReturnsError) {
+HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledWithNullSrcRegionThenAppendMemoryCopyRegionSucceeds) {
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    void *srcPtr = reinterpret_cast<void *>(0x2345);
-    void *dstPtr = nullptr;
-    ze_copy_region_t dstRegion = {};
+    cmdList.returnBaseAllocationStruct = true;
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {0u, 0u, 0u, 1u, 1u, 1u};
     ze_copy_region_t srcRegion = {};
     ze_result_t ret = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams);
     EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
-    EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+    EXPECT_EQ(ret, ZE_RESULT_SUCCESS);
+}
+
+HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledWithNullDstRegionThenAppendMemoryCopyRegionSucceeds) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.returnBaseAllocationStruct = true;
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {};
+    ze_copy_region_t srcRegion = {0u, 0u, 0u, 1u, 1u, 1u};
+    ze_result_t ret = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams);
+    EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
+    EXPECT_EQ(ret, ZE_RESULT_SUCCESS);
 }
 
 HWTEST_F(CommandListAppend, givenCommandListWhenMemoryFillCalledWithNullDstPtrThenAppendMemoryFillReturnsError) {
