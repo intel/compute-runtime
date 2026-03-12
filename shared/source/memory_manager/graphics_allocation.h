@@ -322,6 +322,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         return isCpuAccessRequired(allocationType) ||
                isIsaAllocationType(allocationType) ||
                allocationType == AllocationType::bufferHostMemory ||
+               allocationType == AllocationType::svmZeroCopy ||
                allocationType == AllocationType::sharedResourceCopy;
     }
 

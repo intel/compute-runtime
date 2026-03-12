@@ -219,6 +219,10 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsSvmGpuThenAllocationIsNotLockab
     EXPECT_FALSE(GraphicsAllocation::isLockable(AllocationType::svmGpu));
 }
 
+TEST(GraphicsAllocationTest, whenAllocationTypeIsSvmZeroCopyThenAllocationIsLockable) {
+    EXPECT_TRUE(GraphicsAllocation::isLockable(AllocationType::svmZeroCopy));
+}
+
 TEST(GraphicsAllocationTest, whenAllocationTypeIsSharedResourceCopyThenAllocationIsLockable) {
     EXPECT_TRUE(GraphicsAllocation::isLockable(AllocationType::sharedResourceCopy));
 }
