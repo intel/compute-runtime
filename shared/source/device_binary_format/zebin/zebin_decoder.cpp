@@ -418,6 +418,10 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
 
     if (false == zebinSections.globalZeroInitDataSections.empty()) {
         dst.globalVariables.zeroInitSize = static_cast<size_t>(zebinSections.globalZeroInitDataSections[0]->header->size);
+        size_t globalZeroInitAlignment = static_cast<size_t>(zebinSections.globalZeroInitDataSections[0]->header->addralign);
+        if (globalZeroInitAlignment != 0) {
+            dst.globalVariables.size = alignUp(dst.globalVariables.size, globalZeroInitAlignment);
+        }
     }
 
     if (false == zebinSections.constDataSections.empty()) {
@@ -427,6 +431,10 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
 
     if (false == zebinSections.constZeroInitDataSections.empty()) {
         dst.globalConstants.zeroInitSize = static_cast<size_t>(zebinSections.constZeroInitDataSections[0]->header->size);
+        size_t constZeroInitAlignment = static_cast<size_t>(zebinSections.constZeroInitDataSections[0]->header->addralign);
+        if (constZeroInitAlignment != 0) {
+            dst.globalConstants.size = alignUp(dst.globalConstants.size, constZeroInitAlignment);
+        }
     }
 
     if (false == zebinSections.constDataStringSections.empty()) {
