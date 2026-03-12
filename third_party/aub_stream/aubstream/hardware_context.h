@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,8 @@ struct HardwareContext {
     virtual void release(){};
     virtual uint32_t getCurrentFence() { return 0; };
     virtual uint32_t getExpectedFence() { return 0; };
+    virtual bool isActive() { return false; };
+    virtual void resubmit(){};
 };
 
 } // namespace aub_stream
