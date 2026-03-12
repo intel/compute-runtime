@@ -60,13 +60,6 @@ HWTEST_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError) {
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexCounterBasedEventGetIpcHandle(events[1]->toHandle(), &zexIpcData));
 
-    auto &inOrderExecHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
-    inOrderExecHelper.fromExternalMemory = true;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexCounterBasedEventGetIpcHandle(events[0]->toHandle(), &zexIpcData));
-
-    inOrderExecHelper.fromExternalMemory = false;
-
     events[0]->makeCounterBasedImplicitlyDisabled(nonTsEvent->getAllocation());
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexCounterBasedEventGetIpcHandle(events[0]->toHandle(), &zexIpcData));
 }

@@ -72,7 +72,6 @@ struct InOrderFixtureMockEvent : public EventImp<uint32_t> {
 class WhiteboxInOrderExecEventHelper : public InOrderExecEventHelper {
   public:
     using InOrderExecEventHelper::eventData;
-    using InOrderExecEventHelper::fromExternalMemory;
     using InOrderExecEventHelper::inOrderExecInfo;
     using InOrderExecEventHelper::timestampNodes;
 };
