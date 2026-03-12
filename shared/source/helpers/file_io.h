@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,17 +16,15 @@
 #include <string>
 #include <string_view>
 
-std::unique_ptr<char[]> loadDataFromFile(
-    const char *filename,
-    size_t &retSize);
-
-size_t writeDataToFile(
-    const char *filename,
-    std::string_view data);
+namespace NEO {
 
 bool fileExists(const std::string &fileName);
 bool fileExistsHasSize(const std::string &fileName);
+size_t writeDataToFile(const char *filename, std::string_view data);
+std::unique_ptr<char[]> loadDataFromFile(const char *filename, size_t &retSize);
 void dumpFileIncrement(const char *data, size_t dataSize, const std::string &filename, const std::string &extension);
+
+} // namespace NEO
 
 #define USE_REAL_FILE_SYSTEM()                                                                                                                                                                                       \
     VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopenSetter(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {                                                         \

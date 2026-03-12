@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include <cstring>
 #include <new>
 
+namespace NEO {
 std::unique_ptr<char[]> loadDataFromFile(
     const char *filename,
     size_t &retSize) {
@@ -54,9 +55,11 @@ std::unique_ptr<char[]> loadDataFromFile(
 void dumpFileIncrement(const char *data, size_t dataSize, const std::string &filename, const std::string &extension) {
     auto filenameWithExt = filename + extension;
     int suffix = 0;
-    while (fileExists(filenameWithExt)) {
+    while (NEO::fileExists(filenameWithExt)) {
         filenameWithExt = filename + "_" + std::to_string(suffix) + extension;
         suffix++;
     }
-    writeDataToFile(filenameWithExt.c_str(), std::string_view(data, dataSize));
+    NEO::writeDataToFile(filenameWithExt.c_str(), std::string_view(data, dataSize));
 }
+
+} // namespace NEO

@@ -32,7 +32,7 @@ struct RequiredLibsHelpers {
                                       LockableSearchPaths &cachedSearchPaths,
                                       std::string &outDirPath) {
         if (const auto customPathStr = NEO::debugManager.flags.RequiredLibsBinarySearchPath.get(); customPathStr != "none") {
-            if (not fileExists(NEO::joinPath(customPathStr, libName))) {
+            if (not NEO::fileExists(NEO::joinPath(customPathStr, libName))) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "The binary: %s not found in: %s\n", libName.c_str(), customPathStr.c_str());
                 return false;
             }
@@ -41,7 +41,7 @@ struct RequiredLibsHelpers {
         } else {
             auto findLibInPaths = [&libName](const auto &paths) {
                 return std::ranges::find_if(paths, [libName](const auto dirPath) {
-                    return fileExists(NEO::joinPath(std::string{dirPath}, libName));
+                    return NEO::fileExists(NEO::joinPath(std::string{dirPath}, libName));
                 });
             };
 

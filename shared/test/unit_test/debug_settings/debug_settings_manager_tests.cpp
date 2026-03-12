@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -383,7 +383,7 @@ TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementation
 TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVariablesAreRead) {
     USE_REAL_FILE_SYSTEM();
 
-    bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
+    bool settingsFileExists = NEO::fileExists(SettingsReader::settingsFileName);
     if (!settingsFileExists) {
         const char data[] = "LogApiCalls = 1\nNEO_CAL_ENABLED=1";
         std::ofstream file;
@@ -408,7 +408,7 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVar
 
 TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAreRead) {
     constexpr std::string_view data = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
-    writeDataToFile(SettingsReader::settingsFileName, data);
+    NEO::writeDataToFile(SettingsReader::settingsFileName, data);
 
     SettingsReader *reader = MockSettingsReader::createFileReader();
     EXPECT_NE(nullptr, reader);
@@ -441,11 +441,11 @@ TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCall
     auto output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
-    auto logFileExists = fileExists(logFile);
+    auto logFileExists = NEO::fileExists(logFile);
     EXPECT_TRUE(logFileExists);
 
     size_t retSize;
-    auto data = loadDataFromFile(logFile, retSize);
+    auto data = NEO::loadDataFromFile(logFile, retSize);
 
     EXPECT_STREQ("test log", data.get());
     std::remove(logFile);
@@ -469,7 +469,7 @@ TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCal
     auto output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
-    auto logFileExists = fileExists(logFile);
+    auto logFileExists = NEO::fileExists(logFile);
     ASSERT_FALSE(logFileExists);
 }
 
@@ -491,11 +491,11 @@ TEST(DebugSettingsManager, GivenLogsEnabledWhenLogCacheOperationCalledThenString
                                           .operationType = SVMAllocsManager::SvmAllocationCache::CacheOperationType::trim,
                                           .isSuccess = true});
 
-    auto logFileExists = fileExists(logFile);
+    auto logFileExists = NEO::fileExists(logFile);
     EXPECT_TRUE(logFileExists);
 
     size_t retSize;
-    auto data = loadDataFromFile(logFile, retSize);
+    auto data = NEO::loadDataFromFile(logFile, retSize);
     auto retString = std::string(data.get(), data.get() + retSize);
     std::stringstream expectedString;
     expectedString << timePoint.time_since_epoch().count() << " , "

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ TranslationErrorCode MockCompilerInterfaceSpirv::compile(const NEO::Device &devi
     retrieveBinaryKernelFilename(kernelName, KernelBinaryHelper::BUILT_INS + "_", ".bin");
 
     size_t size = 0;
-    auto src = loadDataFromFile(
+    auto src = NEO::loadDataFromFile(
         kernelName.c_str(),
         size);
     output.deviceBinary.mem = std::move(src);

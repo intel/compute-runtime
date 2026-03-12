@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,9 +49,9 @@ void ProgramFixture::createProgramWithSource(Context *pContext,
 
     testFile.append(clFiles);
     testFile.append(sourceFileName);
-    ASSERT_EQ(true, fileExists(testFile));
+    ASSERT_EQ(true, NEO::fileExists(testFile));
 
-    knownSource = loadDataFromFile(
+    knownSource = NEO::loadDataFromFile(
         testFile.c_str(),
         knownSourceSize);
 
@@ -92,7 +92,7 @@ void ProgramFixture::createProgramFromBinary(Context *pContext,
         testFile.c_str(),
         knownSourceSize);
     if (!knownSource) {
-        knownSource = loadDataFromFile(
+        knownSource = NEO::loadDataFromFile(
             testFile.c_str(),
             knownSourceSize);
     }

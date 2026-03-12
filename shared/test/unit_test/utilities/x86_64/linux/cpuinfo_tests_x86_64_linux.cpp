@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ TEST(CpuInfo, givenProcCpuinfoFileExistsWhenIsCpuFlagPresentIsCalledThenValidVal
     std::string cpuinfoFile = "cpuinfo";
     EXPECT_FALSE(virtualFileExists(cpuinfoFile));
     constexpr std::string_view cpuinfoData = "processor\t\t: 0\nFeatures\t\t: flag1 flag2 flag3\n";
-    writeDataToFile(cpuinfoFile.c_str(), cpuinfoData);
+    NEO::writeDataToFile(cpuinfoFile.c_str(), cpuinfoData);
     EXPECT_TRUE(virtualFileExists(cpuinfoFile));
 
     VariableBackup<decltype(CpuInfo::getCpuFlagsFunc)> funcBackup(&CpuInfo::getCpuFlagsFunc, mockGetCpuFlags);

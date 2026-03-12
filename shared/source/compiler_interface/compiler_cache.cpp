@@ -156,7 +156,7 @@ std::unique_ptr<char[]> CompilerCache::loadCachedBinary(const std::string &kerne
     }
 
     std::string filePath = getCachedFilePath(cacheFilename);
-    auto data = loadDataFromFile(filePath.c_str(), cachedBinarySize);
+    auto data = NEO::loadDataFromFile(filePath.c_str(), cachedBinarySize);
 
     if (cachedBinarySize == 0) {
         if (config.statsEnabled) {

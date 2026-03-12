@@ -167,7 +167,7 @@ namespace NEO {
 template <typename StrT>
 std::unique_ptr<unsigned char[]> loadBinaryFile(StrT &&fileName, size_t &fileSize) {
 
-    std::unique_ptr<char[]> data = loadDataFromFile(fileName.c_str(), fileSize);
+    std::unique_ptr<char[]> data = NEO::loadDataFromFile(fileName.c_str(), fileSize);
     return std::unique_ptr<unsigned char[]>(reinterpret_cast<unsigned char *>(data.release()));
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,9 +46,9 @@ class OfflineCompilerTests : public ::testing::Test {
         constexpr unsigned char mockByteArray[] = {0x01, 0x02, 0x03, 0x04};
         std::string_view byteArrayView(reinterpret_cast<const char *>(mockByteArray), sizeof(mockByteArray));
 
-        writeDataToFile(spvFile.c_str(), byteArrayView);
-        writeDataToFile(binFile.c_str(), byteArrayView);
-        writeDataToFile(dbgFile.c_str(), byteArrayView);
+        NEO::writeDataToFile(spvFile.c_str(), byteArrayView);
+        NEO::writeDataToFile(binFile.c_str(), byteArrayView);
+        NEO::writeDataToFile(dbgFile.c_str(), byteArrayView);
 
         filesMap[clCopybufferFilename] = OfflineCompilerTests::kernelSources;
         oclocArgHelperWithoutInput->setAllCallBase(false);
@@ -78,9 +78,9 @@ class MultiCommandTests : public ::testing::Test {
         constexpr unsigned char mockByteArray[] = {0x01, 0x02, 0x03, 0x04};
         std::string_view byteArrayView(reinterpret_cast<const char *>(mockByteArray), sizeof(mockByteArray));
 
-        writeDataToFile(spvFile.c_str(), byteArrayView);
-        writeDataToFile(binFile.c_str(), byteArrayView);
-        writeDataToFile(dbgFile.c_str(), byteArrayView);
+        NEO::writeDataToFile(spvFile.c_str(), byteArrayView);
+        NEO::writeDataToFile(binFile.c_str(), byteArrayView);
+        NEO::writeDataToFile(dbgFile.c_str(), byteArrayView);
 
         filesMap[clCopybufferFilename] = kernelSources;
         oclocArgHelperWithoutInput->setAllCallBase(false);

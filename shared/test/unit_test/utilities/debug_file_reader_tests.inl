@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ class TestSettingsFileReader : public SettingsFileReader {
 };
 
 TEST(SettingsFileReader, GivenFilesDoesNotExistWhenCreatingFileReaderThenCreationSucceeds) {
-    bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
+    bool settingsFileExists = NEO::fileExists(SettingsReader::settingsFileName);
 
     // if settings file exists, remove it
     if (settingsFileExists) {

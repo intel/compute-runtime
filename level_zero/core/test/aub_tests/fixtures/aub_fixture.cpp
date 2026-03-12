@@ -122,7 +122,7 @@ ze_module_handle_t AUBFixtureL0::createModuleFromFile(const std::string &fileNam
     }
 
     size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
+    auto src = NEO::loadDataFromFile(testFile.c_str(), size);
 
     EXPECT_NE(0u, size);
     EXPECT_NE(nullptr, src);

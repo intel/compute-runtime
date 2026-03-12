@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,7 +107,7 @@ TEST(OSMemoryLinux, GivenProcSelfMapsFileExistsWhenGetMemoryMapsIsQueriedThenVal
     auto mockOSMemoryLinux = MockOSMemoryLinux::create();
 
     std::string mapsFile(std::string(Os::sysFsProcPathPrefix) + "self/maps");
-    EXPECT_TRUE(fileExists(mapsFile));
+    EXPECT_TRUE(NEO::fileExists(mapsFile));
 
     OSMemory::MemoryMaps memoryMaps;
     mockOSMemoryLinux->getMemoryMaps(memoryMaps);

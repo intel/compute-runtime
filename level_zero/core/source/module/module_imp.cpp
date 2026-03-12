@@ -441,7 +441,7 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     }
 
     if (singleDeviceBinaryFormat == NEO::DeviceBinaryFormat::zebin && NEO::debugManager.flags.DumpZEBin.get() == 1) {
-        dumpFileIncrement(reinterpret_cast<const char *>(blob.begin()), blob.size(), "dumped_zebin_module", ".elf");
+        NEO::dumpFileIncrement(reinterpret_cast<const char *>(blob.begin()), blob.size(), "dumped_zebin_module", ".elf");
     }
 
     processDebugData();
@@ -1772,7 +1772,7 @@ void ModuleImp::registerElfInDebuggerL0() {
         this->debugElfHandle = debuggerL0->registerElf(&debugData);
 
         if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF) {
-            dumpFileIncrement(debugData.vIsa, debugData.vIsaSize, "dumped_debug_module", ".elf");
+            NEO::dumpFileIncrement(debugData.vIsa, debugData.vIsaSize, "dumped_debug_module", ".elf");
         }
 
         StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs;

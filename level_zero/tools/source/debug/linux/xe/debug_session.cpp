@@ -853,7 +853,7 @@ bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
 
                 size_t elfSize = 0;
                 if (!loadedElf) {
-                    auto elfData = loadDataFromFile(entry.pathName, elfSize);
+                    auto elfData = NEO::loadDataFromFile(entry.pathName, elfSize);
                     if (elfData == nullptr) {
                         PRINT_DEBUGGER_ERROR_LOG("Failed to read ELF file: %s\n", entry.pathName);
                         return false;

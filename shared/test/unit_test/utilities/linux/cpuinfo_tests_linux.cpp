@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ TEST(CpuInfo, givenProcCpuinfoFileIsNotExistsWhenIsCpuFlagPresentIsCalledThenVal
     USE_REAL_FILE_SYSTEM();
 
     std::string cpuinfoFile = "test_files/linux/proc/cpuinfo";
-    EXPECT_FALSE(fileExists(cpuinfoFile));
+    EXPECT_FALSE(NEO::fileExists(cpuinfoFile));
 
     CpuInfo testCpuInfo;
     EXPECT_FALSE(testCpuInfo.isCpuFlagPresent("flag1"));

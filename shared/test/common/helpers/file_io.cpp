@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,18 +19,6 @@
 namespace NEO {
 extern std::map<std::string, std::stringstream> virtualFileList;
 extern std::map<std::string, std::stringstream> virtualFileListTestKernelsOnly;
-} // namespace NEO
-
-size_t writeDataToFile(
-    const char *filename,
-    std::string_view data) {
-
-    DEBUG_BREAK_IF(nullptr == filename);
-
-    NEO::virtualFileList[filename] << data;
-
-    return NEO::virtualFileList[filename].str().size();
-}
 
 bool fileExists(const std::string &fileName) {
     FILE *pFile = nullptr;
@@ -71,6 +59,18 @@ bool fileExistsHasSize(const std::string &fileName) {
     }
     return pFile != nullptr && nsize > 0;
 }
+
+size_t writeDataToFile(
+    const char *filename,
+    std::string_view data) {
+
+    DEBUG_BREAK_IF(nullptr == filename);
+
+    NEO::virtualFileList[filename] << data;
+
+    return NEO::virtualFileList[filename].str().size();
+}
+} // namespace NEO
 
 void removeVirtualFile(const std::string &fileName) {
     NEO::virtualFileList.erase(fileName);

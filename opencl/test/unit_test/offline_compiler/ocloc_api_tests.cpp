@@ -143,10 +143,10 @@ class OclocApiTest : public ::testing::Test {
         constexpr unsigned char mockByteArray[] = {0x01, 0x02, 0x03, 0x04};
         std::string_view byteArrayView(reinterpret_cast<const char *>(mockByteArray), sizeof(mockByteArray));
 
-        writeDataToFile(spvFile.c_str(), byteArrayView);
-        writeDataToFile(binFile.c_str(), byteArrayView);
-        writeDataToFile(dbgFile.c_str(), byteArrayView);
-        writeDataToFile(clCopybufferFilename.c_str(), kernelSources);
+        NEO::writeDataToFile(spvFile.c_str(), byteArrayView);
+        NEO::writeDataToFile(binFile.c_str(), byteArrayView);
+        NEO::writeDataToFile(dbgFile.c_str(), byteArrayView);
+        NEO::writeDataToFile(clCopybufferFilename.c_str(), kernelSources);
     }
 
     // Helper struct to reduce repetition of IoFunctions mocking

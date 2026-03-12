@@ -330,7 +330,7 @@ TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuc
     EXPECT_NE(nullptr, pMultiCommand);
     EXPECT_EQ(CL_SUCCESS, retVal);
     outFileList = pMultiCommand->outputFileList;
-    EXPECT_TRUE(fileExists(outFileList));
+    EXPECT_TRUE(NEO::fileExists(outFileList));
 
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = pMultiCommand->outDirForBuilds + "/build_no_" + std::to_string(i + 1);
@@ -410,10 +410,10 @@ Usage: ocloc multi <file_name>
                 Expected format of each line inside such file is:
                 '-file <filename> -device <device_type> [compile_options]'.
                 See 'ocloc compile --help' for available compile_options.
-                Results of subsequent compilations will be dumped into 
+                Results of subsequent compilations will be dumped into
                 a directory with name identical file_name's base name.
 
-  -output_file_list             Name of optional file containing 
+  -output_file_list             Name of optional file containing
                                 paths to outputs .bin files
 
 )===";
@@ -2974,7 +2974,7 @@ TEST(OfflineCompilerTest, GivenDelimitersWhenGettingStringThenParseIsCorrect) {
     VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
     VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> mockFseek(&NEO::IoFunctions::fseekPtr, [](FILE *stream, long int offset, int origin) -> int { return 0; });
     VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtell(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int {
-        std::string kernelSource = R"( 
+        std::string kernelSource = R"(
             /*
             * Copyright (C) 2020-2023 Intel Corporation
             *
@@ -3004,7 +3004,7 @@ TEST(OfflineCompilerTest, GivenDelimitersWhenGettingStringThenParseIsCorrect) {
         return static_cast<long int>(fileStream.tellg());
     });
     VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
-        std::string kernelSource = R"( 
+        std::string kernelSource = R"(
             /*
             * Copyright (C) 2020-2023 Intel Corporation
             *
@@ -3041,7 +3041,7 @@ TEST(OfflineCompilerTest, GivenDelimitersWhenGettingStringThenParseIsCorrect) {
     std::string kernelFileName(sharedBuiltinsDir + "/copy_buffer_to_buffer.builtin_kernel");
 
     size_t srcSize = 0;
-    auto ptrSrc = loadDataFromFile(kernelFileName.c_str(), srcSize);
+    auto ptrSrc = NEO::loadDataFromFile(kernelFileName.c_str(), srcSize);
 
     const std::string src = ptrSrc.get();
     ASSERT_EQ(srcSize, src.size());
@@ -4383,7 +4383,7 @@ TEST(OfflineCompilerTest, givenNonExistingFilenameWhenUsedToReadOptionsThenReadO
 
     std::string options;
     std::string file("non_existing_file");
-    ASSERT_FALSE(fileExists(file.c_str()));
+    ASSERT_FALSE(NEO::fileExists(file.c_str()));
 
     auto helper = std::make_unique<OclocArgHelper>();
     bool result = OfflineCompiler::readOptionsFromFile(options, file, helper.get());

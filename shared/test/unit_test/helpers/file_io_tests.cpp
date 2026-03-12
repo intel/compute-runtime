@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,10 +21,10 @@ TEST(FileIO, GivenNonEmptyFileWhenCheckingIfHasSizeThenReturnTrue) {
     ASSERT_FALSE(virtualFileExists(fileName.c_str()));
 
     constexpr std::string_view data = "TEST";
-    writeDataToFile(fileName.c_str(), data);
+    NEO::writeDataToFile(fileName.c_str(), data);
 
     EXPECT_TRUE(virtualFileExists(fileName.c_str()));
-    EXPECT_TRUE(fileExistsHasSize(fileName.c_str()));
+    EXPECT_TRUE(NEO::fileExistsHasSize(fileName.c_str()));
     removeVirtualFile(fileName);
 }
 
@@ -37,9 +37,9 @@ TEST(FileIO, GivenEmptyFileWhenCheckingIfHasSizeThenReturnFalse) {
     ASSERT_FALSE(virtualFileExists(fileName.c_str()));
 
     constexpr std::string_view data = "";
-    writeDataToFile(fileName.c_str(), data);
+    NEO::writeDataToFile(fileName.c_str(), data);
 
     EXPECT_TRUE(virtualFileExists(fileName.c_str()));
-    EXPECT_FALSE(fileExistsHasSize(fileName.c_str()));
+    EXPECT_FALSE(NEO::fileExistsHasSize(fileName.c_str()));
     removeVirtualFile(fileName);
 }

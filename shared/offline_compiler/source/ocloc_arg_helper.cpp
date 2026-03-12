@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,7 @@ OclocArgHelper::~OclocArgHelper() {
 }
 
 bool OclocArgHelper::fileExists(const std::string &filename) const {
-    return sourceFileExists(filename) || ::fileExists(filename);
+    return sourceFileExists(filename) || NEO::fileExists(filename);
 }
 
 void OclocArgHelper::moveOutputs() {
@@ -149,7 +149,7 @@ std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &file
         retSize = s->length;
         return ret;
     } else {
-        return ::loadDataFromFile(filename.c_str(), retSize);
+        return NEO::loadDataFromFile(filename.c_str(), retSize);
     }
 }
 
@@ -211,6 +211,6 @@ void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, 
     if (outputEnabled()) {
         addOutput(filename, pData, dataSize);
     } else {
-        writeDataToFile(filename.c_str(), std::string_view(static_cast<const char *>(pData), dataSize));
+        NEO::writeDataToFile(filename.c_str(), std::string_view(static_cast<const char *>(pData), dataSize));
     }
 }

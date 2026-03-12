@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,22 +14,7 @@
 #include <fstream>
 #include <new>
 
-size_t writeDataToFile(
-    const char *filename,
-    std::string_view data) {
-    FILE *fp = nullptr;
-    size_t nsize = 0;
-
-    DEBUG_BREAK_IF(nullptr == filename);
-
-    fopen_s(&fp, filename, "wb");
-    if (fp) {
-        nsize = fwrite(data.data(), sizeof(unsigned char), data.size(), fp);
-        fclose(fp);
-    }
-
-    return nsize;
-}
+namespace NEO {
 
 bool fileExists(const std::string &fileName) {
     FILE *pFile = nullptr;
@@ -59,3 +44,21 @@ bool fileExistsHasSize(const std::string &fileName) {
     }
     return pFile != nullptr && nsize > 0;
 }
+
+size_t writeDataToFile(
+    const char *filename,
+    std::string_view data) {
+    FILE *fp = nullptr;
+    size_t nsize = 0;
+
+    DEBUG_BREAK_IF(nullptr == filename);
+
+    fopen_s(&fp, filename, "wb");
+    if (fp) {
+        nsize = fwrite(data.data(), sizeof(unsigned char), data.size(), fp);
+        fclose(fp);
+    }
+
+    return nsize;
+}
+} // namespace NEO

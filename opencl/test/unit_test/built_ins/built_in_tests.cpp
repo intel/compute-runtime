@@ -96,7 +96,7 @@ class BuiltInTests
 
     void appendBuiltInStringFromFile(std::string builtInFile, size_t &size) {
         std::string src;
-        auto pData = loadDataFromFile(
+        auto pData = NEO::loadDataFromFile(
             builtInFile.c_str(),
             size);
 
@@ -263,13 +263,13 @@ TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
         auto hashName = getBuiltInHashFileName(hash, supportsImages);
 
         // First fail, if we are inconsistent
-        EXPECT_EQ(true, fileExists(hashName)) << "**********\nBuilt in kernels need to be regenerated for the mock compilers!\n**********";
+        EXPECT_EQ(true, NEO::fileExists(hashName)) << "**********\nBuilt in kernels need to be regenerated for the mock compilers!\n**********";
 
         // then write to file if needed
 #define GENERATE_NEW_HASH_FOR_BUILT_INS 0
 #if GENERATE_NEW_HASH_FOR_BUILT_INS
         std::cout << "writing builtins to file: " << hashName << std::endl;
-        writeDataToFile(hashName.c_str(), allBuiltIns);
+        NEO::writeDataToFile(hashName.c_str(), allBuiltIns);
 #endif
     }
 }

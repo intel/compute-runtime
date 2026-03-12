@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,7 +135,7 @@ HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAn
     testFile.append(clFiles);
     testFile.append("CopyBuffer_simd16.cl");
     size_t sourceSize = 0;
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
+    auto pSource = NEO::loadDataFromFile(testFile.c_str(), sourceSize);
     EXPECT_NE(0u, sourceSize);
     EXPECT_NE(nullptr, pSource);
 
@@ -256,7 +256,7 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThrea
     testFile.append(clFiles);
     testFile.append("CopyBuffer_simd16.cl");
     size_t sourceSize = 0;
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
+    auto pSource = NEO::loadDataFromFile(testFile.c_str(), sourceSize);
     EXPECT_NE(0u, sourceSize);
     EXPECT_NE(nullptr, pSource);
 
@@ -386,7 +386,7 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBuff
     testFile.append(clFiles);
     testFile.append("CopyBuffer_simd16.cl");
     size_t sourceSize = 0;
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
+    auto pSource = NEO::loadDataFromFile(testFile.c_str(), sourceSize);
     EXPECT_NE(0u, sourceSize);
     EXPECT_NE(nullptr, pSource);
 
@@ -504,7 +504,7 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueu
     testFile.append(clFiles);
     testFile.append("CopyBuffer_simd16.cl");
     size_t sourceSize = 0;
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
+    auto pSource = NEO::loadDataFromFile(testFile.c_str(), sourceSize);
     EXPECT_NE(0u, sourceSize);
     EXPECT_NE(nullptr, pSource);
 

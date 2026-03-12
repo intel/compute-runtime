@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ class TestFileLogger : public NEO::FileLogger<debugLevel> {
                      const char *str,
                      size_t length,
                      std::ios_base::openmode mode) override {
-        writeDataToFile(filename.c_str(), std::string_view(str, length));
+        NEO::writeDataToFile(filename.c_str(), std::string_view(str, length));
     }
 
     int32_t createdFilesCount() {

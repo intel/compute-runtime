@@ -205,7 +205,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
         }
     } else {
         if (NEO::debugManager.flags.DumpZEBin.get() == 1 && isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize))) {
-            dumpFileIncrement(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get(), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize, "dumped_zebin_module", ".elf");
+            NEO::dumpFileIncrement(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get(), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize, "dumped_zebin_module", ".elf");
         }
     }
 

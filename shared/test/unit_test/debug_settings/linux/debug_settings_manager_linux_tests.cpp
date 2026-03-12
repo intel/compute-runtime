@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ namespace NEO {
 
 TEST(DebugSettingsManager, givenDisabledDebugManagerAndMockEnvVariableWhenCreateThenAllVariablesAreRead) {
     constexpr std::string_view data = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
-    writeDataToFile(SettingsReader::settingsFileName, data);
+    NEO::writeDataToFile(SettingsReader::settingsFileName, data);
 
     SettingsReader *reader = MockSettingsReader::createFileReader();
 

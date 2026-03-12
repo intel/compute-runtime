@@ -491,7 +491,7 @@ int main(int argc, char **argv) {
                                                      "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16"}) {
                 retrieveBinaryKernelFilename(testFilename, binaryFileCommonName + "_", ".bin", "");
                 size_t retFileNsize = 0;
-                auto retFiledata = loadDataFromFile(testFilename.c_str(), retFileNsize);
+                auto retFiledata = NEO::loadDataFromFile(testFilename.c_str(), retFileNsize);
                 if (retFiledata) {
                     virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
                     UNRECOVERABLE_IF(retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size());

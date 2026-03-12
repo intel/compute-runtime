@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -168,10 +168,10 @@ Usage: ocloc multi <file_name>
                 Expected format of each line inside such file is:
                 '-file <filename> -device <device_type> [compile_options]'.
                 See 'ocloc compile --help' for available compile_options.
-                Results of subsequent compilations will be dumped into 
+                Results of subsequent compilations will be dumped into
                 a directory with name identical file_name's base name.
 
-  -output_file_list             Name of optional file containing 
+  -output_file_list             Name of optional file containing
                                 paths to outputs .bin files
 
 )===");

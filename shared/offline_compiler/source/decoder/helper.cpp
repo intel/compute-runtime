@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ void addSlash(std::string &path) {
 
 std::vector<char> readBinaryFile(const std::string &fileName) {
     size_t length;
-    std::unique_ptr<char[]> data = loadDataFromFile(fileName.c_str(), length);
+    std::unique_ptr<char[]> data = NEO::loadDataFromFile(fileName.c_str(), length);
 
     if (data) {
         std::vector<char> binary(data.get(), data.get() + length);
@@ -67,7 +67,7 @@ void istreamToVectorOfStrings(std::istream &input, std::vector<std::string> &lin
 
 void readFileToVectorOfStrings(std::vector<std::string> &lines, const std::string &fileName, bool replaceTabs) {
     size_t fileSize = 0;
-    std::unique_ptr<char[]> fileData = loadDataFromFile(fileName.c_str(), fileSize);
+    std::unique_ptr<char[]> fileData = NEO::loadDataFromFile(fileName.c_str(), fileSize);
 
     if (fileData && fileSize > 0) {
         std::istringstream inputStream(std::string(fileData.get(), fileSize));

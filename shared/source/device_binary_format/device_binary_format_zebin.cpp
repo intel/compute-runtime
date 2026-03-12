@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ template <Elf::ElfIdentifierClass numBits>
 SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                      std::string &outErrReason, std::string &outWarning) {
     if (1 == NEO::debugManager.flags.DumpZEBin.get()) {
-        dumpFileIncrement(reinterpret_cast<const char *>(archive.begin()), archive.size(), "dumped_zebin_module", ".elf");
+        NEO::dumpFileIncrement(reinterpret_cast<const char *>(archive.begin()), archive.size(), "dumped_zebin_module", ".elf");
     }
     auto elf = Elf::decodeElf<numBits>(archive, outErrReason, outWarning);
     if (nullptr == elf.elfFileHeader) {
