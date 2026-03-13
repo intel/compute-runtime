@@ -5610,6 +5610,7 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCoreCbEventThen
     eventObj = Event::fromHandle(handle);
 
     ASSERT_NE(nullptr, eventObj);
+    EXPECT_EQ(eventObj->getMaxKernelCount(), device->getEventMaxKernelCount());
     EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(counterValue, eventObj->getInOrderExecEventHelper().getEventData()->counterValue);

@@ -323,7 +323,7 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
         .eventPoolAllocation = nullptr,
         .extensions = counterBasedEventDesc->pNext,
         .totalEventSize = 0,
-        .maxKernelCount = EventPacketsCount::maxKernelSplit,
+        .maxKernelCount = device->getEventMaxKernelCount(),
         .maxPacketsCount = 1,
         .counterBasedFlags = inputCbFlags,
         .index = 0,
