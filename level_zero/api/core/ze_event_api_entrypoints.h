@@ -171,32 +171,32 @@ ze_result_t ZE_APICALL zeEventCounterBasedCreate(
     ze_device_handle_t hDevice,
     const ze_event_counter_based_desc_t *desc,
     ze_event_handle_t *phEvent) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return Event::counterBasedCreate(hContext, hDevice, desc, phEvent);
 }
 
 ze_result_t ZE_APICALL zeEventCounterBasedGetDeviceAddress(
     ze_event_handle_t hEvent,
     uint64_t *completionValue,
     uint64_t *deviceAddress) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return Event::counterBasedGetDeviceAddress(hEvent, completionValue, deviceAddress);
 }
 
 ze_result_t ZE_APICALL zeEventCounterBasedGetIpcHandle(
     ze_event_handle_t hEvent,
     ze_ipc_event_counter_based_handle_t *phIpc) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return Event::counterBasedGetIpcHandle(hEvent, phIpc);
 }
 
 ze_result_t ZE_APICALL zeEventCounterBasedOpenIpcHandle(
     ze_context_handle_t hContext,
     ze_ipc_event_counter_based_handle_t hIpc,
     ze_event_handle_t *phEvent) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return Event::counterBasedOpenIpcHandle(hContext, hIpc, phEvent);
 }
 
 ze_result_t ZE_APICALL zeEventCounterBasedCloseIpcHandle(
     ze_event_handle_t hEvent) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return Event::fromHandle(hEvent)->destroy();
 }
 
 } // namespace L0

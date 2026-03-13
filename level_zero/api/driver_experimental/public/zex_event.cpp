@@ -21,83 +21,20 @@ namespace L0 {
 
 ze_result_t ZE_APICALL
 zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address) {
-    auto eventObj = Event::fromHandle(toInternalType(event));
-
-    if (!eventObj || !completionValue || !address) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    if (eventObj->isCounterBased()) {
-        if (!eventObj->getInOrderExecEventHelper().isDataAssigned()) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
-        *completionValue = eventObj->getInOrderExecBaseSignalValue();
-        *address = eventObj->getInOrderExecEventHelper().getBaseDeviceAddress() + eventObj->getInOrderAllocationOffset();
-    } else if (eventObj->isEventTimestampFlagSet()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    } else {
-        *completionValue = Event::State::STATE_SIGNALED;
-        *address = eventObj->getCompletionFieldGpuAddress(eventObj->peekEventPool()->getDevice());
-    }
-
-    return ZE_RESULT_SUCCESS;
+    return Event::counterBasedGetDeviceAddress(event, completionValue, address);
 }
 
 ze_result_t ZE_APICALL
 zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDevice, const zex_counter_based_event_desc_t *desc, ze_event_handle_t *phEvent) {
-    constexpr uint32_t supportedBasedFlags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
+    const auto localDesc = desc ? desc : &defaultZexIntelCounterBasedEventDesc;
 
-    auto device = Device::fromHandle(toInternalType(hDevice));
-    auto counterBasedEventDesc = desc ? desc : &defaultIntelCounterBasedEventDesc;
+    const ze_event_counter_based_desc_t mappedDesc = {.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
+                                                      .pNext = localDesc->pNext,
+                                                      .flags = static_cast<ze_event_counter_based_flags_t>(localDesc->flags),
+                                                      .signal = localDesc->signalScope,
+                                                      .wait = localDesc->waitScope};
 
-    if (!hDevice || !phEvent) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    const bool ipcFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_IPC);
-    const bool timestampFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP);
-    const bool mappedTimestampFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP);
-    const bool externalEvent = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
-
-    uint32_t inputCbFlags = counterBasedEventDesc->flags & supportedBasedFlags;
-    if (inputCbFlags == 0) {
-        inputCbFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
-    }
-
-    if (ipcFlag && (timestampFlag || mappedTimestampFlag)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    auto signalScope = counterBasedEventDesc->signalScope;
-
-    if (NEO::debugManager.flags.MitigateHostVisibleSignal.get()) {
-        signalScope &= ~ZE_EVENT_SCOPE_FLAG_HOST;
-    }
-
-    EventDescriptor eventDescriptor = {
-        .eventPoolAllocation = nullptr,
-        .extensions = counterBasedEventDesc->pNext,
-        .totalEventSize = 0,
-        .maxKernelCount = EventPacketsCount::maxKernelSplit,
-        .maxPacketsCount = 1,
-        .counterBasedFlags = inputCbFlags,
-        .index = 0,
-        .signalScope = signalScope,
-        .waitScope = counterBasedEventDesc->waitScope,
-        .timestampPool = timestampFlag,
-        .kernelMappedTsPoolFlag = mappedTimestampFlag,
-        .importedIpcPool = false,
-        .ipcPool = ipcFlag,
-        .externalEvent = externalEvent,
-    };
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-
-    auto l0Event = device->getL0GfxCoreHelper().createStandaloneEvent(eventDescriptor, device, result);
-
-    *phEvent = l0Event;
-
-    return result;
+    return Event::counterBasedCreate(hContext, hDevice, &mappedDesc, phEvent);
 }
 
 ze_result_t ZE_APICALL
@@ -152,26 +89,12 @@ ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hCont
 }
 
 ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
-    auto event = Event::fromHandle(hEvent);
-    if (!event || !phIpc || !event->isCounterBasedExplicitlyEnabled()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    auto ipcData = reinterpret_cast<IpcCounterBasedEventData *>(phIpc->data);
-
-    return event->getCounterBasedIpcHandle(*ipcData);
+    auto ret = Event::counterBasedGetIpcHandle(hEvent, reinterpret_cast<ze_ipc_event_counter_based_handle_t *>(phIpc));
+    return ret;
 }
 
 ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent) {
-    auto context = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-
-    if (!context || !phEvent) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    auto ipcData = reinterpret_cast<IpcCounterBasedEventData *>(hIpc.data);
-
-    return context->openCounterBasedIpcHandle(*ipcData, phEvent);
+    return Event::counterBasedOpenIpcHandle(hContext, reinterpret_cast<ze_ipc_event_counter_based_handle_t &>(hIpc), phEvent);
 }
 
 ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
@@ -179,13 +102,7 @@ ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEve
 }
 
 ze_result_t ZE_APICALL zexDeviceGetAggregatedCopyOffloadIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue) {
-    auto device = Device::fromHandle(hDevice);
-    if (!device || !incrementValue) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    *incrementValue = device->getAggregatedCopyOffloadIncrementValue();
-    return ZE_RESULT_SUCCESS;
+    return Event::counterBasedGetIncrementValue(hDevice, incrementValue);
 }
 
 } // namespace L0

@@ -5406,12 +5406,12 @@ HWTEST_F(InOrderCmdListTests, givenEventCreatedFromPoolWhenItIsQueriedForAddress
 
     auto eventHandle = events[0]->toHandle();
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexEventGetDeviceAddress(eventHandle, &counterValue, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexEventGetDeviceAddress(eventHandle, nullptr, &address));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexEventGetDeviceAddress(nullptr, &counterValue, &address));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetDeviceAddress(eventHandle, &counterValue, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetDeviceAddress(eventHandle, nullptr, &address));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetDeviceAddress(nullptr, &counterValue, &address));
 
     events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetDeviceAddress(eventHandle, &counterValue, &address));
     EXPECT_EQ(Event::State::STATE_SIGNALED, counterValue);
     EXPECT_EQ(address, events[0]->getCompletionFieldGpuAddress(events[0]->peekEventPool()->getDevice()));
 }
@@ -5422,7 +5422,7 @@ HWTEST_F(InOrderCmdListTests, givenEventCreatedFromPoolWithTimestampsWhenQueried
 
     auto eventHandle = events[0]->toHandle();
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetDeviceAddress(eventHandle, &counterValue, &address));
 }
 
 HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenReturnSuccess) {
@@ -5469,7 +5469,7 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenRetu
 
     uint64_t address = 0;
     uint64_t value = 0;
-    L0::zexEventGetDeviceAddress(handle, &value, &address);
+    zeEventCounterBasedGetDeviceAddress(handle, &value, &address);
 
     EXPECT_EQ(address, eventObj->getInOrderExecEventHelper().getBaseDeviceAddress());
     EXPECT_EQ(value, counterValue);
@@ -5541,7 +5541,89 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEvent2ThenRet
 
     uint64_t address = 0;
     uint64_t value = 0;
-    L0::zexEventGetDeviceAddress(handle, &value, &address);
+    zeEventCounterBasedGetDeviceAddress(handle, &value, &address);
+
+    EXPECT_EQ(address, eventObj->getInOrderExecEventHelper().getBaseDeviceAddress());
+    EXPECT_EQ(value, counterValue);
+
+    zeEventDestroy(handle);
+
+    context->freeMem(hostAddress);
+}
+
+HWTEST_F(InOrderCmdListTests, givenExpFlagsWhenComparingToCoreFlagsThenValuesAreTheSame) {
+    EXPECT_EQ(static_cast<uint32_t>(ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE), static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE));
+    EXPECT_EQ(static_cast<uint32_t>(ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE), static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE));
+    EXPECT_EQ(static_cast<uint32_t>(ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE), static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE));
+    EXPECT_EQ(static_cast<uint32_t>(ZE_EVENT_COUNTER_BASED_FLAG_IPC), static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IPC));
+    EXPECT_EQ(static_cast<uint32_t>(ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP), static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP));
+    EXPECT_EQ(static_cast<uint32_t>(ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP), static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP));
+    EXPECT_EQ(sizeof(zex_ipc_counter_based_event_handle_t::data), sizeof(ze_ipc_event_counter_based_handle_t::data));
+}
+
+HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCoreCbEventThenReturnSuccess) {
+    uint64_t counterValue = 2;
+
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+
+    *hostAddress = counterValue;
+    uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
+
+    ze_event_counter_based_external_sync_allocation_desc_t externalSyncAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC};
+    externalSyncAllocProperties.completionValue = counterValue;
+    externalSyncAllocProperties.deviceAddress = gpuAddress;
+    externalSyncAllocProperties.hostAddress = hostAddress;
+
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+    counterBasedDesc.pNext = &externalSyncAllocProperties;
+    ze_event_handle_t handle = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, device, &counterBasedDesc, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, nullptr, &counterBasedDesc, &handle));
+    externalSyncAllocProperties.hostAddress = &counterValue;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
+
+    externalSyncAllocProperties.hostAddress = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
+
+    externalSyncAllocProperties.hostAddress = hostAddress;
+    externalSyncAllocProperties.deviceAddress = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
+
+    externalSyncAllocProperties.hostAddress = nullptr;
+    externalSyncAllocProperties.deviceAddress = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
+
+    counterBasedDesc.pNext = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
+    auto eventObj = Event::fromHandle(handle);
+
+    zeEventDestroy(handle);
+
+    counterBasedDesc.pNext = &externalSyncAllocProperties;
+    externalSyncAllocProperties.hostAddress = hostAddress;
+    externalSyncAllocProperties.deviceAddress = gpuAddress;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
+
+    eventObj = Event::fromHandle(handle);
+
+    ASSERT_NE(nullptr, eventObj);
+    EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
+
+    EXPECT_EQ(counterValue, eventObj->getInOrderExecEventHelper().getEventData()->counterValue);
+    EXPECT_EQ(hostAddress, eventObj->getInOrderExecEventHelper().getBaseHostAddress());
+    EXPECT_EQ(castToUint64(gpuAddress), eventObj->getInOrderExecEventHelper().getBaseDeviceAddress());
+    EXPECT_EQ(nullptr, eventObj->getInOrderExecEventHelper().getDeviceCounterAllocation());
+
+    eventObj->resetCompletionStatus();
+    eventObj->setIsCompleted();
+    EXPECT_FALSE(eventObj->isAlreadyCompleted());
+
+    uint64_t address = 0;
+    uint64_t value = 0;
+    zeEventCounterBasedGetDeviceAddress(handle, &value, &address);
 
     EXPECT_EQ(address, eventObj->getInOrderExecEventHelper().getBaseDeviceAddress());
     EXPECT_EQ(value, counterValue);
@@ -6292,12 +6374,12 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAnd
 
     auto eventHandle = events[0]->toHandle();
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetDeviceAddress(eventHandle, &counterValue, &address));
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetDeviceAddress(eventHandle, &counterValue, &address));
     EXPECT_EQ(cmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, counterValue);
     EXPECT_EQ(deviceAlloc->getGpuAddress(), address);
 
@@ -6311,13 +6393,13 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAnd
     mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
     mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetDeviceAddress(eventHandle, &counterValue, &address));
     EXPECT_EQ(cmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, counterValue);
     EXPECT_EQ(deviceAlloc->getGpuAddress(), address);
 
     static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).eventData->counterOffset = 0x12300;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetDeviceAddress(eventHandle, &counterValue, &address));
     EXPECT_EQ(cmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, counterValue);
     EXPECT_EQ(deviceAlloc->getGpuAddress() + events[0]->getInOrderAllocationOffset(), address);
 }
@@ -6326,6 +6408,12 @@ HWTEST_F(InOrderCmdListTests, givenIncorrectArgumentswhenCallingZexDeviceGetAggr
     uint32_t incValue = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(nullptr, &incValue));
+}
+
+HWTEST_F(InOrderCmdListTests, givenIncorrectArgumentswhenCallingZeDeviceGetAggregatedCopyOffloadIncrementValueThenReturnError) {
+    uint32_t incValue = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeDeviceGetAggregatedCopyOffloadIncrementValue(nullptr, &incValue));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenGpuHangDetectedInCpuCopyPathThenReportError) {

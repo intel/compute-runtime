@@ -289,6 +289,118 @@ ze_result_t EventPool::closeIpcHandle() {
     return this->destroy();
 }
 
+ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_event_counter_based_desc_t *desc, ze_event_handle_t *phEvent) {
+    constexpr uint32_t supportedBasedFlags = (ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE);
+
+    auto device = Device::fromHandle(toInternalType(hDevice));
+    auto counterBasedEventDesc = desc ? desc : &defaultIntelCounterBasedEventDesc;
+
+    if (!hDevice || !phEvent) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    const bool ipcFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_IPC);
+    const bool timestampFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP);
+    const bool mappedTimestampFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP);
+    const bool externalEvent = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+
+    uint32_t inputCbFlags = counterBasedEventDesc->flags & supportedBasedFlags;
+    if (inputCbFlags == 0) {
+        inputCbFlags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
+    }
+
+    if (ipcFlag && (timestampFlag || mappedTimestampFlag)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto signalScope = counterBasedEventDesc->signal;
+
+    if (NEO::debugManager.flags.MitigateHostVisibleSignal.get()) {
+        signalScope &= ~ZE_EVENT_SCOPE_FLAG_HOST;
+    }
+
+    EventDescriptor eventDescriptor = {
+        .eventPoolAllocation = nullptr,
+        .extensions = counterBasedEventDesc->pNext,
+        .totalEventSize = 0,
+        .maxKernelCount = EventPacketsCount::maxKernelSplit,
+        .maxPacketsCount = 1,
+        .counterBasedFlags = inputCbFlags,
+        .index = 0,
+        .signalScope = signalScope,
+        .waitScope = counterBasedEventDesc->wait,
+        .timestampPool = timestampFlag,
+        .kernelMappedTsPoolFlag = mappedTimestampFlag,
+        .importedIpcPool = false,
+        .ipcPool = ipcFlag,
+        .externalEvent = externalEvent,
+    };
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    auto l0Event = device->getL0GfxCoreHelper().createStandaloneEvent(eventDescriptor, device, result);
+
+    *phEvent = l0Event;
+
+    return result;
+}
+
+ze_result_t Event::counterBasedGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address) {
+    auto eventObj = Event::fromHandle(toInternalType(event));
+
+    if (!eventObj || !completionValue || !address) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (eventObj->isCounterBased()) {
+        if (!eventObj->getInOrderExecEventHelper().isDataAssigned()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        *completionValue = eventObj->getInOrderExecBaseSignalValue();
+        *address = eventObj->getInOrderExecEventHelper().getBaseDeviceAddress() + eventObj->getInOrderAllocationOffset();
+    } else if (eventObj->isEventTimestampFlagSet()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    } else {
+        *completionValue = Event::State::STATE_SIGNALED;
+        *address = eventObj->getCompletionFieldGpuAddress(eventObj->peekEventPool()->getDevice());
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t Event::counterBasedGetIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue) {
+    auto device = Device::fromHandle(hDevice);
+    if (!device || !incrementValue) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    *incrementValue = device->getAggregatedCopyOffloadIncrementValue();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t Event::counterBasedGetIpcHandle(ze_event_handle_t hEvent, ze_ipc_event_counter_based_handle_t *phIpc) {
+    auto event = Event::fromHandle(hEvent);
+    if (!event || !phIpc || !event->isCounterBasedExplicitlyEnabled()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto ipcData = reinterpret_cast<IpcCounterBasedEventData *>(phIpc->data);
+
+    return event->getCounterBasedIpcHandle(*ipcData);
+}
+
+ze_result_t Event::counterBasedOpenIpcHandle(ze_context_handle_t hContext, ze_ipc_event_counter_based_handle_t hIpc, ze_event_handle_t *phEvent) {
+    auto context = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    if (!context || !phEvent) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto ipcData = reinterpret_cast<IpcCounterBasedEventData *>(hIpc.data);
+
+    return context->openCounterBasedIpcHandle(*ipcData, phEvent);
+}
+
 ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *eventHandle,
                                              DriverHandle *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
 
@@ -757,55 +869,88 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
     auto extendedDesc = reinterpret_cast<const ze_base_desc_t *>(eventDescriptor.extensions);
 
     while (extendedDesc) {
-        if (static_cast<uint32_t>(extendedDesc->stype) == ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC) {
-            auto eventSyncModeDesc = reinterpret_cast<const zex_intel_event_sync_mode_exp_desc_t *>(extendedDesc);
-
-            interruptMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
-            kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
-            externalInterruptWait = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT);
+        auto stype = static_cast<uint32_t>(extendedDesc->stype);
+        if (stype == ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC || stype == ZE_STRUCTURE_TYPE_EVENT_SYNC_MODE_DESC) {
+            uint32_t externalInterruptId = 0;
+            if (stype == ZE_STRUCTURE_TYPE_EVENT_SYNC_MODE_DESC) {
+                auto eventSyncModeDesc = reinterpret_cast<const ze_event_sync_mode_desc_t *>(extendedDesc);
+                interruptMode = (eventSyncModeDesc->syncModeFlags & ZE_EVENT_SYNC_MODE_FLAG_SIGNAL_INTERRUPT);
+                kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZE_EVENT_SYNC_MODE_FLAG_LOW_POWER_WAIT);
+                externalInterruptWait = (eventSyncModeDesc->syncModeFlags & ZE_EVENT_SYNC_MODE_FLAG_EXTERNAL_INTERRUPT_WAIT);
+                externalInterruptId = eventSyncModeDesc->externalInterruptId;
+            } else {
+                auto eventSyncModeDesc = reinterpret_cast<const zex_intel_event_sync_mode_exp_desc_t *>(extendedDesc);
+                interruptMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
+                kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
+                externalInterruptWait = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT);
+                externalInterruptId = eventSyncModeDesc->externalInterruptId;
+            }
 
             if (interruptMode && !device->getProductHelper().isInterruptSupported(device->getNEODevice()->getRootDeviceEnvironment())) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
 
             if (externalInterruptWait) {
-                setExternalInterruptId(eventSyncModeDesc->externalInterruptId);
-                UNRECOVERABLE_IF(eventSyncModeDesc->externalInterruptId > 0 && eventDescriptor.eventPoolAllocation);
+                setExternalInterruptId(externalInterruptId);
+                UNRECOVERABLE_IF(externalInterruptId > 0 && eventDescriptor.eventPoolAllocation);
             }
-        } else if (static_cast<uint32_t>(extendedDesc->stype) == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES) {
-            auto externalSyncAllocProperties = reinterpret_cast<const zex_counter_based_event_external_sync_alloc_properties_t *>(extendedDesc);
+        } else if (stype == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES || stype == ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC) {
+            uint64_t *deviceAddress = nullptr;
+            uint64_t *hostAddress = nullptr;
+            uint64_t completionValue = 0;
 
-            if (!externalSyncAllocProperties->deviceAddress || !externalSyncAllocProperties->hostAddress) {
+            if (stype == ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_SYNC_ALLOCATION_DESC) {
+                auto externalSyncAllocProperties = reinterpret_cast<const ze_event_counter_based_external_sync_allocation_desc_t *>(extendedDesc);
+                deviceAddress = externalSyncAllocProperties->deviceAddress;
+                hostAddress = externalSyncAllocProperties->hostAddress;
+                completionValue = externalSyncAllocProperties->completionValue;
+            } else {
+                auto externalSyncAllocProperties = reinterpret_cast<const zex_counter_based_event_external_sync_alloc_properties_t *>(extendedDesc);
+                deviceAddress = externalSyncAllocProperties->deviceAddress;
+                hostAddress = externalSyncAllocProperties->hostAddress;
+                completionValue = externalSyncAllocProperties->completionValue;
+            }
+
+            if (!deviceAddress || !hostAddress) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
-            auto deviceAlloc = getExternalCounterAllocationFromAddress(externalSyncAllocProperties->deviceAddress);
-            auto hostAlloc = getExternalCounterAllocationFromAddress(externalSyncAllocProperties->hostAddress);
+            auto deviceAlloc = getExternalCounterAllocationFromAddress(deviceAddress);
+            auto hostAlloc = getExternalCounterAllocationFromAddress(hostAddress);
 
             if (!hostAlloc) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
-            inOrderExecHelper.assignData(externalSyncAllocProperties->completionValue, 0, 1, 1, deviceAlloc, hostAlloc, castToUint64(externalSyncAllocProperties->deviceAddress),
-                                         externalSyncAllocProperties->hostAddress, 0, 0, (deviceAlloc != hostAlloc), true);
+            inOrderExecHelper.assignData(completionValue, 0, 1, 1, deviceAlloc, hostAlloc, castToUint64(deviceAddress), hostAddress, 0, 0, (deviceAlloc != hostAlloc), true);
 
             disableHostCaching(true);
-        } else if (static_cast<uint32_t>(extendedDesc->stype) == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES) {
-            auto externalStorageProperties = reinterpret_cast<const zex_counter_based_event_external_storage_properties_t *>(extendedDesc);
+        } else if (stype == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES || stype == ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC) {
+            uint64_t *deviceAddress = nullptr;
+            uint64_t completionValue = 0;
+            uint64_t incrementValue = 0;
 
-            auto deviceAlloc = getExternalCounterAllocationFromAddress(externalStorageProperties->deviceAddress);
+            if (stype == ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC) {
+                auto externalStorageProperties = reinterpret_cast<const ze_event_counter_based_external_aggregate_storage_desc_t *>(extendedDesc);
+                deviceAddress = externalStorageProperties->deviceAddress;
+                completionValue = externalStorageProperties->completionValue;
+                incrementValue = externalStorageProperties->incrementValue;
+            } else {
+                auto externalStorageProperties = reinterpret_cast<const zex_counter_based_event_external_storage_properties_t *>(extendedDesc);
+                deviceAddress = externalStorageProperties->deviceAddress;
+                completionValue = externalStorageProperties->completionValue;
+                incrementValue = externalStorageProperties->incrementValue;
+            }
+            auto deviceAlloc = getExternalCounterAllocationFromAddress(deviceAddress);
 
-            if (!deviceAlloc || externalStorageProperties->incrementValue == 0) {
+            if (!deviceAlloc || incrementValue == 0) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
-            auto offset = ptrDiff(externalStorageProperties->deviceAddress, deviceAlloc->getGpuAddress());
-
+            auto offset = ptrDiff(deviceAddress, deviceAlloc->getGpuAddress());
             auto hostAddress = ptrOffset(device->getNEODevice()->getMemoryManager()->lockResource(deviceAlloc), offset);
 
-            inOrderExecHelper.assignData(externalStorageProperties->completionValue, 0, 1, 1, deviceAlloc, deviceAlloc, castToUint64(externalStorageProperties->deviceAddress),
-                                         reinterpret_cast<uint64_t *>(hostAddress), externalStorageProperties->incrementValue, 0, false, true);
-
+            inOrderExecHelper.assignData(completionValue, 0, 1, 1, deviceAlloc, deviceAlloc, castToUint64(deviceAddress), reinterpret_cast<uint64_t *>(hostAddress), incrementValue, 0, false, true);
             disableHostCaching(true);
         }
 

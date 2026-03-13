@@ -385,7 +385,7 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSigna
     memset(dstBuffer2, 0, bufferSize);
 
     uint32_t incValue = 0;
-    L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
+    zeDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
     auto event = createAggregatedEvent(incValue, incValue * 2);
     auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecEventHelper().getBaseDeviceAddress());
     *event->getInOrderExecEventHelper().getBaseHostAddress() = 0;
@@ -525,7 +525,7 @@ HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEve
     memset(dstBuffer2, 0, bufferSize);
 
     uint32_t incValue = 0;
-    L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
+    zeDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
     auto event = createAggregatedEvent(incValue, incValue * 2);
     auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecEventHelper().getBaseDeviceAddress());
     *event->getInOrderExecEventHelper().getBaseHostAddress() = 0;

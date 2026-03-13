@@ -5458,7 +5458,7 @@ HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyIsCalledWhenCpuCopyIsUsedAndC
 TEST_F(EventTests, givenDefaultDescriptorWhenCreatingCbEvent2ThenEventWithNoProfilingAndSignalScopeHostAndDeviceScopeWaitIsCreated) {
     ze_event_handle_t handle = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &defaultIntelCounterBasedEventDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &defaultZexIntelCounterBasedEventDesc, &handle));
 
     auto eventObj = Event::fromHandle(handle);
     EXPECT_TRUE(eventObj->isCounterBasedExplicitlyEnabled());

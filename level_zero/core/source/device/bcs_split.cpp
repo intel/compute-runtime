@@ -16,7 +16,6 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/driver_experimental/zex_api.h"
 
 #include <algorithm>
 
@@ -279,30 +278,30 @@ size_t BcsSplitEvents::createAggregatedEvent(Context *context) {
     UNRECOVERABLE_IF(deviceIncValue % engineCount != 0);
 
     // Use deviceIncValue as completion value. Its dividable by engine count to get increment value per subcopy event.
-    zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES,
-                                                                                            .incrementValue = deviceIncValue / engineCount,
-                                                                                            .completionValue = deviceIncValue};
+    ze_event_counter_based_external_aggregate_storage_desc_t externalAggregateStorageAllocProperties = {.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC,
+                                                                                                        .incrementValue = deviceIncValue / engineCount,
+                                                                                                        .completionValue = deviceIncValue};
 
-    const zex_counter_based_event_desc_t counterBasedDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
-                                                             .pNext = &externalStorageAllocProperties,
-                                                             .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE,
-                                                             .signalScope = ZE_EVENT_SCOPE_FLAG_DEVICE};
+    const ze_event_counter_based_desc_t counterBasedDesc = {.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
+                                                            .pNext = &externalAggregateStorageAllocProperties,
+                                                            .flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE,
+                                                            .signal = ZE_EVENT_SCOPE_FLAG_DEVICE};
 
-    const zex_counter_based_event_desc_t markerCounterBasedDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
-                                                                   .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE,
-                                                                   .signalScope = ZE_EVENT_SCOPE_FLAG_HOST};
+    const ze_event_counter_based_desc_t markerCounterBasedDesc = {.stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
+                                                                  .flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE,
+                                                                  .signal = ZE_EVENT_SCOPE_FLAG_HOST};
 
     for (int i = 0; i < preallocationCount; i++) {
-        externalStorageAllocProperties.deviceAddress = getNextAllocationForAggregatedEvent();
+        externalAggregateStorageAllocProperties.deviceAddress = getNextAllocationForAggregatedEvent();
 
         ze_event_handle_t handle = nullptr;
-        L0::zexCounterBasedEventCreate2(context, bcsSplit.getDevice().toHandle(), &counterBasedDesc, &handle);
+        zeEventCounterBasedCreate(context, bcsSplit.getDevice().toHandle(), &counterBasedDesc, &handle);
         UNRECOVERABLE_IF(handle == nullptr);
 
         this->eventResources.subcopy.push_back(Event::fromHandle(handle));
 
         ze_event_handle_t markerHandle = nullptr;
-        L0::zexCounterBasedEventCreate2(context, bcsSplit.getDevice().toHandle(), &markerCounterBasedDesc, &markerHandle);
+        zeEventCounterBasedCreate(context, bcsSplit.getDevice().toHandle(), &markerCounterBasedDesc, &markerHandle);
         UNRECOVERABLE_IF(markerHandle == nullptr);
 
         auto currentIndex = this->eventResources.subcopy.size() - 1;

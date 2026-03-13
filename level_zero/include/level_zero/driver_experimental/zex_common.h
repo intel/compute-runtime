@@ -218,7 +218,7 @@ typedef struct _zex_counter_based_event_desc_t {
                                                ///< additional cache hierarchies are invalidated.
 } zex_counter_based_event_desc_t;
 
-static const zex_counter_based_event_desc_t defaultIntelCounterBasedEventDesc = {
+static const zex_counter_based_event_desc_t defaultZexIntelCounterBasedEventDesc = {
     ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, // stype
     nullptr,                                // pNext
     ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE |
@@ -226,6 +226,16 @@ static const zex_counter_based_event_desc_t defaultIntelCounterBasedEventDesc = 
         ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE, // flags
     ZE_EVENT_SCOPE_FLAG_HOST,                      // signalScope
     ZE_EVENT_SCOPE_FLAG_DEVICE                     // waitScope
+};
+
+static const ze_event_counter_based_desc_t defaultIntelCounterBasedEventDesc = {
+    ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, // stype
+    nullptr,                                    // pNext
+    ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE |
+        ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE |
+        ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE, // flags
+    ZE_EVENT_SCOPE_FLAG_HOST,                     // signalScope
+    ZE_EVENT_SCOPE_FLAG_DEVICE                    // waitScope
 };
 
 ///////////////////////////////////////////////////////////////////////////////

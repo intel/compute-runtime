@@ -168,7 +168,15 @@ struct Event : _ze_event_handle_t {
     template <typename TagSizeT>
     static Event *create(const EventDescriptor &eventDescriptor, Device *device, ze_result_t &result);
 
+    static ze_result_t counterBasedCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_event_counter_based_desc_t *desc, ze_event_handle_t *phEvent);
+    static ze_result_t counterBasedGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address);
+    static ze_result_t counterBasedGetIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue);
+
     static Event *fromHandle(ze_event_handle_t handle) { return static_cast<Event *>(handle); }
+
+    static ze_result_t counterBasedGetIpcHandle(ze_event_handle_t hEvent, ze_ipc_event_counter_based_handle_t *phIpc);
+
+    static ze_result_t counterBasedOpenIpcHandle(ze_context_handle_t hContext, ze_ipc_event_counter_based_handle_t hIpc, ze_event_handle_t *phEvent);
 
     static ze_result_t openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *eventHandle,
                                                  DriverHandle *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);

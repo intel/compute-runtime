@@ -170,7 +170,7 @@ ze_result_t ZE_APICALL zeDeviceGetPriorityLevels(
 ze_result_t ZE_APICALL zeDeviceGetAggregatedCopyOffloadIncrementValue(
     ze_device_handle_t hDevice,
     uint32_t *incrementValue) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return Event::counterBasedGetIncrementValue(hDevice, incrementValue);
 }
 
 } // namespace L0

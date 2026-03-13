@@ -125,8 +125,6 @@ class ExecEnv {
     zex_pfnCommandListAppendMIMathCb_t zexCommandListAppendMIMathFunc = nullptr;
     zex_pfnCommandListAppendStoreRegVariableCb_t zexCommandListAppendStoreRegVariableFunc = nullptr;
 
-    decltype(&zexEventGetDeviceAddress) zexEventGetDeviceAddressFunc = nullptr;
-
   protected:
     ExecEnv();
 

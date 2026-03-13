@@ -1849,10 +1849,10 @@ bool testExternalMemoryCbWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_
     // get external memory counter values
     uint64_t address = 0;
     uint64_t value = 0;
-    SUCCESS_OR_TERMINATE(execEnv->zexEventGetDeviceAddressFunc(firstExternalEvent, &value, &address));
+    SUCCESS_OR_TERMINATE(zeEventCounterBasedGetDeviceAddress(firstExternalEvent, &value, &address));
     *reinterpret_cast<uint64_t *>(firstExternalEventCounterValueMemory) = value;
 
-    SUCCESS_OR_TERMINATE(execEnv->zexEventGetDeviceAddressFunc(secondExternalEvent, &value, &address));
+    SUCCESS_OR_TERMINATE(zeEventCounterBasedGetDeviceAddress(secondExternalEvent, &value, &address));
     *reinterpret_cast<uint64_t *>(secondExternalEventCounterValueMemory) = value;
 
     SUCCESS_OR_TERMINATE(zeContextMakeMemoryResident(execEnv->context, execEnv->device, externalHostBuffer, externalEventSize));

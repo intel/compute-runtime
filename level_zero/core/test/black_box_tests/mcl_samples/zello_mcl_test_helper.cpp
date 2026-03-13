@@ -92,7 +92,6 @@ ExecEnv::ExecEnv() {
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendStoreRegVariable", reinterpret_cast<void **>(&zexCommandListAppendStoreRegVariableFunc)));
 
     if (cbEventsExtension) {
-        SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexEventGetDeviceAddress", reinterpret_cast<void **>(&zexEventGetDeviceAddressFunc)));
         LevelZeroBlackBoxTests::loadCounterBasedEventCreateFunction(driverHandle);
     }
 
