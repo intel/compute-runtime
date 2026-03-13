@@ -164,6 +164,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
     void submit(GraphicsAllocation &ringBufferAllocation, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize,
                 uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead, const ResidencyContainer *allocationsForResidency) const {
         uploadRingAndCommandBuffers(ringBufferAllocation, batchBufferGpuAddress, batchBufferSize, allocationsForResidency);
+        UNRECOVERABLE_IF(nullptr == hardwareContextController);
         hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize,
                                           memoryBank, entryBits, overrideRingHead);
     }
