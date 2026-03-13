@@ -673,9 +673,8 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
 
 TEST_F(IoctlHelperXeTest, whenGettingFlagsForVmCreateThenPropertValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    drm->ioctlHelper->initialize();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
 
     for (auto &disableScratch : ::testing::Bool()) {
         for (auto &enablePageFault : ::testing::Bool()) {
@@ -683,7 +682,7 @@ TEST_F(IoctlHelperXeTest, whenGettingFlagsForVmCreateThenPropertValueIsReturned)
                 auto flags = xeIoctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
                 EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), (flags & DRM_XE_VM_CREATE_FLAG_LR_MODE));
                 if (enablePageFault) {
-                    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE | xeIoctlHelper->getNoVmOvercommitFlag()), (flags & (DRM_XE_VM_CREATE_FLAG_FAULT_MODE | xeIoctlHelper->getNoVmOvercommitFlag())));
+                    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE), (flags & DRM_XE_VM_CREATE_FLAG_FAULT_MODE));
                 }
                 if (!disableScratch) {
                     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), (flags & DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE));
