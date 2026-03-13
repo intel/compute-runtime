@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,4 +89,9 @@ template <typename Family>
 zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLargeGrfDetection() const {
     return ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU;
 }
+
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, DriverHandle *driverHandle) const {
+}
+
 } // namespace L0

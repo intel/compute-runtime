@@ -39,6 +39,51 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *devi
     return result;
 }
 
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::decompress(Device *device, GraphicsAllocation &gfxAllocation) {
+    auto drmAllocation = static_cast<DrmAllocation *>(&gfxAllocation);
+    auto &engines = device->getAllEngines();
+
+    std::lock_guard<std::mutex> lock(mutex);
+
+    auto setDecompressOnBOs = [&](bool value) {
+        if (drmAllocation->storageInfo.isChunked) {
+            if (auto bo = drmAllocation->getBO()) {
+                bo->requireResourceDecompress(value);
+            }
+        } else {
+            for (auto &bo : drmAllocation->getBOs()) {
+                if (bo) {
+                    bo->requireResourceDecompress(value);
+                }
+            }
+        }
+    };
+
+    for (const auto &engine : engines) {
+        auto osContext = engine.osContext;
+        auto deviceBitfield = osContext->getDeviceBitfield();
+
+        uint32_t devicesDone = 0u;
+        for (uint32_t vmHandleId = 0u; devicesDone < deviceBitfield.count(); vmHandleId++) {
+            if (not deviceBitfield.test(vmHandleId)) {
+                continue;
+            }
+            devicesDone++;
+
+            setDecompressOnBOs(true);
+
+            int retVal = drmAllocation->bindBOs(osContext, vmHandleId, nullptr, true, false);
+
+            setDecompressOnBOs(false);
+
+            if (retVal) {
+                return MemoryOperationsStatus::failed;
+            }
+        }
+    }
+    return MemoryOperationsStatus::success;
+}
+
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
         (*gfxAllocation)->setLockedMemory(true);
