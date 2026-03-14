@@ -17,7 +17,6 @@
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/mocks/windows/mock_gmm_memory.h"
@@ -1476,36 +1475,6 @@ TEST(WddmGfxPartitionTests, givenInternalFrontWindowHeapWhenAllocatingSmallOrBig
 
         EXPECT_EQ(gfxPartition.getHeapBase(heaps[i]), address);
         gfxPartition.heapFree(heaps[i], address, sizeToAlloc);
-    }
-}
-
-TEST(WddmGfxPartitionTests, given2MBLocalMemAlignmentEnabledWhenAllocatingFromExternalFrontWindowThenWholePoolSizeIsUsable) {
-    MockExecutionEnvironment executionEnvironment;
-    auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
-
-    uint32_t rootDeviceIndex = 0;
-    size_t numRootDevices = 1;
-    auto mockProductHelper = std::make_unique<MockProductHelper>();
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
-    std::swap(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->productHelper, productHelper);
-    auto &updatedProductHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
-
-    MockGfxPartition gfxPartition;
-    wddm->init();
-    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, true, &updatedProductHelper);
-
-    HeapIndex heaps[] = {HeapIndex::heapExternalFrontWindow,
-                         HeapIndex::heapExternalDeviceFrontWindow};
-
-    for (auto heap : heaps) {
-        size_t sizeToAlloc = MemoryConstants::pageSize2M;
-        auto address = gfxPartition.heapAllocate(heap, sizeToAlloc);
-
-        EXPECT_EQ(gfxPartition.getHeapBase(heap), address);
-        EXPECT_EQ(MemoryConstants::pageSize2M, sizeToAlloc);
-
-        gfxPartition.heapFree(heap, address, sizeToAlloc);
     }
 }
 

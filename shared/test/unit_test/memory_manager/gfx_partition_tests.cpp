@@ -397,27 +397,6 @@ TEST(GfxPartitionTest, given2MBLocalMemAlignmentEnabledWhenInitializingGfxPartit
     EXPECT_EQ(expectedExternalFrontWindowSize, gfxPartition.getHeapMinimalAddress(HeapIndex::heapExternalDeviceMemory) - gfxPartition.getHeapBase(HeapIndex::heapExternalDeviceMemory));
 }
 
-TEST(GfxPartitionTest, given2MBLocalMemAlignmentEnabledWhenAllocatingFromExternalFrontWindowThenWholePoolSizeIsUsable) {
-    MockGfxPartition gfxPartition;
-    MockProductHelper productHelper;
-    productHelper.is2MBLocalMemAlignmentEnabledResult = true;
-    uint64_t gfxTop = maxNBitValue(48) + 1;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, true, 0u, gfxTop, &productHelper);
-
-    HeapIndex heaps[] = {HeapIndex::heapExternalFrontWindow,
-                         HeapIndex::heapExternalDeviceFrontWindow};
-
-    for (auto heap : heaps) {
-        size_t sizeToAlloc = MemoryConstants::pageSize2M;
-        auto address = gfxPartition.heapAllocate(heap, sizeToAlloc);
-
-        EXPECT_EQ(gfxPartition.getHeapBase(heap), address);
-        EXPECT_EQ(MemoryConstants::pageSize2M, sizeToAlloc);
-
-        gfxPartition.heapFree(heap, address, sizeToAlloc);
-    }
-}
-
 TEST(GfxPartitionTest, givenInternalFrontWindowHeapWhenAllocatingSmallOrBigChunkThenAddressFromFrontIsReturned) {
     MockGfxPartition gfxPartition;
     uint64_t gfxTop = maxNBitValue(48) + 1;

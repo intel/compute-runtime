@@ -1283,7 +1283,7 @@ void Wddm::initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIn
                                                             gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1);
             size_t externalFrontWindowSize = outGfxPartition.getExternalFrontWindowPoolSize();
             auto address = outGfxPartition.heapAllocate(heap, externalFrontWindowSize);
-            outGfxPartition.heapInitExternalFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), address, externalFrontWindowSize);
+            outGfxPartition.heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), address, externalFrontWindowSize);
         } else if (HeapAssigner::isInternalHeap(heap)) {
             auto baseAddress = gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base >= minAddress ? gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base : minAddress;
             auto internalFrontWindowSize = outGfxPartition.getInternalFrontWindowPoolSize();

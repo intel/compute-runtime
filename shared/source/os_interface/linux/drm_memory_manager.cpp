@@ -509,24 +509,16 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     uint64_t alignedGpuAddress = 0;
     size_t alignedStorageSize = cSize;
     size_t alignedVirtualAddressRangeSize = cSize;
-    size_t mmapAlignment = cAlignment;
     auto svmCpuAllocation = allocationData.type == AllocationType::svmCpu;
-    auto &productHelper = getGmmHelper(allocationData.rootDeviceIndex)->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto force2MBAlignmentForSharedUsmCpuAllocation = svmCpuAllocation &&
-                                                      allocationData.makeGPUVaDifferentThanCPUPtr &&
-                                                      (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get() ||
-                                                       productHelper.is2MBLocalMemAlignmentEnabled());
     auto is2MBSizeAlignmentRequired = getDrm(allocationData.rootDeviceIndex).getIoctlHelper()->is2MBSizeAlignmentRequired(allocationData.type);
     if (svmCpuAllocation || is2MBSizeAlignmentRequired) {
         // add padding in case reserved addr is not aligned
 
-        if ((is2MBSizeAlignmentRequired || force2MBAlignmentForSharedUsmCpuAllocation) &&
+        auto &productHelper = getGmmHelper(allocationData.rootDeviceIndex)->getRootDeviceEnvironment().getHelper<ProductHelper>();
+        if (alignedStorageSize >= 2 * MemoryConstants::megaByte &&
+            (is2MBSizeAlignmentRequired || productHelper.is2MBLocalMemAlignmentEnabled()) &&
             cAlignment <= 2 * MemoryConstants::megaByte) {
             alignedStorageSize = alignUp(cSize, MemoryConstants::pageSize2M);
-            mmapAlignment = MemoryConstants::pageSize2M;
-            if (force2MBAlignmentForSharedUsmCpuAllocation) {
-                cAlignment = MemoryConstants::pageSize2M;
-            }
         } else {
             alignedStorageSize = alignUp(cSize, cAlignment);
         }
@@ -545,6 +537,11 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
         if (svmCpuAllocation) {
             alignedGpuAddress = alignUp(gpuReservationAddress, cAlignment);
         }
+    }
+
+    auto mmapAlignment = cAlignment;
+    if (alignedStorageSize >= 2 * MemoryConstants::megaByte && mmapAlignment <= 2 * MemoryConstants::megaByte) {
+        mmapAlignment = MemoryConstants::pageSize2M;
     }
 
     auto drmAllocation = createAllocWithAlignment(allocationData, cSize, mmapAlignment, alignedStorageSize, alignedGpuAddress);
@@ -2316,7 +2313,10 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     if (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get()) {
         finalAlignment = MemoryConstants::pageSize2M;
     } else if (productHelper.is2MBLocalMemAlignmentEnabled()) {
-        finalAlignment = MemoryConstants::pageSize2M;
+        if (baseSize >= MemoryConstants::pageSize2M ||
+            GraphicsAllocation::is2MBPageAllocationType(allocationData.type)) {
+            finalAlignment = MemoryConstants::pageSize2M;
+        }
     }
 
     size_t sizeAligned = alignUp(baseSize, finalAlignment);
@@ -2695,7 +2695,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
         if (!ioctlHelper->retrieveMmapOffsetForBufferObject(*bo, mmapOffsetWb, offset)) {
             ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
-            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
+            ioctlHelper->munmapFunction(*this, cpuPointer, size);
             return nullptr;
         }
 

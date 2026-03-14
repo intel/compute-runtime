@@ -54,10 +54,6 @@ class GfxPartition {
         getHeap(heapIndex).initExternalWithFrontWindow(base, size);
     }
 
-    void heapInitExternalFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size) {
-        getHeap(heapIndex).initExternalFrontWindow(base, size);
-    }
-
     void heapInitWithFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size, uint64_t frontWindowSize) {
         getHeap(heapIndex).initWithFrontWindow(base, size, frontWindowSize);
     }
@@ -158,7 +154,6 @@ class GfxPartition {
         Heap() = default;
         void init(uint64_t base, uint64_t size, size_t allocationAlignment);
         void initExternalWithFrontWindow(uint64_t base, uint64_t size);
-        void initExternalFrontWindow(uint64_t base, uint64_t size);
         void initWithFrontWindow(uint64_t base, uint64_t size, uint64_t frontWindowSize);
         void initFrontWindow(uint64_t base, uint64_t size);
         uint64_t getBase() const { return base; }
