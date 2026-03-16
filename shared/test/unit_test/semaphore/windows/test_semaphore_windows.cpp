@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,13 @@ TEST_F(WddmExternalSemaphoreTest, givenValidD3d12FenceSemaphoreWhenCreateExterna
     HANDLE extSemaphoreHandle = 0;
 
     auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, nullptr);
+    EXPECT_NE(externalSemaphore, nullptr);
+}
+
+TEST_F(WddmExternalSemaphoreTest, givenValidD3d11FenceSemaphoreWhenCreateExternalSemaphoreIsCalledThenSemaphoreIsSuccessfullyReturned) {
+    HANDLE extSemaphoreHandle = 0;
+
+    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d11Fence, extSemaphoreHandle, 0u, nullptr);
     EXPECT_NE(externalSemaphore, nullptr);
 }
 

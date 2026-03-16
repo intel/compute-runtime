@@ -45,6 +45,7 @@ std::unique_ptr<ExternalSemaphoreWindows> ExternalSemaphoreWindows::create(OSInt
 bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) {
     switch (type) {
     case ExternalSemaphore::D3d12Fence:
+    case ExternalSemaphore::D3d11Fence:
     case ExternalSemaphore::OpaqueWin32:
     case ExternalSemaphore::TimelineSemaphoreWin32:
         break;
@@ -153,7 +154,8 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
     D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 open = {};
     open.hNtHandle = syncNtHandle;
     open.hDevice = wddm->getDeviceHandle();
-    open.Flags.NoGPUAccess = (type == ExternalSemaphore::D3d12Fence);
+    open.Flags.NoGPUAccess = (type == ExternalSemaphore::D3d12Fence ||
+                              type == ExternalSemaphore::D3d11Fence);
 
     auto status = wddm->getGdi()->openSyncObjectFromNtHandle2(&open);
     if (status != STATUS_SUCCESS) {
