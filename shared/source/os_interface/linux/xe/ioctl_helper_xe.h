@@ -61,6 +61,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
     bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) override;
+    void checkNoVmOvercommitFlag() override;
     AtomicAccessMode getVmSharedSystemAtomicAttribute(uint64_t handle, const size_t size, const uint32_t vmId) override;
     bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) override;
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
@@ -149,6 +150,9 @@ class IoctlHelperXe : public IoctlHelper {
     EuDebugInterfaceType getEuDebugInterfaceType() override;
     int bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataVec, uint32_t vmHandleId, VmBindExtUserFenceT *vmBindExtUserFence, bool isAdd) override;
     std::optional<std::vector<VmBindOpExtDebugData>> addDebugDataAndCreateBindOpVec(BufferObject *bo, uint32_t vmId, bool isAdd) override;
+    virtual uint32_t getNoVmOvercommitFlag() const;
+    MOCKABLE_VIRTUAL void setNoVmOvercommitFlagAllowed(bool value) { this->noVmOvercommitFlagAllowed = value; }
+    MOCKABLE_VIRTUAL bool getNoVmOvercommitFlagAllowed() { return noVmOvercommitFlagAllowed; }
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
@@ -200,6 +204,7 @@ class IoctlHelperXe : public IoctlHelper {
     };
 
     bool isLowLatencyHintAvailable = false;
+    bool noVmOvercommitFlagAllowed = false;
     int maxExecQueuePriority = 0;
     std::mutex xeLock;
     std::mutex gemCloseLock;

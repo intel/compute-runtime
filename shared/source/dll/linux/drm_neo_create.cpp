@@ -68,6 +68,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 
     drm->configureScratchPagePolicy();
     drm->configureGpuFaultCheckThreshold();
+    drm->checkNoVmOvercommitFlag();
 
     if (!drm->isPerContextVMRequired()) {
         if (!drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(&hwInfo))) {

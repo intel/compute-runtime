@@ -671,10 +671,94 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     EXPECT_FALSE(xeIoctlHelper->getFabricLatency(fabricId, latency, bandwidth));
 }
 
+TEST_F(IoctlHelperXeTest, whenDisableDebugFlagSetAndCheckNoVmOvercommitFlagThenSetNoVmOvercommmitFlagNotAllowed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableNoVmOvercommitFlag.set(true);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    drm->ioctlHelper->initialize();
+
+    xeIoctlHelper->checkNoVmOvercommitFlag();
+    EXPECT_EQ(false, xeIoctlHelper->getNoVmOvercommitFlagAllowed());
+}
+
+TEST_F(IoctlHelperXeTest, whenPageFaultDebugFlagNotSetAndCheckNoVmOvercommitFlagThenSetNoVmOvercommmitFlagNotAllowed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableNoVmOvercommitFlag.set(false);
+    debugManager.flags.EnableRecoverablePageFaults.set(0);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    drm->ioctlHelper->initialize();
+
+    xeIoctlHelper->checkNoVmOvercommitFlag();
+    EXPECT_EQ(false, xeIoctlHelper->getNoVmOvercommitFlagAllowed());
+}
+
+struct DrmMockXeVmCreate : public DrmMockXe {
+    static auto create(RootDeviceEnvironment &rootDeviceEnvironment) {
+        auto drm = std::unique_ptr<DrmMockXeVmCreate>(new DrmMockXeVmCreate{rootDeviceEnvironment});
+        drm->initInstance();
+        return drm;
+    }
+
+    int ioctl(DrmIoctl request, void *arg) override {
+        if (supportsNoVmOvercommitFlag) {
+            return 0;
+        }
+        return -EINVAL;
+    };
+    bool supportsNoVmOvercommitFlag = false;
+
+  protected:
+    // Don't call directly, use the create() function
+    DrmMockXeVmCreate(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXe(rootDeviceEnvironment) {}
+};
+
+TEST_F(IoctlHelperXeTest, whenCheckNoVmOvercommitFlagAndIoctlFailThenSetNoVmOvercommmitFlagNotAllowed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableNoVmOvercommitFlag.set(false);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    auto drm = DrmMockXeVmCreate::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->supportsNoVmOvercommitFlag = false;
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    xeIoctlHelper->checkNoVmOvercommitFlag();
+    EXPECT_EQ(false, xeIoctlHelper->getNoVmOvercommitFlagAllowed());
+}
+
+TEST_F(IoctlHelperXeTest, whenCheckNoVmOvercommitFlagAndIoctlPassThenSetNoVmOvercommmitFlagAllowed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableNoVmOvercommitFlag.set(false);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    auto drm = DrmMockXeVmCreate::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->supportsNoVmOvercommitFlag = true;
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    xeIoctlHelper->checkNoVmOvercommitFlag();
+    EXPECT_EQ(true, xeIoctlHelper->getNoVmOvercommitFlagAllowed());
+}
+
 TEST_F(IoctlHelperXeTest, whenGettingFlagsForVmCreateThenPropertValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    drm->ioctlHelper->initialize();
+    xeIoctlHelper->setNoVmOvercommitFlagAllowed(true);
 
     for (auto &disableScratch : ::testing::Bool()) {
         for (auto &enablePageFault : ::testing::Bool()) {
@@ -682,7 +766,22 @@ TEST_F(IoctlHelperXeTest, whenGettingFlagsForVmCreateThenPropertValueIsReturned)
                 auto flags = xeIoctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
                 EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), (flags & DRM_XE_VM_CREATE_FLAG_LR_MODE));
                 if (enablePageFault) {
-                    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE), (flags & DRM_XE_VM_CREATE_FLAG_FAULT_MODE));
+                    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE | xeIoctlHelper->getNoVmOvercommitFlag()), (flags & (DRM_XE_VM_CREATE_FLAG_FAULT_MODE | xeIoctlHelper->getNoVmOvercommitFlag())));
+                }
+                if (!disableScratch) {
+                    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), (flags & DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE));
+                }
+            }
+        }
+    }
+    xeIoctlHelper->setNoVmOvercommitFlagAllowed(false);
+    for (auto &disableScratch : ::testing::Bool()) {
+        for (auto &enablePageFault : ::testing::Bool()) {
+            for (auto &useVmBind : ::testing::Bool()) {
+                auto flags = xeIoctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
+                EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), (flags & DRM_XE_VM_CREATE_FLAG_LR_MODE));
+                if (enablePageFault) {
+                    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE), (flags & (DRM_XE_VM_CREATE_FLAG_FAULT_MODE | xeIoctlHelper->getNoVmOvercommitFlag())));
                 }
                 if (!disableScratch) {
                     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), (flags & DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE));

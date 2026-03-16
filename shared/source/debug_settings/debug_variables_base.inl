@@ -422,6 +422,7 @@ DECLARE_DEBUG_VARIABLE(bool, ForceZeroCopyForUseHostPtr, false, "When active all
 DECLARE_DEBUG_VARIABLE(bool, DummyPageBackingEnabled, false, "When true, pass page backing flag to KMD to recover from page faults. Windows only.");
 DECLARE_DEBUG_VARIABLE(bool, Disable2MBSizeAlignment, false, "Disable 2MB alignment of user allocations on iGPU/XeKMD")
 DECLARE_DEBUG_VARIABLE(bool, WddmOnLinuxForceNoCpuAccessCachingFlagCleared, false, "Force preferNoCpuAccess flag to be false for Wddm-on-Linux")
+DECLARE_DEBUG_VARIABLE(bool, DisableNoVmOvercommitFlag, false, "Disable DRM_XE_VM_CREATE_NO_VM_OVERCOMMIT flag for XeKMD")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceNonCoherentModeForTimestamps, -1, "When active timestamp buffers are allocated in non coherent memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableReusingGpuTimestamps, -1, "Reuse GPU timestamp for next device time requests. -1: os-specific, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AllowZeroCopyWithoutCoherency, -1, "Use cacheline flush instead of memory copy for map/unmap mem object")

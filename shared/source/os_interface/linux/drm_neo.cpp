@@ -1287,6 +1287,10 @@ bool Drm::queryTopology(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData
     return result;
 }
 
+void Drm::checkNoVmOvercommitFlag() {
+    ioctlHelper->checkNoVmOvercommitFlag();
+}
+
 void Drm::queryPageFaultSupport() {
     if (!pageFaultSupported) {
         const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();

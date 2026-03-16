@@ -2764,3 +2764,16 @@ TEST(DrmTest, givenDrmWhenSetupDrmFabricCalledTwiceThenDoesNotRecreate) {
 
     EXPECT_EQ(firstFabric, secondFabric);
 }
+
+TEST(DrmTest, givenCallToCheckNoVmOvercommitFlagThenNothingDone) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.checkNoVmOvercommitFlag();
+}
+
+TEST(DrmTest, givenCallToIoctlCheckNoVmOvercommitFlagThenNothingDone) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper{drm.getIoctlHelper()};
+    ioctlHelper->checkNoVmOvercommitFlag();
+}

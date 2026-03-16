@@ -1168,12 +1168,26 @@ std::unique_ptr<uint8_t[]> IoctlHelperXe::createVmControlExtRegion(const std::op
     return {};
 }
 
+void IoctlHelperXe::checkNoVmOvercommitFlag() {
+    if ((!debugManager.flags.DisableNoVmOvercommitFlag.get()) && (drm.hasPageFaultSupport())) {
+        GemVmControl ctl{};
+        setNoVmOvercommitFlagAllowed(true);
+        ctl.flags = getFlagsForVmCreate(true, true, true);
+        if (ioctl(DrmIoctl::gemVmCreate, &ctl) != 0) {
+            setNoVmOvercommitFlagAllowed(false);
+        }
+    }
+}
+
 uint32_t IoctlHelperXe::getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) {
     XELOG(" -> IoctlHelperXe::%s %d,%d,%d\n", __FUNCTION__, disableScratch, enablePageFault, useVmBind);
     uint32_t flags = DRM_XE_VM_CREATE_FLAG_LR_MODE;
     bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
     if (enablePageFault || debuggingEnabled) {
         flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
+        if (getNoVmOvercommitFlagAllowed()) {
+            flags |= getNoVmOvercommitFlag();
+        }
     }
     if (!disableScratch) {
         flags |= DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE;
