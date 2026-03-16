@@ -147,6 +147,8 @@ DebuggerL0 ::~DebuggerL0() {
         }
     }
     device->getMemoryManager()->freeGraphicsMemory(moduleDebugArea);
+
+    removeTempFiles();
 }
 
 void DebuggerL0::notifyModuleLoadAllocations(Device *device, const StackVec<NEO::GraphicsAllocation *, 32> &allocs) {

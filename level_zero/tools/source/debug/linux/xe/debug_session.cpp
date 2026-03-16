@@ -894,7 +894,7 @@ bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
                     isa->validVMs.insert(vmBindData.vmBind.vmHandle);
                 }
 
-                if (&entry == &vmBindData.vmBindOpDebugDataVec.back()) {
+                if (&entry == &vmBindData.vmBindOpDebugDataVec.back() && connection->isaMap[tileIndex][entry.addr]->validVMs.size() == 1) {
 
                     // send module load event
                     zet_debug_event_t debugEvent = {};
@@ -929,7 +929,7 @@ bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
                 if (isa->validVMs.count(vmBindData.vmBind.vmHandle)) {
                     isa->validVMs.erase(vmBindData.vmBind.vmHandle);
 
-                    if (&entry == &vmBindData.vmBindOpDebugDataVec.back()) {
+                    if (&entry == &vmBindData.vmBindOpDebugDataVec.back() && isa->validVMs.size() == 0) {
                         auto &module = connection->elfHandleToModule[isa->elfHandle];
 
                         auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();

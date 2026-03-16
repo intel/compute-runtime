@@ -97,6 +97,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &kernelAlloc, uint32_t &moduleHandle, uint32_t elfHandle);
     MOCKABLE_VIRTUAL bool removeZebinModule(uint32_t moduleHandle);
     void initialize();
+    void removeTempFiles();
 
     void setSingleAddressSpaceSbaTracking(bool value) {
         singleAddressSpaceSbaTracking = value;
@@ -110,6 +111,9 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableAndNonMovableClass {
 
   protected:
     static bool initDebuggingInOs(NEO::OSInterface *osInterface);
+    static constexpr std::string_view debugTmpDirPrefix = "/tmp/intel-gpu-debugger";
+    static char debugProcDir[];
+    static bool createDebugDirectory();
 
     NEO::Device *device = nullptr;
     NEO::GraphicsAllocation *sbaAllocation = nullptr;

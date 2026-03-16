@@ -18,6 +18,7 @@ struct WhiteBox;
 
 class MockDebuggerL0 : public NEO::DebuggerL0 {
   public:
+    using NEO::DebuggerL0::debugProcDir;
     MockDebuggerL0(NEO::Device *device) : DebuggerL0(device) {
         device->setDebugger(this);
     }
@@ -139,6 +140,9 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
 template <>
 struct WhiteBox<NEO::DebuggerL0> : public NEO::DebuggerL0 {
     using BaseClass = NEO::DebuggerL0;
+    using BaseClass::createDebugDirectory;
+    using BaseClass::debugProcDir;
+    using BaseClass::debugTmpDirPrefix;
     using BaseClass::initDebuggingInOs;
 };
 

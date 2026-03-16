@@ -7,9 +7,11 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/os_interface/linux/xe/eudebug/mock_eudebug_interface.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -262,6 +264,8 @@ TEST_F(L0DebuggerLinuxTest, givenUpstreamDebuggerWhenRegisterElfCalledThenHandle
     static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
     drmMock->ioctlHelper.reset(xeIoctlHelper.release());
 
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopenToNull{&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return nullptr; }};
+
     IsaDebugData::nextDebugDataMapHandle.store(0u);
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
@@ -274,6 +278,73 @@ TEST_F(L0DebuggerLinuxTest, givenUpstreamDebuggerWhenRegisterElfCalledThenHandle
     EXPECT_EQ(handle, 2u);
     handle = device->getL0Debugger()->registerElf(&debugData);
     EXPECT_EQ(handle, 3u);
+}
+
+TEST_F(L0DebuggerLinuxTest, givenUpstreamDebuggerWhenRegisterElfCalledThenElfFileDumpedToCorrectLocation) {
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(*drmMock);
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
+    drmMock->ioctlHelper.reset(xeIoctlHelper.release());
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsGetpid)> mockGetPid{&NEO::SysCalls::sysCallsGetpid, []() -> pid_t { return 12345; }};
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopenToNull{&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return nullptr; }};
+
+    IsaDebugData::nextDebugDataMapHandle.store(0u);
+    NEO::DebugData debugData;
+    debugData.vIsa = "01234567890";
+    debugData.vIsaSize = 10;
+    std::string expectedFilename = "/tmp/intel-gpu-debugger/12345/elf-0";
+
+    NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.get());
+
+    EXPECT_FALSE(virtualFileExists(expectedFilename));
+    device->getL0Debugger()->registerElf(&debugData);
+    EXPECT_TRUE(virtualFileExists(expectedFilename));
+
+    size_t dataSize = 0;
+    auto writtenData = loadDataFromVirtualFile(expectedFilename.c_str(), dataSize);
+    EXPECT_TRUE(memcmp("0123456789", writtenData.get(), dataSize) == 0);
+    EXPECT_EQ(dataSize, debugData.vIsaSize);
+    EXPECT_EQ(drmMock->isaDebugDataMap[0].elfPath, expectedFilename);
+}
+
+TEST_F(L0DebuggerLinuxTest, givenUpstreamDebuggerWhenInitializingDebuggingInOsThenTmpDebugDirectoryIsCreated) {
+
+    auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
+
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    executionEnvironment->initializeMemoryManager();
+    auto osInterface = new OSInterface();
+    auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock->callBaseIsVmBindAvailable = true;
+    drmMock->bindAvailable = true;
+    drmMock->setPerContextVMRequired(true);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(*drmMock);
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
+    drmMock->ioctlHelper.reset(xeIoctlHelper.release());
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsGetpid)> mockGetPid{&NEO::SysCalls::sysCallsGetpid, []() -> pid_t { return 12345; }};
+    static bool debugPathSet = false;
+    static int mkdirCallCount = 0;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mockMkdir{&NEO::SysCalls::sysCallsMkdir, [](const std::string &pathname) -> int {
+        mkdirCallCount++;
+        if (pathname == std::string(NEO::WhiteBox<NEO::DebuggerL0>::debugTmpDirPrefix) + "/12345") {
+            debugPathSet = true;
+        }
+        return 0; }};
+
+    auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(debugPathSet);
+    debugPathSet = false;
+    EXPECT_EQ(mkdirCallCount, 2); // One for the debug directory and one for the process specific subdirectory
+    mkdirCallCount = 0;
 }
 
 TEST_F(L0DebuggerLinuxTest, givenUpstreamDebuggerwhenRemoveZebinModulecalledThenIsaDebugDataMapHasEntryDeleted) {

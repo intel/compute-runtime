@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -254,5 +254,7 @@ void DebuggerL0::notifyCommandQueueDestroyed(NEO::Device *deviceIn) {
         }
     }
 }
+
+void DebuggerL0::removeTempFiles() {}
 
 } // namespace NEO

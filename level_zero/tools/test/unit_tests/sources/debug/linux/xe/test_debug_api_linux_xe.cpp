@@ -2809,8 +2809,7 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingISAVmBindEventThen
     EXPECT_EQ(connection->isaMap[0].count(vmBindDebugDataSegment3.addr), 1u);
     EXPECT_EQ(connection->isaMap[0].count(vmBindDebugDataSegment4.addr), 1u);
     EXPECT_EQ(connection->isaMap[0][vmBindDebugDataSegment4.addr]->validVMs.size(), 2u);
-    EXPECT_EQ(session->apiEvents.size(), 2u); // module load event
-    session->apiEvents.pop();
+    EXPECT_EQ(session->apiEvents.size(), 1u); // module load event
     session->apiEvents.pop();
 
     // unbinds
@@ -2841,7 +2840,7 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingISAVmBindEventThen
 
     EXPECT_EQ(connection->isaMap[0].count(vmBindDebugDataSegment1.addr), 0u);
     EXPECT_EQ(connection->isaMap[0].count(vmBindDebugDataSegment2.addr), 0u);
-    EXPECT_EQ(session->apiEvents.size(), 1u);
+    EXPECT_EQ(session->apiEvents.size(), 0u);
 
     // try destroy of unmatched vmhandle
     vmBind1.base.seqno = seqno++;
@@ -2859,7 +2858,7 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingISAVmBindEventThen
     session->processPendingVmBindEvents();
 
     // no new events should be generated
-    EXPECT_EQ(session->apiEvents.size(), 1u);
+    EXPECT_EQ(session->apiEvents.size(), 0u);
 
     // unbind last debugdata
     vmBind2.base.seqno = seqno++;
@@ -2878,7 +2877,7 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingISAVmBindEventThen
 
     EXPECT_EQ(connection->isaMap[0].count(vmBindDebugDataSegment3.addr), 0u);
     EXPECT_EQ(connection->isaMap[0].count(vmBindDebugDataSegment4.addr), 0u);
-    EXPECT_EQ(session->apiEvents.size(), 2u); // module unload events
+    EXPECT_EQ(session->apiEvents.size(), 1u); // module unload events
 
     EXPECT_NE(handler->debugEventAckCount, 0);
 }
