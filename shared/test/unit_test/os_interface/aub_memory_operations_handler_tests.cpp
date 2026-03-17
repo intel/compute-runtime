@@ -603,3 +603,14 @@ HWTEST_F(AubMemoryOperationsHandlerTests, givenGfxAllocationWriteableWithGmmPres
     EXPECT_TRUE(aubManager->storedAllocationParams[0].additionalParams.compressionEnabled);
     EXPECT_FALSE(aubManager->storedAllocationParams[0].additionalParams.uncached);
 }
+
+TEST_F(AubMemoryOperationsHandlerTests, givenRegularAllocationWhenDecompressingAllocationThenUnsupportIsReturned) {
+    MockAubManager aubManager;
+    getMemoryOperationsHandler()->setAubManager(&aubManager);
+    auto memoryOperationsInterface = getMemoryOperationsHandler();
+
+    MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+
+    EXPECT_EQ(memoryOperationsInterface->decompress(nullptr, allocation), MemoryOperationsStatus::unsupported);
+}

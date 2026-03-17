@@ -90,6 +90,8 @@ std::string IoctlHelperXe::xeGetBindFlagNames(int bindFlags) {
         return "";
     }
 
+#define DRM_XE_VM_BIND_FLAG_DECOMPRESS (1 << 7)
+
     std::string flags;
     if (bindFlags & DRM_XE_VM_BIND_FLAG_READONLY) {
         bindFlags &= ~DRM_XE_VM_BIND_FLAG_READONLY;
@@ -114,6 +116,10 @@ std::string IoctlHelperXe::xeGetBindFlagNames(int bindFlags) {
     if (bindFlags & DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET) {
         bindFlags &= ~DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET;
         flags += "MADVISE_AUTORESET ";
+    }
+    if (bindFlags & DRM_XE_VM_BIND_FLAG_DECOMPRESS) {
+        bindFlags &= ~DRM_XE_VM_BIND_FLAG_DECOMPRESS;
+        flags += "DECOMPRESS ";
     }
 
     if (bindFlags != 0) {
@@ -297,6 +303,61 @@ bool IoctlHelperXe::isChunkingAvailable() {
 
 bool IoctlHelperXe::isVmBindAvailable() {
     return true;
+}
+
+bool IoctlHelperXe::isVmBindDecompressAvailable(uint32_t vmId) {
+    std::call_once(checkVmBindDecompressOnce, [this, vmId]() {
+
+#define DRM_XE_VM_BIND_FLAG_DECOMPRESS (1 << 7)
+        auto gemRet = createGem(MemoryConstants::pageSize, 1, std::nullopt);
+
+        if (gemRet != 0) {
+            auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+            auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+
+            uint64_t probeAddr = MemoryConstants::pageSize;
+
+            VmBindParams probeVmBind{};
+            probeVmBind.vmId = static_cast<uint32_t>(vmId);
+            probeVmBind.handle = gemRet;
+            probeVmBind.flags = DRM_XE_VM_BIND_FLAG_IMMEDIATE | DRM_XE_VM_BIND_FLAG_DECOMPRESS;
+            probeVmBind.length = MemoryConstants::pageSize;
+            probeVmBind.start = gmmHelper->canonize(probeAddr);
+            probeVmBind.offset = 0u;
+            probeVmBind.sharedSystemUsmEnabled = false;
+            probeVmBind.sharedSystemUsmBind = false;
+            probeVmBind.extensions = 0u;
+            probeVmBind.patIndex = static_cast<uint16_t>(rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(nullptr, GMM_RESOURCE_USAGE_OCL_BUFFER, false, false));
+
+            auto pagingFenceAddr = getPagingFenceAddress(0, nullptr);
+            VmBindExtUserFenceT probeUserFence{};
+            fillVmBindExtUserFence(probeUserFence, castToUint64(pagingFenceAddr), drm.getNextFenceVal(0), probeVmBind.extensions);
+            setVmBindUserFence(probeVmBind, probeUserFence);
+
+            auto probeRet = vmBind(probeVmBind);
+
+            if (probeRet == 0) {
+                VmBindParams probeUnbind{};
+                probeUnbind.vmId = vmId;
+                probeUnbind.start = gmmHelper->canonize(probeAddr);
+                probeUnbind.length = MemoryConstants::pageSize;
+                probeUnbind.sharedSystemUsmEnabled = false;
+                probeUnbind.extensions = 0u;
+
+                VmBindExtUserFenceT unbindUserFence{};
+                fillVmBindExtUserFence(unbindUserFence, castToUint64(getPagingFenceAddress(0, nullptr)), drm.getNextFenceVal(0), probeUnbind.extensions);
+                setVmBindUserFence(probeUnbind, unbindUserFence);
+                vmUnbind(probeUnbind);
+
+                vmBindDecompressAvailable = true;
+            }
+
+            GemClose gemClose{};
+            gemClose.handle = gemRet;
+            ioctl(DrmIoctl::gemClose, &gemClose);
+        }
+    });
+    return vmBindDecompressAvailable;
 }
 
 bool IoctlHelperXe::setDomainCpu(uint32_t handle, bool writeEnable) {
@@ -1115,9 +1176,9 @@ bool IoctlHelperXe::completionFenceExtensionSupported(const bool isVmBindAvailab
     return isVmBindAvailable;
 }
 
-uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource) {
+uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource, bool resolveResource) {
     uint64_t flags = 0;
-    XELOG(" -> IoctlHelperXe::%s %d %d %d %d %d\n", __FUNCTION__, bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource);
+    XELOG(" -> IoctlHelperXe::%s %d %d %d %d %d %d\n", __FUNCTION__, bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource, resolveResource);
     if (bindCapture) {
         flags |= DRM_XE_VM_BIND_FLAG_DUMPABLE;
     }
@@ -1127,6 +1188,11 @@ uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, 
 
     if (readOnlyResource) {
         flags |= DRM_XE_VM_BIND_FLAG_READONLY;
+    }
+
+    if (resolveResource) {
+#define DRM_XE_VM_BIND_FLAG_DECOMPRESS (1 << 7)
+        flags |= DRM_XE_VM_BIND_FLAG_DECOMPRESS;
     }
     return flags;
 }
@@ -1573,6 +1639,14 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     if (ret != 0) {
         UNRECOVERABLE_IF(true);
     }
+
+    auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    if (productHelper.isVmBindResourceDecompressionSupported()) {
+        auto ret = isVmBindDecompressAvailable(drmVmId);
+        rootDeviceEnvironment.executionEnvironment.setResourceDecompressionEnabled(ret);
+    }
+
     return drmContextId;
 }
 

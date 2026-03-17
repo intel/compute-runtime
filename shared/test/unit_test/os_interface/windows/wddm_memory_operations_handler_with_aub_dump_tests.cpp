@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -146,4 +146,8 @@ TEST_F(WddmMemoryOperationsHandlerWithAubDumpTest, whenConstructingWddmMemoryOpe
 
 TEST_F(WddmMemoryOperationsHandlerWithAubDumpTest, givenRegularAllocationWhenLockingAllocationThenUnsupportIsReturned) {
     EXPECT_EQ(wddmMemoryOperationsHandlerWithAubDumpMock->lock(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::unsupported);
+}
+
+TEST_F(WddmMemoryOperationsHandlerWithAubDumpTest, givenRegularAllocationWhenDecompressingAllocationThenUnsupportIsReturned) {
+    EXPECT_EQ(wddmMemoryOperationsHandlerWithAubDumpMock->decompress(nullptr, *allocationPtr), MemoryOperationsStatus::unsupported);
 }

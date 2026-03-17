@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,8 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
         devicePermissionError = value;
     }
     bool isDevicePermissionError() const { return devicePermissionError; }
+    bool isResourceDecompressionEnabled() const { return resourceDecompressionEnabled; };
+    void setResourceDecompressionEnabled(bool value) { resourceDecompressionEnabled = value; };
 
     void setOneApiPvcWaEnv(bool val) {
         oneApiPvcWaEnv = val;
@@ -104,6 +106,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     bool fp64EmulationEnabled = false;
     bool oneApiPvcWaEnv = true;
     bool devicePermissionError = false;
+    bool resourceDecompressionEnabled = false;
 
     DeviceHierarchyMode deviceHierarchyMode = DeviceHierarchyMode::composite;
     DebuggingMode debuggingEnabledMode = DebuggingMode::disabled;

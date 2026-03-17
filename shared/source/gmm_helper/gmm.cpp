@@ -199,6 +199,11 @@ void Gmm::applyAuxFlagsForBuffer(bool preferCompression) {
         resourceParams->Flags.Gpu.CCS = 1;
         resourceParams->Flags.Gpu.UnifiedAuxSurface = 1;
         compressionEnabled = true;
+    } else {
+        gfxCoreHelper.applyRenderCompressionFlag(*this, 0);
+        resourceParams->Flags.Gpu.CCS = 0;
+        resourceParams->Flags.Gpu.UnifiedAuxSurface = 0;
+        compressionEnabled = false;
     }
 
     PRINT_STRING(debugManager.flags.PrintGmmCompressionParams.get(), stdout,

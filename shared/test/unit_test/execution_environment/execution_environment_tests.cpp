@@ -442,14 +442,14 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManag
                                                   sizeof(std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>>) +
                                                   sizeof(std::unordered_map<std::thread::id, std::string>) +
                                                   2 * sizeof(std::mutex) +
-                                                  2 * sizeof(bool) +
+                                                  5 * sizeof(bool) +
                                                   sizeof(DeviceHierarchyMode) +
                                                   sizeof(DebuggingMode) +
                                                   sizeof(std::unordered_map<uint32_t, uint32_t>) +
                                                   sizeof(std::mutex) +
                                                   sizeof(std::vector<std::tuple<std::string, uint32_t>>) +
                                                   sizeof(std::mutex) +
-                                                  (is64bit ? 22 : 14),
+                                                  (is64bit ? 19 : 15),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
@@ -781,6 +781,18 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSetDevicePermissionError
 
     executionEnvironment.setDevicePermissionError(false);
     EXPECT_FALSE(executionEnvironment.isDevicePermissionError());
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSetResourceDecompressionEnabledIsCalledThenCorrectValueIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+
+    EXPECT_FALSE(executionEnvironment.isResourceDecompressionEnabled());
+
+    executionEnvironment.setResourceDecompressionEnabled(true);
+    EXPECT_TRUE(executionEnvironment.isResourceDecompressionEnabled());
+
+    executionEnvironment.setResourceDecompressionEnabled(false);
+    EXPECT_FALSE(executionEnvironment.isResourceDecompressionEnabled());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenCcsNumberIsValidThenAdjustCcsCountReturnsTrue) {
