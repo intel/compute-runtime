@@ -1490,8 +1490,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     ultCsr->recordFlushedBatchBuffer = true;
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    auto heaplessStateInitEnabled = heaplessEnabled;
+    auto heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     auto verifyFlags = [&ultCsr, useImmediateFlushTask](ze_result_t result, bool dispatchFlag, bool bbFlag) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1503,7 +1502,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
         EXPECT_EQ(ultCsr->latestFlushedBatchBuffer.hasStallingCmds, bbFlag);
     };
     // non-pipelined state
-    bool shouldProgramNPStates = !heaplessStateInitEnabled;
+    bool shouldProgramNPStates = !heaplessModeEnabled;
     verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams), false, shouldProgramNPStates);
 
     // non-pipelined state already programmed
@@ -2108,8 +2107,8 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThe
     }
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 
-    auto isHeaplessStateInitEnabled = commandList->isHeaplessStateInitEnabled();
-    if (isHeaplessStateInitEnabled) {
+    auto isHeaplessModeEnabled = commandList->isHeaplessModeEnabled();
+    if (isHeaplessModeEnabled) {
         EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
     } else {
         EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);

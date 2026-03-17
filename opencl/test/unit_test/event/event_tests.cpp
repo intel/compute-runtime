@@ -609,7 +609,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     event.submitCommand(false);
 
-    EXPECT_EQ(mockCmdQueue.getHeaplessStateInitEnabled() ? 2u : 1u, mockCmdQueue.latestTaskCountWaited);
+    EXPECT_EQ(mockCmdQueue.getHeaplessModeEnabled() ? 2u : 1u, mockCmdQueue.latestTaskCountWaited);
 
     std::string output = capture.getCapturedStdout();
     EXPECT_STREQ("test", output.c_str());
@@ -1623,7 +1623,7 @@ HWTEST_F(EventTest, GivenEventCreatedOnMapBufferWithoutCommandWhenSubmittingComm
 
     EXPECT_EQ(CompletionStamp::notReady, ev.peekTaskCount());
     ev.submitCommand(false);
-    EXPECT_EQ(this->pCmdQ->getHeaplessStateInitEnabled() ? 1u : 0u, ev.peekTaskCount());
+    EXPECT_EQ(this->pCmdQ->getHeaplessModeEnabled() ? 1u : 0u, ev.peekTaskCount());
 }
 
 HWTEST_F(EventTest, GivenEventCreatedOnMapImageWithoutCommandWhenSubmittingCommandThenTaskCountIsNotUpdated) {
@@ -1631,7 +1631,7 @@ HWTEST_F(EventTest, GivenEventCreatedOnMapImageWithoutCommandWhenSubmittingComma
 
     EXPECT_EQ(CompletionStamp::notReady, ev.peekTaskCount());
     ev.submitCommand(false);
-    EXPECT_EQ(this->pCmdQ->getHeaplessStateInitEnabled() ? 1u : 0u, ev.peekTaskCount());
+    EXPECT_EQ(this->pCmdQ->getHeaplessModeEnabled() ? 1u : 0u, ev.peekTaskCount());
 }
 
 TEST_F(EventTest, givenCmdQueueWithoutProfilingWhenIsCpuProfilingIsCalledThenFalseIsReturned) {

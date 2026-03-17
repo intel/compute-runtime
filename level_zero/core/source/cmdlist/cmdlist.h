@@ -445,10 +445,6 @@ struct CommandList : _ze_command_list_handle_t {
         return heaplessModeEnabled;
     }
 
-    bool isHeaplessStateInitEnabled() const {
-        return heaplessStateInitEnabled;
-    }
-
     virtual bool skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const { return false; }
 
     bool getCmdListBatchBufferFlag() const {
@@ -732,7 +728,6 @@ struct CommandList : _ze_command_list_handle_t {
     bool isSmallBarConfigPresent = false;
     bool useOnlyGlobalTimestamps = false;
     bool heaplessModeEnabled = false;
-    bool heaplessStateInitEnabled = false;
     bool scratchAddressPatchingEnabled = false;
     bool taskCountUpdateFenceRequired = false;
     bool statelessBuiltinsEnabled = false;

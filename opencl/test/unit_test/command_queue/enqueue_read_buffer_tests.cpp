@@ -326,7 +326,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferTypeTest, GivenBlockingWhenReadi
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenRecordedL3IndexIsL3OrL1ON) {
 
-    if (pCmdQ->getHeaplessStateInitEnabled()) {
+    if (pCmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 
@@ -353,7 +353,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBuf
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenRecordedL3IndexIsL3Off) {
 
-    if (pCmdQ->getHeaplessStateInitEnabled()) {
+    if (pCmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 
@@ -396,7 +396,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndSizeWhenBlockedReadBufferIsCalledThenRecordedL3IndexIsL3Off) {
 
-    if (pCmdQ->getHeaplessStateInitEnabled()) {
+    if (pCmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 

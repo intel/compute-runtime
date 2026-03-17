@@ -410,7 +410,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     this->isWalkerWithProfilingEnqueued |= dispatchFlags.isWalkerWithProfilingEnqueued;
 
-    if (this->getHeaplessStateInitEnabled()) {
+    if (this->getHeaplessModeEnabled()) {
         return flushTaskHeapless(commandStreamTask, commandStreamStartTask, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     } else {
         return flushTaskHeapful(commandStreamTask, commandStreamStartTask, dsh, ioh, ssh, taskLevel, dispatchFlags, device);

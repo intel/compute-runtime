@@ -34,7 +34,6 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::getDevice;
     using BaseClass::gpgpuEngine;
     using BaseClass::heaplessModeEnabled;
-    using BaseClass::heaplessStateInitEnabled;
     using BaseClass::isBlitAuxTranslationRequired;
     using BaseClass::isCacheFlushOnNextBcsWriteRequired;
     using BaseClass::isCompleted;

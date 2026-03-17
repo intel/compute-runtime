@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,6 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::gpgpuEngine;
     using CommandQueue::h2dEngines;
     using CommandQueue::heaplessModeEnabled;
-    using CommandQueue::heaplessStateInitEnabled;
     using CommandQueue::isCopyOnly;
     using CommandQueue::isTextureCacheFlushNeeded;
     using CommandQueue::migrateMultiGraphicsAllocationsIfRequired;

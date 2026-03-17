@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -177,7 +177,7 @@ XE3P_CORETEST_F(ComputeModeRequirementsXe3pCore, givenComputeModeProgrammingWhen
 XE3P_CORETEST_F(ComputeModeRequirementsXe3pCore, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenPcAndPreemptionModeAreNotProgrammed) {
     setUpImpl<FamilyType>();
 
-    if (csr->getHeaplessStateInitEnabled()) {
+    if (csr->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 

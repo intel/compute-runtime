@@ -608,7 +608,7 @@ HWTEST_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppend
     returnValue = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    if (!commandList->isHeaplessStateInitEnabled()) {
+    if (!commandList->isHeaplessModeEnabled()) {
         ASSERT_EQ(0u, debugSurfaceState->getSurfaceBaseAddress());
     }
 

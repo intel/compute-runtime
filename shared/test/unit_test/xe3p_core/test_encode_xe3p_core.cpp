@@ -455,7 +455,6 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessStateInitAndScratchRequir
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
     dispatchArgs.isHeaplessModeEnabled = true;
-    dispatchArgs.isHeaplessStateInitEnabled = true;
     dispatchArgs.immediateScratchAddressPatching = true;
 
     auto *csr = dispatchArgs.device->getDefaultEngine().commandStreamReceiver;

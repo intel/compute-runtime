@@ -616,7 +616,7 @@ void CommandQueueThreadArbitrationPolicyFixture::tearDown() {
     commandQueue->destroy();
 }
 
-void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode, int32_t heaplessStateInitEnabled, bool scratchAddressPatchingEnabled) {
+void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode, int32_t heaplessModeEnabled, bool scratchAddressPatchingEnabled) {
     fixtureGlobalStatelessMode = globalStatelessMode;
     debugManager.flags.SelectCmdListHeapAddressModel.set(globalStatelessMode);
 
@@ -624,14 +624,8 @@ void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode
 
     commandList->scratchAddressPatchingEnabled = scratchAddressPatchingEnabled;
     commandList->heaplessModeEnabled = true;
-    commandList->heaplessStateInitEnabled = !!heaplessStateInitEnabled;
-
     commandListImmediate->heaplessModeEnabled = true;
-    commandListImmediate->heaplessStateInitEnabled = !!heaplessStateInitEnabled;
-
     commandQueue->heaplessModeEnabled = true;
-    commandQueue->heaplessStateInitEnabled = !!heaplessStateInitEnabled;
-
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x40;
     mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = scratchInlinePointerSize;
     mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.offset = scratchInlineOffset;

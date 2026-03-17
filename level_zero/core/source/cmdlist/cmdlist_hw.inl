@@ -87,7 +87,7 @@ CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
 
-    if (!this->stateBaseAddressTracking && !this->heaplessStateInitEnabled) {
+    if (!this->stateBaseAddressTracking && !this->heaplessModeEnabled) {
         if (!isImmediateType()) {
             programStateBaseAddress(commandContainer, false);
         }
@@ -277,7 +277,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->useOnlyGlobalTimestamps = gfxCoreHelper.useOnlyGlobalTimestamps();
     this->maxFillPatternSizeForCopyEngine = l0GfxCoreHelper.getMaxFillPatternSizeForCopyEngine();
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
-    this->heaplessStateInitEnabled = this->heaplessModeEnabled;
     this->requiredStreamState.initSupport(rootDeviceEnvironment);
     this->finalStreamState.initSupport(rootDeviceEnvironment);
     this->duplicatedInOrderCounterStorageEnabled = gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(rootDeviceEnvironment);

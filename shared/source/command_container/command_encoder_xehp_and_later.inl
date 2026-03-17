@@ -297,7 +297,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     if constexpr (NEO::GfxFamilyWithSBA<Family>) {
-        if (args.isHeaplessStateInitEnabled == false && !args.makeCommandView) {
+        if (args.isHeaplessModeEnabled == false && !args.makeCommandView) {
             if (container.isAnyHeapDirty() ||
                 args.requiresUncachedMocs) {
 

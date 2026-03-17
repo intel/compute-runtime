@@ -534,8 +534,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         return externalCondition ? dcFlushSupport : false;
     }
 
-    bool getHeaplessStateInitEnabled() const {
-        return heaplessStateInitEnabled;
+    bool getHeaplessModeEnabled() const {
+        return heaplessModeEnabled;
     }
 
     bool isTbxMode() const;
@@ -774,7 +774,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool forceSkipResourceCleanupRequired = false;
     bool resourcesInitialized = false;
     bool heaplessStateInitialized = false;
-    bool heaplessStateInitEnabled = false;
     bool doubleSbaWa = false;
     bool dshSupported = false;
     bool heaplessModeEnabled = false;

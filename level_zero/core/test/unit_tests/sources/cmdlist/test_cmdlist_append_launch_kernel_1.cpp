@@ -1158,12 +1158,11 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
     }
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    auto heaplessStateInitEnabled = heaplessEnabled;
+    auto heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     if constexpr (FamilyType::isHeaplessRequired() == false) {
         using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-        if (!heaplessStateInitEnabled) {
+        if (!heaplessModeEnabled) {
             GenCmdList cmdList;
             ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
                 cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));

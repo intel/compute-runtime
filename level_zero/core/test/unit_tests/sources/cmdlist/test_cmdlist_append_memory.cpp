@@ -1233,7 +1233,7 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenAppendMemAdviseWithRegularAndHeapLessC
     }
 
     {
-        mockCmdQHw->heaplessStateInitEnabled = true;
+        mockCmdQHw->heaplessModeEnabled = true;
         cmdList.reset();
         cmdList.appendMemAdvise(device->toHandle(), deviceBuffer, allocSize, ZE_MEMORY_ADVICE_CLEAR_SYSTEM_MEMORY_PREFERRED_LOCATION);
         cmdList.close();

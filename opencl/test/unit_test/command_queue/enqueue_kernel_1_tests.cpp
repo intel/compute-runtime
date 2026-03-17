@@ -130,7 +130,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
 }
 
 HWTEST2_F(EnqueueKernelTest, GivenIndirectAccessBufferVersion1WhenExecutingKernelThenImplicitArgsStructIsCorrectlyAligned, IsWithinXeCoreAndXe3Core) {
-    if (pCmdQ->getHeaplessStateInitEnabled()) {
+    if (pCmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 
@@ -845,7 +845,7 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueingKernelThatRequirePrivateScratchThenPri
 
 HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteWhenSbaIsBeingProgrammedThenConstPolicyIsChoosen) {
 
-    if (pCmdQ->getHeaplessStateInitEnabled()) {
+    if (pCmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 
@@ -868,7 +868,7 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteWhenSbaIsBeingP
 
 HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteOnBlockedCodePathWhenSbaIsBeingProgrammedThenConstPolicyIsChoosen) {
 
-    if (pCmdQ->getHeaplessStateInitEnabled()) {
+    if (pCmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 
@@ -1160,7 +1160,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, EnqueueKernelTestWithMockCsrHw2, givenTwo
     hwParse.parseCommands<FamilyType>(*pCmdQ);
     auto bbsCommands = findAll<typename FamilyType::MI_BATCH_BUFFER_START *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
 
-    EXPECT_EQ(pCmdQ->getHeaplessStateInitEnabled() ? 0u : 1u, bbsCommands.size());
+    EXPECT_EQ(pCmdQ->getHeaplessModeEnabled() ? 0u : 1u, bbsCommands.size());
 }
 
 HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesSubmissionsAreFlushed) {
@@ -2204,14 +2204,14 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchWalkersThenInse
 
     findLoadRegImms<FamilyType>(hwParser.cmdList);
 
-    EXPECT_EQ(pCmdQ->getHeaplessStateInitEnabled() ? 1u : 0u, loadRegImmsFound);
+    EXPECT_EQ(pCmdQ->getHeaplessModeEnabled() ? 1u : 0u, loadRegImmsFound);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
     findLoadRegImms<FamilyType>(hwParser.cmdList);
 
-    EXPECT_EQ(pCmdQ->getHeaplessStateInitEnabled() ? 2u : 1u, loadRegImmsFound);
+    EXPECT_EQ(pCmdQ->getHeaplessModeEnabled() ? 2u : 1u, loadRegImmsFound);
 }
 
 HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchMultiplehWalkersThenInsertPipeControlAndLoadRegisterImmCommandsOnlyOnce) {

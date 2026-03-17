@@ -404,7 +404,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void handlePostCompletionOperations(bool checkQueueCompletion);
 
     bool getHeaplessModeEnabled() const { return this->heaplessModeEnabled; }
-    bool getHeaplessStateInitEnabled() const { return this->heaplessStateInitEnabled; }
 
     bool isBcsSplitInitialized() const { return this->bcsSplitInitialized; }
     bool isBcs() const { return isCopyOnly; };
@@ -551,7 +550,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool splitBarrierRequired = false;
     bool gpgpuCsrClientRegistered = false;
     bool heaplessModeEnabled = false;
-    bool heaplessStateInitEnabled = false;
     bool isForceStateless = false;
     bool l3FlushAfterPostSyncEnabled = false;
     bool isWalkerWithProfilingEnqueued = false;

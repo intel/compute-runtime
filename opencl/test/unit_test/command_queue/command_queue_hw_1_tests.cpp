@@ -353,7 +353,7 @@ HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedOnNon
     EXPECT_NE(nullptr, mockCmdQueueHw.virtualEvent);
     mockCmdQueueHw.virtualEvent->setStatus(CL_COMPLETE);
 
-    EXPECT_EQ(mockCmdQueueHw.getHeaplessStateInitEnabled() ? 2u : 1u, mockCmdQueueHw.latestTaskCountWaited);
+    EXPECT_EQ(mockCmdQueueHw.getHeaplessModeEnabled() ? 2u : 1u, mockCmdQueueHw.latestTaskCountWaited);
 
     buffer->decRefInternal();
 }

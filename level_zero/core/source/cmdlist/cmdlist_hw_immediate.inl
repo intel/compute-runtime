@@ -1780,7 +1780,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
     if (L0GfxCoreHelper::useImmediateComputeFlushTask(rootDeviceEnvironment)) {
 
-        if (this->isHeaplessStateInitEnabled()) {
+        if (this->isHeaplessModeEnabled()) {
             this->computeFlushMethod = &CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediateRegularTaskStateless;
         } else {
 

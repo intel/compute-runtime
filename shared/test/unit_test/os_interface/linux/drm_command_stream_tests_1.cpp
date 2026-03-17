@@ -587,7 +587,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     elementInVector = std::find(recordedCmdBuffer->surfaces.begin(), recordedCmdBuffer->surfaces.end(), allocations->getGraphicsAllocation(0u));
     EXPECT_NE(elementInVector, recordedCmdBuffer->surfaces.end());
 
-    if (testedCsr->getHeaplessStateInitEnabled() && !testedCsr->isPerQueuePrologueEnabled()) {
+    if (testedCsr->getHeaplessModeEnabled() && !testedCsr->isPerQueuePrologueEnabled()) {
         EXPECT_EQ(cs.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
     } else {
         EXPECT_EQ(testedCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
@@ -647,7 +647,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
 
     EXPECT_TRUE(cmdBuffers.peekIsEmpty());
 
-    if (!csr->getHeaplessStateInitEnabled()) {
+    if (!csr->getHeaplessModeEnabled()) {
         auto commandBufferGraphicsAllocation = submittedCommandBuffer.getGraphicsAllocation();
         EXPECT_TRUE(commandBufferGraphicsAllocation->isResident(csr->getOsContext().getContextId()));
     }
@@ -662,7 +662,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.getBufferCount());
 
     uint32_t expectedBatchStartOffset = 0u;
-    if (csr->getHeaplessStateInitEnabled()) {
+    if (csr->getHeaplessModeEnabled()) {
         if (testedCsr->isPerQueuePrologueEnabled()) {
             expectedBatchStartOffset = 65540u; // Offset when per-queue state programming is enabled
         } else {
@@ -672,7 +672,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
         expectedBatchStartOffset = 4u; // Default offset for non-heapless mode
     }
     EXPECT_EQ(expectedBatchStartOffset, this->mock->execBuffer.getBatchStartOffset());
-    EXPECT_EQ(csr->getHeaplessStateInitEnabled() ? cs.getUsed() : submittedCommandBuffer.getUsed(), this->mock->execBuffer.getBatchLen());
+    EXPECT_EQ(csr->getHeaplessModeEnabled() ? cs.getUsed() : submittedCommandBuffer.getUsed(), this->mock->execBuffer.getBatchLen());
 
     auto *execObjects = reinterpret_cast<MockExecObject *>(this->mock->execBuffer.getBuffersPtr());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2,
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*pDevice->executionEnvironment);
     mockCsr->overwriteFlatBatchBufferHelper(mockHelper);
-    bool heaplessStateInitEnabled = mockCsr->getHeaplessStateInitEnabled();
+    bool heaplessModeEnabled = mockCsr->getHeaplessModeEnabled();
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
@@ -83,7 +83,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2,
         --expectedCallsCount;
     }
 
-    if (mockCsr->getHeaplessStateInitEnabled()) {
+    if (heaplessModeEnabled) {
         expectedCallsCount = 6;
     }
 
@@ -128,11 +128,11 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2,
     auto batchBufferStart = genCmdCast<MI_BATCH_BUFFER_START *>(bbEndLocation);
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_EQ(lastBatchBufferAddress, batchBufferStart->getBatchBufferStartAddress());
-    EXPECT_EQ(heaplessStateInitEnabled ? 2u : 1u, mockCsr->flushCalledCount);
+    EXPECT_EQ(heaplessModeEnabled ? 2u : 1u, mockCsr->flushCalledCount);
     EXPECT_EQ(expectedCallsCount, mockHelper->setPatchInfoDataCalled);
     EXPECT_EQ(static_cast<unsigned int>(removePatchInfoDataCount), mockHelper->removePatchInfoDataCalled);
-    EXPECT_EQ(heaplessStateInitEnabled ? 3u : 4u, mockHelper->registerCommandChunkCalled);
-    EXPECT_EQ(heaplessStateInitEnabled ? 2u : 3u, mockHelper->registerBatchBufferStartAddressCalled);
+    EXPECT_EQ(heaplessModeEnabled ? 3u : 4u, mockHelper->registerCommandChunkCalled);
+    EXPECT_EQ(heaplessModeEnabled ? 2u : 3u, mockHelper->registerBatchBufferStartAddressCalled);
 }
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoDataIsNotCollected) {
@@ -176,7 +176,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2, given
         --expectedCallsCount;
     }
 
-    if (mockCsr->getHeaplessStateInitEnabled()) {
+    if (mockCsr->getHeaplessModeEnabled()) {
         expectedCallsCount = 0;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeC
     // If CSR == CQ then a PC is required.
     auto itorCmd = reverseFind<PIPE_CONTROL *>(cmdList.rbegin(), cmdList.rend());
 
-    if (mockCmdQ->getHeaplessStateInitEnabled()) {
+    if (mockCmdQ->getHeaplessModeEnabled()) {
         EXPECT_NE(cmdList.rend(), itorCmd);
     } else {
         EXPECT_EQ(cmdList.rend(), itorCmd);

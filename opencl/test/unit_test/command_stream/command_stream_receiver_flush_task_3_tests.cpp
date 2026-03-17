@@ -61,7 +61,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
 
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
-    if (mockCsr->getHeaplessStateInitEnabled()) {
+    if (mockCsr->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 
@@ -688,7 +688,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenUpdat
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTaskIsCalledThenFlushedTaskCountIsModifed) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
-    bool heaplessStateInit = commandQueue.getHeaplessStateInitEnabled();
+    bool heaplessStateInit = commandQueue.getHeaplessModeEnabled();
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
@@ -1020,7 +1020,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
 
     // make sure they are not the same
     EXPECT_NE(cmdList.end(), itorBatchBufferStartFirst);
-    if (mockCsr->getHeaplessStateInitEnabled() && !mockCsr->isPerQueuePrologueEnabled()) {
+    if (mockCsr->getHeaplessModeEnabled() && !mockCsr->isPerQueuePrologueEnabled()) {
         EXPECT_EQ(cmdList.end(), itorBatchBufferStartSecond);
     } else {
         EXPECT_NE(cmdList.end(), itorBatchBufferStartSecond);
@@ -1621,7 +1621,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(itorBatchBufferStartFirst, itorBatchBufferStartSecond);
     EXPECT_EQ(itorPipeControl, itorBatchBufferStartSecond);
 
-    if (!mockCsr->getHeaplessStateInitEnabled()) {
+    if (!mockCsr->getHeaplessModeEnabled()) {
         auto itorBatchBufferStartThird = find<typename FamilyType::MI_BATCH_BUFFER_START *>(++itorBatchBufferStartSecond, cmdList.end());
         EXPECT_NE(cmdList.end(), itorBatchBufferStartThird);
         EXPECT_NE(itorBatchBufferStartThird, itorBatchBufferStartSecond);

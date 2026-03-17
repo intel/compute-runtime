@@ -274,7 +274,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool uncachedMocsKernel = isKernelUncachedMocsRequired(kernelImp->getKernelRequiresUncachedMocs());
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
 
-    if (this->heaplessStateInitEnabled == false && !launchParams.makeKernelCommandView) {
+    if (this->heaplessModeEnabled == false && !launchParams.makeKernelCommandView) {
         updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions, launchParams.isIndirect);
     } else {
         if (!this->isImmediateType()) {
@@ -417,7 +417,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .isKernelDispatchedFromImmediateCmdList = isImmediateType(),
         .isRcs = engineGroupType == NEO::EngineGroupType::renderCompute,
         .isHeaplessModeEnabled = this->heaplessModeEnabled,
-        .isHeaplessStateInitEnabled = this->heaplessStateInitEnabled,
         .immediateScratchAddressPatching = !this->scratchAddressPatchingEnabled,
         .makeCommandView = launchParams.makeKernelCommandView,
     };

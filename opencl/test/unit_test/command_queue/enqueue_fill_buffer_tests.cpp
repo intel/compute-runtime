@@ -606,7 +606,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationI
 
     ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
 
-    GraphicsAllocation *patternAllocation = pCmdQ->getHeaplessStateInitEnabled() ? csr.getAllocationsForReuse().peekTail() : csr.getAllocationsForReuse().peekHead();
+    GraphicsAllocation *patternAllocation = pCmdQ->getHeaplessModeEnabled() ? csr.getAllocationsForReuse().peekTail() : csr.getAllocationsForReuse().peekHead();
     ASSERT_NE(nullptr, patternAllocation);
 
     EXPECT_EQ(AllocationType::fillPattern, patternAllocation->getAllocationType());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -306,7 +306,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
 
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
-    if (commandStreamReceiver->getHeaplessStateInitEnabled()) {
+    if (commandStreamReceiver->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 
@@ -588,7 +588,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(mockCsr->getHeaplessStateInitEnabled() ? 1u : 0u, mockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsr->getHeaplessModeEnabled() ? 1u : 0u, mockCsr->flushCalledCount);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 

@@ -125,12 +125,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                 device->getL0Debugger();
     ctx.lockScratchController = lockScratchController;
     ctx.lockCSR = &lockCSR;
-    ctx.regularHeapful = !this->isCopyOnlyCommandQueue && !this->heaplessStateInitEnabled;
+    ctx.regularHeapful = !this->isCopyOnlyCommandQueue && !this->heaplessModeEnabled;
     ctx.patchPreambleEnabled |= this->patchingPreamble;
 
     if (this->isCopyOnlyCommandQueue) {
         ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
-    } else if (this->heaplessStateInitEnabled) {
+    } else if (this->heaplessModeEnabled) {
         ret = this->executeCommandListsRegularHeapless(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
     } else {
         ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
@@ -627,7 +627,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
         ctx.instructionCacheFlushRequired = this->csr->isInstructionCacheFlushRequired();
         ctx.stateCacheFlushRequired = neoDevice->getBindlessHeapsHelper() ? neoDevice->getBindlessHeapsHelper()->getStateDirtyForContext(this->csr->getOsContext().getContextId()) : false;
-        if (this->heaplessStateInitEnabled) {
+        if (this->heaplessModeEnabled) {
             ctx.perQueuePrologueRequired = this->csr->isPerQueuePrologueRequired();
         }
         ctx.pipelineCmdsDispatch |= (ctx.instructionCacheFlushRequired || ctx.stateCacheFlushRequired || ctx.perQueuePrologueRequired);
@@ -748,7 +748,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeTotal(CommandListE
         linearStreamSizeEstimate += estimateLinearStreamSizeRegularHeapfulPostCmdList(ctx);
     }
 
-    if (this->heaplessStateInitEnabled) {
+    if (this->heaplessModeEnabled) {
         if (ctx.perQueuePrologueRequired) {
             linearStreamSizeEstimate += this->csr->getCmdsSizeForHardwareContext();
         }
@@ -780,7 +780,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedInitial(
 
     size_t linearStreamSizeEstimate = 0u;
 
-    if (this->isCopyOnlyCommandQueue || !this->heaplessStateInitEnabled) {
+    if (this->isCopyOnlyCommandQueue || !this->heaplessModeEnabled) {
         auto hwContextSizeEstimate = this->csr->getCmdsSizeForHardwareContext();
         if (hwContextSizeEstimate > 0) {
             linearStreamSizeEstimate += hwContextSizeEstimate;

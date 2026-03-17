@@ -43,7 +43,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::dcFlushSupport;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::gpuHangCheckPeriod;
-    using CommandStreamReceiver::heaplessStateInitEnabled;
+    using CommandStreamReceiver::heaplessModeEnabled;
     using CommandStreamReceiver::heaplessStateInitialized;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::internalAllocationStorage;
@@ -396,7 +396,6 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::feSupportFlags;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::heaplessModeEnabled;
-    using CommandStreamReceiver::heaplessStateInitEnabled;
     using CommandStreamReceiver::heaplessStateInitialized;
     using CommandStreamReceiver::heapStorageRequiresRecyclingTag;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;

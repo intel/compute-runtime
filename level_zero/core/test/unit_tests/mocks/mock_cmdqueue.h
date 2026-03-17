@@ -52,7 +52,6 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueue {
     using BaseClass::forceBbStartJump;
     using BaseClass::frontEndStateTracking;
     using BaseClass::heaplessModeEnabled;
-    using BaseClass::heaplessStateInitEnabled;
     using BaseClass::internalUsage;
     using BaseClass::partitionCount;
     using BaseClass::patchingPreamble;
@@ -107,7 +106,6 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::doubleSbaWa;
     using L0::CommandQueue::frontEndStateTracking;
     using L0::CommandQueue::heaplessModeEnabled;
-    using L0::CommandQueue::heaplessStateInitEnabled;
     using L0::CommandQueue::internalUsage;
     using L0::CommandQueue::partitionCount;
     using L0::CommandQueue::patchingPreamble;
@@ -152,6 +150,17 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
         recordedScratchController = ctx.scratchSpaceController;
         recordedLockScratchController = ctx.lockScratchController;
         return BaseClass::executeCommandListsRegular(ctx, numCommandLists, commandListHandles, hFence, parentImmediateCommandlistLinearStream);
+    }
+
+    ze_result_t executeCommandListsRegularHeapless(CommandListExecutionContext &ctx,
+                                                   uint32_t numCommandLists,
+                                                   ze_command_list_handle_t *commandListHandles,
+                                                   ze_fence_handle_t hFence,
+                                                   NEO::LinearStream *parentImmediateCommandlistLinearStream) override {
+        recordedGlobalStatelessAllocation = ctx.globalStatelessAllocation;
+        recordedScratchController = ctx.scratchSpaceController;
+        recordedLockScratchController = ctx.lockScratchController;
+        return BaseClass::executeCommandListsRegularHeapless(ctx, numCommandLists, commandListHandles, hFence, parentImmediateCommandlistLinearStream);
     }
 
     ze_result_t initialize(bool copyOnly, bool isInternal, bool immediateCmdListQueue) override {

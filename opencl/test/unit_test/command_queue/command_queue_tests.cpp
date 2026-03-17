@@ -958,8 +958,8 @@ HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGra
     device->device.disableSecondaryEngines = true;
 
     std::unique_ptr<CommandQueue> commandQ(new MockCommandQueue(&context, device.get(), 0, false));
-    *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = commandQ->getHeaplessStateInitEnabled() ? 1 : 0;
-    *device->getDefaultEngine().commandStreamReceiver->getUcTagAddress() = commandQ->getHeaplessStateInitEnabled() ? 0 : 0;
+    *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = commandQ->getHeaplessModeEnabled() ? 1 : 0;
+    *device->getDefaultEngine().commandStreamReceiver->getUcTagAddress() = commandQ->getHeaplessModeEnabled() ? 0 : 0;
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
 
@@ -3498,7 +3498,7 @@ HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndBcsEnqueueNotP
         {true, true, ccsCsr}    // OOQ & CCS idle -> CCS
     };
 
-    const auto initialTagAddress = queue->heaplessStateInitEnabled ? 1 : 0;
+    const auto initialTagAddress = queue->heaplessModeEnabled ? 1 : 0;
 
     for (auto &state : queueState) {
         auto queue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), queueProperties, false);

@@ -46,7 +46,7 @@ struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
         auto commandList = CommandList::fromHandle(commandLists[0]);
-        this->heaplessStateInit = commandList->isHeaplessStateInitEnabled();
+        this->heaplessModeEnabled = commandList->isHeaplessModeEnabled();
         commandList->close();
 
         CommandList::fromHandle(commandLists[1])->close();
@@ -71,7 +71,7 @@ struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
 
     const static uint32_t numCommandLists = 2;
     ze_command_list_handle_t commandLists[numCommandLists];
-    bool heaplessStateInit = false;
+    bool heaplessModeEnabled = false;
 };
 
 using CommandQueueExecuteCommandLists = Test<CommandQueueExecuteCommandListsFixture>;
@@ -865,14 +865,14 @@ void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest
 }
 
 HWTEST_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenExecutingThenQueuePreemptionIsSwitchedAndStateSipProgrammedOnce) {
-    if (heaplessStateInit) {
+    if (heaplessModeEnabled) {
         GTEST_SKIP();
     }
     twoCommandListCommandPreemptionTest<FamilyType>(false);
 }
 
 HWTEST_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenNoCmdStreamPreemptionRequiredThenNoCmdStreamProgrammingAndStateSipProgrammedOnce) {
-    if (heaplessStateInit) {
+    if (heaplessModeEnabled) {
         GTEST_SKIP();
     }
 
@@ -880,7 +880,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionMo
 }
 
 HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopyCommandListThenExpectNoPreemptionProgramming) {
-    if (heaplessStateInit) {
+    if (heaplessModeEnabled) {
         GTEST_SKIP();
     }
 

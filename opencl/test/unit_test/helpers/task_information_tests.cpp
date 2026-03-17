@@ -45,7 +45,7 @@ TEST(CommandTest, GivenNoTerminateFlagWhenSubmittingMapUnmapThenCsrIsFlushed) {
     CompletionStamp completionStamp = command->submit(20, false);
 
     auto expectedTaskCount = initialTaskCount + 1;
-    if (cmdQ->heaplessStateInitEnabled) {
+    if (cmdQ->getHeaplessModeEnabled()) {
         expectedTaskCount++;
     }
     EXPECT_EQ(expectedTaskCount, completionStamp.taskCount);
@@ -76,8 +76,8 @@ TEST(CommandTest, GivenNoTerminateFlagWhenSubmittingMarkerThenCsrIsNotFlushed) {
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr, false));
     MockBuffer buffer;
 
-    auto heaplessStateInit = cmdQ->getHeaplessStateInitEnabled();
-    auto initialTaskCount = heaplessStateInit ? 1u : 0u;
+    auto heaplessModeEnabled = cmdQ->getHeaplessModeEnabled();
+    auto initialTaskCount = heaplessModeEnabled ? 1u : 0u;
 
     std::unique_ptr<Command> command(new CommandWithoutKernel(*cmdQ));
     CompletionStamp completionStamp = command->submit(20, false);
@@ -238,7 +238,7 @@ class MockCsr1 : public CommandStreamReceiverHw<GfxFamily> {
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap *dsh, const IndirectHeap *ioh,
                               const IndirectHeap *ssh, TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
-        if (this->getHeaplessStateInitEnabled()) {
+        if (this->getHeaplessModeEnabled()) {
             return flushTaskHeapless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
         } else {
             return flushTaskHeapful(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);

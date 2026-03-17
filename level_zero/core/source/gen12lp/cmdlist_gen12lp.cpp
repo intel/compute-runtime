@@ -249,8 +249,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .isCooperative = launchParams.isCooperative,
         .isKernelDispatchedFromImmediateCmdList = isImmediateType(),
         .isRcs = engineGroupType == NEO::EngineGroupType::renderCompute,
-        .isHeaplessModeEnabled = this->heaplessModeEnabled,
-        .isHeaplessStateInitEnabled = this->heaplessStateInitEnabled,
+        .isHeaplessModeEnabled = false,
         .immediateScratchAddressPatching = !this->scratchAddressPatchingEnabled,
         .makeCommandView = false,
     };

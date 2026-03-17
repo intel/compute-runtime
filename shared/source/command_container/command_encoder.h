@@ -143,7 +143,6 @@ struct EncodeDispatchKernelArgs {
     bool isKernelDispatchedFromImmediateCmdList = false;
     bool isRcs = false;
     bool isHeaplessModeEnabled = false;
-    bool isHeaplessStateInitEnabled = false;
     bool immediateScratchAddressPatching = false;
     bool makeCommandView = false;
     bool isFlushL3AfterPostSyncForExternalAllocationRequired = false;

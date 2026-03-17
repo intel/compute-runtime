@@ -63,11 +63,11 @@ struct CommandQueueHw : public CommandQueue {
     };
     inline void processMemAdviseOperations(CommandList *commandList);
 
-    ze_result_t executeCommandListsRegularHeapless(CommandListExecutionContext &ctx,
-                                                   uint32_t numCommandLists,
-                                                   ze_command_list_handle_t *commandListHandles,
-                                                   ze_fence_handle_t hFence,
-                                                   NEO::LinearStream *parentImmediateCommandlistLinearStream);
+    MOCKABLE_VIRTUAL ze_result_t executeCommandListsRegularHeapless(CommandListExecutionContext &ctx,
+                                                                    uint32_t numCommandLists,
+                                                                    ze_command_list_handle_t *commandListHandles,
+                                                                    ze_fence_handle_t hFence,
+                                                                    NEO::LinearStream *parentImmediateCommandlistLinearStream);
 
     MOCKABLE_VIRTUAL ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
                                                             uint32_t numCommandLists,

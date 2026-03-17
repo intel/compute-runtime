@@ -1430,12 +1430,12 @@ HWTEST2_F(CopyOffloadInOrderTests, whenDispatchingSelectCorrectQueueAndCsr, IsAt
     auto regularEventsPool = createEvents<FamilyType>(1, false);
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    auto heaplessStateInit = immCmdList->isHeaplessStateInitEnabled();
+    auto heaplessEnabled = immCmdList->isHeaplessModeEnabled();
     auto regularCsr = immCmdList->cmdQImmediate->getCsr();
     auto copyCsr = immCmdList->cmdQImmediateCopyOffload->getCsr();
 
-    auto expectedRegularCsrTaskCount = heaplessStateInit ? 1u : 0u;
-    auto expectedCopyCsrTaskCount = heaplessStateInit ? 1u : 0u;
+    auto expectedRegularCsrTaskCount = heaplessEnabled ? 1u : 0u;
+    auto expectedCopyCsrTaskCount = heaplessEnabled ? 1u : 0u;
     auto expectedImmediateCmdTaskCount = 0u;
     auto expectedCopyOffloadTaskCount = 0u;
 

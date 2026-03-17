@@ -82,7 +82,6 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             .isKernelDispatchedFromImmediateCmdList = false,
             .isRcs = false,
             .isHeaplessModeEnabled = false,
-            .isHeaplessStateInitEnabled = false,
             .immediateScratchAddressPatching = false,
             .makeCommandView = false,
         };

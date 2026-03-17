@@ -842,7 +842,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         TaskCountType taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override {
-        if (getHeaplessStateInitEnabled()) {
+        if (getHeaplessModeEnabled()) {
             return flushTaskHeapless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
         } else {
             return flushTaskHeapful(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);

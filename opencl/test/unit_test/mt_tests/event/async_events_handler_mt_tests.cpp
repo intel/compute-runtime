@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
 
         commandQueue = makeReleaseable<MockCommandQueue>(context.get(), context->getDevice(0), nullptr, false);
 
-        *(commandQueue->getGpgpuCommandStreamReceiver().getTagAddress()) = commandQueue->getHeaplessStateInitEnabled() ? 1 : 0;
+        *(commandQueue->getGpgpuCommandStreamReceiver().getTagAddress()) = commandQueue->getHeaplessModeEnabled() ? 1 : 0;
 
         event1 = makeReleaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
         event2 = makeReleaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
@@ -318,9 +318,9 @@ TEST_F(AsyncEventsHandlerTests, givenUserEventWhenCallbackIsAddedThenDontRegiste
 TEST_F(AsyncEventsHandlerTests, givenRegisteredEventsWhenProcessIsCalledThenReturnCandidateWithLowestTaskCount) {
     int event1Counter(0), event2Counter(0), event3Counter(0);
 
-    event1->setTaskStamp(0, commandQueue->getHeaplessStateInitEnabled() ? 2 : 1);
-    event2->setTaskStamp(0, commandQueue->getHeaplessStateInitEnabled() ? 3 : 2);
-    event3->setTaskStamp(0, commandQueue->getHeaplessStateInitEnabled() ? 4 : 3);
+    event1->setTaskStamp(0, commandQueue->getHeaplessModeEnabled() ? 2 : 1);
+    event2->setTaskStamp(0, commandQueue->getHeaplessModeEnabled() ? 3 : 2);
+    event3->setTaskStamp(0, commandQueue->getHeaplessModeEnabled() ? 4 : 3);
 
     event2->addCallback(&this->callbackFcn, CL_COMPLETE, &event2Counter);
     handler->registerEvent(event2.get());
@@ -338,8 +338,8 @@ TEST_F(AsyncEventsHandlerTests, givenRegisteredEventsWhenProcessIsCalledThenRetu
 }
 
 TEST_F(AsyncEventsHandlerTests, givenEventWithoutCallbacksWhenProcessedThenDontReturnAsSleepCandidate) {
-    event1->setTaskStamp(0, commandQueue->getHeaplessStateInitEnabled() ? 2 : 1);
-    event2->setTaskStamp(0, commandQueue->getHeaplessStateInitEnabled() ? 3 : 2);
+    event1->setTaskStamp(0, commandQueue->getHeaplessModeEnabled() ? 2 : 1);
+    event2->setTaskStamp(0, commandQueue->getHeaplessModeEnabled() ? 3 : 2);
 
     handler->registerEvent(event1.get());
     event2->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
@@ -352,7 +352,7 @@ TEST_F(AsyncEventsHandlerTests, givenEventWithoutCallbacksWhenProcessedThenDontR
 }
 
 TEST_F(AsyncEventsHandlerTests, givenNoGpuHangAndSleepCandidateWhenProcessedThenCallWaitWithQuickKmdSleepRequest) {
-    event1->setTaskStamp(0, commandQueue->getHeaplessStateInitEnabled() ? 2 : 1);
+    event1->setTaskStamp(0, commandQueue->getHeaplessModeEnabled() ? 2 : 1);
     event1->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
     event1->handler->registerEvent(event1.get());
     event1->handler->allowAsyncProcess.store(true);
@@ -366,7 +366,7 @@ TEST_F(AsyncEventsHandlerTests, givenNoGpuHangAndSleepCandidateWhenProcessedThen
 }
 
 TEST_F(AsyncEventsHandlerTests, givenSleepCandidateAndGpuHangWhenProcessedThenCallWaitAndSetExecutionStatusToAbortedDueToGpuHang) {
-    event1->setTaskStamp(0, commandQueue->getHeaplessStateInitEnabled() ? 2 : 1);
+    event1->setTaskStamp(0, commandQueue->getHeaplessModeEnabled() ? 2 : 1);
     event1->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
     event1->handler->registerEvent(event1.get());
     event1->handler->allowAsyncProcess.store(true);

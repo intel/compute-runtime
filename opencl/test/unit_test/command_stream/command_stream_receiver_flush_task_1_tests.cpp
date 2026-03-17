@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -193,7 +193,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto &mockCsr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    if (mockCsr.getHeaplessStateInitEnabled()) {
+    if (mockCsr.getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 
@@ -1035,7 +1035,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenFlu
     commandStream.getSpace(sizeof(typename FamilyType::MI_NOOP));
 
     flushTask(commandStreamReceiver);
-    EXPECT_EQ(commandStreamReceiver.getHeaplessStateInitEnabled() + 1, commandStreamReceiver.flushCount);
+    EXPECT_EQ(commandStreamReceiver.getHeaplessModeEnabled() + 1, commandStreamReceiver.flushCount);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenChainWithBatchBufferStart) {
@@ -1285,7 +1285,7 @@ struct CommandStreamReceiverFlushTaskTestsWithMockCsrHw2DebugFlag : public UltCo
 
 HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2DebugFlag, givenDispatchFlagsWhenCallFlushTaskThenThreadArbitrationPolicyIsSetProperly, IsAtMostXe3Core) {
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
-    if (mockCsr->getHeaplessStateInitEnabled()) {
+    if (mockCsr->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 
@@ -1336,7 +1336,7 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
 
 HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemoryCompressionStateApplicableWhenFlushTaskIsCalledThenUpdateLastMemoryCompressionState) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (mockCsr.getHeaplessStateInitEnabled()) {
+    if (mockCsr.getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
 

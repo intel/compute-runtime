@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1154,7 +1154,7 @@ HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCount
     ASSERT_NE(nullptr, pAfterPC);
     EXPECT_EQ(1u, pAfterPC->getCommandStreamerStallEnable());
 
-    if (pCmdQ->getHeaplessStateInitEnabled()) {
+    if (pCmdQ->getHeaplessModeEnabled()) {
         EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pBeforePC->getPostSyncOperation());
 
     } else {

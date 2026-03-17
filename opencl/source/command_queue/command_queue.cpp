@@ -138,7 +138,6 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         }
 
         this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
-        this->heaplessStateInitEnabled = this->heaplessModeEnabled;
         this->isForceStateless = compilerProductHelper.isForceToStatelessRequired();
         this->l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported(this->heaplessModeEnabled);
         this->shouldRegisterEnqueuedWalkerWithProfiling = productHelper.shouldRegisterEnqueuedWalkerWithProfiling();

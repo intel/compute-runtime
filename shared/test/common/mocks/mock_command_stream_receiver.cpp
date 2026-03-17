@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
     DispatchFlags &dispatchFlags,
     Device &device) {
 
-    if (this->getHeaplessStateInitEnabled()) {
+    if (this->getHeaplessModeEnabled()) {
         return flushTaskHeapless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     } else {
         return flushTaskHeapful(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);

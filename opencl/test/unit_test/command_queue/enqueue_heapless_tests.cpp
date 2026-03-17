@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,11 +18,10 @@ namespace NEO {
 class Kernel;
 } // namespace NEO
 
-HWTEST2_F(EnqueueHandlerTest, givenCommandStreamWithoutKernelAndHeaplessStateInitEnabledWhenCommandEnqueuedThenTaskCountIncreased, HeaplessSupport) {
+HWTEST2_F(EnqueueHandlerTest, givenCommandStreamWithoutKernelAndHeaplessEnabledWhenCommandEnqueuedThenTaskCountIncreased, HeaplessSupport) {
 
     std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
     mockCmdQ->heaplessModeEnabled = true;
-    mockCmdQ->heaplessStateInitEnabled = true;
 
     auto initialTaskCount = std::max(mockCmdQ->getGpgpuCommandStreamReceiver().peekTaskCount(), mockCmdQ->taskCount);
 
@@ -52,7 +51,6 @@ HWTEST2_F(EnqueueHandlerTest, givenNonBlockingAndHeaplessWhenEnqueueHandlerNdRan
     auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
 
     mockCmdQ->heaplessModeEnabled = true;
-    mockCmdQ->heaplessStateInitEnabled = true;
 
     const auto enqueueResult = mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
                                                                                             0,

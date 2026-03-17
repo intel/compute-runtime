@@ -190,7 +190,6 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool doubleSbaWa = false;
     bool dispatchCmdListBatchBufferAsPrimary = false;
     bool heaplessModeEnabled = false;
-    bool heaplessStateInitEnabled = false;
     bool isWalkerWithProfilingEnqueued = false;
     bool patchingPreamble = false;
     bool saveWaitForPreamble = false;

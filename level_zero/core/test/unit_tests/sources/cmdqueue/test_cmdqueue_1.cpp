@@ -1276,8 +1276,7 @@ HWTEST_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphics
 HWTEST_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenWaitForCompletionFalse) {
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    auto heaplessStateInitEnabled = heaplessEnabled;
+    auto heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
@@ -1296,7 +1295,7 @@ HWTEST_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenWaitForComple
     auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
 
-    auto expectedFlushedTaskCount = heaplessStateInitEnabled ? 1u : 0u;
+    auto expectedFlushedTaskCount = heaplessModeEnabled ? 1u : 0u;
     EXPECT_EQ(expectedFlushedTaskCount, csr->peekLatestFlushedTaskCount());
 
     commandQueue->destroy();
@@ -1846,8 +1845,8 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdLi
 
     auto bbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
 
-    auto heaplessStateInitEnabled = commandList->heaplessStateInitEnabled;
-    EXPECT_EQ(heaplessStateInitEnabled ? 1u : 2u, bbStartCmds.size());
+    auto heaplessModeEnabled = commandList->heaplessModeEnabled;
+    EXPECT_EQ(heaplessModeEnabled ? 1u : 2u, bbStartCmds.size());
 
     for (auto &cmd : bbStartCmds) {
         auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*cmd);
@@ -1892,8 +1891,8 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhe
 
     auto bbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
 
-    auto heaplessStateInitEnabled = commandList->heaplessStateInitEnabled;
-    EXPECT_EQ(heaplessStateInitEnabled ? 1u : 2u, bbStartCmds.size());
+    auto heaplessModeEnabled = commandList->heaplessModeEnabled;
+    EXPECT_EQ(heaplessModeEnabled ? 1u : 2u, bbStartCmds.size());
 
     for (auto &cmd : bbStartCmds) {
         auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*cmd);

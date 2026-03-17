@@ -559,7 +559,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenAllEnginesReadyWhenWaitingForEventThenCl
     auto &gpgpuCsr = mockCmdQ->getGpgpuCommandStreamReceiver();
     auto gpgpuTagAddress = gpgpuCsr.getTagAddress();
 
-    EXPECT_EQ(mockCmdQ->heaplessStateInitEnabled ? 4u : 3u, mockCmdQ->taskCount);
+    EXPECT_EQ(mockCmdQ->heaplessModeEnabled ? 4u : 3u, mockCmdQ->taskCount);
 
     *gpgpuTagAddress = mockCmdQ->taskCount - 1;
 
@@ -1006,7 +1006,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenp
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr->commandStream);
 
-    auto heaplessStateInit = cmdQ->getHeaplessStateInitEnabled();
+    auto heaplessStateInit = cmdQ->getHeaplessModeEnabled();
 
     uint32_t miFlushDwCmdsWithOutputCount = 0;
     bool blitCmdFound = false;

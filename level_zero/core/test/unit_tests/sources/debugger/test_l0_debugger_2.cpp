@@ -195,7 +195,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSh
         }
     }
 
-    if (csr.getHeaplessStateInitEnabled()) {
+    if (csr.getHeaplessModeEnabled()) {
         EXPECT_FALSE(gpr15Found);
     } else {
         EXPECT_TRUE(gpr15Found);
@@ -436,7 +436,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsedT
     EXPECT_FALSE(sipFound);
     EXPECT_FALSE(debugSurfaceFound);
 
-    if (!commandList->stateBaseAddressTracking && !commandList->heaplessStateInitEnabled) {
+    if (!commandList->stateBaseAddressTracking && !commandList->heaplessModeEnabled) {
         EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
     } else {
         EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
