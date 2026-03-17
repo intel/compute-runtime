@@ -1162,8 +1162,3 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenIsWalkerPostSyncSkipEnabledCalle
     debugManager.flags.EnableWalkerPostSyncSkip.set(0);
     EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
 }
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenProductHelperWhenCallIsStagingBuffersEnabledThenReturnTrue) {
-    const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isStagingBuffersEnabled());
-}

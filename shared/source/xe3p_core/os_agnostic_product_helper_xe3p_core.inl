@@ -131,9 +131,4 @@ bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
     return false;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
-    return true;
-}
-
 } // namespace NEO
