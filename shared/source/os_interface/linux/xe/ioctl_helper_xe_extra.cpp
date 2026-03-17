@@ -12,4 +12,8 @@ namespace NEO {
 uint32_t IoctlHelperXe::getNoVmOvercommitFlag() const {
     return DRM_XE_VM_CREATE_FLAG_NO_VM_OVERCOMMIT;
 }
+
+uint32_t IoctlHelperXe::getVmBindDecompressFlag() const {
+    return DRM_XE_VM_BIND_FLAG_DECOMPRESS;
+}
 } // namespace NEO

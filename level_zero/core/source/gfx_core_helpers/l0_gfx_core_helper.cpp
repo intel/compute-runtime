@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,6 +133,9 @@ ze_record_replay_graph_exp_flags_t L0GfxCoreHelper::getRecordReplayGraphCapabili
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     return l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities();
+}
+
+void L0GfxCoreHelper::p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, DriverHandle *driverHandle) const {
 }
 
 } // namespace L0

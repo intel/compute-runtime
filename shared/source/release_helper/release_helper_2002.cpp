@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,11 +52,6 @@ bool ReleaseHelperHw<release>::programmAdditionalStallPriorToBarrierWithTimestam
 template <>
 bool ReleaseHelperHw<release>::shouldQueryPeerAccess() const {
     return true;
-}
-
-template <>
-bool ReleaseHelperHw<release>::isUsmCompressionSupportedOnPeerAccess() const {
-    return false;
 }
 
 template <>
