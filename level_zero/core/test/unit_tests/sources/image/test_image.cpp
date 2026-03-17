@@ -357,8 +357,8 @@ HWTEST_F(ImageView, givenPlanarImageWhenCreateImageViewThenProperPlaneIsCreated)
     auto ret = imageHW->initialize(device, &srcImgDesc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    ze_image_view_planar_ext_desc_t planeYdesc = {};
-    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
+    ze_image_view_planar_exp_desc_t planeYdesc = {};
+    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
     planeYdesc.planeIndex = 0u; // Y plane
 
     ze_image_desc_t imageViewDescPlaneY = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -381,8 +381,8 @@ HWTEST_F(ImageView, givenPlanarImageWhenCreateImageViewThenProperPlaneIsCreated)
     EXPECT_EQ(width, yPlaneDesc.imageWidth);
     EXPECT_EQ(height, yPlaneDesc.imageHeight);
 
-    ze_image_view_planar_ext_desc_t planeUVdesc = {};
-    planeUVdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
+    ze_image_view_planar_exp_desc_t planeUVdesc = {};
+    planeUVdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
     planeUVdesc.planeIndex = 1u; // UV plane
 
     ze_image_desc_t imageViewDescPlaneUV = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -595,7 +595,7 @@ HWTEST_F(ImageView, givenPlanarImageWhenCreateImageWithInvalidStructViewThenProp
     auto ret = imageHW->initialize(device, &srcImgDesc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    ze_image_view_planar_ext_desc_t planeYdesc = {};
+    ze_image_view_planar_exp_desc_t planeYdesc = {};
     planeYdesc.stype = ZE_STRUCTURE_TYPE_DEVICE_CACHE_PROPERTIES;
     planeYdesc.planeIndex = 0u; // Y plane
 
@@ -1739,8 +1739,8 @@ HWTEST_F(ImageCreate, WhenImageViewCreateExpThenSuccessIsReturned) {
     auto ret = imageHW->initialize(device, &srcImgDesc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    ze_image_view_planar_ext_desc_t planeYdesc = {};
-    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
+    ze_image_view_planar_exp_desc_t planeYdesc = {};
+    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
     planeYdesc.planeIndex = 0u; // Y plane
 
     ze_image_desc_t imageViewDescPlaneY = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
