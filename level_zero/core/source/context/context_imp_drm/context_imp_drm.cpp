@@ -80,7 +80,7 @@ void ContextImp::closeExternalHandle(uint64_t handle) {
     NEO::SysCalls::close(static_cast<int>(handle));
 }
 
-void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
     uint64_t importHandle = handle;
     uint64_t effectiveCacheID = cacheID;
@@ -155,13 +155,14 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, N
             if (!socketFallbackSuccess) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                              "Socket fallback failed for handle %lu, returning nullptr\n", handle);
-                return nullptr;
+                return {nullptr, nullptr};
             }
         }
     }
 
+    NEO::GraphicsAllocation *alloc = nullptr;
     NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
-    auto result = this->driverHandle->importFdHandle(neoDevice, flags, importHandle, allocationType, nullptr, nullptr, allocDataInternal, compressedMemory);
+    auto result = this->driverHandle->importFdHandle(neoDevice, flags, importHandle, allocationType, nullptr, &alloc, allocDataInternal, compressedMemory);
 
     // Store cacheID in IPC handle tracking if opaque handles are used
     if (result && settings.useOpaqueHandle && effectiveCacheID != 0) {
@@ -173,7 +174,7 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, N
         }
     }
 
-    return result;
+    return {alloc, result};
 }
 
 void ContextImp::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory) {

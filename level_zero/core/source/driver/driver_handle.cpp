@@ -968,7 +968,7 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
     return alloc;
 }
 
-void *DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     bool isHostIpcAllocation = (allocationType == NEO::AllocationType::bufferHostMemory) ? true : false;
@@ -983,7 +983,7 @@ void *DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO
     auto alloc = this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
 
     if (alloc == nullptr) {
-        return nullptr;
+        return {nullptr, nullptr};
     }
 
     NEO::SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
@@ -1000,7 +1000,7 @@ void *DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO
 
     this->getSvmAllocsManager()->insertSVMAlloc(allocData);
 
-    return reinterpret_cast<void *>(alloc->getGpuAddress());
+    return {alloc, reinterpret_cast<void *>(alloc->getGpuAddress())};
 }
 
 void DriverHandle::initializeVertexes() {

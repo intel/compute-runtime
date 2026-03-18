@@ -132,11 +132,11 @@ void MemoryExportImportTest::SetUp() {
     context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
 }
 
-void *DriverHandleGetMemHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetMemHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) {
     if (mockHandle == allocationHandleMap.second) {
-        return allocationHandleMap.first;
+        return {nullptr, allocationHandleMap.first};
     }
-    return nullptr;
+    return {nullptr, nullptr};
 }
 void *DriverHandleGetMemHandleMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
                                                    NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
@@ -223,11 +223,11 @@ void MemoryExportImportWSLTest::TearDown() {
     delete currMemoryManager;
 }
 
-void *DriverHandleGetWinHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetWinHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) {
     if (mockHandle == allocationMap.second) {
-        return allocationMap.first;
+        return {nullptr, allocationMap.first};
     }
-    return nullptr;
+    return {nullptr, nullptr};
 }
 
 ze_result_t ContextHandleMock::allocDeviceMem(ze_device_handle_t hDevice,

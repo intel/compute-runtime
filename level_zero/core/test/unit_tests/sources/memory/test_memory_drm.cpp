@@ -9,6 +9,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
@@ -194,6 +195,10 @@ TEST_F(MemoryGetIpcHandleTest,
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> mockPidfdGet(&NEO::SysCalls::sysCallsPidfdGetfd, [](int pid, int targetfd, unsigned int flags) -> int {
+        return targetfd + 1;
+    });
 
     ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;

@@ -132,7 +132,8 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc
                                    0u,
                                    flags,
                                    0u,
-                                   nullptr, false);
+                                   nullptr, false)
+                       .second;
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -141,7 +142,8 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc
             UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
             *ptr = this->driverHandle->importNTHandle(this->devices.begin()->second,
                                                       lookupTable.sharedHandleType.ntHandle,
-                                                      NEO::AllocationType::bufferHostMemory, 0, false);
+                                                      NEO::AllocationType::bufferHostMemory, 0, false)
+                       .second;
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -284,7 +286,8 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                    0u,
                                    flags,
                                    0u,
-                                   nullptr, false);
+                                   nullptr, false)
+                       .second;
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -294,7 +297,8 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
             *ptr = this->driverHandle->importNTHandle(hDevice,
                                                       lookupTable.sharedHandleType.ntHandle,
                                                       NEO::AllocationType::buffer,
-                                                      0, false);
+                                                      0, false)
+                       .second;
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -789,6 +793,20 @@ ze_result_t ContextImp::closeIpcMemHandle(const void *ptr) {
     return this->freeMem(ptr);
 }
 
+void ContextImp::registerIpcHandleWithServer(uint64_t handleId) {
+    if (!isSocketHandleSharingSupported()) {
+        return;
+    }
+
+    if (!driverHandle->initializeIpcSocketServer()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Failed to initialize IPC socket server for handle %lu\n", handleId);
+    } else if (!driverHandle->registerIpcHandleWithServer(handleId, static_cast<int>(handleId))) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Failed to register handle %lu with IPC socket server\n", handleId);
+    }
+}
+
 ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
     uint64_t handle = 0;
     if (settings.useOpaqueHandle) {
@@ -959,14 +977,19 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
 }
 
 uint64_t IpcOpaqueMemoryData::computeCacheID() const noexcept {
-    uint64_t hash = 0;
-
-    ipcHashCombine(hash, normalizeIPCHandle(*this));
     // Copy values to avoid misaligned reference binding due to #pragma pack(1)
     uint64_t poolOffsetCopy = poolOffset;
-    ipcHashCombine(hash, poolOffsetCopy);
-    ipcHashCombine(hash, static_cast<uint32_t>(processId));
-    ipcHashCombine(hash, static_cast<uint8_t>(type));
+
+    return Context::computeIpcCacheId(normalizeIPCHandle(*this), poolOffsetCopy, static_cast<uint32_t>(processId), static_cast<uint8_t>(type), memoryType);
+}
+
+uint64_t Context::computeIpcCacheId(uint64_t handle, uint64_t poolOffset, uint32_t processId, uint8_t handleType, uint8_t memoryType) {
+    uint64_t hash = 0;
+
+    ipcHashCombine(hash, handle);
+    ipcHashCombine(hash, poolOffset);
+    ipcHashCombine(hash, processId);
+    ipcHashCombine(hash, handleType);
     ipcHashCombine(hash, memoryType);
 
     return hash;
@@ -1014,7 +1037,8 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
                            flags,
                            cacheID,
                            reservedHandleData,
-                           compressedMemory);
+                           compressedMemory)
+               .second;
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

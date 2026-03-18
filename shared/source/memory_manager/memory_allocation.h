@@ -54,6 +54,10 @@ class MemoryAllocation : public GraphicsAllocation {
         handle = internalHandle;
         return 0;
     }
+
+    int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
+        return peekInternalHandle(memoryManager, handle, reservedHandleData);
+    }
 };
 
 } // namespace NEO

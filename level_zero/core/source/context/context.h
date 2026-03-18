@@ -16,6 +16,8 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
+#include <utility>
+
 struct _ze_context_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_CONTEXT> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_context_handle_t>);
 
@@ -238,7 +240,7 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t putVirtualAddressSpaceIpcHandle(ze_ipc_mem_handle_t ipcHandle) = 0;
     virtual ze_result_t lockMemory(ze_device_handle_t hDevice, void *ptr, size_t size) = 0;
     virtual bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) = 0;
-    virtual void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) = 0;
+    virtual std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) = 0;
     virtual void closeExternalHandle(uint64_t handle) = 0;
     virtual void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory) = 0;
     virtual uint8_t isOpaqueHandleSupported(IpcHandleType *handleType) = 0;
@@ -256,6 +258,8 @@ struct Context : _ze_context_handle_t {
 
     virtual ContextExt *getContextExt() = 0;
     virtual ze_result_t systemBarrier(ze_device_handle_t hDevice) = 0;
+
+    static uint64_t computeIpcCacheId(uint64_t handle, uint64_t poolOffset, uint32_t processId, uint8_t handleType, uint8_t memoryType);
 };
 
 } // namespace L0

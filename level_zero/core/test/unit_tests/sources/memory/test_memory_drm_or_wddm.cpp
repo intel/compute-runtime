@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/common/ult_helpers_l0.h"
@@ -881,6 +882,10 @@ TEST_F(MemoryGetIpcHandleTest,
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
 
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> mockPidfdGet(&NEO::SysCalls::sysCallsPidfdGetfd, [](int pid, int targetfd, unsigned int flags) -> int {
+        return targetfd + 1;
+    });
+
     ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
     result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
@@ -1317,6 +1322,10 @@ TEST_F(MemoryExportImportTest,
     extendedImportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
     extendedImportDesc.fd = extendedProperties.fd;
     importDeviceDesc.pNext = &extendedImportDesc;
+
+    auto &rootDeviceEnvironment = *neoDevice->executionEnvironment->rootDeviceEnvironments[0];
+    rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface());
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
 
     void *importedPtr = nullptr;
     result = context->allocDeviceMem(device->toHandle(),

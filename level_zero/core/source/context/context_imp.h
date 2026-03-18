@@ -208,7 +208,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
     bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override;
-    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) override;
+    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) override;
     void closeExternalHandle(uint64_t handle) override;
     void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory) override;
     uint8_t isOpaqueHandleSupported(IpcHandleType *handleType) override;
@@ -256,6 +256,9 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     }
     ze_result_t systemBarrier(ze_device_handle_t hDevice) override;
     NEO::UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);
+
+    bool isSocketHandleSharingSupported() const { return (((settings.useOpaqueHandle & OpaqueHandlingType::sockets) == OpaqueHandlingType::sockets) && (settings.handleType == IpcHandleType::fdHandle)); }
+    void registerIpcHandleWithServer(uint64_t handleId);
 
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, void *pNext, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
@@ -310,17 +313,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
             this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
 
             if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
-                if (handleType == IpcHandleType::fdHandle && settings.useOpaqueHandle == OpaqueHandlingType::sockets) {
-                    if (this->driverHandle->initializeIpcSocketServer()) {
-                        if (!this->driverHandle->registerIpcHandleWithServer(handle, static_cast<int>(handle))) {
-                            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                         "Failed to register handle %lu with IPC socket server\n", handle);
-                        }
-                    } else {
-                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                     "Failed to initialize IPC socket server for handle %lu\n", handle);
-                    }
-                }
+                registerIpcHandleWithServer(handle);
             }
         }
     }

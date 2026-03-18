@@ -30,7 +30,7 @@ bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory
 void ContextImp::closeExternalHandle(uint64_t) {
 }
 
-void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) {
     return this->driverHandle->importNTHandle(hDevice, reinterpret_cast<void *>(handle), allocationType, processId, compressedMemory);
 }
 

@@ -104,14 +104,14 @@ void ContextImp::closeExternalHandle(uint64_t handle) {
     }
 }
 
-void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
-                                  uint64_t handle,
-                                  NEO::AllocationType allocationType,
-                                  unsigned int processId,
-                                  ze_ipc_memory_flags_t flags,
-                                  uint64_t cacheID,
-                                  void *reservedHandleData,
-                                  bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
+                                                                         uint64_t handle,
+                                                                         NEO::AllocationType allocationType,
+                                                                         unsigned int processId,
+                                                                         ze_ipc_memory_flags_t flags,
+                                                                         uint64_t cacheID,
+                                                                         void *reservedHandleData,
+                                                                         bool compressedMemory) {
     L0::Device *device = L0::Device::fromHandle(hDevice);
     auto neoDevice = device->getNEODevice();
     NEO::DriverModelType driverType = NEO::DriverModelType::unknown;
@@ -125,7 +125,9 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                                                   allocationType,
                                                   processId,
                                                   compressedMemory);
-    } else if (driverType == NEO::DriverModelType::drm) {
+    } else if (driverType == NEO::DriverModelType::wddm) {
+        return {nullptr, nullptr};
+    } else {
         auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
         NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
@@ -202,18 +204,19 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                 if (!socketFallbackSuccess) {
                     PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                  "Socket fallback failed for handle %lu, returning nullptr\n", handle);
-                    return nullptr;
+                    return {nullptr, nullptr};
                 }
             }
             // If sockets are not enabled and pidfd failed, fall back to original handle
         }
 
+        NEO::GraphicsAllocation *alloc = nullptr;
         auto result = this->driverHandle->importFdHandle(neoDevice,
                                                          flags,
                                                          importHandle,
                                                          allocationType,
                                                          nullptr,
-                                                         nullptr,
+                                                         &alloc,
                                                          allocDataInternal,
                                                          compressedMemory);
 
@@ -227,9 +230,7 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
             }
         }
 
-        return result;
-    } else {
-        return nullptr;
+        return {alloc, result};
     }
 }
 
