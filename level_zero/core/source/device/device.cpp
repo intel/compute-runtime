@@ -2333,7 +2333,7 @@ NEO::TagAllocatorBase *Device::getInOrderTimestampAllocator() {
             size_t packetsCountPerElement = getEventMaxPacketCount();
             size_t alignment = getGfxCoreHelper().getTimestampPacketAllocatorAlignment();
 
-            inOrderTimestampAllocator = getL0GfxCoreHelper().getInOrderTimestampAllocator(rootDeviceIndices, getNEODevice()->getMemoryManager(), 64, packetsCountPerElement, alignment, getNEODevice()->getDeviceBitfield());
+            inOrderTimestampAllocator = getL0GfxCoreHelper().getInOrderTimestampAllocator(rootDeviceIndices, getNEODevice()->getMemoryManager(), 256, packetsCountPerElement, alignment, getNEODevice()->getDeviceBitfield());
         }
     }
 
