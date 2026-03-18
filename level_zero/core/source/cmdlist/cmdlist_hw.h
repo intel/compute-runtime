@@ -269,6 +269,7 @@ struct CommandListCoreFamily : public CommandList {
     bool doParamsRequireCopyOnly(CmdListMemoryCopyParams &memoryCopyParams) const;
 
   protected:
+    void setupEventParamsForInOrderBarrierSkip(ze_event_handle_t hSignalEvent);
     void dispatchHostFunction(ze_host_function_callback_t pHostFunction,
                               void *pUserData) override;
     void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) override;

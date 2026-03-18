@@ -36,6 +36,7 @@ struct InOrderFixtureMockEvent : public EventImp<uint32_t> {
     using EventImp<uint32_t>::Event::counterBasedFlags;
     using EventImp<uint32_t>::Event::isSharableCounterBased;
     using EventImp<uint32_t>::Event::isTimestampEvent;
+    using EventImp<uint32_t>::Event::heapfullCbEventWithProfiling;
     using EventImp<uint32_t>::Event::inOrderExecHelper;
     using EventImp<uint32_t>::isTimestampPopulated;
     using EventImp<uint32_t>::eventPoolAllocation;

@@ -4266,16 +4266,21 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::setupEventParamsForInOrderBarrierSkip(ze_event_handle_t hSignalEvent) {
+    if (hSignalEvent) {
+        auto event = Event::fromHandle(hSignalEvent);
+        assignInOrderExecInfoToEvent(event);
+        event->setHeapfullCbEventWithProfiling(this->latestOperationHasHeapfullCbEventWithProfiling);
+        if (isImmediateType()) {
+            event->setLatestUsedCmdQueue(this->cmdQImmediate);
+        }
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     if (isInOrderExecutionEnabled() && isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
-        if (hSignalEvent) {
-            auto event = Event::fromHandle(hSignalEvent);
-            assignInOrderExecInfoToEvent(event);
-            if (isImmediateType()) {
-                event->setLatestUsedCmdQueue(this->cmdQImmediate);
-            }
-        }
-
+        setupEventParamsForInOrderBarrierSkip(hSignalEvent);
         return ZE_RESULT_SUCCESS;
     }
 

@@ -4746,8 +4746,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     immCmdList->appendBarrier(nullptr, 0, nullptr, false);
     EXPECT_EQ(nullptr, events[1]->getLatestUsedCmdQueue());
+    immCmdList->latestOperationHasHeapfullCbEventWithProfiling = true;
+    EXPECT_FALSE(events[1]->heapfullCbEventWithProfiling);
     immCmdList->appendBarrier(eventHandle, 0, nullptr, false);
     EXPECT_EQ(immCmdList->cmdQImmediate, events[1]->getLatestUsedCmdQueue());
+    EXPECT_TRUE(events[1]->heapfullCbEventWithProfiling);
 
     EXPECT_EQ(offset, cmdStream->getUsed());
 
@@ -4816,8 +4819,11 @@ HWTEST_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWit
 
     events[1]->setLatestUsedCmdQueue(reinterpret_cast<L0::CommandQueue *>(0x1234));
     cmdList->appendBarrier(nullptr, 0, nullptr, false);
+    cmdList->latestOperationHasHeapfullCbEventWithProfiling = true;
+    EXPECT_FALSE(events[1]->heapfullCbEventWithProfiling);
     cmdList->appendBarrier(eventHandle, 0, nullptr, false);
     EXPECT_EQ(reinterpret_cast<void *>(0x1234), events[1]->getLatestUsedCmdQueue());
+    EXPECT_TRUE(events[1]->heapfullCbEventWithProfiling);
 
     EXPECT_EQ(offset, cmdStream->getUsed());
 

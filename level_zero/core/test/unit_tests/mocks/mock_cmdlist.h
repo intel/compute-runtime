@@ -113,6 +113,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isTimestampEventForMultiTile;
     using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::l3FlushAfterPostSyncEnabled;
+    using BaseClass::latestOperationHasHeapfullCbEventWithProfiling;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::minimalSizeForBcsSplit;
