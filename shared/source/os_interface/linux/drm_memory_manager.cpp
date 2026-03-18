@@ -548,6 +548,10 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     if (drmAllocation != nullptr && gpuReservationAddress) {
         drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuReservationAddress), alignedVirtualAddressRangeSize);
     }
+    if (drmAllocation != nullptr) {
+        auto osContextLinux = static_cast<OsContextLinux *>(allocationData.osContext);
+        drmAllocation->setOsContext(osContextLinux);
+    }
 
     return drmAllocation;
 }

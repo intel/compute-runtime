@@ -3220,6 +3220,21 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalA
     memoryManager->freeGraphicsMemory(drmAllocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDebugSbaTrackingBufferTypeWhenAllocateGraphicsMemoryWithPropertiesThenAllocationHasCorrectOsContext) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    MockOsContextLinux osContext(*mock, rootDeviceIndex, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+
+    AllocationProperties properties{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::debugSbaTrackingBuffer, false, mockDeviceBitfield};
+    properties.osContext = &osContext;
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties));
+    ASSERT_NE(nullptr, alloc);
+    EXPECT_EQ(&osContext, alloc->getOsContext());
+    memoryManager->freeGraphicsMemory(alloc);
+}
+
 using DrmMemoryManagerUSMHostAllocationTests = Test<DrmMemoryManagerFixture>;
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToAllocateGraphicsMemoryWithAlignmentWithIsHostUsmAllocationSetToFalseThenNewHostPointerIsUsedAndAllocationIsCreatedSuccessfully) {
