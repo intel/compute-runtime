@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2019-2025 Intel Corporation
+Copyright (C) 2019-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -37,7 +37,7 @@ SPDX-License-Identifier: MIT
 //////////////////////////////////////////////////////////////////////////////////
 // API build number:
 //////////////////////////////////////////////////////////////////////////////////
-#define MD_API_BUILD_NUMBER_CURRENT 182
+#define MD_API_BUILD_NUMBER_CURRENT 184
 
 namespace MetricsDiscovery
 {
@@ -100,6 +100,27 @@ namespace MetricsDiscovery
     /* Forward declarations */
 
     //////////////////////////////////////////////////////////////////////////////////
+    // Abstract interface for the adapter group object.
+    //////////////////////////////////////////////////////////////////////////////////
+    class IAdapterGroup_1_6;
+    class IAdapterGroup_1_8;
+    class IAdapterGroup_1_9;
+    class IAdapterGroup_1_10;
+    class IAdapterGroup_1_11;
+    class IAdapterGroup_1_13;
+    class IAdapterGroup_1_14;
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // Abstract interface for the GPU adapter object.
+    //////////////////////////////////////////////////////////////////////////////////
+    class IAdapter_1_6;
+    class IAdapter_1_8;
+    class IAdapter_1_9;
+    class IAdapter_1_10;
+    class IAdapter_1_11;
+    class IAdapter_1_13;
+
+    //////////////////////////////////////////////////////////////////////////////////
     // Abstract interface for the GPU metrics root object.
     //////////////////////////////////////////////////////////////////////////////////
     class IMetricsDevice_1_0;
@@ -121,6 +142,7 @@ namespace MetricsDiscovery
     //////////////////////////////////////////////////////////////////////////////////
     class IConcurrentGroup_1_0;
     class IConcurrentGroup_1_1;
+    class IConcurrentGroup_1_3;
     class IConcurrentGroup_1_5;
     class IConcurrentGroup_1_11;
     class IConcurrentGroup_1_13;
@@ -141,6 +163,7 @@ namespace MetricsDiscovery
     // Abstract interface for the metric that is sampled.
     //////////////////////////////////////////////////////////////////////////////////
     class IMetric_1_0;
+    class IMetric_1_13;
 
     //////////////////////////////////////////////////////////////////////////////////
     // Abstract interface for the measurement information (report reason, etc.).
@@ -151,6 +174,16 @@ namespace MetricsDiscovery
     // Abstract interface for the metric read and normalization equation.
     //////////////////////////////////////////////////////////////////////////////////
     class IEquation_1_0;
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // Abstract interface for the metric enumerator object.
+    //////////////////////////////////////////////////////////////////////////////////
+    class IMetricEnumerator_1_13;
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // Abstract interface for the metric prototype object.
+    //////////////////////////////////////////////////////////////////////////////////
+    class IMetricPrototype_1_13;
 
     //////////////////////////////////////////////////////////////////////////////////
     // Value types:
@@ -303,12 +336,13 @@ namespace MetricsDiscovery
     //////////////////////////////////////////////////////////////////////////////////
     typedef enum ESamplingType
     {
-        SAMPLING_TYPE_OA_TIMER   = 0x00000001,
-        SAMPLING_TYPE_OA_EVENT   = 0x00000002,
-        SAMPLING_TYPE_GPU_QUERY  = 0x00000004,
-        SAMPLING_TYPE_DMA_BUFFER = 0x00000008, // Possible future extension for media
-        SAMPLING_TYPE_OAM_TIMER  = 0x00000010,
-        SAMPLING_TYPE_ALL        = 0x0000FFFF,
+        SAMPLING_TYPE_OA_TIMER     = 0x00000001,
+        SAMPLING_TYPE_OA_EVENT     = 0x00000002, // Obsolete
+        SAMPLING_TYPE_GPU_QUERY    = 0x00000004, // Obsolete
+        SAMPLING_TYPE_DMA_BUFFER   = 0x00000008, // Obsolete
+        SAMPLING_TYPE_OAM_TIMER    = 0x00000010,
+        SAMPLING_TYPE_OAMERT_TIMER = 0x00000020,
+        SAMPLING_TYPE_ALL          = 0x0000FFFF,
     } TSamplingType;
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -1724,10 +1758,10 @@ namespace MetricsDiscovery
     class IAdapter_1_10 : public IAdapter_1_9
     {
     public:
-        using IAdapter_1_6::OpenMetricsDevice;
-        using IAdapter_1_6::OpenMetricsDeviceFromFile;
-        using IAdapter_1_9::OpenMetricsSubDevice;
-        using IAdapter_1_9::OpenMetricsSubDeviceFromFile;
+        using IAdapter_1_6::OpenMetricsDevice;            // To avoid hiding by 1.10 interface function
+        using IAdapter_1_6::OpenMetricsDeviceFromFile;    // To avoid hiding by 1.10 interface function
+        using IAdapter_1_9::OpenMetricsSubDevice;         // To avoid hiding by 1.10 interface function
+        using IAdapter_1_9::OpenMetricsSubDeviceFromFile; // To avoid hiding by 1.10 interface function
 
         virtual TCompletionCode OpenMetricsDevice( IMetricsDevice_1_10** metricsDevice );
         virtual TCompletionCode OpenMetricsDeviceFromFile( const char* fileName, void* openParams, IMetricsDevice_1_10** metricsDevice );
@@ -1757,10 +1791,10 @@ namespace MetricsDiscovery
     {
     public:
         // Updates.
-        using IAdapter_1_10::OpenMetricsDevice;
-        using IAdapter_1_10::OpenMetricsDeviceFromFile;
-        using IAdapter_1_10::OpenMetricsSubDevice;
-        using IAdapter_1_10::OpenMetricsSubDeviceFromFile;
+        using IAdapter_1_10::OpenMetricsDevice;            // To avoid hiding by 1.11 interface function
+        using IAdapter_1_10::OpenMetricsDeviceFromFile;    // To avoid hiding by 1.11 interface function
+        using IAdapter_1_10::OpenMetricsSubDevice;         // To avoid hiding by 1.11 interface function
+        using IAdapter_1_10::OpenMetricsSubDeviceFromFile; // To avoid hiding by 1.11 interface function
 
         virtual TCompletionCode OpenMetricsDevice( IMetricsDevice_1_11** metricsDevice );
         virtual TCompletionCode OpenMetricsDeviceFromFile( const char* fileName, void* openParams, IMetricsDevice_1_11** metricsDevice );
@@ -1792,10 +1826,10 @@ namespace MetricsDiscovery
     {
     public:
         // Updates.
-        using IAdapter_1_11::OpenMetricsDevice;
-        using IAdapter_1_11::OpenMetricsDeviceFromFile;
-        using IAdapter_1_11::OpenMetricsSubDevice;
-        using IAdapter_1_11::OpenMetricsSubDeviceFromFile;
+        using IAdapter_1_11::OpenMetricsDevice;            // To avoid hiding by 1.13 interface function
+        using IAdapter_1_11::OpenMetricsDeviceFromFile;    // To avoid hiding by 1.13 interface function
+        using IAdapter_1_11::OpenMetricsSubDevice;         // To avoid hiding by 1.13 interface function
+        using IAdapter_1_11::OpenMetricsSubDeviceFromFile; // To avoid hiding by 1.13 interface function
 
         virtual TCompletionCode OpenMetricsDevice( IMetricsDevice_1_13** metricsDevice );
         virtual TCompletionCode OpenMetricsDeviceFromFile( const char* fileName, void* openParams, IMetricsDevice_1_13** metricsDevice );
