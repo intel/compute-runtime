@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/global_teardown.h"
 
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 
@@ -34,6 +35,18 @@ void globalDriverSetup() {
     additionalSetup();
 }
 
+void removePageFaultManagerAtTermination() {
+    if (globalDriverHandles) {
+        for (auto &globalDriverHandle : *globalDriverHandles) {
+            auto globalDriver = DriverHandle::fromHandle(globalDriverHandle);
+            if (globalDriver != nullptr) {
+                if (globalDriver->getMemoryManager() != nullptr) {
+                    globalDriver->getMemoryManager()->destroyPageFaultManager();
+                }
+            }
+        }
+    }
+}
 void globalDriverTeardown() {
     additionalTeardown();
 

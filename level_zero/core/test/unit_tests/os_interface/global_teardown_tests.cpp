@@ -7,7 +7,9 @@
 
 #include "level_zero/core/test/unit_tests/os_interface/global_teardown_tests.h"
 
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_library.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/test_macros/test.h"
@@ -202,11 +204,26 @@ TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenGlobalSetupAndTeardownA
     EXPECT_TRUE(globalDriverDispatch.runtime.isValidFlag);
 
     globalDriverTeardown();
-
     EXPECT_FALSE(globalDriverDispatch.core.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.tools.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.sysman.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.runtime.isValidFlag);
+}
+
+TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenTerminationThenPageFaultHandlerIsRemoved) {
+    VariableBackup<decltype(globalDriverHandles)> globalDriverHandlesBackup{&globalDriverHandles, nullptr};
+
+    globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    Driver driver;
+    driver.initialize(&result);
+    auto tempDriver = static_cast<L0::DriverHandle *>(DriverHandle::fromHandle((*globalDriverHandles)[0]));
+    tempDriver->getMemoryManager()->initPageFaultManager();
+    EXPECT_NE(tempDriver->getMemoryManager()->getPageFaultManager(), nullptr);
+    removePageFaultManagerAtTermination();
+    EXPECT_EQ(tempDriver->getMemoryManager()->getPageFaultManager(), nullptr);
+    globalDriverTeardown();
 }
 } // namespace ult
 } // namespace L0

@@ -24,6 +24,7 @@ BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     }
     if (fdwReason == DLL_PROCESS_DETACH) {
         if (lpvReserved != nullptr) {
+            L0::removePageFaultManagerAtTermination();
             return TRUE;
         }
         L0::globalDriverTeardown();

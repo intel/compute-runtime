@@ -383,6 +383,7 @@ class MemoryManager {
     std::unique_ptr<GraphicsAllocation> obtainTemporaryAllocationWithPtr(CommandStreamReceiver *csr, size_t requiredSize, const void *requiredPtr, AllocationType allocationType);
     bool isSingleTemporaryAllocationsListEnabled() const { return singleTemporaryAllocationsList; }
     AllocationsList &getTemporaryAllocationsList() const { return *temporaryAllocations; }
+    void destroyPageFaultManager();
 
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);

@@ -1430,4 +1430,8 @@ bool MemoryManager::getLocalOnlyRequired(AllocationType allocationType, const Pr
     }
     return (preferCompressed ? enabledForRelease : false);
 }
+
+void MemoryManager::destroyPageFaultManager() {
+    pageFaultManager.reset();
+}
 } // namespace NEO
