@@ -285,8 +285,8 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediateRegularTaskStateless(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds,
-                                                                                                       bool hasRelaxedOrderingDependencies, NEO::AppendOperations appendOperation, bool requireTaskCountUpdate) {
+NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediateRegularTaskHeapless(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds,
+                                                                                                      bool hasRelaxedOrderingDependencies, NEO::AppendOperations appendOperation, bool requireTaskCountUpdate) {
 
     void *sshCpuPointer = nullptr;
     constexpr bool streamStatesSupported = false;
@@ -311,10 +311,10 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
     this->isWalkerWithProfilingEnqueued = false;
     CommandList::storeReferenceTsToMappedEvents(true);
 
-    return getCsr(false)->flushImmediateTaskStateless(cmdStreamTask,
-                                                      taskStartOffset,
-                                                      dispatchFlags,
-                                                      *(this->device->getNEODevice()));
+    return getCsr(false)->flushImmediateTaskHeapless(cmdStreamTask,
+                                                     taskStartOffset,
+                                                     dispatchFlags,
+                                                     *(this->device->getNEODevice()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1776,7 +1776,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::setupFlushMethod(const NEO::
     if (L0GfxCoreHelper::useImmediateComputeFlushTask(rootDeviceEnvironment)) {
 
         if (this->isHeaplessModeEnabled()) {
-            this->computeFlushMethod = &CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediateRegularTaskStateless;
+            this->computeFlushMethod = &CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediateRegularTaskHeapless;
         } else {
 
             this->computeFlushMethod = &CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediateRegularTask;

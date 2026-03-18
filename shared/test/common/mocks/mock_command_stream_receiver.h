@@ -44,7 +44,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::gpuHangCheckPeriod;
     using CommandStreamReceiver::heaplessModeEnabled;
-    using CommandStreamReceiver::heaplessStateInitialized;
+    using CommandStreamReceiver::heaplessPrologProgrammed;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::internalAllocationStorage;
     using CommandStreamReceiver::latestFlushedTaskCount;
@@ -165,7 +165,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         ImmediateDispatchFlags &dispatchFlags,
         Device &device) override;
 
-    CompletionStamp flushImmediateTaskStateless(
+    CompletionStamp flushImmediateTaskHeapless(
         LinearStream &immediateCommandStream,
         size_t immediateCommandStreamStart,
         ImmediateDispatchFlags &dispatchFlags,
@@ -396,7 +396,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::feSupportFlags;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::heaplessModeEnabled;
-    using CommandStreamReceiver::heaplessStateInitialized;
+    using CommandStreamReceiver::heaplessPrologProgrammed;
     using CommandStreamReceiver::heapStorageRequiresRecyclingTag;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::isPreambleSent;

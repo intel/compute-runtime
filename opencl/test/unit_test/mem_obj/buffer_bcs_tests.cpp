@@ -1006,7 +1006,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenp
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr->commandStream);
 
-    auto heaplessStateInit = cmdQ->getHeaplessModeEnabled();
+    auto heaplessPrologProgrammed = cmdQ->getHeaplessModeEnabled();
 
     uint32_t miFlushDwCmdsWithOutputCount = 0;
     bool blitCmdFound = false;
@@ -1016,7 +1016,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenp
                 continue;
             }
 
-            bool correctMiFlushDwCmdsWithOutputCount = heaplessStateInit ? miFlushDwCmdsWithOutputCount == 1 : miFlushDwCmdsWithOutputCount == 0;
+            bool correctMiFlushDwCmdsWithOutputCount = heaplessPrologProgrammed ? miFlushDwCmdsWithOutputCount == 1 : miFlushDwCmdsWithOutputCount == 0;
 
             EXPECT_EQ(correctMiFlushDwCmdsWithOutputCount,
                       timestampPacketGpuWriteAddress == miFlushDwCmd->getDestinationAddress());
@@ -1026,11 +1026,11 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenp
             miFlushDwCmdsWithOutputCount++;
         } else if (genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {
             blitCmdFound = true;
-            EXPECT_EQ(heaplessStateInit ? 1u : 0u, miFlushDwCmdsWithOutputCount);
+            EXPECT_EQ(heaplessPrologProgrammed ? 1u : 0u, miFlushDwCmdsWithOutputCount);
         }
     }
 
-    EXPECT_EQ(heaplessStateInit ? 3u : 2u, miFlushDwCmdsWithOutputCount); // TimestampPacket + taskCount
+    EXPECT_EQ(heaplessPrologProgrammed ? 3u : 2u, miFlushDwCmdsWithOutputCount); // TimestampPacket + taskCount
 
     EXPECT_TRUE(blitCmdFound);
 }

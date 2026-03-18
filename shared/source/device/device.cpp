@@ -636,10 +636,10 @@ bool Device::initializeEngines() {
         }
 
         auto &compilerProductHelper = this->getCompilerProductHelper();
-        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(this->getHardwareInfo());
+        auto heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(this->getHardwareInfo());
 
-        bool isHeaplessStateInit = engine.osContext->getIsPrimaryEngine() && heaplessEnabled;
-        bool initializeDevice = (engine.osContext->isPartOfContextGroup() || isHeaplessStateInit) && !firstSubmissionDone;
+        bool isHeaplessPrologRequired = engine.osContext->getIsPrimaryEngine() && heaplessModeEnabled;
+        bool initializeDevice = (engine.osContext->isPartOfContextGroup() || isHeaplessPrologRequired) && !firstSubmissionDone;
 
         if (initializeDevice) {
             engine.commandStreamReceiver->initializeResources(false, this->getPreemptionMode());

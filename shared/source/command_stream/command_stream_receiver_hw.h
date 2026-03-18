@@ -71,8 +71,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
                                        ImmediateDispatchFlags &dispatchFlags, Device &device) override;
 
-    CompletionStamp flushImmediateTaskStateless(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
-                                                ImmediateDispatchFlags &dispatchFlags, Device &device) override;
+    CompletionStamp flushImmediateTaskHeapless(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
+                                               ImmediateDispatchFlags &dispatchFlags, Device &device) override;
 
     void forcePipeControl(NEO::LinearStream &commandStreamCSR);
 
@@ -201,7 +201,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     MOCKABLE_VIRTUAL void programHeaplessStateProlog(Device &device, LinearStream &commandStream);
     void programStateBaseAddressHeapless(Device &device, LinearStream &commandStream);
     void programComputeModeHeapless(Device &device, LinearStream &commandStream);
-    void handleAllocationsResidencyForflushTaskStateless(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, Device &device);
+    void handleAllocationsResidencyForFlushTaskHeapless(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, Device &device);
     bool submitDependencyUpdate(TagNodeBase *tag) override;
 
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override;

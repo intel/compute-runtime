@@ -2180,7 +2180,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    if (ultCsr.heaplessStateInitialized) {
+    if (ultCsr.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     auto &csrStream = ultCsr.commandStream;

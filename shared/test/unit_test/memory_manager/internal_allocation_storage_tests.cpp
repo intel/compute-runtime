@@ -148,7 +148,7 @@ TEST_F(InternalAllocationStorageTest, whenCompletedAllocationIsStoredAsReusableA
 HWTEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableAndThenCanBeObtained) {
 
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
-    if (ultCsr->heaplessStateInitialized) {
+    if (ultCsr->heaplessPrologProgrammed) {
         ultCsr->taskCount.store(0);
     }
 

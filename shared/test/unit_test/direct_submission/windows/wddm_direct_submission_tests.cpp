@@ -148,8 +148,8 @@ HWTEST_F(WddmDirectSubmissionGlobalFenceTest, givenWddmWhenDirectIsInitializedWi
 
     auto isFenceRequired = device->getGfxCoreHelper().isFenceAllocationRequired(device->getHardwareInfo(), device->getProductHelper());
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto isHeaplessStateInit = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    if (isFenceRequired && !isHeaplessStateInit) {
+    auto heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
+    if (isFenceRequired && !heaplessModeEnabled) {
         EXPECT_EQ(1u, wddm->makeResidentResult.handleCount);
         EXPECT_TRUE(device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation()->isExplicitlyMadeResident());
     }

@@ -22,7 +22,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handleAllocationsResidencyForflushTaskStateless(
+void CommandStreamReceiverHw<GfxFamily>::handleAllocationsResidencyForFlushTaskHeapless(
     const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, Device &device) {
 
     auto &hwInfo = this->peekHwInfo();
@@ -100,12 +100,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
     void *epiloguePipeControlLocation = nullptr;
     this->isWalkerWithProfilingEnqueued |= dispatchFlags.isWalkerWithProfilingEnqueued;
 
-    if (!heaplessStateInitialized) {
-        bool isHeaplessStateInit = EngineHelpers::isCcs(this->osContext->getEngineType());
-        if (isHeaplessStateInit) {
+    if (!heaplessPrologProgrammed) {
+        bool isHeaplessPrologRequired = EngineHelpers::isCcs(this->osContext->getEngineType());
+        if (isHeaplessPrologRequired) {
             initializeDeviceWithFirstSubmission(device);
         }
-        heaplessStateInitialized = true;
+        heaplessPrologProgrammed = true;
     }
     if (this->ucResourceRequiresTagUpdate) {
         this->emitTagUpdateWithoutDCFlush(commandStream);
@@ -146,7 +146,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
 
     addPipeControlFlushTaskIfNeeded(commandStreamCSR, taskLevel);
 
-    handleAllocationsResidencyForflushTaskStateless(dsh, ioh, ssh, device);
+    handleAllocationsResidencyForFlushTaskHeapless(dsh, ioh, ssh, device);
 
     bool submitTask = commandStreamStart != commandStream.getUsed();
     bool submitCSR = commandStreamStartCSR != commandStreamCSR.getUsed();
@@ -202,22 +202,22 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamHeaplessSi
 }
 
 template <typename GfxFamily>
-CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskStateless(
+CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskHeapless(
     LinearStream &immediateCommandStream,
     size_t immediateCommandStreamStart,
     ImmediateDispatchFlags &dispatchFlags,
     Device &device) {
 
     this->isWalkerWithProfilingEnqueued |= dispatchFlags.isWalkerWithProfilingEnqueued;
-    ImmediateFlushData flushData;
+    ImmediateFlushData flushData{};
 
     if (dispatchFlags.dispatchOperation != AppendOperations::cmdList) {
-        if (!heaplessStateInitialized) {
-            bool isHeaplessStateInit = EngineHelpers::isCcs(this->osContext->getEngineType());
-            if (isHeaplessStateInit) {
+        if (!heaplessPrologProgrammed) {
+            bool isHeaplessPrologRequired = EngineHelpers::isCcs(this->osContext->getEngineType());
+            if (isHeaplessPrologRequired) {
                 initializeDeviceWithFirstSubmission(device);
             }
-            heaplessStateInitialized = true;
+            heaplessPrologProgrammed = true;
         }
 
         flushData.stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
@@ -447,7 +447,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
         waitForCompletionWithTimeout({true, false, true, TimeoutControls::maxTimeout}, this->taskCount);
     }
 
-    heaplessStateInitialized = true;
+    heaplessPrologProgrammed = true;
     return status;
 }
 

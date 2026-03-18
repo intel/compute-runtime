@@ -153,24 +153,24 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    auto heaplessStateInit = heapless;
+    auto heaplessPrologProgrammed = heapless;
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::commandBuffer});
-    allocation->updateTaskCount(heaplessStateInit ? 3 : 2, defaultEngine.osContext->getContextId());
+    allocation->updateTaskCount(heaplessPrologProgrammed ? 3 : 2, defaultEngine.osContext->getContextId());
 
     volatile TagAddressType *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();
     completionAddress += (TagAllocationLayout::completionFenceOffset / sizeof(TagAddressType));
-    *completionAddress = heaplessStateInit ? 2 : 1;
+    *completionAddress = heaplessPrologProgrammed ? 2 : 1;
 
     completionAddress += (postSyncOffset / sizeof(TagAddressType));
-    *completionAddress = heaplessStateInit ? 2 : 1;
+    *completionAddress = heaplessPrologProgrammed ? 2 : 1;
 
     memoryManager->handleFenceCompletion(allocation);
 
     uint64_t expectedAddress = castToUint64(const_cast<TagAddressType *>(defaultEngine.commandStreamReceiver->getTagAddress())) +
                                TagAllocationLayout::completionFenceOffset +
                                postSyncOffset;
-    uint64_t expectedValue = heaplessStateInit ? 3 : 2;
+    uint64_t expectedValue = heaplessPrologProgrammed ? 3 : 2;
 
     EXPECT_EQ(2u, mock->waitUserFenceCall.called);
     EXPECT_EQ(expectedAddress, mock->waitUserFenceCall.address);

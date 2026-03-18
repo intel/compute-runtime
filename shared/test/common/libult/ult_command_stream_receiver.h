@@ -141,7 +141,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
     using BaseClass::CommandStreamReceiver::gsbaFor32BitProgrammed;
     using BaseClass::CommandStreamReceiver::heaplessModeEnabled;
-    using BaseClass::CommandStreamReceiver::heaplessStateInitialized;
+    using BaseClass::CommandStreamReceiver::heaplessPrologProgrammed;
     using BaseClass::CommandStreamReceiver::immWritePostSyncWriteOffset;
     using BaseClass::CommandStreamReceiver::initDirectSubmission;
     using BaseClass::CommandStreamReceiver::initializeTagAllocation;
@@ -266,14 +266,14 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return BaseClass::flushImmediateTask(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
     }
 
-    CompletionStamp flushImmediateTaskStateless(LinearStream &immediateCommandStream,
-                                                size_t immediateCommandStreamStart,
-                                                ImmediateDispatchFlags &dispatchFlags,
-                                                Device &device) override {
+    CompletionStamp flushImmediateTaskHeapless(LinearStream &immediateCommandStream,
+                                               size_t immediateCommandStreamStart,
+                                               ImmediateDispatchFlags &dispatchFlags,
+                                               Device &device) override {
         recordedImmediateDispatchFlags = dispatchFlags;
         this->lastFlushedCommandStream = &commandStream;
         this->lastFlushedImmediateCommandStream = &immediateCommandStream;
-        return BaseClass::flushImmediateTaskStateless(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
+        return BaseClass::flushImmediateTaskHeapless(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
     }
 
     CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
@@ -289,7 +289,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     void programHeaplessStateProlog(Device &device, LinearStream &commandStream) override {
-        this->commandStreamHeaplessStateInit = &commandStream;
+        this->commandStreamHeaplessProlog = &commandStream;
         return BaseClass::programHeaplessStateProlog(device, commandStream);
     }
 
@@ -661,7 +661,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     LinearStream *lastFlushedCommandStream = nullptr;
     LinearStream *lastFlushedImmediateCommandStream = nullptr;
     LinearStream *lastFlushedBcsCommandStream = nullptr;
-    LinearStream *commandStreamHeaplessStateInit = nullptr;
+    LinearStream *commandStreamHeaplessProlog = nullptr;
 
     const IndirectHeap *recordedSsh = nullptr;
 

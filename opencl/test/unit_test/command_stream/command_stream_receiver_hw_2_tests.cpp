@@ -786,7 +786,7 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     auto hostAllocationPtr2 = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);
     void *hostPtr2 = reinterpret_cast<void *>(hostAllocationPtr2.get());
 
-    auto expectedCalled = csr.heaplessStateInitialized ? 1u : 0u;
+    auto expectedCalled = csr.heaplessPrologProgrammed ? 1u : 0u;
     EXPECT_EQ(expectedCalled, csr.makeSurfacePackNonResidentCalled);
     auto graphicsAllocation1 = buffer1->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     auto graphicsAllocation2 = buffer2->getGraphicsAllocation(pDevice->getRootDeviceIndex());

@@ -1300,7 +1300,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
         // requestPreallocation is a no-op with pool allocator, skipping one CSR lock
         expectedLockCounter -= 1u;
     }
-    expectedLockCounter += (pDevice->getUltCommandStreamReceiver<FamilyType>().heaplessStateInitialized ? 1 : 0);
+    expectedLockCounter += (pDevice->getUltCommandStreamReceiver<FamilyType>().heaplessPrologProgrammed ? 1 : 0);
 
     EXPECT_EQ(expectedLockCounter, pDevice->getUltCommandStreamReceiver<FamilyType>().recursiveLockCounter);
 }

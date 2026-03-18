@@ -543,7 +543,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     testedCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
     testedCsr->useNewResourceImplicitFlush = false;
     testedCsr->useGpuIdleImplicitFlush = false;
-    testedCsr->heaplessStateInitialized = true;
+    testedCsr->heaplessPrologProgrammed = true;
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto dummyAllocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -617,7 +617,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     testedCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
     testedCsr->useNewResourceImplicitFlush = false;
     testedCsr->useGpuIdleImplicitFlush = false;
-    testedCsr->heaplessStateInitialized = true;
+    testedCsr->heaplessPrologProgrammed = true;
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap cs(commandBuffer);
@@ -955,7 +955,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     testedCsr->stopDirectSubmission(false, false);
     testedCsr->completionFenceValuePointer = nullptr;
     testedCsr->directSubmission = std::make_unique<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver);
-    testedCsr->heaplessStateInitialized = true;
+    testedCsr->heaplessPrologProgrammed = true;
     auto oldMemoryOperationsInterface = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.release();
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandlerDefault>(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get(), device->getRootDeviceIndex());
     static_cast<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType> *>(testedCsr->directSubmission.get())->dispatchCommandBufferResult = true;
@@ -985,7 +985,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     testedCsr->stopDirectSubmission(false, false);
     testedCsr->completionFenceValuePointer = nullptr;
     testedCsr->directSubmission = std::make_unique<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver);
-    testedCsr->heaplessStateInitialized = true;
+    testedCsr->heaplessPrologProgrammed = true;
     auto oldMemoryOperationsInterface = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.release();
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandlerDefault>(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get(), device->getRootDeviceIndex());
 

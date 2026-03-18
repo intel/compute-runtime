@@ -166,7 +166,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, UltCommandStreamReceiverTest, givenMediaVfeStateD
 
 HWTEST_F(UltCommandStreamReceiverTest, givenCommandStreamReceiverInInitialStateWhenHeapsAreAskedForDirtyStatusThenTrueIsReturned) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -1108,7 +1108,7 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramCorre
     // First submission with global state
     flushBcsTask(&csr, blitProperties, false, *pDevice);
 
-    if (csr.heaplessStateInitialized) {
+    if (csr.heaplessPrologProgrammed) {
         EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasStallingCmds);
         EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
     } else {
@@ -1199,7 +1199,7 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenTagUpdateWhenFlushingThenDisableRelaxedO
     // First submission with global state
     flushBcsTask(&csr, blitProperties, false, *pDevice);
 
-    if (csr.heaplessStateInitialized) {
+    if (csr.heaplessPrologProgrammed) {
         EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasStallingCmds);
         EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
     } else {
@@ -1242,7 +1242,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     uint32_t newTaskCount = 19;
     csr.taskCount = newTaskCount - 1;
     uint32_t expectedResursiveLockCount = csr.resourcesInitialized ? 1u : 0u;
-    if (csr.heaplessStateInitialized) {
+    if (csr.heaplessPrologProgrammed) {
         expectedResursiveLockCount++;
     }
 

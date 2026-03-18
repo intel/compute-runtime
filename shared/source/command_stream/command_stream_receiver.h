@@ -120,8 +120,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
                                                ImmediateDispatchFlags &dispatchFlags, Device &device) = 0;
 
-    virtual CompletionStamp flushImmediateTaskStateless(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
-                                                        ImmediateDispatchFlags &dispatchFlags, Device &device) = 0;
+    virtual CompletionStamp flushImmediateTaskHeapless(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
+                                                       ImmediateDispatchFlags &dispatchFlags, Device &device) = 0;
     virtual SubmissionStatus sendRenderStateCacheFlush() = 0;
 
     virtual bool flushBatchedSubmissions() = 0;
@@ -770,7 +770,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool dcFlushSupport = false;
     bool forceSkipResourceCleanupRequired = false;
     bool resourcesInitialized = false;
-    bool heaplessStateInitialized = false;
+    bool heaplessPrologProgrammed = false;
     bool doubleSbaWa = false;
     bool dshSupported = false;
     bool heaplessModeEnabled = false;

@@ -152,7 +152,7 @@ using MemorySynchronizationViaMiSemaphoreWaitTestXe3pCore = MemorySynchronizatio
 XE3P_CORETEST_F(MemorySynchronizationViaMiSemaphoreWaitTestXe3pCore, givenMemorySynchronizationViaMiSemaphoreWaitWhenProgramEnginePrologueIsCalledThenNoCommandIsProgrammed) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
         commandStreamReceiver.isEnginePrologueSent = false;
     } else {
@@ -188,7 +188,7 @@ using SystemMemoryFenceViaMiMemFenceTestXe3pCore = SystemMemoryFenceViaMiMemFenc
 XE3P_CORETEST_F(SystemMemoryFenceViaMiMemFenceTestXe3pCore, givenCommadStreamReceiverWhenProgramEnginePrologueIsCalledThenIsEnginePrologueSentIsSetToTrue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized, commandStreamReceiver.isEnginePrologueSent);
+    EXPECT_EQ(commandStreamReceiver.heaplessPrologProgrammed, commandStreamReceiver.isEnginePrologueSent);
     commandStreamReceiver.isEnginePrologueSent = false;
     auto requiredSize = commandStreamReceiver.getCmdSizeForPrologue();
     StackVec<char, 4096> buffer(requiredSize);
@@ -202,7 +202,7 @@ XE3P_CORETEST_F(SystemMemoryFenceViaMiMemFenceTestXe3pCore, givenIsEnginePrologu
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized, commandStreamReceiver.isEnginePrologueSent);
+    EXPECT_EQ(commandStreamReceiver.heaplessPrologProgrammed, commandStreamReceiver.isEnginePrologueSent);
     commandStreamReceiver.isEnginePrologueSent = false;
 
     auto sizeForEnginePrologue = commandStreamReceiver.getCmdSizeForPrologue();
@@ -317,7 +317,7 @@ using Xe3pCommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
 XE3P_CORETEST_F(Xe3pCommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode) {
     DebugManagerStateRestore restore;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -337,7 +337,7 @@ XE3P_CORETEST_F(Xe3pCommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhen
     LinearStream stream(buff, 1024);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restore;

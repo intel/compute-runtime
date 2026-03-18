@@ -884,7 +884,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return cs;
     }
 
-    CompletionStamp flushImmediateTaskStateless(
+    CompletionStamp flushImmediateTaskHeapless(
         LinearStream &immediateCommandStream,
         size_t immediateCommandStreamStart,
         ImmediateDispatchFlags &dispatchFlags,

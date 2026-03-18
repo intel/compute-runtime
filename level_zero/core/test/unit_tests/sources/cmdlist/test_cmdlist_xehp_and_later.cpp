@@ -1841,7 +1841,7 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csrImmediate.storeMakeResidentAllocations = true;
-    if (csrImmediate.heaplessStateInitialized) {
+    if (csrImmediate.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     auto &csrStream = csrImmediate.commandStream;

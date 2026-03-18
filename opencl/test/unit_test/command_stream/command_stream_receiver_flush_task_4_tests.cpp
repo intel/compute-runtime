@@ -747,7 +747,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnqueueWithoutArbitrationPoli
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 

@@ -1089,7 +1089,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedOutOfOrderQueueWhenUserEventIsSubmitted
     clSetUserEventStatus(userEvent, 0u);
 
     EXPECT_EQ(neoEvent->peekExecutionStatus(), CL_SUBMITTED);
-    EXPECT_EQ(neoEvent->peekTaskCount(), mockCsr.heaplessStateInitialized ? 2u : 1u);
+    EXPECT_EQ(neoEvent->peekTaskCount(), mockCsr.heaplessPrologProgrammed ? 2u : 1u);
 
     *mockCsr.getTagAddress() = initialHardwareTag;
     clReleaseEvent(blockedEvent);
@@ -1565,7 +1565,7 @@ HWTEST_F(CommandQueueHwTest, givenDirectSubmissionAndSharedDisplayableImageWhenR
     ultCsr.callBaseSendRenderStateCacheFlush = true;
     EXPECT_FALSE(ultCsr.renderStateCacheFlushed);
 
-    const auto taskCountBefore = mockCmdQueueHw.taskCount + (ultCsr.heaplessStateInitialized ? 1u : 0u);
+    const auto taskCountBefore = mockCmdQueueHw.taskCount + (ultCsr.heaplessPrologProgrammed ? 1u : 0u);
     const auto finishCalledBefore = mockCmdQueueHw.finishCalledCount;
     result = mockCmdQueueHw.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
     EXPECT_EQ(result, CL_SUCCESS);

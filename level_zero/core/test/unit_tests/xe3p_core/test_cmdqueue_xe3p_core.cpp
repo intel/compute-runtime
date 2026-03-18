@@ -81,7 +81,7 @@ XE3P_CORETEST_F(CommandQueueScratchTestsXe3p, givenImplicitArgsScratchWhenPatchC
 
 using CommandQueueIndirectAllocationsXe3p = Test<ModuleFixture>;
 
-XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithIndirectAccessAndHeaplessStateInitWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessCalled) {
+XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithIndirectAccessAndHeaplessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessCalled) {
 
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -112,7 +112,7 @@ XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithIndirectAccessA
     commandQueue->destroy();
 }
 
-XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithNoIndirectAccessAndHeaplessStateInitWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessNotCalled) {
+XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithNoIndirectAccessAndHeaplessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessNotCalled) {
 
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -422,7 +422,7 @@ XE3P_CORETEST_F(CommandQueueWithAssertXe3p, givenCmdListWithAssertAndStateHeaple
 
 using CommandQueueWithXe3p = Test<DeviceFixture>;
 
-XE3P_CORETEST_F(CommandQueueWithXe3p, givenHeaplessStateInitAndNonDefaultCsrWhenExecutingCmdListsForTheFirstTimeThenHeaplessPrologIsSent) {
+XE3P_CORETEST_F(CommandQueueWithXe3p, givenHeaplessAndNonDefaultCsrWhenExecutingCmdListsForTheFirstTimeThenHeaplessPrologIsSent) {
 
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
 
@@ -451,7 +451,7 @@ XE3P_CORETEST_F(CommandQueueWithXe3p, givenHeaplessStateInitAndNonDefaultCsrWhen
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
     ctx.pipelineCmdsDispatch = false;
-    EXPECT_FALSE(reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->heaplessStateInitialized);
+    EXPECT_FALSE(reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->heaplessPrologProgrammed);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
 
@@ -460,7 +460,7 @@ XE3P_CORETEST_F(CommandQueueWithXe3p, givenHeaplessStateInitAndNonDefaultCsrWhen
         FamilyType::Parse::parseCommandBuffer(cmdList, csr->getCS().getCpuBase(), csr->getCS().getUsed());
         auto memFence = findAll<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(cmdList.begin(), cmdList.end());
         EXPECT_EQ(1u, memFence.size());
-        EXPECT_TRUE(reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->heaplessStateInitialized);
+        EXPECT_TRUE(reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->heaplessPrologProgrammed);
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
 
@@ -474,7 +474,7 @@ XE3P_CORETEST_F(CommandQueueWithXe3p, givenHeaplessStateInitAndNonDefaultCsrWhen
 
 using CommandListExecuteImmediateXe3p = Test<DeviceFixture>;
 
-XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitWhenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned) {
+XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessWhenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned) {
 
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
@@ -485,7 +485,7 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitWhenExecu
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::kernel, false, false, nullptr, nullptr));
 }
 
-XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitWhenExecutingCommandListImmediateNonKernelOperationWithFlushTaskThenSuccessIsReturned) {
+XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessWhenExecutingCommandListImmediateNonKernelOperationWithFlushTaskThenSuccessIsReturned) {
 
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
@@ -496,7 +496,7 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitWhenExecu
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
 }
 
-XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitAndRegisterInstructionCacheFlushWhenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned) {
+XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndRegisterInstructionCacheFlushWhenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned) {
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -529,7 +529,7 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitAndRegist
     EXPECT_FALSE(commandListImmediate.getCsr(false)->isInstructionCacheFlushRequired());
 }
 
-XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessStateInitAndStateCacheDirtyWhenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned) {
+XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndStateCacheDirtyWhenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned) {
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 

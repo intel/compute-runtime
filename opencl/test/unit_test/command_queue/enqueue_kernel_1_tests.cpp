@@ -945,13 +945,13 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
     csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
     auto isWalkerPostSyncSkipEnabled = pDevice->getGfxCoreHelper().isWalkerPostSyncSkipEnabled(pDevice->getProductHelper().isResolveDependenciesByPipeControlsSupported());
-    size_t timestampPacketSurfacesCount = (!isWalkerPostSyncSkipEnabled && mockCsr->peekTimestampPacketWriteEnabled() && !mockCsr->heaplessStateInitialized) ? 1 : 0;
+    size_t timestampPacketSurfacesCount = (!isWalkerPostSyncSkipEnabled && mockCsr->peekTimestampPacketWriteEnabled() && !mockCsr->heaplessPrologProgrammed) ? 1 : 0;
     size_t fenceSurfaceCount = mockCsr->globalFenceAllocation ? 1 : 0;
     size_t clearColorSize = mockCsr->clearColorAllocation ? 1 : 0;
     size_t commandBufferCount = pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0 ? 0 : 1;
     size_t rtSurface = pDevice->getRTMemoryBackedBuffer() ? 1u : 0u;
 
-    EXPECT_EQ(mockCsr->heaplessStateInitialized ? 1u : 0u, mockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 1u : 0u, mockCsr->flushCalledCount);
     EXPECT_EQ(4u + csrSurfaceCount + timestampPacketSurfacesCount + fenceSurfaceCount + clearColorSize + commandBufferCount + rtSurface, cmdBuffer->surfaces.size());
 }
 
@@ -1067,7 +1067,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverIn
     EXPECT_EQ(CL_SUCCESS, ret);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    EXPECT_EQ(mockCsrmockCsr->heaplessStateInitialized ? 2u : 1u, mockCsrmockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsrmockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsrmockCsr->flushCalledCount);
 }
 
 HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverInBatchingModeAndBatchedKernelWhenFlushIsCalledTwiceThenNothingChanges) {
@@ -1087,7 +1087,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverIn
     EXPECT_EQ(CL_SUCCESS, ret);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    EXPECT_EQ(mockCsrmockCsr->heaplessStateInitialized ? 2u : 1u, mockCsrmockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsrmockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsrmockCsr->flushCalledCount);
 }
 
 HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIsEnqueuedTwiceThenTwoSubmissionsAreRecorded) {
@@ -1137,7 +1137,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverIn
     pCmdQ->flush();
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    EXPECT_EQ(mockCsr->heaplessStateInitialized ? 2u : 1u, mockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 }
 
 HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, EnqueueKernelTestWithMockCsrHw2, givenTwoEnqueueProgrammedWithinSameCommandBufferWhenBatchedThenNoBBSBetweenThem) {
@@ -1183,7 +1183,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
     pCmdQ->finish(false);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    EXPECT_EQ(mockCsr->heaplessStateInitialized ? 2u : 1u, mockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 }
 
 HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenThressEnqueueKernelsAreCalledThenBatchesSubmissionsAreFlushed) {
@@ -1208,7 +1208,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenTh
     pCmdQ->finish(false);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    EXPECT_EQ(mockCsr->heaplessStateInitialized ? 2u : 1u, mockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 }
 
 HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenWaitForEventsIsCalledThenBatchedSubmissionsAreFlushed) {
@@ -1232,7 +1232,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenWa
 
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    EXPECT_EQ(mockCsr->heaplessStateInitialized ? 2u : 1u, mockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 
     status = clReleaseEvent(event);
     EXPECT_EQ(CL_SUCCESS, status);
@@ -1258,7 +1258,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenCo
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
     auto neoEvent = castToObject<Event>(event);
 
-    auto expectedStamp = mockCsr->heaplessStateInitialized ? 1u : 0u;
+    auto expectedStamp = mockCsr->heaplessPrologProgrammed ? 1u : 0u;
     EXPECT_EQ(expectedStamp, mockCsr->flushStamp->peekStamp());
     EXPECT_EQ(expectedStamp, neoEvent->flushStamp->peekStamp());
     EXPECT_EQ(expectedStamp, pCmdQ->flushStamp->peekStamp());
@@ -1293,7 +1293,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenNo
 
     pCmdQ->flush();
     auto neoEvent = castToObject<Event>(event);
-    EXPECT_EQ(mockCsr->heaplessStateInitialized ? 2u : 1u, neoEvent->flushStamp->peekStamp());
+    EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, neoEvent->flushStamp->peekStamp());
     clReleaseEvent(event);
 }
 
@@ -1316,7 +1316,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenCo
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     auto neoEvent = castToObject<Event>(event);
 
-    auto expectedStamp = mockCsr->heaplessStateInitialized ? 1u : 0u;
+    auto expectedStamp = mockCsr->heaplessPrologProgrammed ? 1u : 0u;
     EXPECT_EQ(expectedStamp, mockCsr->flushStamp->peekStamp());
     EXPECT_EQ(expectedStamp, neoEvent->flushStamp->peekStamp());
     EXPECT_EQ(expectedStamp, pCmdQ->flushStamp->peekStamp());
@@ -1348,7 +1348,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenCl
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    auto expectedStamp = mockCsr->heaplessStateInitialized ? 1u : 0u;
+    auto expectedStamp = mockCsr->heaplessPrologProgrammed ? 1u : 0u;
     EXPECT_EQ(expectedStamp, mockCsr->flushStamp->peekStamp());
     EXPECT_EQ(expectedStamp, pCmdQ->flushStamp->peekStamp());
 
@@ -1376,7 +1376,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenWa
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 
-    auto expectedFlushCalledCount = mockCsr->heaplessStateInitialized ? 2u : 1u;
+    auto expectedFlushCalledCount = mockCsr->heaplessPrologProgrammed ? 2u : 1u;
     if (mockCsr->isUpdateTagFromWaitEnabled()) {
         expectedFlushCalledCount++;
     }
@@ -1408,7 +1408,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
 
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    EXPECT_EQ(mockCsr->heaplessStateInitialized ? 2u : 1u, mockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 
     status = clReleaseEvent(event);
     EXPECT_EQ(CL_SUCCESS, status);
@@ -1611,7 +1611,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenBl
     cl_event event;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
     auto neoEvent = castToObject<Event>(event);
-    auto expectedCount = mockCsr->heaplessStateInitialized ? 2u : 1u;
+    auto expectedCount = mockCsr->heaplessPrologProgrammed ? 2u : 1u;
 
     EXPECT_EQ(expectedCount, neoEvent->flushStamp->peekStamp());
 
@@ -1631,7 +1631,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenKernelWhenItIsEnqueuedT
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_EQ(mockCsr->heaplessStateInitialized ? 2u : 1u, mockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 
     auto csrTaskCount = mockCsr->peekTaskCount();
     auto &passedAllocationPack = mockCsr->copyOfAllocations;
@@ -1878,7 +1878,7 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        heaplessStateInit = heapless;
+        heaplessPrologProgrammed = heapless;
     }
 
     template <typename FamilyType>
@@ -2043,7 +2043,7 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
     uint32_t pipeControlAfterWalkerFound = 0;
     uint32_t loadRegImmsFound = 0;
     uint32_t pipeControlsBeforeLoadRegImm = 0;
-    bool heaplessStateInit = false;
+    bool heaplessPrologProgrammed = false;
 };
 
 HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInsertPauseCommandsAroundSpecifiedEnqueue) {
@@ -2092,7 +2092,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetToMinusTwoWhenDispatchWalker
 }
 
 HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeOnlyWhenDispatchingThenInsertPauseOnlyBeforeEnqueue) {
-    if (heaplessStateInit) {
+    if (heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     debugManager.flags.PauseOnEnqueue.set(0);
@@ -2117,7 +2117,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeOnlyWhenDispatchingThenInsert
 
 HWTEST_F(PauseOnGpuTests, givenPauseModeSetToAfterOnlyWhenDispatchingThenInsertPauseOnlyAfterEnqueue) {
 
-    if (heaplessStateInit) {
+    if (heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -2142,7 +2142,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToAfterOnlyWhenDispatchingThenInsertP
 }
 
 HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenInsertPauseAroundEnqueue) {
-    if (heaplessStateInit) {
+    if (heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     debugManager.flags.PauseOnEnqueue.set(0);

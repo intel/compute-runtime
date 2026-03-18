@@ -1094,17 +1094,17 @@ HWTEST_F(TimestampPacketTests, givenEventWhenReleasingThenCheckQueueResources) {
     cmdQ->flush();
 
     auto tagAddress = csr.getTagAddress();
-    *tagAddress = csr.heaplessStateInitialized ? 2 : 1;
+    *tagAddress = csr.heaplessPrologProgrammed ? 2 : 1;
 
-    EXPECT_EQ(csr.heaplessStateInitialized ? 3u : 2u, csr.taskCount);
-    EXPECT_EQ(csr.heaplessStateInitialized ? 3u : 2u, cmdQ->taskCount);
+    EXPECT_EQ(csr.heaplessPrologProgrammed ? 3u : 2u, csr.taskCount);
+    EXPECT_EQ(csr.heaplessPrologProgrammed ? 3u : 2u, cmdQ->taskCount);
 
     clWaitForEvents(1, &clEvent);
 
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(expectedTimestampPacketNodes, timestampPacketContainer->peekNodes().size());
 
-    *tagAddress = csr.heaplessStateInitialized ? 3 : 2;
+    *tagAddress = csr.heaplessPrologProgrammed ? 3 : 2;
 
     clReleaseEvent(clEvent);
 

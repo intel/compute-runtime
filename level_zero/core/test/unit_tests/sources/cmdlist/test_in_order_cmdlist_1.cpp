@@ -255,7 +255,7 @@ HWTEST_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCou
     auto immCmdList1 = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-    bool heapless = ultCsr->heaplessStateInitialized;
+    bool heapless = ultCsr->heaplessPrologProgrammed;
     auto mockAlloc = std::make_unique<MockGraphicsAllocation>();
 
     auto internalAllocStorage = ultCsr->getInternalAllocationStorage();
@@ -2505,9 +2505,9 @@ HWTEST_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingFromDifferentCm
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
-    auto heaplessStateInit = ultCsr->heaplessStateInitialized;
+    auto heaplessPrologProgrammed = ultCsr->heaplessPrologProgrammed;
 
-    if (heaplessStateInit) {
+    if (heaplessPrologProgrammed) {
         EXPECT_NE(nullptr, immCmdList1->inOrderExecInfo->getHostCounterAllocation());
         EXPECT_NE(nullptr, immCmdList2->inOrderExecInfo->getHostCounterAllocation());
     } else {

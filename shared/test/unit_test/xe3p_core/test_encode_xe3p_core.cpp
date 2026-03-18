@@ -439,7 +439,7 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenScratchRequiredPatchingDisabledWh
     EXPECT_EQ(expectedAddress, scratchAddressProgrammed);
 }
 
-XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessStateInitAndScratchRequiredWhenEncodeComputeWalker2ThenInlineDataContainCorrectScratchAddress) {
+XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessAndScratchRequiredWhenEncodeComputeWalker2ThenInlineDataContainCorrectScratchAddress) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restore;

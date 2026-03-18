@@ -395,7 +395,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
 
     auto currentCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
 
-    if (reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(currentCsr)->heaplessStateInitialized) {
+    if (reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(currentCsr)->heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -453,7 +453,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
     desc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
 
     auto currentCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
-    if (reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(currentCsr)->heaplessStateInitialized) {
+    if (reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(currentCsr)->heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -1125,8 +1125,8 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     // 1st call then initialize registers
     GenCmdList cmdList;
 
-    if (csr->commandStreamHeaplessStateInit) {
-        ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(csr->commandStreamHeaplessStateInit->getCpuBase(), 0), csr->commandStreamHeaplessStateInit->getUsed()));
+    if (csr->commandStreamHeaplessProlog) {
+        ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(csr->commandStreamHeaplessProlog->getCpuBase(), 0), csr->commandStreamHeaplessProlog->getUsed()));
     } else {
         ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore1stExecute), usedSpaceOn1stExecute));
     }

@@ -291,7 +291,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -498,7 +498,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
     mockCsr->flushCalledCount = 0;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -526,7 +526,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenBufferToFlushWhenFlushTaskCalledThenUpdateFlushStamp) {
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     commandStream.getSpace(1);
     EXPECT_EQ(0u, mockCsr->flushCalledCount);
@@ -561,7 +561,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
@@ -593,7 +593,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenUpdat
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
@@ -688,7 +688,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenUpdat
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTaskIsCalledThenFlushedTaskCountIsModifed) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
-    bool heaplessStateInit = commandQueue.getHeaplessModeEnabled();
+    bool heaplessPrologProgrammed = commandQueue.getHeaplessModeEnabled();
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
@@ -698,8 +698,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTask
 
     flushTaskMethod<FamilyType>(csr, commandStream, 0, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
 
-    EXPECT_EQ(heaplessStateInit ? 2u : 1u, csr.peekLatestSentTaskCount());
-    EXPECT_EQ(heaplessStateInit ? 2u : 1u, csr.peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessPrologProgrammed ? 2u : 1u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(heaplessPrologProgrammed ? 2u : 1u, csr.peekLatestFlushedTaskCount());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTaskIsCalledGivenNumberOfTimesThenFlushIsCalled) {
@@ -721,21 +721,21 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
 
     flushTaskMethod<FamilyType>(csr, commandStream, 0, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
 
-    EXPECT_EQ(csr.heaplessStateInitialized ? 2u : 1u, csr.peekLatestSentTaskCount());
-    EXPECT_EQ(csr.heaplessStateInitialized ? 2u : 0u, csr.peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr.heaplessPrologProgrammed ? 2u : 1u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(csr.heaplessPrologProgrammed ? 2u : 0u, csr.peekLatestFlushedTaskCount());
     dispatchFlags.implicitFlush = false;
 
     flushTaskMethod<FamilyType>(csr, commandStream, 0, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
 
-    EXPECT_EQ(csr.heaplessStateInitialized ? 3u : 2u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(csr.heaplessPrologProgrammed ? 3u : 2u, csr.peekLatestSentTaskCount());
     EXPECT_EQ(2u, csr.peekLatestFlushedTaskCount());
 
     dispatchFlags.implicitFlush = false;
 
     flushTaskMethod<FamilyType>(csr, commandStream, 0, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
 
-    EXPECT_EQ(csr.heaplessStateInitialized ? 4u : 3u, csr.peekLatestSentTaskCount());
-    EXPECT_EQ(csr.heaplessStateInitialized ? 4u : 2u, csr.peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr.heaplessPrologProgrammed ? 4u : 3u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(csr.heaplessPrologProgrammed ? 4u : 2u, csr.peekLatestFlushedTaskCount());
 }
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrInBatchingModeWhenWaitForTaskCountIsCalledWithTaskCountThatWasNotYetFlushedThenBatchedCommandBuffersAreSubmitted) {
@@ -749,7 +749,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -791,7 +791,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->getResidencyAllocations().clear();
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -833,7 +833,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->getResidencyAllocations().clear();
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -902,7 +902,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -962,7 +962,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1691,7 +1691,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispa
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1724,7 +1724,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispa
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1773,7 +1773,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispa
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1856,7 +1856,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispa
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);

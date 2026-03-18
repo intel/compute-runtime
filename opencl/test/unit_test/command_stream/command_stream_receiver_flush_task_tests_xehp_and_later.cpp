@@ -111,7 +111,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     if constexpr (FamilyType::isHeaplessRequired() == false) {
         using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-        if (commandStreamReceiver.heaplessStateInitialized) {
+        if (commandStreamReceiver.heaplessPrologProgrammed) {
             GTEST_SKIP();
         }
 
@@ -138,7 +138,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
         using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-        if (commandStreamReceiver.heaplessStateInitialized) {
+        if (commandStreamReceiver.heaplessPrologProgrammed) {
             GTEST_SKIP();
         }
 
@@ -323,7 +323,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenCommandStreamReceiverWithInstructionCacheRequestWhenFlushTaskIsCalledThenPipeControlWithInstructionCacheIsEmitted) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     auto startRecursiveLockCounter = commandStreamReceiver.recursiveLockCounter.load();
@@ -366,7 +366,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
     debugManager.flags.FlushAllCaches.set(true);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.isPreambleSent = true;
@@ -468,7 +468,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
         auto l1CacheOnMocs = gmmHelper->getL1EnabledMOCS();
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-        if (commandStreamReceiver.heaplessStateInitialized) {
+        if (commandStreamReceiver.heaplessPrologProgrammed) {
             GTEST_SKIP();
         }
 
@@ -494,7 +494,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
-    commandStreamReceiver->heaplessStateInitialized = true;
+    commandStreamReceiver->heaplessPrologProgrammed = true;
 
     // Configure the CSR to not need to submit any state or commands
     configureCSRtoNonDirtyState<FamilyType>(true);
@@ -544,7 +544,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
     auto &commandStream = commandQueue.getCS(4096u);
 
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     configureCSRtoNonDirtyState<FamilyType>(true);
 
@@ -606,7 +606,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->getResidencyAllocations().clear();
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -671,7 +671,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
 
 HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw2, givenNothingToFlushWhenFlushTaskCalledThenDontFlushStamp) {
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
-    mockCsr->heaplessStateInitialized = true;
+    mockCsr->heaplessPrologProgrammed = true;
 
     configureCSRtoNonDirtyState<FamilyType>(true);
 
@@ -686,7 +686,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenEpilogueRequiredFlagWhenTaskIsSubmittedDirectlyThenItPointsBackToCsr) {
     configureCSRtoNonDirtyState<FamilyType>(true);
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -841,7 +841,7 @@ struct CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests : public Command
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleStaticActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOnAndActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -865,7 +865,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     debugManager.flags.UpdateTaskCountFromWait.set(3);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -884,7 +884,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenSingleStaticActivePartitionWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.activePartitions = 1;
@@ -907,7 +907,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     debugManager.flags.UpdateTaskCountFromWait.set(3);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -939,7 +939,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleDynamicActivePartitionsWhenFlushingTaskTwiceThenExpectTagUpdatePipeControlWithoutPartitionFlagAndPartitionRegisters) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.activePartitions = 2;
@@ -961,7 +961,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     debugManager.flags.UpdateTaskCountFromWait.set(1);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.activePartitions = 2;
@@ -976,7 +976,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleStaticActivePartitionsAndDirectSubmissionActiveWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOnAndNoActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.directSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(commandStreamReceiver);

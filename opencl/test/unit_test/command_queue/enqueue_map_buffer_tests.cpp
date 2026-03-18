@@ -54,7 +54,7 @@ struct EnqueueMapBufferTest : public ClDeviceFixture,
 
         auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
         auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        heaplessStateInit = heapless;
+        heaplessPrologProgrammed = heapless;
     }
 
     void TearDown() override {
@@ -67,7 +67,7 @@ struct EnqueueMapBufferTest : public ClDeviceFixture,
     cl_int retVal = CL_SUCCESS;
     Buffer *buffer = nullptr;
     char srcMemory[128];
-    bool heaplessStateInit = false;
+    bool heaplessPrologProgrammed = false;
 };
 
 TEST_F(EnqueueMapBufferTest, GivenBufferAddressesWhenMappingBufferThenCpuAndGpuAddressAreEqualWhenZeroCopyIsUsed) {
@@ -310,7 +310,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
 
     auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
     TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
-    auto expectedTaskCount = this->heaplessStateInit ? 1u : 0u;
+    auto expectedTaskCount = this->heaplessPrologProgrammed ? 1u : 0u;
 
     EXPECT_EQ(expectedTaskCount, taskCount);
 
@@ -345,7 +345,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
 
     auto neoEvent = castToObject<Event>(mapEventReturned);
     // if task count of csr is higher then event task count with proper dc flushing then we are fine
-    auto expectedStamp = this->heaplessStateInit ? 2u : 1u;
+    auto expectedStamp = this->heaplessPrologProgrammed ? 2u : 1u;
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         expectedStamp++;
     }
@@ -428,7 +428,7 @@ TEST_F(EnqueueMapBufferTest, givenNonReadOnlyBufferWhenMappedOnGpuThenSetValidEv
     EXPECT_NE(nullptr, buffer.get());
 
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
-    auto expectedTaskCount = this->heaplessStateInit ? 1u : 0u;
+    auto expectedTaskCount = this->heaplessPrologProgrammed ? 1u : 0u;
     EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekTaskCount());
 
     auto ptrResult = clEnqueueMapBuffer(pCmdQ, buffer.get(), CL_FALSE, CL_MAP_WRITE, 0, 8, 0,
@@ -528,7 +528,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedT
 
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
     TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
-    auto expectedTaskCount = this->heaplessStateInit ? 1u : 0u;
+    auto expectedTaskCount = this->heaplessPrologProgrammed ? 1u : 0u;
 
     EXPECT_EQ(expectedTaskCount, taskCount);
 
@@ -608,7 +608,7 @@ HWTEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsC
     auto pBuffer = castToObject<Buffer>(buffer);
     ASSERT_FALSE(pBuffer->isMemObjZeroCopy());
 
-    auto expectedTaskCount = this->heaplessStateInit ? 1u : 0u;
+    auto expectedTaskCount = this->heaplessPrologProgrammed ? 1u : 0u;
 
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
 
@@ -746,7 +746,7 @@ TEST_F(EnqueueMapBufferTest, GivenZeroCopyBufferWhenMapBufferWithoutEventsThenCo
     EXPECT_NE(nullptr, ptrResult);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto expectedTaskCount = this->heaplessStateInit ? 1u : 0u;
+    auto expectedTaskCount = this->heaplessPrologProgrammed ? 1u : 0u;
     EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
 
     clReleaseMemObject(buffer);

@@ -2617,7 +2617,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &cmdQueueStream = commandQueue->commandStream;
-    if (ultCsr->heaplessStateInitialized) {
+    if (ultCsr->heaplessPrologProgrammed) {
         EXPECT_NE(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
     } else {
         EXPECT_EQ(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
@@ -2664,7 +2664,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
 
     auto &cmdQueueStream = commandQueue->commandStream;
 
-    if (ultCsr->heaplessStateInitialized) {
+    if (ultCsr->heaplessPrologProgrammed) {
         EXPECT_NE(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
     } else {
         EXPECT_EQ(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);

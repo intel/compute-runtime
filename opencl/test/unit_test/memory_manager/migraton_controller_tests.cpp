@@ -33,7 +33,7 @@ struct MigrationControllerTests : public ::testing::Test {
         }
         auto &compilerProductHelper = context.getDevice(0)->getCompilerProductHelper();
         auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        heaplessStateInit = heapless;
+        heaplessPrologProgrammed = heapless;
     }
     void TearDown() override {
     }
@@ -41,7 +41,7 @@ struct MigrationControllerTests : public ::testing::Test {
     CommandStreamReceiver *pCsr0 = nullptr;
     CommandStreamReceiver *pCsr1 = nullptr;
     MockMemoryManager *memoryManager = nullptr;
-    bool heaplessStateInit = false;
+    bool heaplessPrologProgrammed = false;
 };
 
 HWTEST_F(MigrationControllerTests, givenAllocationWithUndefinedLocationWhenHandleMigrationThenNoMigrationIsPerformedAndProperLocationIsSet) {

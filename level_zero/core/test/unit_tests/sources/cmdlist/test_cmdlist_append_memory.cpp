@@ -461,7 +461,7 @@ HWTEST_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemor
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
-    bool heaplessStateInit = ultCsr->heaplessStateInitialized;
+    bool heaplessPrologProgrammed = ultCsr->heaplessPrologProgrammed;
     auto cmdQueue = std::make_unique<Mock<CommandQueue>>();
     cmdQueue->csr = ultCsr;
     cmdQueue->isCopyOnlyCommandQueue = true;
@@ -484,7 +484,7 @@ HWTEST_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemor
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    if (heaplessStateInit) {
+    if (heaplessPrologProgrammed) {
         EXPECT_NE(0u, ultCsr->getCS(0).getUsed());
     } else {
         EXPECT_EQ(0u, ultCsr->getCS(0).getUsed());
@@ -573,7 +573,7 @@ HWTEST_F(AppendMemoryCopyTests, givenSyncImmediateCommandListWhenAppendingMemory
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
-    bool heaplessStateInit = ultCsr->heaplessStateInitialized;
+    bool heaplessPrologProgrammed = ultCsr->heaplessPrologProgrammed;
 
     auto cmdQueue = std::make_unique<Mock<CommandQueue>>();
     cmdQueue->csr = ultCsr;
@@ -594,7 +594,7 @@ HWTEST_F(AppendMemoryCopyTests, givenSyncImmediateCommandListWhenAppendingMemory
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    if (heaplessStateInit) {
+    if (heaplessPrologProgrammed) {
         EXPECT_NE(0u, ultCsr->getCS(0).getUsed());
 
     } else {

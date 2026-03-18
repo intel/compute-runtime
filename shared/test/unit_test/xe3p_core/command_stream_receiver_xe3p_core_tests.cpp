@@ -132,7 +132,7 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, WhenFlushingImmediateTaskStateles
     auto graphicsAllocation = std::make_unique<MockGraphicsAllocation>(cmdBuffer, cmdBufferGpuAddress, bufferSize);
     cmdStream.replaceGraphicsAllocation(graphicsAllocation.get());
 
-    csr.flushImmediateTaskStateless(cmdStream, 0, csr.recordedImmediateDispatchFlags, *device);
+    csr.flushImmediateTaskHeapless(cmdStream, 0, csr.recordedImmediateDispatchFlags, *device);
 
     EXPECT_FALSE(csr.isEnginePrologueSent);
 }

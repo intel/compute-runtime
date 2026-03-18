@@ -76,7 +76,7 @@ CompletionStamp MockCommandStreamReceiver::flushImmediateTask(
     return stamp;
 }
 
-CompletionStamp MockCommandStreamReceiver::flushImmediateTaskStateless(
+CompletionStamp MockCommandStreamReceiver::flushImmediateTaskHeapless(
     LinearStream &immediateCommandStream,
     size_t immediateCommandStreamStart,
     ImmediateDispatchFlags &dispatchFlags,

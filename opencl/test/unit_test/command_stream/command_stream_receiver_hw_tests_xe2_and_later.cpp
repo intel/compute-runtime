@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ HWTEST2_F(CommandStreamReceiverXe2AndLater, GivenPreambleNotSentAndDebugFlagEnab
     debugManager.flags.PipelinedPipelineSelect.set(true);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.isPreambleSent = false;

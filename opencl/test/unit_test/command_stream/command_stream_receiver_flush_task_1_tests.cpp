@@ -49,7 +49,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenForceCsrReprogrammingDebugVar
     DebugManagerStateRestore restore;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -106,7 +106,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenTaskCountIsInc
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);
 
-    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 2u : 1u, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessPrologProgrammed ? 2u : 1u, commandStreamReceiver.peekTaskCount());
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenconfigureCSRtoNonDirtyStateWhenFlushTaskIsCalledThenNoCommandsAreAdded) {
@@ -456,7 +456,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, whenSamplerC
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeThenSendPipecontrol) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.isPreambleSent = true;
@@ -503,7 +503,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, whenSamplerC
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushAfterThenSendPipecontrol) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.isPreambleSent = true;
@@ -543,7 +543,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenCompletionStam
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto completionStamp = flushTask(commandStreamReceiver);
 
-    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 2u : 1u, completionStamp.taskCount);
+    EXPECT_EQ(commandStreamReceiver.heaplessPrologProgrammed ? 2u : 1u, completionStamp.taskCount);
     EXPECT_EQ(taskLevel, completionStamp.taskLevel);
     EXPECT_EQ(commandStreamReceiver.flushStamp->peekStamp(), completionStamp.flushStamp);
 }
@@ -598,7 +598,7 @@ SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDebugVariableSetWhenProgr
     debugManager.flags.ForceStatelessMocsEncryptionBit.set(1);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -616,7 +616,7 @@ SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDebugVariableSetWhenProgr
 
 SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToItWithTextureCacheFlush) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -688,7 +688,7 @@ SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableGrfConfigWhe
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenPreambleNotSentWhenFlushingTaskThenPreambleIsSent) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.isPreambleSent = false;
@@ -701,7 +701,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenPreambleNotSentWhenFlushingTa
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenFlushTaskWhenInitProgrammingFlagsIsCalledThenBindingTableBaseAddressRequiredIsSetCorrecty) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -868,7 +868,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockingWithNoPreviousDepende
     flushTask(commandStreamReceiver, blocking);
 
     EXPECT_EQ(7u, commandStreamReceiver.peekTaskLevel());
-    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 2u : 1u, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessPrologProgrammed ? 2u : 1u, commandStreamReceiver.peekTaskCount());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingWithNoPreviousDependenciesWhenFlushingTaskThenTaskLevelIsNotIncremented) {
@@ -880,7 +880,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingWithNoPreviousDepe
     flushTask(commandStreamReceiver, blocking);
 
     EXPECT_EQ(6u, commandStreamReceiver.peekTaskLevel());
-    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 2u : 1u, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessPrologProgrammed ? 2u : 1u, commandStreamReceiver.peekTaskCount());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWhenFlushingTaskThenOnlyAvailableMemoryIsUsed) {
@@ -970,7 +970,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
     auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -1042,7 +1042,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenCha
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_NOOP = typename FamilyType::MI_NOOP;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     // Reserve space for 16 NOOPs

@@ -91,7 +91,7 @@ struct CommandStreamReceiverTest : public DeviceFixture,
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        this->heaplessStateInit = heaplessEnabled;
+        this->heaplessModeEnabled = heaplessEnabled;
     }
 
     void TearDown() override {
@@ -101,7 +101,7 @@ struct CommandStreamReceiverTest : public DeviceFixture,
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     MemoryManager *memoryManager = nullptr;
     InternalAllocationStorage *internalAllocationStorage = nullptr;
-    bool heaplessStateInit = false;
+    bool heaplessModeEnabled = false;
 };
 
 template <typename GfxFamily>
@@ -182,7 +182,7 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     EXPECT_EQ(0u, csr.peekTaskLevel());
-    EXPECT_EQ(csr.heaplessStateInitialized ? 1u : 0u, csr.peekTaskCount());
+    EXPECT_EQ(csr.heaplessPrologProgrammed ? 1u : 0u, csr.peekTaskCount());
     EXPECT_FALSE(csr.isPreambleSent);
 }
 
@@ -831,7 +831,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFlushUnsuccessWhenWaitingForTaskCountTh
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.activePartitions = 1;
 
-    auto taskCountToWait = csr.heaplessStateInitialized ? 2 : 1;
+    auto taskCountToWait = csr.heaplessPrologProgrammed ? 2 : 1;
     csr.flushReturnValue = SubmissionStatus::failed;
     auto waitStatus = csr.waitForTaskCount(taskCountToWait);
     EXPECT_EQ(WaitStatus::notReady, waitStatus);
@@ -2802,7 +2802,7 @@ TEST_F(CommandStreamReceiverTest, givenPreambleFlagIsSetWhenGettingFlagStateThen
 
 TEST_F(CommandStreamReceiverTest, givenPreemptionSentIsInitialWhenSettingPreemptionToNewModeThenExpectCorrectPreemption) {
     PreemptionMode mode = PreemptionMode::Initial;
-    if (!heaplessStateInit) {
+    if (!heaplessModeEnabled) {
         EXPECT_EQ(mode, commandStreamReceiver->getPreemptionMode());
     }
     mode = PreemptionMode::ThreadGroup;
@@ -3682,7 +3682,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           IsAtLeastXeCore) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -3716,7 +3716,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4158,7 +4158,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4189,7 +4189,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskCmdListDispatchWhenStateComputeModeNotInitializedThenDoNotDispatchStateComputeModeCommand,
           IsAtLeastXeCore) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4209,7 +4209,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4254,7 +4254,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4289,7 +4289,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4327,7 +4327,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskCmdListDispatchWhenStateBaseAddressNotInitializedThenDoNotDispatchStateBaseAddressAndBindingPoolBaseAddressCommand,
           IsAtLeastXeCore) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4349,7 +4349,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4392,7 +4392,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4432,7 +4432,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4489,7 +4489,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -4534,7 +4534,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.createGlobalStatelessHeap();
@@ -4825,7 +4825,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto heapless = commandStreamReceiver.heaplessModeEnabled;
-    auto heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
+    auto heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
 
     bool additionalSyncCmd = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, commandStreamReceiver.peekRootDeviceEnvironment()) > 0;
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -4839,10 +4839,10 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     immediateFlushTaskFlags.blockingAppend = true;
 
-    auto completionStamp = heaplessStateInit ? commandStreamReceiver.flushImmediateTaskStateless(commandStream, startOffset, immediateFlushTaskFlags, *pDevice)
-                                             : commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+    auto completionStamp = heaplessPrologProgrammed ? commandStreamReceiver.flushImmediateTaskHeapless(commandStream, startOffset, immediateFlushTaskFlags, *pDevice)
+                                                    : commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
 
-    auto expectedCount = heaplessStateInit ? 2u : 1u;
+    auto expectedCount = heaplessPrologProgrammed ? 2u : 1u;
 
     EXPECT_EQ(expectedCount, completionStamp.taskCount);
     EXPECT_EQ(expectedCount, commandStreamReceiver.taskCount);
@@ -4875,8 +4875,8 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     UnitTestHelper<FamilyType>::getSpaceAndInitWalkerCmd(commandStream, heapless);
 
-    if (heaplessStateInit) {
-        completionStamp = commandStreamReceiver.flushImmediateTaskStateless(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+    if (heaplessPrologProgrammed) {
+        completionStamp = commandStreamReceiver.flushImmediateTaskHeapless(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
     } else {
         completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
     }
@@ -4920,7 +4920,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto heapless = commandStreamReceiver.heaplessModeEnabled;
-    auto heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
+    auto heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
 
     bool additionalSyncCmd = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, commandStreamReceiver.peekRootDeviceEnvironment()) > 0;
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -4932,10 +4932,10 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     uint64_t postsyncAddress = csrTagAllocation->getGpuAddress();
 
     immediateFlushTaskFlags.requireTaskCountUpdate = true;
-    auto completionStamp = heaplessStateInit ? commandStreamReceiver.flushImmediateTaskStateless(commandStream, startOffset, immediateFlushTaskFlags, *pDevice)
-                                             : commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+    auto completionStamp = heaplessPrologProgrammed ? commandStreamReceiver.flushImmediateTaskHeapless(commandStream, startOffset, immediateFlushTaskFlags, *pDevice)
+                                                    : commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
 
-    auto expectedCount = heaplessStateInit ? 2u : 1u;
+    auto expectedCount = heaplessPrologProgrammed ? 2u : 1u;
     EXPECT_EQ(expectedCount, completionStamp.taskCount);
     EXPECT_EQ(expectedCount, commandStreamReceiver.taskCount);
     EXPECT_EQ(expectedCount, commandStreamReceiver.latestSentTaskCount);
@@ -5008,7 +5008,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
     commandStreamReceiver.recordFlushedBatchBuffer = true;
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -5067,7 +5067,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           IsAtLeastXeCore) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     bool heapless = commandStreamReceiver.heaplessModeEnabled;
-    bool heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
+    bool heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
     commandStreamReceiver.storeMakeResidentAllocations = true;
     commandStreamReceiver.recordFlushedBatchBuffer = true;
 
@@ -5079,14 +5079,14 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     immediateFlushTaskFlags.blockingAppend = true;
     commandStreamReceiver.flushReturnValue = NEO::SubmissionStatus::failed;
 
-    auto completionStamp = heaplessStateInit ? commandStreamReceiver.flushImmediateTaskStateless(commandStream, startOffset, immediateFlushTaskFlags, *pDevice)
-                                             : commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+    auto completionStamp = heaplessPrologProgrammed ? commandStreamReceiver.flushImmediateTaskHeapless(commandStream, startOffset, immediateFlushTaskFlags, *pDevice)
+                                                    : commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
 
     auto csrCmdBufferAllocation = commandStreamReceiver.commandStream.getGraphicsAllocation();
 
     TaskCountType currentTaskCountType = 1u;
 
-    auto expectedCount = heaplessStateInit ? 1u : 0u;
+    auto expectedCount = heaplessPrologProgrammed ? 1u : 0u;
 
     EXPECT_EQ(NEO::CompletionStamp::failed, completionStamp.taskCount);
     EXPECT_EQ(expectedCount, commandStreamReceiver.taskCount);
@@ -5102,15 +5102,15 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     EXPECT_EQ(false, recordedBatchBuffer.hasStallingCmds);
     EXPECT_EQ(false, recordedBatchBuffer.hasRelaxedOrderingDependencies);
 
-    completionStamp = heaplessStateInit ? commandStreamReceiver.flushImmediateTaskStateless(commandStream, startOffset, immediateFlushTaskFlags, *pDevice)
-                                        : commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+    completionStamp = heaplessPrologProgrammed ? commandStreamReceiver.flushImmediateTaskHeapless(commandStream, startOffset, immediateFlushTaskFlags, *pDevice)
+                                               : commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
 
     EXPECT_EQ(NEO::CompletionStamp::failed, completionStamp.taskCount);
     EXPECT_EQ(expectedCount, commandStreamReceiver.taskCount);
     EXPECT_EQ(expectedCount, commandStreamReceiver.latestSentTaskCount);
     EXPECT_EQ(expectedCount, commandStreamReceiver.latestFlushedTaskCount);
 
-    if (heaplessStateInit) {
+    if (heaplessPrologProgrammed) {
         EXPECT_TRUE(commandStreamReceiver.isMadeResident(immediateListCmdBufferAllocation, currentTaskCountType));
     } else {
         EXPECT_FALSE(commandStreamReceiver.isMadeResident(immediateListCmdBufferAllocation, currentTaskCountType));
@@ -5123,17 +5123,17 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
+    auto heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
 
     bool preemptionModeProgramming = NEO::PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(pDevice->getPreemptionMode(), commandStreamReceiver.getPreemptionMode()) > 0;
     auto preemptionDetails = getPreemptionTestHwDetails<FamilyType>();
 
-    if (!heaplessStateInit) {
+    if (!heaplessPrologProgrammed) {
         EXPECT_EQ(NEO::PreemptionMode::Initial, commandStreamReceiver.getPreemptionMode());
     }
 
-    heaplessStateInit ? commandStreamReceiver.flushImmediateTaskStateless(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice)
-                      : commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    heaplessPrologProgrammed ? commandStreamReceiver.flushImmediateTaskHeapless(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice)
+                             : commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
     EXPECT_EQ(pDevice->getPreemptionMode(), commandStreamReceiver.getPreemptionMode());
 
@@ -5151,8 +5151,8 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     size_t usedSize = commandStreamReceiver.commandStream.getUsed();
 
-    heaplessStateInit ? commandStreamReceiver.flushImmediateTaskStateless(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice)
-                      : commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    heaplessPrologProgrammed ? commandStreamReceiver.flushImmediateTaskHeapless(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice)
+                             : commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
     hwParserCsr.tearDown();
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
@@ -5173,7 +5173,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           IsAtLeastXeCore) {
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -5222,7 +5222,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     pDevice->getL0Debugger()->initialize();
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -5283,7 +5283,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -5505,7 +5505,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperW
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -5629,7 +5629,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenRequiresInstructionCacheFlushWhenFlus
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
     commandStreamReceiver.registerInstructionCacheFlush();
@@ -5650,7 +5650,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenContextInitializedAndRequiresInstruct
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
     }
 
@@ -6215,13 +6215,13 @@ HWTEST_F(CommandStreamReceiverHwHeaplessTest, whenHeaplessCommandStreamReceiverF
     EXPECT_ANY_THROW(csr->getCmdSizeForHeaplessPrologue(*pDevice));
     EXPECT_ANY_THROW(csr->handleAllocationsResidencyForHeaplessProlog(commandStream, *pDevice));
     EXPECT_ANY_THROW(csr->programHeaplessStateProlog(*pDevice, commandStream));
-    EXPECT_ANY_THROW(csr->handleAllocationsResidencyForflushTaskStateless(nullptr, nullptr, nullptr, *pDevice));
+    EXPECT_ANY_THROW(csr->handleAllocationsResidencyForFlushTaskHeapless(nullptr, nullptr, nullptr, *pDevice));
     EXPECT_ANY_THROW(csr->getRequiredCmdStreamHeaplessSize(csr->recordedDispatchFlags, *pDevice));
     EXPECT_ANY_THROW(csr->getRequiredCmdStreamHeaplessSizeAligned(csr->recordedDispatchFlags, *pDevice));
-    EXPECT_ANY_THROW(csr->flushImmediateTaskStateless(commandStream, 0, csr->recordedImmediateDispatchFlags, *pDevice));
+    EXPECT_ANY_THROW(csr->flushImmediateTaskHeapless(commandStream, 0, csr->recordedImmediateDispatchFlags, *pDevice));
     EXPECT_ANY_THROW(csr->handleImmediateFlushStatelessAllocationsResidency(0, commandStream, *pDevice));
 
-    EXPECT_FALSE(csr->heaplessStateInitialized);
+    EXPECT_FALSE(csr->heaplessPrologProgrammed);
 }
 
 HWTEST2_F(CommandStreamReceiverHwTest,
@@ -6615,15 +6615,15 @@ HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushBcsTa
 
 HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushImmediateTaskCalledThenDispachEpilogueCommandsIntoEpilogueStream) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
+    auto heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
 
     // first flush can carry preamble, no interest in flags here
 
-    if (heaplessStateInit) {
-        commandStreamReceiver.flushImmediateTaskStateless(commandStream,
-                                                          commandStream.getUsed(),
-                                                          immediateFlushTaskFlags,
-                                                          *pDevice);
+    if (heaplessPrologProgrammed) {
+        commandStreamReceiver.flushImmediateTaskHeapless(commandStream,
+                                                         commandStream.getUsed(),
+                                                         immediateFlushTaskFlags,
+                                                         *pDevice);
     } else {
         commandStreamReceiver.flushImmediateTask(commandStream,
                                                  commandStream.getUsed(),
@@ -6642,11 +6642,11 @@ HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushImmed
     immediateFlushTaskFlags.requireTaskCountUpdate = true;
     immediateFlushTaskFlags.optionalEpilogueCmdStream = &epilogueStream;
 
-    if (heaplessStateInit) {
-        commandStreamReceiver.flushImmediateTaskStateless(commandStream,
-                                                          commandStream.getUsed(),
-                                                          immediateFlushTaskFlags,
-                                                          *pDevice);
+    if (heaplessPrologProgrammed) {
+        commandStreamReceiver.flushImmediateTaskHeapless(commandStream,
+                                                         commandStream.getUsed(),
+                                                         immediateFlushTaskFlags,
+                                                         *pDevice);
     } else {
         commandStreamReceiver.flushImmediateTask(commandStream,
                                                  commandStream.getUsed(),
@@ -6686,16 +6686,16 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFlushBcsTaskCmdListDispatchWhenCalled
 
 HWTEST_F(CommandStreamReceiverHwTest, givenImmediateFlushTaskCmdListDispatchWhenFlushingBufferThenDisableFlatRingBuffer) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
+    auto heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
     commandStreamReceiver.recordFlushedBatchBuffer = true;
 
     immediateFlushTaskFlags.dispatchOperation = NEO::AppendOperations::cmdList;
 
-    if (heaplessStateInit) {
-        commandStreamReceiver.flushImmediateTaskStateless(commandStream,
-                                                          commandStream.getUsed(),
-                                                          immediateFlushTaskFlags,
-                                                          *pDevice);
+    if (heaplessPrologProgrammed) {
+        commandStreamReceiver.flushImmediateTaskHeapless(commandStream,
+                                                         commandStream.getUsed(),
+                                                         immediateFlushTaskFlags,
+                                                         *pDevice);
     } else {
         commandStreamReceiver.flushImmediateTask(commandStream,
                                                  commandStream.getUsed(),

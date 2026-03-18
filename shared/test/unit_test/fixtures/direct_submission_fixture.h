@@ -56,7 +56,7 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
         batchBuffer.stream = stream.get();
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        heaplessStateInit = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
+        heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
         UnitTestSetter::setupSemaphore64bCmdSupport(this->restorer, pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     }
@@ -74,5 +74,5 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
     DebugManagerStateRestore restorer;
     std::unique_ptr<LinearStream> stream;
 
-    bool heaplessStateInit = false;
+    bool heaplessModeEnabled = false;
 };

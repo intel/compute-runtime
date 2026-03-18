@@ -39,7 +39,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
     std::vector<GraphicsAllocation *> toFree; // pointers to be freed on destruction
     Device *pDevice;
     ClDevice *pClDevice;
-    bool heaplessStateInit = false;
+    bool heaplessPrologProgrammed = false;
 
   public:
     size_t expectedToFreeCount = (size_t)-1;
@@ -48,14 +48,14 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
         this->pClDevice = pDevice->getSpecializedDevice<ClDevice>();
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-        this->heaplessStateInit = heapless;
+        this->heaplessPrologProgrammed = heapless;
     }
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
 
         EXPECT_NE(nullptr, batchBuffer.commandBufferAllocation->getUnderlyingBuffer());
 
-        if (!heaplessStateInit) {
+        if (!heaplessPrologProgrammed) {
             toFree.push_back(batchBuffer.commandBufferAllocation);
             batchBuffer.stream->replaceBuffer(nullptr, 0);
             batchBuffer.stream->replaceGraphicsAllocation(nullptr);
@@ -69,7 +69,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
     ~CommandStreamReceiverMock() override {
         EXPECT_FALSE(pClDevice->hasOwnership());
 
-        if (!heaplessStateInit) {
+        if (!heaplessPrologProgrammed) {
             if (expectedToFreeCount == (size_t)-1) {
                 EXPECT_GT(toFree.size(), 0u); // make sure flush was called
             } else {
