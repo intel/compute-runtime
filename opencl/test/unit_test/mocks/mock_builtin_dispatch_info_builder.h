@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,13 +12,13 @@
 
 using namespace NEO;
 
-class MockBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
+class MockBuiltInDispatchInfoBuilder : public BuiltIn::DispatchInfoBuilder {
   public:
-    MockBuiltinDispatchInfoBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltinDispatchInfoBuilder *origBuilder)
-        : BuiltinDispatchInfoBuilder(kernelLib, clDevice), originalBuilder(origBuilder) {
+    MockBuiltInDispatchInfoBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltIn::DispatchInfoBuilder *origBuilder)
+        : BuiltIn::DispatchInfoBuilder(kernelLib, clDevice), originalBuilder(origBuilder) {
     }
 
-    virtual void validateInput(const BuiltinOpParams &conf) const {};
+    virtual void validateInput(const BuiltIn::OpParams &conf) const {};
 
     bool buildDispatchInfos(MultiDispatchInfo &mdi) const override {
         validateInput(mdi.peekBuiltinOpParams());
@@ -31,7 +31,7 @@ class MockBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         return true;
     }
 
-    const BuiltinOpParams *getBuiltinOpParams() const {
+    const BuiltIn::OpParams *getBuiltinOpParams() const {
         return &multiDispatchInfo.peekBuiltinOpParams();
     };
     const MultiDispatchInfo *getMultiDispatchInfo() const {
@@ -50,7 +50,7 @@ class MockBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
 
   protected:
     mutable MultiDispatchInfo multiDispatchInfo;
-    BuiltinDispatchInfoBuilder *originalBuilder;
+    BuiltIn::DispatchInfoBuilder *originalBuilder;
     bool withFailureInjection = false;
     uint32_t failingArgIndex = 0;
 };

@@ -23,88 +23,88 @@
 
 namespace NEO {
 
-const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
-    switch (builtin) {
+const char *BuiltIn::getAsString(BuiltIn::Group builtInGroup) {
+    switch (builtInGroup) {
     default:
         return "unknown";
-    case EBuiltInOps::auxTranslation:
+    case BuiltIn::Group::auxTranslation:
         return "aux_translation.builtin_kernel";
-    case EBuiltInOps::copyBufferToBuffer:
+    case BuiltIn::Group::copyBufferToBuffer:
         return "copy_buffer_to_buffer.builtin_kernel";
-    case EBuiltInOps::copyBufferToBufferStateless:
-    case EBuiltInOps::copyBufferToBufferWideStateless:
-    case EBuiltInOps::copyBufferToBufferStatelessHeapless:
-    case EBuiltInOps::copyBufferToBufferWideStatelessHeapless:
+    case BuiltIn::Group::copyBufferToBufferStateless:
+    case BuiltIn::Group::copyBufferToBufferWideStateless:
+    case BuiltIn::Group::copyBufferToBufferStatelessHeapless:
+    case BuiltIn::Group::copyBufferToBufferWideStatelessHeapless:
         return "copy_buffer_to_buffer_stateless.builtin_kernel";
-    case EBuiltInOps::copyBufferRect:
+    case BuiltIn::Group::copyBufferRect:
         return "copy_buffer_rect.builtin_kernel";
-    case EBuiltInOps::copyBufferRectStateless:
-    case EBuiltInOps::copyBufferRectWideStateless:
-    case EBuiltInOps::copyBufferRectStatelessHeapless:
-    case EBuiltInOps::copyBufferRectWideStatelessHeapless:
+    case BuiltIn::Group::copyBufferRectStateless:
+    case BuiltIn::Group::copyBufferRectWideStateless:
+    case BuiltIn::Group::copyBufferRectStatelessHeapless:
+    case BuiltIn::Group::copyBufferRectWideStatelessHeapless:
         return "copy_buffer_rect_stateless.builtin_kernel";
-    case EBuiltInOps::fillBuffer:
+    case BuiltIn::Group::fillBuffer:
         return "fill_buffer.builtin_kernel";
-    case EBuiltInOps::fillBufferStateless:
-    case EBuiltInOps::fillBufferWideStateless:
-    case EBuiltInOps::fillBufferStatelessHeapless:
-    case EBuiltInOps::fillBufferWideStatelessHeapless:
+    case BuiltIn::Group::fillBufferStateless:
+    case BuiltIn::Group::fillBufferWideStateless:
+    case BuiltIn::Group::fillBufferStatelessHeapless:
+    case BuiltIn::Group::fillBufferWideStatelessHeapless:
         return "fill_buffer_stateless.builtin_kernel";
-    case EBuiltInOps::copyBufferToImage3d:
+    case BuiltIn::Group::copyBufferToImage3d:
         return "copy_buffer_to_image3d.builtin_kernel";
-    case EBuiltInOps::copyBufferToImage3dStateless:
-    case EBuiltInOps::copyBufferToImage3dWideStateless:
-    case EBuiltInOps::copyBufferToImage3dStatelessHeapless:
-    case EBuiltInOps::copyBufferToImage3dWideStatelessHeapless:
+    case BuiltIn::Group::copyBufferToImage3dStateless:
+    case BuiltIn::Group::copyBufferToImage3dWideStateless:
+    case BuiltIn::Group::copyBufferToImage3dStatelessHeapless:
+    case BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless:
         return "copy_buffer_to_image3d_stateless.builtin_kernel";
-    case EBuiltInOps::copyImage3dToBuffer:
+    case BuiltIn::Group::copyImage3dToBuffer:
         return "copy_image3d_to_buffer.builtin_kernel";
-    case EBuiltInOps::copyImage3dToBufferStateless:
-    case EBuiltInOps::copyImage3dToBufferWideStateless:
-    case EBuiltInOps::copyImage3dToBufferStatelessHeapless:
-    case EBuiltInOps::copyImage3dToBufferWideStatelessHeapless:
+    case BuiltIn::Group::copyImage3dToBufferStateless:
+    case BuiltIn::Group::copyImage3dToBufferWideStateless:
+    case BuiltIn::Group::copyImage3dToBufferStatelessHeapless:
+    case BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless:
         return "copy_image3d_to_buffer_stateless.builtin_kernel";
-    case EBuiltInOps::copyImageToImage1d:
-    case EBuiltInOps::copyImageToImage1dHeapless:
+    case BuiltIn::Group::copyImageToImage1d:
+    case BuiltIn::Group::copyImageToImage1dHeapless:
         return "copy_image_to_image1d.builtin_kernel";
-    case EBuiltInOps::copyImageToImage2d:
-    case EBuiltInOps::copyImageToImage2dHeapless:
+    case BuiltIn::Group::copyImageToImage2d:
+    case BuiltIn::Group::copyImageToImage2dHeapless:
         return "copy_image_to_image2d.builtin_kernel";
-    case EBuiltInOps::copyImageToImage3d:
-    case EBuiltInOps::copyImageToImage3dHeapless:
+    case BuiltIn::Group::copyImageToImage3d:
+    case BuiltIn::Group::copyImageToImage3dHeapless:
         return "copy_image_to_image3d.builtin_kernel";
-    case EBuiltInOps::fillImage1d:
-    case EBuiltInOps::fillImage1dHeapless:
+    case BuiltIn::Group::fillImage1d:
+    case BuiltIn::Group::fillImage1dHeapless:
         return "fill_image1d.builtin_kernel";
-    case EBuiltInOps::fillImage2d:
-    case EBuiltInOps::fillImage2dHeapless:
+    case BuiltIn::Group::fillImage2d:
+    case BuiltIn::Group::fillImage2dHeapless:
         return "fill_image2d.builtin_kernel";
-    case EBuiltInOps::fillImage3d:
-    case EBuiltInOps::fillImage3dHeapless:
+    case BuiltIn::Group::fillImage3d:
+    case BuiltIn::Group::fillImage3dHeapless:
         return "fill_image3d.builtin_kernel";
-    case EBuiltInOps::queryKernelTimestamps:
-    case EBuiltInOps::queryKernelTimestampsStateless:
-    case EBuiltInOps::queryKernelTimestampsStatelessHeapless:
+    case BuiltIn::Group::queryKernelTimestamps:
+    case BuiltIn::Group::queryKernelTimestampsStateless:
+    case BuiltIn::Group::queryKernelTimestampsStatelessHeapless:
         return "copy_kernel_timestamps.builtin_kernel";
-    case EBuiltInOps::fillImage1dBuffer:
-    case EBuiltInOps::fillImage1dBufferHeapless:
+    case BuiltIn::Group::fillImage1dBuffer:
+    case BuiltIn::Group::fillImage1dBufferHeapless:
         return "fill_image1d_buffer.builtin_kernel";
     };
 }
 
-BuiltinResourceT createBuiltinResource(const char *ptr, size_t size) {
-    return BuiltinResourceT(ptr, ptr + size);
+BuiltIn::Resource BuiltIn::createResource(const char *ptr, size_t size) {
+    return BuiltIn::Resource(ptr, ptr + size);
 }
 
-BuiltinResourceT createBuiltinResource(const BuiltinResourceT &r) {
-    return BuiltinResourceT(r);
+BuiltIn::Resource BuiltIn::createResource(const BuiltIn::Resource &r) {
+    return BuiltIn::Resource(r);
 }
 
-std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::string &extension) {
-    return getBuiltinAsString(builtin) + extension;
+std::string BuiltIn::createResourceName(BuiltIn::Group builtInGroup, const std::string &extension) {
+    return BuiltIn::getAsString(builtInGroup) + extension;
 }
 
-StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device) {
+StackVec<std::string, 3> BuiltIn::getResourceNames(BuiltIn::Group builtInGroup, BuiltIn::CodeType type, const Device &device) {
     auto &hwInfo = device.getHardwareInfo();
     auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
@@ -114,15 +114,15 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
         return deviceId.str();
     };
     const auto deviceIp = createDeviceIdFilenameComponent(hwInfo.ipVersion);
-    const auto builtinFilename = getBuiltinAsString(builtin);
-    const auto extension = BuiltinCode::getExtension(type);
+    const auto builtinFilename = BuiltIn::getAsString(builtInGroup);
+    const auto extension = BuiltIn::Code::getExtension(type);
 
     std::string_view addressingModePrefix;
-    const bool builtInUsesWideStatelessAddressing = EBuiltInOps::isWideStateless(builtin);
-    if (type == BuiltinCode::ECodeType::binary) {
-        const bool heaplessEnabled = EBuiltInOps::isHeapless(builtin);
+    const bool builtInUsesWideStatelessAddressing = BuiltIn::isWideStateless(builtInGroup);
+    if (type == BuiltIn::CodeType::binary) {
+        const bool heaplessEnabled = BuiltIn::isHeapless(builtInGroup);
         const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
-        const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin) || builtInUsesWideStatelessAddressing;
+        const bool builtInUsesStatelessAddressing = BuiltIn::isStateless(builtInGroup) || builtInUsesWideStatelessAddressing;
         if (heaplessEnabled) {
             addressingModePrefix = builtInUsesWideStatelessAddressing ? "wide_stateless_heapless_" : "stateless_heapless_";
         } else if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
@@ -132,11 +132,11 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
         } else {
             addressingModePrefix = "bindful_";
         }
-    } else if (type == BuiltinCode::ECodeType::intermediate && builtInUsesWideStatelessAddressing) {
+    } else if (type == BuiltIn::CodeType::intermediate && builtInUsesWideStatelessAddressing) {
         addressingModePrefix = "wide_stateless_";
     }
 
-    auto createBuiltinResourceName = [](ConstStringRef deviceIpPath, std::string_view addressingModePrefix, std::string_view builtinFilename, std::string_view extension) {
+    auto createResourceName = [](ConstStringRef deviceIpPath, std::string_view addressingModePrefix, std::string_view builtinFilename, std::string_view extension) {
         std::ostringstream outResourceName;
         if (false == deviceIpPath.empty()) {
             outResourceName << deviceIpPath.str() << "_";
@@ -145,10 +145,10 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
         return outResourceName.str();
     };
     StackVec<std::string, 3> resourcesToLookup = {};
-    resourcesToLookup.push_back(createBuiltinResourceName(deviceIp, addressingModePrefix, builtinFilename, extension));
+    resourcesToLookup.push_back(createResourceName(deviceIp, addressingModePrefix, builtinFilename, extension));
 
-    if (BuiltinCode::ECodeType::binary != type) {
-        resourcesToLookup.push_back(createBuiltinResourceName("", addressingModePrefix, builtinFilename, extension));
+    if (BuiltIn::CodeType::binary != type) {
+        resourcesToLookup.push_back(createResourceName("", addressingModePrefix, builtinFilename, extension));
     }
     return resourcesToLookup;
 }
@@ -157,12 +157,12 @@ std::string getDriverInstallationPath() {
     return "";
 }
 
-BuiltinResourceT Storage::load(const std::string &resourceName) {
+BuiltIn::Resource BuiltIn::Storage::load(const std::string &resourceName) {
     return loadImpl(joinPath(rootPath, resourceName));
 }
 
-BuiltinResourceT FileStorage::loadImpl(const std::string &fullResourceName) {
-    BuiltinResourceT ret;
+BuiltIn::Resource BuiltIn::FileStorage::loadImpl(const std::string &fullResourceName) {
+    BuiltIn::Resource ret;
 
     std::ifstream f{fullResourceName, std::ios::in | std::ios::binary | std::ios::ate};
     auto end = f.tellg();
@@ -174,7 +174,7 @@ BuiltinResourceT FileStorage::loadImpl(const std::string &fullResourceName) {
     return ret;
 }
 
-const BuiltinResourceT *EmbeddedStorageRegistry::get(const std::string &name) const {
+const BuiltIn::Resource *BuiltIn::EmbeddedStorageRegistry::get(const std::string &name) const {
     auto it = resources.find(name);
     if (resources.end() == it) {
         return nullptr;
@@ -183,47 +183,47 @@ const BuiltinResourceT *EmbeddedStorageRegistry::get(const std::string &name) co
     return &it->second;
 }
 
-BuiltinResourceT EmbeddedStorage::loadImpl(const std::string &fullResourceName) {
-    auto *constResource = EmbeddedStorageRegistry::getInstance().get(fullResourceName);
+BuiltIn::Resource BuiltIn::EmbeddedStorage::loadImpl(const std::string &fullResourceName) {
+    auto *constResource = BuiltIn::EmbeddedStorageRegistry::getInstance().get(fullResourceName);
     if (constResource == nullptr) {
-        BuiltinResourceT ret;
+        BuiltIn::Resource ret;
         return ret;
     }
 
-    return createBuiltinResource(*constResource);
+    return BuiltIn::createResource(*constResource);
 }
 
-BuiltinsLib::BuiltinsLib() {
-    allStorages.push_back(std::unique_ptr<Storage>(new EmbeddedStorage("")));
-    allStorages.push_back(std::unique_ptr<Storage>(new FileStorage(getDriverInstallationPath())));
+BuiltIn::ResourceLoader::ResourceLoader() {
+    allStorages.push_back(std::unique_ptr<BuiltIn::Storage>(new BuiltIn::EmbeddedStorage("")));
+    allStorages.push_back(std::unique_ptr<BuiltIn::Storage>(new BuiltIn::FileStorage(getDriverInstallationPath())));
 }
 
-BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
+BuiltIn::Code BuiltIn::ResourceLoader::getBuiltinCode(BuiltIn::Group builtInGroup, BuiltIn::CodeType requestedCodeType, Device &device) {
     std::lock_guard<std::mutex> lockRaii{mutex};
 
-    BuiltinResourceT bc;
-    BuiltinCode::ECodeType usedCodetType = BuiltinCode::ECodeType::invalid;
+    BuiltIn::Resource bc;
+    BuiltIn::CodeType usedCodetType = BuiltIn::CodeType::invalid;
 
-    if (requestedCodeType == BuiltinCode::ECodeType::any) {
-        uint32_t codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::binary);
+    if (requestedCodeType == BuiltIn::CodeType::any) {
+        uint32_t codeType = static_cast<uint32_t>(BuiltIn::CodeType::binary);
         bool requiresRebuild = !device.getExecutionEnvironment()->isOneApiPvcWaEnv();
         if (requiresRebuild || debugManager.flags.RebuildPrecompiledKernels.get()) {
-            codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::source);
+            codeType = static_cast<uint32_t>(BuiltIn::CodeType::source);
         }
-        for (uint32_t e = static_cast<uint32_t>(BuiltinCode::ECodeType::count);
+        for (uint32_t e = static_cast<uint32_t>(BuiltIn::CodeType::count);
              codeType != e; ++codeType) {
-            bc = getBuiltinResource(builtin, static_cast<BuiltinCode::ECodeType>(codeType), device);
+            bc = getBuiltinResource(builtInGroup, static_cast<BuiltIn::CodeType>(codeType), device);
             if (bc.size() > 0) {
-                usedCodetType = static_cast<BuiltinCode::ECodeType>(codeType);
+                usedCodetType = static_cast<BuiltIn::CodeType>(codeType);
                 break;
             }
         }
     } else {
-        bc = getBuiltinResource(builtin, requestedCodeType, device);
+        bc = getBuiltinResource(builtInGroup, requestedCodeType, device);
         usedCodetType = requestedCodeType;
     }
 
-    BuiltinCode ret;
+    BuiltIn::Code ret;
     std::swap(ret.resource, bc);
     ret.type = usedCodetType;
     ret.targetDevice = &device;
@@ -231,9 +231,9 @@ BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::
     return ret;
 }
 
-BuiltinResourceT BuiltinsLib::getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
-    BuiltinResourceT builtinResource;
-    auto resourcesToLookup = getBuiltinResourceNames(builtin, requestedCodeType, device);
+BuiltIn::Resource BuiltIn::ResourceLoader::getBuiltinResource(BuiltIn::Group builtInGroup, BuiltIn::CodeType requestedCodeType, Device &device) {
+    BuiltIn::Resource builtinResource;
+    auto resourcesToLookup = BuiltIn::getResourceNames(builtInGroup, requestedCodeType, device);
     for (auto &resourceName : resourcesToLookup) {
         for (auto &storage : allStorages) {
             builtinResource = storage->load(resourceName);

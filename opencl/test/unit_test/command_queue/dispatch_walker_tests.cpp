@@ -1109,8 +1109,8 @@ TEST(DispatchWalker, WhenCalculatingDispatchDimensionsThenCorrectValuesAreReturn
 using IsAuxTranslationSupported = IsAtMostXeCore;
 
 HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded, IsAuxTranslationSupported) {
-    BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
-    auto &builder = static_cast<BuiltInOp<EBuiltInOps::auxTranslation> &>(baseBuilder);
+    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, *pClDevice);
+    auto &builder = static_cast<BuiltIn::Op<BuiltIn::Group::auxTranslation> &>(baseBuilder);
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
@@ -1128,7 +1128,7 @@ HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTra
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);
@@ -1157,8 +1157,8 @@ HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTra
 }
 
 HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded, IsAuxTranslationSupported) {
-    BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
-    auto &builder = static_cast<BuiltInOp<EBuiltInOps::auxTranslation> &>(baseBuilder);
+    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, *pClDevice);
+    auto &builder = static_cast<BuiltIn::Op<BuiltIn::Group::auxTranslation> &>(baseBuilder);
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
@@ -1176,7 +1176,7 @@ HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTra
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
     builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);

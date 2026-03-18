@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -206,11 +206,11 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, WhenReadingBufferThenI
     enqueueReadBufferRect2D<FamilyType>();
 
     // Extract the kernel used
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferRect,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRect,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = buffer.get();
     dc.dstPtr = hostPtr;
     dc.srcOffset = {0, 0, 0};

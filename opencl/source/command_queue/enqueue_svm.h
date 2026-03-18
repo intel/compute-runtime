@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,7 +115,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         void *svmBasePtr = svmData->cpuAllocation->getUnderlyingBuffer();
         size_t svmOffset = ptrDiff(svmPtr, svmBasePtr);
 
-        BuiltinOpParams dc;
+        BuiltIn::OpParams dc;
         dc.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddressToPatch());
         dc.dstSvmAlloc = svmData->cpuAllocation;
         dc.dstOffset = {svmOffset, 0, 0};
@@ -130,8 +130,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         MultiDispatchInfo dispatchInfo(dc);
         const bool isStateless = forceStateless(svmData->size);
         const bool useHeapless = this->getHeaplessModeEnabled();
-        auto eBuiltInOps = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, useHeapless);
-        const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blocking, csr);
+        auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isStateless, useHeapless);
+        const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blocking, csr);
         if (dispatchResult != CL_SUCCESS) {
             return dispatchResult;
         }
@@ -206,7 +206,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
 
         Surface *surfaces[] = {&dstSurface, &srcSurface};
 
-        BuiltinOpParams dc;
+        BuiltIn::OpParams dc;
         dc.dstPtr = reinterpret_cast<void *>(gpuAllocation->getGpuAddressToPatch());
         dc.dstSvmAlloc = gpuAllocation;
         dc.dstOffset = {svmOperation->offset, 0, 0};
@@ -221,8 +221,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
         MultiDispatchInfo dispatchInfo(dc);
         const bool isStateless = forceStateless(svmData->size);
         const bool useHeapless = this->getHeaplessModeEnabled();
-        auto eBuiltInOps = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, useHeapless);
-        const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, false, csr);
+        auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isStateless, useHeapless);
+        const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, false, csr);
         if (dispatchResult != CL_SUCCESS) {
             return dispatchResult;
         }
@@ -284,7 +284,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMFree(cl_uint numSvmPointers,
     return CL_SUCCESS;
 }
 
-inline void setOperationParams(BuiltinOpParams &operationParams, size_t size,
+inline void setOperationParams(BuiltIn::OpParams &operationParams, size_t size,
                                const void *srcPtr, GraphicsAllocation *srcSvmAlloc,
                                void *dstPtr, GraphicsAllocation *dstSvmAlloc) {
     operationParams.size = {size, 0, 0};
@@ -362,13 +362,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         (dstSvmData != nullptr && forceStateless(dstSvmData->size));
 
     const bool useHeapless = this->getHeaplessModeEnabled();
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStatelessRequired, useHeapless);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isStatelessRequired, useHeapless);
 
     auto selectCsr = [csrParam, this](CsrSelectionArgs &csrSelectionArgs) -> CommandStreamReceiver & {
         return csrParam ? *csrParam : selectCsrForBuiltinOperation(csrSelectionArgs);
     };
     MultiDispatchInfo dispatchInfo;
-    BuiltinOpParams operationParams;
+    BuiltIn::OpParams operationParams;
     Surface *surfaces[2];
     cl_int dispatchResult = CL_SUCCESS;
 
@@ -388,7 +388,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             operationParams.bcsSplit = bcsSplit;
             operationParams.direction = csrSelectionArgs.direction;
             dispatchInfo.setBuiltinOpParams(operationParams);
-            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
         } else {
             HostPtrSurface dstHostPtrSurf(dstGpuPtr, size);
             if (size != 0) {
@@ -406,7 +406,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             operationParams.bcsSplit = bcsSplit;
             operationParams.direction = csrSelectionArgs.direction;
             dispatchInfo.setBuiltinOpParams(operationParams);
-            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
         }
 
         if (size != 0) {
@@ -428,7 +428,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             operationParams.bcsSplit = bcsSplit;
             operationParams.direction = csrSelectionArgs.direction;
             dispatchInfo.setBuiltinOpParams(operationParams);
-            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
         } else {
             HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcGpuPtr), size, true);
             if (size != 0) {
@@ -446,7 +446,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             operationParams.bcsSplit = bcsSplit;
             operationParams.direction = csrSelectionArgs.direction;
             dispatchInfo.setBuiltinOpParams(operationParams);
-            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
         }
     } else if (copyType == SvmToSvm) {
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, srcAllocation, dstAllocation, device->getRootDeviceIndex(), &size};
@@ -461,7 +461,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         operationParams.bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, size, csr);
         operationParams.direction = csrSelectionArgs.direction;
         dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_SVM_MEMCPY>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+        dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_SVM_MEMCPY>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     } else {
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &size};
         CommandStreamReceiver &csr = selectCsr(csrSelectionArgs);
@@ -478,7 +478,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             operationParams.bcsSplit = bcsSplit;
             operationParams.direction = csrSelectionArgs.direction;
             dispatchInfo.setBuiltinOpParams(operationParams);
-            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
         } else {
             HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcGpuPtr), size);
             HostPtrSurface dstHostPtrSurf(dstGpuPtr, size);
@@ -500,7 +500,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             operationParams.bcsSplit = bcsSplit;
             operationParams.direction = csrSelectionArgs.direction;
             dispatchInfo.setBuiltinOpParams(operationParams);
-            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
         }
     }
     if (event) {
@@ -567,14 +567,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
 
     const bool isStateless = svmData ? forceStateless(svmData->size) : forceStateless(size);
     const bool useHeapless = this->getHeaplessModeEnabled();
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(isStateless, useHeapless);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(isStateless, useHeapless);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            this->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                              this->getClDevice());
 
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
+    BuiltIn::OwnershipWrapper builtInLock(builder, this->context);
 
-    BuiltinOpParams operationParams;
+    BuiltIn::OpParams operationParams;
     auto multiGraphicsAllocation = MultiGraphicsAllocation(getDevice().getRootDeviceIndex());
     multiGraphicsAllocation.addAllocation(patternAllocation);
 

@@ -30,21 +30,21 @@
 
 namespace L0 {
 namespace ult {
-class BuiltinFunctionsLibFixture : public DeviceFixture {
+class BuiltInKernelLibFixture : public DeviceFixture {
   public:
-    struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
-        using BuiltinFunctionsLibImpl::builtins;
-        using BuiltinFunctionsLibImpl::ensureInitCompletion;
-        using BuiltinFunctionsLibImpl::getFunction;
-        using BuiltinFunctionsLibImpl::imageBuiltins;
-        using BuiltinFunctionsLibImpl::initAsyncComplete;
-        MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
+    struct MockBuiltInKernelLibImpl : BuiltInKernelLibImpl {
+        using BuiltInKernelLibImpl::builtins;
+        using BuiltInKernelLibImpl::ensureInitCompletion;
+        using BuiltInKernelLibImpl::getFunction;
+        using BuiltInKernelLibImpl::imageBuiltins;
+        using BuiltInKernelLibImpl::initAsyncComplete;
+        MockBuiltInKernelLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltInKernelLibImpl(device, builtInsLib) {
             mockModule = std::make_unique<Mock<Module>>(device, nullptr);
         }
-        std::unique_ptr<BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {
+        std::unique_ptr<BuiltInKernelData> loadBuiltIn(NEO::BuiltIn::Group builtInGroup, const char *kernelName) override {
             auto mockKernel = std::make_unique<Mock<::L0::KernelImp>>();
 
-            return std::make_unique<BuiltinData>(mockModule.get(), std::move(mockKernel));
+            return std::make_unique<BuiltInKernelData>(mockModule.get(), std::move(mockKernel));
         }
         std::unique_ptr<Module> mockModule;
     };
@@ -52,7 +52,7 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
         mockDevicePtr = std::make_unique<MockDeviceForSpv>(device->getNEODevice(), driverHandle.get());
-        mockBuiltinFunctionsLibImpl = std::make_unique<MockBuiltinFunctionsLibImpl>(mockDevicePtr.get(), neoDevice->getBuiltIns());
+        mockBuiltinFunctionsLibImpl = std::make_unique<MockBuiltInKernelLibImpl>(mockDevicePtr.get(), neoDevice->getBuiltIns());
         mockBuiltinFunctionsLibImpl->ensureInitCompletion();
         EXPECT_TRUE(mockBuiltinFunctionsLibImpl->initAsyncComplete);
     }
@@ -61,100 +61,100 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
         DeviceFixture::tearDown();
     }
 
-    std::unique_ptr<MockBuiltinFunctionsLibImpl> mockBuiltinFunctionsLibImpl;
+    std::unique_ptr<MockBuiltInKernelLibImpl> mockBuiltinFunctionsLibImpl;
     std::unique_ptr<MockDeviceForSpv> mockDevicePtr;
 };
 
-using TestBuiltinFunctionsLibImpl = Test<BuiltinFunctionsLibFixture>;
+using TestBuiltinFunctionsLibImpl = Test<BuiltInKernelLibFixture>;
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenImageSupportThenEachBuiltinImageFunctionsIsLoadedOnlyOnce) {
-    L0::Kernel *initializedImageBuiltins[static_cast<uint32_t>(ImageBuiltin::count)];
+    L0::Kernel *initializedImageBuiltIns[static_cast<uint32_t>(ImageBuiltIn::count)];
 
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::count); builtId++) {
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltIn::count); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
     }
 
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::count); builtId++) {
-        EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltIn::count); builtId++) {
+        EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->getImageFunction(static_cast<L0::ImageBuiltIn>(builtId)));
         EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
-        initializedImageBuiltins[builtId] = mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]->func.get();
+        initializedImageBuiltIns[builtId] = mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]->func.get();
     }
 
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::count); builtId++) {
-        EXPECT_EQ(initializedImageBuiltins[builtId],
-                  mockBuiltinFunctionsLibImpl->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltIn::count); builtId++) {
+        EXPECT_EQ(initializedImageBuiltIns[builtId],
+                  mockBuiltinFunctionsLibImpl->getImageFunction(static_cast<L0::ImageBuiltIn>(builtId)));
     }
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenImageSupportAndWrongIdWhenCallingBuiltinImageFunctionThenExceptionIsThrown) {
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::count); builtId++) {
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltIn::count); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
     }
 
-    uint32_t builtId = static_cast<uint32_t>(ImageBuiltin::count) + 1;
-    EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinImageKernel(static_cast<L0::ImageBuiltin>(builtId)), std::exception);
+    uint32_t builtId = static_cast<uint32_t>(ImageBuiltIn::count) + 1;
+    EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinImageKernel(static_cast<L0::ImageBuiltIn>(builtId)), std::exception);
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenCallsToGetFunctionThenEachBuiltinFunctionsIsLoadedOnlyOnce) {
-    L0::Kernel *initializedBuiltins[static_cast<uint32_t>(Builtin::count)];
+    L0::Kernel *initializedBuiltins[static_cast<uint32_t>(BufferBuiltIn::count)];
 
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(BufferBuiltIn::count); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->builtins[builtId]);
     }
 
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
-        EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->getFunction(static_cast<L0::Builtin>(builtId)));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(BufferBuiltIn::count); builtId++) {
+        EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->getFunction(static_cast<L0::BufferBuiltIn>(builtId)));
         EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->builtins[builtId]);
         initializedBuiltins[builtId] = mockBuiltinFunctionsLibImpl->builtins[builtId]->func.get();
     }
 
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(BufferBuiltIn::count); builtId++) {
         EXPECT_EQ(initializedBuiltins[builtId],
-                  mockBuiltinFunctionsLibImpl->getFunction(static_cast<L0::Builtin>(builtId)));
+                  mockBuiltinFunctionsLibImpl->getFunction(static_cast<L0::BufferBuiltIn>(builtId)));
     }
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenCallToBuiltinFunctionWithWrongIdThenExceptionIsThrown) {
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(BufferBuiltIn::count); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->builtins[builtId]);
     }
-    uint32_t builtId = static_cast<uint32_t>(Builtin::count) + 1;
-    EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinKernel(static_cast<L0::Builtin>(builtId)), std::exception);
+    uint32_t builtId = static_cast<uint32_t>(BufferBuiltIn::count) + 1;
+    EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinKernel(static_cast<L0::BufferBuiltIn>(builtId)), std::exception);
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, whenCreateBuiltinFunctionsLibThenImmediateFillIsLoaded) {
-    struct MockBuiltinFunctionsLibImpl : public BuiltinFunctionsLibImpl {
-        using BuiltinFunctionsLibImpl::BuiltinFunctionsLibImpl;
-        using BuiltinFunctionsLibImpl::builtins;
-        using BuiltinFunctionsLibImpl::ensureInitCompletion;
-        using BuiltinFunctionsLibImpl::initAsyncComplete;
+    struct MockBuiltInKernelLibImpl : public BuiltInKernelLibImpl {
+        using BuiltInKernelLibImpl::BuiltInKernelLibImpl;
+        using BuiltInKernelLibImpl::builtins;
+        using BuiltInKernelLibImpl::ensureInitCompletion;
+        using BuiltInKernelLibImpl::initAsyncComplete;
     };
 
     EXPECT_TRUE(mockBuiltinFunctionsLibImpl->initAsyncComplete);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useinitBuiltinsAsyncEnabled = true;
-    MockBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+    MockBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
     EXPECT_FALSE(lib.initAsyncComplete);
     lib.ensureInitCompletion();
     EXPECT_TRUE(lib.initAsyncComplete);
     const auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto expectedInitFillBuiltin = Builtin::count;
+    auto expectedInitFillBuiltin = BufferBuiltIn::count;
     if (compilerProductHelper.isHeaplessModeEnabled(this->device->getHwInfo())) {
-        expectedInitFillBuiltin = Builtin::fillBufferImmediateStatelessHeapless;
+        expectedInitFillBuiltin = BufferBuiltIn::fillBufferImmediateStatelessHeapless;
     } else if (compilerProductHelper.isForceToStatelessRequired()) {
-        expectedInitFillBuiltin = Builtin::fillBufferImmediateStateless;
+        expectedInitFillBuiltin = BufferBuiltIn::fillBufferImmediateStateless;
     } else {
-        expectedInitFillBuiltin = Builtin::fillBufferImmediate;
+        expectedInitFillBuiltin = BufferBuiltIn::fillBufferImmediate;
     }
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(BufferBuiltIn::count); builtId++) {
         if (builtId == static_cast<uint32_t>(expectedInitFillBuiltin)) {
             EXPECT_NE(nullptr, lib.builtins[builtId]);
         } else {
             EXPECT_EQ(nullptr, lib.builtins[builtId]);
         }
     }
-    uint32_t builtId = static_cast<uint32_t>(Builtin::count) + 1;
-    EXPECT_THROW(lib.initBuiltinKernel(static_cast<L0::Builtin>(builtId)), std::exception);
+    uint32_t builtId = static_cast<uint32_t>(BufferBuiltIn::count) + 1;
+    EXPECT_THROW(lib.initBuiltinKernel(static_cast<L0::BufferBuiltIn>(builtId)), std::exception);
 
     /* std::async may create a detached thread - completion of the scheduled task can be ensured,
        but there is no way to ensure that actual OS thread exited and its resources are freed */
@@ -163,205 +163,205 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, whenCreateBuiltinFunctionsLibThenImmediate
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenHeaplessBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
 
-    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+    MockCheckPassedArgumentsBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
 
-    lib.initBuiltinKernel(L0::Builtin::copyBufferBytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::copyBufferBytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("copyBufferToBufferBytesSingle", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinKernel(L0::Builtin::copyBufferToBufferMiddleStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::copyBufferToBufferMiddleStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToBufferMiddleRegion", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinKernel(L0::Builtin::copyBufferToBufferSideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::copyBufferToBufferSideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToBufferSideRegion", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinKernel(L0::Builtin::fillBufferImmediateStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::fillBufferImmediateStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::fillBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("FillBufferImmediate", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinKernel(L0::Builtin::fillBufferImmediateLeftOverStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::fillBufferImmediateLeftOverStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::fillBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("FillBufferImmediateLeftOver", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinKernel(L0::Builtin::fillBufferSSHOffsetStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::fillBufferSSHOffsetStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::fillBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("FillBufferSSHOffset", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinKernel(L0::Builtin::fillBufferSSHOffsetStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::fillBufferSSHOffsetStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::fillBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("FillBufferSSHOffset", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinKernel(L0::Builtin::fillBufferMiddleStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::fillBufferMiddleStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::fillBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("FillBufferMiddle", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinKernel(L0::Builtin::fillBufferRightLeftoverStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::fillBufferRightLeftoverStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::fillBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("FillBufferRightLeftover", lib.kernelNamePassed.c_str());
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, givenHeaplessImageBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenHeaplessImageBuiltInsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
 
-    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+    MockCheckPassedArgumentsBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d16BytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d16Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d2BytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d2BytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d2Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d4BytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d4BytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d4Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d8BytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d8BytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d8Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer16BytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer16Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer2BytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer2BytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer2Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer4BytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer4BytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer4Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBufferBytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBufferBytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBufferBytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer3BytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer3BytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer3Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer6BytesStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer6BytesStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer6Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImageRegionHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImageToImage3dHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImageRegionHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImageToImage3dHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToImage3d", lib.kernelNamePassed.c_str());
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenHeaplessBufferRectBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
 
-    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+    MockCheckPassedArgumentsBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
 
-    lib.initBuiltinKernel(L0::Builtin::copyBufferRectBytes2dStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferRectStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::copyBufferRectBytes2dStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferRectStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferRectBytes2d", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinKernel(L0::Builtin::copyBufferRectBytes3dStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferRectStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::copyBufferRectBytes3dStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferRectStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferRectBytes3d", lib.kernelNamePassed.c_str());
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenStatelessBufferRectBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
 
-    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+    MockCheckPassedArgumentsBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
 
-    lib.initBuiltinKernel(L0::Builtin::copyBufferRectBytes2dStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferRectStateless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::copyBufferRectBytes2dStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferRectStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferRectBytes2d", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinKernel(L0::Builtin::copyBufferRectBytes3dStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferRectStateless, lib.builtinPassed);
+    lib.initBuiltinKernel(L0::BufferBuiltIn::copyBufferRectBytes3dStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferRectStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferRectBytes3d", lib.kernelNamePassed.c_str());
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, givenStatelessImageBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
-    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenStatelessImageBuiltInsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
+    MockCheckPassedArgumentsBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d16BytesStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d16Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d2BytesStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d2BytesStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d2Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d4BytesStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d4BytesStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d4Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d8BytesStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d8BytesStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d8Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer16BytesStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer16Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer2BytesStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer2BytesStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer2Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer4BytesStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer4BytesStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer4Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBufferBytesStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBufferBytesStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBufferBytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer3BytesStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer3BytesStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer3Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer6BytesStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer6BytesStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer6Bytes", lib.kernelNamePassed.c_str());
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, givenAlignedImageBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
-    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenAlignedImageBuiltInsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
+    MockCheckPassedArgumentsBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesAligned);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3d, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d16BytesAligned);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3d, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d16BytesAligned", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesAlignedStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d16BytesAlignedStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d16BytesAligned", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesAlignedWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d16BytesAlignedWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d16BytesAligned", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesAlignedStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d16BytesAlignedStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d16BytesAligned", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesAlignedWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d16BytesAlignedWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d16BytesAligned", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesAligned);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBuffer, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer16BytesAligned);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBuffer, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer16BytesAligned", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesAlignedStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer16BytesAlignedStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer16BytesAligned", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesAlignedWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer16BytesAlignedWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer16BytesAligned", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesAlignedStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer16BytesAlignedStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer16BytesAligned", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesAlignedWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer16BytesAlignedWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer16BytesAligned", lib.kernelNamePassed.c_str());
 }
 
@@ -370,8 +370,8 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceAndI
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new NEO::MockCompilerInterfaceSpirv());
     std::unique_ptr<L0::Device> testDevice(Device::create(device->getDriverHandle(), neoDevice, false, &returnValue));
 
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::count); builtId++) {
-        EXPECT_NE(nullptr, testDevice->getBuiltinFunctionsLib()->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltIn::count); builtId++) {
+        EXPECT_NE(nullptr, testDevice->getBuiltinFunctionsLib()->getImageFunction(static_cast<L0::ImageBuiltIn>(builtId)));
     }
 }
 
@@ -380,8 +380,8 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceThen
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new NEO::MockCompilerInterfaceSpirv());
     std::unique_ptr<L0::Device> testDevice(Device::create(device->getDriverHandle(), neoDevice, false, &returnValue));
 
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
-        EXPECT_NE(nullptr, testDevice->getBuiltinFunctionsLib()->getFunction(static_cast<L0::Builtin>(builtId)));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(BufferBuiltIn::count); builtId++) {
+        EXPECT_NE(nullptr, testDevice->getBuiltinFunctionsLib()->getFunction(static_cast<L0::BufferBuiltIn>(builtId)));
     }
 }
 
@@ -392,9 +392,9 @@ HWTEST_F(BuiltInTestsL0, givenRebuildPrecompiledKernelsDebugFlagWhenInitFuctions
     DebugManagerStateRestore dgbRestorer;
     NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
     MockDeviceForBuiltinTests testDevice(pDevice);
-    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(&testDevice, pDevice->getBuiltIns()));
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
-        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
+    testDevice.builtins.reset(new BuiltInKernelLibImpl(&testDevice, pDevice->getBuiltIns()));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(BufferBuiltIn::count); builtId++) {
+        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<BufferBuiltIn>(builtId));
     }
 
     EXPECT_TRUE(testDevice.createModuleCalled);
@@ -406,9 +406,9 @@ HWTEST_F(BuiltInTestsL0, givenNotToRebuildPrecompiledKernelsDebugFlagWhenInitFuc
     NEO::debugManager.flags.RebuildPrecompiledKernels.set(false);
     MockDeviceForBuiltinTests testDevice(pDevice);
     L0::Device *testDevicePtr = &testDevice;
-    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, pDevice->getBuiltIns()));
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
-        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
+    testDevice.builtins.reset(new BuiltInKernelLibImpl(testDevicePtr, pDevice->getBuiltIns()));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(BufferBuiltIn::count); builtId++) {
+        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<BufferBuiltIn>(builtId));
     }
 
     EXPECT_TRUE(testDevice.createModuleCalled);
@@ -418,9 +418,9 @@ HWTEST_F(BuiltInTestsL0, givenBuiltinsWhenInitializingFunctionsThenModulesWithPr
     pDevice->incRefInternal();
     MockDeviceForBuiltinTests testDevice(pDevice);
     L0::Device *testDevicePtr = &testDevice;
-    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, pDevice->getBuiltIns()));
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
-        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
+    testDevice.builtins.reset(new BuiltInKernelLibImpl(testDevicePtr, pDevice->getBuiltIns()));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(BufferBuiltIn::count); builtId++) {
+        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<BufferBuiltIn>(builtId));
     }
 
     EXPECT_EQ(ModuleType::builtin, testDevice.typeCreated);
@@ -431,10 +431,10 @@ HWTEST_F(BuiltInTestsL0, givenDeviceWithUnregisteredBinaryBuiltinWhenGettingBuil
     MockDeviceForBuiltinTests testDevice(pDevice);
     L0::Device *testDevicePtr = &testDevice;
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->ipVersion.value += 0xdead;
-    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, pDevice->getBuiltIns()));
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(L0::Builtin::count); builtId++) {
+    testDevice.builtins.reset(new BuiltInKernelLibImpl(testDevicePtr, pDevice->getBuiltIns()));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(L0::BufferBuiltIn::count); builtId++) {
         testDevice.formatForModule = {};
-        ASSERT_NE(nullptr, testDevice.getBuiltinFunctionsLib()->getFunction(static_cast<L0::Builtin>(builtId)));
+        ASSERT_NE(nullptr, testDevice.getBuiltinFunctionsLib()->getFunction(static_cast<L0::BufferBuiltIn>(builtId)));
         EXPECT_EQ(ZE_MODULE_FORMAT_IL_SPIRV, testDevice.formatForModule);
     }
 }
@@ -444,100 +444,100 @@ HWTEST_F(BuiltInTestsL0, givenOneApiPvcSendWarWaEnvFalseWhenGettingBuiltinThenIn
     pDevice->getExecutionEnvironment()->setOneApiPvcWaEnv(false);
 
     MockDeviceForBuiltinTests testDevice(pDevice);
-    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(&testDevice, pDevice->getBuiltIns()));
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
-        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
+    testDevice.builtins.reset(new BuiltInKernelLibImpl(&testDevice, pDevice->getBuiltIns()));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(BufferBuiltIn::count); builtId++) {
+        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<BufferBuiltIn>(builtId));
     }
 
     EXPECT_TRUE(testDevice.createModuleCalled);
     EXPECT_EQ(ZE_MODULE_FORMAT_IL_SPIRV, testDevice.formatForModule);
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, givenWideStatelessHeaplessImageBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
-    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenWideStatelessHeaplessImageBuiltInsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
+    MockCheckPassedArgumentsBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d16BytesWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d16Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d2BytesWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d2BytesWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d2Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d4BytesWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d4BytesWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d4Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d8BytesWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d8BytesWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d8Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer16BytesWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer16Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer2BytesWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer2BytesWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer2Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer4BytesWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer4BytesWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer4Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBufferBytesWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBufferBytesWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBufferBytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer3BytesWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer3BytesWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer3Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer6BytesWideStatelessHeapless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStatelessHeapless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer6BytesWideStatelessHeapless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer6Bytes", lib.kernelNamePassed.c_str());
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, givenWideStatelessImageBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
-    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenWideStatelessImageBuiltInsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
+    MockCheckPassedArgumentsBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d16BytesWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d16Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d2BytesWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d2BytesWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d2Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d4BytesWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d4BytesWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d4Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d8BytesWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyBufferToImage3d8BytesWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyBufferToImage3dWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyBufferToImage3d8Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer16BytesWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer16Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer2BytesWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer2BytesWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer2Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer4BytesWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer4BytesWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer4Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBufferBytesWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBufferBytesWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBufferBytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer3BytesWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer3BytesWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer3Bytes", lib.kernelNamePassed.c_str());
 
-    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer6BytesWideStateless);
-    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferWideStateless, lib.builtinPassed);
+    lib.initBuiltinImageKernel(L0::ImageBuiltIn::copyImage3dToBuffer6BytesWideStateless);
+    EXPECT_EQ(NEO::BuiltIn::Group::copyImage3dToBufferWideStateless, lib.builtInGroupPassed);
     EXPECT_STREQ("CopyImage3dToBuffer6Bytes", lib.kernelNamePassed.c_str());
 }
 

@@ -215,21 +215,21 @@ HWTEST_P(MipMapCopyImageToBufferTest, GivenImageWithMipLevelNonZeroWhenCopyImage
 
     const auto &compilerProductHelper = pCmdQ->getDevice().getCompilerProductHelper();
 
-    EBuiltInOps::Type builtInType = EBuiltInOps::copyImage3dToBuffer;
+    BuiltIn::Group builtInGroup = BuiltIn::Group::copyImage3dToBuffer;
     if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
-        builtInType = EBuiltInOps::copyImage3dToBufferStatelessHeapless;
+        builtInGroup = BuiltIn::Group::copyImage3dToBufferStatelessHeapless;
     } else if (compilerProductHelper.isForceToStatelessRequired()) {
-        builtInType = EBuiltInOps::copyImage3dToBufferStateless;
+        builtInGroup = BuiltIn::Group::copyImage3dToBufferStateless;
     }
 
-    auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        builtInType,
+    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        builtInGroup,
         pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
-        builtInType,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
+        builtInGroup,
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuiltInDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
     cl_int retVal = CL_SUCCESS;
     cl_image_desc imageDesc = {};
@@ -279,15 +279,15 @@ HWTEST_P(MipMapCopyImageToBufferTest, GivenImageWithMipLevelNonZeroWhenCopyImage
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                                                                              pCmdQ->getClDevice()));
+    auto &mockBuilder = static_cast<MockBuiltInDispatchInfoBuilder &>(BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                                                                                pCmdQ->getClDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
 
     EXPECT_EQ(expectedMipLevel, params->srcMipLevel);
 
     // restore original builder and retrieve mock builder
     auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
-        builtInType,
+        builtInGroup,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 }

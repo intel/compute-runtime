@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
 
     const bool isStateless = forceStateless(buffer->getSize());
     const bool useHeapless = this->getHeaplessModeEnabled();
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(isStateless, useHeapless);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferRect>(isStateless, useHeapless);
 
     void *srcPtr = const_cast<void *>(ptr);
 
@@ -90,7 +90,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     void *alignedSrcPtr = alignDown(srcPtr, 4);
     size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = alignedSrcPtr;
     dc.dstMemObj = buffer;
     dc.srcOffset = hostOrigin;
@@ -106,7 +106,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     dc.direction = csrSelectionArgs.direction;
 
     MultiDispatchInfo dispatchInfo(dc);
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;
     }

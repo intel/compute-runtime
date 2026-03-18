@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,18 +21,18 @@
 
 namespace NEO {
 template <>
-class BuiltInOp<EBuiltInOps::auxTranslation> : public BuiltinDispatchInfoBuilder {
+class BuiltIn::Op<BuiltIn::Group::auxTranslation> : public BuiltIn::DispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device);
+    Op(BuiltIns &kernelsLib, ClDevice &device);
     template <typename GfxFamily>
-    bool buildDispatchInfosForAuxTranslation(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
+    bool buildDispatchInfosForAuxTranslation(MultiDispatchInfo &multiDispatchInfo, const BuiltIn::OpParams &operationParams) const {
         size_t kernelInstanceNumber = 0;
         size_t numKernelObjectsToTranslate = multiDispatchInfo.getKernelObjsForAuxTranslation()->size();
         resizeKernelInstances(numKernelObjectsToTranslate);
         multiDispatchInfo.setBuiltinOpParams(operationParams);
 
         for (auto &kernelObj : *multiDispatchInfo.getKernelObjsForAuxTranslation()) {
-            DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit> builder(clDevice);
+            NEO::DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit> builder(clDevice);
 
             UNRECOVERABLE_IF(builder.getMaxNumDispatches() != 1);
 

@@ -630,7 +630,7 @@ HWTEST_F(CommandListTest, givenComputeCommandListAnd3dRegionWhenMemoryCopyRegion
 }
 
 HWTEST_F(CommandListTest, givenHeaplessAnd2dRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
-    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes2d);
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferRectBytes2d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->passedArgumentValues.clear();
@@ -662,7 +662,7 @@ HWTEST_F(CommandListTest, givenHeaplessAnd2dRegionWhenAppendMemoryCopyRegionThen
 }
 
 HWTEST_F(CommandListTest, givenHeaplessAnd3dRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
-    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes3d);
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferRectBytes3d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->passedArgumentValues.clear();
@@ -695,7 +695,7 @@ HWTEST_F(CommandListTest, givenHeaplessAnd3dRegionWhenAppendMemoryCopyRegionThen
 
 HWTEST_F(CommandListTest, givenStatelessAnd2dRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetCorrectly) {
     for (bool isStateless : {false, true}) {
-        Builtin func = isStateless ? Builtin::copyBufferRectBytes2dStateless : Builtin::copyBufferRectBytes2d;
+        BufferBuiltIn func = isStateless ? BufferBuiltIn::copyBufferRectBytes2dStateless : BufferBuiltIn::copyBufferRectBytes2d;
 
         auto kernel = device->getBuiltinFunctionsLib()->getFunction(func);
         auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
@@ -735,7 +735,7 @@ HWTEST_F(CommandListTest, givenStatelessAnd2dRegionWhenAppendMemoryCopyRegionThe
 
 HWTEST_F(CommandListTest, givenStatelessAnd3dRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetCorrectly) {
     for (bool isStateless : {false, true}) {
-        Builtin func = isStateless ? Builtin::copyBufferRectBytes3dStateless : Builtin::copyBufferRectBytes3d;
+        BufferBuiltIn func = isStateless ? BufferBuiltIn::copyBufferRectBytes3dStateless : BufferBuiltIn::copyBufferRectBytes3d;
 
         auto kernel = device->getBuiltinFunctionsLib()->getFunction(func);
         auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
@@ -775,7 +775,7 @@ HWTEST_F(CommandListTest, givenStatelessAnd3dRegionWhenAppendMemoryCopyRegionThe
 }
 
 HWTEST_F(CommandListTest, given4GBOrGreater2dSrcAndDstRegionsWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
-    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes2d);
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferRectBytes2d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->passedArgumentValues.clear();
@@ -811,7 +811,7 @@ HWTEST_F(CommandListTest, given4GBOrGreater2dSrcAndDstRegionsWhenAppendMemoryCop
 }
 
 HWTEST_F(CommandListTest, given4GBOrGreater3dSrcAndDstRegionsWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
-    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes3d);
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferRectBytes3d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->passedArgumentValues.clear();
@@ -848,7 +848,7 @@ HWTEST_F(CommandListTest, given4GBOrGreater3dSrcAndDstRegionsWhenAppendMemoryCop
 }
 
 HWTEST_F(CommandListTest, given4GBOrGreater2dDstRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
-    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes2d);
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferRectBytes2d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->passedArgumentValues.clear();
@@ -884,7 +884,7 @@ HWTEST_F(CommandListTest, given4GBOrGreater2dDstRegionWhenAppendMemoryCopyRegion
 }
 
 HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
-    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes3d);
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferRectBytes3d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->passedArgumentValues.clear();
@@ -923,7 +923,7 @@ HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegion
 using ImageSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToImageTheBuiltinFlagIsSet, ImageSupport) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -944,7 +944,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToImageTheBui
 }
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToExternalHostMemoryThenBuiltinFlagAndDestinationAllocSystemIsSet, ImageSupport) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -965,7 +965,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToExternalHos
 }
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToUsmHostMemoryThenBuiltinFlagAndDestinationAllocSystemIsSet, ImageSupport) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -992,7 +992,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToUsmHostMemo
 }
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToUsmDeviceMemoryThenBuiltinFlagIsSetAndDestinationAllocSystemNotSet, ImageSupport) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -1024,7 +1024,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToUsmDeviceMe
 }
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenImageCopyFromMemoryThenBuiltinFlagIsSet, ImageSupport) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -1050,7 +1050,7 @@ HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyFromMemoryThenCorrect
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     for (bool heaplessEnabled : {false, true}) {
-        ImageBuiltin func = heaplessEnabled ? ImageBuiltin::copyBufferToImage3dBytesStatelessHeapless : ImageBuiltin::copyBufferToImage3dBytes;
+        ImageBuiltIn func = heaplessEnabled ? ImageBuiltIn::copyBufferToImage3dBytesStatelessHeapless : ImageBuiltIn::copyBufferToImage3dBytes;
         auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(func);
         auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
         mockBuiltinKernel->checkPassedArgumentValues = true;
@@ -1095,7 +1095,7 @@ HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyToMemoryThenCorrectRo
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     for (bool heaplessEnabled : {false, true}) {
-        ImageBuiltin func = heaplessEnabled ? ImageBuiltin::copyImage3dToBufferBytesStatelessHeapless : ImageBuiltin::copyImage3dToBufferBytes;
+        ImageBuiltIn func = heaplessEnabled ? ImageBuiltIn::copyImage3dToBufferBytesStatelessHeapless : ImageBuiltIn::copyImage3dToBufferBytes;
 
         auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(func);
         auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
@@ -1150,13 +1150,13 @@ HWTEST2_F(CommandListTest, givenAlignedBufferWhenAppendImageCopyFromMemoryWith16
     bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
     bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
 
-    ImageBuiltin expectedBuiltin;
+    ImageBuiltIn expectedBuiltin;
     if (isHeapless) {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesAlignedStatelessHeapless;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesAlignedStatelessHeapless;
     } else if (isStateless) {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesAlignedStateless;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesAlignedStateless;
     } else {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesAligned;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesAligned;
     }
 
     auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
@@ -1203,13 +1203,13 @@ HWTEST2_F(CommandListTest, givenUnalignedBufferWhenAppendImageCopyFromMemoryWith
     bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
     bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
 
-    ImageBuiltin expectedBuiltin;
+    ImageBuiltIn expectedBuiltin;
     if (isHeapless) {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStatelessHeapless;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesStatelessHeapless;
     } else if (isStateless) {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStateless;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesStateless;
     } else {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16Bytes;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16Bytes;
     }
 
     auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
@@ -1253,7 +1253,7 @@ HWTEST2_F(CommandListTest, givenHeaplessAndAlignedBufferWhenAppendImageCopyFromM
     auto result = context->allocHostMem(&hostDesc, allocSize, 16u, &srcBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3d8BytesStatelessHeapless);
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyBufferToImage3d8BytesStatelessHeapless);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
     mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
@@ -1300,13 +1300,13 @@ HWTEST2_F(CommandListTest, givenAlignedBufferWhenAppendImageCopyToMemoryWith16By
     bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
     bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
 
-    ImageBuiltin expectedBuiltin;
+    ImageBuiltIn expectedBuiltin;
     if (isHeapless) {
-        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesAlignedStatelessHeapless;
+        expectedBuiltin = ImageBuiltIn::copyImage3dToBuffer16BytesAlignedStatelessHeapless;
     } else if (isStateless) {
-        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesAlignedStateless;
+        expectedBuiltin = ImageBuiltIn::copyImage3dToBuffer16BytesAlignedStateless;
     } else {
-        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesAligned;
+        expectedBuiltin = ImageBuiltIn::copyImage3dToBuffer16BytesAligned;
     }
 
     auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
@@ -1353,13 +1353,13 @@ HWTEST2_F(CommandListTest, givenUnalignedBufferWhenAppendImageCopyToMemoryWith16
     bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
     bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
 
-    ImageBuiltin expectedBuiltin;
+    ImageBuiltIn expectedBuiltin;
     if (isHeapless) {
-        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesStatelessHeapless;
+        expectedBuiltin = ImageBuiltIn::copyImage3dToBuffer16BytesStatelessHeapless;
     } else if (isStateless) {
-        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesStateless;
+        expectedBuiltin = ImageBuiltIn::copyImage3dToBuffer16BytesStateless;
     } else {
-        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16Bytes;
+        expectedBuiltin = ImageBuiltIn::copyImage3dToBuffer16Bytes;
     }
 
     auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
@@ -1403,7 +1403,7 @@ HWTEST2_F(CommandListTest, givenHeaplessAndAlignedBufferWhenAppendImageCopyToMem
     auto result = context->allocHostMem(&hostDesc, allocSize, 16u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBuffer8BytesStatelessHeapless);
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImage3dToBuffer8BytesStatelessHeapless);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
     mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
@@ -1450,13 +1450,13 @@ HWTEST2_F(CommandListTest, givenAddressMisalignedWhenAppendImageCopyFromMemoryWi
     bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
     bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
 
-    ImageBuiltin expectedBuiltin;
+    ImageBuiltIn expectedBuiltin;
     if (isHeapless) {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStatelessHeapless;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesStatelessHeapless;
     } else if (isStateless) {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStateless;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesStateless;
     } else {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16Bytes;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16Bytes;
     }
 
     auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
@@ -1501,13 +1501,13 @@ HWTEST2_F(CommandListTest, givenOffsetMisalignedWhenAppendImageCopyFromMemoryWit
     bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
     bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
 
-    ImageBuiltin expectedBuiltin;
+    ImageBuiltIn expectedBuiltin;
     if (isHeapless) {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStatelessHeapless;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesStatelessHeapless;
     } else if (isStateless) {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStateless;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesStateless;
     } else {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16Bytes;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16Bytes;
     }
 
     auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
@@ -1552,13 +1552,13 @@ HWTEST2_F(CommandListTest, givenRowPitchMisalignedWhenAppendImageCopyToMemoryWit
     bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
     bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
 
-    ImageBuiltin expectedBuiltin;
+    ImageBuiltIn expectedBuiltin;
     if (isHeapless) {
-        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesStatelessHeapless;
+        expectedBuiltin = ImageBuiltIn::copyImage3dToBuffer16BytesStatelessHeapless;
     } else if (isStateless) {
-        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesStateless;
+        expectedBuiltin = ImageBuiltIn::copyImage3dToBuffer16BytesStateless;
     } else {
-        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16Bytes;
+        expectedBuiltin = ImageBuiltIn::copyImage3dToBuffer16Bytes;
     }
 
     auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
@@ -1606,13 +1606,13 @@ HWTEST2_F(CommandListTest, givenSlicePitchMisalignedWhenAppendImageCopyFromMemor
     bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
     bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
 
-    ImageBuiltin expectedBuiltin;
+    ImageBuiltIn expectedBuiltin;
     if (isHeapless) {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStatelessHeapless;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesStatelessHeapless;
     } else if (isStateless) {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStateless;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16BytesStateless;
     } else {
-        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16Bytes;
+        expectedBuiltin = ImageBuiltIn::copyBufferToImage3d16Bytes;
     }
 
     auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
@@ -1649,7 +1649,7 @@ HWTEST2_F(CommandListTest, givenSlicePitchMisalignedWhenAppendImageCopyFromMemor
 }
 
 HWTEST_F(CommandListTest, givenStatelessWhenAppendImageCopyFromMemoryThenCorrectRowAndSlicePitchArePassed) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImage3dToBufferBytes);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
@@ -1689,7 +1689,7 @@ HWTEST_F(CommandListTest, givenStatelessWhenAppendImageCopyFromMemoryThenCorrect
 }
 
 HWTEST_F(CommandListTest, givenStatelessWhenAppendImageCopyToMemoryThenCorrectRowAndSlicePitchArePassed) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImage3dToBufferBytes);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
@@ -1729,7 +1729,7 @@ HWTEST_F(CommandListTest, givenStatelessWhenAppendImageCopyToMemoryThenCorrectRo
 }
 
 HWTEST_F(CommandListTest, givenBufferGreaterThan4GBWhenAppendImageCopyFromMemoryExtThenRowAndSlicePitchArgumentsAreSetAs64Bit) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3dBytes);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyBufferToImage3dBytes);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
@@ -1761,7 +1761,7 @@ HWTEST_F(CommandListTest, givenBufferGreaterThan4GBWhenAppendImageCopyFromMemory
 }
 
 HWTEST_F(CommandListTest, givenImageBufferGreaterThan4GBWhenAppendImageCopyToMemoryExtThenRowAndSlicePitchArgumentsAreSetAs64Bit) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImage3dToBufferBytes);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
@@ -1953,7 +1953,7 @@ HWTEST2_F(CommandListTest, givenStatelessWhenAppendMemoryFillIsCalledThenCorrect
 
     bool isStateless = true;
     bool isHeapless = commandList->isHeaplessModeEnabled();
-    auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless);
+    auto builtin = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferMiddle>(isStateless, isHeapless);
 
     Kernel *expectedBuiltinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
 

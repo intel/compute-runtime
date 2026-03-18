@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,11 @@
 
 namespace NEO {
 template <typename... KernelsDescArgsT>
-void BuiltinDispatchInfoBuilder::populate(EBuiltInOps::Type op, ConstStringRef options, KernelsDescArgsT &&...desc) {
-    auto src = kernelsLib.getBuiltinsLib().getBuiltinCode(op, BuiltinCode::ECodeType::any, clDevice.getDevice());
+void BuiltIn::DispatchInfoBuilder::populate(BuiltIn::Group op, ConstStringRef options, KernelsDescArgsT &&...desc) {
+    auto src = kernelsLib.getBuiltinsLib().getBuiltinCode(op, BuiltIn::CodeType::any, clDevice.getDevice());
     ClDeviceVector deviceVector;
     deviceVector.push_back(&clDevice);
-    prog.reset(BuiltinDispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
+    prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
     prog->build(deviceVector, options.data());
     grabKernels(std::forward<KernelsDescArgsT>(desc)...);
 }

@@ -1035,7 +1035,7 @@ class MockAppendMemoryLockedCopyTestImmediateCmdList : public MockCommandListImm
                                              uint64_t dstOffset, uintptr_t srcPtr,
                                              NEO::GraphicsAllocation *srcPtrAlloc,
                                              uint64_t srcOffset, uint64_t size,
-                                             uint64_t elementSize, Builtin builtin,
+                                             uint64_t elementSize, BufferBuiltIn builtin,
                                              L0::Event *signalEvent,
                                              bool isStateless,
                                              CmdListKernelLaunchParams &launchParams) override {
@@ -1438,7 +1438,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenAppendMemoryFi
     void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 0x1000, 0x1000, &dstBuffer);
-    auto builtinKernelByte = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferRightLeftover);
+    auto builtinKernelByte = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::fillBufferRightLeftover);
     CmdListMemoryCopyParams copyParams = {};
     commandList->appendMemoryFill(ptrOffset(dstBuffer, unalignedOffset), &pattern, patternSize, sizeToFill, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(commandList->passedKernel, builtinKernelByte);
@@ -1454,7 +1454,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenKernelLaunchSp
     void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 0x1000, 0x1000, &dstBuffer);
-    auto builtinKernelByte = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferRightLeftover);
+    auto builtinKernelByte = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::fillBufferRightLeftover);
     CmdListMemoryCopyParams copyParams = {};
     commandList->appendMemoryFill(ptrOffset(dstBuffer, unalignedOffset), &pattern, patternSize, sizeToFill, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(commandList->passedKernel, builtinKernelByte);
@@ -1488,7 +1488,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenAppendMemoryFill
     void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 0x1000, 0x1000, &dstBuffer);
-    auto builtinKernelByte = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferMiddle);
+    auto builtinKernelByte = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::fillBufferMiddle);
     CmdListMemoryCopyParams copyParams = {};
     commandList->appendMemoryFill(ptrOffset(dstBuffer, unalignedOffset), &pattern, patternSize, sizeToFill, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(commandList->passedKernel, builtinKernelByte);

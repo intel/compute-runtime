@@ -880,7 +880,7 @@ TEST(DriverTest, givenBuiltinsAsyncInitEnabledWhenCreatingDriverThenMakeSureBuil
     auto builtinFunctionsLib = device->getBuiltinFunctionsLib();
 
     if (builtinFunctionsLib) {
-        auto builtinsLibIpl = static_cast<MockBuiltinFunctionsLibImpl *>(builtinFunctionsLib);
+        auto builtinsLibIpl = static_cast<MockBuiltInKernelLibImpl *>(builtinFunctionsLib);
         EXPECT_TRUE(builtinsLibIpl->initAsyncComplete);
     }
 

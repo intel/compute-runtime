@@ -39,9 +39,9 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
-        copyBufferToImageBuiltin = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(compilerProductHelper.isForceToStatelessRequired(),
+        copyBufferToImageBuiltin = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(compilerProductHelper.isForceToStatelessRequired(),
                                                                                                     compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
-        copyImageToBufferBuiltin = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(compilerProductHelper.isForceToStatelessRequired(),
+        copyImageToBufferBuiltin = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(compilerProductHelper.isForceToStatelessRequired(),
                                                                                                     compilerProductHelper.isHeaplessModeEnabled(pDevice->getHardwareInfo()));
         initialized = true;
     }
@@ -59,8 +59,8 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
     Image *srcImage = nullptr;
     Image *dstImage = nullptr;
 
-    EBuiltInOps::Type copyBufferToImageBuiltin;
-    EBuiltInOps::Type copyImageToBufferBuiltin;
+    BuiltIn::Group copyBufferToImageBuiltin;
+    BuiltIn::Group copyImageToBufferBuiltin;
 
     bool initialized = false;
 };
@@ -96,11 +96,11 @@ HWTEST_F(GetSizeRequiredImageMockedZebinTest, WhenCopyingImageThenHeapsAndComman
     auto retVal = EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImageToImage3d,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstMemObj = dstImage;
     dc.srcOffset = EnqueueCopyImageTraits::srcOrigin;
@@ -203,11 +203,11 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndComman
         CL_FALSE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyImageToBufferBuiltin,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyImageToBufferBuiltin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstPtr = EnqueueReadImageTraits::hostPtr;
     dc.srcOffset = EnqueueReadImageTraits::origin;
@@ -261,11 +261,11 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBu
         CL_TRUE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyImageToBufferBuiltin,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyImageToBufferBuiltin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstPtr = EnqueueReadImageTraits::hostPtr;
     dc.srcOffset = EnqueueReadImageTraits::origin;
@@ -319,11 +319,11 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageNonBlockingThenHeapsAndComman
         CL_FALSE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyBufferToImageBuiltin,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyBufferToImageBuiltin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = EnqueueWriteImageTraits::hostPtr;
     dc.dstMemObj = dstImage;
     dc.dstOffset = EnqueueWriteImageTraits::origin;
@@ -376,11 +376,11 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageBlockingThenHeapsAndCommandBu
         CL_TRUE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyBufferToImageBuiltin,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyBufferToImageBuiltin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = EnqueueWriteImageTraits::hostPtr;
     dc.dstMemObj = dstImage;
     dc.dstOffset = EnqueueWriteImageTraits::origin;

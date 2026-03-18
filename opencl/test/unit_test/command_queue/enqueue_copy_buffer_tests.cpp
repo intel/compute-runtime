@@ -218,12 +218,12 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
 
     enqueueCopyBuffer();
 
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(pDevice->getCompilerProductHelper().isForceToStatelessRequired(), pCmdQ->getHeaplessModeEnabled());
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            pCmdQ->getClDevice());
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(pDevice->getCompilerProductHelper().isForceToStatelessRequired(), pCmdQ->getHeaplessModeEnabled());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = {srcOffset, 0, 0};
@@ -261,11 +261,11 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessThenStatelessKernelIsU
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBufferStateless,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferToBufferStateless,
+                                                                              pCmdQ->getClDevice());
 
     ASSERT_NE(nullptr, &builder);
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer.get();
     dc.dstMemObj = dstBuffer.get();
     dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
@@ -289,11 +289,11 @@ HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessHeaplessThenCorrectKe
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBufferStatelessHeapless,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferToBufferStatelessHeapless,
+                                                                              pCmdQ->getClDevice());
 
     ASSERT_NE(nullptr, &builder);
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer.get();
     dc.dstMemObj = dstBuffer.get();
     dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
@@ -396,13 +396,13 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentZeroMatchesSourceAd
 
     // Extract the kernel used
 
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(pDevice->getCompilerProductHelper().isForceToStatelessRequired(), pCmdQ->getHeaplessModeEnabled());
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(pDevice->getCompilerProductHelper().isForceToStatelessRequired(), pCmdQ->getHeaplessModeEnabled());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = {srcOffset, 0, 0};
@@ -427,12 +427,12 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     enqueueCopyBufferAndParse<FamilyType>();
 
     // Extract the kernel used
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(pDevice->getCompilerProductHelper().isForceToStatelessRequired(), pCmdQ->getHeaplessModeEnabled());
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            pCmdQ->getClDevice());
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(pDevice->getCompilerProductHelper().isForceToStatelessRequired(), pCmdQ->getHeaplessModeEnabled());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = {srcOffset, 0, 0};

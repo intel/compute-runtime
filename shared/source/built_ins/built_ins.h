@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,46 +20,53 @@
 #include <vector>
 
 namespace NEO {
-typedef std::vector<char> BuiltinResourceT;
 
 class Device;
 class SipKernel;
 class MemoryManager;
 class OsContext;
 
-struct BuiltinCode {
-    enum class ECodeType {
-        any = 0,          // for requesting "any" code available - priorities as below
-        binary = 1,       // ISA - highest priority
-        intermediate = 2, // SPIR/LLVM - medium prioroty
-        source = 3,       // OCL C - lowest priority
-        count,
-        invalid
-    };
+namespace BuiltIn {
 
-    static const char *getExtension(BuiltinCode::ECodeType ct) {
+using Resource = std::vector<char>;
+
+enum class CodeType {
+    any = 0,          // for requesting "any" code available - priorities as below
+    binary = 1,       // ISA - highest priority
+    intermediate = 2, // SPIR/LLVM - medium priority
+    source = 3,       // OCL C - lowest priority
+    count,
+    invalid
+};
+
+struct Code {
+    static const char *getExtension(CodeType ct) {
         switch (ct) {
         default:
             return "";
-        case BuiltinCode::ECodeType::binary:
+        case CodeType::binary:
             return ".bin";
-        case BuiltinCode::ECodeType::intermediate:
+        case CodeType::intermediate:
             return ".spv";
-        case BuiltinCode::ECodeType::source:
+        case CodeType::source:
             return ".cl";
         }
     }
 
-    BuiltinCode::ECodeType type;
-    BuiltinResourceT resource;
+    CodeType type;
+    Resource resource;
     Device *targetDevice;
 };
 
-BuiltinResourceT createBuiltinResource(const char *ptr, size_t size);
-BuiltinResourceT createBuiltinResource(const BuiltinResourceT &r);
-std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::string &extension);
-StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device);
-const char *getBuiltinAsString(EBuiltInOps::Type builtin);
+} // namespace BuiltIn
+
+namespace BuiltIn {
+
+Resource createResource(const char *ptr, size_t size);
+Resource createResource(const Resource &r);
+std::string createResourceName(Group builtInGroup, const std::string &extension);
+StackVec<std::string, 3> getResourceNames(Group builtInGroup, CodeType type, const Device &device);
+const char *getAsString(Group builtInGroup);
 
 class Storage {
   public:
@@ -69,10 +76,10 @@ class Storage {
 
     virtual ~Storage() = default;
 
-    BuiltinResourceT load(const std::string &resourceName);
+    Resource load(const std::string &resourceName);
 
   protected:
-    virtual BuiltinResourceT loadImpl(const std::string &fullResourceName) = 0;
+    virtual Resource loadImpl(const std::string &fullResourceName) = 0;
 
     std::string rootPath;
 };
@@ -84,7 +91,7 @@ class FileStorage : public Storage {
     }
 
   protected:
-    BuiltinResourceT loadImpl(const std::string &fullResourceName) override;
+    Resource loadImpl(const std::string &fullResourceName) override;
 };
 
 struct EmbeddedStorageRegistry {
@@ -95,11 +102,11 @@ struct EmbeddedStorageRegistry {
         return gsr;
     }
 
-    void store(const std::string &name, BuiltinResourceT &&resource) {
-        resources.emplace(name, BuiltinResourceT(std::move(resource)));
+    void store(const std::string &name, Resource &&resource) {
+        resources.emplace(name, Resource(std::move(resource)));
     }
 
-    const BuiltinResourceT *get(const std::string &name) const;
+    const Resource *get(const std::string &name) const;
 
     ~EmbeddedStorageRegistry() {
         exists = false;
@@ -110,7 +117,7 @@ struct EmbeddedStorageRegistry {
         exists = true;
     }
 
-    using ResourcesContainer = std::unordered_map<std::string, BuiltinResourceT>;
+    using ResourcesContainer = std::unordered_map<std::string, Resource>;
     ResourcesContainer resources;
 };
 
@@ -121,22 +128,24 @@ class EmbeddedStorage : public Storage {
     }
 
   protected:
-    BuiltinResourceT loadImpl(const std::string &fullResourceName) override;
+    Resource loadImpl(const std::string &fullResourceName) override;
 };
 
-class BuiltinsLib {
+class ResourceLoader {
   public:
-    BuiltinsLib();
-    BuiltinCode getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device);
+    ResourceLoader();
+    Code getBuiltinCode(Group builtInGroup, CodeType requestedCodeType, Device &device);
 
   protected:
-    BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device);
+    Resource getBuiltinResource(Group builtInGroup, CodeType requestedCodeType, Device &device);
 
     using StoragesContainerT = std::vector<std::unique_ptr<Storage>>;
     StoragesContainerT allStorages; // sorted by priority allStorages[0] will be checked before allStorages[1], etc.
 
     std::mutex mutex;
 };
+
+} // namespace BuiltIn
 
 class BuiltIns {
   public:
@@ -147,7 +156,7 @@ class BuiltIns {
     MOCKABLE_VIRTUAL const SipKernel &getSipKernel(Device &device, OsContext *context);
     MOCKABLE_VIRTUAL void freeSipKernels(MemoryManager *memoryManager);
 
-    BuiltinsLib &getBuiltinsLib() {
+    BuiltIn::ResourceLoader &getBuiltinsLib() {
         DEBUG_BREAK_IF(!builtinsLib.get());
         return *builtinsLib;
     }
@@ -156,13 +165,15 @@ class BuiltIns {
     // sip builtins
     std::pair<std::unique_ptr<SipKernel>, std::once_flag> sipKernels[static_cast<uint32_t>(SipKernelType::count)];
 
-    std::unique_ptr<BuiltinsLib> builtinsLib;
+    std::unique_ptr<BuiltIn::ResourceLoader> builtinsLib;
 
     using ContextId = uint32_t;
     std::unordered_map<ContextId, std::pair<std::unique_ptr<SipKernel>, std::once_flag>> perContextSipKernels;
 };
 
-template <EBuiltInOps::Type opCode>
-class BuiltInOp;
+namespace BuiltIn {
+template <Group opCode>
+class Op;
+} // namespace BuiltIn
 
 } // namespace NEO

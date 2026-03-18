@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     MemObjSurface dstImgSurf(dstImage);
     Surface *surfaces[] = {&srcImgSurf, &dstImgSurf};
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstMemObj = dstImage;
     dc.srcOffset = srcOrigin;
@@ -56,7 +56,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
 
     MultiDispatchInfo dispatchInfo(dc);
 
-    auto builtIn = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyImageToImage3d>(this->heaplessModeEnabled);
+    auto builtIn = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::copyImageToImage3d>(this->heaplessModeEnabled);
 
     return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_IMAGE>(dispatchInfo, surfaces, builtIn, numEventsInWaitList, eventWaitList, event, false, csr);
 }

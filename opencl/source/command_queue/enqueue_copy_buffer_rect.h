@@ -40,13 +40,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
 
     const bool isStateless = forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()));
     const bool isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(srcBuffer->getSize(), dstBuffer->getSize());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(isStateless, this->heaplessModeEnabled, isWideness);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferRect>(isStateless, this->heaplessModeEnabled, isWideness);
 
     MemObjSurface srcBufferSurf(srcBuffer);
     MemObjSurface dstBufferSurf(dstBuffer);
     Surface *surfaces[] = {&srcBufferSurf, &dstBufferSurf};
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = srcOrigin;
@@ -60,7 +60,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     dc.direction = csrSelectionArgs.direction;
 
     MultiDispatchInfo dispatchInfo(dc);
-    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, false, csr);
+    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, false, csr);
 }
 
 } // namespace NEO

@@ -1506,7 +1506,7 @@ void CommandQueue::clearLastBcsPackets() {
     }
 }
 
-bool CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) {
+bool CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltIn::OpParams &operationParams, CommandStreamReceiver &csr) {
     bool migrationHandled = false;
     for (auto argMemObj : {operationParams.srcMemObj, operationParams.dstMemObj}) {
         if (argMemObj) {

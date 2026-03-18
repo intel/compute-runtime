@@ -72,11 +72,11 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenProgramInterfaceDescrip
     std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d,
-                                                                            cmdQ.getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImageToImage3d,
+                                                                              cmdQ.getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage.get();
     dc.dstMemObj = dstImage.get();
     dc.srcOffset = {0, 0, 0};
@@ -150,11 +150,11 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
 
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtin = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyImageToImage3d>(heaplessAllowed);
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
+    auto builtin = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::copyImageToImage3d>(heaplessAllowed);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage.get();
     dc.dstMemObj = dstImage.get();
     dc.srcOffset = {0, 0, 0};
@@ -313,11 +313,11 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenAllocatingIndirectState
     std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d,
-                                                                            cmdQ.getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImageToImage3d,
+                                                                              cmdQ.getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage.get();
     dc.dstMemObj = dstImage.get();
     dc.srcOffset = {0, 0, 0};
@@ -501,10 +501,10 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, whenSendingIndirectStateThe
 
     std::unique_ptr<Image> img(Image2dHelperUlt<>::create(pContext));
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d,
-                                                                            cmdQ.getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImageToImage3d,
+                                                                              cmdQ.getClDevice());
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = img.get();
     dc.dstMemObj = img.get();
     dc.size = {1, 1, 1};
@@ -596,11 +596,11 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenSendingIndirectStateThe
     std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3d,
-                                                                            cmdQ.getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferToImage3d,
+                                                                              cmdQ.getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = nullptr;
     dc.dstMemObj = dstImage.get();
     dc.dstOffset = {0, 0, 0};

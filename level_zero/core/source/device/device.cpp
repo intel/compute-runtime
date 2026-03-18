@@ -1407,7 +1407,7 @@ ze_result_t Device::activateMetricGroupsDeferred(uint32_t count,
     return status;
 }
 
-BuiltinFunctionsLib *Device::getBuiltinFunctionsLib() { return builtins.get(); }
+BuiltInKernelLib *Device::getBuiltinFunctionsLib() { return builtins.get(); }
 
 uint32_t Device::getMOCS(bool l3enabled, bool l1enabled) {
     return getGfxCoreHelper().getMocsIndex(*getNEODevice()->getGmmHelper(), l3enabled, l1enabled) << 1;
@@ -1489,7 +1489,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     bool platformImplicitScaling = gfxCoreHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
     device->implicitScalingCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), platformImplicitScaling);
     device->metricContext = MetricDeviceContext::create(*device);
-    device->builtins = BuiltinFunctionsLib::create(
+    device->builtins = BuiltInKernelLib::create(
         device, neoDevice->getBuiltIns());
     device->cacheReservation = CacheReservation::create(*device);
     device->maxNumHwThreads = NEO::GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
@@ -1702,11 +1702,11 @@ Module *Device::createRequiredLibModule(const std::string &libName, ModuleBuildL
     return doCreateRequiredLibModule(reqLibBuff, buildLog, result);
 }
 
-NEO::BuiltinResourceT Device::getBufferFromFile(const std::string &dirPath, const std::string &fileName) const {
-    return NEO::FileStorage(dirPath).load(fileName);
+NEO::BuiltIn::Resource Device::getBufferFromFile(const std::string &dirPath, const std::string &fileName) const {
+    return NEO::BuiltIn::FileStorage(dirPath).load(fileName);
 }
 
-Module *Device::doCreateRequiredLibModule(NEO::BuiltinResourceT &reqLibBuff, ModuleBuildLog *buildLog, ze_result_t &result) {
+Module *Device::doCreateRequiredLibModule(NEO::BuiltIn::Resource &reqLibBuff, ModuleBuildLog *buildLog, ze_result_t &result) {
     ze_module_desc_t moduleDesc = {
         .stype = ZE_STRUCTURE_TYPE_MODULE_DESC,
         .pNext = nullptr,

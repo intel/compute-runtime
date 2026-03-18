@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,11 +210,11 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2
     enqueueCopyBufferRect2D<FamilyType>();
 
     // Extract the kernel used
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferRect,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRect,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = {0, 0, 0};
@@ -241,11 +241,11 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2
 
 HWTEST_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRectStatelessThenStatelessKernelIsUsed) {
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferRectStateless,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStateless,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = {0, 0, 0};
@@ -272,11 +272,11 @@ HWTEST2_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRectStatelessHeaplessThenC
         GTEST_SKIP();
     }
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferRectStatelessHeapless,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStatelessHeapless,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = {0, 0, 0};

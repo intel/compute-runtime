@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ HWTEST_F(ImageHelperFixture, whenImagesCheckedForPackageFormatThenFalseIsReturne
 }
 
 HWTEST_F(ImageHelperFixture, givenPackedSurfaceStateWhenCopyingImageThenSurfaceStateIsNotModified) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 

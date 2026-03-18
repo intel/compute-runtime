@@ -31,7 +31,9 @@ struct ProgramFromPatchtokens;
 }
 
 enum class BuildPhase;
-class BuiltinDispatchInfoBuilder;
+namespace BuiltIn {
+class DispatchInfoBuilder;
+}
 class ClDevice;
 class Context;
 class CompilerInterface;
@@ -141,7 +143,7 @@ class Program : public BaseObject<_cl_program> {
     cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions);
 
     cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions,
-                 std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
+                 std::unordered_map<std::string, BuiltIn::DispatchInfoBuilder *> &builtinsMap);
 
     cl_int processGenBinaries(const ClDeviceVector &clDevices, std::unordered_map<uint32_t, BuildPhase> &phaseReached);
     MOCKABLE_VIRTUAL cl_int processGenBinary(const ClDevice &clDevice);

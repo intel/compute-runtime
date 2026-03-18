@@ -60,7 +60,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCou
                                                  cl_uint numEventsInWaitList,
                                                  const cl_event *eventWaitList,
                                                  cl_event *event) {
-    BuiltInOwnershipWrapper builtInLock;
+    BuiltIn::OwnershipWrapper builtInLock;
     std::unique_ptr<KernelObjsForAuxTranslation> kernelObjsForAuxTranslation;
     MultiDispatchInfo multiDispatchInfo(kernel);
 
@@ -76,7 +76,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCou
     }
 
     if (AuxTranslationMode::builtin == auxTranslationMode) {
-        auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, getClDevice());
+        auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, getClDevice());
         builtInLock.takeOwnership(builder, this->context);
 
         dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::auxToNonAux);
@@ -1338,7 +1338,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
         this->setDcFlushRequiredOnStallingCommandsOnNextFlush(true);
         NullSurface s;
         Surface *surfaces[] = {&s};
-        BuiltinOpParams params{};
+        BuiltIn::OpParams params{};
         params.bcsSplit = true;
         MultiDispatchInfo di(params);
         ret = enqueueHandler<CL_COMMAND_MARKER>(surfaces,
@@ -1581,7 +1581,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
 
 template <typename GfxFamily>
 template <uint32_t cmdType, size_t surfaceCount>
-cl_int CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], EBuiltInOps::Type builtInOperation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr) {
+cl_int CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], BuiltIn::Group builtInOperation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr) {
     const bool blit = EngineHelpers::isBcs(csr.getOsContext().getEngineType());
 
     if (blit) {
@@ -1595,9 +1595,9 @@ cl_int CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &d
 
         return ret;
     } else {
-        auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInOperation,
-                                                                                this->getClDevice());
-        BuiltInOwnershipWrapper builtInLock(builder, this->context);
+        auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInOperation,
+                                                                                  this->getClDevice());
+        BuiltIn::OwnershipWrapper builtInLock(builder, this->context);
 
         builder.buildDispatchInfos(dispatchInfo);
 

@@ -290,7 +290,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
     TimestampPacketDependencies timestampPacketDependencies;
     EventsRequest eventsRequest(0, nullptr, nullptr);
     EventBuilder eventBuilder;
-    BuiltinOpParams builtinOpParams;
+    BuiltIn::OpParams builtinOpParams;
     builtinOpParams.srcMemObj = buffer.get();
     builtinOpParams.dstPtr = reinterpret_cast<void *>(0x1234);
     MultiDispatchInfo multiDispatchInfo;
@@ -341,7 +341,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationWhenEnqueueCommandWithoutKern
     TimestampPacketDependencies timestampPacketDependencies;
     EventsRequest eventsRequest(0, nullptr, nullptr);
     EventBuilder eventBuilder;
-    BuiltinOpParams builtinOpParams;
+    BuiltIn::OpParams builtinOpParams;
     builtinOpParams.srcMemObj = buffer.get();
     builtinOpParams.dstPtr = reinterpret_cast<void *>(0x1234);
     MultiDispatchInfo multiDispatchInfo;
@@ -489,7 +489,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenA
     EventBuilder eventBuilder;
 
     bool blocked = false;
-    BuiltinOpParams builtinOpParams;
+    BuiltIn::OpParams builtinOpParams;
     builtinOpParams.srcMemObj = buffer.get();
     builtinOpParams.dstPtr = reinterpret_cast<void *>(0x1234);
     MultiDispatchInfo multiDispatchInfo;

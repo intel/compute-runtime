@@ -83,17 +83,19 @@ struct EnqueueCopyBufferToImageMipMapTest : public CommandEnqueueFixture,
         CommandEnqueueFixture::tearDown();
     }
 
-    int32_t adjustBuiltInType(bool isHeaplessEnabled, int32_t builtInType) {
+    BuiltIn::Group adjustBuiltinGroup(bool isHeaplessEnabled, BuiltIn::Group builtInGroup) {
 
         if (isHeaplessEnabled) {
-            switch (builtInType) {
-            case EBuiltInOps::copyBufferToImage3d:
-            case EBuiltInOps::copyBufferToImage3dStateless:
-                return EBuiltInOps::copyBufferToImage3dStatelessHeapless;
+            switch (builtInGroup) {
+            case BuiltIn::Group::copyBufferToImage3d:
+            case BuiltIn::Group::copyBufferToImage3dStateless:
+                return BuiltIn::Group::copyBufferToImage3dStatelessHeapless;
+            default:
+                break;
             }
         }
 
-        return builtInType;
+        return builtInGroup;
     }
 
     MockContext *context = nullptr;

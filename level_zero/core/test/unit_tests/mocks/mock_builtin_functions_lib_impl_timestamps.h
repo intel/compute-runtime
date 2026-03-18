@@ -18,28 +18,28 @@
 namespace L0 {
 namespace ult {
 
-struct MockBuiltinDataTimestamp : BuiltinFunctionsLibImpl::BuiltinData {
-    using BuiltinFunctionsLibImpl::BuiltinData::BuiltinData;
+struct MockBuiltInKernelDataTimestamp : BuiltInKernelLibImpl::BuiltInKernelData {
+    using BuiltInKernelLibImpl::BuiltInKernelData::BuiltInKernelData;
 };
-struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
+struct MockBuiltInKernelLibImplTimestamps : BuiltInKernelLibImpl {
 
-    using BuiltinFunctionsLibImpl::BuiltinFunctionsLibImpl;
+    using BuiltInKernelLibImpl::BuiltInKernelLibImpl;
 
-    void initBuiltinKernel(Builtin func) override {
+    void initBuiltinKernel(BufferBuiltIn func) override {
         auto builtId = static_cast<uint32_t>(func);
-        switch (static_cast<Builtin>(func)) {
-        case Builtin::queryKernelTimestamps:
-        case Builtin::queryKernelTimestampsStateless:
-        case Builtin::queryKernelTimestampsStatelessHeapless:
+        switch (static_cast<BufferBuiltIn>(func)) {
+        case BufferBuiltIn::queryKernelTimestamps:
+        case BufferBuiltIn::queryKernelTimestampsStateless:
+        case BufferBuiltIn::queryKernelTimestampsStatelessHeapless:
             if (builtins[builtId].get() == nullptr) {
-                builtins[builtId] = loadBuiltIn(NEO::EBuiltInOps::queryKernelTimestamps, "QueryKernelTimestamps");
+                builtins[builtId] = loadBuiltIn(NEO::BuiltIn::Group::queryKernelTimestamps, "QueryKernelTimestamps");
             }
             break;
-        case Builtin::queryKernelTimestampsWithOffsets:
-        case Builtin::queryKernelTimestampsWithOffsetsStateless:
-        case Builtin::queryKernelTimestampsWithOffsetsStatelessHeapless:
+        case BufferBuiltIn::queryKernelTimestampsWithOffsets:
+        case BufferBuiltIn::queryKernelTimestampsWithOffsetsStateless:
+        case BufferBuiltIn::queryKernelTimestampsWithOffsetsStatelessHeapless:
             if (builtins[builtId].get() == nullptr) {
-                builtins[builtId] = loadBuiltIn(NEO::EBuiltInOps::queryKernelTimestamps, "QueryKernelTimestampsWithOffsets");
+                builtins[builtId] = loadBuiltIn(NEO::BuiltIn::Group::queryKernelTimestamps, "QueryKernelTimestampsWithOffsets");
             }
             break;
         default:
@@ -47,19 +47,19 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
         };
     }
 
-    void initBuiltinImageKernel(ImageBuiltin func) override {
+    void initBuiltinImageKernel(ImageBuiltIn func) override {
     }
 
-    Kernel *getFunction(Builtin func) override {
+    Kernel *getFunction(BufferBuiltIn func) override {
         auto builtId = static_cast<uint32_t>(func);
         return builtins[builtId]->func.get();
     }
 
-    std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {
-        using BuiltInCodeType = NEO::BuiltinCode::ECodeType;
+    std::unique_ptr<BuiltInKernelLibImpl::BuiltInKernelData> loadBuiltIn(NEO::BuiltIn::Group builtInGroup, const char *kernelName) override {
+        using BuiltInCodeType = NEO::BuiltIn::CodeType;
 
         auto builtInCodeType = NEO::debugManager.flags.RebuildPrecompiledKernels.get() ? BuiltInCodeType::intermediate : BuiltInCodeType::binary;
-        auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtin, builtInCodeType, *device->getNEODevice());
+        auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtInGroup, builtInCodeType, *device->getNEODevice());
 
         [[maybe_unused]] ze_result_t res;
 
@@ -76,12 +76,12 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
         std::unique_ptr<Kernel> kernel;
         ze_kernel_handle_t kernelHandle;
         ze_kernel_desc_t kernelDesc = {};
-        kernelDesc.pKernelName = builtInName;
+        kernelDesc.pKernelName = kernelName;
         res = module->createKernel(&kernelDesc, &kernelHandle);
         DEBUG_BREAK_IF(res != ZE_RESULT_SUCCESS);
 
         kernel.reset(Kernel::fromHandle(kernelHandle));
-        return std::unique_ptr<BuiltinData>(new MockBuiltinDataTimestamp{module, std::move(kernel)});
+        return std::unique_ptr<BuiltInKernelData>(new MockBuiltInKernelDataTimestamp{module, std::move(kernel)});
     }
 };
 

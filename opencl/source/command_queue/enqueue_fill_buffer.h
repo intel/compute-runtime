@@ -56,14 +56,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
 
     const bool isStateless = forceStateless(buffer->getSize());
     const bool isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(buffer->getSize());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            this->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                              this->getClDevice());
 
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
+    BuiltIn::OwnershipWrapper builtInLock(builder, this->context);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     auto multiGraphicsAllocation = MultiGraphicsAllocation(getDevice().getRootDeviceIndex());
     multiGraphicsAllocation.addAllocation(patternAllocation);
 

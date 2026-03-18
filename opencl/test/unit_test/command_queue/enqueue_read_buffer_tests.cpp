@@ -156,19 +156,19 @@ HWTEST_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenIndirectDataIsAdded) {
     srcBuffer->forceDisallowCPUCopy = true;
     EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ, srcBuffer.get(), CL_TRUE);
 
-    auto builtInType = EBuiltInOps::copyBufferToBuffer;
+    auto builtInGroup = BuiltIn::Group::copyBufferToBuffer;
 
     if (pCmdQ->getHeaplessModeEnabled()) {
-        builtInType = EBuiltInOps::copyBufferToBufferStatelessHeapless;
+        builtInGroup = BuiltIn::Group::copyBufferToBufferStatelessHeapless;
     } else if (static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->isForceStateless) {
-        builtInType = EBuiltInOps::copyBufferToBufferStateless;
+        builtInGroup = BuiltIn::Group::copyBufferToBufferStateless;
     }
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.dstPtr = EnqueueReadBufferTraits::hostPtr;
     dc.srcMemObj = srcBuffer.get();
     dc.srcOffset = {EnqueueReadBufferTraits::offset, 0, 0};
@@ -1035,7 +1035,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, given4gbBufferAndIsForceStatelessIsFalseWhen
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ);
     mockCmdQ->isForceStateless = false;
 
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled(), true);
+    BuiltIn::Group copyBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled(), true);
 
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
@@ -1043,11 +1043,11 @@ HWTEST_F(EnqueueReadBufferTypeTest, given4gbBufferAndIsForceStatelessIsFalseWhen
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
     FourGbMockBuffer buffer;
 
-    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         *pClDevice));
 

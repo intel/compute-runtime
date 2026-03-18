@@ -1530,7 +1530,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr), true, true);
 
     if constexpr (FamilyType::supportsSampler) {
-        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
         auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
         mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -1675,7 +1675,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
         verifyFlags(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, nullptr, numWaitEvents, waitlist, copyParams));
 
         if constexpr (FamilyType::supportsSampler) {
-            auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+            auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
             auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
             mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -1942,7 +1942,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
                     false, false);
 
         if constexpr (FamilyType::supportsSampler) {
-            auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+            auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
             auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
             mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -2354,7 +2354,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     verifyWalkerWithProfilingEnqueued(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), event, 0, nullptr), false);
 
     if constexpr (FamilyType::supportsSampler) {
-        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
         auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
         mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -2461,7 +2461,7 @@ HWTEST2_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfiling
     verifyFlag(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), event, 0, nullptr), false);
 
     if constexpr (FamilyType::supportsSampler) {
-        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
         auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
         mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -3651,52 +3651,52 @@ TEST_F(CommandListCreateTests, givenCreatedCommandListWhenGettingTrackingFlagsTh
     EXPECT_EQ(commandList->statelessBuiltinsEnabled, compilerProductHelper.isForceToStatelessRequired());
 }
 
-TEST(BuiltinTypeHelperTest, givenNonStatelessAndNonHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {
+TEST(BuiltInHelperTest, givenNonStatelessAndNonHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {
     bool isStateless = false;
     bool isHeapless = false;
 
-    EXPECT_EQ(Builtin::copyBufferBytes, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferBytes>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferRectBytes2d, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes2d>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferRectBytes3d, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes3d>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferToBufferMiddle, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferToBufferSide, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferImmediate, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferImmediateLeftOver, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferSSHOffset, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferSSHOffset>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferMiddle, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferRightLeftover, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferBytes, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferBytes>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferRectBytes2d, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferRectBytes2d>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferRectBytes3d, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferRectBytes3d>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferToBufferMiddle, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferToBufferSide, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferSide>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferImmediate, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediate>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferImmediateLeftOver, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediateLeftOver>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferSSHOffset, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferSSHOffset>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferMiddle, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferRightLeftover, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferRightLeftover>(isStateless, isHeapless));
 }
 
-TEST(BuiltinTypeHelperTest, givenStatelessAndNonHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {
+TEST(BuiltInHelperTest, givenStatelessAndNonHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {
     bool isStateless = true;
     bool isHeapless = false;
 
-    EXPECT_EQ(Builtin::copyBufferBytesStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferBytes>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferRectBytes2dStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes2d>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferRectBytes3dStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes3d>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferToBufferMiddleStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferToBufferSideStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferImmediateStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferImmediateLeftOverStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferSSHOffsetStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferSSHOffset>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferMiddleStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferRightLeftoverStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferBytesStateless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferBytes>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferRectBytes2dStateless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferRectBytes2d>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferRectBytes3dStateless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferRectBytes3d>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferToBufferMiddleStateless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferToBufferSideStateless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferSide>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferImmediateStateless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediate>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferImmediateLeftOverStateless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediateLeftOver>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferSSHOffsetStateless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferSSHOffset>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferMiddleStateless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferRightLeftoverStateless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferRightLeftover>(isStateless, isHeapless));
 }
 
-TEST(BuiltinTypeHelperTest, givenHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {
+TEST(BuiltInHelperTest, givenHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {
     bool isStateless = false;
     bool isHeapless = true;
 
-    EXPECT_EQ(Builtin::copyBufferBytesStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferBytes>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferRectBytes2dStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes2d>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferRectBytes3dStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes3d>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferToBufferMiddleStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::copyBufferToBufferSideStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferImmediateStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferImmediateLeftOverStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferSSHOffsetStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferSSHOffset>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferMiddleStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless));
-    EXPECT_EQ(Builtin::fillBufferRightLeftoverStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferBytesStatelessHeapless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferBytes>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferRectBytes2dStatelessHeapless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferRectBytes2d>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferRectBytes3dStatelessHeapless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferRectBytes3d>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferToBufferMiddleStatelessHeapless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::copyBufferToBufferSideStatelessHeapless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferSide>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferImmediateStatelessHeapless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediate>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferImmediateLeftOverStatelessHeapless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediateLeftOver>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferSSHOffsetStatelessHeapless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferSSHOffset>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferMiddleStatelessHeapless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(BufferBuiltIn::fillBufferRightLeftoverStatelessHeapless, BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferRightLeftover>(isStateless, isHeapless));
 }
 
 HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithPostSyncThenDummyBlitIsProgrammedPriorToMiFlushAndDummyAllocationIsAddedToResidencyContainer, IsAtLeastXeCore) {

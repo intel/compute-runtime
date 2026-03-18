@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,17 +45,19 @@ struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    int32_t adjustBuiltInType(int32_t builtInType) {
+    BuiltIn::Group adjustBuiltinGroup(BuiltIn::Group builtInGroup) {
 
         if (this->isHeaplessEnabled) {
-            switch (builtInType) {
-            case EBuiltInOps::fillBuffer:
-            case EBuiltInOps::fillBufferStateless:
-                return EBuiltInOps::fillBufferStatelessHeapless;
+            switch (builtInGroup) {
+            case BuiltIn::Group::fillBuffer:
+            case BuiltIn::Group::fillBufferStateless:
+                return BuiltIn::Group::fillBufferStatelessHeapless;
+            default:
+                break;
             }
         }
 
-        return builtInType;
+        return builtInGroup;
     }
 
     bool isHeaplessEnabled = false;

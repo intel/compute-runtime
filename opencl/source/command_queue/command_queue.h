@@ -46,7 +46,9 @@ class LinearStream;
 class PerformanceCounters;
 class PrintfHandler;
 enum class WaitStatus;
-struct BuiltinOpParams;
+namespace BuiltIn {
+struct OpParams;
+}
 struct CsrSelectionArgs;
 struct MultiDispatchInfo;
 struct TimestampPacketDependencies;
@@ -460,7 +462,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void providePerformanceHint(TransferProperties &transferProperties);
     bool queueDependenciesClearRequired() const;
     bool blitEnqueueAllowed(const CsrSelectionArgs &args) const;
-    MOCKABLE_VIRTUAL bool migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr);
+    MOCKABLE_VIRTUAL bool migrateMultiGraphicsAllocationsIfRequired(const BuiltIn::OpParams &operationParams, CommandStreamReceiver &csr);
 
     inline bool shouldFlushDC(uint32_t commandType, PrintfHandler *printfHandler) const {
         return (commandType == CL_COMMAND_READ_BUFFER ||

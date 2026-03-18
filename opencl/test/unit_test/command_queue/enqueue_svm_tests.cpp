@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1787,7 +1787,7 @@ struct StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory : public
 HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given4gbBufferAndIsForceStatelessIsFalseWhenEnqueueSvmMapCallThenStatelessIsUsed) {
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
 
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, queue.getHeaplessModeEnabled());
+    BuiltIn::Group copyBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(true, queue.getHeaplessModeEnabled());
 
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(queue.getDevice().getExecutionEnvironment()->rootDeviceEnvironments[queue.getDevice().getRootDeviceIndex()].get(), builtIns);
@@ -1795,12 +1795,12 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
 
     auto svmPtr4gb = mockSvmManager->createSVMAlloc(static_cast<size_t>(4ull * MemoryConstants::gigaByte), {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     EXPECT_NE(svmPtr4gb, nullptr);
 
-    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         *pClDevice));
 
@@ -1824,7 +1824,7 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
 HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given4gbBufferAndIsForceStatelessIsFalseWhenEnqueueSvmUnMapCallThenStatelessIsUsed) {
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
 
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, queue.getHeaplessModeEnabled());
+    BuiltIn::Group copyBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(true, queue.getHeaplessModeEnabled());
 
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(queue.getDevice().getExecutionEnvironment()->rootDeviceEnvironments[queue.getDevice().getRootDeviceIndex()].get(), builtIns);
@@ -1838,9 +1838,9 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
 
-    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         *pClDevice));
 
@@ -1861,7 +1861,7 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
 HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given4gbBufferAndIsForceStatelessIsFalseWhenEnqueueSvmMemFillCallThenStatelessIsUsed) {
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
 
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(true, queue.getHeaplessModeEnabled());
+    BuiltIn::Group copyBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(true, queue.getHeaplessModeEnabled());
 
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(queue.getDevice().getExecutionEnvironment()->rootDeviceEnvironments[queue.getDevice().getRootDeviceIndex()].get(), builtIns);
@@ -1875,9 +1875,9 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
 
-    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         *pClDevice));
 

@@ -62,7 +62,7 @@ class BcsSplit;
 class CacheReservation;
 class L0GfxCoreHelper;
 class MetricDeviceContext;
-struct BuiltinFunctionsLib;
+struct BuiltInKernelLib;
 struct CommandList;
 struct DebugSession;
 class DriverHandle;
@@ -128,7 +128,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL ze_result_t systemBarrier();
     MOCKABLE_VIRTUAL ze_result_t synchronize();
 
-    MOCKABLE_VIRTUAL BuiltinFunctionsLib *getBuiltinFunctionsLib();
+    MOCKABLE_VIRTUAL BuiltInKernelLib *getBuiltinFunctionsLib();
     MOCKABLE_VIRTUAL uint32_t getMOCS(bool l3enabled, bool l1enabled);
     MOCKABLE_VIRTUAL uint32_t getMaxNumHwThreads() const;
 
@@ -253,7 +253,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     std::unique_ptr<NEO::AllocationsList> allocationsForReuse;
     std::unique_ptr<NEO::DriverInfo> driverInfo;
-    std::unique_ptr<BuiltinFunctionsLib> builtins;
+    std::unique_ptr<BuiltInKernelLib> builtins;
     std::unique_ptr<MetricDeviceContext> metricContext;
     std::unique_ptr<CacheReservation> cacheReservation;
     std::unique_ptr<BcsSplit> bcsSplit;
@@ -279,8 +279,8 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     void getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const;
     MOCKABLE_VIRTUAL Module *createRequiredLibModule(const std::string &libName, ModuleBuildLog *buildLog, ze_result_t &result);
     bool getRequiredLibDirPath(const std::string &libName, std::string &outPath);
-    MOCKABLE_VIRTUAL NEO::BuiltinResourceT getBufferFromFile(const std::string &dirPath, const std::string &fileName) const;
-    MOCKABLE_VIRTUAL Module *doCreateRequiredLibModule(NEO::BuiltinResourceT &reqLibBuff, ModuleBuildLog *buildLog, ze_result_t &result);
+    MOCKABLE_VIRTUAL NEO::BuiltIn::Resource getBufferFromFile(const std::string &dirPath, const std::string &fileName) const;
+    MOCKABLE_VIRTUAL Module *doCreateRequiredLibModule(NEO::BuiltIn::Resource &reqLibBuff, ModuleBuildLog *buildLog, ze_result_t &result);
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
     NEO::Lockable<std::vector<std::string_view>> requiredLibsOptionalSearchPaths;

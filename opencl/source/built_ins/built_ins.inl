@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,13 +11,13 @@
 #include "opencl/source/mem_obj/buffer.h"
 namespace NEO {
 
-BuiltInOp<EBuiltInOps::auxTranslation>::BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltinDispatchInfoBuilder(kernelsLib, device) {
-    BuiltinDispatchInfoBuilder::populate(EBuiltInOps::auxTranslation, "", "fullCopy", multiDeviceBaseKernel);
+BuiltIn::Op<BuiltIn::Group::auxTranslation>::Op(BuiltIns &kernelsLib, ClDevice &device) : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
+    BuiltIn::DispatchInfoBuilder::populate(BuiltIn::Group::auxTranslation, "", "fullCopy", multiDeviceBaseKernel);
     baseKernel = multiDeviceBaseKernel->getKernel(clDevice.getRootDeviceIndex());
     resizeKernelInstances(5);
 }
 
-void BuiltInOp<EBuiltInOps::auxTranslation>::resizeKernelInstances(size_t size) const {
+void BuiltIn::Op<BuiltIn::Group::auxTranslation>::resizeKernelInstances(size_t size) const {
     convertToNonAuxKernel.reserve(size);
     convertToAuxKernel.reserve(size);
 

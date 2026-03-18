@@ -121,15 +121,15 @@ HWTEST_F(MultiIoqCmdQSynchronizationTest, givenTwoIoqCmdQsWhenEnqueuesSynchroniz
 
 struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
-    void setUpImpl(EBuiltInOps::Type operation) {
+    void setUpImpl(BuiltIn::Group operation) {
         auto builtIns = new MockBuiltins();
         MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
         auto swapBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
             operation,
-            std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+            std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
-        mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
             operation,
             *pClDevice));
     }
@@ -139,16 +139,16 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    auto builtInType = EBuiltInOps::copyBufferToBuffer;
+    auto builtInGroup = BuiltIn::Group::copyBufferToBuffer;
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
-        builtInType = EBuiltInOps::copyBufferToBufferStatelessHeapless;
+        builtInGroup = BuiltIn::Group::copyBufferToBufferStatelessHeapless;
     } else if (compilerProductHelper.isForceToStatelessRequired()) {
-        builtInType = EBuiltInOps::copyBufferToBufferStateless;
+        builtInGroup = BuiltIn::Group::copyBufferToBufferStateless;
     }
 
-    setUpImpl(builtInType);
+    setUpImpl(builtInGroup);
     BufferDefaults::context = context;
     auto buffer = clUniquePtr(BufferHelper<>::create());
 
@@ -195,7 +195,7 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueWriteImageCallWhenBuiltin
         }
 
         reinterpret_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->heaplessModeEnabled = useHeapless;
-        setUpImpl(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(useStateless, useHeapless));
+        setUpImpl(BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(useStateless, useHeapless));
 
         std::unique_ptr<Image> dstImage(ImageHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(context));
 
@@ -239,7 +239,7 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinP
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
-    setUpImpl(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(useStateless, pCmdQ->getHeaplessModeEnabled()));
+    setUpImpl(BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(useStateless, pCmdQ->getHeaplessModeEnabled()));
 
     std::unique_ptr<Image> dstImage(ImageHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(context));
 
@@ -282,11 +282,11 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferRectCallWh
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
-    auto builtIn = EBuiltInOps::copyBufferRect;
+    auto builtIn = BuiltIn::Group::copyBufferRect;
     if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
-        builtIn = EBuiltInOps::copyBufferRectStatelessHeapless;
+        builtIn = BuiltIn::Group::copyBufferRectStatelessHeapless;
     } else if (pCmdQ->getDevice().getCompilerProductHelper().isForceToStatelessRequired()) {
-        builtIn = EBuiltInOps::copyBufferRectStateless;
+        builtIn = BuiltIn::Group::copyBufferRectStateless;
     }
 
     setUpImpl(builtIn);

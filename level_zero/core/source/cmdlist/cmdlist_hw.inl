@@ -890,36 +890,36 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     const auto isStateless = this->forceStateless(bufferSize);
     const auto isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(bufferSize);
     const auto isHeaplessEnabled = this->heaplessModeEnabled;
-    ImageBuiltin builtInType = ImageBuiltin::copyBufferToImage3dBytes;
+    ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyBufferToImage3dBytes;
 
     switch (bytesPerPixel) {
     case 1u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3dBytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3dBytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 2u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d2Bytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d2Bytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 4u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d3To4Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d3To4Bytes>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d4Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d4Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
         break;
     case 8u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d6To8Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d6To8Bytes>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d8Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d8Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
         break;
     case 16u: {
         bool isSrc16BytesAligned = isAligned<16>(allocationStruct.alignedAllocationPtr, allocationStruct.offset,
                                                  srcRowPitch, srcSlicePitchCalculated);
         if (isSrc16BytesAligned) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16BytesAligned>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d16BytesAligned>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d16Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
         break;
     }
@@ -929,7 +929,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     }
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(builtInType);
+    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn);
 
     builtinSetArg(builtinKernel, 0, allocationStruct.alignedAllocationPtr, allocationStruct.alloc);
     builtinKernel->setArgRedescribedImage(1u, image->toHandle(), false);
@@ -1109,42 +1109,42 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     const auto isStateless = this->forceStateless(bufferSize);
     const auto isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(bufferSize);
     const auto isHeaplessEnabled = this->heaplessModeEnabled;
-    ImageBuiltin builtInType = ImageBuiltin::copyBufferToImage3dBytes;
+    ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyBufferToImage3dBytes;
 
     switch (bytesPerPixel) {
     case 1u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBufferBytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBufferBytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 2u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer2Bytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer2Bytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 3u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer3Bytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer3Bytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 4u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4To3Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer4To3Bytes>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer4Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
         break;
     case 6u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer6Bytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer6Bytes>(isStateless, isHeaplessEnabled, isWideness);
         break;
     case 8u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8To6Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer8To6Bytes>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer8Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
         break;
     case 16u: {
         bool isDst16BytesAligned = isAligned<16>(allocationStruct.alignedAllocationPtr, allocationStruct.offset,
                                                  destRowPitch, destSlicePitchCalculated);
         if (isDst16BytesAligned) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16BytesAligned>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer16BytesAligned>(isStateless, isHeaplessEnabled, isWideness);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer16Bytes>(isStateless, isHeaplessEnabled, isWideness);
         }
 
         break;
@@ -1159,7 +1159,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     }
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(builtInType);
+    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn);
 
     builtinKernel->setArgRedescribedImage(0u, image->toHandle(), false);
     builtinSetArg(builtinKernel, 1, allocationStruct.alignedAllocationPtr, allocationStruct.alloc);
@@ -1341,10 +1341,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         return status;
     }
 
-    ImageBuiltin builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImageRegion>(false, this->heaplessModeEnabled);
+    ImageBuiltIn imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImageRegion>(false, this->heaplessModeEnabled);
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(builtInType);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn);
 
     ze_result_t ret = kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
                                                &groupSizeY, &groupSizeZ);
@@ -1551,7 +1551,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(u
                                                                                uint64_t srcOffset,
                                                                                uint64_t size,
                                                                                uint64_t elementSize,
-                                                                               Builtin builtin,
+                                                                               BufferBuiltIn builtin,
                                                                                Event *signalEvent,
                                                                                bool isStateless,
                                                                                CmdListKernelLaunchParams &launchParams) {
@@ -1812,7 +1812,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                            srcAllocation, 0,
                                            size - rightSize,
                                            middleElSize,
-                                           Builtin::copyBufferToBufferMiddle,
+                                           BufferBuiltIn::copyBufferToBufferMiddle,
                                            nullptr,
                                            isStateless,
                                            launchParams);
@@ -1823,7 +1823,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                                reinterpret_cast<uintptr_t>(&srcAddress),
                                                srcAllocation, size - rightSize,
                                                rightSize, 1UL,
-                                               Builtin::copyBufferToBufferSide,
+                                               BufferBuiltIn::copyBufferToBufferSide,
                                                nullptr,
                                                isStateless,
                                                launchParams);
@@ -2170,7 +2170,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
         if (ret == ZE_RESULT_SUCCESS && leftSize) {
 
-            Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless, isWideness);
+            BufferBuiltIn copyKernel = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferSide>(isStateless, isHeapless, isWideness);
 
             ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, dstAllocationStruct.offset,
@@ -2186,7 +2186,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
         if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
 
-            Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless, isWideness);
+            BufferBuiltIn copyKernel = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferMiddle>(isStateless, isHeapless, isWideness);
 
             ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
@@ -2203,7 +2203,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
         if (ret == ZE_RESULT_SUCCESS && rightSize) {
 
-            Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless, isWideness);
+            BufferBuiltIn copyKernel = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferSide>(isStateless, isHeapless, isWideness);
 
             ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
@@ -2333,15 +2333,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                             srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3,
                                             signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams, isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed));
     } else if ((srcRegion->depth > 1) || (srcRegion->originZ != 0) || (dstRegion->originZ != 0)) {
-        Builtin builtInType = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes3d>(isStateless, isHeapless);
-        result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, builtInType,
+        BufferBuiltIn bufferBuiltIn = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferRectBytes3d>(isStateless, isHeapless);
+        result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, bufferBuiltIn,
                                                 dstRegion, dstPitch, dstSlicePitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcSlicePitch, srcAllocationStruct.offset,
                                                 signalEvent, numWaitEvents, phWaitEvents,
                                                 memoryCopyParams.relaxedOrderingDispatch, isStateless, isHeapless);
     } else {
-        Builtin builtInType = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes2d>(isStateless, isHeapless);
-        result = this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct, builtInType,
+        BufferBuiltIn bufferBuiltIn = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferRectBytes2d>(isStateless, isHeapless);
+        result = this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct, bufferBuiltIn,
                                                 dstRegion, dstPitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcAllocationStruct.offset,
                                                 signalEvent, numWaitEvents, phWaitEvents,
@@ -2375,7 +2375,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation,
                                                                            AlignedAllocationData *srcAlignedAllocation,
-                                                                           Builtin builtin,
+                                                                           BufferBuiltIn builtin,
                                                                            const ze_copy_region_t *dstRegion,
                                                                            uint32_t dstPitch,
                                                                            uint32_t dstSlicePitch,
@@ -2458,7 +2458,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation,
                                                                            AlignedAllocationData *srcAlignedAllocation,
-                                                                           Builtin builtin,
+                                                                           BufferBuiltIn builtin,
                                                                            const ze_copy_region_t *dstRegion,
                                                                            uint32_t dstPitch,
                                                                            size_t dstOffset,
@@ -2571,7 +2571,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool isStateless, uint32_t unalignedSize, const AlignedAllocationData &dstAllocation, const void *pattern, Event *signalEvent, CmdListKernelLaunchParams &launchParams) {
 
     const bool isHeapless = this->isHeaplessModeEnabled();
-    auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(isStateless, isHeapless);
+    auto builtin = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediateLeftOver>(isStateless, isHeapless);
 
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
     uint32_t groupSizeY = 1, groupSizeZ = 1;
@@ -2688,8 +2688,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     bool useImmediateFill = canUseImmediateFill(size, patternSize, dstAllocation.offset, this->device->getDeviceInfo().maxWorkGroupSize);
     auto builtin = useImmediateFill
-                       ? BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless, isWideness)
-                       : BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless, isWideness);
+                       ? BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediate>(isStateless, isHeapless, isWideness)
+                       : BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferMiddle>(isStateless, isHeapless, isWideness);
 
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
@@ -2836,7 +2836,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         } else {
             uint32_t dstOffsetRemainder = static_cast<uint32_t>(dstAllocation.offset);
 
-            auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless, isWideness);
+            auto builtin = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferRightLeftover>(isStateless, isHeapless, isWideness);
             Kernel *builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
             builtinKernelRemainder->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
@@ -2862,7 +2862,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             uint32_t dstOffsetRemainder = static_cast<uint32_t>(fillArguments.rightOffset);
             uint64_t patternOffsetRemainder = fillArguments.patternOffsetRemainder;
 
-            auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless, isWideness);
+            auto builtin = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferRightLeftover>(isStateless, isHeapless, isWideness);
             Kernel *builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
             builtinKernelRemainder->setGroupSize(fillArguments.rightRemainingBytes, 1u, 1u);
@@ -3802,7 +3802,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     const auto isStateless = this->forceStateless(alignedSize);
     const bool isHeapless = this->isHeaplessModeEnabled();
     if (pOffsets == nullptr) {
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(BuiltinTypeHelper::adjustBuiltinType<Builtin::queryKernelTimestamps>(isStateless, isHeapless));
+        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::queryKernelTimestamps>(isStateless, isHeapless));
         builtinKernel->setArgumentValue(2u, sizeof(uint32_t), &useOnlyGlobalTimestampsValue);
     } else {
         auto pOffsetAllocationStruct = getAlignedAllocationData(this->device, false, pOffsets, sizeof(size_t) * numEvents, false, false, nullptr);
@@ -3812,7 +3812,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
 
         auto offsetValPtr = static_cast<uintptr_t>(pOffsetAllocationStruct.alloc->getGpuAddress());
         commandContainer.addToResidencyContainer(pOffsetAllocationStruct.alloc);
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(BuiltinTypeHelper::adjustBuiltinType<Builtin::queryKernelTimestampsWithOffsets>(isStateless, isHeapless));
+        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::queryKernelTimestampsWithOffsets>(isStateless, isHeapless));
         builtinKernel->setArgBufferWithAlloc(2, offsetValPtr, pOffsetAllocationStruct.alloc, nullptr);
         builtinKernel->setArgumentValue(3u, sizeof(uint32_t), &useOnlyGlobalTimestampsValue);
         offsetValPtr += sizeof(size_t);

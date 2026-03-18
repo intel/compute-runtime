@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace NEO {
 struct ClBlitProperties {
     static BlitProperties constructProperties(BlitterConstants::BlitDirection blitDirection,
                                               CommandStreamReceiver &commandStreamReceiver,
-                                              const BuiltinOpParams &builtinOpParams) {
+                                              const BuiltIn::OpParams &builtinOpParams) {
 
         auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
         auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
@@ -176,7 +176,7 @@ struct ClBlitProperties {
         }
     }
 
-    static void setBlitPropertiesForImage(BlitProperties &blitProperties, const BuiltinOpParams &builtinOpParams) {
+    static void setBlitPropertiesForImage(BlitProperties &blitProperties, const BuiltIn::OpParams &builtinOpParams) {
         DEBUG_BREAK_IF(!blitProperties.isImageOperation());
 
         auto srcImage = castToObject<Image>(builtinOpParams.srcMemObj);

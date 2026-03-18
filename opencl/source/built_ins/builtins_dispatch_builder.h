@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,13 +20,14 @@
 #include <vector>
 
 namespace NEO {
-struct BuiltinCode;
+namespace BuiltIn {
+struct Code;
+using Resource = std::vector<char>;
+} // namespace BuiltIn
 class BuiltIns;
 class GraphicsAllocation;
 class Kernel;
 struct KernelInfo;
-
-typedef std::vector<char> BuiltinResourceT;
 
 class ClDeviceVector;
 class Context;
@@ -35,7 +36,9 @@ class MemObj;
 struct MultiDispatchInfo;
 class Program;
 
-struct BuiltinOpParams {
+namespace BuiltIn {
+
+struct OpParams {
     void *srcPtr = nullptr;
     void *dstPtr = nullptr;
     MemObj *srcMemObj = nullptr;
@@ -59,13 +62,13 @@ struct BuiltinOpParams {
     TransferDirection direction = TransferDirection::localToLocal;
 };
 
-class BuiltinDispatchInfoBuilder {
+class DispatchInfoBuilder {
   public:
-    BuiltinDispatchInfoBuilder(BuiltIns &kernelLib, ClDevice &device) : kernelsLib(kernelLib), clDevice(device) {}
-    virtual ~BuiltinDispatchInfoBuilder() = default;
+    DispatchInfoBuilder(BuiltIns &kernelLib, ClDevice &device) : kernelsLib(kernelLib), clDevice(device) {}
+    virtual ~DispatchInfoBuilder() = default;
 
     template <typename... KernelsDescArgsT>
-    void populate(EBuiltInOps::Type operation, ConstStringRef options, KernelsDescArgsT &&...desc);
+    void populate(Group operation, ConstStringRef options, KernelsDescArgsT &&...desc);
 
     virtual bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const {
         return false;
@@ -88,7 +91,7 @@ class BuiltinDispatchInfoBuilder {
 
     std::vector<std::unique_ptr<MultiDeviceKernel>> &peekUsedKernels() { return usedKernels; }
 
-    static std::unique_ptr<Program> createProgramFromCode(const BuiltinCode &bc, const ClDeviceVector &device);
+    static std::unique_ptr<Program> createProgramFromCode(const Code &bc, const ClDeviceVector &device);
 
   protected:
     template <typename KernelNameT, typename... KernelsDescArgsT>
@@ -113,23 +116,25 @@ class BuiltinDispatchInfoBuilder {
     ClDevice &clDevice;
 };
 
-class BuiltInDispatchBuilderOp {
+class DispatchBuilderOp {
   public:
-    static BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, ClDevice &device);
+    static DispatchInfoBuilder &getBuiltinDispatchInfoBuilder(Group builtInGroup, ClDevice &device);
 };
 
-class BuiltInOwnershipWrapper : public NonCopyableAndNonMovableClass {
+class OwnershipWrapper : public NonCopyableAndNonMovableClass {
   public:
-    BuiltInOwnershipWrapper() = default;
-    BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
-    ~BuiltInOwnershipWrapper();
+    OwnershipWrapper() = default;
+    OwnershipWrapper(DispatchInfoBuilder &inputBuilder, Context *context);
+    ~OwnershipWrapper();
 
-    void takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
+    void takeOwnership(DispatchInfoBuilder &inputBuilder, Context *context);
 
   protected:
-    BuiltinDispatchInfoBuilder *builder = nullptr;
+    DispatchInfoBuilder *builder = nullptr;
 };
 
-static_assert(NEO::NonCopyableAndNonMovable<BuiltInOwnershipWrapper>);
+} // namespace BuiltIn
+
+static_assert(NEO::NonCopyableAndNonMovable<BuiltIn::OwnershipWrapper>);
 
 } // namespace NEO

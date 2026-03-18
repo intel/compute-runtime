@@ -98,7 +98,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenDispatchingCo
     MockGraphicsAllocation mockGraphicsAllocation;
     MockBuffer mockMemObj(mockGraphicsAllocation);
 
-    BuiltinOpParams params;
+    BuiltIn::OpParams params;
     params.dstPtr = reinterpret_cast<void *>(0x12300);
     params.dstOffset = {0, 0, 0};
     params.srcMemObj = &mockMemObj;
@@ -179,7 +179,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenEnqueueBlitIs
     MockGraphicsAllocation mockGraphicsAllocation;
     MockBuffer mockMemObj(mockGraphicsAllocation);
 
-    BuiltinOpParams params;
+    BuiltIn::OpParams params;
     params.dstPtr = reinterpret_cast<void *>(0x12300);
     params.dstOffset = {0, 0, 0};
     params.srcMemObj = &mockMemObj;

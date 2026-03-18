@@ -40,13 +40,13 @@ static inline uintptr_t getBufferAddress(const void *ptr, MemObj *memObj, uint32
 }
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferToBuffer> : public BuiltinDispatchInfoBuilder {
+class BuiltIn::Op<BuiltIn::Group::copyBufferToBuffer> : public BuiltIn::DispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp(kernelsLib, device, EBuiltInOps::copyBufferToBuffer, CompilerOptions::kernelOptions.c_str()) {}
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : Op(kernelsLib, device, BuiltIn::Group::copyBufferToBuffer, CompilerOptions::kernelOptions.c_str()) {}
     template <typename OffsetType>
     bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo) const {
-        DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> kernelSplit1DBuilder(clDevice);
+        NEO::DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> kernelSplit1DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         DEBUG_BREAK_IF((operationParams.srcMemObj == nullptr) && (operationParams.srcSvmAlloc == nullptr) && (operationParams.srcPtr == nullptr));
@@ -141,8 +141,8 @@ class BuiltInOp<EBuiltInOps::copyBufferToBuffer> : public BuiltinDispatchInfoBui
     MultiDeviceKernel *kernMiddle = nullptr;
     MultiDeviceKernel *kernMiddleMisaligned = nullptr;
     MultiDeviceKernel *kernRightLeftover = nullptr;
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, EBuiltInOps::Type operation, ConstStringRef options)
-        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+    Op(BuiltIns &kernelsLib, ClDevice &device, BuiltIn::Group operation, ConstStringRef options)
+        : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
         populate(operation,
                  options,
                  "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
@@ -153,10 +153,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToBuffer> : public BuiltinDispatchInfoBui
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferToBufferStateless> : public BuiltInOp<EBuiltInOps::copyBufferToBuffer> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferToBufferStateless> : public BuiltIn::Op<BuiltIn::Group::copyBufferToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferToBuffer>(kernelsLib, device, EBuiltInOps::copyBufferToBufferStateless, CompilerOptions::kernelStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferToBuffer>(kernelsLib, device, BuiltIn::Group::copyBufferToBufferStateless, CompilerOptions::kernelStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -165,10 +165,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToBufferStateless> : public BuiltInOp<EBu
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferToBufferWideStateless> : public BuiltInOp<EBuiltInOps::copyBufferToBuffer> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferToBufferWideStateless> : public BuiltIn::Op<BuiltIn::Group::copyBufferToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferToBuffer>(kernelsLib, device, EBuiltInOps::copyBufferToBufferWideStateless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferToBuffer>(kernelsLib, device, BuiltIn::Group::copyBufferToBufferWideStateless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -177,10 +177,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToBufferWideStateless> : public BuiltInOp
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferToBufferStatelessHeapless> : public BuiltInOp<EBuiltInOps::copyBufferToBuffer> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferToBufferStatelessHeapless> : public BuiltIn::Op<BuiltIn::Group::copyBufferToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferToBuffer>(kernelsLib, device, EBuiltInOps::copyBufferToBufferStatelessHeapless, CompilerOptions::kernelStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferToBuffer>(kernelsLib, device, BuiltIn::Group::copyBufferToBufferStatelessHeapless, CompilerOptions::kernelStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -189,10 +189,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToBufferStatelessHeapless> : public Built
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferToBufferWideStatelessHeapless> : public BuiltInOp<EBuiltInOps::copyBufferToBuffer> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferToBufferWideStatelessHeapless> : public BuiltIn::Op<BuiltIn::Group::copyBufferToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferToBuffer>(kernelsLib, device, EBuiltInOps::copyBufferToBufferWideStatelessHeapless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferToBuffer>(kernelsLib, device, BuiltIn::Group::copyBufferToBufferWideStatelessHeapless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -201,10 +201,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToBufferWideStatelessHeapless> : public B
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferRect> : public BuiltinDispatchInfoBuilder {
+class BuiltIn::Op<BuiltIn::Group::copyBufferRect> : public BuiltIn::DispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp(kernelsLib, device, EBuiltInOps::copyBufferRect, CompilerOptions::kernelOptions.c_str()) {}
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : Op(kernelsLib, device, BuiltIn::Group::copyBufferRect, CompilerOptions::kernelOptions.c_str()) {}
 
     template <typename OffsetType>
     bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo) const {
@@ -252,7 +252,7 @@ class BuiltInOp<EBuiltInOps::copyBufferRect> : public BuiltinDispatchInfoBuilder
         const size_t pitchSize = is3D ? sizeof(OffsetType) * 2 : sizeof(OffsetType);
 
         if (this->clDevice.getProductHelper().isCopyBufferRectSplitSupported()) {
-            DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> kernelSplit3DBuilder(clDevice);
+            NEO::DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> kernelSplit3DBuilder(clDevice);
 
             const auto totalSize = operationParams.size.x * operationParams.size.y * operationParams.size.z;
             if (totalSize == 0u) {
@@ -353,7 +353,7 @@ class BuiltInOp<EBuiltInOps::copyBufferRect> : public BuiltinDispatchInfoBuilder
 
             return true;
         } else {
-            DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> kernelNoSplit3DBuilder(clDevice);
+            NEO::DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> kernelNoSplit3DBuilder(clDevice);
 
             // Set-up ISA
             kernelNoSplit3DBuilder.setKernel(kernelBytes[dimensions - 1]->getKernel(rootDeviceIndex));
@@ -409,8 +409,8 @@ class BuiltInOp<EBuiltInOps::copyBufferRect> : public BuiltinDispatchInfoBuilder
     MultiDeviceKernel *kernelLeft[3]{};
     MultiDeviceKernel *kernelMiddle[3]{};
     MultiDeviceKernel *kernelRight[3]{};
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, EBuiltInOps::Type operation, ConstStringRef options)
-        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+    Op(BuiltIns &kernelsLib, ClDevice &device, BuiltIn::Group operation, ConstStringRef options)
+        : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
         populate(operation,
                  options,
                  "CopyBufferRectBytes2d", kernelBytes[0],
@@ -429,10 +429,10 @@ class BuiltInOp<EBuiltInOps::copyBufferRect> : public BuiltinDispatchInfoBuilder
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferRectStateless> : public BuiltInOp<EBuiltInOps::copyBufferRect> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferRectStateless> : public BuiltIn::Op<BuiltIn::Group::copyBufferRect> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferRect>(kernelsLib, device, EBuiltInOps::copyBufferRectStateless, CompilerOptions::kernelStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferRect>(kernelsLib, device, BuiltIn::Group::copyBufferRectStateless, CompilerOptions::kernelStatelessOptions.c_str()) {
     }
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
         return buildDispatchInfosTyped<uint32_t>(multiDispatchInfo);
@@ -440,10 +440,10 @@ class BuiltInOp<EBuiltInOps::copyBufferRectStateless> : public BuiltInOp<EBuiltI
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferRectWideStateless> : public BuiltInOp<EBuiltInOps::copyBufferRect> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferRectWideStateless> : public BuiltIn::Op<BuiltIn::Group::copyBufferRect> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferRect>(kernelsLib, device, EBuiltInOps::copyBufferRectWideStateless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferRect>(kernelsLib, device, BuiltIn::Group::copyBufferRectWideStateless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
     }
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
         return buildDispatchInfosTyped<uint64_t>(multiDispatchInfo);
@@ -451,10 +451,10 @@ class BuiltInOp<EBuiltInOps::copyBufferRectWideStateless> : public BuiltInOp<EBu
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferRectStatelessHeapless> : public BuiltInOp<EBuiltInOps::copyBufferRect> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferRectStatelessHeapless> : public BuiltIn::Op<BuiltIn::Group::copyBufferRect> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferRect>(kernelsLib, device, EBuiltInOps::copyBufferRectStatelessHeapless, CompilerOptions::kernelStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferRect>(kernelsLib, device, BuiltIn::Group::copyBufferRectStatelessHeapless, CompilerOptions::kernelStatelessOptions.c_str()) {
     }
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
         return buildDispatchInfosTyped<uint32_t>(multiDispatchInfo);
@@ -462,10 +462,10 @@ class BuiltInOp<EBuiltInOps::copyBufferRectStatelessHeapless> : public BuiltInOp
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferRectWideStatelessHeapless> : public BuiltInOp<EBuiltInOps::copyBufferRect> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferRectWideStatelessHeapless> : public BuiltIn::Op<BuiltIn::Group::copyBufferRect> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferRect>(kernelsLib, device, EBuiltInOps::copyBufferRectWideStatelessHeapless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferRect>(kernelsLib, device, BuiltIn::Group::copyBufferRectWideStatelessHeapless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
     }
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
         return buildDispatchInfosTyped<uint64_t>(multiDispatchInfo);
@@ -473,14 +473,14 @@ class BuiltInOp<EBuiltInOps::copyBufferRectWideStatelessHeapless> : public Built
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::fillBuffer> : public BuiltinDispatchInfoBuilder {
+class BuiltIn::Op<BuiltIn::Group::fillBuffer> : public BuiltIn::DispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp(kernelsLib, device, EBuiltInOps::fillBuffer, CompilerOptions::kernelOptions.c_str()) {}
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : Op(kernelsLib, device, BuiltIn::Group::fillBuffer, CompilerOptions::kernelOptions.c_str()) {}
 
     template <typename OffsetType>
     bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo) const {
-        DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> kernelSplit1DBuilder(clDevice);
+        NEO::DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> kernelSplit1DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         uintptr_t start = reinterpret_cast<uintptr_t>(operationParams.dstPtr) + operationParams.dstOffset.x;
@@ -556,8 +556,8 @@ class BuiltInOp<EBuiltInOps::fillBuffer> : public BuiltinDispatchInfoBuilder {
     MultiDeviceKernel *kernMiddle = nullptr;
     MultiDeviceKernel *kernRightLeftover = nullptr;
 
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, EBuiltInOps::Type operation, ConstStringRef options)
-        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+    Op(BuiltIns &kernelsLib, ClDevice &device, BuiltIn::Group operation, ConstStringRef options)
+        : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
         populate(operation,
                  options,
                  "FillBufferLeftLeftover", kernLeftLeftover,
@@ -567,10 +567,10 @@ class BuiltInOp<EBuiltInOps::fillBuffer> : public BuiltinDispatchInfoBuilder {
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::fillBufferStateless> : public BuiltInOp<EBuiltInOps::fillBuffer> {
+class BuiltIn::Op<BuiltIn::Group::fillBufferStateless> : public BuiltIn::Op<BuiltIn::Group::fillBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::fillBuffer>(kernelsLib, device, EBuiltInOps::fillBufferStateless, CompilerOptions::kernelStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::fillBuffer>(kernelsLib, device, BuiltIn::Group::fillBufferStateless, CompilerOptions::kernelStatelessOptions.c_str()) {
     }
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfos) const override {
         return buildDispatchInfosTyped<uint32_t>(multiDispatchInfos);
@@ -578,10 +578,10 @@ class BuiltInOp<EBuiltInOps::fillBufferStateless> : public BuiltInOp<EBuiltInOps
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::fillBufferWideStateless> : public BuiltInOp<EBuiltInOps::fillBuffer> {
+class BuiltIn::Op<BuiltIn::Group::fillBufferWideStateless> : public BuiltIn::Op<BuiltIn::Group::fillBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::fillBuffer>(kernelsLib, device, EBuiltInOps::fillBufferWideStateless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::fillBuffer>(kernelsLib, device, BuiltIn::Group::fillBufferWideStateless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
     }
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfos) const override {
         return buildDispatchInfosTyped<uint64_t>(multiDispatchInfos);
@@ -589,10 +589,10 @@ class BuiltInOp<EBuiltInOps::fillBufferWideStateless> : public BuiltInOp<EBuiltI
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::fillBufferStatelessHeapless> : public BuiltInOp<EBuiltInOps::fillBuffer> {
+class BuiltIn::Op<BuiltIn::Group::fillBufferStatelessHeapless> : public BuiltIn::Op<BuiltIn::Group::fillBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::fillBuffer>(kernelsLib, device, EBuiltInOps::fillBufferStatelessHeapless, CompilerOptions::kernelStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::fillBuffer>(kernelsLib, device, BuiltIn::Group::fillBufferStatelessHeapless, CompilerOptions::kernelStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfos) const override {
@@ -601,10 +601,10 @@ class BuiltInOp<EBuiltInOps::fillBufferStatelessHeapless> : public BuiltInOp<EBu
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::fillBufferWideStatelessHeapless> : public BuiltInOp<EBuiltInOps::fillBuffer> {
+class BuiltIn::Op<BuiltIn::Group::fillBufferWideStatelessHeapless> : public BuiltIn::Op<BuiltIn::Group::fillBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::fillBuffer>(kernelsLib, device, EBuiltInOps::fillBufferWideStatelessHeapless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::fillBuffer>(kernelsLib, device, BuiltIn::Group::fillBufferWideStatelessHeapless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfos) const override {
@@ -613,10 +613,10 @@ class BuiltInOp<EBuiltInOps::fillBufferWideStatelessHeapless> : public BuiltInOp
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferToImage3d> : public BuiltinDispatchInfoBuilder {
+class BuiltIn::Op<BuiltIn::Group::copyBufferToImage3d> : public BuiltIn::DispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp(kernelsLib, device, EBuiltInOps::copyBufferToImage3d, CompilerOptions::kernelOptions.c_str()) {}
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : Op(kernelsLib, device, BuiltIn::Group::copyBufferToImage3d, CompilerOptions::kernelOptions.c_str()) {}
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
         return buildDispatchInfosTyped<uint32_t>(multiDispatchInfo);
@@ -626,8 +626,8 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3d> : public BuiltinDispatchInfoBu
     MultiDeviceKernel *kernelBytes[5] = {nullptr};
     MultiDeviceKernel *kernel16BytesAligned = nullptr;
 
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, EBuiltInOps::Type operation, ConstStringRef options)
-        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+    Op(BuiltIns &kernelsLib, ClDevice &device, BuiltIn::Group operation, ConstStringRef options)
+        : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
         populate(operation,
                  options,
                  "CopyBufferToImage3dBytes", kernelBytes[0],
@@ -640,7 +640,7 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3d> : public BuiltinDispatchInfoBu
 
     template <typename OffsetType>
     bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo) const {
-        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> kernelNoSplit3DBuilder(clDevice);
+        NEO::DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> kernelNoSplit3DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         DEBUG_BREAK_IF(!(((operationParams.srcPtr != nullptr) || (operationParams.srcMemObj != nullptr)) && (operationParams.dstPtr == nullptr)));
@@ -721,10 +721,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3d> : public BuiltinDispatchInfoBu
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferToImage3dStateless> : public BuiltInOp<EBuiltInOps::copyBufferToImage3d> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferToImage3dStateless> : public BuiltIn::Op<BuiltIn::Group::copyBufferToImage3d> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferToImage3d>(kernelsLib, device, EBuiltInOps::copyBufferToImage3dStateless, CompilerOptions::kernelStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferToImage3d>(kernelsLib, device, BuiltIn::Group::copyBufferToImage3dStateless, CompilerOptions::kernelStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -733,10 +733,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3dStateless> : public BuiltInOp<EB
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferToImage3dWideStateless> : public BuiltInOp<EBuiltInOps::copyBufferToImage3d> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferToImage3dWideStateless> : public BuiltIn::Op<BuiltIn::Group::copyBufferToImage3d> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferToImage3d>(kernelsLib, device, EBuiltInOps::copyBufferToImage3dWideStateless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferToImage3d>(kernelsLib, device, BuiltIn::Group::copyBufferToImage3dWideStateless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -745,10 +745,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3dWideStateless> : public BuiltInO
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferToImage3dStatelessHeapless> : public BuiltInOp<EBuiltInOps::copyBufferToImage3d> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferToImage3dStatelessHeapless> : public BuiltIn::Op<BuiltIn::Group::copyBufferToImage3d> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferToImage3d>(kernelsLib, device, EBuiltInOps::copyBufferToImage3dStatelessHeapless, CompilerOptions::kernelStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferToImage3d>(kernelsLib, device, BuiltIn::Group::copyBufferToImage3dStatelessHeapless, CompilerOptions::kernelStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -757,10 +757,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3dStatelessHeapless> : public Buil
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyBufferToImage3dWideStatelessHeapless> : public BuiltInOp<EBuiltInOps::copyBufferToImage3d> {
+class BuiltIn::Op<BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless> : public BuiltIn::Op<BuiltIn::Group::copyBufferToImage3d> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyBufferToImage3d>(kernelsLib, device, EBuiltInOps::copyBufferToImage3dWideStatelessHeapless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyBufferToImage3d>(kernelsLib, device, BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -769,10 +769,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3dWideStatelessHeapless> : public 
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyImage3dToBuffer> : public BuiltinDispatchInfoBuilder {
+class BuiltIn::Op<BuiltIn::Group::copyImage3dToBuffer> : public BuiltIn::DispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp(kernelsLib, device, EBuiltInOps::copyImage3dToBuffer, CompilerOptions::kernelOptions.c_str()) {}
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : Op(kernelsLib, device, BuiltIn::Group::copyImage3dToBuffer, CompilerOptions::kernelOptions.c_str()) {}
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
         return buildDispatchInfosTyped<uint32_t>(multiDispatchInfo);
@@ -782,8 +782,8 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBuffer> : public BuiltinDispatchInfoBu
     MultiDeviceKernel *kernelBytes[5] = {nullptr};
     MultiDeviceKernel *kernel16BytesAligned = nullptr;
 
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, EBuiltInOps::Type operation, ConstStringRef options)
-        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+    Op(BuiltIns &kernelsLib, ClDevice &device, BuiltIn::Group operation, ConstStringRef options)
+        : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
         populate(operation,
                  options,
                  "CopyImage3dToBufferBytes", kernelBytes[0],
@@ -796,7 +796,7 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBuffer> : public BuiltinDispatchInfoBu
 
     template <typename OffsetType>
     bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo) const {
-        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> kernelNoSplit3DBuilder(clDevice);
+        NEO::DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> kernelNoSplit3DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         DEBUG_BREAK_IF(!((operationParams.srcPtr == nullptr) && ((operationParams.dstPtr != nullptr) || (operationParams.dstMemObj != nullptr))));
@@ -883,10 +883,10 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBuffer> : public BuiltinDispatchInfoBu
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyImage3dToBufferStateless> : public BuiltInOp<EBuiltInOps::copyImage3dToBuffer> {
+class BuiltIn::Op<BuiltIn::Group::copyImage3dToBufferStateless> : public BuiltIn::Op<BuiltIn::Group::copyImage3dToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyImage3dToBuffer>(kernelsLib, device, EBuiltInOps::copyImage3dToBufferStateless, CompilerOptions::kernelStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyImage3dToBuffer>(kernelsLib, device, BuiltIn::Group::copyImage3dToBufferStateless, CompilerOptions::kernelStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -895,10 +895,10 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBufferStateless> : public BuiltInOp<EB
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyImage3dToBufferWideStateless> : public BuiltInOp<EBuiltInOps::copyImage3dToBuffer> {
+class BuiltIn::Op<BuiltIn::Group::copyImage3dToBufferWideStateless> : public BuiltIn::Op<BuiltIn::Group::copyImage3dToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyImage3dToBuffer>(kernelsLib, device, EBuiltInOps::copyImage3dToBufferWideStateless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyImage3dToBuffer>(kernelsLib, device, BuiltIn::Group::copyImage3dToBufferWideStateless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -907,10 +907,10 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBufferWideStateless> : public BuiltInO
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyImage3dToBufferStatelessHeapless> : public BuiltInOp<EBuiltInOps::copyImage3dToBuffer> {
+class BuiltIn::Op<BuiltIn::Group::copyImage3dToBufferStatelessHeapless> : public BuiltIn::Op<BuiltIn::Group::copyImage3dToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyImage3dToBuffer>(kernelsLib, device, EBuiltInOps::copyImage3dToBufferStatelessHeapless, CompilerOptions::kernelStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyImage3dToBuffer>(kernelsLib, device, BuiltIn::Group::copyImage3dToBufferStatelessHeapless, CompilerOptions::kernelStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -919,10 +919,10 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBufferStatelessHeapless> : public Buil
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyImage3dToBufferWideStatelessHeapless> : public BuiltInOp<EBuiltInOps::copyImage3dToBuffer> {
+class BuiltIn::Op<BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless> : public BuiltIn::Op<BuiltIn::Group::copyImage3dToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyImage3dToBuffer>(kernelsLib, device, EBuiltInOps::copyImage3dToBufferWideStatelessHeapless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyImage3dToBuffer>(kernelsLib, device, BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless, CompilerOptions::kernelWideStatelessOptions.c_str()) {
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -931,11 +931,11 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBufferWideStatelessHeapless> : public 
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBuilder {
+class BuiltIn::Op<BuiltIn::Group::copyImageToImage3d> : public BuiltIn::DispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
-        populate(EBuiltInOps::copyImageToImage3d,
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
+        populate(BuiltIn::Group::copyImageToImage3d,
                  "",
                  "CopyImage3dToImage3d", kernelCopyImage3dToImage3d,
                  "CopyImage1dBufferToImage3d", kernelCopyImage1dBufferToImage3d,
@@ -944,7 +944,7 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBui
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
-        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> kernelNoSplit3DBuilder(clDevice);
+        NEO::DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> kernelNoSplit3DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         DEBUG_BREAK_IF(!((operationParams.srcPtr == nullptr) && (operationParams.dstPtr == nullptr)));
@@ -1033,10 +1033,10 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBui
     }
 
   protected:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
-        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+    Op(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
+        : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
         if (populateKernels) {
-            populate(EBuiltInOps::copyImageToImage3d,
+            populate(BuiltIn::Group::copyImageToImage3d,
                      "",
                      "CopyImage3dToImage3d", kernelCopyImage3dToImage3d,
                      "CopyImage1dBufferToImage3d", kernelCopyImage1dBufferToImage3d,
@@ -1052,11 +1052,11 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBui
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::copyImageToImage3dHeapless> : public BuiltInOp<EBuiltInOps::copyImageToImage3d> {
+class BuiltIn::Op<BuiltIn::Group::copyImageToImage3dHeapless> : public BuiltIn::Op<BuiltIn::Group::copyImageToImage3d> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::copyImageToImage3d>(kernelsLib, device, false) {
-        populate(EBuiltInOps::copyImageToImage3dHeapless,
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::copyImageToImage3d>(kernelsLib, device, false) {
+        populate(BuiltIn::Group::copyImageToImage3dHeapless,
                  "",
                  "CopyImage3dToImage3d", kernelCopyImage3dToImage3d,
                  "CopyImage1dBufferToImage3d", kernelCopyImage1dBufferToImage3d,
@@ -1066,17 +1066,17 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3dHeapless> : public BuiltInOp<EBui
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::fillImage3d> : public BuiltinDispatchInfoBuilder {
+class BuiltIn::Op<BuiltIn::Group::fillImage3d> : public BuiltIn::DispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
-        populate(EBuiltInOps::fillImage3d,
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
+        populate(BuiltIn::Group::fillImage3d,
                  "",
                  "FillImage3d", kernel);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
-        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> kernelNoSplit3DBuilder(clDevice);
+        NEO::DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> kernelNoSplit3DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
         DEBUG_BREAK_IF(!((operationParams.srcMemObj == nullptr) && (operationParams.srcPtr != nullptr) && (operationParams.dstPtr == nullptr)));
 
@@ -1119,11 +1119,11 @@ class BuiltInOp<EBuiltInOps::fillImage3d> : public BuiltinDispatchInfoBuilder {
     }
 
   protected:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
-        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+    Op(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
+        : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
         if (populateKernels) {
 
-            populate(EBuiltInOps::fillImage3d,
+            populate(BuiltIn::Group::fillImage3d,
                      "",
                      "FillImage3d", kernel);
         }
@@ -1133,149 +1133,148 @@ class BuiltInOp<EBuiltInOps::fillImage3d> : public BuiltinDispatchInfoBuilder {
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::fillImage3dHeapless> : public BuiltInOp<EBuiltInOps::fillImage3d> {
+class BuiltIn::Op<BuiltIn::Group::fillImage3dHeapless> : public BuiltIn::Op<BuiltIn::Group::fillImage3d> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::fillImage3d>(kernelsLib, device, false) {
-        populate(EBuiltInOps::fillImage3dHeapless,
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::fillImage3d>(kernelsLib, device, false) {
+        populate(BuiltIn::Group::fillImage3dHeapless,
                  "",
                  "FillImage3d", kernel);
     }
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::fillImage1dBuffer> : public BuiltInOp<EBuiltInOps::fillImage3d> {
+class BuiltIn::Op<BuiltIn::Group::fillImage1dBuffer> : public BuiltIn::Op<BuiltIn::Group::fillImage3d> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::fillImage3d>(kernelsLib, device, false) {
-        populate(EBuiltInOps::fillImage1dBuffer,
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::fillImage3d>(kernelsLib, device, false) {
+        populate(BuiltIn::Group::fillImage1dBuffer,
                  "",
                  "FillImage1dBuffer", kernel);
     }
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::fillImage1dBufferHeapless> : public BuiltInOp<EBuiltInOps::fillImage3d> {
+class BuiltIn::Op<BuiltIn::Group::fillImage1dBufferHeapless> : public BuiltIn::Op<BuiltIn::Group::fillImage3d> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::fillImage3d>(kernelsLib, device, false) {
-        populate(EBuiltInOps::fillImage1dBufferHeapless,
+    Op(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltIn::Op<BuiltIn::Group::fillImage3d>(kernelsLib, device, false) {
+        populate(BuiltIn::Group::fillImage1dBufferHeapless,
                  "",
                  "FillImage1dBuffer", kernel);
     }
 };
 
-BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {
-    uint32_t operationId = static_cast<uint32_t>(operation);
+BuiltIn::DispatchInfoBuilder &BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group builtInGroup, ClDevice &device) {
     auto &builtins = *device.getDevice().getBuiltIns();
-    auto &operationBuilder = device.peekBuilders()[operationId];
-    switch (operation) {
-    case EBuiltInOps::copyBufferToBuffer:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToBuffer>>(builtins, device); });
+    auto &[builder, onceFlag] = device.peekBuilders()[BuiltIn::toIndex(builtInGroup)];
+    switch (builtInGroup) {
+    case BuiltIn::Group::copyBufferToBuffer:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferToBuffer>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferToBufferStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToBufferStateless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferToBufferStateless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferToBufferStateless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferToBufferWideStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToBufferWideStateless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferToBufferWideStateless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferToBufferWideStateless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferToBufferStatelessHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToBufferStatelessHeapless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferToBufferStatelessHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferToBufferStatelessHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferToBufferWideStatelessHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToBufferWideStatelessHeapless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferToBufferWideStatelessHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferToBufferWideStatelessHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferRect:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferRect>>(builtins, device); });
+    case BuiltIn::Group::copyBufferRect:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferRect>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferRectStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferRectStateless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferRectStateless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferRectStateless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferRectWideStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferRectWideStateless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferRectWideStateless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferRectWideStateless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferRectStatelessHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferRectStatelessHeapless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferRectStatelessHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferRectStatelessHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferRectWideStatelessHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferRectWideStatelessHeapless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferRectWideStatelessHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferRectWideStatelessHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::fillBuffer:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillBuffer>>(builtins, device); });
+    case BuiltIn::Group::fillBuffer:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::fillBuffer>>(builtins, device); });
         break;
-    case EBuiltInOps::fillBufferStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillBufferStateless>>(builtins, device); });
+    case BuiltIn::Group::fillBufferStateless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::fillBufferStateless>>(builtins, device); });
         break;
-    case EBuiltInOps::fillBufferWideStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillBufferWideStateless>>(builtins, device); });
+    case BuiltIn::Group::fillBufferWideStateless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::fillBufferWideStateless>>(builtins, device); });
         break;
-    case EBuiltInOps::fillBufferStatelessHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillBufferStatelessHeapless>>(builtins, device); });
+    case BuiltIn::Group::fillBufferStatelessHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::fillBufferStatelessHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::fillBufferWideStatelessHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillBufferWideStatelessHeapless>>(builtins, device); });
+    case BuiltIn::Group::fillBufferWideStatelessHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::fillBufferWideStatelessHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferToImage3d:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToImage3d>>(builtins, device); });
+    case BuiltIn::Group::copyBufferToImage3d:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferToImage3d>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferToImage3dStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToImage3dStateless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferToImage3dStateless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferToImage3dStateless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferToImage3dWideStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToImage3dWideStateless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferToImage3dWideStateless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferToImage3dWideStateless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferToImage3dStatelessHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToImage3dStatelessHeapless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferToImage3dStatelessHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferToImage3dStatelessHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyBufferToImage3dWideStatelessHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToImage3dWideStatelessHeapless>>(builtins, device); });
+    case BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyImage3dToBuffer:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImage3dToBuffer>>(builtins, device); });
+    case BuiltIn::Group::copyImage3dToBuffer:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyImage3dToBuffer>>(builtins, device); });
         break;
-    case EBuiltInOps::copyImage3dToBufferStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImage3dToBufferStateless>>(builtins, device); });
+    case BuiltIn::Group::copyImage3dToBufferStateless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyImage3dToBufferStateless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyImage3dToBufferWideStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImage3dToBufferWideStateless>>(builtins, device); });
+    case BuiltIn::Group::copyImage3dToBufferWideStateless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyImage3dToBufferWideStateless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyImage3dToBufferStatelessHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImage3dToBufferStatelessHeapless>>(builtins, device); });
+    case BuiltIn::Group::copyImage3dToBufferStatelessHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyImage3dToBufferStatelessHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyImage3dToBufferWideStatelessHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImage3dToBufferWideStatelessHeapless>>(builtins, device); });
+    case BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::copyImageToImage3d:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImageToImage3d>>(builtins, device); });
+    case BuiltIn::Group::copyImageToImage3d:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyImageToImage3d>>(builtins, device); });
         break;
-    case EBuiltInOps::copyImageToImage3dHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImageToImage3dHeapless>>(builtins, device); });
+    case BuiltIn::Group::copyImageToImage3dHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::copyImageToImage3dHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::fillImage3d:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillImage3d>>(builtins, device); });
+    case BuiltIn::Group::fillImage3d:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::fillImage3d>>(builtins, device); });
         break;
-    case EBuiltInOps::fillImage3dHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillImage3dHeapless>>(builtins, device); });
+    case BuiltIn::Group::fillImage3dHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::fillImage3dHeapless>>(builtins, device); });
         break;
-    case EBuiltInOps::auxTranslation:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::auxTranslation>>(builtins, device); });
+    case BuiltIn::Group::auxTranslation:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::auxTranslation>>(builtins, device); });
         break;
-    case EBuiltInOps::fillImage1dBuffer:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillImage1dBuffer>>(builtins, device); });
+    case BuiltIn::Group::fillImage1dBuffer:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::fillImage1dBuffer>>(builtins, device); });
         break;
-    case EBuiltInOps::fillImage1dBufferHeapless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillImage1dBufferHeapless>>(builtins, device); });
+    case BuiltIn::Group::fillImage1dBufferHeapless:
+        std::call_once(onceFlag, [&] { builder = std::make_unique<BuiltIn::Op<BuiltIn::Group::fillImage1dBufferHeapless>>(builtins, device); });
         break;
     default:
         UNRECOVERABLE_IF("getBuiltinDispatchInfoBuilder failed");
     }
-    return *operationBuilder.first;
+    return *builder;
 }
 
-BuiltInOwnershipWrapper::BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
+BuiltIn::OwnershipWrapper::OwnershipWrapper(BuiltIn::DispatchInfoBuilder &inputBuilder, Context *context) {
     takeOwnership(inputBuilder, context);
 }
-BuiltInOwnershipWrapper::~BuiltInOwnershipWrapper() {
+BuiltIn::OwnershipWrapper::~OwnershipWrapper() {
     if (builder) {
         for (auto &kernel : builder->peekUsedKernels()) {
             kernel->releaseOwnership();
@@ -1286,7 +1285,7 @@ BuiltInOwnershipWrapper::~BuiltInOwnershipWrapper() {
         }
     }
 }
-void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
+void BuiltIn::OwnershipWrapper::takeOwnership(BuiltIn::DispatchInfoBuilder &inputBuilder, Context *context) {
     UNRECOVERABLE_IF(builder);
     builder = &inputBuilder;
     if (!builder->peekUsedKernels().empty()) {
@@ -1298,7 +1297,7 @@ void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBui
     }
 }
 
-std::unique_ptr<Program> BuiltinDispatchInfoBuilder::createProgramFromCode(const BuiltinCode &bc, const ClDeviceVector &deviceVector) {
+std::unique_ptr<Program> BuiltIn::DispatchInfoBuilder::createProgramFromCode(const BuiltIn::Code &bc, const ClDeviceVector &deviceVector) {
     std::unique_ptr<Program> ret;
     const char *data = bc.resource.data();
     size_t dataLen = bc.resource.size();
@@ -1306,11 +1305,11 @@ std::unique_ptr<Program> BuiltinDispatchInfoBuilder::createProgramFromCode(const
     switch (bc.type) {
     default:
         break;
-    case BuiltinCode::ECodeType::source:
-    case BuiltinCode::ECodeType::intermediate:
+    case BuiltIn::CodeType::source:
+    case BuiltIn::CodeType::intermediate:
         ret.reset(Program::createBuiltInFromSource(data, nullptr, deviceVector, &err));
         break;
-    case BuiltinCode::ECodeType::binary:
+    case BuiltIn::CodeType::binary:
         ret.reset(Program::createBuiltInFromGenBinary(nullptr, deviceVector, data, dataLen, &err));
         break;
     }

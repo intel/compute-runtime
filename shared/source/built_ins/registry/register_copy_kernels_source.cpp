@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,9 +18,9 @@ static constexpr const char copyBufferToBufferSrc[] =
 static constexpr size_t copyBufferToBufferSrcSize = sizeof(copyBufferToBufferSrc);
 
 static RegisterEmbeddedResource registerCopyBufferToBufferSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyBufferToBuffer,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyBufferToBuffer,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyBufferToBufferSrc,
     copyBufferToBufferSrcSize);
@@ -31,9 +31,9 @@ static constexpr const char copyBufferToBufferStatelessSrc[] =
 static constexpr size_t copyBufferToBufferStatelessSrcSize = sizeof(copyBufferToBufferStatelessSrc);
 
 static RegisterEmbeddedResource registerCopyBufferToBufferStatelessSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyBufferToBufferStateless,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyBufferToBufferStateless,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyBufferToBufferStatelessSrc,
     copyBufferToBufferStatelessSrcSize);
@@ -44,9 +44,9 @@ static constexpr const char copyBufferToBufferStatelessHeaplessSrc[] =
 static constexpr size_t copyBufferToBufferStatelessHeaplessSrcSize = sizeof(copyBufferToBufferStatelessHeaplessSrc);
 
 static RegisterEmbeddedResource registerCopyBufferToBufferStatelessHeaplessSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyBufferToBufferStatelessHeapless,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyBufferToBufferStatelessHeapless,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyBufferToBufferStatelessHeaplessSrc,
     copyBufferToBufferStatelessHeaplessSrcSize);
@@ -57,9 +57,9 @@ static constexpr const char copyBufferRectSrc[] =
 static constexpr size_t copyBufferRectSrcSize = sizeof(copyBufferRectSrc);
 
 static RegisterEmbeddedResource registerCopyBufferRectSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyBufferRect,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyBufferRect,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyBufferRectSrc,
     copyBufferRectSrcSize);
@@ -70,9 +70,9 @@ static constexpr const char copyBufferRectStatelessSrc[] =
 static constexpr size_t copyBufferRectStatelessSrcSize = sizeof(copyBufferRectStatelessSrc);
 
 static RegisterEmbeddedResource registerCopyBufferRectStatelessSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyBufferRectStateless,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyBufferRectStateless,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyBufferRectStatelessSrc,
     copyBufferRectStatelessSrcSize);
@@ -83,9 +83,9 @@ static constexpr const char copyBufferRectStatelessHeaplessSrc[] =
 static constexpr size_t copyBufferRectStatelessHeaplessSrcSize = sizeof(copyBufferRectStatelessHeaplessSrc);
 
 static RegisterEmbeddedResource registerCopyBufferRectStatelessHeaplessSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyBufferRectStatelessHeapless,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyBufferRectStatelessHeapless,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyBufferRectStatelessHeaplessSrc,
     copyBufferRectStatelessHeaplessSrcSize);
@@ -96,9 +96,9 @@ static constexpr const char fillBufferSrc[] =
 static constexpr size_t fillBufferSrcSize = sizeof(fillBufferSrc);
 
 static RegisterEmbeddedResource registerFillBufferSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::fillBuffer,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::fillBuffer,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     fillBufferSrc,
     fillBufferSrcSize);
@@ -109,9 +109,9 @@ static constexpr const char fillBufferStatelessSrc[] =
 static constexpr size_t fillBufferStatelessSrcSize = sizeof(fillBufferStatelessSrc);
 
 static RegisterEmbeddedResource registerFillBufferStatelessSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::fillBufferStateless,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::fillBufferStateless,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     fillBufferStatelessSrc,
     fillBufferStatelessSrcSize);
@@ -122,9 +122,9 @@ static constexpr const char fillBufferStatelessHeaplessSrc[] =
 static constexpr size_t fillBufferStatelessHeaplessSrcSize = sizeof(fillBufferStatelessHeaplessSrc);
 
 static RegisterEmbeddedResource registerFillBufferStatelessHeaplessSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::fillBufferStatelessHeapless,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::fillBufferStatelessHeapless,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     fillBufferStatelessHeaplessSrc,
     fillBufferStatelessHeaplessSrcSize);
@@ -135,9 +135,9 @@ static constexpr const char copyBufferToImage3dSrc[] =
 static constexpr size_t copyBufferToImage3dSrcSize = sizeof(copyBufferToImage3dSrc);
 
 static RegisterEmbeddedResource registerCopyBufferToImage3dSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyBufferToImage3d,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyBufferToImage3d,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyBufferToImage3dSrc,
     copyBufferToImage3dSrcSize);
@@ -148,9 +148,9 @@ static constexpr const char copyBufferToImage3dStatelessSrc[] =
 static constexpr size_t copyBufferToImage3dStatelessSrcSize = sizeof(copyBufferToImage3dStatelessSrc);
 
 static RegisterEmbeddedResource registerCopyBufferToImage3dStatelessSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyBufferToImage3dStateless,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyBufferToImage3dStateless,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyBufferToImage3dStatelessSrc,
     copyBufferToImage3dStatelessSrcSize);
@@ -161,9 +161,9 @@ static constexpr const char copyImage3dToBufferSrc[] =
 static constexpr size_t copyImage3dToBufferSrcSize = sizeof(copyImage3dToBufferSrc);
 
 static RegisterEmbeddedResource registerCopyImage3dToBufferSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyImage3dToBuffer,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyImage3dToBuffer,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyImage3dToBufferSrc,
     copyImage3dToBufferSrcSize);
@@ -174,9 +174,9 @@ static constexpr const char copyImage3dToBufferStatelessSrc[] =
 static constexpr size_t copyImage3dToBufferStatelessSrcSize = sizeof(copyImage3dToBufferStatelessSrc);
 
 static RegisterEmbeddedResource registerCopyImage3dToBufferStatelessSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyImage3dToBufferStateless,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyImage3dToBufferStateless,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyImage3dToBufferStatelessSrc,
     copyImage3dToBufferStatelessSrcSize);
@@ -187,9 +187,9 @@ static constexpr const char copyImageToImage1dSrc[] =
 static constexpr size_t copyImageToImage1dSrcSize = sizeof(copyImageToImage1dSrc);
 
 static RegisterEmbeddedResource registerCopyImageToImage1dSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyImageToImage1d,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyImageToImage1d,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyImageToImage1dSrc,
     copyImageToImage1dSrcSize);
@@ -200,9 +200,9 @@ static constexpr const char copyImageToImage2dSrc[] =
 static constexpr size_t copyImageToImage2dSrcSize = sizeof(copyImageToImage2dSrc);
 
 static RegisterEmbeddedResource registerCopyImageToImage2dSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyImageToImage2d,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyImageToImage2d,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyImageToImage2dSrc,
     copyImageToImage2dSrcSize);
@@ -213,9 +213,9 @@ static constexpr const char copyImageToImage3dSrc[] =
 static constexpr size_t copyImageToImage3dSrcSize = sizeof(copyImageToImage3dSrc);
 
 static RegisterEmbeddedResource registerCopyImageToImage3dSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::copyImageToImage3d,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::copyImageToImage3d,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyImageToImage3dSrc,
     copyImageToImage3dSrcSize);
@@ -226,9 +226,9 @@ static constexpr const char fillImage1dSrc[] =
 static constexpr size_t fillImage1dSrcSize = sizeof(fillImage1dSrc);
 
 static RegisterEmbeddedResource registerFillImage1dSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::fillImage1d,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::fillImage1d,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     fillImage1dSrc,
     fillImage1dSrcSize);
@@ -239,9 +239,9 @@ static constexpr const char fillImage2dSrc[] =
 static constexpr size_t fillImage2dSrcSize = sizeof(fillImage2dSrc);
 
 static RegisterEmbeddedResource registerFillImage2dSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::fillImage2d,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::fillImage2d,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     fillImage2dSrc,
     fillImage2dSrcSize);
@@ -252,9 +252,9 @@ static constexpr const char fillImage3dSrc[] =
 static constexpr size_t fillImage3dSrcSize = sizeof(fillImage3dSrc);
 
 static RegisterEmbeddedResource registerFillImage3dSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::fillImage3d,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::fillImage3d,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     fillImage3dSrc,
     fillImage3dSrcSize);
@@ -265,9 +265,9 @@ static constexpr const char auxTranslationSrc[] =
 static constexpr size_t auxTranslationSrcSize = sizeof(auxTranslationSrc);
 
 static RegisterEmbeddedResource registerAuxTranslationSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::auxTranslation,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::auxTranslation,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     auxTranslationSrc,
     auxTranslationSrcSize);
@@ -278,9 +278,9 @@ static constexpr const char copyKernelTimestampsSrc[] =
 static constexpr size_t copyKernelTimestampsSrcSize = sizeof(copyKernelTimestampsSrc);
 
 static RegisterEmbeddedResource registerCopyKernelTimestampsSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::queryKernelTimestamps,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::queryKernelTimestamps,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     copyKernelTimestampsSrc,
     copyKernelTimestampsSrcSize);
@@ -291,9 +291,9 @@ static constexpr const char fillImage1dBufferSrc[] =
 static constexpr size_t fillImage1dBufferSrcSize = sizeof(fillImage1dBufferSrc);
 
 static RegisterEmbeddedResource registerFillImage1dBufferSrc(
-    createBuiltinResourceName(
-        EBuiltInOps::fillImage1dBuffer,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+    BuiltIn::createResourceName(
+        BuiltIn::Group::fillImage1dBuffer,
+        BuiltIn::Code::getExtension(BuiltIn::CodeType::source))
         .c_str(),
     fillImage1dBufferSrc,
     fillImage1dBufferSrcSize);

@@ -25,7 +25,7 @@
 namespace NEO {
 
 BuiltIns::BuiltIns() {
-    builtinsLib.reset(new BuiltinsLib());
+    builtinsLib.reset(new BuiltIn::ResourceLoader());
 }
 
 BuiltIns::~BuiltIns() = default;

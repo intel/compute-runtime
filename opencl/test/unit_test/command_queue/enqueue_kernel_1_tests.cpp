@@ -726,8 +726,8 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
 }
 
 TEST_F(EnqueueKernelTest, GivenKernelWithBuiltinDispatchInfoBuilderWhenBeingDispatchedThenBuiltinDispatcherIsUsedForDispatchValidation) {
-    struct MockBuiltinDispatchBuilder : BuiltinDispatchInfoBuilder {
-        using BuiltinDispatchInfoBuilder::BuiltinDispatchInfoBuilder;
+    struct MockBuiltInDispatchBuilder : BuiltIn::DispatchInfoBuilder {
+        using BuiltIn::DispatchInfoBuilder::DispatchInfoBuilder;
 
         cl_int validateDispatch(Kernel *kernel, uint32_t inworkDim, const Vec3<size_t> &gws,
                                 const Vec3<size_t> &elws, const Vec3<size_t> &offset) const override {
@@ -752,7 +752,7 @@ TEST_F(EnqueueKernelTest, GivenKernelWithBuiltinDispatchInfoBuilderWhenBeingDisp
         mutable bool wasValidateDispatchCalled = false;
     };
 
-    MockBuiltinDispatchBuilder mockNuiltinDispatchBuilder(*pCmdQ->getDevice().getBuiltIns(), pCmdQ->getClDevice());
+    MockBuiltInDispatchBuilder mockNuiltinDispatchBuilder(*pCmdQ->getDevice().getBuiltIns(), pCmdQ->getClDevice());
 
     MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.kernelInfo.builtinDispatchBuilder = &mockNuiltinDispatchBuilder;

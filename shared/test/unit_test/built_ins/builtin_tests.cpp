@@ -28,7 +28,7 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinDisabledWhenBinExtensionPass
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
+    auto resourceNames = BuiltIn::getResourceNames(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "bindful_copy_buffer_to_buffer.builtin_kernel.bin";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -43,7 +43,7 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinEnabledWhenBinExtensionPasse
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
+    auto resourceNames = BuiltIn::getResourceNames(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "bindless_copy_buffer_to_buffer.builtin_kernel.bin";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -53,27 +53,27 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinEnabledWhenBinExtensionPasse
 }
 
 TEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatformThenOnlyIntermediateFormatIsAvailable) {
-    auto builtinsLib = std::make_unique<MockBuiltinsLib>();
+    auto builtinsLib = std::make_unique<MockBuiltInResourceLoader>();
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo.ipVersion.value += 0xdead;
-    const std::array<uint32_t, 12> builtinTypes{EBuiltInOps::copyBufferToBuffer,
-                                                EBuiltInOps::copyBufferRect,
-                                                EBuiltInOps::fillBuffer,
-                                                EBuiltInOps::copyBufferToImage3d,
-                                                EBuiltInOps::copyImage3dToBuffer,
-                                                EBuiltInOps::copyImageToImage1d,
-                                                EBuiltInOps::copyImageToImage2d,
-                                                EBuiltInOps::copyImageToImage3d,
-                                                EBuiltInOps::fillImage1d,
-                                                EBuiltInOps::fillImage2d,
-                                                EBuiltInOps::fillImage3d,
-                                                EBuiltInOps::fillImage1dBuffer};
+    const std::array<BuiltIn::Group, 12> builtinTypes{BuiltIn::Group::copyBufferToBuffer,
+                                                      BuiltIn::Group::copyBufferRect,
+                                                      BuiltIn::Group::fillBuffer,
+                                                      BuiltIn::Group::copyBufferToImage3d,
+                                                      BuiltIn::Group::copyImage3dToBuffer,
+                                                      BuiltIn::Group::copyImageToImage1d,
+                                                      BuiltIn::Group::copyImageToImage2d,
+                                                      BuiltIn::Group::copyImageToImage3d,
+                                                      BuiltIn::Group::fillImage1d,
+                                                      BuiltIn::Group::fillImage2d,
+                                                      BuiltIn::Group::fillImage3d,
+                                                      BuiltIn::Group::fillImage1dBuffer};
 
     for (auto &builtinType : builtinTypes) {
-        auto binaryBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::binary, *pDevice);
+        auto binaryBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltIn::CodeType::binary, *pDevice);
         EXPECT_EQ(0U, binaryBuiltinResource.size());
 
-        auto intermediateBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::intermediate, *pDevice);
+        auto intermediateBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltIn::CodeType::intermediate, *pDevice);
         EXPECT_NE(0U, intermediateBuiltinResource.size());
     }
 }
@@ -82,7 +82,7 @@ HWTEST2_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAdd
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferStateless, BuiltinCode::ECodeType::binary, *pDevice);
+    auto resourceNames = BuiltIn::getResourceNames(BuiltIn::Group::copyBufferToBufferStateless, BuiltIn::CodeType::binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -95,14 +95,14 @@ HWTEST2_F(BuiltInSharedTest, GivenPlatformWithoutStatefulAddresingSupportWhenGet
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
     {
-        auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
+        auto resourceNames = BuiltIn::getResourceNames(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::binary, *pDevice);
         std::string expectedResourceName = deviceIpString + "_stateless_copy_buffer_to_buffer.builtin_kernel.bin";
         EXPECT_EQ(1u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceName);
     }
 
     {
-        auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferStateless, BuiltinCode::ECodeType::binary, *pDevice);
+        auto resourceNames = BuiltIn::getResourceNames(BuiltIn::Group::copyBufferToBufferStateless, BuiltIn::CodeType::binary, *pDevice);
         std::string expectedResourceName = deviceIpString + "_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
         EXPECT_EQ(1u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceName);
@@ -115,7 +115,7 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNames
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::intermediate, *pDevice);
+    auto resourceNames = BuiltIn::getResourceNames(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::intermediate, *pDevice);
 
     std::string expectedResourceNameGeneric = "copy_buffer_to_buffer.builtin_kernel.spv";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -127,50 +127,50 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNames
 
 TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinResourceNameThenCorrectNameIsReturned) {
 
-    const std::pair<EBuiltInOps::Type, const char *> testCases[] = {
-        {EBuiltInOps::auxTranslation, "aux_translation.builtin_kernel"},
-        {EBuiltInOps::copyBufferToBuffer, "copy_buffer_to_buffer.builtin_kernel"},
-        {EBuiltInOps::copyBufferToBufferStateless, "copy_buffer_to_buffer_stateless.builtin_kernel"},
-        {EBuiltInOps::copyBufferToBufferStatelessHeapless, "copy_buffer_to_buffer_stateless.builtin_kernel"},
-        {EBuiltInOps::copyBufferRect, "copy_buffer_rect.builtin_kernel"},
-        {EBuiltInOps::copyBufferRectStateless, "copy_buffer_rect_stateless.builtin_kernel"},
-        {EBuiltInOps::copyBufferRectStatelessHeapless, "copy_buffer_rect_stateless.builtin_kernel"},
-        {EBuiltInOps::fillBuffer, "fill_buffer.builtin_kernel"},
-        {EBuiltInOps::fillBufferStateless, "fill_buffer_stateless.builtin_kernel"},
-        {EBuiltInOps::fillBufferStatelessHeapless, "fill_buffer_stateless.builtin_kernel"},
-        {EBuiltInOps::copyBufferToImage3d, "copy_buffer_to_image3d.builtin_kernel"},
-        {EBuiltInOps::copyBufferToImage3dStateless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
-        {EBuiltInOps::copyBufferToImage3dStatelessHeapless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
-        {EBuiltInOps::copyImage3dToBuffer, "copy_image3d_to_buffer.builtin_kernel"},
-        {EBuiltInOps::copyImage3dToBufferStateless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
-        {EBuiltInOps::copyImage3dToBufferStatelessHeapless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
-        {EBuiltInOps::copyImageToImage1d, "copy_image_to_image1d.builtin_kernel"},
-        {EBuiltInOps::copyImageToImage1dHeapless, "copy_image_to_image1d.builtin_kernel"},
-        {EBuiltInOps::copyImageToImage2d, "copy_image_to_image2d.builtin_kernel"},
-        {EBuiltInOps::copyImageToImage2dHeapless, "copy_image_to_image2d.builtin_kernel"},
-        {EBuiltInOps::copyImageToImage3d, "copy_image_to_image3d.builtin_kernel"},
-        {EBuiltInOps::copyImageToImage3dHeapless, "copy_image_to_image3d.builtin_kernel"},
-        {EBuiltInOps::fillImage1d, "fill_image1d.builtin_kernel"},
-        {EBuiltInOps::fillImage1dHeapless, "fill_image1d.builtin_kernel"},
-        {EBuiltInOps::fillImage2d, "fill_image2d.builtin_kernel"},
-        {EBuiltInOps::fillImage2dHeapless, "fill_image2d.builtin_kernel"},
-        {EBuiltInOps::fillImage3d, "fill_image3d.builtin_kernel"},
-        {EBuiltInOps::fillImage3dHeapless, "fill_image3d.builtin_kernel"},
-        {EBuiltInOps::queryKernelTimestamps, "copy_kernel_timestamps.builtin_kernel"},
-        {EBuiltInOps::fillImage1dBuffer, "fill_image1d_buffer.builtin_kernel"},
-        {EBuiltInOps::fillImage1dBufferHeapless, "fill_image1d_buffer.builtin_kernel"}};
+    const std::pair<BuiltIn::Group, const char *> testCases[] = {
+        {BuiltIn::Group::auxTranslation, "aux_translation.builtin_kernel"},
+        {BuiltIn::Group::copyBufferToBuffer, "copy_buffer_to_buffer.builtin_kernel"},
+        {BuiltIn::Group::copyBufferToBufferStateless, "copy_buffer_to_buffer_stateless.builtin_kernel"},
+        {BuiltIn::Group::copyBufferToBufferStatelessHeapless, "copy_buffer_to_buffer_stateless.builtin_kernel"},
+        {BuiltIn::Group::copyBufferRect, "copy_buffer_rect.builtin_kernel"},
+        {BuiltIn::Group::copyBufferRectStateless, "copy_buffer_rect_stateless.builtin_kernel"},
+        {BuiltIn::Group::copyBufferRectStatelessHeapless, "copy_buffer_rect_stateless.builtin_kernel"},
+        {BuiltIn::Group::fillBuffer, "fill_buffer.builtin_kernel"},
+        {BuiltIn::Group::fillBufferStateless, "fill_buffer_stateless.builtin_kernel"},
+        {BuiltIn::Group::fillBufferStatelessHeapless, "fill_buffer_stateless.builtin_kernel"},
+        {BuiltIn::Group::copyBufferToImage3d, "copy_buffer_to_image3d.builtin_kernel"},
+        {BuiltIn::Group::copyBufferToImage3dStateless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
+        {BuiltIn::Group::copyBufferToImage3dStatelessHeapless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
+        {BuiltIn::Group::copyImage3dToBuffer, "copy_image3d_to_buffer.builtin_kernel"},
+        {BuiltIn::Group::copyImage3dToBufferStateless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
+        {BuiltIn::Group::copyImage3dToBufferStatelessHeapless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
+        {BuiltIn::Group::copyImageToImage1d, "copy_image_to_image1d.builtin_kernel"},
+        {BuiltIn::Group::copyImageToImage1dHeapless, "copy_image_to_image1d.builtin_kernel"},
+        {BuiltIn::Group::copyImageToImage2d, "copy_image_to_image2d.builtin_kernel"},
+        {BuiltIn::Group::copyImageToImage2dHeapless, "copy_image_to_image2d.builtin_kernel"},
+        {BuiltIn::Group::copyImageToImage3d, "copy_image_to_image3d.builtin_kernel"},
+        {BuiltIn::Group::copyImageToImage3dHeapless, "copy_image_to_image3d.builtin_kernel"},
+        {BuiltIn::Group::fillImage1d, "fill_image1d.builtin_kernel"},
+        {BuiltIn::Group::fillImage1dHeapless, "fill_image1d.builtin_kernel"},
+        {BuiltIn::Group::fillImage2d, "fill_image2d.builtin_kernel"},
+        {BuiltIn::Group::fillImage2dHeapless, "fill_image2d.builtin_kernel"},
+        {BuiltIn::Group::fillImage3d, "fill_image3d.builtin_kernel"},
+        {BuiltIn::Group::fillImage3dHeapless, "fill_image3d.builtin_kernel"},
+        {BuiltIn::Group::queryKernelTimestamps, "copy_kernel_timestamps.builtin_kernel"},
+        {BuiltIn::Group::fillImage1dBuffer, "fill_image1d_buffer.builtin_kernel"},
+        {BuiltIn::Group::fillImage1dBufferHeapless, "fill_image1d_buffer.builtin_kernel"}};
 
     for (const auto &[type, name] : testCases) {
-        std::string builtinResourceName = createBuiltinResourceName(type, ".bin");
+        std::string builtinResourceName = BuiltIn::createResourceName(type, ".bin");
         std::string expectedBuiltinResourceName = std::string(name) + ".bin";
         EXPECT_EQ(expectedBuiltinResourceName, builtinResourceName);
     }
 }
 
 TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {
-    auto builtinsLib = std::make_unique<MockBuiltinsLib>();
-    auto builtinCode = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::binary, builtinCode.type);
+    auto builtinsLib = std::make_unique<MockBuiltInResourceLoader>();
+    auto builtinCode = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::any, *pDevice);
+    EXPECT_EQ(BuiltIn::CodeType::binary, builtinCode.type);
     EXPECT_NE(0U, builtinCode.resource.size());
 }
 
@@ -190,20 +190,20 @@ TEST_F(BuiltInSharedTest, GivenHeaplessModeEnabledWhenGetBuiltinResourceNamesIsC
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
     struct TestParam {
-        std::string builtInTypeAsString;
-        EBuiltInOps::Type builtinType;
+        std::string builtInGroupAsString;
+        BuiltIn::Group builtinType;
     };
 
     TestParam params[] = {
-        {"copy_buffer_to_buffer_stateless", EBuiltInOps::copyBufferToBufferStatelessHeapless},
-        {"copy_buffer_rect_stateless", EBuiltInOps::copyBufferRectStatelessHeapless},
-        {"fill_buffer_stateless", EBuiltInOps::fillBufferStatelessHeapless}};
+        {"copy_buffer_to_buffer_stateless", BuiltIn::Group::copyBufferToBufferStatelessHeapless},
+        {"copy_buffer_rect_stateless", BuiltIn::Group::copyBufferRectStatelessHeapless},
+        {"fill_buffer_stateless", BuiltIn::Group::fillBufferStatelessHeapless}};
 
-    for (auto &[builtInTypeAsString, builtInType] : params) {
+    for (auto &[builtInGroupAsString, builtInGroup] : params) {
 
-        auto resourceNames = getBuiltinResourceNames(builtInType, BuiltinCode::ECodeType::binary, *pDevice);
+        auto resourceNames = BuiltIn::getResourceNames(builtInGroup, BuiltIn::CodeType::binary, *pDevice);
 
-        std::string expectedResourceNameGeneric = "stateless_heapless_" + builtInTypeAsString + ".builtin_kernel.bin";
+        std::string expectedResourceNameGeneric = "stateless_heapless_" + builtInGroupAsString + ".builtin_kernel.bin";
         std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
 
         EXPECT_EQ(1u, resourceNames.size());
@@ -218,25 +218,25 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeWhenGettingResourceNamesThenReturnRe
                                  std::to_string(hwInfo.ipVersion.revision);
 
     struct WideCase {
-        EBuiltInOps::Type op;
+        BuiltIn::Group op;
         const char *genericResource;
     };
 
     const WideCase wideCases[] = {
-        {EBuiltInOps::copyBufferToBufferWideStateless, "wide_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin"},
-        {EBuiltInOps::copyBufferToBufferWideStatelessHeapless, "wide_stateless_heapless_copy_buffer_to_buffer_stateless.builtin_kernel.bin"},
-        {EBuiltInOps::copyBufferRectWideStateless, "wide_stateless_copy_buffer_rect_stateless.builtin_kernel.bin"},
-        {EBuiltInOps::copyBufferRectWideStatelessHeapless, "wide_stateless_heapless_copy_buffer_rect_stateless.builtin_kernel.bin"},
-        {EBuiltInOps::fillBufferWideStateless, "wide_stateless_fill_buffer_stateless.builtin_kernel.bin"},
-        {EBuiltInOps::fillBufferWideStatelessHeapless, "wide_stateless_heapless_fill_buffer_stateless.builtin_kernel.bin"},
-        {EBuiltInOps::copyBufferToImage3dWideStateless, "wide_stateless_copy_buffer_to_image3d_stateless.builtin_kernel.bin"},
-        {EBuiltInOps::copyBufferToImage3dWideStatelessHeapless, "wide_stateless_heapless_copy_buffer_to_image3d_stateless.builtin_kernel.bin"},
-        {EBuiltInOps::copyImage3dToBufferWideStateless, "wide_stateless_copy_image3d_to_buffer_stateless.builtin_kernel.bin"},
-        {EBuiltInOps::copyImage3dToBufferWideStatelessHeapless, "wide_stateless_heapless_copy_image3d_to_buffer_stateless.builtin_kernel.bin"},
+        {BuiltIn::Group::copyBufferToBufferWideStateless, "wide_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin"},
+        {BuiltIn::Group::copyBufferToBufferWideStatelessHeapless, "wide_stateless_heapless_copy_buffer_to_buffer_stateless.builtin_kernel.bin"},
+        {BuiltIn::Group::copyBufferRectWideStateless, "wide_stateless_copy_buffer_rect_stateless.builtin_kernel.bin"},
+        {BuiltIn::Group::copyBufferRectWideStatelessHeapless, "wide_stateless_heapless_copy_buffer_rect_stateless.builtin_kernel.bin"},
+        {BuiltIn::Group::fillBufferWideStateless, "wide_stateless_fill_buffer_stateless.builtin_kernel.bin"},
+        {BuiltIn::Group::fillBufferWideStatelessHeapless, "wide_stateless_heapless_fill_buffer_stateless.builtin_kernel.bin"},
+        {BuiltIn::Group::copyBufferToImage3dWideStateless, "wide_stateless_copy_buffer_to_image3d_stateless.builtin_kernel.bin"},
+        {BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless, "wide_stateless_heapless_copy_buffer_to_image3d_stateless.builtin_kernel.bin"},
+        {BuiltIn::Group::copyImage3dToBufferWideStateless, "wide_stateless_copy_image3d_to_buffer_stateless.builtin_kernel.bin"},
+        {BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless, "wide_stateless_heapless_copy_image3d_to_buffer_stateless.builtin_kernel.bin"},
     };
 
     for (const auto &tc : wideCases) {
-        auto resourceNames = getBuiltinResourceNames(tc.op, BuiltinCode::ECodeType::binary, *pDevice);
+        auto resourceNames = BuiltIn::getResourceNames(tc.op, BuiltIn::CodeType::binary, *pDevice);
 
         std::string expectedGeneric = tc.genericResource;
         std::string expectedForRelease = deviceIpString + "_" + expectedGeneric;
@@ -250,7 +250,7 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingWideStateless
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferWideStateless, BuiltinCode::ECodeType::intermediate, *pDevice);
+    auto resourceNames = BuiltIn::getResourceNames(BuiltIn::Group::copyBufferToBufferWideStateless, BuiltIn::CodeType::intermediate, *pDevice);
 
     std::string expectedResourceNameGeneric = "wide_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.spv";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -264,7 +264,7 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeSourceWhenGettingWideStatelessBuilti
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferWideStateless, BuiltinCode::ECodeType::source, *pDevice);
+    auto resourceNames = BuiltIn::getResourceNames(BuiltIn::Group::copyBufferToBufferWideStateless, BuiltIn::CodeType::source, *pDevice);
 
     std::string expectedResourceNameGeneric = "copy_buffer_to_buffer_stateless.builtin_kernel.cl";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;

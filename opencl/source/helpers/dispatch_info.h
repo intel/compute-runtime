@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ struct MultiDispatchInfo : NEO::NonCopyableAndNonMovableClass {
     ~MultiDispatchInfo();
 
     explicit MultiDispatchInfo(Kernel *mainKernel) : mainKernel(mainKernel) {}
-    explicit MultiDispatchInfo(const BuiltinOpParams &operationParams) : builtinOpParams(operationParams) {}
+    explicit MultiDispatchInfo(const BuiltIn::OpParams &operationParams) : builtinOpParams(operationParams) {}
     MultiDispatchInfo() = default;
 
     bool empty() const {
@@ -170,11 +170,11 @@ struct MultiDispatchInfo : NEO::NonCopyableAndNonMovableClass {
 
     Kernel *peekMainKernel() const;
 
-    void setBuiltinOpParams(const BuiltinOpParams &builtinOpParams) {
+    void setBuiltinOpParams(const BuiltIn::OpParams &builtinOpParams) {
         this->builtinOpParams = builtinOpParams;
     }
 
-    const BuiltinOpParams &peekBuiltinOpParams() const {
+    const BuiltIn::OpParams &peekBuiltinOpParams() const {
         return builtinOpParams;
     }
 
@@ -187,7 +187,7 @@ struct MultiDispatchInfo : NEO::NonCopyableAndNonMovableClass {
     }
 
   protected:
-    BuiltinOpParams builtinOpParams = {};
+    BuiltIn::OpParams builtinOpParams = {};
     StackVec<DispatchInfo, 9> dispatchInfos;
     StackVec<MemObj *, 2> redescribedSurfaces;
     std::unique_ptr<const KernelObjsForAuxTranslation> kernelObjsForAuxTranslation;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getUnknownDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {
+BuiltIn::DispatchInfoBuilder &BuiltIn::DispatchBuilderOp::getUnknownDispatchInfoBuilder(BuiltIn::Group operation, ClDevice &device) {
     throw std::runtime_error("getBuiltinDispatchInfoBuilder failed");
 }
 } // namespace NEO

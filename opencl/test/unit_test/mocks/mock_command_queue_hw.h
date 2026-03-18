@@ -292,7 +292,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
     std::vector<Kernel *> lastEnqueuedKernels;
     MultiDispatchInfo storedMultiDispatchInfo;
-    BuiltinOpParams kernelParams;
+    BuiltIn::OpParams kernelParams;
     size_t enqueueWriteImageCounter = 0;
     size_t enqueueReadImageCounter = 0;
     size_t enqueueWriteBufferCounter = 0;

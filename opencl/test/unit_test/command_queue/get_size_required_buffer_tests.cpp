@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
         auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
         bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
         bool isForceStateless = compilerProductHelper.isForceToStatelessRequired();
-        copyBufferToBufferBuiltin = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isForceStateless, heaplessAllowed);
+        copyBufferToBufferBuiltin = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isForceStateless, heaplessAllowed);
     }
 
     void TearDown() override {
@@ -51,7 +51,7 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
     Buffer *srcBuffer = nullptr;
     Buffer *dstBuffer = nullptr;
     GraphicsAllocation *patternAllocation = nullptr;
-    EBuiltInOps::Type copyBufferToBufferBuiltin;
+    BuiltIn::Group copyBufferToBufferBuiltin;
 };
 
 HWTEST_F(GetSizeRequiredBufferTest, WhenFillingBufferThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
@@ -70,12 +70,12 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenFillingBufferThenHeapsAndCommandBufferCo
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
     bool isForceStateless = compilerProductHelper.isForceToStatelessRequired();
-    auto builtin = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(isForceStateless, heaplessAllowed);
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin,
-                                                                            pCmdQ->getClDevice());
+    auto builtin = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(isForceStateless, heaplessAllowed);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
@@ -124,11 +124,11 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenCopyingBufferThenHeapsAndCommandBufferCo
     auto retVal = EnqueueCopyBufferHelper<>::enqueue(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
@@ -178,11 +178,11 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferNonBlockingThenHeapsAndComm
         srcBuffer,
         CL_FALSE);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.dstPtr = EnqueueReadBufferTraits::hostPtr;
     dc.srcMemObj = srcBuffer;
     dc.srcOffset = {EnqueueReadBufferTraits::offset, 0, 0};
@@ -232,11 +232,11 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferBlockingThenThenHeapsAndCom
         srcBuffer,
         CL_TRUE);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.dstPtr = EnqueueReadBufferTraits::hostPtr;
     dc.srcMemObj = srcBuffer;
     dc.srcOffset = {EnqueueReadBufferTraits::offset, 0, 0};
@@ -286,11 +286,11 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferNonBlockingThenHeapsAndComm
         CL_FALSE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = EnqueueWriteBufferTraits::hostPtr;
     dc.dstMemObj = dstBuffer;
     dc.dstOffset = {EnqueueWriteBufferTraits::offset, 0, 0};
@@ -338,11 +338,11 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferBlockingThenHeapsAndCommand
         CL_TRUE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = EnqueueWriteBufferTraits::hostPtr;
     dc.dstMemObj = dstBuffer;
     dc.dstOffset = {EnqueueWriteBufferTraits::offset, 0, 0};
@@ -436,11 +436,11 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenOutEventForMultiDeviceContextWhenCalcul
 }
 
 HWTEST2_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSizeIsComputedThenItIsProperlyAligned, IsHeapfulRequired) {
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = EnqueueWriteBufferTraits::hostPtr;
     dc.dstMemObj = dstBuffer;
     dc.dstOffset = {EnqueueWriteBufferTraits::offset, 0, 0};

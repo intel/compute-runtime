@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,21 +26,21 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    auto builtInTypeImage3d = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::fillImage3d>(this->heaplessModeEnabled);
-    auto builtInTypeImage1dBuffer = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::fillImage1dBuffer>(this->heaplessModeEnabled);
+    auto builtInGroupImage3d = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::fillImage3d>(this->heaplessModeEnabled);
+    auto builtInGroupImage1dBuffer = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::fillImage1dBuffer>(this->heaplessModeEnabled);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER
-            ? builtInTypeImage1dBuffer
-            : builtInTypeImage3d,
+            ? builtInGroupImage1dBuffer
+            : builtInGroupImage3d,
         this->getClDevice());
 
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
+    BuiltIn::OwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface dstImgSurf(image);
     Surface *surfaces[] = {&dstImgSurf};
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = const_cast<void *>(fillColor);
     dc.dstMemObj = image;
     dc.srcOffset = {0, 0, 0};

@@ -21,7 +21,9 @@
 namespace NEO {
 
 class GraphicsAllocation;
-class BuiltinDispatchInfoBuilder;
+namespace BuiltIn {
+class DispatchInfoBuilder;
+}
 class Context;
 
 ClDeviceVector toClDeviceVector(ClDevice &clDevice);
@@ -176,7 +178,7 @@ class MockProgram : public Program {
         this->isCreatedFromBinary = false;
         this->requiresRebuild = true;
         setBuildStatus(CL_BUILD_NONE);
-        std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtins;
+        std::unordered_map<std::string, BuiltIn::DispatchInfoBuilder *> builtins;
         return this->build(getDevices(), this->options.c_str(), builtins);
     }
 

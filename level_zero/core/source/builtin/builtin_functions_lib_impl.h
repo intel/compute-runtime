@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,8 @@
 #include <vector>
 
 namespace NEO {
-namespace EBuiltInOps {
-using Type = uint32_t;
+namespace BuiltIn {
+enum class Group : uint32_t;
 }
 class BuiltIns;
 } // namespace NEO
@@ -25,42 +25,42 @@ namespace L0 {
 struct Kernel;
 struct Device;
 
-struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib, NEO::NonCopyableClass {
-    struct BuiltinData;
-    BuiltinFunctionsLibImpl(Device *device, NEO::BuiltIns *builtInsLib);
-    ~BuiltinFunctionsLibImpl() override {
+struct BuiltInKernelLibImpl : BuiltInKernelLib, NEO::NonCopyableClass {
+    struct BuiltInKernelData;
+    BuiltInKernelLibImpl(Device *device, NEO::BuiltIns *builtInsLib);
+    ~BuiltInKernelLibImpl() override {
         this->ensureInitCompletionImpl();
     }
 
-    Kernel *getFunction(Builtin func) override;
-    Kernel *getImageFunction(ImageBuiltin func) override;
-    void initBuiltinKernel(Builtin builtId) override;
-    void initBuiltinImageKernel(ImageBuiltin func) override;
+    Kernel *getFunction(BufferBuiltIn func) override;
+    Kernel *getImageFunction(ImageBuiltIn func) override;
+    void initBuiltinKernel(BufferBuiltIn builtId) override;
+    void initBuiltinImageKernel(ImageBuiltIn func) override;
     void ensureInitCompletion() override;
     void ensureInitCompletionImpl();
-    MOCKABLE_VIRTUAL std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName);
+    MOCKABLE_VIRTUAL std::unique_ptr<BuiltInKernelLibImpl::BuiltInKernelData> loadBuiltIn(NEO::BuiltIn::Group builtInGroup, const char *kernelName);
 
     static bool initBuiltinsAsyncEnabled(Device *device);
 
   protected:
     std::vector<std::unique_ptr<Module>> modules = {};
-    std::unique_ptr<BuiltinData> builtins[static_cast<uint32_t>(Builtin::count)];
-    std::unique_ptr<BuiltinData> imageBuiltins[static_cast<uint32_t>(ImageBuiltin::count)];
+    std::unique_ptr<BuiltInKernelData> builtins[static_cast<uint32_t>(BufferBuiltIn::count)];
+    std::unique_ptr<BuiltInKernelData> imageBuiltins[static_cast<uint32_t>(ImageBuiltIn::count)];
     Device *device;
     NEO::BuiltIns *builtInsLib;
 
     bool initAsyncComplete = true;
     std::atomic_bool initAsync = false;
 };
-struct BuiltinFunctionsLibImpl::BuiltinData : NEO::NonCopyableClass {
-    MOCKABLE_VIRTUAL ~BuiltinData();
-    BuiltinData();
-    BuiltinData(Module *module, std::unique_ptr<L0::Kernel> &&ker);
+struct BuiltInKernelLibImpl::BuiltInKernelData : NEO::NonCopyableClass {
+    MOCKABLE_VIRTUAL ~BuiltInKernelData();
+    BuiltInKernelData();
+    BuiltInKernelData(Module *module, std::unique_ptr<L0::Kernel> &&ker);
 
     Module *module = nullptr;
     std::unique_ptr<Kernel> func;
 };
 
-static_assert(NEO::NonCopyable<BuiltinFunctionsLibImpl>);
-static_assert(NEO::NonCopyable<BuiltinFunctionsLibImpl::BuiltinData>);
+static_assert(NEO::NonCopyable<BuiltInKernelLibImpl>);
+static_assert(NEO::NonCopyable<BuiltInKernelLibImpl::BuiltInKernelData>);
 } // namespace L0

@@ -48,12 +48,12 @@ struct KernelAddressingTest : public ClDeviceFixture, public ::testing::Test, pu
 };
 
 TEST_P(KernelAddressingTest, givenBuiltinCopyBufferToBufferKernelsWhenWidenessIsEnabledThenCorrectArgumentSizesAreUsed) {
-    const auto builtinType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, isHeapless, isWideness);
+    const auto builtinType = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isStateless, isHeapless, isWideness);
 
-    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltinCode::ECodeType::any, *pDevice);
+    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltIn::CodeType::any, *pDevice);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
-    prog.reset(BuiltinDispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
+    prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
     prog->build(deviceVector, "");
 
     const std::vector<const char *> bufferToBufferKernelNames = {
@@ -75,12 +75,12 @@ TEST_P(KernelAddressingTest, givenBuiltinCopyBufferToBufferKernelsWhenWidenessIs
 }
 
 TEST_P(KernelAddressingTest, givenBuiltinCopyBufferRectKernelsWhenFetchedFromProgramThenCorrectArgumentSizesAreUsed) {
-    const auto builtinType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(isStateless, isHeapless, isWideness);
+    const auto builtinType = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferRect>(isStateless, isHeapless, isWideness);
 
-    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltinCode::ECodeType::any, *pDevice);
+    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltIn::CodeType::any, *pDevice);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
-    prog.reset(BuiltinDispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
+    prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
     prog->build(deviceVector, "");
     auto pKernelInfo = prog->getKernelInfo("CopyBufferRectBytes2d", 0);
     EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
@@ -105,12 +105,12 @@ TEST_P(KernelAddressingTest, givenBuiltinCopyBufferRectKernelsWhenFetchedFromPro
 }
 
 TEST_P(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgramThenCorrectArgumentSizesAreUsed) {
-    const auto builtinType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(isStateless, isHeapless, isWideness);
+    const auto builtinType = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(isStateless, isHeapless, isWideness);
 
-    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltinCode::ECodeType::any, *pDevice);
+    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltIn::CodeType::any, *pDevice);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
-    prog.reset(BuiltinDispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
+    prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
     prog->build(deviceVector, "");
     auto pKernelInfo = prog->getKernelInfo("FillBufferBytes", 0);
     EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
@@ -135,12 +135,12 @@ TEST_P(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgram
 TEST_P(KernelAddressingTest, givenBuiltinCopyBufferToImage3dKernelsWhenFetchedFromProgramThenCorrectArgumentSizesAreUsed) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-    const auto builtinType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, isHeapless, isWideness);
+    const auto builtinType = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, isHeapless, isWideness);
 
-    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltinCode::ECodeType::any, *pDevice);
+    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltIn::CodeType::any, *pDevice);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
-    prog.reset(BuiltinDispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
+    prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
     prog->build(deviceVector, "");
 
     const char *bufferToImageKernelNames[] = {
@@ -166,12 +166,12 @@ TEST_P(KernelAddressingTest, givenBuiltinCopyBufferToImage3dKernelsWhenFetchedFr
 TEST_P(KernelAddressingTest, givenBuiltinCopyImage3dToBufferKernelsWhenFetchedFromProgramThenCorrectArgumentSizesAreUsed) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-    const auto builtinType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, isHeapless, isWideness);
+    const auto builtinType = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, isHeapless, isWideness);
 
-    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltinCode::ECodeType::any, *pDevice);
+    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltIn::CodeType::any, *pDevice);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
-    prog.reset(BuiltinDispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
+    prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
     auto ret = prog->build(deviceVector, "");
     ASSERT_EQ(ret, CL_SUCCESS);
 

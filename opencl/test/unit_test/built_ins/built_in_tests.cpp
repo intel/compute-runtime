@@ -78,14 +78,14 @@ class BuiltInTests
         auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
         bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
         bool isForceStateless = compilerProductHelper.isForceToStatelessRequired();
-        copyBufferToBufferBuiltin = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isForceStateless, heaplessAllowed);
+        copyBufferToBufferBuiltin = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isForceStateless, heaplessAllowed);
     }
 
     void TearDown() override {
         allBuiltIns.clear();
         auto builders = pClDevice->peekBuilders();
         if (builders) {
-            for (uint32_t i = 0; i < static_cast<uint32_t>(EBuiltInOps::count); ++i) {
+            for (uint32_t i = 0; i < static_cast<uint32_t>(BuiltIn::Group::count); ++i) {
                 builders[i].first.reset();
             }
         }
@@ -115,8 +115,8 @@ class BuiltInTests
         allBuiltIns.append(src, start, size);
     }
 
-    bool compareBuiltinOpParams(const BuiltinOpParams &left,
-                                const BuiltinOpParams &right) {
+    bool compareBuiltinOpParams(const BuiltIn::OpParams &left,
+                                const BuiltIn::OpParams &right) {
         return left.srcPtr == right.srcPtr &&
                left.dstPtr == right.dstPtr &&
                left.size == right.size &&
@@ -126,7 +126,7 @@ class BuiltInTests
                left.srcMemObj == right.srcMemObj;
     }
 
-    EBuiltInOps::Type copyBufferToBufferBuiltin;
+    BuiltIn::Group copyBufferToBufferBuiltin;
     DebugManagerStateRestore restore;
     std::string allBuiltIns;
 };
@@ -147,23 +147,23 @@ struct AuxBuiltinsMatcher {
 };
 
 HWTEST2_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingAuxTranslationBuiltinThenResourceSizeIsNonZero, MatchAny) {
-    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+    auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
     EXPECT_EQ(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::auxBuiltinsSupported,
-              mockBuiltinsLib->getBuiltinResource(EBuiltInOps::auxTranslation, BuiltinCode::ECodeType::binary, *pDevice).size() != 0);
+              mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::auxTranslation, BuiltIn::CodeType::binary, *pDevice).size() != 0);
 }
 
-class MockAuxBuilInOp : public BuiltInOp<EBuiltInOps::auxTranslation> {
+class MockAuxBuilInOp : public BuiltIn::Op<BuiltIn::Group::auxTranslation> {
   public:
-    using BuiltinDispatchInfoBuilder::populate;
-    using BaseClass = BuiltInOp<EBuiltInOps::auxTranslation>;
+    using BuiltIn::DispatchInfoBuilder::populate;
+    using BaseClass = BuiltIn::Op<BuiltIn::Group::auxTranslation>;
     using BaseClass::baseKernel;
     using BaseClass::convertToAuxKernel;
     using BaseClass::convertToNonAuxKernel;
     using BaseClass::resizeKernelInstances;
     using BaseClass::usedKernels;
 
-    using BaseClass::BuiltInOp;
+    using BaseClass::Op;
 };
 
 INSTANTIATE_TEST_SUITE_P(,
@@ -180,10 +180,10 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTransla
 
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
 
-    BuiltinOpParams builtinOpParamsToAux;
+    BuiltIn::OpParams builtinOpParamsToAux;
     builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
-    BuiltinOpParams builtinOpParamsToNonAux;
+    BuiltIn::OpParams builtinOpParamsToNonAux;
     builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     std::unique_ptr<Buffer> buffer = nullptr;
@@ -275,7 +275,7 @@ TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     MockBuffer *srcPtr = new MockBuffer();
     MockBuffer *dstPtr = new MockBuffer();
@@ -286,7 +286,7 @@ TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreate
     srcPtr->mockGfxAllocation.setAllocationType(AllocationType::buffer);
     dstPtr->mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
     builtinOpsParams.dstMemObj = &dst;
@@ -342,7 +342,7 @@ TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreate
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     MockBuffer *srcPtr = new MockBuffer();
     MockBuffer *dstPtr = new MockBuffer();
@@ -353,7 +353,7 @@ TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreated
     srcPtr->mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
     dstPtr->mockGfxAllocation.setAllocationType(AllocationType::buffer);
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
     builtinOpsParams.dstMemObj = &dst;
@@ -373,8 +373,8 @@ TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreated
 }
 
 HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels, AuxBuiltinsMatcher) {
-    BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
-    auto &builder = static_cast<BuiltInOp<EBuiltInOps::auxTranslation> &>(baseBuilder);
+    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, *pClDevice);
+    auto &builder = static_cast<BuiltIn::Op<BuiltIn::Group::auxTranslation> &>(baseBuilder);
 
     std::vector<Kernel *> builtinKernels;
     std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
@@ -382,7 +382,7 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxT
     mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x20000));
     mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x30000));
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
@@ -441,8 +441,8 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxT
 }
 
 HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels, AuxBuiltinsMatcher) {
-    BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
-    auto &builder = static_cast<BuiltInOp<EBuiltInOps::auxTranslation> &>(baseBuilder);
+    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, *pClDevice);
+    auto &builder = static_cast<BuiltIn::Op<BuiltIn::Group::auxTranslation> &>(baseBuilder);
 
     std::vector<Kernel *> builtinKernels;
     std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
@@ -450,7 +450,7 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTran
     mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x20000));
     mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x30000));
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
@@ -508,8 +508,8 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTran
 }
 
 HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickDifferentKernelsDependingOnRequest, AuxBuiltinsMatcher) {
-    BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
-    auto &builder = static_cast<BuiltInOp<EBuiltInOps::auxTranslation> &>(baseBuilder);
+    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, *pClDevice);
+    auto &builder = static_cast<BuiltIn::Op<BuiltIn::Group::auxTranslation> &>(baseBuilder);
 
     std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
     for (int i = 0; i < 3; i++) {
@@ -517,7 +517,7 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThe
     }
     std::vector<Kernel *> builtinKernels;
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
     for (auto &kernelObj : mockKernelObjForAuxTranslation) {
@@ -546,8 +546,8 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThe
 }
 
 HWTEST2_P(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchInfosThenAbort, AuxBuiltinsMatcher) {
-    BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
-    auto &builder = static_cast<BuiltInOp<EBuiltInOps::auxTranslation> &>(baseBuilder);
+    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, *pClDevice);
+    auto &builder = static_cast<BuiltIn::Op<BuiltIn::Group::auxTranslation> &>(baseBuilder);
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
     auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
@@ -555,7 +555,7 @@ HWTEST2_P(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispat
 
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
 
     kernelObjsForAuxTranslationPtr->insert(mockKernelObjForAuxTranslation);
 
@@ -579,7 +579,7 @@ HWTEST2_P(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInst
         mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType));
     }
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
@@ -611,9 +611,9 @@ HWTEST2_F(BuiltInTests, givenAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstance
 }
 
 HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin, AuxBuiltinsMatcher) {
-    BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
+    BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, *pClDevice);
     auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pBuiltIns, *pClDevice);
-    pClDevice->setBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, std::unique_ptr<MockAuxBuilInOp>(mockAuxBuiltInOp));
+    pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, std::unique_ptr<MockAuxBuilInOp>(mockAuxBuiltInOp));
 
     auto mockProgram = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
@@ -668,10 +668,10 @@ HWCMDTEST_P(IGFX_GEN12LP_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSet
 
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
 
-    BuiltinOpParams builtinOpParamsToAux;
+    BuiltIn::OpParams builtinOpParamsToAux;
     builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
-    BuiltinOpParams builtinOpParamsToNonAux;
+    BuiltIn::OpParams builtinOpParamsToNonAux;
     builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     std::unique_ptr<Buffer> buffer = nullptr;
@@ -736,7 +736,7 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
 
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
 
-    BuiltinOpParams builtinOpParams;
+    BuiltIn::OpParams builtinOpParams;
     builtinOpParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     std::unique_ptr<Buffer> buffer = nullptr;
@@ -795,7 +795,7 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
 
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
 
-    BuiltinOpParams builtinOpParams;
+    BuiltIn::OpParams builtinOpParams;
     builtinOpParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
     MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
@@ -836,12 +836,12 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToBufferWhenDispatchInfoIsCreatedThenSizeIsAlignedToCachLineSize) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     AlignedBuffer src;
     AlignedBuffer dst;
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
     builtinOpsParams.dstMemObj = &dst;
@@ -875,7 +875,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferStateless
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBufferStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferToBufferStateless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -886,7 +886,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferStateless
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &srcBuffer;
     builtinOpsParams.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -905,7 +905,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToSystemBufferRec
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferRectStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStateless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -919,7 +919,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToSystemBufferRec
     srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -945,7 +945,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToLocalBufferRect
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferRectStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStateless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -959,7 +959,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToLocalBufferRect
     srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -985,7 +985,7 @@ TEST_F(BuiltInTests, givenMisalignedDstPitchWhenBuilderCopyBufferRectSplitIsUsed
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferRectStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStateless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t size = 4ull * MemoryConstants::gigaByte;
@@ -998,7 +998,7 @@ TEST_F(BuiltInTests, givenMisalignedDstPitchWhenBuilderCopyBufferRectSplitIsUsed
     srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {0, 0, 0};
@@ -1020,7 +1020,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillSystemBufferStatelessIs
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillBufferStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::fillBufferStateless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -1034,7 +1034,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillSystemBufferStatelessIs
     srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
     dc.dstOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -1055,7 +1055,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsU
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillBufferStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::fillBufferStateless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -1069,7 +1069,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsU
     srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
     dc.dstOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -1086,7 +1086,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsU
 }
 
 TEST_F(BuiltInTests, givenSystemPtrWhenBuilderFillBufferStatelessIsUsedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillBufferStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::fillBufferStateless, *pClDevice);
 
     size_t size = 1024 * 1024 * 1024;
     void *systemPtr = &size;
@@ -1094,7 +1094,7 @@ TEST_F(BuiltInTests, givenSystemPtrWhenBuilderFillBufferStatelessIsUsedThenParam
     MockBuffer srcBuffer;
     srcBuffer.size = 4; // pattern size
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstPtr = systemPtr;
     dc.dstOffset = {0, 0, 0};
@@ -1120,9 +1120,9 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStateles
     std ::unique_ptr<Image> pDstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pDstImage.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3dStateless, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferToImage3dStateless, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = &srcBuffer;
     dc.dstMemObj = pDstImage.get();
     dc.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -1152,9 +1152,9 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyBufferToImageHeaplessIsUsedTh
     std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3dStatelessHeapless, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferToImage3dStatelessHeapless, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = &buffer;
     dc.dstMemObj = image.get();
     dc.srcOffset = {0, 0, 0};
@@ -1179,9 +1179,9 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToBufferHeaplessIsUsedTh
     std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferStatelessHeapless, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImage3dToBufferStatelessHeapless, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = image.get();
     dc.dstPtr = &buffer;
     dc.srcOffset = {0, 0, 0};
@@ -1207,10 +1207,10 @@ HWTEST_F(BuiltInTests, WhenBuilderCopyImageToImageIsUsedThenParamsAreCorrect) {
 
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtin = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyImageToImage3d>(heaplessAllowed);
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
+    auto builtin = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::copyImageToImage3d>(heaplessAllowed);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage.get();
     dc.dstMemObj = dstImage.get();
 
@@ -1232,10 +1232,10 @@ HWTEST_F(BuiltInTests, WhenBuilderFillImageIsUsedThenParamsAreCorrect) {
 
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtin = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::fillImage3d>(heaplessAllowed);
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
+    auto builtin = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::fillImage3d>(heaplessAllowed);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = &fillColor;
     dc.dstMemObj = image.get();
     dc.srcOffset = {0, 0, 0};
@@ -1256,10 +1256,10 @@ HWTEST_F(BuiltInTests, WhenBuilderFillImage1dBufferIsUsedThenParamsAreCorrect) {
 
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtin = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::fillImage1dBuffer>(heaplessAllowed);
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
+    auto builtin = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::fillImage1dBuffer>(heaplessAllowed);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = &fillColor;
     dc.dstMemObj = image.get();
     dc.srcOffset = {0, 0, 0};
@@ -1286,9 +1286,9 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferSt
     std ::unique_ptr<Image> pSrcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferStateless, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImage3dToBufferStateless, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = pSrcImage.get();
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {0, 0, 0};
@@ -1324,9 +1324,9 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
     std ::unique_ptr<Image> pSrcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferStateless, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImage3dToBufferStateless, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = pSrcImage.get();
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {0, 0, 0};
@@ -1348,12 +1348,12 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
 }
 
 TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     AlignedBuffer src;
     AlignedBuffer dst;
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
     builtinOpsParams.srcOffset.x = 5; // causes misalignment from 4-byte boundary by 1 byte (8 bits)
@@ -1377,13 +1377,13 @@ TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedTh
 }
 
 TEST_F(BuiltInTests, GivenReadBufferAlignedWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     AlignedBuffer srcMemObj;
     auto size = 10 * MemoryConstants::cacheLineSize;
     auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &srcMemObj;
     builtinOpsParams.dstPtr = dstPtr;
@@ -1416,13 +1416,13 @@ TEST_F(BuiltInTests, GivenReadBufferAlignedWhenDispatchInfoIsCreatedThenParamsAr
 }
 
 TEST_F(BuiltInTests, GivenWriteBufferAlignedWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     auto size = 10 * MemoryConstants::cacheLineSize;
     auto srcPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
     AlignedBuffer dstMemObj;
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
 
     builtinOpsParams.srcPtr = srcPtr;
     builtinOpsParams.dstMemObj = &dstMemObj;
@@ -1451,8 +1451,8 @@ TEST_F(BuiltInTests, GivenWriteBufferAlignedWhenDispatchInfoIsCreatedThenParamsA
 }
 
 TEST_F(BuiltInTests, WhenGettingBuilderInfoTwiceThenPointerIsSame) {
-    BuiltinDispatchInfoBuilder &builder1 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
-    BuiltinDispatchInfoBuilder &builder2 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder1 = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder2 = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferBuiltin, *pClDevice);
 
     EXPECT_EQ(&builder1, &builder2);
 }
@@ -1463,47 +1463,47 @@ HWTEST_F(BuiltInTests, GivenBuiltInOperationWhenGettingBuilderThenCorrectBuiltIn
     bool isForceStateless = pClDevice->getCompilerProductHelper().isForceToStatelessRequired();
 
     auto verifyBuilder = [&](auto operation) {
-        auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(operation, *pClDevice);
+        auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(operation, *pClDevice);
         auto *expectedBuilder = pClDevice->peekBuilders()[static_cast<uint32_t>(operation)].first.get();
 
         EXPECT_EQ(expectedBuilder, &builder);
     };
 
     auto verifyBuilderIfSupported = [&](auto operation) {
-        if (EBuiltInOps::isHeapless(operation) && (heaplessAllowed == false)) {
+        if (BuiltIn::isHeapless(operation) && (heaplessAllowed == false)) {
             return;
         }
-        if ((!EBuiltInOps::isHeapless(operation) && !EBuiltInOps::isStateless(operation)) && isForceStateless) {
+        if ((!BuiltIn::isHeapless(operation) && !BuiltIn::isStateless(operation)) && isForceStateless) {
             return;
         }
 
         verifyBuilder(operation);
     };
 
-    EBuiltInOps::Type operationsBuffers[] = {
-        EBuiltInOps::copyBufferToBufferStateless,
-        EBuiltInOps::copyBufferToBufferStatelessHeapless,
-        EBuiltInOps::copyBufferToBuffer,
-        EBuiltInOps::copyBufferRect,
-        EBuiltInOps::copyBufferRectStateless,
-        EBuiltInOps::copyBufferRectStatelessHeapless,
-        EBuiltInOps::fillBuffer,
-        EBuiltInOps::fillBufferStateless,
-        EBuiltInOps::fillBufferStatelessHeapless};
+    BuiltIn::Group operationsBuffers[] = {
+        BuiltIn::Group::copyBufferToBufferStateless,
+        BuiltIn::Group::copyBufferToBufferStatelessHeapless,
+        BuiltIn::Group::copyBufferToBuffer,
+        BuiltIn::Group::copyBufferRect,
+        BuiltIn::Group::copyBufferRectStateless,
+        BuiltIn::Group::copyBufferRectStatelessHeapless,
+        BuiltIn::Group::fillBuffer,
+        BuiltIn::Group::fillBufferStateless,
+        BuiltIn::Group::fillBufferStatelessHeapless};
 
-    EBuiltInOps::Type operationsImages[] = {
-        EBuiltInOps::copyBufferToImage3d,
-        EBuiltInOps::copyBufferToImage3dStateless,
-        EBuiltInOps::copyBufferToImage3dStatelessHeapless,
-        EBuiltInOps::copyImage3dToBuffer,
-        EBuiltInOps::copyImage3dToBufferStateless,
-        EBuiltInOps::copyImage3dToBufferStatelessHeapless,
-        EBuiltInOps::copyImageToImage3d,
-        EBuiltInOps::copyImageToImage3dHeapless,
-        EBuiltInOps::fillImage3d,
-        EBuiltInOps::fillImage3dHeapless,
-        EBuiltInOps::fillImage1dBuffer,
-        EBuiltInOps::fillImage1dBufferHeapless};
+    BuiltIn::Group operationsImages[] = {
+        BuiltIn::Group::copyBufferToImage3d,
+        BuiltIn::Group::copyBufferToImage3dStateless,
+        BuiltIn::Group::copyBufferToImage3dStatelessHeapless,
+        BuiltIn::Group::copyImage3dToBuffer,
+        BuiltIn::Group::copyImage3dToBufferStateless,
+        BuiltIn::Group::copyImage3dToBufferStatelessHeapless,
+        BuiltIn::Group::copyImageToImage3d,
+        BuiltIn::Group::copyImageToImage3dHeapless,
+        BuiltIn::Group::fillImage3d,
+        BuiltIn::Group::fillImage3dHeapless,
+        BuiltIn::Group::fillImage1dBuffer,
+        BuiltIn::Group::fillImage1dBufferHeapless};
 
     for (auto operation : operationsBuffers) {
         verifyBuilderIfSupported(operation);
@@ -1518,14 +1518,14 @@ HWTEST_F(BuiltInTests, GivenBuiltInOperationWhenGettingBuilderThenCorrectBuiltIn
 
 TEST_F(BuiltInTests, GivenUnknownBuiltInOpWhenGettingBuilderInfoThenExceptionThrown) {
     EXPECT_THROW(
-        BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::count, *pClDevice),
+        BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::count, *pClDevice),
         std::runtime_error);
 }
 
 TEST_F(BuiltInTests, GivenUnsupportedBuildTypeWhenBuildingDispatchInfoThenFalseIsReturned) {
     auto &builtIns = *pDevice->getBuiltIns();
-    BuiltinDispatchInfoBuilder dispatchInfoBuilder{builtIns, *pClDevice};
-    BuiltinOpParams params;
+    BuiltIn::DispatchInfoBuilder dispatchInfoBuilder{builtIns, *pClDevice};
+    BuiltIn::OpParams params;
 
     MultiDispatchInfo multiDispatchInfo(params);
     auto ret = dispatchInfoBuilder.buildDispatchInfos(multiDispatchInfo);
@@ -1539,16 +1539,16 @@ TEST_F(BuiltInTests, GivenUnsupportedBuildTypeWhenBuildingDispatchInfoThenFalseI
 
 TEST_F(BuiltInTests, GivenDefaultBuiltinDispatchInfoBuilderWhenValidateDispatchIsCalledThenClSuccessIsReturned) {
     auto &builtIns = *pDevice->getBuiltIns();
-    BuiltinDispatchInfoBuilder dispatchInfoBuilder{builtIns, *pClDevice};
+    BuiltIn::DispatchInfoBuilder dispatchInfoBuilder{builtIns, *pClDevice};
     auto ret = dispatchInfoBuilder.validateDispatch(nullptr, 1, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
     EXPECT_EQ(CL_SUCCESS, ret);
 }
 
 TEST_F(BuiltInTests, WhenSettingExplictArgThenTrueIsReturned) {
     auto &builtIns = *pDevice->getBuiltIns();
-    BuiltinDispatchInfoBuilder dispatchInfoBuilder{builtIns, *pClDevice};
+    BuiltIn::DispatchInfoBuilder dispatchInfoBuilder{builtIns, *pClDevice};
     MultiDispatchInfo multiDispatchInfo;
-    BuiltinOpParams params;
+    BuiltIn::OpParams params;
 
     cl_int err;
     auto ret = dispatchInfoBuilder.setExplicitArg(1, 5, nullptr, err);
@@ -1556,20 +1556,20 @@ TEST_F(BuiltInTests, WhenSettingExplictArgThenTrueIsReturned) {
 }
 
 TEST_F(BuiltInTests, GivenEncodeTypeWhenGettingExtensionThenCorrectStringIsReturned) {
-    EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::any)));
-    EXPECT_EQ(0, strcmp(".bin", BuiltinCode::getExtension(BuiltinCode::ECodeType::binary)));
-    EXPECT_EQ(0, strcmp(".spv", BuiltinCode::getExtension(BuiltinCode::ECodeType::intermediate)));
-    EXPECT_EQ(0, strcmp(".cl", BuiltinCode::getExtension(BuiltinCode::ECodeType::source)));
-    EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::count)));
-    EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::invalid)));
+    EXPECT_EQ(0, strcmp("", BuiltIn::Code::getExtension(BuiltIn::CodeType::any)));
+    EXPECT_EQ(0, strcmp(".bin", BuiltIn::Code::getExtension(BuiltIn::CodeType::binary)));
+    EXPECT_EQ(0, strcmp(".spv", BuiltIn::Code::getExtension(BuiltIn::CodeType::intermediate)));
+    EXPECT_EQ(0, strcmp(".cl", BuiltIn::Code::getExtension(BuiltIn::CodeType::source)));
+    EXPECT_EQ(0, strcmp("", BuiltIn::Code::getExtension(BuiltIn::CodeType::count)));
+    EXPECT_EQ(0, strcmp("", BuiltIn::Code::getExtension(BuiltIn::CodeType::invalid)));
 }
 
 TEST_F(BuiltInTests, GivenBuiltinResourceWhenCreatingBuiltinResourceThenSizesAreEqual) {
     std::string resource = "__kernel";
 
-    auto br1 = createBuiltinResource(resource.data(), resource.size());
+    auto br1 = BuiltIn::createResource(resource.data(), resource.size());
     EXPECT_NE(0u, br1.size());
-    auto br2 = createBuiltinResource(br1);
+    auto br2 = BuiltIn::createResource(br1);
     EXPECT_NE(0u, br2.size());
 
     EXPECT_EQ(br1, br2);
@@ -1586,33 +1586,33 @@ TEST_F(BuiltInTests, WhenJoiningPathThenPathsAreJoinedWithCorrectSeparator) {
 }
 
 TEST_F(BuiltInTests, GivenFileNameWhenGettingKernelFromEmbeddedStorageRegistryThenValidPtrIsReturnedForExisitngKernels) {
-    class MockEmbeddedStorageRegistry : public EmbeddedStorageRegistry {
-        using EmbeddedStorageRegistry::EmbeddedStorageRegistry;
+    class MockEmbeddedStorageRegistry : public BuiltIn::EmbeddedStorageRegistry {
+        using BuiltIn::EmbeddedStorageRegistry::EmbeddedStorageRegistry;
     };
     MockEmbeddedStorageRegistry storageRegistry;
 
     std::string resource = "__kernel";
-    storageRegistry.store("kernel.cl", createBuiltinResource(resource.data(), resource.size() + 1));
+    storageRegistry.store("kernel.cl", BuiltIn::createResource(resource.data(), resource.size() + 1));
 
-    const BuiltinResourceT *br = storageRegistry.get("kernel.cl");
+    const BuiltIn::Resource *br = storageRegistry.get("kernel.cl");
     EXPECT_NE(nullptr, br);
     EXPECT_EQ(0, strcmp(resource.data(), br->data()));
 
-    const BuiltinResourceT *bnr = storageRegistry.get("unknown.cl");
+    const BuiltIn::Resource *bnr = storageRegistry.get("unknown.cl");
     EXPECT_EQ(nullptr, bnr);
 }
 
 TEST_F(BuiltInTests, WhenStoringRootPathThenPathIsSavedCorrectly) {
-    class MockStorage : Storage {
+    class MockStorage : BuiltIn::Storage {
       public:
-        MockStorage(const std::string &rootPath) : Storage(rootPath){};
+        MockStorage(const std::string &rootPath) : BuiltIn::Storage(rootPath){};
         std::string &getRootPath() {
-            return Storage::rootPath;
+            return BuiltIn::Storage::rootPath;
         }
 
       protected:
-        BuiltinResourceT loadImpl(const std::string &fullResourceName) override {
-            BuiltinResourceT ret;
+        BuiltIn::Resource loadImpl(const std::string &fullResourceName) override {
+            BuiltIn::Resource ret;
             return ret;
         }
     };
@@ -1622,80 +1622,80 @@ TEST_F(BuiltInTests, WhenStoringRootPathThenPathIsSavedCorrectly) {
 }
 
 TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromEmbeddedStorageRegistryThenValidPtrIsReturnedForExisitngKernels) {
-    class MockEmbeddedStorage : EmbeddedStorage {
+    class MockEmbeddedStorage : BuiltIn::EmbeddedStorage {
       public:
-        MockEmbeddedStorage(const std::string &rootPath) : EmbeddedStorage(rootPath){};
-        BuiltinResourceT loadImpl(const std::string &fullResourceName) override {
-            return EmbeddedStorage::loadImpl(fullResourceName);
+        MockEmbeddedStorage(const std::string &rootPath) : BuiltIn::EmbeddedStorage(rootPath){};
+        BuiltIn::Resource loadImpl(const std::string &fullResourceName) override {
+            return BuiltIn::EmbeddedStorage::loadImpl(fullResourceName);
         }
     };
     MockEmbeddedStorage mockEmbeddedStorage("root");
 
-    BuiltinResourceT br = mockEmbeddedStorage.loadImpl("copy_buffer_to_buffer.builtin_kernel.cl");
+    BuiltIn::Resource br = mockEmbeddedStorage.loadImpl("copy_buffer_to_buffer.builtin_kernel.cl");
     EXPECT_NE(0u, br.size());
 
-    BuiltinResourceT bnr = mockEmbeddedStorage.loadImpl("unknown.cl");
+    BuiltIn::Resource bnr = mockEmbeddedStorage.loadImpl("unknown.cl");
     EXPECT_EQ(0u, bnr.size());
 }
 
 TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromFileStorageThenValidPtrIsReturnedForExisitngKernels) {
-    class MockFileStorage : FileStorage {
+    class MockFileStorage : BuiltIn::FileStorage {
       public:
-        MockFileStorage(const std::string &rootPath) : FileStorage(rootPath){};
-        BuiltinResourceT loadImpl(const std::string &fullResourceName) override {
-            return FileStorage::loadImpl(fullResourceName);
+        MockFileStorage(const std::string &rootPath) : BuiltIn::FileStorage(rootPath){};
+        BuiltIn::Resource loadImpl(const std::string &fullResourceName) override {
+            return BuiltIn::FileStorage::loadImpl(fullResourceName);
         }
     };
     MockFileStorage mockEmbeddedStorage("root");
 
-    BuiltinResourceT br = mockEmbeddedStorage.loadImpl(clFiles + "copybuffer.cl");
+    BuiltIn::Resource br = mockEmbeddedStorage.loadImpl(clFiles + "copybuffer.cl");
     EXPECT_NE(0u, br.size());
 
-    BuiltinResourceT bnr = mockEmbeddedStorage.loadImpl("unknown.cl");
+    BuiltIn::Resource bnr = mockEmbeddedStorage.loadImpl("unknown.cl");
     EXPECT_EQ(0u, bnr.size());
 }
 
-TEST_F(BuiltInTests, WhenBuiltinsLibIsCreatedThenAllStoragesSizeIsTwo) {
-    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
-    EXPECT_EQ(2u, mockBuiltinsLib->allStorages.size());
+TEST_F(BuiltInTests, WhenBuiltInLibraryIsCreatedThenAllStoragesSizeIsTwo) {
+    auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
+    EXPECT_EQ(2u, mockBuiltInLibrary->allStorages.size());
 }
 
 TEST_F(BuiltInTests, GivenTypeAnyWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltinCode::ECodeType::any, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltIn::CodeType::any, *pDevice);
+    EXPECT_EQ(BuiltIn::CodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, GivenTypeBinaryWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltinCode::ECodeType::binary, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltIn::CodeType::binary, *pDevice);
+    EXPECT_EQ(BuiltIn::CodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, GivenTypeIntermediateWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::intermediate, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::intermediate, code.type);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::intermediate, *pDevice);
+    EXPECT_EQ(BuiltIn::CodeType::intermediate, code.type);
     EXPECT_EQ(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, GivenTypeSourceWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::source, code.type);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::source, *pDevice);
+    EXPECT_EQ(BuiltIn::CodeType::source, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, GivenTypeInvalidWhenGettingBuiltinCodeThenKernelIsEmpty) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::invalid, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::invalid, code.type);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::invalid, *pDevice);
+    EXPECT_EQ(BuiltIn::CodeType::invalid, code.type);
     EXPECT_EQ(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
@@ -1703,105 +1703,105 @@ TEST_F(BuiltInTests, GivenTypeInvalidWhenGettingBuiltinCodeThenKernelIsEmpty) {
 HWTEST2_F(BuiltInTests, GivenImagesAndHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupport) {
 
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+    auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3dStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBufferStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dBufferHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferToImage3dStatelessHeapless, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImage3dToBufferStatelessHeapless, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage1dHeapless, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage2dHeapless, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage3dHeapless, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage1dHeapless, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage2dHeapless, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage3dHeapless, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage1dBufferHeapless, BuiltIn::CodeType::binary, *pDevice).size());
 }
 
 HWTEST2_F(BuiltInTests, GivenHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupport) {
-    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+    auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBufferStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRectStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBufferStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferToBufferStatelessHeapless, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferRectStatelessHeapless, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillBufferStatelessHeapless, BuiltIn::CodeType::binary, *pDevice).size());
 }
 
 TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
-    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::auxTranslation, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRect, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::source, *pDevice).size());
+    auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::auxTranslation, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferRect, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillBuffer, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferToImage3d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImage3dToBuffer, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage1d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage2d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage3d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage1d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage2d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage3d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage1dBuffer, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::count, BuiltIn::CodeType::source, *pDevice).size());
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
-    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+    auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRect, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBuffer, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3d, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBuffer, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1d, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2d, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3d, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dBuffer, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferRect, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillBuffer, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferToImage3d, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImage3dToBuffer, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage1d, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage2d, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage3d, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage1d, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage2d, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage3d, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage1dBuffer, BuiltIn::CodeType::binary, *pDevice).size());
 
-    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::count, BuiltIn::CodeType::binary, *pDevice).size());
 }
 
 TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceForNotRegisteredRevisionThenResourceSizeIsNonZero) {
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId += 0xdead;
-    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+    auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRect, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferRect, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillBuffer, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyBufferToImage3d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImage3dToBuffer, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage1d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage2d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::copyImageToImage3d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage1d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage2d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage3d, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::fillImage1dBuffer, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::Group::count, BuiltIn::CodeType::source, *pDevice).size());
 }
 
 TEST_F(BuiltInTests, GivenTypeAnyWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::any, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
-    auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
+    auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
 }
 
 TEST_F(BuiltInTests, GivenTypeSourceWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::source, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
-    auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
+    auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
 }
 
 TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenForceToStatelessRequiredOr32BitThenInternalOptionsHasGreaterThan4gbBuffersRequired) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
 
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice);
+    const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::source, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
-    auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
+    auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
     auto builtinInternalOptions = program->getInternalOptions();
 
@@ -1814,34 +1814,34 @@ TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenForceToStatelessRequiredOr3
 }
 
 TEST_F(BuiltInTests, GivenTypeIntermediateWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::intermediate, *pDevice);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::intermediate, *pDevice);
     EXPECT_EQ(0u, bc.resource.size());
-    auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
+    auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_EQ(nullptr, program.get());
 }
 
 TEST_F(BuiltInTests, GivenTypeBinaryWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltinCode::ECodeType::binary, *pDevice);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltIn::CodeType::binary, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
-    auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
+    auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
 }
 
 TEST_F(BuiltInTests, GivenTypeInvalidWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::invalid, *pDevice);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::invalid, *pDevice);
     EXPECT_EQ(0u, bc.resource.size());
-    auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
+    auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_EQ(nullptr, program.get());
 }
 
 TEST_F(BuiltInTests, GivenInvalidBuiltinWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::count, BuiltinCode::ECodeType::any, *pDevice);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::Group::count, BuiltIn::CodeType::any, *pDevice);
     EXPECT_EQ(0u, bc.resource.size());
-    auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
+    auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_EQ(nullptr, program.get());
 }
 
@@ -1885,27 +1885,27 @@ TEST_F(BuiltInTests, givenSipKernelWhenAllocationFailsThenItHasNullptrGraphicsAl
 
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuiltinCodeBinary) {
     debugManager.flags.RebuildPrecompiledKernels.set(true);
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltinCode::ECodeType::binary, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)), BuiltIn::CodeType::binary, *pDevice);
+    EXPECT_EQ(BuiltIn::CodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCodeSource) {
     debugManager.flags.RebuildPrecompiledKernels.set(true);
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::source, code.type);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::any, *pDevice);
+    EXPECT_EQ(BuiltIn::CodeType::source, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, givenOneApiPvcSendWarWaEnvFalseWhenGettingBuiltinCodeThenSourceCodeTypeIsUsed) {
     pDevice->getExecutionEnvironment()->setOneApiPvcWaEnv(false);
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::source, code.type);
+    auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
+    BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::any, *pDevice);
+    EXPECT_EQ(BuiltIn::CodeType::source, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
@@ -1917,7 +1917,7 @@ HWTEST2_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUn
     MockContext context(pClDevice);
     {
         EXPECT_EQ(nullptr, mockAuxBuiltInOp.baseKernel->getProgram()->getContextPtr());
-        BuiltInOwnershipWrapper lock(mockAuxBuiltInOp, &context);
+        BuiltIn::OwnershipWrapper lock(mockAuxBuiltInOp, &context);
         EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->getMultiDeviceKernel()->hasOwnership());
         EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->getProgram()->hasOwnership());
         EXPECT_EQ(&context, mockAuxBuiltInOp.baseKernel->getProgram()->getContextPtr());
@@ -1931,7 +1931,7 @@ HWTEST2_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructi
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     MockContext context(pClDevice);
     {
-        BuiltInOwnershipWrapper lock;
+        BuiltIn::OwnershipWrapper lock;
         EXPECT_EQ(nullptr, mockAuxBuiltInOp.baseKernel->getProgram()->getContextPtr());
         lock.takeOwnership(mockAuxBuiltInOp, &context);
         EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->getMultiDeviceKernel()->hasOwnership());
@@ -1948,14 +1948,14 @@ HWTEST2_F(BuiltInOwnershipWrapperTests, givenLockWithAcquiredOwnershipWhenTakeOw
     MockAuxBuilInOp mockAuxBuiltInOp2(*pBuiltIns, *pClDevice);
     MockContext context(pClDevice);
 
-    BuiltInOwnershipWrapper lock(mockAuxBuiltInOp1, &context);
+    BuiltIn::OwnershipWrapper lock(mockAuxBuiltInOp1, &context);
     EXPECT_THROW(lock.takeOwnership(mockAuxBuiltInOp1, &context), std::exception);
     EXPECT_THROW(lock.takeOwnership(mockAuxBuiltInOp2, &context), std::exception);
 }
 
 HWTEST_F(BuiltInOwnershipWrapperTests, givenBuiltInOwnershipWrapperWhenAskedForTypeTraitsThenDisableCopyConstructorAndOperator) {
-    EXPECT_FALSE(std::is_copy_constructible<BuiltInOwnershipWrapper>::value);
-    EXPECT_FALSE(std::is_copy_assignable<BuiltInOwnershipWrapper>::value);
+    EXPECT_FALSE(std::is_copy_constructible<BuiltIn::OwnershipWrapper>::value);
+    EXPECT_FALSE(std::is_copy_assignable<BuiltIn::OwnershipWrapper>::value);
 }
 
 HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
@@ -1964,7 +1964,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToBufferStatelessHeaplessIsUsedThen
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBufferStatelessHeapless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferToBufferStatelessHeapless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -1975,7 +1975,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToBufferStatelessHeaplessIsUsedThen
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    BuiltinOpParams builtinOpsParams;
+    BuiltIn::OpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &srcBuffer;
     builtinOpsParams.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -1994,7 +1994,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToSystemBufferRectStatelessHeapless
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferRectStatelessHeapless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStatelessHeapless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -2008,7 +2008,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToSystemBufferRectStatelessHeapless
     srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -2034,7 +2034,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToLocalBufferRectStatelessHeaplessI
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferRectStatelessHeapless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStatelessHeapless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -2048,7 +2048,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToLocalBufferRectStatelessHeaplessI
     srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -2074,7 +2074,7 @@ HWTEST2_F(BuiltInTests, whenBuilderFillSystemBufferStatelessHeaplessIsUsedThenPa
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillBufferStatelessHeapless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::fillBufferStatelessHeapless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -2088,7 +2088,7 @@ HWTEST2_F(BuiltInTests, whenBuilderFillSystemBufferStatelessHeaplessIsUsedThenPa
     srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
     dc.dstOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -2109,7 +2109,7 @@ HWTEST2_F(BuiltInTests, whenBuilderFillLocalBufferStatelessHeaplessIsUsedThenPar
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillBufferStatelessHeapless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::fillBufferStatelessHeapless, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -2123,7 +2123,7 @@ HWTEST2_F(BuiltInTests, whenBuilderFillLocalBufferStatelessHeaplessIsUsedThenPar
     srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
     dc.dstOffset = {static_cast<size_t>(bigOffset), 0, 0};
@@ -2145,7 +2145,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcPtrWhenBuilderIsUs
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2158,9 +2158,9 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcPtrWhenBuilderIsUs
     void *srcPtr = alignedBuffer;
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(srcPtr) & 0x0000000F);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = srcPtr;
     dc.dstMemObj = image;
     dc.srcOffset = {0, 0, 0};
@@ -2187,7 +2187,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcMemObjWhenBuilderI
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2200,9 +2200,9 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcMemObjWhenBuilderI
     srcBuffer.mockGfxAllocation.gpuAddress = 0x1000;
     ASSERT_EQ(0u, srcBuffer.mockGfxAllocation.gpuAddress & 0x0000000F);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = image;
     dc.srcOffset = {0, 0, 0};
@@ -2229,7 +2229,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAddressMisalignedSrcPtrW
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2242,9 +2242,9 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAddressMisalignedSrcPtrW
     void *srcPtr = buffer + 1;
     ASSERT_NE(0u, reinterpret_cast<uintptr_t>(srcPtr) & 0x0000000F);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = srcPtr;
     dc.dstMemObj = image;
     dc.srcOffset = {0, 0, 0};
@@ -2271,7 +2271,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstPtrWhenBuilderIs
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2284,9 +2284,9 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstPtrWhenBuilderIs
     void *dstPtr = alignedBuffer;
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(dstPtr) & 0x0000000F);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = image;
     dc.dstPtr = dstPtr;
     dc.srcOffset = {0, 0, 0};
@@ -2313,7 +2313,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstMemObjWhenBuilde
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2326,9 +2326,9 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstMemObjWhenBuilde
     dstBuffer.mockGfxAllocation.gpuAddress = 0x2000;
     ASSERT_EQ(0u, dstBuffer.mockGfxAllocation.gpuAddress & 0x0000000F);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = image;
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {0, 0, 0};
@@ -2355,7 +2355,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithAddressMisalignedDstPt
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2368,9 +2368,9 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithAddressMisalignedDstPt
     void *dstPtr = buffer + 1;
     ASSERT_NE(0u, reinterpret_cast<uintptr_t>(dstPtr) & 0x0000000F);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = image;
     dc.dstPtr = dstPtr;
     dc.srcOffset = {0, 0, 0};
@@ -2397,7 +2397,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBufferNon16BytesFormatWhenBuilderIsUsed
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_R, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2409,9 +2409,9 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBufferNon16BytesFormatWhenBuilderIsUsed
     alignas(16) uint8_t alignedBuffer[bufferSize];
     void *dstPtr = alignedBuffer;
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = image;
     dc.dstPtr = dstPtr;
     dc.srcOffset = {0, 0, 0};
@@ -2439,7 +2439,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImageNon16BytesFormatWhenBuilderIsUsedTh
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_R, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2451,9 +2451,9 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImageNon16BytesFormatWhenBuilderIsUsedTh
     alignas(16) uint8_t alignedBuffer[bufferSize];
     void *srcPtr = alignedBuffer;
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = srcPtr;
     dc.dstMemObj = image;
     dc.srcOffset = {0, 0, 0};
@@ -2481,7 +2481,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithImageAsSrcMemObjWhenBuil
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2492,9 +2492,9 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithImageAsSrcMemObjWhenBuil
     auto srcImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
     ASSERT_NE(nullptr, srcImage);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstMemObj = dstImage;
     dc.srcOffset = {0, 0, 0};
@@ -2522,7 +2522,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAlignedBufferWhenBuilder
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2536,9 +2536,9 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAlignedBufferWhenBuilder
     ASSERT_NE(nullptr, srcBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = image;
     dc.srcOffset = {0, 0, 0};
@@ -2566,7 +2566,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedBufferWh
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2580,9 +2580,9 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedBufferWh
     ASSERT_NE(nullptr, srcBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = image;
     dc.srcOffset = {1, 0, 0};
@@ -2610,7 +2610,7 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithImageAsDstMemObjWhenBuil
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2621,9 +2621,9 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithImageAsDstMemObjWhenBuil
     auto dstImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
     ASSERT_NE(nullptr, dstImage);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstMemObj = dstImage;
     dc.srcOffset = {0, 0, 0};
@@ -2651,7 +2651,7 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithAlignedBufferWhenBuilder
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2665,9 +2665,9 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithAlignedBufferWhenBuilder
     ASSERT_NE(nullptr, dstBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = {0, 0, 0};
@@ -2695,7 +2695,7 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithOffsetMisalignedBufferWh
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2709,9 +2709,9 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithOffsetMisalignedBufferWh
     ASSERT_NE(nullptr, dstBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = {0, 0, 0};
@@ -2739,7 +2739,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithRowPitchMisalignedWhenBu
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2752,9 +2752,9 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithRowPitchMisalignedWhenBu
     void *srcPtr = alignedBuffer;
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(srcPtr) & 0x0000000F);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = srcPtr;
     dc.dstMemObj = image;
     dc.srcOffset = {0, 0, 0};
@@ -2781,7 +2781,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithSlicePitchMisalignedWh
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2794,9 +2794,9 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithSlicePitchMisalignedWh
     void *dstPtr = alignedBuffer;
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(dstPtr) & 0x0000000F);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = image;
     dc.dstPtr = dstPtr;
     dc.srcOffset = {0, 0, 0};
@@ -2823,7 +2823,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedWhenBuil
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2836,9 +2836,9 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedWhenBuil
     void *srcPtr = alignedBuffer;
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(srcPtr) & 0x0000000F);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = srcPtr;
     dc.dstMemObj = image;
     dc.srcOffset = {8, 0, 0}; // 16-byte misaligned offset
@@ -2865,7 +2865,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithNullAddressWhenBuilder
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2877,9 +2877,9 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithNullAddressWhenBuilder
     dstBuffer.size = 1024;
     dstBuffer.mockGfxAllocation.gpuAddress = 0;
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = image;
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {0, 0, 0};
@@ -2906,7 +2906,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithNullPtrAndNullMemObjWhen
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     bool isStateless = compilerProductHelper.isForceToStatelessRequired();
     bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed);
 
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
@@ -2914,9 +2914,9 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithNullPtrAndNullMemObjWhen
     auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
     ASSERT_NE(nullptr, image);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.dstMemObj = image;
     dc.size = {1, 1, 1};
 
@@ -2940,15 +2940,15 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyBufferToBufferWhenWidenessEnabledAndStat
     }
     const bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
 
-    const auto builtInType =
-        EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, heaplessAllowed, true);
+    const auto builtInGroup =
+        BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isStateless, heaplessAllowed, true);
 
     MockBuffer srcBuffer;
     MockBuffer dstBuffer;
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = &srcBuffer;
     dc.dstPtr = &dstBuffer;
     dc.size = {1, 1, 1};
@@ -2974,15 +2974,15 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyBufferRect2dWhenWidenessEnabledAndStatel
     }
     const bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
 
-    const auto builtInType =
-        EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(isStateless, heaplessAllowed, true);
+    const auto builtInGroup =
+        BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferRect>(isStateless, heaplessAllowed, true);
 
     MockBuffer srcBuffer;
     MockBuffer dstBuffer;
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = &srcBuffer;
     dc.dstPtr = &dstBuffer;
 
@@ -3018,10 +3018,10 @@ HWTEST_F(BuiltInTests, givenAdjustedFillBufferWhenWidenessEnabledAndStatelessReq
     }
     const bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
 
-    const auto builtInType =
-        EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(isStateless, heaplessAllowed, true);
+    const auto builtInGroup =
+        BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(isStateless, heaplessAllowed, true);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
     uint64_t size = MemoryConstants::gigaByte;
 
@@ -3030,7 +3030,7 @@ HWTEST_F(BuiltInTests, givenAdjustedFillBufferWhenWidenessEnabledAndStatelessReq
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(size);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
     dc.dstOffset = {static_cast<size_t>(size), 0, 0};
@@ -3058,16 +3058,16 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyBufferToImage3dWhenWidenessEnabledAndSta
     }
     const bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
 
-    const auto builtInType =
-        EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, heaplessAllowed, true);
+    const auto builtInGroup =
+        BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, heaplessAllowed, true);
 
     MockBuffer buffer;
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = &buffer;
     dc.dstMemObj = image.get();
     dc.size = {1, 1, 1};
@@ -3095,16 +3095,16 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyImage3dToBufferWhenWidenessEnabledAndSta
     }
     const bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
 
-    const auto builtInType =
-        EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, heaplessAllowed, true);
+    const auto builtInGroup =
+        BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, heaplessAllowed, true);
 
     MockBuffer buffer;
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup, *pClDevice);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = image.get();
     dc.dstPtr = &buffer;
     dc.size = {1, 1, 1};

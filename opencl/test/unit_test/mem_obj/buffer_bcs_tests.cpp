@@ -1528,7 +1528,7 @@ HWTEST_TEMPLATED_F(BcsSvmTests, givenSVMMAllocationWithOffsetWhenUsingBcsThenPro
                     auto srcGpuAllocation = srcSvmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
                     auto dstGpuAllocation = dstSvmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
-                    BuiltinOpParams builtinOpParams = {};
+                    BuiltIn::OpParams builtinOpParams = {};
                     builtinOpParams.size = {allocSize, 0, 0};
                     builtinOpParams.srcPtr = const_cast<void *>(alignDown(pSrcPtr, 4));
                     builtinOpParams.srcSvmAlloc = srcGpuAllocation;

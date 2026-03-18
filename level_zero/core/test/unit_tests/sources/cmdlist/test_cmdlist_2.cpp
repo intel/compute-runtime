@@ -69,7 +69,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                              uint64_t srcOffset,
                                              uint64_t size,
                                              uint64_t elementSize,
-                                             Builtin builtin,
+                                             BufferBuiltIn builtin,
                                              L0::Event *signalEvent,
                                              bool isStateless,
                                              CmdListKernelLaunchParams &launchParams) override {
@@ -121,7 +121,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
 
     void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint64_t forceAggregatedEventIncValue, bool useAdditionalTimestamp) override {}
     ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         Builtin builtin, const ze_copy_region_t *dstRegion,
+                                         BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          size_t srcOffset, L0::Event *signalEvent,
@@ -132,7 +132,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     }
 
     ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         Builtin builtin, const ze_copy_region_t *dstRegion,
+                                         BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
@@ -907,7 +907,7 @@ HWTEST2_F(CommandListAppend, givenImmediateCommandListWhenImageCopyFromOrToMemor
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHW->initialize(device, &zeDesc);
 
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
     cmdList->appendImageCopyFromMemory(imageHW->toHandle(), hostPtr, nullptr, nullptr, 0, nullptr, copyParams);
@@ -1370,7 +1370,7 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromToMemoryExtWith
 }
 
 HWTEST2_F(CommandListAppend, givenComputeCommandListAndEventIsUsedWhenCopyFromImageToImageThenKernelImageCopyCalled, ImageSupport) {
-    Mock<::L0::KernelImp> *mockKernel = static_cast<Mock<::L0::KernelImp> *>(device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion));
+    Mock<::L0::KernelImp> *mockKernel = static_cast<Mock<::L0::KernelImp> *>(device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion));
     mockKernel->setArgRedescribedImageCallBase = false;
 
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
@@ -1406,7 +1406,7 @@ HWTEST2_F(DirectSubmissionCommandListTest, givenComputeCommandListWhenCopyImageT
         GTEST_SKIP();
     }
 
-    Mock<::L0::KernelImp> *mockKernel = static_cast<Mock<::L0::KernelImp> *>(device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion));
+    Mock<::L0::KernelImp> *mockKernel = static_cast<Mock<::L0::KernelImp> *>(device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion));
     mockKernel->setArgRedescribedImageCallBase = false;
 
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
@@ -1940,7 +1940,7 @@ HWTEST2_F(CommandListAppendImage, givenComputeCommandListWhenAppendImageCopyFrom
     debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
     debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(1);
 
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3dBytes);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyBufferToImage3dBytes);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -2037,7 +2037,7 @@ HWTEST2_F(CommandListAppendImage, givenComputeCommandListWhenAppendImageCopyToMe
     debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
     debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(1);
 
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImage3dToBufferBytes);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
@@ -2177,7 +2177,7 @@ HWTEST2_F(CommandListAppendMemoryCopyRegion, givenComputeCommandListWhenAppendMe
     debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
     debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(1);
 
-    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes3d);
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferRectBytes3d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
     mockBuiltinKernel->passedArgumentValues.clear();

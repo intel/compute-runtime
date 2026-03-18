@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,9 +118,9 @@ cl_int CommandQueueHw<Family>::enqueueMarkerForReadWriteOperation(MemObj *memObj
 template <typename Family>
 void CommandQueueHw<Family>::dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo,
                                                            AuxTranslationDirection auxTranslationDirection) {
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, getClDevice());
-    auto &auxTranslationBuilder = static_cast<BuiltInOp<EBuiltInOps::auxTranslation> &>(builder);
-    BuiltinOpParams dispatchParams;
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, getClDevice());
+    auto &auxTranslationBuilder = static_cast<BuiltIn::Op<BuiltIn::Group::auxTranslation> &>(builder);
+    BuiltIn::OpParams dispatchParams;
 
     dispatchParams.auxTranslationDirection = auxTranslationDirection;
 

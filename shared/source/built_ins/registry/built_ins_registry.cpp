@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,8 @@
 namespace NEO {
 
 RegisterEmbeddedResource::RegisterEmbeddedResource(const char *name, const char *resource, size_t resourceLength) {
-    auto &storageRegistry = EmbeddedStorageRegistry::getInstance();
-    storageRegistry.store(name, createBuiltinResource(resource, resourceLength));
+    auto &storageRegistry = BuiltIn::EmbeddedStorageRegistry::getInstance();
+    storageRegistry.store(name, BuiltIn::createResource(resource, resourceLength));
 }
 
 } // namespace NEO

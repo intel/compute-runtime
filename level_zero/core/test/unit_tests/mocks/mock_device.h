@@ -82,7 +82,7 @@ struct MockDevice : public Device {
     ADDMETHOD_NOBASE_REFRETURN(getL0GfxCoreHelper, L0GfxCoreHelper &, ());
     ADDMETHOD_NOBASE_REFRETURN(getProductHelper, NEO::ProductHelper &, ());
     ADDMETHOD_NOBASE_REFRETURN(getCompilerProductHelper, NEO::CompilerProductHelper &, ());
-    ADDMETHOD_NOBASE(getBuiltinFunctionsLib, BuiltinFunctionsLib *, nullptr, ());
+    ADDMETHOD_NOBASE(getBuiltinFunctionsLib, BuiltInKernelLib *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(getMaxNumHwThreads, uint32_t, 16u, ());
     ADDMETHOD_NOBASE(activateMetricGroupsDeferred, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t count, zet_metric_group_handle_t *phMetricGroups));
     ADDMETHOD_NOBASE_REFRETURN(getOsInterface, NEO::OSInterface *, ());
@@ -111,8 +111,8 @@ struct MockDevice : public Device {
     ADDMETHOD_CONST_NOBASE(getEventMaxPacketCount, uint32_t, 8, ())
     ADDMETHOD_CONST_NOBASE(getEventMaxKernelCount, uint32_t, 3, ())
     ADDMETHOD_NOBASE(getAggregatedCopyOffloadIncrementValue, uint32_t, 0, ())
-    ADDMETHOD_CONST_NOBASE(getBufferFromFile, NEO::BuiltinResourceT, std::vector<char>{'X'}, (const std::string &dirPath, const std::string &fileName))
-    ADDMETHOD_NOBASE(doCreateRequiredLibModule, ::L0::Module *, nullptr, (NEO::BuiltinResourceT & reqLibBuff, ::L0::ModuleBuildLog *buildLog, ze_result_t &result))
+    ADDMETHOD_CONST_NOBASE(getBufferFromFile, NEO::BuiltIn::Resource, std::vector<char>{'X'}, (const std::string &dirPath, const std::string &fileName))
+    ADDMETHOD_NOBASE(doCreateRequiredLibModule, ::L0::Module *, nullptr, (NEO::BuiltIn::Resource & reqLibBuff, ::L0::ModuleBuildLog *buildLog, ze_result_t &result))
     ADDMETHOD(getRequiredLibModule, ::L0::Module *, false, nullptr, (const std::string &libName, ModuleBuildLog *moduleBuildLog), (libName, moduleBuildLog))
 
     DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) override {

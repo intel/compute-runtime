@@ -1222,7 +1222,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
             cl_buffer_region subBufferRegion2 = {subBuffer2Offset, 1};
             auto subBuffer2 = clUniquePtr<Buffer>(buffer2->createSubBuffer(CL_MEM_READ_WRITE, 0, &subBufferRegion2, retVal));
 
-            BuiltinOpParams builtinOpParams = {};
+            BuiltIn::OpParams builtinOpParams = {};
             builtinOpParams.dstMemObj = subBuffer2.get();
             builtinOpParams.srcMemObj = subBuffer1.get();
             builtinOpParams.size.x = copySize.x;
@@ -1388,7 +1388,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
     memoryManager->returnFakeAllocation = true;
     {
         // from hostPtr
-        BuiltinOpParams builtinOpParams = {};
+        BuiltIn::OpParams builtinOpParams = {};
         builtinOpParams.dstMemObj = buffer.get();
         builtinOpParams.srcPtr = mapPtr;
         builtinOpParams.size = {1, 1, 1};
@@ -1400,7 +1400,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
     }
     {
         // to hostPtr
-        BuiltinOpParams builtinOpParams = {};
+        BuiltIn::OpParams builtinOpParams = {};
         builtinOpParams.srcMemObj = buffer.get();
         builtinOpParams.dstPtr = mapPtr;
         builtinOpParams.size = {1, 1, 1};
@@ -1432,7 +1432,7 @@ HWTEST_F(BcsTests, givenNonZeroCopySvmAllocationWhenConstructingBlitPropertiesFo
 
     {
         // from hostPtr
-        BuiltinOpParams builtinOpParams = {};
+        BuiltIn::OpParams builtinOpParams = {};
         builtinOpParams.dstSvmAlloc = gpuAllocation;
         builtinOpParams.srcSvmAlloc = svmData->cpuAllocation;
         builtinOpParams.srcPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress());
@@ -1445,7 +1445,7 @@ HWTEST_F(BcsTests, givenNonZeroCopySvmAllocationWhenConstructingBlitPropertiesFo
     }
     {
         // to hostPtr
-        BuiltinOpParams builtinOpParams = {};
+        BuiltIn::OpParams builtinOpParams = {};
         builtinOpParams.srcSvmAlloc = gpuAllocation;
         builtinOpParams.dstSvmAlloc = svmData->cpuAllocation;
         builtinOpParams.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress());
@@ -1483,7 +1483,7 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
     for (auto &copySize : copySizes) {
         {
             // from hostPtr
-            BuiltinOpParams builtinOpParams = {};
+            BuiltIn::OpParams builtinOpParams = {};
             builtinOpParams.dstSvmAlloc = svmData->cpuAllocation;
             builtinOpParams.srcSvmAlloc = gpuAllocation;
             builtinOpParams.srcPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress() + srcOffset);
@@ -1510,7 +1510,7 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
         }
         {
             // to hostPtr
-            BuiltinOpParams builtinOpParams = {};
+            BuiltIn::OpParams builtinOpParams = {};
             builtinOpParams.srcSvmAlloc = gpuAllocation;
             builtinOpParams.dstSvmAlloc = svmData->cpuAllocation;
             builtinOpParams.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation + dstOffset);
@@ -1542,7 +1542,7 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
 HWTEST_F(BcsTests, givenNullSvmAllocAndMemObjWhenConstructingBlitPropertiesForHostPtrToBufferThenAllocationsAreNullAndAddressesAreSet) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    BuiltinOpParams builtinOpParams = {};
+    BuiltIn::OpParams builtinOpParams = {};
     builtinOpParams.dstSvmAlloc = nullptr;
     builtinOpParams.dstMemObj = nullptr;
     builtinOpParams.srcSvmAlloc = nullptr;
@@ -1564,7 +1564,7 @@ HWTEST_F(BcsTests, givenNullSvmAllocAndMemObjWhenConstructingBlitPropertiesForHo
 HWTEST_F(BcsTests, givenNullSvmAllocAndMemObjWhenConstructingBlitPropertiesForBufferToHostPtrThenAllocationsAreNullAndAddressesAreSet) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    BuiltinOpParams builtinOpParams = {};
+    BuiltIn::OpParams builtinOpParams = {};
     builtinOpParams.srcSvmAlloc = nullptr;
     builtinOpParams.srcMemObj = nullptr;
     builtinOpParams.dstSvmAlloc = nullptr;
@@ -1916,7 +1916,7 @@ HWTEST_F(BcsTestsImages, givenImage1DWhenSetBlitPropertiesForImageIsCalledThenVa
     size_t expectedRowPitch = image->getImageDesc().image_row_pitch;
     size_t expectedSlicePitch = image->getImageDesc().image_slice_pitch;
 
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcMemObj = image.get();
 
     BlitProperties blitProperties{};
@@ -1965,7 +1965,7 @@ HWTEST_F(BcsTestsImages, givenImage1DBufferWhenSetBlitPropertiesForImageIsCalled
     initBlitProperties.copySize = {1, 0, 0};
 
     // imageToHostPtr
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcMemObj = image.get();
     auto blitProperties = initBlitProperties;
     blitProperties.blitDirection = BlitterConstants::BlitDirection::imageToHostPtr;
@@ -2023,7 +2023,7 @@ HWTEST_F(BcsTestsImages, givenImage2DArrayWhenSetBlitPropertiesForImageIsCalledT
     size_t expectedRowPitch = image->getImageDesc().image_row_pitch;
     size_t expectedSlicePitch = image->getImageDesc().image_slice_pitch;
 
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.dstMemObj = image.get();
 
@@ -2049,7 +2049,7 @@ HWTEST_F(BcsTestsImages, givenImageWithSurfaceOffsetWhenSetBlitPropertiesForImag
     uint64_t surfaceOffset = 0x01000;
     image->setSurfaceOffsets(surfaceOffset, 0, 0, 0);
 
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcMemObj = image.get();
 
     BlitProperties blitProperties{};
@@ -2069,7 +2069,7 @@ HWTEST_F(BcsTestsImages, givenImageWithPlaneSetWhenAdjustBlitPropertiesForImageI
     EXPECT_EQ(ImagePlane::noPlane, blitProperties.dstPlane);
     EXPECT_EQ(ImagePlane::noPlane, blitProperties.srcPlane);
 
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.dstMemObj = image.get();
 
@@ -2103,7 +2103,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesA
     imgDesc.image_width = 10u;
     imgDesc.image_height = 12u;
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcPtr = hostPtr;
     builtinOpParams.srcMemObj = nullptr;
     builtinOpParams.dstMemObj = image.get();
@@ -2144,7 +2144,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenConstructPropertiesIsCalledThenValuesA
     imgDesc.image_width = 10u;
     imgDesc.image_height = 12u;
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.dstPtr = hostPtr;
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.dstMemObj = nullptr;
@@ -2183,7 +2183,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWithInputRowSlicePitchesWhenConstructPrope
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcPtr = hostPtr;
     builtinOpParams.srcMemObj = nullptr;
     builtinOpParams.dstMemObj = image.get();
@@ -2216,7 +2216,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWithInputRowSlicePitchesWhenConstructPrope
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.dstPtr = hostPtr;
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.dstMemObj = nullptr;
@@ -2252,7 +2252,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsFound) 
     void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
 
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get()));
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcPtr = hostPtr;
     builtinOpParams.dstMemObj = image.get();
     builtinOpParams.size = {1, 1, 1};
@@ -2282,7 +2282,7 @@ HWTEST_F(BcsTests, given1DTiledArrayImageWhenConstructPropertiesThenImageTransfo
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get()));
     auto oldGmm = std::unique_ptr<Gmm>(image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getDefaultGmm());
     image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->setGmm(gmmSrc.release(), 0);
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.dstMemObj = image.get();
     builtinOpParams.size = {1, 8, 1};
@@ -2309,7 +2309,7 @@ HWTEST_F(BcsTests, given1DNotTiledArrayImageWhenConstructPropertiesThenImageNotT
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get()));
     auto oldGmm = std::unique_ptr<Gmm>(image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getDefaultGmm());
     image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->setGmm(gmmSrc.release(), 0);
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.dstMemObj = image.get();
     builtinOpParams.size = {1, 8, 1};

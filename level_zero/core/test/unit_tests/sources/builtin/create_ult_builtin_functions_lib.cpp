@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,12 +13,12 @@
 
 namespace L0 {
 
-std::unique_ptr<BuiltinFunctionsLib> BuiltinFunctionsLib::create(Device *device,
-                                                                 NEO::BuiltIns *builtins) {
-    return std::unique_ptr<BuiltinFunctionsLib>(new ult::MockBuiltinFunctionsLibImpl(device, builtins));
+std::unique_ptr<BuiltInKernelLib> BuiltInKernelLib::create(Device *device,
+                                                           NEO::BuiltIns *builtins) {
+    return std::unique_ptr<BuiltInKernelLib>(new ult::MockBuiltInKernelLibImpl(device, builtins));
 }
 
-bool BuiltinFunctionsLibImpl::initBuiltinsAsyncEnabled(Device *device) {
+bool BuiltInKernelLibImpl::initBuiltinsAsyncEnabled(Device *device) {
     return NEO::ultHwConfig.useinitBuiltinsAsyncEnabled;
 }
 

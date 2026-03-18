@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,9 @@
 #include "opencl/source/cl_device/cl_device.h"
 
 namespace NEO {
-class BuiltinDispatchInfoBuilder;
+namespace BuiltIn {
+class DispatchInfoBuilder;
+}
 class CommandStreamReceiver;
 class FailMemoryManager;
 class OSTime;
@@ -73,7 +75,7 @@ class MockClDevice : public ClDevice {
     SubDevice *createSubDevice(uint32_t subDeviceIndex);
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     BuiltIns *getBuiltIns() const;
-    std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, std::unique_ptr<BuiltinDispatchInfoBuilder> builder);
+    std::unique_ptr<BuiltIn::DispatchInfoBuilder> setBuiltinDispatchInfoBuilder(BuiltIn::Group builtInGroup, std::unique_ptr<BuiltIn::DispatchInfoBuilder> newBuilder);
 
     MockDevice &device;
     DeviceInfo &sharedDeviceInfo;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,9 @@ class GfxCoreHelper;
 class ProductHelper;
 class GTPinGfxCoreHelper;
 class CompilerProductHelper;
-class BuiltinDispatchInfoBuilder;
+namespace BuiltIn {
+class DispatchInfoBuilder;
+}
 
 enum class EngineGroupType : uint32_t;
 
@@ -139,7 +141,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     std::unique_ptr<GTPinGfxCoreHelper> gtpinGfxCoreHelper;
     cl_version getExtensionVersion(std::string name);
 
-    using BuilderT = std::pair<std::unique_ptr<BuiltinDispatchInfoBuilder>, std::once_flag>;
+    using BuilderT = std::pair<std::unique_ptr<BuiltIn::DispatchInfoBuilder>, std::once_flag>;
     BuilderT *peekBuilders() { return rootClDevice.builtinOpsBuilders.get(); }
 
   protected:

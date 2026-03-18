@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,14 +59,14 @@ struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
                                   0xFFEEDDCCBBAA9988, 0x7766554433221100, 0x0011223344556677, 0x8899AABBCCDDEEFF};
     size_t patternSize = 0x10;
 
-    EBuiltInOps::Type getAdjustedFillBufferBuiltIn() {
+    BuiltIn::Group getAdjustedFillBufferBuiltIn() {
         if (useHeapless) {
-            return EBuiltInOps::fillBufferStatelessHeapless;
+            return BuiltIn::Group::fillBufferStatelessHeapless;
         } else if (useStateless) {
-            return EBuiltInOps::fillBufferStateless;
+            return BuiltIn::Group::fillBufferStateless;
         }
 
-        return EBuiltInOps::fillBuffer;
+        return BuiltIn::Group::fillBuffer;
     }
 
     bool useHeapless = false;
@@ -76,9 +76,9 @@ struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
 using BaseEnqueueSvmMemFillTest = Test<BaseEnqueueSvmMemFillFixture>;
 
 HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilderThenUseGpuAddressForPatchingOfPatternSVMAllocation) {
-    struct MockFillBufferBuilder : MockBuiltinDispatchInfoBuilder {
-        MockFillBufferBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltinDispatchInfoBuilder *origBuilder, const void *pattern, size_t patternSize)
-            : MockBuiltinDispatchInfoBuilder(kernelLib, clDevice, origBuilder),
+    struct MockFillBufferBuilder : MockBuiltInDispatchInfoBuilder {
+        MockFillBufferBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltIn::DispatchInfoBuilder *origBuilder, const void *pattern, size_t patternSize)
+            : MockBuiltInDispatchInfoBuilder(kernelLib, clDevice, origBuilder),
               pattern(pattern), patternSize(patternSize) {
         }
         const void *pattern;
@@ -90,7 +90,7 @@ HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBui
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
-    auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
@@ -98,7 +98,7 @@ HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBui
     // note that we need to store the returned value, as it is an unique pointer storing original builder, which will be later invoked
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
 
     size_t patternSize = 0x10u;
     auto patternAllocation = static_cast<MockGraphicsAllocation *>(context->getMemoryManager()->allocateGraphicsMemoryWithProperties({pCmdQ->getDevice().getRootDeviceIndex(), 2 * patternSize, AllocationType::fillPattern, pCmdQ->getDevice().getDeviceBitfield()}));
@@ -122,7 +122,7 @@ HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBui
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // return mock builder
-    auto &newBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &newBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
@@ -153,12 +153,12 @@ struct EnqueueSvmMemFillTest : public BaseEnqueueSvmMemFillFixture,
 };
 
 HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilderThenItIsConfiguredWithBuitinOpParamsAndProducesDispatchInfo) {
-    struct MockFillBufferBuilder : MockBuiltinDispatchInfoBuilder {
-        MockFillBufferBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltinDispatchInfoBuilder *origBuilder, const void *pattern, size_t patternSize)
-            : MockBuiltinDispatchInfoBuilder(kernelLib, clDevice, origBuilder),
+    struct MockFillBufferBuilder : MockBuiltInDispatchInfoBuilder {
+        MockFillBufferBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltIn::DispatchInfoBuilder *origBuilder, const void *pattern, size_t patternSize)
+            : MockBuiltInDispatchInfoBuilder(kernelLib, clDevice, origBuilder),
               pattern(pattern), patternSize(patternSize) {
         }
-        void validateInput(const BuiltinOpParams &conf) const override {
+        void validateInput(const BuiltIn::OpParams &conf) const override {
             auto patternAllocation = conf.srcMemObj->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
             EXPECT_EQ(MemoryConstants::pageSize, patternAllocation->getUnderlyingBufferSize());
             EXPECT_EQ(0, memcmp(pattern, patternAllocation->getUnderlyingBuffer(), patternSize));
@@ -173,7 +173,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
     // retrieve original builder
-    auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
@@ -181,7 +181,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
     // call enqueue on mock builder
@@ -203,7 +203,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
-    auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &restoredBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);

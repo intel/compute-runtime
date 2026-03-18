@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,10 +58,10 @@ void applyWorkarounds() {
                                                                   "fill_image2d.builtin_kernel.spv",
                                                                   "fill_image3d.builtin_kernel.spv",
                                                                   "fill_image1d_buffer.builtin_kernel.spv"};
-    auto &storageRegistry = EmbeddedStorageRegistry::getInstance();
+    auto &storageRegistry = BuiltIn::EmbeddedStorageRegistry::getInstance();
     for (auto builtinIntermediateName : builtinIntermediateNames) {
         std::string resource = "__mock_spirv_resource";
-        storageRegistry.store(builtinIntermediateName.str(), createBuiltinResource(resource.data(), resource.size() + 1));
+        storageRegistry.store(builtinIntermediateName.str(), BuiltIn::createResource(resource.data(), resource.size() + 1));
     }
 }
 

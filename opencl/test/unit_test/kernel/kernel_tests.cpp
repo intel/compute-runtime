@@ -2900,8 +2900,8 @@ TEST(KernelInfoTest, givenGfxCoreHelperWhenCreatingKernelAllocationThenCorrectPa
 }
 
 TEST(KernelTest, WhenSettingKernelArgThenBuiltinDispatchInfoBuilderIsUsed) {
-    struct MockBuiltinDispatchBuilder : BuiltinDispatchInfoBuilder {
-        using BuiltinDispatchInfoBuilder::BuiltinDispatchInfoBuilder;
+    struct MockBuiltInDispatchBuilder : BuiltIn::DispatchInfoBuilder {
+        using BuiltIn::DispatchInfoBuilder::DispatchInfoBuilder;
 
         bool setExplicitArg(uint32_t argIndex, size_t argSize, const void *argVal, cl_int &err) const override {
             receivedArgs.push_back(std::make_tuple(argIndex, argSize, argVal));
@@ -2919,7 +2919,7 @@ TEST(KernelTest, WhenSettingKernelArgThenBuiltinDispatchInfoBuilderIsUsed) {
     kernel.mockKernel->initialize();
     kernel.mockKernel->kernelArguments.resize(2);
 
-    MockBuiltinDispatchBuilder mockBuilder(*device->getBuiltIns(), *device);
+    MockBuiltInDispatchBuilder mockBuilder(*device->getBuiltIns(), *device);
     kernel.kernelInfo.builtinDispatchBuilder = &mockBuilder;
 
     mockBuilder.valueToReturn = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
     }
 
     if (!device.isSubDevice()) {
-        builtinOpsBuilders = std::make_unique<BuilderT[]>(EBuiltInOps::count);
+        builtinOpsBuilders = std::make_unique<BuilderT[]>(static_cast<uint32_t>(BuiltIn::Group::count));
     }
 }
 

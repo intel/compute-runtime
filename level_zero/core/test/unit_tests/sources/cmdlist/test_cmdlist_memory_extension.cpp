@@ -103,7 +103,7 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
                                              uint64_t srcOffset,
                                              uint64_t size,
                                              uint64_t elementSize,
-                                             Builtin builtin,
+                                             BufferBuiltIn builtin,
                                              Event *signalEvent,
                                              bool isStateless,
                                              CmdListKernelLaunchParams &launchParams) override {
@@ -156,7 +156,7 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
     }
 
     ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         Builtin builtin, const ze_copy_region_t *dstRegion,
+                                         BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          size_t srcOffset, Event *signalEvent,
@@ -167,7 +167,7 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
     }
 
     ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         Builtin builtin, const ze_copy_region_t *dstRegion,
+                                         BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,

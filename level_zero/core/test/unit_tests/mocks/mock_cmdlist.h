@@ -28,7 +28,7 @@ class GraphicsAllocation;
 
 namespace L0 {
 struct Device;
-enum class Builtin : uint32_t;
+enum class BufferBuiltIn : uint32_t;
 struct Event;
 
 namespace ult {
@@ -705,7 +705,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                uint64_t dstOffset, uintptr_t srcPtr,
                NEO::GraphicsAllocation *srcPtrAlloc,
                uint64_t srcOffset, uint64_t size,
-               uint64_t elementSize, Builtin builtin,
+               uint64_t elementSize, BufferBuiltIn builtin,
                L0::Event *signalEvent,
                bool isStateless,
                CmdListKernelLaunchParams &launchParams),
@@ -737,7 +737,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     }
 
     ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         Builtin builtin, const ze_copy_region_t *dstRegion,
+                                         BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          size_t srcOffset, L0::Event *signalEvent,
@@ -749,7 +749,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     }
 
     ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         Builtin builtin, const ze_copy_region_t *dstRegion,
+                                         BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
@@ -833,7 +833,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
                                              uint64_t srcOffset,
                                              uint64_t size,
                                              uint64_t elementSize,
-                                             Builtin builtin,
+                                             BufferBuiltIn builtin,
                                              L0::Event *signalEvent,
                                              bool isStateless,
                                              CmdListKernelLaunchParams &launchParams) override {
@@ -883,7 +883,7 @@ struct CmdListHelper {
     ze_group_count_t threadGroupDimensions;
     const uint32_t *groupSize = nullptr;
     uint32_t useOnlyGlobalTimestamp = std::numeric_limits<uint32_t>::max();
-    bool isBuiltin = false;
+    bool isBuiltInKernel = false;
     bool isDstInSystem = false;
 };
 
@@ -918,7 +918,7 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
         auto element = arg.as<NEO::ArgDescValue>().elements[0];
         auto pDst = ptrOffset(crossThreadData, element.offset);
         cmdListHelper.useOnlyGlobalTimestamp = *(uint32_t *)(pDst);
-        cmdListHelper.isBuiltin = launchParams.isBuiltInKernel;
+        cmdListHelper.isBuiltInKernel = launchParams.isBuiltInKernel;
         cmdListHelper.isDstInSystem = launchParams.isDestinationAllocationInSystemMemory;
 
         return ZE_RESULT_SUCCESS;

@@ -31,17 +31,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
 
     const bool isStateless = forceStateless(srcBuffer->getSize());
     const bool isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(srcBuffer->getSize());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, this->heaplessModeEnabled, isWideness);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, this->heaplessModeEnabled, isWideness);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            this->getClDevice());
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                              this->getClDevice());
+    BuiltIn::OwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface srcBufferSurf(srcBuffer);
     MemObjSurface dstImgSurf(dstImage);
     Surface *surfaces[] = {&srcBufferSurf, &dstImgSurf};
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstImage;
     dc.srcOffset = {srcOffset, 0, 0};

@@ -75,14 +75,14 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
         ClDeviceFixture::tearDown();
     }
 
-    EBuiltInOps::Type getAdjustedCopyBufferToBufferBuiltIn() {
+    BuiltIn::Group getAdjustedCopyBufferToBufferBuiltIn() {
         if (useHeapless) {
-            return EBuiltInOps::copyBufferToBufferStatelessHeapless;
+            return BuiltIn::Group::copyBufferToBufferStatelessHeapless;
         } else if (useStateless) {
-            return EBuiltInOps::copyBufferToBufferStateless;
+            return BuiltIn::Group::copyBufferToBufferStateless;
         }
 
-        return EBuiltInOps::copyBufferToBuffer;
+        return BuiltIn::Group::copyBufferToBuffer;
     }
 
     void *srcSvmPtr = nullptr;
@@ -106,7 +106,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     // retrieve original builder
-    auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
@@ -114,7 +114,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuiltInDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
     // call enqueue on mock builder
@@ -137,13 +137,13 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
-    auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &restoredBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
     // use mock builder to validate builder's input / output
-    auto mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder *>(newBuilder.get());
+    auto mockBuilder = static_cast<MockBuiltInDispatchInfoBuilder *>(newBuilder.get());
 
     // validate builder's input - builtin ops
     auto params = mockBuilder->getBuiltinOpParams();
@@ -167,8 +167,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     auto kernel = di->getKernel();
     EXPECT_EQ("CopyBufferToBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
-    EXPECT_EQ(kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, EBuiltInOps::isWideStateless(builtIn) ? sizeof(uint64_t) : sizeof(uint32_t));
-    EXPECT_EQ(kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, EBuiltInOps::isWideStateless(builtIn) ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, BuiltIn::isWideStateless(builtIn) ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, BuiltIn::isWideStateless(builtIn) ? sizeof(uint64_t) : sizeof(uint32_t));
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderAndSrcHostPtrThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
@@ -187,7 +187,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     size_t hostPtrOffset = 2;
 
     // retrieve original builder
-    auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
@@ -195,7 +195,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuiltInDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
     // call enqueue on mock builder
@@ -218,7 +218,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
-    auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &restoredBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
@@ -238,7 +238,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_NE(nullptr, srcSvmAlloc);
 
     // use mock builder to validate builder's input / output
-    auto mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder *>(newBuilder.get());
+    auto mockBuilder = static_cast<MockBuiltInDispatchInfoBuilder *>(newBuilder.get());
 
     // validate builder's input - builtin ops
     auto params = mockBuilder->getBuiltinOpParams();
@@ -271,7 +271,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     size_t hostPtrOffset = 2;
 
     // retrieve original builder
-    auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
@@ -279,7 +279,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuiltInDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
     // call enqueue on mock builder
@@ -302,7 +302,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
-    auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &restoredBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
@@ -322,7 +322,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_NE(nullptr, dstSvmAlloc);
 
     // use mock builder to validate builder's input / output
-    auto mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder *>(newBuilder.get());
+    auto mockBuilder = static_cast<MockBuiltInDispatchInfoBuilder *>(newBuilder.get());
 
     // validate builder's input - builtin ops
     auto params = mockBuilder->getBuiltinOpParams();
@@ -550,7 +550,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinK
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     // retrieve original builder
-    auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
@@ -558,7 +558,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinK
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuiltInDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
     srcSvmAlloc->setAllocationType(NEO::AllocationType::svmZeroCopy);
@@ -584,13 +584,13 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinK
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
-    auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &restoredBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
     // use mock builder to validate builder's input / output
-    auto mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder *>(newBuilder.get());
+    auto mockBuilder = static_cast<MockBuiltInDispatchInfoBuilder *>(newBuilder.get());
 
     // validate builder's input - builtin ops
     auto params = mockBuilder->getBuiltinOpParams();
@@ -629,7 +629,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernel
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     // retrieve original builder
-    auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
@@ -637,7 +637,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernel
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuiltInDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
     srcSvmAlloc->setAllocationType(NEO::AllocationType::svmGpu);
@@ -663,13 +663,13 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernel
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
-    auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto &restoredBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
     // use mock builder to validate builder's input / output
-    auto mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder *>(newBuilder.get());
+    auto mockBuilder = static_cast<MockBuiltInDispatchInfoBuilder *>(newBuilder.get());
 
     // validate builder's input - builtin ops
     auto params = mockBuilder->getBuiltinOpParams();
@@ -743,7 +743,7 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest, given4gbB
 
     static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->isForceStateless = false;
 
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled());
+    BuiltIn::Group copyBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled());
 
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
@@ -751,9 +751,9 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest, given4gbB
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
-    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         *pClDevice));
 
@@ -784,7 +784,7 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest, givenDst4
 
     static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->isForceStateless = false;
 
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled());
+    BuiltIn::Group copyBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled());
 
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
@@ -792,9 +792,9 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest, givenDst4
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
-    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         *pClDevice));
 

@@ -930,7 +930,7 @@ struct BcsCrossDeviceMigrationTests : public ::testing::Test {
       public:
         MockCmdQToTestMigration(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {}
 
-        bool migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) override {
+        bool migrateMultiGraphicsAllocationsIfRequired(const BuiltIn::OpParams &operationParams, CommandStreamReceiver &csr) override {
             migrateMultiGraphicsAllocationsIfRequiredCalled = true;
             migrateMultiGraphicsAllocationsReceivedOperationParams = operationParams;
             migrateMultiGraphicsAllocationsReceivedCsr = &csr;
@@ -938,7 +938,7 @@ struct BcsCrossDeviceMigrationTests : public ::testing::Test {
         }
 
         bool migrateMultiGraphicsAllocationsIfRequiredCalled = false;
-        BuiltinOpParams migrateMultiGraphicsAllocationsReceivedOperationParams{};
+        BuiltIn::OpParams migrateMultiGraphicsAllocationsReceivedOperationParams{};
         CommandStreamReceiver *migrateMultiGraphicsAllocationsReceivedCsr = nullptr;
     };
 

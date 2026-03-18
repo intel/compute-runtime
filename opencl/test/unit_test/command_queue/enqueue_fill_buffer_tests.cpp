@@ -103,18 +103,18 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    auto builtInType = EBuiltInOps::fillBuffer;
+    auto builtInGroup = BuiltIn::Group::fillBuffer;
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     if (compilerProductHelper.isForceToStatelessRequired()) {
-        builtInType = EBuiltInOps::fillBufferStateless;
+        builtInGroup = BuiltIn::Group::fillBufferStateless;
     }
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltInType(builtInType),
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltinGroup(builtInGroup),
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
@@ -154,12 +154,12 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenRightLeftoverWhenFillingBufferThenFillB
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    const EBuiltInOps::Type builtInType = adjustBuiltInType(EBuiltInOps::fillBuffer);
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            pCmdQ->getClDevice());
+    const BuiltIn::Group builtInGroup = adjustBuiltinGroup(BuiltIn::Group::fillBuffer);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
@@ -182,12 +182,12 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenMiddleWhenFillingBufferThenFillBufferMi
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    const EBuiltInOps::Type builtInType = adjustBuiltInType(EBuiltInOps::fillBuffer);
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            pCmdQ->getClDevice());
+    const BuiltIn::Group builtInGroup = adjustBuiltinGroup(BuiltIn::Group::fillBuffer);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
@@ -210,12 +210,12 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenLeftLeftoverWhenFillingBufferThenFillBu
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    const EBuiltInOps::Type builtInType = adjustBuiltInType(EBuiltInOps::fillBuffer);
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            pCmdQ->getClDevice());
+    const BuiltIn::Group builtInGroup = adjustBuiltinGroup(BuiltIn::Group::fillBuffer);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
@@ -310,11 +310,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
 
     // Extract the kernel used
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltInType(EBuiltInOps::fillBuffer),
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltinGroup(BuiltIn::Group::fillBuffer),
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
@@ -345,11 +345,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
     enqueueFillBuffer<FamilyType>();
 
     // Extract the kernel used
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltInType(EBuiltInOps::fillBuffer),
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltinGroup(BuiltIn::Group::fillBuffer),
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
@@ -382,11 +382,11 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorre
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     // Extract the kernel used
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillBufferStatelessHeapless,
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::fillBufferStatelessHeapless,
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
@@ -424,11 +424,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessThenStatelessKerne
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     // Extract the kernel used
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltInType(EBuiltInOps::fillBufferStateless),
-                                                                            pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltinGroup(BuiltIn::Group::fillBufferStateless),
+                                                                              pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
@@ -622,10 +622,10 @@ HWTEST_F(EnqueueFillBufferCmdTests, whenFillingBufferThenUseGpuAddressForPatchin
     patternAllocation->setAllocationOffset(10u);
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltInType(EBuiltInOps::fillBuffer), pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltinGroup(BuiltIn::Group::fillBuffer), pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
@@ -717,7 +717,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, given4gbBufferAndIsForceStatelessIsFalseWhen
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ);
     mockCmdQ->isForceStateless = false;
 
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(true, pCmdQ->getHeaplessModeEnabled(), true);
+    BuiltIn::Group copyBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(true, pCmdQ->getHeaplessModeEnabled(), true);
 
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
@@ -725,11 +725,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, given4gbBufferAndIsForceStatelessIsFalseWhen
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
     FourGbMockBuffer buffer;
 
-    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         *pClDevice));
 

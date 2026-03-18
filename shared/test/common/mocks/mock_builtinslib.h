@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,9 @@
 #include "shared/source/built_ins/built_ins.h"
 
 using namespace NEO;
-class MockBuiltinsLib : BuiltinsLib {
+class MockBuiltInResourceLoader : BuiltIn::ResourceLoader {
   public:
-    using BuiltinsLib::allStorages;
-    using BuiltinsLib::getBuiltinCode;
-    using BuiltinsLib::getBuiltinResource;
+    using BuiltIn::ResourceLoader::allStorages;
+    using BuiltIn::ResourceLoader::getBuiltinCode;
+    using BuiltIn::ResourceLoader::getBuiltinResource;
 };

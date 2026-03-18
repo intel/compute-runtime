@@ -38,7 +38,7 @@ HWTEST_F(BcsTests, given3dImageWhenBlitBufferIsCalledThenBlitCmdIsFoundZtimes) {
     void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
 
     std::unique_ptr<Image> image(Image3dHelperUlt<>::create(context.get()));
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcPtr = hostPtr;
     builtinOpParams.dstMemObj = image.get();
     builtinOpParams.size = {1, 1, 10};
@@ -69,7 +69,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenBlitBufferIsCalledThenBlitCmdIsFound) 
     void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
 
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get()));
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.dstPtr = hostPtr;
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.size = {1, 1, 1};
@@ -98,7 +98,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsCorrect
     imgDesc.image_width = 10;
     imgDesc.image_height = 12;
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcPtr = hostPtr;
     builtinOpParams.srcMemObj = nullptr;
     builtinOpParams.dstMemObj = image.get();
@@ -133,7 +133,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenBlitBufferIsCalledThenBlitCmdIsCorrect
     imgDesc.image_width = 10u;
     imgDesc.image_height = 12u;
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.dstPtr = hostPtr;
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.dstMemObj = nullptr;
@@ -166,7 +166,7 @@ HWTEST_F(BcsTests, givenImageToImageWhenBlitBufferIsCalledThenBlitCmdIsCorrectly
     std::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(context.get(), &imgDesc));
     std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(context.get(), &imgDesc));
 
-    BuiltinOpParams builtinOpParams{};
+    BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcMemObj = srcImage.get();
     builtinOpParams.dstMemObj = dstImage.get();
     builtinOpParams.size = {2, 3, 1};

@@ -1886,7 +1886,7 @@ TEST(CommandQueue, givenBufferWhenMultiStorageIsNotSetThenDontRequireMigrations)
     size_t size = MemoryConstants::kiloByte;
     auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
 
-    BuiltinOpParams operationParams;
+    BuiltIn::OpParams operationParams;
     operationParams.srcMemObj = srcBuffer.get();
     operationParams.dstPtr = dstPtr;
     operationParams.size = {size, 0, 0};
@@ -1923,7 +1923,7 @@ HWTEST_F(MultiRootDeviceCommandQueueTest, givenBuffersInLocalMemoryWhenMultiGrap
     size_t size = MemoryConstants::kiloByte;
     auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
 
-    BuiltinOpParams operationParams;
+    BuiltIn::OpParams operationParams;
     operationParams.srcMemObj = srcBuffer.get();
     operationParams.dstPtr = dstPtr;
     operationParams.size = {size, 0, 0};

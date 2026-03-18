@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ struct OneMipLevelImageFixture {
     size_t region[4] = {0, 0, 0, 0};
     void *cpuPtr = Image3dDefaults::hostPtr;
 
-    BuiltinOpParams usedBuiltinOpsParams;
+    BuiltIn::OpParams usedBuiltinOpsParams;
     bool builtinOpsParamsCaptured;
 };
 

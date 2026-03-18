@@ -85,7 +85,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferImpl(
     const auto isStateless = forceStateless(buffer->getSize());
     const auto isHeapless = this->getHeaplessModeEnabled();
     const auto isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(buffer->getSize());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, isHeapless, isWideness);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isStateless, isHeapless, isWideness);
 
     void *srcPtr = const_cast<void *>(ptr);
 
@@ -115,7 +115,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferImpl(
     void *alignedSrcPtr = alignDown(srcPtr, 4);
     size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcPtr = alignedSrcPtr;
     dc.srcOffset = {srcPtrOffset, 0, 0};
     dc.dstMemObj = buffer;
@@ -126,7 +126,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferImpl(
     dc.direction = csrSelectionArgs.direction;
 
     MultiDispatchInfo dispatchInfo(dc);
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;
     }

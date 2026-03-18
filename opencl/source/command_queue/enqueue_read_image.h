@@ -130,7 +130,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImageImpl(
     void *alignedDstPtr = alignDown(dstPtr, 4);
     size_t dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
 
-    BuiltinOpParams dc;
+    BuiltIn::OpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstPtr = alignedDstPtr;
     dc.dstOffset.x = dstPtrOffset;
@@ -151,10 +151,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImageImpl(
     const bool isStateless = forceStateless(srcImage->getSize());
     const bool isWideness =
         AddressingModeHelper::isAnyValueWiderThan32bit(hostPtrSize);
-    auto eBuiltInOps = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
+    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
     MultiDispatchInfo dispatchInfo(dc);
 
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;
     }

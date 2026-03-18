@@ -22,7 +22,9 @@ typedef struct igc_info_s igc_info_t;
 
 namespace NEO {
 struct HardwareInfo;
-class BuiltinDispatchInfoBuilder;
+namespace BuiltIn {
+class DispatchInfoBuilder;
+}
 class Device;
 class Kernel;
 struct KernelInfo;
@@ -111,7 +113,7 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
     HeapInfo heapInfo = {};
     std::vector<std::pair<uint32_t, uint32_t>> childrenKernelsIdOffset;
     char *crossThreadData = nullptr;
-    const BuiltinDispatchInfoBuilder *builtinDispatchBuilder = nullptr;
+    const BuiltIn::DispatchInfoBuilder *builtinDispatchBuilder = nullptr;
     uint32_t systemKernelOffset = 0;
     uint64_t kernelId = 0;
     bool isKernelHeapSubstituted = false;

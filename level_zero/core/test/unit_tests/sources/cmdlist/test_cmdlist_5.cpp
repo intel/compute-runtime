@@ -36,9 +36,9 @@ using CommandListCreate = Test<DeviceFixture>;
 HWTEST_F(CommandListCreate, givenCommandListWithInvalidWaitEventArgWhenAppendQueryKernelTimestampsThenProperErrorRetruned) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
-    device->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestamps);
-    device->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsStateless);
-    device->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsStatelessHeapless);
+    device->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps);
+    device->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsStateless);
+    device->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsStatelessHeapless);
     MockEvent event;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
@@ -59,13 +59,13 @@ using AppendQueryKernelTimestamps = CommandListCreate;
 
 HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithoutOffsetsThenProperBuiltinWasAdded) {
     auto testDevice = std::make_unique<MockDeviceForSpv>(device->getNEODevice(), driverHandle.get());
-    testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestamps);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsStateless);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsStatelessHeapless);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsWithOffsets);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsWithOffsetsStateless);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsWithOffsetsStatelessHeapless);
+    testDevice->builtins.reset(new MockBuiltInKernelLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsStateless);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsStatelessHeapless);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsWithOffsets);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsWithOffsetsStateless);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsWithOffsetsStatelessHeapless);
 
     device = testDevice.get();
 
@@ -107,7 +107,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     EXPECT_TRUE(containsDstAlloc);
     EXPECT_TRUE(gpuTimeStampAlloc);
 
-    EXPECT_EQ(testDevice->getBuiltinFunctionsLib()->getFunction(Builtin::queryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
+    EXPECT_EQ(testDevice->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::queryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
     EXPECT_EQ(2u, commandList.cmdListHelper.groupSize[0]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[2]);
@@ -119,7 +119,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountZ);
 
-    EXPECT_TRUE(commandList.cmdListHelper.isBuiltin);
+    EXPECT_TRUE(commandList.cmdListHelper.isBuiltInKernel);
     EXPECT_FALSE(commandList.cmdListHelper.isDstInSystem);
 
     context->freeMem(dstPtr);
@@ -129,13 +129,13 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     auto testDevice = std::make_unique<MockDeviceForSpv>(device->getNEODevice(), driverHandle.get());
-    testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestamps);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsStateless);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsStatelessHeapless);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsWithOffsets);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsWithOffsetsStateless);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsWithOffsetsStatelessHeapless);
+    testDevice->builtins.reset(new MockBuiltInKernelLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsStateless);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsStatelessHeapless);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsWithOffsets);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsWithOffsetsStateless);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsWithOffsetsStatelessHeapless);
 
     device = testDevice.get();
 
@@ -182,7 +182,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 
     const auto isStateless = commandList.forceStateless(MemoryConstants::pageSize64k);
     const bool isHeapless = commandList.isHeaplessModeEnabled();
-    auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::queryKernelTimestampsWithOffsets>(isStateless, isHeapless);
+    auto builtin = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::queryKernelTimestampsWithOffsets>(isStateless, isHeapless);
 
     EXPECT_EQ(device->getBuiltinFunctionsLib()->getFunction(builtin)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
     EXPECT_EQ(2u, commandList.cmdListHelper.groupSize[0]);
@@ -202,10 +202,10 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 
 HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsInUsmHostMemoryWithEventsNumberBiggerThanMaxWorkItemSizeThenProperGroupSizeAndGroupCountIsSet) {
     auto testDevice = std::make_unique<MockDeviceForSpv>(device->getNEODevice(), driverHandle.get());
-    testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestamps);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsStateless);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsStatelessHeapless);
+    testDevice->builtins.reset(new MockBuiltInKernelLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsStateless);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsStatelessHeapless);
 
     device = testDevice.get();
 
@@ -234,13 +234,13 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     result = commandList.appendQueryKernelTimestamps(static_cast<uint32_t>(eventCount), events.get(), alloc, nullptr, nullptr, 0u, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(device->getBuiltinFunctionsLib()->getFunction(Builtin::queryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
+    EXPECT_EQ(device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::queryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
 
     uint32_t groupSizeX = static_cast<uint32_t>(eventCount);
     uint32_t groupSizeY = 1u;
     uint32_t groupSizeZ = 1u;
 
-    device->getBuiltinFunctionsLib()->getFunction(Builtin::queryKernelTimestamps)->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+    device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::queryKernelTimestamps)->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
 
     EXPECT_EQ(groupSizeX, commandList.cmdListHelper.groupSize[0]);
     EXPECT_EQ(groupSizeY, commandList.cmdListHelper.groupSize[1]);
@@ -253,7 +253,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountZ);
 
-    EXPECT_TRUE(commandList.cmdListHelper.isBuiltin);
+    EXPECT_TRUE(commandList.cmdListHelper.isBuiltInKernel);
     EXPECT_TRUE(commandList.cmdListHelper.isDstInSystem);
 
     context->freeMem(alloc);
@@ -262,10 +262,10 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsInExternalHostMemoryWithEventsNumberBiggerThanMaxWorkItemSizeThenProperGroupSizeAndGroupCountIsSet) {
 
     auto testDevice = std::make_unique<MockDeviceForSpv>(device->getNEODevice(), driverHandle.get());
-    testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestamps);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsStateless);
-    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestampsStatelessHeapless);
+    testDevice->builtins.reset(new MockBuiltInKernelLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsStateless);
+    testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsStatelessHeapless);
 
     device = testDevice.get();
 
@@ -291,13 +291,13 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     auto result = commandList.appendQueryKernelTimestamps(static_cast<uint32_t>(eventCount), events.get(), alloc.get(), nullptr, nullptr, 0u, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(device->getBuiltinFunctionsLib()->getFunction(Builtin::queryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
+    EXPECT_EQ(device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::queryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
 
     uint32_t groupSizeX = static_cast<uint32_t>(eventCount);
     uint32_t groupSizeY = 1u;
     uint32_t groupSizeZ = 1u;
 
-    device->getBuiltinFunctionsLib()->getFunction(Builtin::queryKernelTimestamps)->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+    device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::queryKernelTimestamps)->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
 
     EXPECT_EQ(groupSizeX, commandList.cmdListHelper.groupSize[0]);
     EXPECT_EQ(groupSizeY, commandList.cmdListHelper.groupSize[1]);
@@ -310,7 +310,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountZ);
 
-    EXPECT_TRUE(commandList.cmdListHelper.isBuiltin);
+    EXPECT_TRUE(commandList.cmdListHelper.isBuiltInKernel);
     EXPECT_TRUE(commandList.cmdListHelper.isDstInSystem);
 }
 
@@ -333,21 +333,21 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
             return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
         }
     };
-    struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
+    struct MockBuiltInKernelLibImpl : BuiltInKernelLibImpl {
 
-        using BuiltinFunctionsLibImpl::builtins;
-        using BuiltinFunctionsLibImpl::getFunction;
-        using BuiltinFunctionsLibImpl::imageBuiltins;
-        MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {}
+        using BuiltInKernelLibImpl::builtins;
+        using BuiltInKernelLibImpl::getFunction;
+        using BuiltInKernelLibImpl::imageBuiltins;
+        MockBuiltInKernelLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltInKernelLibImpl(device, builtInsLib) {}
     };
-    struct MockBuiltinFunctionsForQueryKernelTimestamps : BuiltinFunctionsLibImpl {
-        MockBuiltinFunctionsForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
+    struct MockBuiltInKernelLibForQueryKernelTimestamps : BuiltInKernelLibImpl {
+        MockBuiltInKernelLibForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltInKernelLibImpl(device, builtInsLib) {
             tmpMockKernel = new MockQueryKernelTimestampsKernel;
         }
-        MockQueryKernelTimestampsKernel *getFunction(Builtin func) override {
+        MockQueryKernelTimestampsKernel *getFunction(BufferBuiltIn func) override {
             return tmpMockKernel;
         }
-        ~MockBuiltinFunctionsForQueryKernelTimestamps() override {
+        ~MockBuiltInKernelLibForQueryKernelTimestamps() override {
             delete tmpMockKernel;
         }
         MockQueryKernelTimestampsKernel *tmpMockKernel = nullptr;
@@ -360,15 +360,15 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
             neoDevice = device->getNEODevice();
             neoDevice->incRefInternal();
             driverHandle = device->getDriverHandle();
-            tmpMockBultinLib = new MockBuiltinFunctionsForQueryKernelTimestamps{this, device->getNEODevice()->getBuiltIns()};
+            tmpMockBultinLib = new MockBuiltInKernelLibForQueryKernelTimestamps{this, device->getNEODevice()->getBuiltIns()};
         }
-        MockBuiltinFunctionsForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
+        MockBuiltInKernelLibForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
             return tmpMockBultinLib;
         }
         ~MockDeviceHandle() override {
             delete tmpMockBultinLib;
         }
-        MockBuiltinFunctionsForQueryKernelTimestamps *tmpMockBultinLib = nullptr;
+        MockBuiltInKernelLibForQueryKernelTimestamps *tmpMockBultinLib = nullptr;
     };
 
     MockDeviceHandle mockDevice;
@@ -421,21 +421,21 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
             return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
         }
     };
-    struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
+    struct MockBuiltInKernelLibImpl : BuiltInKernelLibImpl {
 
-        using BuiltinFunctionsLibImpl::builtins;
-        using BuiltinFunctionsLibImpl::getFunction;
-        using BuiltinFunctionsLibImpl::imageBuiltins;
-        MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {}
+        using BuiltInKernelLibImpl::builtins;
+        using BuiltInKernelLibImpl::getFunction;
+        using BuiltInKernelLibImpl::imageBuiltins;
+        MockBuiltInKernelLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltInKernelLibImpl(device, builtInsLib) {}
     };
-    struct MockBuiltinFunctionsForQueryKernelTimestamps : BuiltinFunctionsLibImpl {
-        MockBuiltinFunctionsForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
+    struct MockBuiltInKernelLibForQueryKernelTimestamps : BuiltInKernelLibImpl {
+        MockBuiltInKernelLibForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltInKernelLibImpl(device, builtInsLib) {
             tmpMockKernel = new MockQueryKernelTimestampsKernel;
         }
-        MockQueryKernelTimestampsKernel *getFunction(Builtin func) override {
+        MockQueryKernelTimestampsKernel *getFunction(BufferBuiltIn func) override {
             return tmpMockKernel;
         }
-        ~MockBuiltinFunctionsForQueryKernelTimestamps() override {
+        ~MockBuiltInKernelLibForQueryKernelTimestamps() override {
             delete tmpMockKernel;
         }
         MockQueryKernelTimestampsKernel *tmpMockKernel = nullptr;
@@ -448,15 +448,15 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
             neoDevice = device->getNEODevice();
             neoDevice->incRefInternal();
             driverHandle = device->getDriverHandle();
-            tmpMockBultinLib = new MockBuiltinFunctionsForQueryKernelTimestamps{this, device->getNEODevice()->getBuiltIns()};
+            tmpMockBultinLib = new MockBuiltInKernelLibForQueryKernelTimestamps{this, device->getNEODevice()->getBuiltIns()};
         }
-        MockBuiltinFunctionsForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
+        MockBuiltInKernelLibForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
             return tmpMockBultinLib;
         }
         ~MockDeviceHandle() override {
             delete tmpMockBultinLib;
         }
-        MockBuiltinFunctionsForQueryKernelTimestamps *tmpMockBultinLib = nullptr;
+        MockBuiltInKernelLibForQueryKernelTimestamps *tmpMockBultinLib = nullptr;
     };
 
     MockDeviceHandle mockDevice;
@@ -526,12 +526,12 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
         MockModule *module = nullptr;
     };
 
-    struct MockBuiltinFunctionsForQueryKernelTimestamps : BuiltinFunctionsLibImpl {
-        MockBuiltinFunctionsForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
+    struct MockBuiltInKernelLibForQueryKernelTimestamps : BuiltInKernelLibImpl {
+        MockBuiltInKernelLibForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltInKernelLibImpl(device, builtInsLib) {
             tmpModule = std::make_unique<MockModule>(device, nullptr, ModuleType::builtin);
             tmpMockKernel = std::make_unique<MockQueryKernelTimestampsKernel>(tmpModule.get());
         }
-        MockQueryKernelTimestampsKernel *getFunction(Builtin func) override {
+        MockQueryKernelTimestampsKernel *getFunction(BufferBuiltIn func) override {
             return tmpMockKernel.get();
         }
 
@@ -546,12 +546,12 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
             neoDevice = device->getNEODevice();
             neoDevice->incRefInternal();
             driverHandle = device->getDriverHandle();
-            tmpMockBultinLib = std::make_unique<MockBuiltinFunctionsForQueryKernelTimestamps>(this, device->getNEODevice()->getBuiltIns());
+            tmpMockBultinLib = std::make_unique<MockBuiltInKernelLibForQueryKernelTimestamps>(this, device->getNEODevice()->getBuiltIns());
         }
-        MockBuiltinFunctionsForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
+        MockBuiltInKernelLibForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
             return tmpMockBultinLib.get();
         }
-        std::unique_ptr<MockBuiltinFunctionsForQueryKernelTimestamps> tmpMockBultinLib;
+        std::unique_ptr<MockBuiltInKernelLibForQueryKernelTimestamps> tmpMockBultinLib;
     };
 
     MockDeviceHandle mockDevice;

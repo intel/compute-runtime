@@ -180,7 +180,7 @@ cl_int Program::build(
 }
 
 cl_int Program::build(const ClDeviceVector &deviceVector, const char *buildOptions,
-                      std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap) {
+                      std::unordered_map<std::string, BuiltIn::DispatchInfoBuilder *> &builtinsMap) {
     auto ret = this->build(deviceVector, buildOptions);
     if (ret != CL_SUCCESS) {
         return ret;

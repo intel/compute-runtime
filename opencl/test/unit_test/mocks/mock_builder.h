@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,8 @@ namespace NEO {
 class Kernel;
 }
 
-struct MockBuilder : BuiltinDispatchInfoBuilder {
-    using BuiltinDispatchInfoBuilder::BuiltinDispatchInfoBuilder;
+struct MockBuilder : BuiltIn::DispatchInfoBuilder {
+    using BuiltIn::DispatchInfoBuilder::DispatchInfoBuilder;
     bool buildDispatchInfos(MultiDispatchInfo &d) const override;
     bool buildDispatchInfos(MultiDispatchInfo &d, Kernel *kernel,
                             const uint32_t dim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset) const override;

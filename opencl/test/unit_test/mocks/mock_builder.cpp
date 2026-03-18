@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ bool MockBuilder::buildDispatchInfos(MultiDispatchInfo &d, Kernel *kernel,
     paramsReceived.offset = offset;
     wasBuildDispatchInfosWithKernelParamsCalled = true;
 
-    DispatchInfoBuilder<NEO::SplitDispatch::Dim::d3D, NEO::SplitDispatch::SplitMode::noSplit> dispatchInfoBuilder(clDevice);
+    NEO::DispatchInfoBuilder<NEO::SplitDispatch::Dim::d3D, NEO::SplitDispatch::SplitMode::noSplit> dispatchInfoBuilder(clDevice);
     dispatchInfoBuilder.setKernel(paramsToUse.kernel);
     dispatchInfoBuilder.setDispatchGeometry(dim, paramsToUse.gws, paramsToUse.elws, paramsToUse.offset);
     dispatchInfoBuilder.bake(d);
