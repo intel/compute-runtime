@@ -76,6 +76,7 @@ enum class ClientGen : uint32_t
     XeHPC   = 11,
     Xe2HPG  = 12,
     Xe3     = 13,
+    Xe3P    = 14,
     // ...
     Last
 };
@@ -741,6 +742,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 200
+#define METRICS_LIBRARY_BUILD_NUMBER 209
 
 } // namespace MetricsLibraryApi
