@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,6 +127,11 @@ XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForGet
 XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenL0GfxCoreHelperWhenCheckingMetricsAggregationSupportThenReturnFalse) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_FALSE(l0GfxCoreHelper.supportMetricsAggregation());
+}
+
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenL0GfxCoreHelperWhenCheckingMetricsTracerSupportThenReturnFalse) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_FALSE(l0GfxCoreHelper.isMetricTracerSupported());
 }
 
 } // namespace ult

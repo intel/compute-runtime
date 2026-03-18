@@ -342,8 +342,6 @@ using MetricIpSamplingTimestampTest = MetricIpSamplingFixture;
 
 HWTEST2_F(MetricIpSamplingTimestampTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFrequencyThenValuesAreUpdated, HasIPSamplingSupport) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
-
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
     device->getProperties(&deviceProps);
     zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
@@ -374,8 +372,6 @@ HWTEST2_F(MetricIpSamplingTimestampTest, GivenEnumerationIsSuccessfulWhenReading
 }
 
 HWTEST2_F(MetricIpSamplingTimestampTest, GivenGetGpuCpuTimeIsFalseWhenReadingMetricsFrequencyThenValuesAreZero, HasIPSamplingSupport) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
 
     neoDevice->setOSTime(new FalseGpuCpuTime());
 

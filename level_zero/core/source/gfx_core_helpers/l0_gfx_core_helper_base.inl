@@ -125,4 +125,9 @@ uint64_t L0GfxCoreHelperHw<Family>::getSupportedCustomOperations2() const {
     return 0u;
 }
 
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::isMetricTracerSupported() const {
+    return false;
+}
+
 } // namespace L0

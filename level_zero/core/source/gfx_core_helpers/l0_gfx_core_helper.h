@@ -122,6 +122,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool isDefaultCmdListWithCopyOffloadSupported(bool additionalBlitPropertiesSupported) const = 0;
     virtual bool bcsSplitAggregatedModeEnabled() const = 0;
     virtual bool supportMetricsAggregation() const = 0;
+    virtual bool isMetricTracerSupported() const = 0;
     virtual size_t getMaxFillPatternSizeForCopyEngine() const = 0;
     virtual uint64_t getSupportedCustomOperations1() const = 0;
     virtual uint64_t getSupportedCustomOperations2() const = 0;
@@ -186,6 +187,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool isDefaultCmdListWithCopyOffloadSupported(bool additionalBlitPropertiesSupported) const override;
     bool bcsSplitAggregatedModeEnabled() const override;
     bool supportMetricsAggregation() const override;
+    bool isMetricTracerSupported() const override;
     size_t getMaxFillPatternSizeForCopyEngine() const override;
     uint64_t getSupportedCustomOperations1() const override;
     uint64_t getSupportedCustomOperations2() const override;
