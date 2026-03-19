@@ -301,7 +301,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                                                                                    dcFlushRequired,
                                                                                    HasSemaphore64bCmd<FamilyType>);
 
-                EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute());
+                EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
 
                 {
                     // 1st host function in order
@@ -321,13 +321,13 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                         hostFunctionData[partitionId] = HostFunctionStatus::completed;
                     }
 
-                    EXPECT_EQ(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+                    EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
 
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                         hostFunctionData[partitionId] = 1u;
                     }
 
-                    EXPECT_NE(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+                    EXPECT_TRUE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
                     EXPECT_EQ(isTbx, downloadAllocationCalled);
 
                     hostFunctionStreamer->prepareForExecution(programmedHostFunction1);
@@ -336,7 +336,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                         EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount);
                     }
                     // next host function must wait, streamer busy until host function is completed
-                    EXPECT_EQ(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+                    EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
                     hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction1);
 
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
@@ -374,7 +374,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                         hostFunctionData[partitionId] = HostFunctionStatus::completed;
                     }
-                    EXPECT_EQ(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+                    EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
 
                     hostFunctionId = hostFunctionStreamer->getNextHostFunctionIdAndIncrement();
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
@@ -385,7 +385,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                         EXPECT_EQ(nPartitions, ultCsr.writeMemoryParams.totalCallCount);
                     }
 
-                    EXPECT_NE(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+                    EXPECT_TRUE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
                     EXPECT_EQ(isTbx, downloadAllocationCalled);
 
                     hostFunctionStreamer->prepareForExecution(programmedHostFunction2);
@@ -404,7 +404,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                 }
                 {
                     // no more programmed Host Functions
-                    EXPECT_EQ(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+                    EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
                 }
             }
         }

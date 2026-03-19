@@ -171,25 +171,29 @@ void HostFunctionStreamer::downloadHostFunctionAllocation() const {
     }
 }
 
-uint64_t HostFunctionStreamer::getHostFunctionReadyToExecute() const {
+std::optional<uint64_t> HostFunctionStreamer::getHostFunctionReadyToExecute() const {
     if (pendingHostFunctions.load(std::memory_order_acquire) == 0) {
-        return HostFunctionStatus::completed;
+        return std::nullopt;
     }
 
     if (isInOrderExecutionInProgress()) {
-        return HostFunctionStatus::completed;
+        return std::nullopt;
     }
 
     downloadHostFunctionAllocation();
 
-    uint64_t hostFunctionId = HostFunctionStatus::completed;
+    uint64_t hostFunctionId = getHostFunctionId(0);
+    if (hostFunctionId == HostFunctionStatus::notReady) {
+        return std::nullopt;
+    }
 
-    for (auto partitionId = 0u; partitionId < activePartitions; partitionId++) {
-        hostFunctionId = getHostFunctionId(partitionId);
-        bool hostFunctionNotReady = hostFunctionId == HostFunctionStatus::completed;
-        if (hostFunctionNotReady) {
-            return HostFunctionStatus::completed;
+    for (auto partitionId = 1u; partitionId < activePartitions; partitionId++) {
+        auto idFromOtherPartitions = getHostFunctionId(partitionId);
+        if (idFromOtherPartitions == HostFunctionStatus::notReady) {
+            return std::nullopt;
         }
+
+        UNRECOVERABLE_IF(hostFunctionId != idFromOtherPartitions);
     }
 
     return hostFunctionId;

@@ -24,8 +24,8 @@ void HostFunctionSingleWorker::processNextHostFunction(std::stop_token st) noexc
 
     if (skipHostFunctionExecution == false) {
         auto hostFunctionId = waitUntilHostFunctionIsReady(st);
-        if (hostFunctionId != HostFunctionStatus::completed) {
-            auto hostFunction = streamer->getHostFunction(hostFunctionId);
+        if (hostFunctionId.has_value()) {
+            auto hostFunction = streamer->getHostFunction(hostFunctionId.value());
             streamer->prepareForExecution(hostFunction);
             hostFunction.invoke();
             streamer->signalHostFunctionCompletion(hostFunction);
@@ -33,20 +33,20 @@ void HostFunctionSingleWorker::processNextHostFunction(std::stop_token st) noexc
     }
 }
 
-uint64_t HostFunctionSingleWorker::waitUntilHostFunctionIsReady(std::stop_token st) noexcept {
+std::optional<uint64_t> HostFunctionSingleWorker::waitUntilHostFunctionIsReady(std::stop_token st) noexcept {
 
     const auto start = std::chrono::steady_clock::now();
 
     while (true) {
 
         if (st.stop_requested()) {
-            return HostFunctionStatus::completed;
+            return std::nullopt;
         }
 
         streamer->downloadHostFunctionAllocation();
 
         auto hostFunctionId = streamer->getHostFunctionReadyToExecute();
-        if (hostFunctionId != HostFunctionStatus::completed) {
+        if (hostFunctionId.has_value()) {
             return hostFunctionId;
         }
 

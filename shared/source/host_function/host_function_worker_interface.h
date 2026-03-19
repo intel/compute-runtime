@@ -13,6 +13,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stop_token>
 #include <thread>
 
@@ -33,7 +34,7 @@ class HostFunctionSingleWorker : public HostFunctionWorker {
 
   protected:
     MOCKABLE_VIRTUAL void processNextHostFunction(std::stop_token st) noexcept;
-    uint64_t waitUntilHostFunctionIsReady(std::stop_token st) noexcept;
+    std::optional<uint64_t> waitUntilHostFunctionIsReady(std::stop_token st) noexcept;
     HostFunctionStreamer *streamer = nullptr;
 };
 

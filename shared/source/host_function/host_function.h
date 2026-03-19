@@ -13,6 +13,7 @@
 #include <deque>
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 
 #if defined(_WIN32)
@@ -49,6 +50,7 @@ struct HostFunction {
 
 namespace HostFunctionStatus {
 inline constexpr uint64_t completed = 0;
+inline constexpr uint64_t notReady = completed;
 } // namespace HostFunctionStatus
 
 namespace HostFunctionThreadPoolHelper {
@@ -68,7 +70,7 @@ class HostFunctionStreamer {
                          bool useSemaphore64bCmd);
     ~HostFunctionStreamer() = default;
 
-    uint64_t getHostFunctionReadyToExecute() const;
+    std::optional<uint64_t> getHostFunctionReadyToExecute() const;
     GraphicsAllocation *getHostFunctionIdAllocation() const;
     HostFunction getHostFunction(uint64_t hostFunctionId);
     uint64_t getHostFunctionId(uint32_t partitionId) const;

@@ -84,7 +84,8 @@ void HostFunctionScheduler::schedulerLoop(std::stop_token st) noexcept {
 
         registeredStreamersLock.lock();
         for (auto streamer : registeredStreamers) {
-            if (auto id = isHostFunctionReadyToExecute(streamer); id != HostFunctionStatus::completed) {
+            uint64_t id = HostFunctionStatus::notReady;
+            if (isHostFunctionReadyToExecute(streamer, id)) {
                 scheduleHostFunctionToThreadPool(streamer, id);
                 waitStart = std::chrono::steady_clock::now();
             }
@@ -105,12 +106,15 @@ void HostFunctionScheduler::registerHostFunctionStreamer(HostFunctionStreamer *s
     registeredStreamers.push_back(streamer);
 }
 
-uint64_t HostFunctionScheduler::isHostFunctionReadyToExecute(HostFunctionStreamer *streamer) {
+bool HostFunctionScheduler::isHostFunctionReadyToExecute(HostFunctionStreamer *streamer, uint64_t &hostFunctionId) {
     auto id = streamer->getHostFunctionReadyToExecute();
-    if (id != HostFunctionStatus::completed && semaphore.try_acquire()) {
-        return id;
+
+    if (id.has_value() && semaphore.try_acquire()) {
+        hostFunctionId = id.value();
+        return true;
     }
-    return HostFunctionStatus::completed;
+
+    return false;
 }
 
 static_assert(NonCopyableAndNonMovable<HostFunctionScheduler>);

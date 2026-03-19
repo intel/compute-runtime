@@ -39,7 +39,7 @@ class HostFunctionScheduler final : public HostFunctionWorker {
     void scheduleHostFunctionToThreadPool(HostFunctionStreamer *streamer, uint64_t hostFunctionId) noexcept;
     void schedulerLoop(std::stop_token st) noexcept;
     void registerHostFunctionStreamer(HostFunctionStreamer *streamer);
-    uint64_t isHostFunctionReadyToExecute(HostFunctionStreamer *streamer);
+    bool isHostFunctionReadyToExecute(HostFunctionStreamer *streamer, uint64_t &hostFunctionId);
 
     std::mutex registeredStreamersMutex;
     std::once_flag shutdownOnceFlag;
