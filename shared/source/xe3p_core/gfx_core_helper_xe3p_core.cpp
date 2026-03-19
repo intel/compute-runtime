@@ -49,6 +49,11 @@ uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
 }
 
 template <>
+uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
+    return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe3P);
+}
+
+template <>
 const StackVec<size_t, 3> GfxCoreHelperHw<Family>::getDeviceSubGroupSizes() const {
     return {16, 32};
 }
