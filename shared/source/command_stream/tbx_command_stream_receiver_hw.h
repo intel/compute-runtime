@@ -72,9 +72,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName) override;
 
-    void downloadAllocationsForHostFunction() override;
-    void uploadAllocationsForHostFunction() override;
-
     // Family specific version
     MOCKABLE_VIRTUAL void submitBatchBufferTbx(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead);
     void pollForCompletion(bool skipTaskCountCheck) override;
