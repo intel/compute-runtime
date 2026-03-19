@@ -31,9 +31,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto ret = this->variable->setValue(kernelDispatchVariableSize, 0, argValue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    EXPECT_EQ(groupCountValues[0], this->variable->kernelDispatch.groupCount[0]);
-    EXPECT_EQ(groupCountValues[1], this->variable->kernelDispatch.groupCount[1]);
-    EXPECT_EQ(groupCountValues[2], this->variable->kernelDispatch.groupCount[2]);
+    EXPECT_EQ(groupCountValues[0], this->variable->desc.kernelDispatch.groupCount[0]);
+    EXPECT_EQ(groupCountValues[1], this->variable->desc.kernelDispatch.groupCount[1]);
+    EXPECT_EQ(groupCountValues[2], this->variable->desc.kernelDispatch.groupCount[2]);
 
     EXPECT_TRUE(this->variable->desc.commitRequired);
 
@@ -54,14 +54,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     bufferUsages.statelessWithoutOffset.push_back(0x40);
 
     this->variable->setBufferUsages(std::move(bufferUsages));
-    const auto &bufferUsage = this->variable->getBufferUsages();
+    auto &bufferUsage = this->variable->getBufferUsages();
     ASSERT_EQ(1u, bufferUsage.statelessWithoutOffset.size());
     EXPECT_EQ(0x40u, bufferUsage.statelessWithoutOffset[0]);
 
-    const auto &desc = this->variable->getDesc();
+    auto &desc = this->variable->getDesc();
     EXPECT_EQ(L0::MCL::VariableType::buffer, desc.type);
 
     EXPECT_EQ(nullptr, this->variable->getInitialVariableDispatch());
+
+    const Variable *constVariable = const_cast<const Variable *>(this->variable.get());
+
+    auto &constBufferUsage = constVariable->getBufferUsages();
+    EXPECT_EQ(constBufferUsage.statelessWithoutOffset.size(), bufferUsage.statelessWithoutOffset.size());
+
+    auto &constDesc = constVariable->getDesc();
+    EXPECT_EQ(constDesc.type, desc.type);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -73,9 +81,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     valueUsages.commandBufferWithoutOffset.push_back(0x40);
 
     this->variable->setValueUsages(std::move(valueUsages));
-    const auto &valueUsage = this->variable->getValueUsages();
+    auto &valueUsage = this->variable->getValueUsages();
     ASSERT_EQ(1u, valueUsage.commandBufferWithoutOffset.size());
     EXPECT_EQ(0x40u, valueUsage.commandBufferWithoutOffset[0]);
+
+    const Variable *constVariable = const_cast<const Variable *>(this->variable.get());
+    auto constValueUsage = constVariable->getValueUsages();
+    EXPECT_EQ(constValueUsage.commandBufferWithoutOffset.size(), valueUsage.commandBufferWithoutOffset.size());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -815,13 +827,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     Variable *slmArgument = getVariable(L0::MCL::VariableType::slmBuffer);
     EXPECT_EQ(slmArgument, this->variableDispatch->getLastSlmArgumentVariable());
 
-    EXPECT_EQ(nullptr, slmArgument->slmValue.nextSlmVariable);
-    EXPECT_EQ(0u, slmArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(nullptr, slmArgument->desc.slmValue.nextSlmVariable);
+    EXPECT_EQ(0u, slmArgument->desc.slmValue.slmOffsetValue);
 
     auto ret = slmArgument->setValue(slmSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_TRUE(slmArgument->desc.commitRequired);
-    EXPECT_EQ(slmSize, slmArgument->slmValue.slmSize);
+    EXPECT_EQ(slmSize, slmArgument->desc.slmValue.slmSize);
 
     slmArgument->commitVariable();
     EXPECT_EQ(slmSize, this->kernelDispatch->slmTotalSize);
@@ -844,13 +856,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     this->stageCommitMode = false;
     createVariableDispatch(false, false, false, true);
     Variable *slmArgument = getVariable(L0::MCL::VariableType::slmBuffer);
-    EXPECT_EQ(nullptr, slmArgument->slmValue.nextSlmVariable);
-    EXPECT_EQ(0u, slmArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(nullptr, slmArgument->desc.slmValue.nextSlmVariable);
+    EXPECT_EQ(0u, slmArgument->desc.slmValue.slmOffsetValue);
 
     auto ret = slmArgument->setValue(slmSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_FALSE(slmArgument->desc.commitRequired);
-    EXPECT_EQ(slmSize, slmArgument->slmValue.slmSize);
+    EXPECT_EQ(slmSize, slmArgument->desc.slmValue.slmSize);
     EXPECT_EQ(slmSize, this->kernelDispatch->slmTotalSize);
 }
 
@@ -866,13 +878,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     createVariableDispatch(false, false, false, true);
     Variable *slmArgument = getVariable(L0::MCL::VariableType::slmBuffer);
-    EXPECT_EQ(nullptr, slmArgument->slmValue.nextSlmVariable);
-    EXPECT_EQ(0u, slmArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(nullptr, slmArgument->desc.slmValue.nextSlmVariable);
+    EXPECT_EQ(0u, slmArgument->desc.slmValue.slmOffsetValue);
 
     auto ret = slmArgument->setValue(slmSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_TRUE(slmArgument->desc.commitRequired);
-    EXPECT_EQ(slmSize, slmArgument->slmValue.slmSize);
+    EXPECT_EQ(slmSize, slmArgument->desc.slmValue.slmSize);
 
     slmArgument->commitVariable();
     EXPECT_EQ(expectedSlmSize, this->kernelDispatch->slmTotalSize);
@@ -882,7 +894,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     expectedSlmSize = alignUp(slmSize, totalSlmAlignment);
     ret = slmArgument->setValue(slmSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(slmSize, slmArgument->slmValue.slmSize);
+    EXPECT_EQ(slmSize, slmArgument->desc.slmValue.slmSize);
 
     slmArgument->commitVariable();
     EXPECT_EQ(expectedSlmSize, this->kernelDispatch->slmTotalSize);
@@ -923,15 +935,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::slmBuffer, true, -1, -1);
     Variable *slmFirstArgument = this->variable.get();
 
-    slmFirstArgument->slmValue.nextSlmVariable = slmLastArgument;
+    slmFirstArgument->desc.slmValue.nextSlmVariable = slmLastArgument;
 
     uint32_t *slmOffsetPatch = reinterpret_cast<uint32_t *>(ptrOffset(this->cmdListIndirectCpuBase, this->defaultSlmSecondOffset));
     memset(slmOffsetPatch, 0, sizeof(uint32_t));
 
     auto ret = slmFirstArgument->setValue(slmFirstSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(slmFirstSize, slmFirstArgument->slmValue.slmSize);
-    EXPECT_EQ(slmFirstSize, slmLastArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmFirstSize, slmFirstArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(slmFirstSize, slmLastArgument->desc.slmValue.slmOffsetValue);
     EXPECT_EQ(slmFirstSize, *slmOffsetPatch);
 
     EXPECT_FALSE(slmFirstArgument->desc.commitRequired);
@@ -942,8 +954,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = slmLastArgument->setValue(slmSecondSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(slmSecondSize, slmLastArgument->slmValue.slmSize);
-    EXPECT_EQ(slmFirstSize, slmLastArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmSecondSize, slmLastArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(slmFirstSize, slmLastArgument->desc.slmValue.slmOffsetValue);
     EXPECT_EQ(slmFirstSize, *slmOffsetPatch);
 
     EXPECT_FALSE(slmFirstArgument->desc.commitRequired);
@@ -955,15 +967,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto slmNextValue = slmFirstSize + 1;
     ret = slmFirstArgument->setValue(slmNextValue, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(slmNextValue, slmFirstArgument->slmValue.slmSize);
+    EXPECT_EQ(slmNextValue, slmFirstArgument->desc.slmValue.slmSize);
     auto slmLastOffset = alignUp(slmNextValue, defaultSlmArgumentAlignment);
-    EXPECT_EQ(slmLastOffset, slmLastArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmLastOffset, slmLastArgument->desc.slmValue.slmOffsetValue);
 
     slmNextValue += 1;
     ret = slmFirstArgument->setValue(slmNextValue, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(slmNextValue, slmFirstArgument->slmValue.slmSize);
-    EXPECT_EQ(slmLastOffset, slmLastArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmNextValue, slmFirstArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(slmLastOffset, slmLastArgument->desc.slmValue.slmOffsetValue);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -981,16 +993,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::slmBuffer, true, -1, -1);
     Variable *slmFirstArgument = this->variable.get();
 
-    slmFirstArgument->slmValue.nextSlmVariable = slmLastArgument;
+    slmFirstArgument->desc.slmValue.nextSlmVariable = slmLastArgument;
 
     uint32_t *slmOffsetPatch = reinterpret_cast<uint32_t *>(ptrOffset(this->cmdListIndirectCpuBase, this->defaultSlmSecondOffset));
     memset(slmOffsetPatch, 0, sizeof(uint32_t));
 
     auto ret = slmLastArgument->setValue(slmSecondSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(0u, slmFirstArgument->slmValue.slmSize);
-    EXPECT_EQ(slmSecondSize, slmLastArgument->slmValue.slmSize);
-    EXPECT_EQ(0u, slmLastArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(0u, slmFirstArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(slmSecondSize, slmLastArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(0u, slmLastArgument->desc.slmValue.slmOffsetValue);
     EXPECT_EQ(0u, *slmOffsetPatch);
 
     EXPECT_FALSE(slmFirstArgument->desc.commitRequired);
@@ -1001,9 +1013,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = slmFirstArgument->setValue(slmFirstSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(slmFirstSize, slmFirstArgument->slmValue.slmSize);
-    EXPECT_EQ(slmSecondSize, slmLastArgument->slmValue.slmSize);
-    EXPECT_EQ(slmFirstSize, slmLastArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmFirstSize, slmFirstArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(slmSecondSize, slmLastArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(slmFirstSize, slmLastArgument->desc.slmValue.slmOffsetValue);
     EXPECT_EQ(slmFirstSize, *slmOffsetPatch);
 
     EXPECT_FALSE(slmFirstArgument->desc.commitRequired);
@@ -1033,15 +1045,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::slmBuffer, true, -1, -1);
     Variable *slmFirstArgument = this->variable.get();
 
-    slmFirstArgument->slmValue.nextSlmVariable = slmLastArgument;
+    slmFirstArgument->desc.slmValue.nextSlmVariable = slmLastArgument;
 
     uint32_t *slmOffsetPatch = reinterpret_cast<uint32_t *>(ptrOffset(this->mutableComputeWalker->getInlineDataPointer(), slmInlineOffset));
     memset(slmOffsetPatch, 0, sizeof(uint32_t));
 
     auto ret = slmFirstArgument->setValue(slmFirstSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(slmFirstSize, slmFirstArgument->slmValue.slmSize);
-    EXPECT_EQ(slmFirstSize, slmLastArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmFirstSize, slmFirstArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(slmFirstSize, slmLastArgument->desc.slmValue.slmOffsetValue);
     EXPECT_EQ(slmFirstSize, *slmOffsetPatch);
 
     EXPECT_FALSE(slmFirstArgument->desc.commitRequired);
@@ -1049,8 +1061,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = slmLastArgument->setValue(slmSecondSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(slmSecondSize, slmLastArgument->slmValue.slmSize);
-    EXPECT_EQ(slmFirstSize, slmLastArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmSecondSize, slmLastArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(slmFirstSize, slmLastArgument->desc.slmValue.slmOffsetValue);
     EXPECT_EQ(slmFirstSize, *slmOffsetPatch);
 
     EXPECT_FALSE(slmFirstArgument->desc.commitRequired);
@@ -1081,15 +1093,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::slmBuffer, true, -1, -1);
     Variable *slmFirstArgument = this->variable.get();
 
-    slmFirstArgument->slmValue.nextSlmVariable = slmLastArgument;
+    slmFirstArgument->desc.slmValue.nextSlmVariable = slmLastArgument;
 
     uint32_t *slmOffsetPatch = reinterpret_cast<uint32_t *>(ptrOffset(this->cmdListIndirectCpuBase, actualHeapOffset));
     memset(slmOffsetPatch, 0, sizeof(uint32_t));
 
     auto ret = slmFirstArgument->setValue(slmFirstSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(slmFirstSize, slmFirstArgument->slmValue.slmSize);
-    EXPECT_EQ(slmFirstSize, slmLastArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmFirstSize, slmFirstArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(slmFirstSize, slmLastArgument->desc.slmValue.slmOffsetValue);
     EXPECT_EQ(slmFirstSize, *slmOffsetPatch);
 
     EXPECT_FALSE(slmFirstArgument->desc.commitRequired);
@@ -1097,8 +1109,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = slmLastArgument->setValue(slmSecondSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(slmSecondSize, slmLastArgument->slmValue.slmSize);
-    EXPECT_EQ(slmFirstSize, slmLastArgument->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmSecondSize, slmLastArgument->desc.slmValue.slmSize);
+    EXPECT_EQ(slmFirstSize, slmLastArgument->desc.slmValue.slmOffsetValue);
     EXPECT_EQ(slmFirstSize, *slmOffsetPatch);
 
     EXPECT_FALSE(slmFirstArgument->desc.commitRequired);
@@ -1305,7 +1317,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
     auto ret = this->variable->setAsSignalEvent(event, this->mutableComputeWalker.get(), nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
 
     auto newEvent = this->createTestEvent(false, false, false, false);
     ASSERT_NE(nullptr, newEvent);
@@ -1313,7 +1325,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
 
     auto walkerCmdCpu = reinterpret_cast<WalkerType *>(this->cpuWalkerBuffer);
     auto testPostSyncAddress = walkerCmdCpu->getPostSync().getDestinationAddress();
@@ -1332,7 +1344,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
     auto ret = this->variable->setAsSignalEvent(event, nullptr, this->mutablePipeControl.get());
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
 
     auto newEvent = this->createTestEvent(false, true, false, false);
     ASSERT_NE(nullptr, newEvent);
@@ -1340,7 +1352,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
 
     auto pipeControlCmd = reinterpret_cast<PIPE_CONTROL *>(this->pipeControlBuffer);
     auto testPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
@@ -1360,7 +1372,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
     auto ret = this->variable->setAsSignalEvent(event, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
     this->variable->getStoreRegMemList().push_back(this->mutableStoreRegisterMem.get());
 
     auto newEvent = this->createTestEvent(false, true, true, false);
@@ -1369,7 +1381,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
 
     auto storeRegisterMemCmd = reinterpret_cast<MI_STORE_REGISTER_MEM *>(this->storeRegisterMemBuffer);
     auto testPostSyncAddress = storeRegisterMemCmd->getMemoryAddress();
@@ -1389,9 +1401,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
     auto ret = this->variable->setAsWaitEvent(event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
     this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
-    EXPECT_FALSE(this->variable->eventValue.counterBasedEvent);
+    EXPECT_FALSE(this->variable->desc.eventValue.counterBasedEvent);
 
     auto newEvent = this->createTestEvent(false, false, false, false);
     ASSERT_NE(nullptr, newEvent);
@@ -1399,7 +1411,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
     auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
@@ -1407,7 +1419,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1425,24 +1437,24 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
     auto ret = this->variable->setAsWaitEvent(event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
     this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
-    EXPECT_FALSE(this->variable->eventValue.counterBasedEvent);
+    EXPECT_FALSE(this->variable->desc.eventValue.counterBasedEvent);
     auto expectedWaitAddress = event->getGpuAddress(device) + offset;
 
     auto newEvent = nullptr;
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
-    EXPECT_TRUE(this->variable->eventValue.noopState);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
+    EXPECT_TRUE(this->variable->desc.eventValue.noopState);
 
     EXPECT_EQ(0, memcmp(noopSemaphoreSpace, this->semaphoreWaitBuffer, sizeof(MI_SEMAPHORE_WAIT)));
 
     ret = this->variable->setValue(0, 0, event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_FALSE(this->variable->eventValue.noopState);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
+    EXPECT_FALSE(this->variable->desc.eventValue.noopState);
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
     auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
@@ -1463,7 +1475,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
     auto ret = this->variable->setAsWaitEvent(event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(peerCounterDeviceAlloc.getGpuAddress(), this->variable->eventValue.cbEventDeviceCounterAllocation->getGpuAddress());
+    EXPECT_EQ(peerCounterDeviceAlloc.getGpuAddress(), this->variable->desc.eventValue.cbEventDeviceCounterAllocation->getGpuAddress());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1579,7 +1591,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
     auto ret = this->variable->setAsSignalEvent(event, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
     this->variable->getStoreDataImmList().push_back(this->mutableStoreDataImm.get());
 
     auto newEvent = this->createTestEvent(false, true, true, false);
@@ -1588,7 +1600,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
 
     auto storeDataImmCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(this->storeDataImmBuffer);
     auto testPostSyncAddress = storeDataImmCmd->getAddress();
@@ -1596,7 +1608,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1610,16 +1622,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
     auto ret = this->variable->setAsSignalEvent(event, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_EQ(this->cmdListInOrderAllocationOffset, this->variable->eventValue.inOrderAllocationOffset);
-    EXPECT_EQ(this->cmdListInOrderCounterValue, this->variable->eventValue.inOrderExecBaseSignalValue);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
+    EXPECT_EQ(this->cmdListInOrderAllocationOffset, this->variable->desc.eventValue.inOrderAllocationOffset);
+    EXPECT_EQ(this->cmdListInOrderCounterValue, this->variable->desc.eventValue.inOrderExecBaseSignalValue);
 
     auto newEvent = this->createTestEvent(true, false, false, false);
     ASSERT_NE(nullptr, newEvent);
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
     EXPECT_EQ(this->cmdListInOrderAllocationOffset, newEvent->getInOrderAllocationOffset());
     EXPECT_EQ(this->cmdListInOrderCounterValue, newEvent->getInOrderExecBaseSignalValue());
 }
@@ -1635,17 +1647,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
     auto ret = this->variable->setAsSignalEvent(event, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_EQ(this->cmdListInOrderAllocationOffset, this->variable->eventValue.inOrderAllocationOffset);
-    EXPECT_EQ(this->cmdListInOrderCounterValue, this->variable->eventValue.inOrderExecBaseSignalValue);
-    EXPECT_TRUE(this->variable->eventValue.hasStandaloneProfilingNode);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
+    EXPECT_EQ(this->cmdListInOrderAllocationOffset, this->variable->desc.eventValue.inOrderAllocationOffset);
+    EXPECT_EQ(this->cmdListInOrderCounterValue, this->variable->desc.eventValue.inOrderExecBaseSignalValue);
+    EXPECT_TRUE(this->variable->desc.eventValue.hasStandaloneProfilingNode);
 
     auto newEvent = this->createTestEvent(true, false, true, false);
     ASSERT_NE(nullptr, newEvent);
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
     EXPECT_EQ(this->cmdListInOrderAllocationOffset, newEvent->getInOrderAllocationOffset());
     EXPECT_EQ(this->cmdListInOrderCounterValue, newEvent->getInOrderExecBaseSignalValue());
     EXPECT_TRUE(newEvent->hasInOrderTimestampNode());
@@ -1660,17 +1672,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
     auto ret = this->variable->setAsSignalEvent(event, this->mutableComputeWalker.get(), nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_EQ(this->externalEventCounterValue, this->variable->eventValue.inOrderExecBaseSignalValue);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
+    EXPECT_EQ(this->externalEventCounterValue, this->variable->desc.eventValue.inOrderExecBaseSignalValue);
 
     auto newEvent = this->createTestEvent(true, false, false, true);
     ASSERT_NE(nullptr, newEvent);
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
     EXPECT_EQ(this->externalEventCounterValue * 2, newEvent->getInOrderExecBaseSignalValue());
-    EXPECT_EQ(this->externalEventCounterValue * 2, this->variable->eventValue.inOrderExecBaseSignalValue);
+    EXPECT_EQ(this->externalEventCounterValue * 2, this->variable->desc.eventValue.inOrderExecBaseSignalValue);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1696,10 +1708,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
-    EXPECT_FALSE(this->variable->eventValue.noopState);
-    EXPECT_FALSE(this->variable->eventValue.isCbEventBoundToCmdList);
-    EXPECT_NE(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
+    EXPECT_FALSE(this->variable->desc.eventValue.noopState);
+    EXPECT_FALSE(this->variable->desc.eventValue.isCbEventBoundToCmdList);
+    EXPECT_NE(nullptr, this->variable->desc.eventValue.cbEventDeviceCounterAllocation);
 
     auto expectedWaitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
 
@@ -1734,17 +1746,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
-    EXPECT_TRUE(this->variable->eventValue.noopState);
-    EXPECT_EQ(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
+    EXPECT_TRUE(this->variable->desc.eventValue.noopState);
+    EXPECT_EQ(nullptr, this->variable->desc.eventValue.cbEventDeviceCounterAllocation);
 
     EXPECT_EQ(0, memcmp(noopSemaphoreSpace, this->semaphoreWaitBuffer, sizeof(MI_SEMAPHORE_WAIT)));
 
     ret = this->variable->setValue(0, 0, event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_FALSE(this->variable->eventValue.noopState);
-    EXPECT_NE(nullptr, this->variable->eventValue.cbEventDeviceCounterAllocation);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
+    EXPECT_FALSE(this->variable->desc.eventValue.noopState);
+    EXPECT_NE(nullptr, this->variable->desc.eventValue.cbEventDeviceCounterAllocation);
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
     auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();

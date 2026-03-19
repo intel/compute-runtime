@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,10 +26,8 @@ struct WhiteBox<::L0::MCL::Variable>
     using BaseClass::bufferUsages;
     using BaseClass::cmdList;
     using BaseClass::desc;
-    using BaseClass::eventValue;
     using BaseClass::hasKernelArgCorrectType;
     using BaseClass::immediateValueChunks;
-    using BaseClass::kernelDispatch;
     using BaseClass::setBufferVariable;
     using BaseClass::setCbWaitEventUpdateOperation;
     using BaseClass::setCommitVariable;
@@ -42,7 +40,6 @@ struct WhiteBox<::L0::MCL::Variable>
     using BaseClass::setValueVariableContinuous;
     using BaseClass::setValueVariableInChunks;
     using BaseClass::setWaitEventVariable;
-    using BaseClass::slmValue;
     using BaseClass::usedInDispatch;
     using BaseClass::valueUsages;
 

@@ -125,19 +125,19 @@ ze_result_t Variable::setAsSignalEvent(Event *event, MutableComputeWalker *walke
     if (false == isType(VariableType::signalEvent)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    this->eventValue.event = event;
-    this->eventValue.eventPoolAllocation = event->getAllocation(cmdList->getBase()->getDevice());
-    this->eventValue.counterBasedEvent = event->isCounterBased();
-    this->eventValue.inOrderIncrementEvent = event->getInOrderIncrementValue(cmdList->getBase()->getPartitionCount()) > 0;
-    this->eventValue.walkerCmd = walkerCmd;
-    this->eventValue.postSyncCmd = postSyncCmd;
-    this->eventValue.kernelCount = event->getKernelCount();
-    this->eventValue.packetCount = event->getPacketsInUse();
-    this->eventValue.waitPackets = event->getPacketsToWait();
-    this->eventValue.hasStandaloneProfilingNode = event->hasInOrderTimestampNode();
-    if (this->eventValue.counterBasedEvent) {
-        this->eventValue.inOrderExecBaseSignalValue = event->getInOrderExecBaseSignalValue();
-        this->eventValue.inOrderAllocationOffset = event->getInOrderAllocationOffset();
+    this->desc.eventValue.event = event;
+    this->desc.eventValue.eventPoolAllocation = event->getAllocation(cmdList->getBase()->getDevice());
+    this->desc.eventValue.counterBasedEvent = event->isCounterBased();
+    this->desc.eventValue.inOrderIncrementEvent = event->getInOrderIncrementValue(cmdList->getBase()->getPartitionCount()) > 0;
+    this->desc.eventValue.walkerCmd = walkerCmd;
+    this->desc.eventValue.postSyncCmd = postSyncCmd;
+    this->desc.eventValue.kernelCount = event->getKernelCount();
+    this->desc.eventValue.packetCount = event->getPacketsInUse();
+    this->desc.eventValue.waitPackets = event->getPacketsToWait();
+    this->desc.eventValue.hasStandaloneProfilingNode = event->hasInOrderTimestampNode();
+    if (this->desc.eventValue.counterBasedEvent) {
+        this->desc.eventValue.inOrderExecBaseSignalValue = event->getInOrderExecBaseSignalValue();
+        this->desc.eventValue.inOrderAllocationOffset = event->getInOrderAllocationOffset();
     }
     this->desc.size = 0;
     return ZE_RESULT_SUCCESS;
@@ -147,25 +147,25 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
     if (false == isType(VariableType::waitEvent)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    this->eventValue.event = event;
-    this->eventValue.eventPoolAllocation = event->getAllocation(cmdList->getBase()->getDevice());
-    this->eventValue.counterBasedEvent = event->isCounterBased();
-    this->eventValue.kernelCount = event->getKernelCount();
-    this->eventValue.packetCount = event->getPacketsInUse();
-    if (this->eventValue.counterBasedEvent) {
-        this->eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
-        this->eventValue.noopState = cmdList->isCbEventBoundToCmdList(event);
+    this->desc.eventValue.event = event;
+    this->desc.eventValue.eventPoolAllocation = event->getAllocation(cmdList->getBase()->getDevice());
+    this->desc.eventValue.counterBasedEvent = event->isCounterBased();
+    this->desc.eventValue.kernelCount = event->getKernelCount();
+    this->desc.eventValue.packetCount = event->getPacketsInUse();
+    if (this->desc.eventValue.counterBasedEvent) {
+        this->desc.eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
+        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(event);
         bool useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
         if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(cmdList->isQwordInOrderCounter(), useSemaphore64bCmd)) {
-            this->eventValue.loadRegImmCmds.reserve(2 * this->eventValue.waitPackets);
+            this->desc.eventValue.loadRegImmCmds.reserve(2 * this->desc.eventValue.waitPackets);
         }
-        this->eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
+        this->desc.eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
         auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
-        this->eventValue.cbEventDeviceCounterAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
+        this->desc.eventValue.cbEventDeviceCounterAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
     } else {
-        this->eventValue.waitPackets = event->getPacketsToWait();
+        this->desc.eventValue.waitPackets = event->getPacketsToWait();
     }
-    this->eventValue.semWaitCmds.reserve(this->eventValue.waitPackets);
+    this->desc.eventValue.semWaitCmds.reserve(this->desc.eventValue.waitPackets);
     this->desc.size = 0;
     return ZE_RESULT_SUCCESS;
 }
@@ -222,12 +222,12 @@ ze_result_t Variable::addKernelArgUsage(const NEO::ArgDescriptor &kernelArg, Ind
         return selectImmediateAddKernelArgUsageHandler(kernelArg, iohOffset, iohFullOffset, walkerCmdOffset, mutableComputeWalker, inlineData);
     } break;
     case VariableType::slmBuffer: {
-        this->slmValue.slmSize = slmArgSize;
-        this->slmValue.slmOffsetValue = slmArgOffsetValue;
+        this->desc.slmValue.slmSize = slmArgSize;
+        this->desc.slmValue.slmOffsetValue = slmArgOffsetValue;
 
         const auto &arg = kernelArg.as<NEO::ArgDescPointer>();
         if (NEO::isValidOffset(arg.slmOffset)) {
-            this->slmValue.slmAlignment = arg.requiredSlmAlignment;
+            this->desc.slmValue.slmAlignment = arg.requiredSlmAlignment;
             if (inlineData) {
                 if (arg.slmOffset < mutableComputeWalker->getInlineDataSize()) {
                     bufferUsages.commandBufferOffsets.push_back(walkerCmdOffset + mutableComputeWalker->getInlineDataOffset() + arg.slmOffset);
@@ -532,9 +532,9 @@ ze_result_t Variable::setValueVariableInChunks(size_t size, const void *argVal) 
 
 ze_result_t Variable::setGroupSizeVariable(size_t size, const void *argVal) {
     const uint32_t *groupSize = reinterpret_cast<const uint32_t *>(argVal);
-    if (groupSize[0] == kernelDispatch.groupSize[0] &&
-        groupSize[1] == kernelDispatch.groupSize[1] &&
-        groupSize[2] == kernelDispatch.groupSize[2]) {
+    if (groupSize[0] == desc.kernelDispatch.groupSize[0] &&
+        groupSize[1] == desc.kernelDispatch.groupSize[1] &&
+        groupSize[2] == desc.kernelDispatch.groupSize[2]) {
         return ZE_RESULT_SUCCESS;
     }
     for (auto &vd : usedInDispatch) {
@@ -548,9 +548,9 @@ ze_result_t Variable::setGroupSizeVariable(size_t size, const void *argVal) {
 
 ze_result_t Variable::setGroupCountVariable(size_t size, const void *argVal) {
     const uint32_t *groupCount = reinterpret_cast<const uint32_t *>(argVal);
-    if (groupCount[0] == kernelDispatch.groupCount[0] &&
-        groupCount[1] == kernelDispatch.groupCount[1] &&
-        groupCount[2] == kernelDispatch.groupCount[2]) {
+    if (groupCount[0] == desc.kernelDispatch.groupCount[0] &&
+        groupCount[1] == desc.kernelDispatch.groupCount[1] &&
+        groupCount[2] == desc.kernelDispatch.groupCount[2]) {
         return ZE_RESULT_SUCCESS;
     }
     for (auto &vd : usedInDispatch) {
@@ -564,9 +564,9 @@ ze_result_t Variable::setGroupCountVariable(size_t size, const void *argVal) {
 
 ze_result_t Variable::setGlobalOffsetVariable(size_t size, const void *argVal) {
     const uint32_t *globalOffset = reinterpret_cast<const uint32_t *>(argVal);
-    if (globalOffset[0] == kernelDispatch.globalOffset[0] &&
-        globalOffset[1] == kernelDispatch.globalOffset[1] &&
-        globalOffset[2] == kernelDispatch.globalOffset[2]) {
+    if (globalOffset[0] == desc.kernelDispatch.globalOffset[0] &&
+        globalOffset[1] == desc.kernelDispatch.globalOffset[1] &&
+        globalOffset[2] == desc.kernelDispatch.globalOffset[2]) {
         return ZE_RESULT_SUCCESS;
     }
     for (auto &vd : usedInDispatch) {
@@ -580,12 +580,12 @@ ze_result_t Variable::setGlobalOffsetVariable(size_t size, const void *argVal) {
 
 ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
     Event *newEvent = const_cast<Event *>(reinterpret_cast<const Event *>(argVal));
-    if (newEvent == this->eventValue.event) {
+    if (newEvent == this->desc.eventValue.event) {
         return ZE_RESULT_SUCCESS;
     }
     auto device = cmdList->getBase()->getDevice();
 
-    if (this->eventValue.hasStandaloneProfilingNode) {
+    if (this->desc.eventValue.hasStandaloneProfilingNode) {
         auto *inOrderTimestampAllocator = device->getInOrderTimestampAllocator();
         auto *timestampNode = inOrderTimestampAllocator->getTag();
         auto *uploadCsr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
@@ -595,12 +595,12 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
     }
 
     auto newEventAllocation = newEvent->getAllocation(device);
-    auto oldEventAllocation = this->eventValue.eventPoolAllocation;
+    auto oldEventAllocation = this->desc.eventValue.eventPoolAllocation;
 
     updateAllocationResidency(oldEventAllocation, newEventAllocation);
 
-    if (this->eventValue.counterBasedEvent && !this->eventValue.inOrderIncrementEvent) {
-        this->cmdList->switchCounterBasedEvents(this->eventValue.inOrderExecBaseSignalValue, this->eventValue.inOrderAllocationOffset, newEvent);
+    if (this->desc.eventValue.counterBasedEvent && !this->desc.eventValue.inOrderIncrementEvent) {
+        this->cmdList->switchCounterBasedEvents(this->desc.eventValue.inOrderExecBaseSignalValue, this->desc.eventValue.inOrderAllocationOffset, newEvent);
     }
 
     uint64_t postSyncAddress = 0;
@@ -609,38 +609,38 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
     if (newEventAllocation != nullptr) {
         postSyncAddress = newEvent->getGpuAddress(device);
 
-        for (auto &mutableStoreDataImm : this->eventValue.storeDataImmCmds) {
+        for (auto &mutableStoreDataImm : this->desc.eventValue.storeDataImmCmds) {
             mutableStoreDataImm->setAddress(postSyncAddress);
         }
-        for (auto &mutableSemaphoreWait : this->eventValue.semWaitCmds) {
+        for (auto &mutableSemaphoreWait : this->desc.eventValue.semWaitCmds) {
             mutableSemaphoreWait->setSemaphoreAddress(postSyncAddress);
         }
-        for (auto &mutableStoreRegMem : this->eventValue.storeRegMemCmds) {
+        for (auto &mutableStoreRegMem : this->desc.eventValue.storeRegMemCmds) {
             mutableStoreRegMem->setMemoryAddress(postSyncAddress);
         }
-        if (this->eventValue.postSyncCmd) {
-            this->eventValue.postSyncCmd->setPostSyncAddress(postSyncAddress);
+        if (this->desc.eventValue.postSyncCmd) {
+            this->desc.eventValue.postSyncCmd->setPostSyncAddress(postSyncAddress);
         }
     }
 
-    if (this->eventValue.inOrderIncrementEvent) {
+    if (this->desc.eventValue.inOrderIncrementEvent) {
         inOrderIncrementAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress();
     }
 
     if (postSyncAddress != 0 || inOrderIncrementAddress != 0) {
-        if (this->eventValue.walkerCmd) {
-            this->eventValue.walkerCmd->setPostSyncAddress(postSyncAddress, inOrderIncrementAddress);
+        if (this->desc.eventValue.walkerCmd) {
+            this->desc.eventValue.walkerCmd->setPostSyncAddress(postSyncAddress, inOrderIncrementAddress);
         }
     }
 
-    newEvent->setKernelCount(this->eventValue.kernelCount);
-    newEvent->setPacketsInUse(this->eventValue.packetCount);
+    newEvent->setKernelCount(this->desc.eventValue.kernelCount);
+    newEvent->setPacketsInUse(this->desc.eventValue.packetCount);
 
-    this->eventValue.event = newEvent;
-    this->eventValue.eventPoolAllocation = newEventAllocation;
-    if (this->eventValue.counterBasedEvent) {
-        this->eventValue.inOrderExecBaseSignalValue = newEvent->getInOrderExecBaseSignalValue();
-        this->eventValue.inOrderAllocationOffset = newEvent->getInOrderAllocationOffset();
+    this->desc.eventValue.event = newEvent;
+    this->desc.eventValue.eventPoolAllocation = newEventAllocation;
+    if (this->desc.eventValue.counterBasedEvent) {
+        this->desc.eventValue.inOrderExecBaseSignalValue = newEvent->getInOrderExecBaseSignalValue();
+        this->desc.eventValue.inOrderAllocationOffset = newEvent->getInOrderAllocationOffset();
     }
     desc.state = State::initialized;
     return ZE_RESULT_SUCCESS;
@@ -648,7 +648,7 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
 
 ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     Event *newEvent = const_cast<Event *>(reinterpret_cast<const Event *>(argVal));
-    if (newEvent == this->eventValue.event) {
+    if (newEvent == this->desc.eventValue.event) {
         return ZE_RESULT_SUCCESS;
     }
     auto device = cmdList->getBase()->getDevice();
@@ -677,12 +677,12 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
         }
     }
 
-    bool oldNooped = this->eventValue.noopState;
-    if (this->eventValue.event != nullptr) {
-        oldEventAllocation = this->eventValue.eventPoolAllocation;
-        if (this->eventValue.counterBasedEvent) {
-            if (!this->eventValue.isCbEventBoundToCmdList) {
-                oldInOrderAllocation = this->eventValue.cbEventDeviceCounterAllocation;
+    bool oldNooped = this->desc.eventValue.noopState;
+    if (this->desc.eventValue.event != nullptr) {
+        oldEventAllocation = this->desc.eventValue.eventPoolAllocation;
+        if (this->desc.eventValue.counterBasedEvent) {
+            if (!this->desc.eventValue.isCbEventBoundToCmdList) {
+                oldInOrderAllocation = this->desc.eventValue.cbEventDeviceCounterAllocation;
             }
         }
     }
@@ -690,11 +690,11 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     updateAllocationResidency(oldEventAllocation, newEventAllocation);
     updateAllocationResidency(oldInOrderAllocation, newInOrderAllocation);
 
-    if (this->eventValue.counterBasedEvent && (this->cmdList->getBase()->isHeaplessModeEnabled() || !(newEvent ? newEvent->hasInOrderTimestampNode() : false))) {
+    if (this->desc.eventValue.counterBasedEvent && (this->cmdList->getBase()->isHeaplessModeEnabled() || !(newEvent ? newEvent->hasInOrderTimestampNode() : false))) {
         if (oldNooped) {
             if (!newNooped) {
                 // was nooped, needs programming - restore
-                this->eventValue.noopState = false;
+                this->desc.eventValue.noopState = false;
                 // update in order info with patching, restore commands with new address
                 auto waitAddress = newInOrderEventHelper->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
                 setCbWaitEventUpdateOperation(CbWaitEventOperationType::restore, waitAddress, newInOrderEventHelper);
@@ -702,7 +702,7 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
         } else {
             if (newNooped) {
                 // was programed, needs noop
-                this->eventValue.noopState = true;
+                this->desc.eventValue.noopState = true;
                 setCbWaitEventUpdateOperation(CbWaitEventOperationType::noop, 0, newInOrderEventHelper);
             } else {
                 // was programed, needs update address and new newInOrderEventHelper
@@ -713,7 +713,7 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     } else {
         if (newEventAllocation != nullptr) {
             auto waitAddress = newEvent->getGpuAddress(device);
-            for (auto &mutableSemWait : this->eventValue.semWaitCmds) {
+            for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
                 if (oldNooped) {
                     mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
                 } else {
@@ -722,20 +722,20 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
             }
         }
         if (newNooped) {
-            this->eventValue.noopState = true;
-            for (auto &mutableSemWait : this->eventValue.semWaitCmds) {
+            this->desc.eventValue.noopState = true;
+            for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
                 mutableSemWait->noop();
             }
         } else {
-            this->eventValue.noopState = false;
+            this->desc.eventValue.noopState = false;
         }
     }
 
-    this->eventValue.event = newEvent;
-    this->eventValue.eventPoolAllocation = newEventAllocation;
-    if (this->eventValue.counterBasedEvent) {
-        this->eventValue.isCbEventBoundToCmdList = newCbEventBoundToCmdList;
-        this->eventValue.cbEventDeviceCounterAllocation = newInOrderAllocation;
+    this->desc.eventValue.event = newEvent;
+    this->desc.eventValue.eventPoolAllocation = newEventAllocation;
+    if (this->desc.eventValue.counterBasedEvent) {
+        this->desc.eventValue.isCbEventBoundToCmdList = newCbEventBoundToCmdList;
+        this->desc.eventValue.cbEventDeviceCounterAllocation = newInOrderAllocation;
     }
     desc.state = State::initialized;
     return ZE_RESULT_SUCCESS;
@@ -746,7 +746,7 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
     bool useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
     bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, useSemaphore64bCmd);
 
-    for (auto &mutableSemWait : this->eventValue.semWaitCmds) {
+    for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
         if (operation == CbWaitEventOperationType::set) {
             mutableSemWait->setSemaphoreAddress(waitAddress);
         } else if (operation == CbWaitEventOperationType::noop) {
@@ -763,7 +763,7 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
     }
     if (qwordIndirect) {
         uint32_t cmdIndex = 0;
-        for (auto &mutableLoadRegImm : this->eventValue.loadRegImmCmds) {
+        for (auto &mutableLoadRegImm : this->desc.eventValue.loadRegImmCmds) {
             if (operation == CbWaitEventOperationType::noop) {
                 mutableLoadRegImm->noop();
             } else if (operation == CbWaitEventOperationType::restore) {
@@ -816,9 +816,9 @@ bool Variable::isCooperativeVariable() const {
 
 ze_result_t Variable::setSlmBufferVariable(size_t size, const void *argVal) {
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel slm argument variable %p new size %u, old size %u\n",
-                 this, size, this->slmValue.slmSize);
-    if (this->slmValue.slmSize != static_cast<SlmOffset>(size)) {
-        this->slmValue.slmSize = static_cast<SlmOffset>(size);
+                 this, size, this->desc.slmValue.slmSize);
+    if (this->desc.slmValue.slmSize != static_cast<SlmOffset>(size)) {
+        this->desc.slmValue.slmSize = static_cast<SlmOffset>(size);
 
         processVariableDispatchForSlm();
     }
@@ -828,11 +828,11 @@ ze_result_t Variable::setSlmBufferVariable(size_t size, const void *argVal) {
 }
 
 void Variable::setNextSlmVariableOffset(SlmOffset nextSlmOffset) {
-    SlmOffset alignedNewOffset = alignUp<SlmOffset>(nextSlmOffset, this->slmValue.slmAlignment);
-    bool patchSlmOffset = alignedNewOffset != this->slmValue.slmOffsetValue;
+    SlmOffset alignedNewOffset = alignUp<SlmOffset>(nextSlmOffset, this->desc.slmValue.slmAlignment);
+    bool patchSlmOffset = alignedNewOffset != this->desc.slmValue.slmOffsetValue;
 
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel slm argument variable %p new slm offset %u, old slm offset %u\n",
-                 this, alignedNewOffset, this->slmValue.slmOffsetValue);
+                 this, alignedNewOffset, this->desc.slmValue.slmOffsetValue);
 
     if (patchSlmOffset) {
         auto &commandContainer = cmdList->getBase()->getCmdContainer();
@@ -861,15 +861,15 @@ void Variable::setNextSlmVariableOffset(SlmOffset nextSlmOffset) {
             }
         }
 
-        this->slmValue.slmOffsetValue = alignedNewOffset;
+        this->desc.slmValue.slmOffsetValue = alignedNewOffset;
         processVariableDispatchForSlm();
     }
 }
 
 void Variable::processVariableDispatchForSlm() {
-    SlmOffset nextSlmOffset = this->slmValue.slmOffsetValue + this->slmValue.slmSize;
-    if (this->slmValue.nextSlmVariable != nullptr) {
-        this->slmValue.nextSlmVariable->setNextSlmVariableOffset(nextSlmOffset);
+    SlmOffset nextSlmOffset = this->desc.slmValue.slmOffsetValue + this->desc.slmValue.slmSize;
+    if (this->desc.slmValue.nextSlmVariable != nullptr) {
+        this->desc.slmValue.nextSlmVariable->setNextSlmVariableOffset(nextSlmOffset);
     } else {
         SlmOffset slmArgsTotalSize = static_cast<SlmOffset>(alignUp(nextSlmOffset, MemoryConstants::kiloByte));
         for (auto &vd : usedInDispatch) {

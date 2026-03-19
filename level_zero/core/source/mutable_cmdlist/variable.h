@@ -35,6 +35,7 @@ struct MutableLoadRegisterImm;
 struct MutableSemaphoreWait;
 struct MutableStoreDataImm;
 struct MutableStoreRegisterMem;
+struct Variable;
 struct VariableDispatch;
 
 struct InterfaceVariableDescriptor {
@@ -60,6 +61,52 @@ enum VariableType : uint8_t {
     slmBuffer
 };
 
+struct ImmediateValueChunkProperties {
+    size_t size = 0;
+    size_t sourceOffset = 0;
+
+    size_t heapStatelessUsageIndex = std::numeric_limits<size_t>::max();
+    size_t commandBufferUsageIndex = std::numeric_limits<size_t>::max();
+};
+
+struct EventValueProperties {
+    Event *event = nullptr;
+    NEO::GraphicsAllocation *eventPoolAllocation = nullptr;
+    NEO::GraphicsAllocation *cbEventDeviceCounterAllocation = nullptr;
+    uint64_t inOrderExecBaseSignalValue = 0;
+
+    MutableComputeWalker *walkerCmd = nullptr;
+    MutablePipeControl *postSyncCmd = nullptr;
+    std::vector<MutableLoadRegisterImm *> loadRegImmCmds;
+    std::vector<MutableSemaphoreWait *> semWaitCmds;
+    std::vector<MutableStoreDataImm *> storeDataImmCmds;
+    std::vector<MutableStoreRegisterMem *> storeRegMemCmds;
+
+    uint32_t kernelCount = 0;
+    uint32_t packetCount = 0;
+    uint32_t waitPackets = 0;
+    uint32_t inOrderAllocationOffset = 0;
+
+    bool counterBasedEvent = false;
+    bool inOrderIncrementEvent = false;
+    bool noopState = false;
+    bool isCbEventBoundToCmdList = false;
+    bool hasStandaloneProfilingNode = false;
+};
+
+struct SlmValueProperties {
+    Variable *nextSlmVariable = nullptr;
+    SlmOffset slmSize = 0;
+    SlmOffset slmOffsetValue = 0;
+    uint8_t slmAlignment = 0;
+};
+
+struct KernelDispatchProperties {
+    MaxChannelsCArray groupCount = {0, 0, 0};
+    MaxChannelsCArray groupSize = {0, 0, 0};
+    MaxChannelsCArray globalOffset = {undefined<uint32_t>, undefined<uint32_t>, undefined<uint32_t>};
+};
+
 struct VariableDescriptor {
     enum State : uint8_t {
         declared,
@@ -76,6 +123,10 @@ struct VariableDescriptor {
     GpuAddress bufferGpuAddress = undefined<GpuAddress>;
     NEO::GraphicsAllocation *bufferAlloc = nullptr;
     const void *argValue = reinterpret_cast<void *>(undefined<size_t>);
+
+    EventValueProperties eventValue;
+    SlmValueProperties slmValue;
+    KernelDispatchProperties kernelDispatch;
 
     uint32_t allocId = undefined<uint32_t>;
     uint32_t allocIdMemoryManagerCounter = undefined<uint32_t>;
@@ -133,21 +184,21 @@ struct Variable : public VariableHandle {
     inline VariableDescriptor &getDesc() { return desc; }
     inline const VariableDescriptor &getDesc() const { return desc; }
     inline std::vector<MutableStoreRegisterMem *> &getStoreRegMemList() {
-        return eventValue.storeRegMemCmds;
+        return desc.eventValue.storeRegMemCmds;
     }
     inline std::vector<MutableSemaphoreWait *> &getSemWaitList() {
-        return eventValue.semWaitCmds;
+        return desc.eventValue.semWaitCmds;
     }
     inline std::vector<MutableStoreDataImm *> &getStoreDataImmList() {
-        return eventValue.storeDataImmCmds;
+        return desc.eventValue.storeDataImmCmds;
     }
     inline std::vector<MutableLoadRegisterImm *> &getLoadRegImmList() {
-        return eventValue.loadRegImmCmds;
+        return desc.eventValue.loadRegImmCmds;
     }
 
     void updateMutableComputeWalker(MutableComputeWalker *walkerCmd) {
-        if (eventValue.walkerCmd != nullptr) {
-            eventValue.walkerCmd = walkerCmd;
+        if (desc.eventValue.walkerCmd != nullptr) {
+            desc.eventValue.walkerCmd = walkerCmd;
         }
     }
 
@@ -160,23 +211,23 @@ struct Variable : public VariableHandle {
         desc.allocIdMemoryManagerCounter = undefined<uint32_t>;
     }
     inline void resetSlmVariable() {
-        slmValue.slmOffsetValue = undefined<SlmOffset>;
-        slmValue.slmSize = undefined<SlmOffset>;
+        desc.slmValue.slmOffsetValue = undefined<SlmOffset>;
+        desc.slmValue.slmSize = undefined<SlmOffset>;
     }
     inline void resetGroupCountVariable() {
-        kernelDispatch.groupCount[0] = 0;
-        kernelDispatch.groupCount[1] = 0;
-        kernelDispatch.groupCount[2] = 0;
+        desc.kernelDispatch.groupCount[0] = 0;
+        desc.kernelDispatch.groupCount[1] = 0;
+        desc.kernelDispatch.groupCount[2] = 0;
     }
     inline void resetGroupSizeVariable() {
-        kernelDispatch.groupSize[0] = 0;
-        kernelDispatch.groupSize[1] = 0;
-        kernelDispatch.groupSize[2] = 0;
+        desc.kernelDispatch.groupSize[0] = 0;
+        desc.kernelDispatch.groupSize[1] = 0;
+        desc.kernelDispatch.groupSize[2] = 0;
     }
     inline void resetGlobalOffsetVariable() {
-        kernelDispatch.globalOffset[0] = undefined<uint32_t>;
-        kernelDispatch.globalOffset[1] = undefined<uint32_t>;
-        kernelDispatch.globalOffset[2] = undefined<uint32_t>;
+        desc.kernelDispatch.globalOffset[0] = undefined<uint32_t>;
+        desc.kernelDispatch.globalOffset[1] = undefined<uint32_t>;
+        desc.kernelDispatch.globalOffset[2] = undefined<uint32_t>;
     }
 
     void commitVariable();
@@ -195,80 +246,34 @@ struct Variable : public VariableHandle {
     }
 
     void setNextSlmVariable(Variable *nextSlmVariable) {
-        slmValue.nextSlmVariable = nextSlmVariable;
+        desc.slmValue.nextSlmVariable = nextSlmVariable;
     }
     void setNextSlmVariableOffset(SlmOffset nextSlmOffset);
     void processVariableDispatchForSlm();
     uint32_t getAlignedSlmSize(uint32_t slmSize);
 
     void setGroupCountProperty(const uint32_t *groupCount) {
-        kernelDispatch.groupCount[0] = groupCount[0];
-        kernelDispatch.groupCount[1] = groupCount[1];
-        kernelDispatch.groupCount[2] = groupCount[2];
+        desc.kernelDispatch.groupCount[0] = groupCount[0];
+        desc.kernelDispatch.groupCount[1] = groupCount[1];
+        desc.kernelDispatch.groupCount[2] = groupCount[2];
     }
 
     void setGroupSizeProperty(const uint32_t *groupSize) {
-        kernelDispatch.groupSize[0] = groupSize[0];
-        kernelDispatch.groupSize[1] = groupSize[1];
-        kernelDispatch.groupSize[2] = groupSize[2];
+        desc.kernelDispatch.groupSize[0] = groupSize[0];
+        desc.kernelDispatch.groupSize[1] = groupSize[1];
+        desc.kernelDispatch.groupSize[2] = groupSize[2];
     }
 
     void setGlobalOffsetProperty(const uint32_t *globalOffset) {
-        kernelDispatch.globalOffset[0] = globalOffset[0];
-        kernelDispatch.globalOffset[1] = globalOffset[1];
-        kernelDispatch.globalOffset[2] = globalOffset[2];
+        desc.kernelDispatch.globalOffset[0] = globalOffset[0];
+        desc.kernelDispatch.globalOffset[1] = globalOffset[1];
+        desc.kernelDispatch.globalOffset[2] = globalOffset[2];
     }
     inline MutableCommandList *getCmdList() const {
         return cmdList;
     }
 
   protected:
-    struct ImmediateValueChunkProperties {
-        size_t size = 0;
-        size_t sourceOffset = 0;
-
-        size_t heapStatelessUsageIndex = std::numeric_limits<size_t>::max();
-        size_t commandBufferUsageIndex = std::numeric_limits<size_t>::max();
-    };
-
-    struct EventValueProperties {
-        Event *event = nullptr;
-        NEO::GraphicsAllocation *eventPoolAllocation = nullptr;
-        NEO::GraphicsAllocation *cbEventDeviceCounterAllocation = nullptr;
-        uint64_t inOrderExecBaseSignalValue = 0;
-
-        MutableComputeWalker *walkerCmd = nullptr;
-        MutablePipeControl *postSyncCmd = nullptr;
-        std::vector<MutableLoadRegisterImm *> loadRegImmCmds;
-        std::vector<MutableSemaphoreWait *> semWaitCmds;
-        std::vector<MutableStoreDataImm *> storeDataImmCmds;
-        std::vector<MutableStoreRegisterMem *> storeRegMemCmds;
-
-        uint32_t kernelCount = 0;
-        uint32_t packetCount = 0;
-        uint32_t waitPackets = 0;
-        uint32_t inOrderAllocationOffset = 0;
-
-        bool counterBasedEvent = false;
-        bool inOrderIncrementEvent = false;
-        bool noopState = false;
-        bool isCbEventBoundToCmdList = false;
-        bool hasStandaloneProfilingNode = false;
-    };
-
-    struct SlmValueProperties {
-        Variable *nextSlmVariable = nullptr;
-        SlmOffset slmSize = 0;
-        SlmOffset slmOffsetValue = 0;
-        uint8_t slmAlignment = 0;
-    };
-
-    struct KernelDispatchProperties {
-        MaxChannelsCArray groupCount = {0, 0, 0};
-        MaxChannelsCArray groupSize = {0, 0, 0};
-        MaxChannelsCArray globalOffset = {undefined<uint32_t>, undefined<uint32_t>, undefined<uint32_t>};
-    };
-
     void setDescExperimentalValues(const InterfaceVariableDescriptor *ifaceVarDesc);
     bool hasKernelArgCorrectType(const NEO::ArgDescriptor &arg);
     void mutateStatefulBufferArg(GpuAddress bufferGpuAddress, NEO::GraphicsAllocation *bufferAllocation);
@@ -314,9 +319,6 @@ struct Variable : public VariableHandle {
     BufferUsages bufferUsages;
     ValueUsages valueUsages;
 
-    EventValueProperties eventValue;
-    SlmValueProperties slmValue;
-    KernelDispatchProperties kernelDispatch;
     MutableCommandList *cmdList;
 };
 } // namespace L0::MCL

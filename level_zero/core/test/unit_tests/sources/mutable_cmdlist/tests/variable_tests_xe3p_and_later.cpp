@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,17 +25,17 @@ HWTEST2_F(VariableInOrderTest, givenCbSignalExternalEventWhenMutatingEventThenPo
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
     auto ret = this->variable->setAsSignalEvent(event, this->mutableComputeWalker.get(), nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, event);
-    EXPECT_EQ(this->externalEventCounterValue, this->variable->eventValue.inOrderExecBaseSignalValue);
+    EXPECT_EQ(this->variable->desc.eventValue.event, event);
+    EXPECT_EQ(this->externalEventCounterValue, this->variable->desc.eventValue.inOrderExecBaseSignalValue);
 
     auto newEvent = this->createTestEvent(true, false, false, true);
     ASSERT_NE(nullptr, newEvent);
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->eventValue.event, newEvent);
+    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
     EXPECT_EQ(this->externalEventCounterValue * 2, newEvent->getInOrderExecBaseSignalValue());
-    EXPECT_EQ(this->externalEventCounterValue * 2, this->variable->eventValue.inOrderExecBaseSignalValue);
+    EXPECT_EQ(this->externalEventCounterValue * 2, this->variable->desc.eventValue.inOrderExecBaseSignalValue);
 
     auto walkerCmdCpu = reinterpret_cast<WalkerType *>(this->cpuWalkerBuffer);
     EXPECT_EQ(reinterpret_cast<uint64_t>(this->externalEventDeviceAddress), walkerCmdCpu->getPostSync().getDestinationAddress());

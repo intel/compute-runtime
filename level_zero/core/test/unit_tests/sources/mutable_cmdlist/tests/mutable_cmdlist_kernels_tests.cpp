@@ -1844,23 +1844,23 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_EQ(2u, kernelSlmBufferVariables.size());
 
     auto kernel1SlmBufferVariable1 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
-    EXPECT_EQ(slmSize, kernel1SlmBufferVariable1->slmValue.slmSize);
-    EXPECT_NE(undefined<L0::MCL::SlmOffset>, kernel1SlmBufferVariable1->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmSize, kernel1SlmBufferVariable1->desc.slmValue.slmSize);
+    EXPECT_NE(undefined<L0::MCL::SlmOffset>, kernel1SlmBufferVariable1->desc.slmValue.slmOffsetValue);
 
     auto kernel1SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
-    EXPECT_EQ(slmSize, kernel1SlmBufferVariable2->slmValue.slmSize);
-    EXPECT_NE(undefined<L0::MCL::SlmOffset>, kernel1SlmBufferVariable2->slmValue.slmOffsetValue);
+    EXPECT_EQ(slmSize, kernel1SlmBufferVariable2->desc.slmValue.slmSize);
+    EXPECT_NE(undefined<L0::MCL::SlmOffset>, kernel1SlmBufferVariable2->desc.slmValue.slmOffsetValue);
 
     kernelSlmBufferVariables = getVariableList(commandId, L0::MCL::VariableType::slmBuffer, kernel2.get());
     ASSERT_EQ(2u, kernelSlmBufferVariables.size());
 
     auto kernel2SlmBufferVariable1 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
-    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable1->slmValue.slmSize);
-    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable1->slmValue.slmOffsetValue);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable1->desc.slmValue.slmSize);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable1->desc.slmValue.slmOffsetValue);
 
     auto kernel2SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
-    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->slmValue.slmSize);
-    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->slmValue.slmOffsetValue);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->desc.slmValue.slmSize);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->desc.slmValue.slmOffsetValue);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
