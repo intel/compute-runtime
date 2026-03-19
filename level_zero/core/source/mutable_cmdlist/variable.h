@@ -78,7 +78,7 @@ struct VariableDescriptor {
     const void *argValue = reinterpret_cast<void *>(undefined<size_t>);
 
     uint32_t allocId = undefined<uint32_t>;
-    uint32_t allocIdMemoryManagerCounter = 0;
+    uint32_t allocIdMemoryManagerCounter = undefined<uint32_t>;
 
     VariableType type = VariableType::none;
     State state = State::declared;
@@ -157,7 +157,7 @@ struct Variable : public VariableHandle {
         desc.state = VariableDescriptor::State::defined;
         desc.argValue = reinterpret_cast<void *>(undefined<size_t>);
         desc.allocId = undefined<uint32_t>;
-        desc.allocIdMemoryManagerCounter = 0;
+        desc.allocIdMemoryManagerCounter = undefined<uint32_t>;
     }
     inline void resetSlmVariable() {
         slmValue.slmOffsetValue = undefined<SlmOffset>;

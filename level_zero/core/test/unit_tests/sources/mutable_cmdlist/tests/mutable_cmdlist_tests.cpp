@@ -415,6 +415,65 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
+            givenMutableCommandListAndKernelBufferNullArgumentsWhenAppendingKernelAndMutatingIntoNullThenAllocIdCountFromManagerDoesNotChange) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+
+    uint64_t usmPatchAddressValue = 0;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+
+    void *nullSurface = nullptr;
+
+    // set kernel arg 0 => buffer1
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
+
+    result = kernel->setArgBuffer(0, sizeof(void *), nullSurface);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &buffer0VarMutDesc = mutation.variables.kernelArguments[0];
+    auto &buffer0InternalDesc = buffer0VarMutDesc.kernelArgumentVariable->getDesc();
+    EXPECT_EQ(L0::MCL::VariableType::buffer, buffer0InternalDesc.type);
+    auto gpuVa0PatchFullAddress = reinterpret_cast<void *>(buffer0VarMutDesc.kernelArgumentVariable->getBufferUsages().statelessWithoutOffset[0]);
+    memcpy(&usmPatchAddressValue, gpuVa0PatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(0u, usmPatchAddressValue);
+    EXPECT_EQ(undefined<uint32_t>, buffer0InternalDesc.allocIdMemoryManagerCounter);
+
+    // update manager counter
+    void *usm1 = allocateUsm(4096);
+    ASSERT_NE(nullptr, usm1);
+
+    ze_mutable_kernel_argument_exp_desc_t kernelBuffer1Arg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+
+    kernelBuffer1Arg.argIndex = 0;
+    kernelBuffer1Arg.argSize = sizeof(void *);
+    kernelBuffer1Arg.commandId = commandId;
+    kernelBuffer1Arg.pArgValue = nullSurface;
+    mutableCommandsDesc.pNext = &kernelBuffer1Arg;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    memcpy(&usmPatchAddressValue, gpuVa0PatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(0u, usmPatchAddressValue);
+    EXPECT_EQ(undefined<uint32_t>, buffer0InternalDesc.allocIdMemoryManagerCounter);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
             givenMutableCommandListAndInlineKernelWhenAppendingKernelAndMutatingArgumentsThenDataIsPatchedIntoInlineData) {
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
 
@@ -507,6 +566,78 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
     EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndSystemSharedAllocationWhenMutatingIntoBufferThenPerformMutation) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    void *usmSystem = nullptr, *usmAllocatedHost = nullptr;
+
+    auto result = this->context->allocHostMem(&hostDesc, 4096, 4096, &usmAllocatedHost);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, usmAllocatedHost);
+
+    usmSystem = reinterpret_cast<void *>(0x1000);
+
+    // set kernel arg 0 => buffer
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
+    this->crossThreadOffset = 8;
+    this->nextArgOffset = 16;
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
+
+    result = kernel->setArgBuffer(0, sizeof(void *), &usmSystem);
+
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint64_t usmPatchAddressValue = 0;
+
+    auto &bufferVarMutDesc = mutation.variables.kernelArguments[0];
+    auto &bufferInternalDesc = bufferVarMutDesc.kernelArgumentVariable->getDesc();
+    EXPECT_EQ(L0::MCL::VariableType::buffer, bufferInternalDesc.type);
+    ASSERT_NE(0u, bufferVarMutDesc.kernelArgumentVariable->getBufferUsages().commandBufferWithoutOffset.size());
+    auto gpuVaPatchFullAddress = reinterpret_cast<void *>(bufferVarMutDesc.kernelArgumentVariable->getBufferUsages().commandBufferWithoutOffset[0]);
+    memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(reinterpret_cast<uint64_t>(usmSystem), usmPatchAddressValue);
+    // no graphics allocation present
+    EXPECT_EQ(nullptr, bufferInternalDesc.bufferAlloc);
+
+    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &kernelBufferArg;
+
+    kernelBufferArg.argIndex = 0;
+    kernelBufferArg.argSize = sizeof(void *);
+    kernelBufferArg.commandId = commandId;
+    kernelBufferArg.pArgValue = &usmAllocatedHost;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(reinterpret_cast<uint64_t>(usmAllocatedHost), usmPatchAddressValue);
+
+    // graphics allocation is present
+    EXPECT_NE(nullptr, bufferInternalDesc.bufferAlloc);
+
+    result = this->context->freeMem(usmAllocatedHost);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

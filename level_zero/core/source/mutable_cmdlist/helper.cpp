@@ -20,7 +20,7 @@ ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsA
     GpuAddress gpuAddress = 0u;
     DriverHandle *driverHandle = device->getDriverHandle();
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(buffer);
-    uint32_t allocId = undefined<uint32_t>;
+    uint32_t allocId = 0;
     if (allocData != nullptr) {
         bufferAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         // buffer can be offset SVM value

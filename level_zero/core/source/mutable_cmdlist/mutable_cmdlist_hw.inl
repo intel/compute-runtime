@@ -432,13 +432,17 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                 auto &varDescriptor = variable->getDesc();
                 PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument variable %p index %u type %" PRIu8 "\n", variable, index, varDescriptor.type);
                 if (varDescriptor.type == VariableType::buffer) {
-                    if (residencyContainer[index] != nullptr) {
+                    if (kernelArgInfos[index].value != nullptr) {
                         varDescriptor.bufferAlloc = residencyContainer[index];
                         varDescriptor.argValue = kernelArgInfos[index].value;
-                        varDescriptor.bufferGpuAddress = varDescriptor.bufferAlloc->getGpuAddress();
+                        varDescriptor.bufferGpuAddress = reinterpret_cast<uintptr_t>(kernelArgInfos[index].value);
                         varDescriptor.allocId = kernelArgInfos[index].allocId;
                         varDescriptor.allocIdMemoryManagerCounter = kernelArgInfos[index].allocIdMemoryManagerCounter;
-                        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument buffer gpuva %" PRIx64 " ptr value %p\n", varDescriptor.bufferGpuAddress, kernelArgInfos[index].value);
+                        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument buffer gpuva %" PRIx64 " ptr value %p alloc id %u, alloc id counter %u\n",
+                                     varDescriptor.bufferGpuAddress,
+                                     kernelArgInfos[index].value,
+                                     varDescriptor.allocId,
+                                     varDescriptor.allocIdMemoryManagerCounter);
                         varDescriptor.state = VariableDescriptor::State::initialized;
                     } else {
                         varDescriptor.argValue = nullptr;

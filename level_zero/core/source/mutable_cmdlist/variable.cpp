@@ -394,7 +394,7 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
 
     if (argValue != nullptr) {
         // same arg value and alloc id is set
-        if (desc.argValue == argValue && desc.allocId != newAllocId) {
+        if (desc.allocId > 0 && desc.allocId != newAllocId && desc.argValue == argValue) {
             // if alloc id is set then compare
             if (newAllocIdMemoryManagerCounter > 0 && desc.allocIdMemoryManagerCounter == newAllocIdMemoryManagerCounter) {
                 PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL same alloc id from manager, same arg value, alloc id set\n");
@@ -406,16 +406,22 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
         if (retVal != ZE_RESULT_SUCCESS) {
             return retVal;
         }
-    }
-    if (desc.argValue == argValue && desc.allocId == newAllocId) {
-        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL same alloc id, same arg value, updating alloc id from manager to new %u\n",
-                     newAllocIdMemoryManagerCounter);
-        desc.allocIdMemoryManagerCounter = newAllocIdMemoryManagerCounter;
-        return ZE_RESULT_SUCCESS;
+
+        if (desc.argValue == argValue && desc.allocId == newAllocId) {
+            PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL same alloc id, same arg value, updating alloc id from manager to new %u\n",
+                         newAllocIdMemoryManagerCounter);
+            desc.allocIdMemoryManagerCounter = newAllocIdMemoryManagerCounter;
+            return ZE_RESULT_SUCCESS;
+        }
+    } else {
+        if (desc.argValue == argValue) {
+            PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL null buffer argument is the same as new, early quit\n");
+            return ZE_RESULT_SUCCESS;
+        }
     }
 
     if (desc.state == State::initialized) {
-        DEBUG_BREAK_IF(desc.bufferAlloc == nullptr);
+        DEBUG_BREAK_IF(desc.argValue == nullptr);
         desc.bufferAlloc = nullptr;
         desc.state = State::defined;
     }
