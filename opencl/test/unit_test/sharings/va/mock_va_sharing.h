@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ class VASharingFunctionsMock : public VASharingFunctions {
         }};
 
     VASharingFunctionsMock(VADisplay vaDisplay) : VASharingFunctions(vaDisplay) {}
-    VASharingFunctionsMock() : VASharingFunctionsMock(nullptr){};
+    VASharingFunctionsMock() : VASharingFunctionsMock(nullptr) {};
 
     VAStatus deriveImage(VASurfaceID vaSurface, VAImage *vaImage) override {
         if (deriveImageReturnStatus != VA_STATUS_SUCCESS) {

@@ -127,7 +127,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual bool flushBatchedSubmissions() = 0;
     MOCKABLE_VIRTUAL SubmissionStatus submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
     void pollForCompletion() { pollForCompletion(false); }
-    virtual void pollForAubCompletion(){};
+    virtual void pollForAubCompletion() {};
     virtual void pollForCompletion(bool skipTaskCountCheck) {}
     virtual bool isPerQueuePrologueRequired() const = 0;
     virtual void programHardwareContext(LinearStream &cmdStream) = 0;
@@ -250,8 +250,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     WaitStatus baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait);
     MOCKABLE_VIRTUAL bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait);
     void downloadAllocations(bool blockingWait) { downloadAllocations(blockingWait, this->latestFlushedTaskCount); };
-    virtual void downloadAllocations(bool blockingWait, TaskCountType taskCount){};
-    virtual void removeDownloadAllocation(GraphicsAllocation *alloc){};
+    virtual void downloadAllocations(bool blockingWait, TaskCountType taskCount) {};
+    virtual void removeDownloadAllocation(GraphicsAllocation *alloc) {};
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
 
@@ -314,9 +314,9 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
     MOCKABLE_VIRTUAL bool writeMemory(GraphicsAllocation &gfxAllocation) { return writeMemory(gfxAllocation, false, 0, 0); }
     virtual bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) { return false; }
-    virtual void writeMemoryAub(aub_stream::AllocationParams &allocationParams){};
-    virtual void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables){};
-    virtual void initializeEngine(){};
+    virtual void writeMemoryAub(aub_stream::AllocationParams &allocationParams) {};
+    virtual void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) {};
+    virtual void initializeEngine() {};
 
     virtual bool isMultiOsContextCapable() const = 0;
 
@@ -334,7 +334,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual SubmissionStatus flushTagUpdate() = 0;
     virtual void updateTagFromWait() = 0;
     virtual bool isUpdateTagFromWaitEnabled() = 0;
-    virtual void flushMonitorFence(bool notifyKmd){};
+    virtual void flushMonitorFence(bool notifyKmd) {};
     virtual bool isTlbFlushRequiredForStateCacheFlush();
 
     TaskCountType flushTagUpdateIfRequired() {
@@ -407,8 +407,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     }
 
     virtual void stopDirectSubmission(bool blocking, bool needsLock) {}
-    virtual void unregisterDirectSubmissionFromController(){};
-    virtual void resetDirectSubmission(){};
+    virtual void unregisterDirectSubmissionFromController() {};
+    virtual void resetDirectSubmission() {};
 
     virtual QueueThrottle getLastDirectSubmissionThrottle() = 0;
 

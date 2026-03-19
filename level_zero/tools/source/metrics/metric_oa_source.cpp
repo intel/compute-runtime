@@ -27,8 +27,8 @@ std::unique_ptr<OaMetricSourceImp> OaMetricSourceImp::create(const MetricDeviceC
 }
 
 OaMetricSourceImp::OaMetricSourceImp(const MetricDeviceContext &metricDeviceContext) : metricDeviceContext(metricDeviceContext),
-                                                                                       metricEnumeration(std::unique_ptr<MetricEnumeration>(new(std::nothrow) MetricEnumeration(*this))),
-                                                                                       metricsLibrary(std::unique_ptr<MetricsLibrary>(new(std::nothrow) MetricsLibrary(*this))) {
+                                                                                       metricEnumeration(std::unique_ptr<MetricEnumeration>(new (std::nothrow) MetricEnumeration(*this))),
+                                                                                       metricsLibrary(std::unique_ptr<MetricsLibrary>(new (std::nothrow) MetricsLibrary(*this))) {
     activationTracker = std::make_unique<MultiDomainDeferredActivationTracker>(metricDeviceContext.getSubDeviceIndex());
     type = MetricSource::metricSourceTypeOa;
 }

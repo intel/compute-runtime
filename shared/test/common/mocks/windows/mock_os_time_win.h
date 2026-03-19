@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ class MockOSTimeWin : public OSTimeWin {
   public:
     using OSTimeWin::deviceTime;
     using OSTimeWin::maxGpuTimeStamp;
-    MockOSTimeWin(OSInterface &osInterface) : OSTimeWin(osInterface){};
+    MockOSTimeWin(OSInterface &osInterface) : OSTimeWin(osInterface) {};
 
     void overrideQueryPerformanceCounterFunction(decltype(&QueryPerformanceCounter) function) {
         this->QueryPerfomanceCounterFnc = function;

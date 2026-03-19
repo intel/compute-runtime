@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ struct Source {
     const size_t length;
     const char *name;
     Source(const uint8_t *data, const size_t length, const char *name)
-        : data(data), length(length), name(name){};
+        : data(data), length(length), name(name) {};
     void toVectorOfStrings(std::vector<std::string> &lines, bool replaceTabs = false);
     inline std::vector<char> toBinaryVector() {
         return std::vector<char>(data, data + length);

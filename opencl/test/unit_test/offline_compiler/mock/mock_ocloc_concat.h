@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 namespace NEO {
 class MockOclocConcat : public OclocConcat {
   public:
-    MockOclocConcat(OclocArgHelper *argHelper) : OclocConcat(argHelper){};
+    MockOclocConcat(OclocArgHelper *argHelper) : OclocConcat(argHelper) {};
 
     using OclocConcat::checkIfFatBinariesExist;
     using OclocConcat::fatBinaryName;

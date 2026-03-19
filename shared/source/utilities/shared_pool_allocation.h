@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,13 +16,13 @@ namespace NEO {
 class SharedPoolAllocation {
   public:
     SharedPoolAllocation(GraphicsAllocation *graphicsAllocation, size_t offset, size_t size, std::mutex *mtx)
-        : SharedPoolAllocation(graphicsAllocation, offset, size, mtx, true){};
+        : SharedPoolAllocation(graphicsAllocation, offset, size, mtx, true) {};
 
     SharedPoolAllocation(GraphicsAllocation *graphicsAllocation, size_t offset, size_t size, std::mutex *mtx, bool isFromPool)
-        : graphicsAllocation(graphicsAllocation), offset(offset), size(size), mtx(mtx), fromPool(isFromPool){};
+        : graphicsAllocation(graphicsAllocation), offset(offset), size(size), mtx(mtx), fromPool(isFromPool) {};
 
     explicit SharedPoolAllocation(GraphicsAllocation *graphicsAllocation)
-        : graphicsAllocation(graphicsAllocation), offset(0u), size(graphicsAllocation ? graphicsAllocation->getUnderlyingBufferSize() : 0u), mtx(nullptr), fromPool(false){};
+        : graphicsAllocation(graphicsAllocation), offset(0u), size(graphicsAllocation ? graphicsAllocation->getUnderlyingBufferSize() : 0u), mtx(nullptr), fromPool(false) {};
 
     GraphicsAllocation *getGraphicsAllocation() const {
         return graphicsAllocation;

@@ -6665,9 +6665,21 @@ TEST_F(SipRegisterPackerTest, GivenValidUnpackedDataThenPackRegistersReturnsCorr
     const SipRegisterPacker packer = SipRegisterPacker::create(regdesc, 0, 3).value();
 
     const std::vector<uint32_t> unpacked{
-        0x11, 0x22, 0x33, 0x44, 0x55, // major=0
-        0x66, 0x77, 0x88, 0x99, 0xaa, // major=1
-        0xbb, 0xcc, 0xdd, 0xee, 0xff, // major=2
+        0x11,
+        0x22,
+        0x33,
+        0x44,
+        0x55, // major=0
+        0x66,
+        0x77,
+        0x88,
+        0x99,
+        0xaa, // major=1
+        0xbb,
+        0xcc,
+        0xdd,
+        0xee,
+        0xff, // major=2
     };
 
     const std::vector<uint32_t> packed = packer.packRegisters(unpacked);
@@ -6679,9 +6691,18 @@ TEST_F(SipRegisterPackerTest, GivenInvalidUnpackedDataThenPackRegistersReturnsEm
     const SipRegisterPacker packer = SipRegisterPacker::create(regdesc, 0, 3).value();
 
     const std::vector<uint32_t> unpacked{
-        0x11, 0x22, 0x33, 0x44, 0x55, // major=0
-        0x66, 0x77, 0x88, 0x99, 0xaa, // major=1
-        0xbb, 0xcc,                   // major=2 is short
+        0x11,
+        0x22,
+        0x33,
+        0x44,
+        0x55, // major=0
+        0x66,
+        0x77,
+        0x88,
+        0x99,
+        0xaa, // major=1
+        0xbb,
+        0xcc, // major=2 is short
     };
 
     const std::vector<uint32_t> packed = packer.packRegisters(unpacked);
@@ -6696,9 +6717,21 @@ TEST_F(SipRegisterPackerTest, GivenValidPackedDataThenUnpackRegistersReturnsCorr
     const std::vector<uint32_t> unpacked = packer.unpackRegisters(packed);
 
     const std::vector<uint32_t> expected{
-        0x00, 0x22, 0x00, 0x44, 0x00, // major=0
-        0x00, 0x00, 0x00, 0x00, 0x00, // major=1
-        0x00, 0x00, 0xdd, 0x00, 0x00, // major=2
+        0x00,
+        0x22,
+        0x00,
+        0x44,
+        0x00, // major=0
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // major=1
+        0x00,
+        0x00,
+        0xdd,
+        0x00,
+        0x00, // major=2
     };
 
     EXPECT_EQ(unpacked, expected);

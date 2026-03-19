@@ -76,7 +76,7 @@ class MockAubManager : public aub_stream::AubManager {
     using PageInfo = aub_stream::PageInfo;
 
   public:
-    MockAubManager(){};
+    MockAubManager() {};
     MockAubManager(const aub_stream::AubManagerOptions &inputOptions) : options(inputOptions) {
     }
     ~MockAubManager() override {}

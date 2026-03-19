@@ -316,7 +316,7 @@ TEST_F(Wddm20WithMockGdiDllTests, whenInitWddmThenAdapterInfoCapsArePassedToGmmL
 
 class MockRegistryReaderWithDriverStorePath : public SettingsReader {
   public:
-    MockRegistryReaderWithDriverStorePath(const char *driverStorePathArg) : driverStorePath(driverStorePathArg){};
+    MockRegistryReaderWithDriverStorePath(const char *driverStorePathArg) : driverStorePath(driverStorePathArg) {};
     std::string getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) override { return ""; };
 
     std::string getSetting(const char *settingName, const std::string &value) override {

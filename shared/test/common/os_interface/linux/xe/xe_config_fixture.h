@@ -38,8 +38,8 @@ class XeConfigFixture {
         };
     }
 
-    void setUp(){};
-    void tearDown(){};
+    void setUp() {};
+    void tearDown() {};
 
     VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl{&SysCalls::sysCallsIoctl};
 };

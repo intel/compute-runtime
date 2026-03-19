@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,7 @@ class DriverModel : public NonCopyableClass {
     virtual PhysicalDevicePciBusInfo getPciBusInfo() const = 0;
     virtual PhysicalDevicePciSpeedInfo getPciSpeedInfo() const = 0;
 
-    virtual void unregisterTrimCallback(){};
+    virtual void unregisterTrimCallback() {};
 
     virtual size_t getMaxMemAllocSize() const {
         return std::numeric_limits<size_t>::max();

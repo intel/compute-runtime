@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ struct EngineControl {
     EngineControl() = default;
     EngineControl(CommandStreamReceiver *commandStreamReceiver, OsContext *osContext)
         : commandStreamReceiver(commandStreamReceiver),
-          osContext(osContext){};
+          osContext(osContext) {};
 
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     OsContext *osContext = nullptr;

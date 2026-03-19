@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ struct ComputeModeRequirements : public ::testing::Test {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiver::streamProperties;
         MyCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
-            : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield){};
+            : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield) {};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &this->csrSizeRequestFlags; }
         bool hasSharedHandles() override {
             if (hasSharedHandlesReturnValue) {

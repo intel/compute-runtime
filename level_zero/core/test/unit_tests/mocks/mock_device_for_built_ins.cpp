@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ struct Device;
 
 namespace ult {
 
-MockDeviceForBuiltinTests::MockModuleForBuiltinTests::MockModuleForBuiltinTests(Device *device, ModuleType type) : ModuleImp(device, nullptr, type){};
+MockDeviceForBuiltinTests::MockModuleForBuiltinTests::MockModuleForBuiltinTests(Device *device, ModuleType type) : ModuleImp(device, nullptr, type) {};
 
 ze_result_t MockDeviceForBuiltinTests::MockModuleForBuiltinTests::createKernel(const ze_kernel_desc_t *desc,
                                                                                ze_kernel_handle_t *kernelHandle) {

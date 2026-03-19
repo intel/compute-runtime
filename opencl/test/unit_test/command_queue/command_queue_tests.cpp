@@ -1100,7 +1100,7 @@ HWTEST_F(CommandQueueTests, givenPreallocationsPerQueueWhenInitializeGpgpuCalled
 struct WaitForQueueCompletionTests : public ::testing::Test {
     template <typename Family>
     struct MyCmdQueue : public CommandQueueHw<Family> {
-        MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
+        MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false) {};
         WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, std::span<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
             requestedUseQuickKmdSleep = useQuickKmdSleep;
             waitUntilCompleteCounter++;
@@ -1188,7 +1188,7 @@ struct WaitUntilCompletionTests : public ::testing::Test {
       public:
         using CommandQueue::gpgpuEngine;
 
-        MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
+        MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false) {};
 
         CommandStreamReceiver *getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) override {
             return bcsCsrToReturn;

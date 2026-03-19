@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,8 +24,7 @@ HRESULT(WINAPI failCreateTopLevelInterface)
 }
 
 template <typename T>
-HRESULT(WINAPI createTopLevelInterface)
-(REFIID riid, void **ppFactory) {
+HRESULT(WINAPI createTopLevelInterface)(REFIID riid, void **ppFactory) {
     auto obj = std::make_unique<T>();
     *reinterpret_cast<T **>(ppFactory) = obj.get();
     obj.release();

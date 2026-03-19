@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ bool UdevLibImp::init() {
     return (mon != nullptr);
 }
 
-UdevLibImp::~UdevLibImp(){};
+UdevLibImp::~UdevLibImp() {};
 
 UdevLib *UdevLib::create() {
     UdevLibImp *pUdevLib = new UdevLibImp();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ class Diagnostics : _zes_diag_handle_t {
 };
 
 struct DiagnosticsHandleContext {
-    DiagnosticsHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    DiagnosticsHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     void releaseDiagnosticsHandles();
     MOCKABLE_VIRTUAL ~DiagnosticsHandleContext();
 

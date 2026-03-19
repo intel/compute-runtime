@@ -386,7 +386,7 @@ std::optional<int> formerOclocFree(const std::string &formerOclocName, uint32_t 
         return {};
     }
 
-    typedef int (*pOclocFreeOutput)(uint32_t * numOutputs, uint8_t * **dataOutputs, uint64_t * *lenOutputs, char ***nameOutputs);
+    typedef int (*pOclocFreeOutput)(uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs);
     auto oclocFreeFunc = reinterpret_cast<pOclocFreeOutput>(oclocLib->getProcAddress("oclocFreeOutput"));
 
     if (!oclocFreeFunc) {

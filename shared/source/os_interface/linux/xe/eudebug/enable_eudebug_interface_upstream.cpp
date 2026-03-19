@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,4 +9,4 @@
 
 namespace NEO {
 [[maybe_unused]] static EnableEuDebugInterface enableEuDebugUpstream(EuDebugInterfaceType::upstream, EuDebugInterfaceUpstream::sysFsXeEuDebugFile, []() -> std::unique_ptr<EuDebugInterface> { return std::make_unique<EuDebugInterfaceUpstream>(); });
-}
+} // namespace NEO

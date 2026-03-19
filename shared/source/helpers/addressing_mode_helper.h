@@ -23,8 +23,8 @@ bool containsStatefulAccess(const KernelDescriptor &kernelDescriptor);
 bool containsBindlessKernel(const std::vector<KernelInfo *> &kernelInfos);
 template <typename... Ts>
 bool isAnyValueWiderThan32bit(Ts... args) {
-    static_assert(((std::is_integral_v<Ts>)&&...));
-    static_assert(((!std::is_signed_v<Ts>)&&...));
+    static_assert(((std::is_integral_v<Ts>) && ...));
+    static_assert(((!std::is_signed_v<Ts>) && ...));
 
     constexpr auto u32Max = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
     return ((static_cast<uint64_t>(args) > u32Max) || ...);

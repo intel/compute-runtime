@@ -51,7 +51,7 @@ class WhiteBoxContext : public Context {
         return numProperties;
     }
 
-    WhiteBoxContext(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *), void *userData) : Context(pfnNotify, userData){};
+    WhiteBoxContext(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *), void *userData) : Context(pfnNotify, userData) {};
 };
 
 struct ContextTest : public PlatformFixture,

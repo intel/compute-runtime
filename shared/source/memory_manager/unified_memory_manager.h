@@ -37,7 +37,7 @@ struct UnifiedMemoryProperties;
 struct VirtualMemoryReservation;
 
 struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
-    SvmAllocationData(uint32_t maxRootDeviceIndex) : gpuAllocations(maxRootDeviceIndex), maxRootDeviceIndex(maxRootDeviceIndex){};
+    SvmAllocationData(uint32_t maxRootDeviceIndex) : gpuAllocations(maxRootDeviceIndex), maxRootDeviceIndex(maxRootDeviceIndex) {};
     SvmAllocationData(const SvmAllocationData &svmAllocData) : SvmAllocationData(svmAllocData.maxRootDeviceIndex) {
         this->allocationFlagsProperty = svmAllocData.allocationFlagsProperty;
         this->cpuAllocation = svmAllocData.cpuAllocation;

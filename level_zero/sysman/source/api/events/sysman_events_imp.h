@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ class EventsImp : public Events, NEO::NonCopyableAndNonMovableClass {
     OsEvents *pOsEvents = nullptr;
 
     EventsImp() = default;
-    EventsImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    EventsImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~EventsImp() override;
 
   private:

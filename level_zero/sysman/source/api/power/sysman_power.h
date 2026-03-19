@@ -40,7 +40,7 @@ class Power : _zes_pwr_handle_t {
     bool isCardPower = false;
 };
 struct PowerHandleContext {
-    PowerHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    PowerHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~PowerHandleContext();
 
     void init(uint32_t subDeviceCount);

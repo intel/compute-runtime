@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -243,7 +243,7 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenBuildingThenNotifyModuleCreat
     auto mockCompilerInterface = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
 
-    auto zebin = ZebinTestData::ValidEmptyProgram < is32bit ? NEO::Elf::EI_CLASS_32 : NEO::Elf::EI_CLASS_64 > ();
+    auto zebin = ZebinTestData::ValidEmptyProgram<is32bit ? NEO::Elf::EI_CLASS_32 : NEO::Elf::EI_CLASS_64>();
     auto program = new MockProgram(toClDeviceVector(*clDevice));
 
     auto copyHwInfo = device->getHardwareInfo();
@@ -275,7 +275,7 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenLinkingThenNotifyModuleCreate
     auto mockCompilerInterface = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
 
-    auto zebin = ZebinTestData::ValidEmptyProgram < is32bit ? NEO::Elf::EI_CLASS_32 : NEO::Elf::EI_CLASS_64 > ();
+    auto zebin = ZebinTestData::ValidEmptyProgram<is32bit ? NEO::Elf::EI_CLASS_32 : NEO::Elf::EI_CLASS_64>();
     auto program = new MockProgram(toClDeviceVector(*clDevice));
 
     auto copyHwInfo = device->getHardwareInfo();

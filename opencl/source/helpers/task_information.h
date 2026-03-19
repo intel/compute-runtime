@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ struct KernelOperation {
   protected:
     struct ResourceCleaner {
         ResourceCleaner() = delete;
-        ResourceCleaner(InternalAllocationStorage *storageForAllocations) : storageForAllocations(storageForAllocations){};
+        ResourceCleaner(InternalAllocationStorage *storageForAllocations) : storageForAllocations(storageForAllocations) {};
 
         template <typename ObjectT>
         void operator()(ObjectT *object);

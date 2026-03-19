@@ -29,7 +29,7 @@ struct UltHwConfig;
 
 class DrmMemoryManagerBasic : public ::testing::Test {
   public:
-    DrmMemoryManagerBasic() : executionEnvironment(defaultHwInfo.get(), false, numRootDevices){};
+    DrmMemoryManagerBasic() : executionEnvironment(defaultHwInfo.get(), false, numRootDevices) {};
     void SetUp() override;
 
     const uint32_t rootDeviceIndex = 1u;

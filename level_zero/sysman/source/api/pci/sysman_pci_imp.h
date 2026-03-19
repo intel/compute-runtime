@@ -29,7 +29,7 @@ class PciImp : public L0::Sysman::Pci, NEO::NonCopyableAndNonMovableClass {
     ze_result_t pciLinkSpeedUpdate(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) override;
     void pciGetStaticFields();
 
-    PciImp(L0::Sysman::OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    PciImp(L0::Sysman::OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~PciImp() override;
     L0::Sysman::OsPci *pOsPci = nullptr;
 

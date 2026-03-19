@@ -22,7 +22,7 @@
 namespace L0 {
 struct DebugSessionLinux : DebugSessionImp {
 
-    DebugSessionLinux(const zet_debug_config_t &config, Device *device, int fd) : DebugSessionImp(config, device), fd(fd){};
+    DebugSessionLinux(const zet_debug_config_t &config, Device *device, int fd) : DebugSessionImp(config, device), fd(fd) {};
     static ze_result_t translateDebuggerOpenErrno(int error);
     bool closeFd();
     void closeAsyncThread();
@@ -109,7 +109,7 @@ struct DebugSessionLinux : DebugSessionImp {
     };
 
     struct EventToAck {
-        EventToAck(uint64_t seqno, uint32_t type) : seqno(seqno), type(type){};
+        EventToAck(uint64_t seqno, uint32_t type) : seqno(seqno), type(type) {};
         uint64_t seqno;
         uint32_t type;
     };

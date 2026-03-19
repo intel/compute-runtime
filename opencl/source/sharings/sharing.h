@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ enum SynchronizeStatus {
 };
 
 struct UpdateData {
-    UpdateData(uint32_t inRootDeviceIndex) : rootDeviceIndex(inRootDeviceIndex){};
+    UpdateData(uint32_t inRootDeviceIndex) : rootDeviceIndex(inRootDeviceIndex) {};
     const uint32_t rootDeviceIndex;
     SynchronizeStatus synchronizationStatus = SHARED_OBJECT_NOT_CHANGED;
     osHandle sharedHandle = 0;
@@ -41,15 +41,15 @@ class SharingHandler {
     void release(MemObj *memObject, uint32_t rootDeviceIndex);
     virtual ~SharingHandler() = default;
 
-    virtual void getMemObjectInfo(size_t &paramValueSize, void *&paramValue){};
-    virtual void releaseReusedGraphicsAllocation(){};
+    virtual void getMemObjectInfo(size_t &paramValueSize, void *&paramValue) {};
+    virtual void releaseReusedGraphicsAllocation() {};
 
   protected:
     virtual int synchronizeHandler(UpdateData &updateData);
     virtual int validateUpdateData(UpdateData &updateData);
     virtual void synchronizeObject(UpdateData &updateData) { updateData.synchronizationStatus = SYNCHRONIZE_ERROR; }
     virtual void resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData);
-    virtual void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex){};
+    virtual void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {};
     unsigned int acquireCount = 0u;
 };
 } // namespace NEO

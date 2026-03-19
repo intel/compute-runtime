@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,11 +25,11 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
     struct MyCsr : public CommandStreamReceiverHw<Gen12LpFamily> {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiver::streamProperties;
-        MyCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen12LpFamily>(executionEnvironment, 0, 1){};
+        MyCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen12LpFamily>(executionEnvironment, 0, 1) {};
         MyCsr(ExecutionEnvironment &executionEnvironment,
               int32_t rootDeviceIndex,
               const DeviceBitfield deviceBitfield)
-            : CommandStreamReceiverHw<Gen12LpFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield){};
+            : CommandStreamReceiverHw<Gen12LpFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 

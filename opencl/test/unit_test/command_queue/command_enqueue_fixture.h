@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,7 +100,7 @@ struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBa
 
 template <typename FamilyType>
 struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
-    CommandQueueStateless(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false){};
+    CommandQueueStateless(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {};
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();
@@ -125,7 +125,7 @@ struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
 
 template <typename FamilyType>
 struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
-    CommandQueueStateful(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false){
+    CommandQueueStateful(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {
 
                                                                };
 

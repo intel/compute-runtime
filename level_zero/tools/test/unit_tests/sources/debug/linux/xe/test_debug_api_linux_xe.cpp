@@ -270,7 +270,7 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingOpenConnectionUpstreamWithValidDataThenSu
     L0::ult::openConnectionUpstreamFuncXe = nullptr;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static int direntIndex = 0;
             if (direntIndex >= static_cast<int>(sizeof(mockFDEntries) / sizeof(dirent))) {
                 direntIndex = 0;
@@ -336,7 +336,7 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingOpenConnectionUpstreamWithValidDataThenSu
         {0, 0, 0, 0, "4"},
         {0, 0, 0, 0, "5"},
     };
-    mockReaddir = [](DIR * dir) -> struct dirent * {
+    mockReaddir = [](DIR *dir) -> struct dirent * {
         static int direntIndex = 0;
         if (direntIndex >= static_cast<int>(sizeof(mockFDEntriesLarge) / sizeof(dirent))) {
             direntIndex = 0;
@@ -394,7 +394,7 @@ TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerConnectionUpstreamIsErrorThenReturns
 
     L0::ult::openConnectionUpstreamFuncXe = nullptr;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static int direntIndex = 0;
             if (direntIndex >= static_cast<int>(sizeof(mockFDEntries) / sizeof(dirent))) {
                 direntIndex = 0;

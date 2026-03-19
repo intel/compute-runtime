@@ -1967,7 +1967,7 @@ struct SvmHostAllocationCacheTestDataType {
                                                                                    1,
                                                                                    rootDeviceIndicesArg,
                                                                                    subdeviceBitFields),
-                                                           name(name){
+                                                           name(name) {
 
                                                            };
     size_t allocationSize;

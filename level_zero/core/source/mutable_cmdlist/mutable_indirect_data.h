@@ -29,7 +29,7 @@ class MutableIndirectData {
     MutableIndirectData(std::unique_ptr<Offsets> offsets,
                         ArrayRef<uint8_t> crossThreadData, ArrayRef<uint8_t> perThreadData,
                         ArrayRef<uint8_t> inlineData)
-        : offsets(std::move(offsets)), crossThreadData(crossThreadData), perThreadData(perThreadData), inlineData(inlineData){};
+        : offsets(std::move(offsets)), crossThreadData(crossThreadData), perThreadData(perThreadData), inlineData(inlineData) {};
 
     inline void setIfDefined(const CrossThreadDataOffset (&offsets)[3], MaxChannelsArray data);
     void setLocalWorkSize(MaxChannelsArray localWorkSize);

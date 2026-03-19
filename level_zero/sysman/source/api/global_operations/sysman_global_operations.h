@@ -13,7 +13,7 @@ namespace Sysman {
 
 class GlobalOperations {
   public:
-    virtual ~GlobalOperations(){};
+    virtual ~GlobalOperations() {};
     virtual ze_result_t reset(ze_bool_t force) = 0;
     virtual ze_result_t deviceGetProperties(zes_device_properties_t *pProperties) = 0;
     virtual bool getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) = 0;

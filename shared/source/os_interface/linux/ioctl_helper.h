@@ -109,7 +109,7 @@ using VmBindExtUserFenceT = uint8_t[56];
 
 class IoctlHelper {
   public:
-    IoctlHelper(Drm &drmArg) : drm(drmArg){};
+    IoctlHelper(Drm &drmArg) : drm(drmArg) {};
     virtual ~IoctlHelper() {}
     static std::unique_ptr<IoctlHelper> getI915Helper(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, Drm &drm);
     virtual int ioctl(DrmIoctl request, void *arg);

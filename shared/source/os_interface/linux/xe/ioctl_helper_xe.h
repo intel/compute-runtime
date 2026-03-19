@@ -181,7 +181,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint64_t convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass resourceClass);
     virtual bool isMediaEngine(uint16_t engineClass) const { return false; }
     virtual bool isMediaGt(uint16_t gtType) const;
-    virtual void setContextPropertiesForRootDeviceContext(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut){};
+    virtual void setContextPropertiesForRootDeviceContext(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut) {};
 
     virtual bool isPrimaryContext(const OsContextLinux &osContext, uint32_t deviceIndex);
     virtual uint32_t getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 namespace L0 {
 
-void WddmDiagnosticsImp::osGetDiagProperties(zes_diag_properties_t *pProperties){};
+void WddmDiagnosticsImp::osGetDiagProperties(zes_diag_properties_t *pProperties) {};
 
 ze_result_t WddmDiagnosticsImp::osGetDiagTests(uint32_t *pCount, zes_diag_test_t *pTests) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

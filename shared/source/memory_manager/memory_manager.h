@@ -126,9 +126,9 @@ class MemoryManager {
         uint32_t arrayIndex;
         uint32_t parentProcessId = 0;
 
-        OsHandleData(uint64_t handle, uint32_t arrayIndex = 0) : handle(static_cast<osHandle>(handle)), arrayIndex(arrayIndex){};
-        OsHandleData(void *handle, uint32_t arrayIndex = 0) : handle(toOsHandle(handle)), arrayIndex(arrayIndex){};
-        OsHandleData(osHandle handle, uint32_t arrayIndex = 0) : handle(handle), arrayIndex(arrayIndex){};
+        OsHandleData(uint64_t handle, uint32_t arrayIndex = 0) : handle(static_cast<osHandle>(handle)), arrayIndex(arrayIndex) {};
+        OsHandleData(void *handle, uint32_t arrayIndex = 0) : handle(toOsHandle(handle)), arrayIndex(arrayIndex) {};
+        OsHandleData(osHandle handle, uint32_t arrayIndex = 0) : handle(handle), arrayIndex(arrayIndex) {};
     };
 
     MemoryManager(ExecutionEnvironment &executionEnvironment);
@@ -157,8 +157,8 @@ class MemoryManager {
     virtual bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) { return false; }
     virtual GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) = 0;
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) = 0;
-    virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation){};
-    virtual void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation){};
+    virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation) {};
+    virtual void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandleWithReservedData(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation, void *reservedHandleData) { closeInternalHandle(handle, handleId, graphicsAllocation); };
 
     virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation);
@@ -188,8 +188,8 @@ class MemoryManager {
     virtual void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) = 0;
     MOCKABLE_VIRTUAL void freeGraphicsMemory(GraphicsAllocation *gfxAllocation);
     MOCKABLE_VIRTUAL void freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool isImportedAllocation);
-    virtual void handleFenceCompletion(GraphicsAllocation *allocation){};
-    virtual void removeAllocationFromDownloadAllocationsInCsr(GraphicsAllocation *alloc){};
+    virtual void handleFenceCompletion(GraphicsAllocation *allocation) {};
+    virtual void removeAllocationFromDownloadAllocationsInCsr(GraphicsAllocation *alloc) {};
 
     void checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation);
 
@@ -273,7 +273,7 @@ class MemoryManager {
     HeapIndex selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM, bool useFrontWindow);
     static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment, DriverModelType driverModel);
     virtual void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) { return nullptr; };
-    virtual void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex){};
+    virtual void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex) {};
     void *getReservedMemory(size_t size, size_t alignment);
     GfxPartition *getGfxPartition(uint32_t rootDeviceIndex) { return gfxPartitions.at(rootDeviceIndex).get(); }
     GmmHelper *getGmmHelper(uint32_t rootDeviceIndex);
@@ -292,7 +292,7 @@ class MemoryManager {
     static HeapIndex selectExternalHeap(bool useLocalMemory);
 
     static uint32_t maxOsContextCount;
-    virtual void commonCleanup(){};
+    virtual void commonCleanup() {};
     virtual bool isCpuCopyRequired(const void *ptr) { return false; }
     virtual bool isWCMemory(const void *ptr) { return false; }
 
@@ -314,9 +314,9 @@ class MemoryManager {
         return hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == AllocationType::bufferHostMemory);
     }
 
-    virtual void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex){};
-    virtual void createDeviceSpecificMemResources(uint32_t rootDeviceIndex){};
-    virtual void releaseDeviceSpecificGfxPartition(uint32_t rootDeviceIndex){};
+    virtual void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) {};
+    virtual void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) {};
+    virtual void releaseDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) {};
     virtual bool reInitDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) { return true; };
 
     void reInitLatestContextId() {

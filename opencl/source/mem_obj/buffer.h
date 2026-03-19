@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ struct EncodeSurfaceStateArgs;
 class GraphicsAllocation;
 class SharingHandler;
 
-using BufferCreateFunc = Buffer *(*)(Context *context,
+using BufferCreateFunc = Buffer *(*)(Context * context,
                                      const MemoryProperties &memoryProperties,
                                      cl_mem_flags flags,
                                      cl_mem_flags_intel flagsIntel,

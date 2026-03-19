@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class Fan : _zes_fan_handle_t {
     bool initSuccess = false;
 };
 struct FanHandleContext {
-    FanHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    FanHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~FanHandleContext();
 
     void init();

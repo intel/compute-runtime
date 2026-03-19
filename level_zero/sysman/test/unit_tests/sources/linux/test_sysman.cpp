@@ -62,7 +62,7 @@ TEST_F(SysmanDeviceFixture, GivenValidSysmanKmdInterfaceWhenCallingListDirectori
     });
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;
             if (entryIndex >= numEntries) {
                 entryIndex = 0;

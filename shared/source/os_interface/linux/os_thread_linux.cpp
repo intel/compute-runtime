@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include <sched.h>
 
 namespace NEO {
-ThreadLinux::ThreadLinux(pthread_t threadId) : threadId(threadId){};
+ThreadLinux::ThreadLinux(pthread_t threadId) : threadId(threadId) {};
 
 decltype(&Thread::create) Thread::createFunc = Thread::create;
 

@@ -6917,7 +6917,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPageFaultIsSupportedWhenCallingBin
     uint32_t vmHandleId = 0;
 
     struct MockDrmAllocationToTestPageFault : MockDrmAllocation {
-        MockDrmAllocationToTestPageFault() : MockDrmAllocation(0u, AllocationType::buffer, MemoryPool::localMemory){};
+        MockDrmAllocationToTestPageFault() : MockDrmAllocation(0u, AllocationType::buffer, MemoryPool::localMemory) {};
         bool shouldAllocationPageFault(const Drm *drm) override {
             return shouldPageFault;
         }

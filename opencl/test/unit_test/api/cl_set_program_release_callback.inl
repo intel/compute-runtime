@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ TEST_F(clSetProgramReleaseCallbackTests, givenPfnNotifyNullptrWhenSettingProgram
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-void CL_CALLBACK callback(cl_program, void *){};
+void CL_CALLBACK callback(cl_program, void *) {};
 
 TEST_F(clSetProgramReleaseCallbackTests, WhenSettingProgramReleaseCallbackThenInvalidOperationErrorIsReturned) {
     auto retVal = clSetProgramReleaseCallback(pProgram, callback, nullptr);

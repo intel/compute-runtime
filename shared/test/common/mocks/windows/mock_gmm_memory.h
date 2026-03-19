@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class MockGmmMemory : public GmmMemory {
   public:
     ~MockGmmMemory() override = default;
 
-    MockGmmMemory(GmmClientContext *gmmClientContext) : GmmMemory(gmmClientContext){};
+    MockGmmMemory(GmmClientContext *gmmClientContext) : GmmMemory(gmmClientContext) {};
 
     bool configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                      GMM_ESCAPE_HANDLE hDevice,

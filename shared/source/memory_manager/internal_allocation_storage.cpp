@@ -15,7 +15,7 @@
 namespace NEO {
 
 InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver)
-    : commandStreamReceiver(commandStreamReceiver){};
+    : commandStreamReceiver(commandStreamReceiver) {};
 
 void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage) {
     TaskCountType taskCount = gfxAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId());

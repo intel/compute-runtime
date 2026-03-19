@@ -43,7 +43,7 @@ struct KernelMutableStateDefaultCopyableParams {
         uint32_t slmArgsTotalSize = 0u;
 
         Vec3<size_t> suggestedGroupSize;
-        SuggestGroupSizeCacheEntry(size_t groupSize[3], uint32_t slmArgsTotalSize, size_t suggestedGroupSize[3]) : groupSize(groupSize), slmArgsTotalSize(slmArgsTotalSize), suggestedGroupSize(suggestedGroupSize){};
+        SuggestGroupSizeCacheEntry(size_t groupSize[3], uint32_t slmArgsTotalSize, size_t suggestedGroupSize[3]) : groupSize(groupSize), slmArgsTotalSize(slmArgsTotalSize), suggestedGroupSize(suggestedGroupSize) {};
 
         bool operator==(const SuggestGroupSizeCacheEntry &) const = default;
     };

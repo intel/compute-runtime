@@ -89,7 +89,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
     SubmissionStatus flushTagUpdate() override { return SubmissionStatus::success; };
-    void updateTagFromWait() override{};
+    void updateTagFromWait() override {};
     bool submitDependencyUpdate(TagNodeBase *tag) override {
         submitDependencyUpdateCalledTimes++;
         return submitDependencyUpdateReturnValue;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class ExternalSemaphoreWindows : public ExternalSemaphore {
   public:
     static std::unique_ptr<ExternalSemaphoreWindows> create(OSInterface *osInterface);
 
-    ~ExternalSemaphoreWindows() override{};
+    ~ExternalSemaphoreWindows() override {};
 
     bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override;
 

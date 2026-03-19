@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getDeviceOffset(uint64_t *deviceOffset) override;
     static size_t getRowPitchFor2dImage(Device *device, const NEO::ImageInfo &imgInfo);
     ze_result_t allocateImplicitArgsOnDemand() override;
-    void encodeImplicitArgsSurfaceState() override{};
+    void encodeImplicitArgsSurfaceState() override {};
 
   protected:
     Device *device = nullptr;

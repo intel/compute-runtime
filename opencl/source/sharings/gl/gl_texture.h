@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ class GlTexture : public GlSharing {
   protected:
     GlTexture(GLSharingFunctions *sharingFunctions, unsigned int glObjectType, unsigned int glObjectId, CL_GL_RESOURCE_INFO texInfo,
               cl_GLenum target, cl_GLint miplevel)
-        : GlSharing(sharingFunctions, glObjectType, glObjectId), target(target), miplevel(miplevel), textureInfo(texInfo){};
+        : GlSharing(sharingFunctions, glObjectType, glObjectId), target(target), miplevel(miplevel), textureInfo(texInfo) {};
 
     static uint32_t getClObjectType(cl_GLenum glType, bool returnClGlObjectType);
 

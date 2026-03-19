@@ -72,8 +72,8 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     void freeCpuAddress(AddressRange addressRange) override;
     bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool ntHandle) override;
     bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) override;
-    void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override{};
-    void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override{};
+    void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override {};
+    void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override {};
     void registerAllocationInOs(GraphicsAllocation *allocation) override;
     void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override;
     MOCKABLE_VIRTUAL NTSTATUS createInternalNTHandle(D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle, uint32_t rootDeviceIndex);

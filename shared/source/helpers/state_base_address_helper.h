@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,8 +14,8 @@ namespace NEO {
 struct SBAPlaceholder {};
 template <typename GfxFamily>
 concept GfxFamilyWithSBA = requires() {
-                               typename GfxFamily::STATE_BASE_ADDRESS;
-                           };
+    typename GfxFamily::STATE_BASE_ADDRESS;
+};
 template <typename GfxFamily>
 struct StateBaseAddressTypeHelper;
 

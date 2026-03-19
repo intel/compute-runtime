@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 class BinaryEncoder {
   public:
     BinaryEncoder(const std::string &dump, const std::string &elf)
-        : pathToDump(dump), elfName(elf){};
+        : pathToDump(dump), elfName(elf) {};
     BinaryEncoder(OclocArgHelper *helper) : argHelper(helper), iga(new IgaWrapper) {
         iga->setMessagePrinter(argHelper->getPrinterRef());
     }

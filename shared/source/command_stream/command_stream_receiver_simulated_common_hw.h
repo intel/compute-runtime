@@ -43,7 +43,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     virtual bool expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
     virtual bool expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
     virtual bool expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length);
-    virtual void pollForCompletionImpl(){};
+    virtual void pollForCompletionImpl() {};
     virtual void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) = 0;
     virtual void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) const = 0;
     virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;

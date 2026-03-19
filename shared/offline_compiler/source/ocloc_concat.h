@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ class OclocConcat : NEO::NonCopyableAndNonMovableClass {
     using ErrorCode = uint32_t;
 
     OclocConcat() = delete;
-    OclocConcat(OclocArgHelper *argHelper) : argHelper(argHelper){};
+    OclocConcat(OclocArgHelper *argHelper) : argHelper(argHelper) {};
     ErrorCode initialize(const std::vector<std::string> &args);
     ErrorCode concatenate();
     void printHelp();

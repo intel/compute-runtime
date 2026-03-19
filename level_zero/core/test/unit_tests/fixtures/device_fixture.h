@@ -192,7 +192,7 @@ struct MultipleDevicesWithCustomHwInfo {
 
 struct SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl : public MultiDeviceFixture {
 
-    SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl(uint32_t copyEngineCount, uint32_t implicitScaling) : implicitScaling(implicitScaling), expectedCopyEngineCount(copyEngineCount){};
+    SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl(uint32_t copyEngineCount, uint32_t implicitScaling) : implicitScaling(implicitScaling), expectedCopyEngineCount(copyEngineCount) {};
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
@@ -217,7 +217,7 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl : public MultiDevi
 };
 template <uint32_t copyEngineCount, uint32_t implicitScalingArg>
 struct SingleRootMultiSubDeviceFixtureWithImplicitScaling : public SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl {
-    SingleRootMultiSubDeviceFixtureWithImplicitScaling() : SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl(copyEngineCount, implicitScalingArg){};
+    SingleRootMultiSubDeviceFixtureWithImplicitScaling() : SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl(copyEngineCount, implicitScalingArg) {};
 };
 
 class FalseGpuCpuDeviceTime : public NEO::DeviceTime {

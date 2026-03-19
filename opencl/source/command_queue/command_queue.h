@@ -448,7 +448,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void *enqueueMapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueUnmapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest);
 
-    virtual void obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType){};
+    virtual void obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) {};
     bool isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue, bool isMarkerWithProfiling) const;
 
     bool isDependenciesFlushForMarkerRequired(const EventsRequest &eventsRequest) const;
@@ -575,6 +575,6 @@ PtrType CommandQueue::convertAddressWithOffsetToGpuVa(PtrType ptr, InternalMemor
     return ptr;
 }
 
-using CommandQueueCreateFunc = CommandQueue *(*)(Context *context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage);
+using CommandQueueCreateFunc = CommandQueue *(*)(Context * context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage);
 
 } // namespace NEO

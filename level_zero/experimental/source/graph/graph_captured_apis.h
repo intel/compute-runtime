@@ -197,18 +197,18 @@ struct Closure {
 
 template <class ApiArgsT>
 concept HasPhWaitEvents = requires(ApiArgsT &apiArgs) {
-                              apiArgs.phWaitEvents;
-                          };
+    apiArgs.phWaitEvents;
+};
 
 template <class ApiArgsT>
 concept HasPhEvents = requires(ApiArgsT &apiArgs) {
-                          apiArgs.phEvents;
-                      };
+    apiArgs.phEvents;
+};
 
 template <class ApiArgsT>
 concept HasHSignalEvent = requires(ApiArgsT &apiArgs) {
-                              apiArgs.hSignalEvent;
-                          };
+    apiArgs.hSignalEvent;
+};
 
 template <CaptureApi api, typename... TArgs>
     requires HasPhWaitEvents<typename Closure<api>::ApiArgs>

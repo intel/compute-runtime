@@ -492,7 +492,7 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateMemoryByKMDWhen32bitAndIsSt
 
 class MockWddmReserveValidAddressRange : public WddmMock {
   public:
-    MockWddmReserveValidAddressRange(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment){};
+    MockWddmReserveValidAddressRange(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {};
     bool reserveValidAddressRange(size_t size, void *&reservedMem) override {
         reserveValidAddressRangeResult.called++;
         reservedMem = dummyAddress;

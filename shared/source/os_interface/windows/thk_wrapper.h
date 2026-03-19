@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ class ThkWrapper {
     const uint32_t id{};
 
   public:
-    ThkWrapper(GdiProfiler &profiler, const char *name, uint32_t id) : profiler(profiler), name(name), id(id){};
+    ThkWrapper(GdiProfiler &profiler, const char *name, uint32_t id) : profiler(profiler), name(name), id(id) {};
 
     Func mFunc = nullptr;
 

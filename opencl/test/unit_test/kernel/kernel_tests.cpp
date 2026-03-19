@@ -793,7 +793,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     std::unique_ptr<TagAllocatorBase> createMultiRootDeviceTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices) override { return std::unique_ptr<TagAllocatorBase>(nullptr); }
 
     SubmissionStatus flushTagUpdate() override { return SubmissionStatus::success; };
-    void updateTagFromWait() override{};
+    void updateTagFromWait() override {};
     bool isUpdateTagFromWaitEnabled() override { return false; };
 
     bool isMultiOsContextCapable() const override { return false; }

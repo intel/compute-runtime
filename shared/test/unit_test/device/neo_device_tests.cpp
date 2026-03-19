@@ -549,14 +549,14 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
     class MockMemoryManager : public MemoryManager {
       public:
         MockMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment) {}
-        void addAllocationToHostPtrManager(GraphicsAllocation *memory) override{};
-        void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) override{};
+        void addAllocationToHostPtrManager(GraphicsAllocation *memory) override {};
+        void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) override {};
         GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override { return nullptr; }
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override { return nullptr; };
         AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override { return AllocationStatus::Success; };
-        void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
-        void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override{};
-        void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override{};
+        void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override {};
+        void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {};
+        void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override {};
         uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override {
             return 0;
         };
@@ -587,9 +587,9 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
             }
             return pageSizeAlignment;
         }
-        void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
+        void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override {};
         AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override { return {}; }
-        void freeCpuAddress(AddressRange addressRange) override{};
+        void freeCpuAddress(AddressRange addressRange) override {};
         GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override { return nullptr; };
         GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override { return nullptr; };
         GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override { return nullptr; };
@@ -609,7 +609,7 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
         GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override { return nullptr; };
         GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override { return nullptr; };
         void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override { return nullptr; };
-        void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override{};
+        void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override {};
     };
 
     MockExecutionEnvironment executionEnvironment;

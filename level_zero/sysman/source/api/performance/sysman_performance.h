@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class Performance : _zes_perf_handle_t {
 };
 
 struct PerformanceHandleContext {
-    PerformanceHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    PerformanceHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~PerformanceHandleContext();
 
     ze_result_t init(uint32_t subDeviceCount);

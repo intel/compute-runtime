@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ static jmp_buf jmpbuf;
 class SafetyGuardLinux : NEO::NonCopyableAndNonMovableClass {
   public:
     SafetyGuardLinux() {
-        struct sigaction sigact {};
+        struct sigaction sigact{};
 
         sigact.sa_sigaction = sigAction;
         sigact.sa_flags = SA_RESTART | SA_SIGINFO;
@@ -73,8 +73,8 @@ class SafetyGuardLinux : NEO::NonCopyableAndNonMovableClass {
 
     typedef void (*callbackFunction)();
     callbackFunction onSigSegv = nullptr;
-    struct sigaction previousSigSegvAction {};
-    struct sigaction previousSigIllvAction {};
+    struct sigaction previousSigSegvAction{};
+    struct sigaction previousSigIllvAction{};
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<SafetyGuardLinux>);

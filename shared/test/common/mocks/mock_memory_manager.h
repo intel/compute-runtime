@@ -505,12 +505,12 @@ class FailMemoryManager : public MockMemoryManager {
     }
 
     void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override { return nullptr; };
-    void unlockResourceImpl(GraphicsAllocation &gfxAllocation) override{};
+    void unlockResourceImpl(GraphicsAllocation &gfxAllocation) override {};
 
     MemoryManager::AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override {
         return AllocationStatus::Error;
     };
-    void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
+    void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override {};
 
     uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override {
         return 0;
@@ -530,8 +530,8 @@ class FailMemoryManager : public MockMemoryManager {
 
 class MockMemoryManagerFailFirstAllocation : public MockMemoryManager {
   public:
-    MockMemoryManagerFailFirstAllocation(bool enableLocalMemory, const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(enableLocalMemory, const_cast<ExecutionEnvironment &>(executionEnvironment)){};
-    MockMemoryManagerFailFirstAllocation(const ExecutionEnvironment &executionEnvironment) : MockMemoryManagerFailFirstAllocation(false, executionEnvironment){};
+    MockMemoryManagerFailFirstAllocation(bool enableLocalMemory, const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(enableLocalMemory, const_cast<ExecutionEnvironment &>(executionEnvironment)) {};
+    MockMemoryManagerFailFirstAllocation(const ExecutionEnvironment &executionEnvironment) : MockMemoryManagerFailFirstAllocation(false, executionEnvironment) {};
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override {
         allocateGraphicsMemoryInDevicePoolCalled++;

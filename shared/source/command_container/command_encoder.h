@@ -182,8 +182,8 @@ struct EncodeWalkerArgs {
 
 template <class T>
 concept LegacyInterfaceDescriptorType = requires() {
-                                            T::SAMPLERSTATEPOINTER_ALIGN_SIZE;
-                                        };
+    T::SAMPLERSTATEPOINTER_ALIGN_SIZE;
+};
 
 template <class InterfaceDescriptorType>
 struct InterfaceDescriptorTraits {

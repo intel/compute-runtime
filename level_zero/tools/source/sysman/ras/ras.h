@@ -40,7 +40,7 @@ class Ras : _zes_ras_handle_t {
 };
 
 struct RasHandleContext {
-    RasHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    RasHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     MOCKABLE_VIRTUAL ~RasHandleContext();
 
     MOCKABLE_VIRTUAL void init(std::vector<ze_device_handle_t> &deviceHandles);

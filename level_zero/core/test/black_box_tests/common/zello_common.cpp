@@ -669,10 +669,10 @@ void printCommandQueueGroupsProperties(ze_device_handle_t &device) {
 }
 
 const std::vector<const char *> &getResourcesSearchLocations() {
-    static std::vector<const char *> locations {
+    static std::vector<const char *> locations{
         "test_files/spv_modules/",
 #if defined(OS_DATADIR)
-            TOSTR(OS_DATADIR),
+        TOSTR(OS_DATADIR),
 #endif
     };
     return locations;

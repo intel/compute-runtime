@@ -574,7 +574,7 @@ struct Mock<CommandList> : public CommandList {
                       bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation));
 
     ADDMETHOD_NOBASE(appendWriteGlobalTimestamp, ze_result_t, ZE_RESULT_SUCCESS,
-                     (uint64_t * dstptr,
+                     (uint64_t *dstptr,
                       ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents));

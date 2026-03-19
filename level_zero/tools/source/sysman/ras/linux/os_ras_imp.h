@@ -121,7 +121,7 @@ class LinuxRasSourceHbm : public LinuxRasSources {
     std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategories(zes_ras_error_type_t errorType) override;
     LinuxRasSourceHbm(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, uint32_t subdeviceId);
     LinuxRasSourceHbm() = default;
-    ~LinuxRasSourceHbm() override{};
+    ~LinuxRasSourceHbm() override {};
 
   protected:
     ze_result_t getMemoryErrorCountFromFw(zes_ras_error_type_t rasErrorType, uint32_t subDeviceCount, uint64_t &errorCount);

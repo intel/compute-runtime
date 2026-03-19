@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ using namespace NEO;
 
 class KernelArgInfoFixture {
   public:
-    KernelArgInfoFixture(){};
+    KernelArgInfoFixture() {};
 
     void setUp() {
         clDevice = std::make_unique<MockClDevice>(new MockDevice());

@@ -104,7 +104,7 @@ class BcsSplit {
 
     BcsSplitParams::CmdListsForSplitContainer getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize);
 
-    BcsSplit(Device &device) : events(*this), device(device){};
+    BcsSplit(Device &device) : events(*this), device(device) {};
 
   protected:
     std::vector<CommandList *> &selectCmdLists(NEO::TransferDirection direction);

@@ -732,7 +732,7 @@ HWTEST_F(ModuleTest, GivenIncorrectNameWhenCreatingKernelThenResultErrorInvalidA
 struct DerivedModuleImp : public L0::ModuleImp {
     using ModuleImp::kernelImmData;
     using ModuleImp::translationUnit;
-    DerivedModuleImp(L0::Device *device) : ModuleImp(device, nullptr, ModuleType::user){};
+    DerivedModuleImp(L0::Device *device) : ModuleImp(device, nullptr, ModuleType::user) {};
     ~DerivedModuleImp() override = default;
 
     bool canModulesShareIsaAllocation() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ namespace Sysman {
 struct SysmanDeviceImp;
 
 struct OsSysman {
-    virtual ~OsSysman(){};
+    virtual ~OsSysman() {};
 
     virtual ze_result_t init() = 0;
     virtual ze_result_t initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) = 0;

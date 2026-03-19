@@ -194,7 +194,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     AllocationType getAllocationType() const { return allocationType; }
 
     MemoryPool getMemoryPool() const { return memoryPool; }
-    virtual void setAsReadOnly(){};
+    virtual void setAsReadOnly() {};
 
     bool isUsed() const {
         if (parentAllocation) {

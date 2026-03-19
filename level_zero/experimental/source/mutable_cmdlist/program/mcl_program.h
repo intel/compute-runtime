@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -162,7 +162,7 @@ static ConstStringRef functionPrefix = ".text.eu.func.";
 struct Symbol {
     Symbol() = default;
     Symbol(const std::string &name, SymbolType type, Sections::SectionType section, uint64_t value, size_t size)
-        : name(name), type(type), section(section), value(value), size(size){};
+        : name(name), type(type), section(section), value(value), size(size) {};
     std::string name;
     SymbolType type;
     Sections::SectionType section;
@@ -232,7 +232,7 @@ static_assert(sizeof(RelocType) == sizeof(uint32_t));
 struct Relocation {
     Relocation() = delete;
     Relocation(Sections::SectionType section, size_t symbolId, RelocType type, uint64_t offset, int64_t addend = 0)
-        : symbolId(symbolId), offset(offset), addend(addend), type(type), section(section){};
+        : symbolId(symbolId), offset(offset), addend(addend), type(type), section(section) {};
 
     size_t symbolId;
     uint64_t offset;

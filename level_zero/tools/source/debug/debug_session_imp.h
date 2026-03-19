@@ -189,7 +189,7 @@ struct DebugSessionImp : DebugSession {
     void dumpDebugSurfaceToFile(uint64_t vmHandle, uint64_t gpuVa, const std::string &path);
     void validateAndSetStateSaveAreaHeader(uint64_t vmHandle, uint64_t gpuVa);
     bool getRegHeaderSize(const NEO::StateSaveAreaHeader *pStateSaveArea, size_t size, size_t &regHeaderSize);
-    virtual void readStateSaveAreaHeader(){};
+    virtual void readStateSaveAreaHeader() {};
     MOCKABLE_VIRTUAL ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention);
     MOCKABLE_VIRTUAL ze_result_t isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP::fifo_node &node);
     void getFifoOffsets(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t &offsetTail, uint64_t &offsetFifoSize, uint64_t &offsetFifo, uint64_t gpuVa);

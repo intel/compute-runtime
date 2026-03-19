@@ -166,7 +166,7 @@ TEST_F(DeviceExtensionTest, givenDeviceCacheLineSizeExtensionThenGetCachePropert
 class MockCacheReservation : public CacheReservation {
   public:
     ~MockCacheReservation() override = default;
-    MockCacheReservation(L0::Device &device, bool initialize) : isInitialized(initialize){};
+    MockCacheReservation(L0::Device &device, bool initialize) : isInitialized(initialize) {};
 
     bool reserveCache(size_t cacheLevel, size_t cacheReservationSize) override {
         receivedCacheLevel = cacheLevel;

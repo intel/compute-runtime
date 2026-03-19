@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ namespace NEO {
 
 class MockOsLibrary : public NEO::OsLibrary {
   public:
-    MockOsLibrary(){};
+    MockOsLibrary() {};
     void *getProcAddress(const std::string &procName) override;
     bool isLoaded() override;
     std::string getFullPath() override;

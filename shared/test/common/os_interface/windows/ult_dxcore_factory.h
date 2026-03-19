@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,7 +126,7 @@ class UltDxCoreAdapter : public IDXCoreAdapter {
 
     // IUnknown
 #ifdef _WIN32
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject) override {
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR * __RPC_FAR * ppvObject) override {
         UNRECOVERABLE_IF(true);
         return error;
     }
@@ -189,7 +189,7 @@ class UltDXCoreAdapterList : public IDXCoreAdapterList {
 
     // IUnknown
 #ifdef _WIN32
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject) override {
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR * __RPC_FAR * ppvObject) override {
         UNRECOVERABLE_IF(true);
         return error;
     }
@@ -261,7 +261,7 @@ class UltDXCoreAdapterFactory : public IDXCoreAdapterFactory {
 
     // IUnknown
 #ifdef _WIN32
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject) override {
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR * __RPC_FAR * ppvObject) override {
         UNRECOVERABLE_IF(true);
         return error;
     }

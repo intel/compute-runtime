@@ -202,12 +202,12 @@ class MemoryManagerIpcMock : public NEO::MemoryManager {
     MemoryManagerIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MemoryManager(executionEnvironment) {}
     NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override { return nullptr; }
     NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override { return nullptr; }
-    void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
-    void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
+    void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override {};
+    void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override {};
     AllocationStatus populateOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override { return AllocationStatus::Success; };
-    void cleanOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
-    void freeGraphicsMemoryImpl(NEO::GraphicsAllocation *gfxAllocation) override{};
-    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override{};
+    void cleanOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override {};
+    void freeGraphicsMemoryImpl(NEO::GraphicsAllocation *gfxAllocation) override {};
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override {};
     uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override { return 0; };
     uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override { return 0; };
     double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override { return 0; }
@@ -236,9 +236,9 @@ class MemoryManagerIpcMock : public NEO::MemoryManager {
         }
         return pageSizeAlignment;
     }
-    void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
+    void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override {};
     AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override { return {}; }
-    void freeCpuAddress(AddressRange addressRange) override{};
+    void freeCpuAddress(AddressRange addressRange) override {};
     NEO::GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const NEO::AllocationData &allocationData) override { return nullptr; };
     NEO::GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const NEO::AllocationData &allocationData) override { return nullptr; };
     NEO::GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const NEO::AllocationData &allocationData) override { return nullptr; };
@@ -258,7 +258,7 @@ class MemoryManagerIpcMock : public NEO::MemoryManager {
     NEO::GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const NEO::AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override { return nullptr; };
     NEO::GraphicsAllocation *allocateMemoryByKMD(const NEO::AllocationData &allocationData) override { return nullptr; };
     void *lockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override { return nullptr; };
-    void unlockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override{};
+    void unlockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override {};
 };
 
 class IpcImplicitScalingMockGraphicsAllocation : public NEO::MemoryAllocation {
@@ -348,12 +348,12 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
   public:
     MemoryManagerIpcImplicitScalingMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MemoryManager(executionEnvironment) {}
 
-    void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
-    void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
+    void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override {};
+    void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override {};
     AllocationStatus populateOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override { return AllocationStatus::Success; };
-    void cleanOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
-    void freeGraphicsMemoryImpl(NEO::GraphicsAllocation *gfxAllocation) override{};
-    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override{};
+    void cleanOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override {};
+    void freeGraphicsMemoryImpl(NEO::GraphicsAllocation *gfxAllocation) override {};
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override {};
     uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override { return 0; };
     uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override { return 0; };
     double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override { return 0; }
@@ -382,9 +382,9 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
         }
         return pageSizeAlignment;
     }
-    void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
+    void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override {};
     AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override { return {}; }
-    void freeCpuAddress(AddressRange addressRange) override{};
+    void freeCpuAddress(AddressRange addressRange) override {};
     NEO::GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const NEO::AllocationData &allocationData) override { return nullptr; };
     NEO::GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const NEO::AllocationData &allocationData) override { return nullptr; };
     NEO::GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const NEO::AllocationData &allocationData) override { return nullptr; };
@@ -404,7 +404,7 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
     NEO::GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const NEO::AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override { return nullptr; };
     NEO::GraphicsAllocation *allocateMemoryByKMD(const NEO::AllocationData &allocationData) override { return nullptr; };
     void *lockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override { return nullptr; };
-    void unlockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override{};
+    void unlockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override {};
 
     NEO::GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) override;
 

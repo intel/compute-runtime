@@ -19,12 +19,12 @@ class ProductHelper;
 
 template <typename T>
 concept PoolTraits = requires(Device *d, size_t s) {
-                         { T::allocationType } -> std::convertible_to<AllocationType>;
-                         { T::maxAllocationSize } -> std::convertible_to<size_t>;
-                         { T::defaultPoolSize } -> std::convertible_to<size_t>;
-                         { T::poolAlignment } -> std::convertible_to<size_t>;
-                         { T::createAllocationProperties(d, s) } -> std::same_as<AllocationProperties>;
-                     };
+    { T::allocationType } -> std::convertible_to<AllocationType>;
+    { T::maxAllocationSize } -> std::convertible_to<size_t>;
+    { T::defaultPoolSize } -> std::convertible_to<size_t>;
+    { T::poolAlignment } -> std::convertible_to<size_t>;
+    { T::createAllocationProperties(d, s) } -> std::same_as<AllocationProperties>;
+};
 
 struct TimestampPoolTraits {
     static constexpr AllocationType allocationType = AllocationType::gpuTimestampDeviceBuffer;

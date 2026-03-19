@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ class Standby : _zes_standby_handle_t {
 };
 
 struct StandbyHandleContext {
-    StandbyHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    StandbyHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~StandbyHandleContext();
 
     ze_result_t init(uint32_t subDeviceCount);

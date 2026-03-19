@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ class Firmware : _zes_firmware_handle_t {
 };
 
 struct FirmwareHandleContext {
-    FirmwareHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    FirmwareHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     MOCKABLE_VIRTUAL ~FirmwareHandleContext();
     void releaseFwHandles();
 

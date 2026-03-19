@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,14 +47,14 @@ class MockIMetricEnumerator1x13 : public MetricsDiscovery::IMetricEnumerator_1_1
 class MockIMetric1x13 : public MetricsDiscovery::IMetric_1_13 {
   public:
     MetricsDiscovery::TMetricParams_1_13 mockMetricParams{};
-    ~MockIMetric1x13() override{};
+    ~MockIMetric1x13() override {};
     MetricsDiscovery::TMetricParams_1_13 *GetParams() override;
 };
 
 class MockIInformation1x0 : public MetricsDiscovery::IInformation_1_0 {
   public:
     MetricsDiscovery::TInformationParams_1_0 mockInformationParams{};
-    ~MockIInformation1x0() override{};
+    ~MockIInformation1x0() override {};
     MetricsDiscovery::TInformationParams_1_0 *GetParams() override;
 };
 

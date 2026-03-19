@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ class DrmMockForWorker : public Drm {
 
 class DrmGemCloseWorkerFixture {
   public:
-    DrmGemCloseWorkerFixture() : executionEnvironment(defaultHwInfo.get()){};
+    DrmGemCloseWorkerFixture() : executionEnvironment(defaultHwInfo.get()) {};
     // max loop count for while
     static const uint32_t deadCntInit = 10 * 1000 * 1000;
 

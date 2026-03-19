@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,7 +94,7 @@ class GscRasUtil : public RasUtil {
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId);
     uint32_t rasGetCategoryCount() override;
     GscRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId);
-    ~GscRasUtil() override{};
+    ~GscRasUtil() override {};
 
   protected:
     ze_result_t getMemoryErrorCountFromFw(zes_ras_error_type_t rasErrorType, uint32_t subDeviceCount, uint64_t &errorCount);
@@ -115,7 +115,7 @@ class RasUtilNone : public RasUtil {
     ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; };
     uint32_t rasGetCategoryCount() override { return 0u; };
     RasUtilNone() = default;
-    ~RasUtilNone() override{};
+    ~RasUtilNone() override {};
 };
 
 } // namespace Sysman

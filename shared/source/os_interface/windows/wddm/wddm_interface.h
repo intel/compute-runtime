@@ -20,7 +20,7 @@ struct WddmSubmitArguments;
 
 class WddmInterface {
   public:
-    WddmInterface(Wddm &wddm) : wddm(wddm){};
+    WddmInterface(Wddm &wddm) : wddm(wddm) {};
     virtual ~WddmInterface() = default;
     WddmInterface() = delete;
     virtual bool createHwQueue(OsContextWin &osContext) = 0;

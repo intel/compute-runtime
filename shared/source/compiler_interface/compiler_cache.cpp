@@ -135,7 +135,7 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
 }
 
 CompilerCache::CompilerCache(const CompilerCacheConfig &cacheConfig)
-    : config(cacheConfig){};
+    : config(cacheConfig) {};
 
 std::string CompilerCache::getCachedFilePath(const std::string &cacheFile) {
     std::string path = config.cacheDir;

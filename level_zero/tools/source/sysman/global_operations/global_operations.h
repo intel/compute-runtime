@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ namespace L0 {
 
 class GlobalOperations {
   public:
-    virtual ~GlobalOperations(){};
+    virtual ~GlobalOperations() {};
     virtual ze_result_t reset(ze_bool_t force) = 0;
     virtual ze_result_t deviceGetProperties(zes_device_properties_t *pProperties) = 0;
     virtual ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) = 0;

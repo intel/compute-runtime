@@ -43,7 +43,8 @@ TEST_F(KernelAddressingTest,
        givenBuiltinCopyBufferToBufferKernelsWhenFetchedFromBuiltinLibThenCorrectArgumentSizesAreUsed) {
     {
         // BufferBuiltIn copyBufferBytes uses copyBufferToBufferBytesSingle without extra arguments
-    } {
+    }
+    {
         const auto builtinType = BuiltInHelper::adjustBufferBuiltIn<L0::BufferBuiltIn::copyBufferToBufferMiddle>(isStateless, isHeapless);
 
         auto kernel = builtinLib->getFunction(builtinType);

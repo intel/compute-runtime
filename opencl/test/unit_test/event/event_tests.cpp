@@ -107,7 +107,7 @@ TEST(Event, givenEventWithHigherTaskCountWhenLowerTaskCountIsBeingSetThenTaskCou
 TEST(Event, WhenGettingTaskLevelThenCorrectTaskLevelIsReturned) {
     class TempEvent : public Event {
       public:
-        TempEvent() : Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 5, 7){};
+        TempEvent() : Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 5, 7) {};
 
         TaskCountType getTaskLevel() override {
             return Event::getTaskLevel();

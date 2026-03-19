@@ -215,7 +215,7 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
 
     class MockHeapAllocator : public HeapAllocator {
       public:
-        MockHeapAllocator() : HeapAllocator(0, 0){};
+        MockHeapAllocator() : HeapAllocator(0, 0) {};
         void free(uint64_t ptr, size_t size) override {}
     };
     usmMemAllocPool.chunkAllocator = std::make_unique<MockHeapAllocator>();

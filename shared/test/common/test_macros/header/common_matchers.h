@@ -288,5 +288,5 @@ struct ImageSupport {
 
 template <typename GfxFamily>
 concept HasSemaphore64bCmd = requires {
-                                 typename GfxFamily::MI_SEMAPHORE_WAIT_64;
-                             };
+    typename GfxFamily::MI_SEMAPHORE_WAIT_64;
+};

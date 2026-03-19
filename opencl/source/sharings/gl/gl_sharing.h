@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ class GLSharingFunctions : public SharingFunctions {
 class GlSharing : public SharingHandler {
   public:
     GlSharing(GLSharingFunctions *sharingFunctions, unsigned int glObjectType, unsigned int glObjectId)
-        : sharingFunctions(sharingFunctions), clGlObjectType(glObjectType), clGlObjectId(glObjectId){};
+        : sharingFunctions(sharingFunctions), clGlObjectType(glObjectType), clGlObjectId(glObjectId) {};
     GLSharingFunctions *peekFunctionsHandler() { return sharingFunctions; }
     void getGlObjectInfo(unsigned int *pClGlObjectType, unsigned int *pClGlObjectId) {
         if (pClGlObjectType) {

@@ -30,7 +30,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     ze_result_t initialize() override;
 
     struct IoctlHandlerXe : DebugSessionLinux::IoctlHandler {
-        IoctlHandlerXe(const NEO::EuDebugInterface &euDebugInterface) : euDebugInterface(euDebugInterface){};
+        IoctlHandlerXe(const NEO::EuDebugInterface &euDebugInterface) : euDebugInterface(euDebugInterface) {};
         int ioctl(int fd, unsigned long request, void *arg) override {
             int ret = 0;
             int error = 0;

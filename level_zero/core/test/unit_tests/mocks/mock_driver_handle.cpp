@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,7 +98,7 @@ NEO::GraphicsAllocation *Mock<DriverHandle>::getDriverSystemMemoryAllocation(voi
     }
     return nullptr;
 }
-Mock<DriverHandle>::~Mock(){};
+Mock<DriverHandle>::~Mock() {};
 
 } // namespace ult
 } // namespace L0

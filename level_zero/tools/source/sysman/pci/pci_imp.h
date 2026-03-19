@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class PciImp : public Pci, NEO::NonCopyableAndNonMovableClass {
     ze_result_t pciGetState(zes_pci_state_t *pState) override;
     void pciGetStaticFields();
 
-    PciImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    PciImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~PciImp() override;
     OsPci *pOsPci = nullptr;
 

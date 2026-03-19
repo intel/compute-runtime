@@ -1818,7 +1818,7 @@ TEST(OsAgnosticMemoryManager, givenDifferentIsaPaddingIncludedFlagValuesWhenAllo
 
 class MemoryManagerWithAsyncDeleterTest : public ::testing::Test {
   public:
-    MemoryManagerWithAsyncDeleterTest() : memoryManager(false, false){};
+    MemoryManagerWithAsyncDeleterTest() : memoryManager(false, false) {};
     void SetUp() override {
         memoryManager.overrideAsyncDeleterFlag(true);
     }
@@ -2946,7 +2946,7 @@ class FailFirstCpuReserveMemoryManager : public MockMemoryManager {
         }
         return AddressRange{0xDEADBEEF, size};
     }
-    void freeCpuAddress(AddressRange addressRange) override{};
+    void freeCpuAddress(AddressRange addressRange) override {};
 
     bool alwaysFail = false;
     bool isFirstCpuReservationCall = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -279,7 +279,7 @@ class Mock<IMetric_1_13> : public IMetric_1_13 {
 template <>
 class Mock<IInformation_1_0> : public IInformation_1_0 {
   public:
-    Mock(){};
+    Mock() {};
 
     ADDMETHOD_NOBASE(GetParams, MetricsDiscovery::TInformationParams_1_0 *, nullptr, ());
 };

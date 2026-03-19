@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ class MockOclocArgHelper : public OclocArgHelper {
     bool shouldReturnEmptyVectorOfStrings = false;
 
     MockOclocArgHelper(FilesMap &filesMap) : OclocArgHelper(0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr),
-                                             filesMap(filesMap){};
+                                             filesMap(filesMap) {};
 
     void setFormerProductConfigHelper(std::unique_ptr<FormerProductConfigHelper> helper) {
         formerProductConfigHelper = std::move(helper);

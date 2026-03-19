@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ class Frequency : _zes_freq_handle_t {
 };
 
 struct FrequencyHandleContext {
-    FrequencyHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    FrequencyHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~FrequencyHandleContext();
 
     ze_result_t init(uint32_t subDeviceCount);

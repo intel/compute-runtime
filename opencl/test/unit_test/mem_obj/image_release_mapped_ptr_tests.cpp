@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ template <typename Family>
 class MyMockCommandQueue : public CommandQueueHw<Family> {
 
   public:
-    MyMockCommandQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
+    MyMockCommandQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false) {};
 
     cl_int enqueueWriteImage(Image *dstImage, cl_bool blockingWrite,
                              const size_t *origin, const size_t *region,

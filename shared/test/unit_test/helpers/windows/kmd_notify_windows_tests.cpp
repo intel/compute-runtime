@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class PublicKmdNotifyHelper : public KmdNotifyHelper {
     using KmdNotifyHelper::acLineConnected;
     using KmdNotifyHelper::updateAcLineStatus;
 
-    PublicKmdNotifyHelper(const KmdNotifyProperties *newProperties) : KmdNotifyHelper(newProperties){};
+    PublicKmdNotifyHelper(const KmdNotifyProperties *newProperties) : KmdNotifyHelper(newProperties) {};
 };
 
 TEST(KmdNotifyWindowsTests, whenGetSystemPowerStatusReturnSuccessThenUpdateAcLineStatus) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1316,7 +1316,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 class BufferCalculateHostPtrSize : public testing::TestWithParam<std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t>> {
   public:
-    BufferCalculateHostPtrSize(){};
+    BufferCalculateHostPtrSize() {};
 
   protected:
     void SetUp() override {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class MockGmm : public Gmm {
     using Gmm::Gmm;
     using Gmm::setupImageResourceParams;
 
-    MockGmm(GmmHelper *gmmHelper) : Gmm(gmmHelper, nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, GmmRequirements{true, false}){};
+    MockGmm(GmmHelper *gmmHelper) : Gmm(gmmHelper, nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, GmmRequirements{true, false}) {};
 
     ADDMETHOD_NOBASE(extraMemoryFlagsRequired, bool, false, ());
 

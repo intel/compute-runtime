@@ -129,8 +129,28 @@ struct MetricIpSamplingMetricsAggregationMultiDevFixture : public MetricIpSampli
     size_t rawReports2BytesSize = 0;
 
     std::vector<uint64_t> expectedMetricValues2Xe2AndLater = {
-        2, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,   // 1st raw report + 3rd raw report of secondRawDataElementsXe2AndLater
-        100, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, // 2nd raw report + 4th raw report of secondRawDataElementsXe2AndLater
+        2,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20, // 1st raw report + 3rd raw report of secondRawDataElementsXe2AndLater
+        100,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99, // 2nd raw report + 4th raw report of secondRawDataElementsXe2AndLater
     };
 
     // Report format is: 11 Metrics ComputeScope 0, 11 Metrics ComputeScope 1

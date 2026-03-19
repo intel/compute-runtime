@@ -262,7 +262,7 @@ struct OaMetricGroupImp : public MetricGroupImp {
 };
 
 struct OaMetricImp : public MetricImp {
-    ~OaMetricImp() override{};
+    ~OaMetricImp() override {};
 
     OaMetricImp(MetricSource &metricSource, std::vector<MetricScopeImp *> &metricScopes) : MetricImp(metricSource, metricScopes) {}
 

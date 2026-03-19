@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,11 +12,11 @@ namespace NEO {
 
 class MockTbxSockets : public TbxSockets {
   public:
-    MockTbxSockets(){};
+    MockTbxSockets() {};
     ~MockTbxSockets() override = default;
 
     bool init(const std::string &hostNameOrIp, uint16_t port) override { return true; };
-    void close() override{};
+    void close() override {};
 
     bool writeGTT(uint32_t gttOffset, uint64_t entry) override { return true; };
 

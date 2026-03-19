@@ -423,7 +423,7 @@ TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndValidDirectoryWhenCallingsca
     });
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static int callCount = 0;
             callCount++;
             if (callCount > 1) {
@@ -785,7 +785,7 @@ TEST_F(SysmanDeviceFixture, GivenValidPidWhenCallingProcfsAccessGetFileDescripto
     });
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static int callCount = 0;
             if (callCount > 2) {
                 return nullptr;
@@ -814,7 +814,7 @@ TEST_F(SysmanDeviceFixture, GivenValidProcfsAccessHandleWhenCallingListProcesses
     });
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static int callCount = 0;
             if (callCount > 2) {
                 return nullptr;

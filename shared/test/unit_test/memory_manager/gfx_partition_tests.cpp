@@ -281,7 +281,7 @@ class MockOsMemory : public OSMemory {
 
     void getMemoryMaps(MemoryMaps &outMemoryMaps) override {}
 
-    void releaseCpuAddressRange(const OSMemory::ReservedCpuAddressRange &reservedCpuAddressRange) override{};
+    void releaseCpuAddressRange(const OSMemory::ReservedCpuAddressRange &reservedCpuAddressRange) override {};
 
     void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve, bool topDownHint) override { return nullptr; }
     void osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) override {}

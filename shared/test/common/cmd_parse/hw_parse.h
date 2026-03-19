@@ -64,7 +64,8 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
     }
 
     template <typename FamilyType>
-        requires std::is_same_v<typename FamilyType::StallingBarrierType, typename FamilyType::RESOURCE_BARRIER> bool
+        requires std::is_same_v<typename FamilyType::StallingBarrierType, typename FamilyType::RESOURCE_BARRIER>
+    bool
     isStallingBarrier(GenCmdList::iterator &iter) {
         using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
         auto resourceBarrierCmd = genCmdCast<RESOURCE_BARRIER *>(*iter);

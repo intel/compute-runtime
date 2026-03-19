@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ namespace NEO {
 
 class DriverInfoMock : public DriverInfo {
   public:
-    DriverInfoMock() : DriverInfo(DriverInfoType::windowsType){};
+    DriverInfoMock() : DriverInfo(DriverInfoType::windowsType) {};
 
     std::string getDeviceName(std::string defaultName) override { return deviceName; };
     std::string getVersion(std::string defaultVersion) override { return version; };

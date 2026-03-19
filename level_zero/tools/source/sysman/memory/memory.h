@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ class Memory : _zes_mem_handle_t {
 };
 
 struct MemoryHandleContext {
-    MemoryHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    MemoryHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~MemoryHandleContext();
 
     ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);

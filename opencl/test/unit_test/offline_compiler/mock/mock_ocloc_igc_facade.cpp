@@ -13,7 +13,7 @@ class OclocArgHelper;
 
 namespace NEO {
 
-MockOclocIgcFacade::MockOclocIgcFacade(OclocArgHelper *argHelper) : OclocIgcFacade(argHelper){};
+MockOclocIgcFacade::MockOclocIgcFacade(OclocArgHelper *argHelper) : OclocIgcFacade(argHelper) {};
 MockOclocIgcFacade::~MockOclocIgcFacade() = default;
 
 std::unique_ptr<OsLibrary> MockOclocIgcFacade::loadIgcLibrary(const char *libName) const {

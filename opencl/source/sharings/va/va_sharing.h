@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace NEO {
 class VASharing : public SharingHandler {
   public:
     VASharing(VASharingFunctions *sharingFunctions, VAImageID imageId)
-        : sharingFunctions(sharingFunctions), imageId(imageId){};
+        : sharingFunctions(sharingFunctions), imageId(imageId) {};
     VASharingFunctions *peekFunctionsHandler() { return sharingFunctions; }
 
   protected:

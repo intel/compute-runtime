@@ -641,7 +641,7 @@ struct MockScratchController : public ScratchSpaceController {
                                                bool &vfeStateDirty,
                                                NEO::CommandStreamReceiver *csr) override {
     }
-    void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override{};
+    void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override {};
 };
 
 HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, whenScratchIsRequiredForFirstFlushAndPrivateScratchForSecondFlushThenHandleResidencyProperly, FlushTaskNonHeaplessMatcher) {

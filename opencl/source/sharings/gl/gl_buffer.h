@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ class GlBuffer : public GlSharing, NEO::NonCopyableAndNonMovableClass {
 
   protected:
     GlBuffer(GLSharingFunctions *sharingFunctions, unsigned int glObjectId)
-        : GlSharing(sharingFunctions, CL_GL_OBJECT_BUFFER, glObjectId){};
+        : GlSharing(sharingFunctions, CL_GL_OBJECT_BUFFER, glObjectId) {};
     ~GlBuffer() override {
         callReleaseResource(true);
     }

@@ -195,7 +195,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool saveWaitForPreamble = false;
 };
 
-using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,
+using CommandQueueAllocatorFn = CommandQueue *(*)(Device * device, NEO::CommandStreamReceiver *csr,
                                                   const ze_command_queue_desc_t *desc);
 extern CommandQueueAllocatorFn commandQueueFactory[];
 

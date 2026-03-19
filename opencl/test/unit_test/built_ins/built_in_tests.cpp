@@ -1605,7 +1605,7 @@ TEST_F(BuiltInTests, GivenFileNameWhenGettingKernelFromEmbeddedStorageRegistryTh
 TEST_F(BuiltInTests, WhenStoringRootPathThenPathIsSavedCorrectly) {
     class MockStorage : BuiltIn::Storage {
       public:
-        MockStorage(const std::string &rootPath) : BuiltIn::Storage(rootPath){};
+        MockStorage(const std::string &rootPath) : BuiltIn::Storage(rootPath) {};
         std::string &getRootPath() {
             return BuiltIn::Storage::rootPath;
         }
@@ -1624,7 +1624,7 @@ TEST_F(BuiltInTests, WhenStoringRootPathThenPathIsSavedCorrectly) {
 TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromEmbeddedStorageRegistryThenValidPtrIsReturnedForExisitngKernels) {
     class MockEmbeddedStorage : BuiltIn::EmbeddedStorage {
       public:
-        MockEmbeddedStorage(const std::string &rootPath) : BuiltIn::EmbeddedStorage(rootPath){};
+        MockEmbeddedStorage(const std::string &rootPath) : BuiltIn::EmbeddedStorage(rootPath) {};
         BuiltIn::Resource loadImpl(const std::string &fullResourceName) override {
             return BuiltIn::EmbeddedStorage::loadImpl(fullResourceName);
         }
@@ -1641,7 +1641,7 @@ TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromEmbeddedStorageRegis
 TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromFileStorageThenValidPtrIsReturnedForExisitngKernels) {
     class MockFileStorage : BuiltIn::FileStorage {
       public:
-        MockFileStorage(const std::string &rootPath) : BuiltIn::FileStorage(rootPath){};
+        MockFileStorage(const std::string &rootPath) : BuiltIn::FileStorage(rootPath) {};
         BuiltIn::Resource loadImpl(const std::string &fullResourceName) override {
             return BuiltIn::FileStorage::loadImpl(fullResourceName);
         }

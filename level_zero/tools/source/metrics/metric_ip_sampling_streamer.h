@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ struct IpSamplingMetricStreamerBase : public MetricStreamer {
 struct IpSamplingMetricStreamerImp : public IpSamplingMetricStreamerBase {
 
     IpSamplingMetricStreamerImp(IpSamplingMetricSourceImp &ipSamplingSource) : ipSamplingSource(ipSamplingSource) {}
-    ~IpSamplingMetricStreamerImp() override{};
+    ~IpSamplingMetricStreamerImp() override {};
     ze_result_t readData(uint32_t maxReportCount, size_t *pRawDataSize, uint8_t *pRawData) override;
     ze_result_t close() override;
     Event::State getNotificationState() override;
@@ -56,7 +56,7 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
                               IpSamplingMetricSourceImp &metricSource,
                               std::vector<uint32_t> &includedMetricIndexes,
                               std::vector<MetricImp *> &excludedMetrics);
-    ~IpSamplingMetricCalcOpImp() override{};
+    ~IpSamplingMetricCalcOpImp() override {};
 
     static ze_result_t create(bool isMultiDevice,
                               IpSamplingMetricSourceImp &metricSource,

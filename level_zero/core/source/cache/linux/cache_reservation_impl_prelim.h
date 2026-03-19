@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ struct Device;
 class CacheReservationImpl : public CacheReservation {
   public:
     ~CacheReservationImpl() override = default;
-    CacheReservationImpl(Device &device) : device(device){};
+    CacheReservationImpl(Device &device) : device(device) {};
 
     bool reserveCache(size_t cacheLevel, size_t cacheReservationSize) override;
     bool setCacheAdvice(void *ptr, size_t regionSize, ze_cache_ext_region_t cacheRegion) override;

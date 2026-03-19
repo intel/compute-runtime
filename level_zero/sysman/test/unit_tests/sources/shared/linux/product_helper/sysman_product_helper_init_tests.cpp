@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,8 +42,8 @@ HWTEST2_F(SysmanProductHelperSysmanInitTest, GivenValidProductHelperHandleWhenQu
 
 class SysmanNewPlatformInitTest : public ::testing::Test {
   public:
-    void SetUp() override{};
-    void TearDown() override{};
+    void SetUp() override {};
+    void TearDown() override {};
 };
 
 HWTEST2_F(SysmanNewPlatformInitTest, GivenLegacySysmanVariableSetWhenSysmanInitOnLinuxIsCalledThenUnSupportedErrorIsReturned, IsPVC) {

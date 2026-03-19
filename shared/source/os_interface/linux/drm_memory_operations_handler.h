@@ -18,7 +18,7 @@ class Drm;
 class OsContext;
 class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
-    DrmMemoryOperationsHandler(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex) : rootDeviceIndex(rootDeviceIndex), rootDeviceEnvironment(rootDeviceEnvironment){};
+    DrmMemoryOperationsHandler(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex) : rootDeviceIndex(rootDeviceIndex), rootDeviceEnvironment(rootDeviceEnvironment) {};
     ~DrmMemoryOperationsHandler() override = default;
 
     virtual MemoryOperationsStatus mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;

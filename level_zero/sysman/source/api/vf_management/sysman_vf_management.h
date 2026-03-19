@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ class VfManagement : _zes_vf_handle_t {
 };
 
 struct VfManagementHandleContext : NEO::NonCopyableAndNonMovableClass {
-    VfManagementHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    VfManagementHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~VfManagementHandleContext();
 
     ze_result_t init();

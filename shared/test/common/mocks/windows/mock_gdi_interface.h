@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ class MockGdi : public Gdi {
     MockGdi() {
         initialized = MockGdi::getAllProcAddresses();
     }
-    ~MockGdi() override{};
+    ~MockGdi() override {};
 
     static const D3DKMT_HANDLE adapterHandleForHdc = 0x1233;
     static UINT64 pagingFenceReturnValue;

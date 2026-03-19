@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class EccImp : public Ecc, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getEccState(zes_device_ecc_properties_t *pState) override;
     ze_result_t setEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) override;
 
-    EccImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    EccImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~EccImp() override {}
 
   private:

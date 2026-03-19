@@ -1154,8 +1154,8 @@ TEST_F(GmmHelperTests, whenResourceIsCreatedThenHandleItsOwnership) {
     struct MyMockResourecInfo : public GmmResourceInfo {
         using GmmResourceInfo::resourceInfo;
 
-        MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(clientContext, inputParams){};
-        MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(clientContext, inputGmmResourceInfo){};
+        MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(clientContext, inputParams) {};
+        MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(clientContext, inputGmmResourceInfo) {};
     };
 
     GMM_RESCREATE_PARAMS gmmParams = {};

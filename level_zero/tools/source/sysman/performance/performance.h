@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class Performance : _zes_perf_handle_t {
 };
 
 struct PerformanceHandleContext {
-    PerformanceHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    PerformanceHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~PerformanceHandleContext();
 
     ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles, ze_device_handle_t coreDevice);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ class Ras : _zes_ras_handle_t {
 };
 
 struct RasHandleContext {
-    RasHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    RasHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     MOCKABLE_VIRTUAL ~RasHandleContext();
 
     MOCKABLE_VIRTUAL void init(uint32_t subDeviceCount);

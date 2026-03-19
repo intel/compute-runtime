@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ enum class EnabledIrFormat {
 
 template <EnabledIrFormat irFormat = EnabledIrFormat::none>
 struct MockElfBinaryPatchtokens {
-    MockElfBinaryPatchtokens(const HardwareInfo &hwInfo) : MockElfBinaryPatchtokens(std::string{}, hwInfo){};
+    MockElfBinaryPatchtokens(const HardwareInfo &hwInfo) : MockElfBinaryPatchtokens(std::string{}, hwInfo) {};
     MockElfBinaryPatchtokens(const std::string &buildOptions, const HardwareInfo &inputHwInfo) {
         auto hwInfo = inputHwInfo;
         auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);

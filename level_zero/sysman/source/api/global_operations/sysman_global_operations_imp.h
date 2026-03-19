@@ -32,7 +32,7 @@ class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableAndNonMovab
     OsGlobalOperations *pOsGlobalOperations = nullptr;
 
     GlobalOperationsImp() = default;
-    GlobalOperationsImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    GlobalOperationsImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~GlobalOperationsImp() override;
 
   private:

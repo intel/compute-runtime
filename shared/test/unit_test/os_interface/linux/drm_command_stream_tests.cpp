@@ -1405,7 +1405,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenVmBindAvailableUseWaitCall
 struct MockMergeResidencyContainerMemoryOperationsHandler : public DrmMemoryOperationsHandlerDefault {
     using DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault;
     MockMergeResidencyContainerMemoryOperationsHandler(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex)
-        : DrmMemoryOperationsHandlerDefault(rootDeviceEnvironment, rootDeviceIndex){};
+        : DrmMemoryOperationsHandlerDefault(rootDeviceEnvironment, rootDeviceIndex) {};
 
     ADDMETHOD_NOBASE(mergeWithResidencyContainer, NEO::MemoryOperationsStatus, NEO::MemoryOperationsStatus::success,
                      (OsContext * osContext, ResidencyContainer &residencyContainer));

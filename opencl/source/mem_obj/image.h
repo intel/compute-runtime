@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ struct UnifiedSharingMemoryDescription;
 class MemoryManager;
 class SharingHandler;
 
-using ImageCreateFunc = Image *(*)(Context *context,
+using ImageCreateFunc = Image *(*)(Context * context,
                                    const MemoryProperties &memoryProperties,
                                    uint64_t flags,
                                    uint64_t flagsIntel,

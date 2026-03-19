@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class MockKmdNotifyHelper : public KmdNotifyHelper {
     using KmdNotifyHelper::properties;
 
     MockKmdNotifyHelper() = delete;
-    MockKmdNotifyHelper(const KmdNotifyProperties *newProperties) : KmdNotifyHelper(newProperties){};
+    MockKmdNotifyHelper(const KmdNotifyProperties *newProperties) : KmdNotifyHelper(newProperties) {};
 
     void updateLastWaitForCompletionTimestamp() override {
         KmdNotifyHelper::updateLastWaitForCompletionTimestamp();

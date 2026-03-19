@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ namespace ZelloMetricsUtility {
 class MetricOaExporter01Logger {
 
     uintptr_t startAddress;
-    MetricOaExporter01Logger(){};
+    MetricOaExporter01Logger() {};
 
     void showMetricApiVersion(zet_intel_metric_df_gpu_apiversion_0_1_t *apiVersion, uint32_t indent = 1) {
         LOG(LogLevel::DEBUG) << "@line: " << __LINE__ << " of function " << __FUNCTION__ << std::endl;

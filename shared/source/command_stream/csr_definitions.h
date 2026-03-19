@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,7 +91,7 @@ struct DispatchFlags {
                                                                                                                                                                                                              hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies),
                                                                                                                                                                                                              stateCacheInvalidation(stateCacheInvalidation),
                                                                                                                                                                                                              isStallingCommandsOnNextFlushRequired(isStallingCommandsOnNextFlushRequired),
-                                                                                                                                                                                                             isDcFlushRequiredOnStallingCommandsOnNextFlush(isDcFlushRequiredOnStallingCommandsOnNextFlush){};
+                                                                                                                                                                                                             isDcFlushRequiredOnStallingCommandsOnNextFlush(isDcFlushRequiredOnStallingCommandsOnNextFlush) {};
 
     CsrDependencies csrDependencies{};
     TimestampPacketContainer *barrierTimestampPacketNodes = nullptr;

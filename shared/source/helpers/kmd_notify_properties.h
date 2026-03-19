@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ inline constexpr uint32_t minimumTaskCountDiffToCheckAcLine = 10;
 class KmdNotifyHelper {
   public:
     KmdNotifyHelper() = delete;
-    KmdNotifyHelper(const KmdNotifyProperties *properties) : properties(properties){};
+    KmdNotifyHelper(const KmdNotifyProperties *properties) : properties(properties) {};
     MOCKABLE_VIRTUAL ~KmdNotifyHelper() = default;
 
     WaitParams obtainTimeoutParams(bool quickKmdSleepRequest,

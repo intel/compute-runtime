@@ -125,7 +125,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableAndNonMovableClass {
 
 static_assert(std::is_standard_layout<DebuggerL0::CommandQueueNotification>::value, "DebuggerL0::CommandQueueNotification issue");
 
-using DebugerL0CreateFn = DebuggerL0 *(*)(NEO::Device *device);
+using DebugerL0CreateFn = DebuggerL0 *(*)(NEO::Device * device);
 extern DebugerL0CreateFn debuggerL0Factory[];
 
 template <typename GfxFamily>
@@ -141,7 +141,7 @@ class DebuggerL0Hw : public DebuggerL0 {
     void programSbaTrackingCommandsSingleAddressSpace(NEO::LinearStream &cmdStream, const SbaAddresses &sba, bool useFirstLevelBB);
 
   protected:
-    DebuggerL0Hw(NEO::Device *device) : DebuggerL0(device){};
+    DebuggerL0Hw(NEO::Device *device) : DebuggerL0(device) {};
 };
 
 template <uint32_t coreFamily, typename GfxFamily>

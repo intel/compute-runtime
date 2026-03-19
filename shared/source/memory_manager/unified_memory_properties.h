@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ struct UnifiedMemoryProperties {
                             const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields) : memoryType(memoryType),
                                                                                             alignment(alignment),
                                                                                             rootDeviceIndices(rootDeviceIndices),
-                                                                                            subdeviceBitfields(subdeviceBitfields){};
+                                                                                            subdeviceBitfields(subdeviceBitfields) {};
     uint32_t getRootDeviceIndex() const;
     InternalMemoryType memoryType = InternalMemoryType::notSpecified;
     MemoryProperties allocationFlags;

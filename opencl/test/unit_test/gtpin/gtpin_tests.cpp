@@ -145,7 +145,7 @@ void onCommandBufferComplete(command_buffer_handle_t cb) {
 class MockMemoryManagerWithFailures : public OsAgnosticMemoryManager {
   public:
     using OsAgnosticMemoryManager::pageFaultManager;
-    MockMemoryManagerWithFailures(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment){};
+    MockMemoryManagerWithFailures(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment) {};
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override {
         if (failAllAllocationsInDevicePool) {

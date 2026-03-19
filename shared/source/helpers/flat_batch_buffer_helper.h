@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ struct HardwareInfo;
 class FlatBatchBufferHelper {
   public:
     FlatBatchBufferHelper(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment) {}
-    virtual ~FlatBatchBufferHelper(){};
+    virtual ~FlatBatchBufferHelper() {};
     MOCKABLE_VIRTUAL bool setPatchInfoData(const PatchInfoData &data);
     MOCKABLE_VIRTUAL bool removePatchInfoData(uint64_t targetLocation);
     MOCKABLE_VIRTUAL bool registerCommandChunk(uint64_t baseCpu, uint64_t baseGpu, uint64_t startOffset, uint64_t endOffset);

@@ -69,7 +69,7 @@ components:
     dest_dir: tools/clang-format
     type: git
     branch: clang-format
-    revision: 15.0.6
+    revision: 22.1.1
   wdk:
     dest_dir: wdk
     type: git

@@ -39,7 +39,7 @@ struct SvmFreeUserData {
           svmPointers(svmPointers),
           clb(clb),
           userData(userData),
-          ownsEventDeletion(ownsEventDeletion){};
+          ownsEventDeletion(ownsEventDeletion) {};
 };
 
 inline void CL_CALLBACK freeSvmEventClb(cl_event event,

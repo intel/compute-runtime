@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ class UltIDXGIAdapter1 : public IDXGIAdapter1 {
     // IUnknown
     HRESULT STDMETHODCALLTYPE QueryInterface(
         REFIID riid,
-        void __RPC_FAR *__RPC_FAR *ppvObject) {
+        void __RPC_FAR * __RPC_FAR * ppvObject) {
 
         return S_OK;
     }
@@ -173,7 +173,7 @@ class UltIDXGIFactory1 : public IDXGIFactory1 {
     // IUnknown
     HRESULT STDMETHODCALLTYPE QueryInterface(
         REFIID riid,
-        void __RPC_FAR *__RPC_FAR *ppvObject) {
+        void __RPC_FAR * __RPC_FAR * ppvObject) {
 
         return S_OK;
     }

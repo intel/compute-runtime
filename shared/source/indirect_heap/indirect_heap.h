@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class IndirectHeap : public LinearStream {
 
   public:
     using Type = IndirectHeapType;
-    IndirectHeap(void *buffer, size_t bufferSize) : BaseClass(buffer, bufferSize){};
+    IndirectHeap(void *buffer, size_t bufferSize) : BaseClass(buffer, bufferSize) {};
     IndirectHeap(GraphicsAllocation *graphicsAllocation) : BaseClass(graphicsAllocation) {}
     IndirectHeap(GraphicsAllocation *graphicsAllocation, bool canBeUtilizedAs4GbHeap)
         : BaseClass(graphicsAllocation), canBeUtilizedAs4GbHeap(canBeUtilizedAs4GbHeap) {}

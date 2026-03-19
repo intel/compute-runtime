@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ class OclocArgHelper;
 
 namespace NEO {
 
-MockOclocFclFacade::MockOclocFclFacade(OclocArgHelper *argHelper) : OclocFclFacade(argHelper){};
+MockOclocFclFacade::MockOclocFclFacade(OclocArgHelper *argHelper) : OclocFclFacade(argHelper) {};
 MockOclocFclFacade::~MockOclocFclFacade() = default;
 
 std::unique_ptr<OsLibrary> MockOclocFclFacade::loadFclLibrary() const {

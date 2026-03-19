@@ -533,7 +533,7 @@ TEST_F(IoctlHelperXeDebugDataTest, givenIsaClassWhenAddDebugDataAndCreateBindOpV
     bo.isaDebugDataHandle = isaDebugDataHandle;
     bo2.isaDebugDataHandle = isaDebugDataHandle;
 
-    struct IsaDebugData isaDebugData {};
+    struct IsaDebugData isaDebugData{};
     isaDebugData.totalSegments = 2;
     strcpy_s(isaDebugData.elfPath, sizeof(isaDebugData.elfPath), "mockElfPath");
 
@@ -595,7 +595,7 @@ TEST_F(IoctlHelperXeDebugDataTest, givenSingleIsaWhenAddDebugDataAndCreateBindOp
     bo2.isaDebugDataHandle = isaDebugDataHandle;
     bo3.isaDebugDataHandle = isaDebugDataHandle;
 
-    struct IsaDebugData isaDebugData {};
+    struct IsaDebugData isaDebugData{};
     isaDebugData.totalSegments = 3;
     strcpy_s(isaDebugData.elfPath, sizeof(isaDebugData.elfPath), "mockElfPath");
     std::vector<IsaDebugData::DebugDataBindInfo> bindInfoVec({{bo.gpuAddress, bo.size}, {bo2.gpuAddress, bo2.size}, {bo3.gpuAddress, bo3.size}});

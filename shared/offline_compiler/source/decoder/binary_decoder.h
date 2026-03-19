@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ using PTMap = std::unordered_map<uint8_t, std::unique_ptr<PatchToken>>;
 class BinaryDecoder {
   public:
     BinaryDecoder(const std::string &file, const std::string &patch, const std::string &dump)
-        : binaryFile(file), pathToPatch(patch), pathToDump(dump){};
+        : binaryFile(file), pathToPatch(patch), pathToDump(dump) {};
 
     BinaryDecoder(OclocArgHelper *helper) : argHelper(helper), iga(new IgaWrapper) {
         iga->setMessagePrinter(argHelper->getPrinterRef());

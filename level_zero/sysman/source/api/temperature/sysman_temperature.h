@@ -35,7 +35,7 @@ class Temperature : _zes_temp_handle_t {
 };
 
 struct TemperatureHandleContext {
-    TemperatureHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    TemperatureHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
     ~TemperatureHandleContext();
 
     ze_result_t init(uint32_t subDeviceCount);

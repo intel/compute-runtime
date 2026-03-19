@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ namespace Sysman {
 
 class Events {
   public:
-    virtual ~Events(){};
+    virtual ~Events() {};
     virtual ze_result_t eventRegister(zes_event_type_flags_t events) = 0;
     virtual bool eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) = 0;
     virtual void init() = 0;

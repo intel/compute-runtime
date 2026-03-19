@@ -22,13 +22,13 @@ class MockDebuggerL0 : public NEO::DebuggerL0 {
         device->setDebugger(this);
     }
 
-    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) override{};
+    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) override {};
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
         return 0;
     }
 
     size_t getSbaAddressLoadCommandsSize() override { return 0; };
-    void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa, bool isBcs) override{};
+    void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa, bool isBcs) override {};
 };
 
 template <typename GfxFamily>

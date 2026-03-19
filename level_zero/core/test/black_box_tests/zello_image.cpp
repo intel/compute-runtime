@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,9 +14,9 @@
 
 #define imageIndex(buf, x, y, z, chan) \
     (buf)[(chan) +                     \
-          (x)*channels +               \
-          (y)*channels * hostWidth +   \
-          (z)*channels * hostWidth * hostHeight]
+          (x) * channels +             \
+          (y) * channels * hostWidth + \
+          (z) * channels * hostWidth * hostHeight]
 
 void testAppendImageFunction(ze_context_handle_t &context,
                              ze_device_handle_t &device,

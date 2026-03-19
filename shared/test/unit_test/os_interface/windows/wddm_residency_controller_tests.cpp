@@ -1115,7 +1115,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 }
 
 struct WddmMakeResidentMock : public WddmMock {
-    WddmMakeResidentMock(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment){};
+    WddmMakeResidentMock(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {};
 
     bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override {
         *numberOfBytesToTrim = makeResidentNumberOfBytesToTrim;

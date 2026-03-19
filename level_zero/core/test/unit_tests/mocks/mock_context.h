@@ -97,7 +97,7 @@ struct Mock<Context> : public Context {
 
 template <>
 struct Mock<ContextImp> : public ContextImp {
-    Mock(DriverHandle *driverHandle) : ContextImp(driverHandle){};
+    Mock(DriverHandle *driverHandle) : ContextImp(driverHandle) {};
     ~Mock() override = default;
     using BaseClass = ContextImp;
 

@@ -83,13 +83,13 @@ class DirectSubmissionHw {
         return relaxedOrderingEnabled;
     }
 
-    virtual void flushMonitorFence(bool notifyKmd){};
+    virtual void flushMonitorFence(bool notifyKmd) {};
 
     QueueThrottle getLastSubmittedThrottle() {
         return this->lastSubmittedThrottle;
     }
 
-    virtual void unblockPagingFenceSemaphore(uint64_t pagingFenceValue){};
+    virtual void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) {};
     uint32_t getRelaxedOrderingQueueSize() const { return currentRelaxedOrderingQueueSize; }
 
   protected:
@@ -118,13 +118,13 @@ class DirectSubmissionHw {
     virtual bool allocateOsResources();
     virtual bool submit(uint64_t gpuAddress, size_t size, const ResidencyContainer *allocationsForResidency) = 0;
     virtual bool handleResidency(const ResidencyContainer *allocationsForResidency) = 0;
-    virtual void handleRingRestartForUllsLightResidency(const ResidencyContainer *allocationsForResidency){};
-    virtual void handleResidencyContainerForUllsLightNewRingAllocation(ResidencyContainer *allocationsForResidency){};
+    virtual void handleRingRestartForUllsLightResidency(const ResidencyContainer *allocationsForResidency) {};
+    virtual void handleResidencyContainerForUllsLightNewRingAllocation(ResidencyContainer *allocationsForResidency) {};
     void handleNewResourcesSubmission();
     bool isNewResourceHandleNeeded();
     size_t getSizeNewResourceHandler();
-    virtual void handleStopRingBuffer(){};
-    virtual void ensureRingCompletion(){};
+    virtual void handleStopRingBuffer() {};
+    virtual void ensureRingCompletion() {};
     void switchRingBuffersNeeded(size_t size, ResidencyContainer *allocationsForResidency);
     uint64_t switchRingBuffers(ResidencyContainer *allocationsForResidency);
     virtual void handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) = 0;
@@ -188,7 +188,7 @@ class DirectSubmissionHw {
     size_t getSizeSystemMemoryFenceAddress();
 
     void setImmWritePostSyncOffset();
-    virtual void dispatchStopRingBufferSection(){};
+    virtual void dispatchStopRingBufferSection() {};
     virtual size_t dispatchStopRingBufferSectionSize() {
         return 0;
     };
@@ -199,10 +199,10 @@ class DirectSubmissionHw {
     uint32_t getInitialSemaphoreValue() const;
     void handleSemaphoreDataOverflow();
 
-    virtual void makeGlobalFenceAlwaysResident(){};
+    virtual void makeGlobalFenceAlwaysResident() {};
     struct RingBufferUse {
         RingBufferUse() = default;
-        RingBufferUse(FlushStamp completionFence, FlushStamp completionFenceForSwitch, GraphicsAllocation *ringBuffer) : completionFence(completionFence), completionFenceForSwitch(completionFenceForSwitch), ringBuffer(ringBuffer){};
+        RingBufferUse(FlushStamp completionFence, FlushStamp completionFenceForSwitch, GraphicsAllocation *ringBuffer) : completionFence(completionFence), completionFenceForSwitch(completionFenceForSwitch), ringBuffer(ringBuffer) {};
 
         constexpr static uint32_t initialRingBufferCount = 2u;
 

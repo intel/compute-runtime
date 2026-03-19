@@ -183,7 +183,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
     virtual uint32_t getIndirectSize() const = 0;
 };
 
-using KernelAllocatorFn = Kernel *(*)(Module *module);
+using KernelAllocatorFn = Kernel *(*)(Module * module);
 extern KernelAllocatorFn kernelFactory[];
 
 template <uint32_t productFamily, typename KernelType>

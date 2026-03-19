@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ void SharingFactory::verifyExtensionSupport(DriverInfo *driverInfo) {
         builder->setExtensionEnabled(driverInfo);
     }
 };
-void SharingBuilderFactory::setExtensionEnabled(DriverInfo *driverInfo){};
+void SharingBuilderFactory::setExtensionEnabled(DriverInfo *driverInfo) {};
 
 SharingFactory sharingFactory;
 } // namespace NEO

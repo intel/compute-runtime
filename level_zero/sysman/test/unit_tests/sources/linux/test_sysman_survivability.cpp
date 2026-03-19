@@ -55,7 +55,7 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityDeviceConditionWhe
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;
             if (entryIndex >= numEntries) {
                 entryIndex = 0;
@@ -81,7 +81,7 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityDeviceConditionWhe
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;
             if (entryIndex >= numEntries) {
                 entryIndex = 0;
@@ -107,7 +107,7 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityDeviceConditionAnd
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnFailure};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;
             if (entryIndex >= numEntries) {
                 entryIndex = 0;
@@ -133,7 +133,7 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenC
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;
             if (entryIndex >= numEntries) {
                 entryIndex = 0;
@@ -177,7 +177,7 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenS
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;
             if (entryIndex >= numEntries) {
                 entryIndex = 0;
@@ -246,7 +246,7 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSysmanDriverHandleWhenSurvivabi
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
-        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+        &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;
             if (entryIndex >= numEntriesAllowed) {
                 entryIndex = 0;

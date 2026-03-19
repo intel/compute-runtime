@@ -121,8 +121,7 @@ ThreadPriority setThreadPriorityLastValue{};
 HANDLE(*sysCallsCreateFile)
 (LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) = nullptr;
 
-BOOL(*sysCallsDeviceIoControl)
-(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) = nullptr;
+BOOL (*sysCallsDeviceIoControl)(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) = nullptr;
 
 CONFIGRET(*sysCallsCmGetDeviceInterfaceListSize)
 (PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) = nullptr;
@@ -142,17 +141,13 @@ CONFIGRET(*sysCallsCmGetChild)
 CONFIGRET(*sysCallsCmGetSibling)
 (PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) = nullptr;
 
-BOOL(*sysCallsSetupDiGetDeviceRegistryProperty)
-(HDEVINFO deviceInfoSet, PSP_DEVINFO_DATA deviceInfoData, DWORD property, PDWORD propertyRegDataType, PBYTE propertyBuffer, DWORD propertyBufferSize, PDWORD requiredSize) = nullptr;
+BOOL (*sysCallsSetupDiGetDeviceRegistryProperty)(HDEVINFO deviceInfoSet, PSP_DEVINFO_DATA deviceInfoData, DWORD property, PDWORD propertyRegDataType, PBYTE propertyBuffer, DWORD propertyBufferSize, PDWORD requiredSize) = nullptr;
 
-BOOL(*sysCallsSetupDiOpenDeviceInfo)
-(HDEVINFO deviceInfoSet, PCWSTR deviceInstanceId, HWND hwndParent, DWORD openFlags, PSP_DEVINFO_DATA deviceInfoData) = nullptr;
+BOOL (*sysCallsSetupDiOpenDeviceInfo)(HDEVINFO deviceInfoSet, PCWSTR deviceInstanceId, HWND hwndParent, DWORD openFlags, PSP_DEVINFO_DATA deviceInfoData) = nullptr;
 
-BOOL(*sysCallsSetupDiEnumDeviceInfo)
-(HDEVINFO deviceInfoSet, DWORD memberIndex, PSP_DEVINFO_DATA deviceInfoData) = nullptr;
+BOOL (*sysCallsSetupDiEnumDeviceInfo)(HDEVINFO deviceInfoSet, DWORD memberIndex, PSP_DEVINFO_DATA deviceInfoData) = nullptr;
 
-BOOL(*sysCallsSetupDiDestroyDeviceInfoList)
-(HDEVINFO deviceInfoSet) = nullptr;
+BOOL (*sysCallsSetupDiDestroyDeviceInfoList)(HDEVINFO deviceInfoSet) = nullptr;
 
 HDEVINFO(*sysCallsSetupDiGetClassDevs)
 (GUID *classGuid, PCWSTR enumerator, HWND hwndParent, DWORD flags) = nullptr;
@@ -160,11 +155,9 @@ HDEVINFO(*sysCallsSetupDiGetClassDevs)
 LPVOID(*sysCallsHeapAlloc)
 (HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) = nullptr;
 
-BOOL(*sysCallsHeapFree)
-(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) = nullptr;
+BOOL (*sysCallsHeapFree)(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) = nullptr;
 
-BOOL(*sysCallsDuplicateHandle)
-(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) = nullptr;
+BOOL (*sysCallsDuplicateHandle)(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) = nullptr;
 
 HANDLE(*sysCallsOpenProcess)
 (DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) = nullptr;
@@ -586,16 +579,13 @@ SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_
     return sizeof(MEMORY_BASIC_INFORMATION);
 }
 
-BOOL(*sysCallsGetModuleHandleExW)
-(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) = nullptr;
+BOOL (*sysCallsGetModuleHandleExW)(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) = nullptr;
 DWORD(*sysCallsGetModuleFileNameW)
 (HMODULE hModule, LPWSTR lpFilename, DWORD nSize) = nullptr;
 DWORD(*sysCallsGetFileVersionInfoSizeW)
 (LPCWSTR lptstrFilename, LPDWORD lpdwHandle) = nullptr;
-BOOL(*sysCallsGetFileVersionInfoW)
-(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) = nullptr;
-BOOL(*sysCallsVerQueryValueW)
-(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen) = nullptr;
+BOOL (*sysCallsGetFileVersionInfoW)(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) = nullptr;
+BOOL (*sysCallsVerQueryValueW)(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen) = nullptr;
 DWORD(*sysCallsGetLastError)
 () = nullptr;
 BOOL getModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {

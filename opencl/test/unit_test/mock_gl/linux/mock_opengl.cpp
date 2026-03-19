@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ const unsigned char *glGetString(unsigned int name) {
 
 void glGetIntegerv(GLenum pname, GLint *params) { return NEO::MockGLSharingFunctions::glGetIntegervTest(pname, params); };
 
-void resetParam(const char *name){};
+void resetParam(const char *name) {};
 int getParam(const char *name) {
     return 0;
 };
