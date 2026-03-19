@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,12 +19,19 @@ bool GmmPageTableMngr::updateAuxTable(uint64_t gpuVa, Gmm *gmm, bool map) {
     ddiUpdateAuxTable.DoNotWait = true;
     ddiUpdateAuxTable.Map = map;
 
-    return updateAuxTable(&ddiUpdateAuxTable) == GMM_STATUS::GMM_SUCCESS;
+    return updateAuxTable(&ddiUpdateAuxTable);
 }
 
 bool GmmPageTableMngr::initPageTableManagerRegisters(void *csrHandle) {
-    auto status = initContextAuxTableRegister(csrHandle, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
-    return status == GMM_SUCCESS;
+    return initContextAuxTableRegister(csrHandle, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
+}
+
+bool GmmPageTableMngr::updateAuxTable(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable) {
+    return pageTableManager->UpdateAuxTable(ddiUpdateAuxTable) == GMM_STATUS::GMM_SUCCESS;
+}
+
+bool GmmPageTableMngr::initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) {
+    return pageTableManager->InitContextAuxTableRegister(initialBBHandle, engineType) == GMM_STATUS::GMM_SUCCESS;
 }
 
 } // namespace NEO

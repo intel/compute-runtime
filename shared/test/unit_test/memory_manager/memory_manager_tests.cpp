@@ -3150,7 +3150,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorTh
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
     auto mockMngr = new MockGmmPageTableMngr();
-    mockMngr->updateAuxTableResult = GMM_ERROR;
+    mockMngr->updateAuxTableResult = false;
 
     memoryManager->getRegisteredEngines(1)[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
 

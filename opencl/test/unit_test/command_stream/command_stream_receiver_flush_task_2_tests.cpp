@@ -1229,7 +1229,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenComma
     MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
     csr->pageTableManager.reset(pageTableManager);
 
-    pageTableManager->initContextAuxTableRegisterResult = GMM_ERROR;
+    pageTableManager->initContextAuxTableRegisterResult = false;
 
     auto memoryManager = pDevice->getMemoryManager();
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});

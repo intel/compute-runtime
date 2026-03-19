@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,16 +30,13 @@ class GmmPageTableMngr : NonCopyableAndNonMovableClass {
   protected:
     GmmPageTableMngr() = default;
 
-    MOCKABLE_VIRTUAL GMM_STATUS updateAuxTable(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable) {
-        return pageTableManager->UpdateAuxTable(ddiUpdateAuxTable);
-    }
+    MOCKABLE_VIRTUAL bool updateAuxTable(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable);
 
-    MOCKABLE_VIRTUAL GMM_STATUS initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) {
-        return pageTableManager->InitContextAuxTableRegister(initialBBHandle, engineType);
-    }
+    MOCKABLE_VIRTUAL bool initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType);
 
     GmmPageTableMngr(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb, void *aubCsrHandle);
     std::unique_ptr<GMM_PAGETABLE_MGR, std::function<void(GMM_PAGETABLE_MGR *)>> pageTableManager;
+    GmmClientContext *clientContext = nullptr;
 };
 
 static_assert(NonCopyableAndNonMovable<GmmPageTableMngr>);

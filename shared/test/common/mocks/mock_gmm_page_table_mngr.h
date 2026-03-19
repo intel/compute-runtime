@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
         }
     };
 
-    GMM_STATUS initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) override {
+    bool initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) override {
         initContextAuxTableRegisterCalled++;
         initContextAuxTableRegisterParamsPassed.push_back({initialBBHandle, engineType});
         return initContextAuxTableRegisterResult;
@@ -45,9 +45,9 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
 
     StackVec<InitContextAuxTableRegisterParams, 2> initContextAuxTableRegisterParamsPassed{};
     uint32_t initContextAuxTableRegisterCalled = 0u;
-    GMM_STATUS initContextAuxTableRegisterResult = GMM_STATUS::GMM_SUCCESS;
+    bool initContextAuxTableRegisterResult = true;
 
-    GMM_STATUS updateAuxTable(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable) override {
+    bool updateAuxTable(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable) override {
         updateAuxTableCalled++;
         updateAuxTableParamsPassed.push_back({*ddiUpdateAuxTable});
         return updateAuxTableResult;
@@ -59,7 +59,7 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
 
     StackVec<UpdateAuxTableParams, 1> updateAuxTableParamsPassed{};
     uint32_t updateAuxTableCalled = 0u;
-    GMM_STATUS updateAuxTableResult = GMM_STATUS::GMM_SUCCESS;
+    bool updateAuxTableResult = true;
 
     void *passedAubCsrHandle = nullptr;
 
