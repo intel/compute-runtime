@@ -3370,5 +3370,115 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(usedBefore + prefetchSize, cmdListStream.getUsed());
 }
 
+HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndNoSignalEventThenSuccessIsReturned) {
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
+    commandList.appendWaitOnEventsCallBase = false;
+    commandList.appendSignalEventCallBase = false;
+
+    void *alloc = reinterpret_cast<void *>(0x87651234uLL);
+
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, nullptr, 0u, nullptr);
+    EXPECT_EQ(commandList.appendWaitOnEventsCalled, 0u);
+    EXPECT_EQ(commandList.appendSignalEventCalled, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    context->freeMem(alloc);
+}
+
+HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndWaitEventsAndNoSignalEventThenWaitOnEventsAndSuccessIsReturned) {
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
+    commandList.appendWaitOnEventsCallBase = false;
+    commandList.appendSignalEventCallBase = false;
+
+    MockEvent waitEvent;
+    waitEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    waitEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto waitEventHandle = waitEvent.toHandle();
+
+    void *alloc = reinterpret_cast<void *>(0x87651234uLL);
+
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, nullptr, 1u, &waitEventHandle);
+    EXPECT_EQ(commandList.appendWaitOnEventsCalled, 1u);
+    EXPECT_EQ(commandList.appendSignalEventCalled, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    context->freeMem(alloc);
+}
+
+HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndSignalEventThenSignalEventAndSuccessIsReturned) {
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
+    commandList.appendWaitOnEventsCallBase = false;
+    commandList.appendSignalEventCallBase = false;
+
+    MockEvent signalEvent;
+    signalEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    signalEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *alloc = reinterpret_cast<void *>(0x87651234uLL);
+
+    auto signalEventHandle = signalEvent.toHandle();
+
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 0u, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandList.appendWaitOnEventsCalled, 0u);
+    EXPECT_EQ(commandList.appendSignalEventCalled, 1u);
+
+    context->freeMem(alloc);
+}
+
+HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithZeroEventsAndWaitEventsAndSignalEventThenWaitAndSignalAndSuccessIsReturned) {
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
+    commandList.appendWaitOnEventsCallBase = false;
+    commandList.appendSignalEventCallBase = false;
+
+    MockEvent waitEvent;
+    waitEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    waitEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    MockEvent signalEvent;
+    signalEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    signalEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *alloc = reinterpret_cast<void *>(0x87651234uLL);
+
+    auto waitEventHandle = waitEvent.toHandle();
+    auto signalEventHandle = signalEvent.toHandle();
+
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &waitEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandList.appendWaitOnEventsCalled, 1u);
+    EXPECT_EQ(commandList.appendSignalEventCalled, 1u);
+
+    context->freeMem(alloc);
+}
+
+HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendWaitEventReturnErrorThenSignalEventNotCalledAndErrorPropagated) {
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
+    commandList.appendWaitOnEventsCallBase = false;
+    commandList.appendSignalEventCallBase = false;
+    commandList.appendWaitOnEventsResult = ZE_RESULT_ERROR_DEVICE_LOST;
+
+    MockEvent waitEvent;
+    waitEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    waitEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    MockEvent signalEvent;
+    signalEvent.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    signalEvent.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *alloc = reinterpret_cast<void *>(0x87651234uLL);
+
+    auto waitEventHandle = waitEvent.toHandle();
+    auto signalEventHandle = signalEvent.toHandle();
+
+    auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &waitEventHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+    EXPECT_EQ(commandList.appendWaitOnEventsCalled, 1u);
+    EXPECT_EQ(commandList.appendSignalEventCalled, 0u);
+
+    context->freeMem(alloc);
+}
+
 } // namespace ult
 } // namespace L0

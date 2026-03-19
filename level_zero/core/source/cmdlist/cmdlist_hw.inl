@@ -3766,7 +3766,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
     const size_t *pOffsets, ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-
+    if (numEvents == 0) {
+        ze_result_t ret = ZE_RESULT_SUCCESS;
+        if (numWaitEvents > 0) {
+            ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, false, false, false, true, false);
+        }
+        if (ret == ZE_RESULT_SUCCESS && hSignalEvent != nullptr) {
+            ret = appendSignalEvent(hSignalEvent, false);
+        }
+        return ret;
+    }
     auto dstPtrAllocationStruct = getAlignedAllocationData(this->device, false, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents, false, false, nullptr);
     if (dstPtrAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;

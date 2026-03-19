@@ -586,7 +586,7 @@ struct Mock<CommandList> : public CommandList {
                       const size_t *pOffsets,
                       ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents))
+                      ze_event_handle_t *phWaitEvents));
 
     ADDMETHOD_NOBASE(appendMemoryCopyFromContext, ze_result_t, ZE_RESULT_SUCCESS,
                      (void *dstptr,
@@ -731,6 +731,15 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                          (L0::Kernel * kernel,
                           uint32_t sizePerHwThread),
                          (kernel, sizePerHwThread));
+
+    ADDMETHOD(appendWaitOnEvents, ze_result_t, true, ZE_RESULT_SUCCESS,
+              (uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
+               bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation),
+              (numEvents, phEvent, outWaitCmds, relaxedOrderingAllowed, trackDependencies, apiRequest, skipAddingWaitEventsToResidency, skipFlush, copyOffloadOperation));
+
+    ADDMETHOD(appendSignalEvent, ze_result_t, true, ZE_RESULT_SUCCESS,
+              (ze_event_handle_t hEvent, bool relaxedOrderingDispatch),
+              (hEvent, relaxedOrderingDispatch));
 
     AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload, const L0::MemAllocInfo *bufferAllocInfo) override {
         return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(device, sharedSystemEnabled, buffer, bufferSize, allowHostCopy, copyOffload, bufferAllocInfo);
