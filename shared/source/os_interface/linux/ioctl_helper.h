@@ -266,6 +266,7 @@ class IoctlHelper {
     virtual bool isDrmFabricSupported() const { return false; }
     virtual int bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataVec, uint32_t vmHandleId, VmBindExtUserFenceT *vmBindExtUserFence, bool isAdd) { return 0; };
     virtual std::optional<std::vector<VmBindOpExtDebugData>> addDebugDataAndCreateBindOpVec(BufferObject *bo, uint32_t vmId, bool isAdd) { return std::nullopt; };
+    virtual bool requireBoChunksForLargeHostPtrs() const { return false; }
 
   protected:
     Drm &drm;
@@ -310,6 +311,7 @@ class IoctlHelperI915 : public IoctlHelper {
     bool isSmallBarConfigAllowed() const override { return true; }
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
     bool overrideMaxSlicesSupported() const override { return true; }
+    bool requireBoChunksForLargeHostPtrs() const override { return true; }
 
   protected:
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);

@@ -25,6 +25,8 @@ enum class AtomicAccessMode : uint32_t;
 
 enum class GemCloseWorkerMode;
 
+using BufferObjects = StackVec<BufferObject *, EngineLimits::maxHandleCount>;
+
 struct BoHandleDeviceIndexPairComparer {
     bool operator()(std::pair<int, uint32_t> const &lhs, std::pair<int, uint32_t> const &rhs) const {
         return (lhs.first < rhs.first) || (lhs.second < rhs.second);
@@ -144,6 +146,8 @@ class DrmMemoryManager : public MemoryManager {
 
     void drainGemCloseWorker() const override;
     void disableForcePin();
+
+    MOCKABLE_VIRTUAL BufferObjects createBufferObjectsForNonSvmHostPtr(size_t realAllocationSize, const void *alignedPtr, uint64_t gpuVirtualAddress, const AllocationData &allocationData, uint32_t rootDeviceIndex, uint8_t patIndex, size_t alignedSize);
 
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;

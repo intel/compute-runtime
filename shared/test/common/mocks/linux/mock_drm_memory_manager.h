@@ -236,6 +236,23 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     }
     size_t passedAlignment = 0;
 
+    BufferObjects createBufferObjectsForNonSvmHostPtr(size_t realAllocationSize, const void *alignedPtr, uint64_t gpuVirtualAddress, const AllocationData &allocationData, uint32_t rootDeviceIndex, uint8_t patIndex, size_t alignedSize) override {
+        createBufferObjectsForNonSvmHostPtrCallCount++;
+        if (createBufferObjectsForNonSvmHostPtrCallBase) {
+            return DrmMemoryManager::createBufferObjectsForNonSvmHostPtr(realAllocationSize, alignedPtr, gpuVirtualAddress, allocationData, rootDeviceIndex, patIndex, alignedSize);
+        }
+        BufferObjects bos;
+        auto bo = new (std::nothrow) MockBufferObject(rootDeviceIndex, &this->getDrm(rootDeviceIndex));
+        if (bo) {
+            bo->setSize(alignedSize);
+            bo->setAddress(gpuVirtualAddress);
+            bos.push_back(bo);
+        }
+        return bos;
+    }
+    bool createBufferObjectsForNonSvmHostPtrCallBase = true;
+    uint32_t createBufferObjectsForNonSvmHostPtrCallCount = 0u;
+
   protected:
     std::mutex unreferenceMtx;
     std::mutex releaseGpuRangeMtx;

@@ -679,6 +679,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableCompatibilityMode, true, "Enables compatibili
 DECLARE_DEBUG_VARIABLE(bool, RedirectFlushL3HostUsmToExternal, false, "If L3 flush for host usm is needed it will be rerouted to follow the external allocation flush logic")
 DECLARE_DEBUG_VARIABLE(bool, ForceFlushL3AfterPostSyncForHostUsm, false, "Force L3 flush for host usm after postSync")
 DECLARE_DEBUG_VARIABLE(bool, ForceFlushL3AfterPostSyncForExternalAllocation, false, "Force L3 flush for external allocation after postSync")
+DECLARE_DEBUG_VARIABLE(bool, DoNotUseChunkedBosForHugeHostPtrAllocs, false, "Do not use chunked BOs for huge host pointer allocations")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBOChunking, -1, "Enables use of chunking of BOs in the KMD, mask: -1 = default, 0 = no chunking, 1 = shared allocations only, 2 = multi-tile device allocations only, 3 = shared and multi-tile device allocations .")
 DECLARE_DEBUG_VARIABLE(int32_t, DestroyAllocationsViaGmm, -1, "Use DeAllocate2 wrapper instead of raw GDI destroy allocations")
 DECLARE_DEBUG_VARIABLE(int32_t, NumberOfBOChunks, 2, "Number of chunks to use")

@@ -3744,7 +3744,88 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
 
     memoryManager->freeGraphicsMemory(allocation);
 }
+TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledThenCreateBosCalled) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
 
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    allocationData.size = 13;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+
+    EXPECT_EQ(memoryManager->createBufferObjectsForNonSvmHostPtrCallCount, 1u);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocatingGreaterThan2GBThenCreateMoreThanOneBo) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    allocationData.size = MemoryConstants::gigaByte * 3;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    size_t realAllocationSize = MemoryConstants::gigaByte * 3;
+    const void *alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
+    uint64_t gpuVirtualAddress = reinterpret_cast<uint64_t>(alignedPtr);
+    uint32_t rootDeviceIndex = 0;
+    uint8_t patIndex = 0;
+    size_t alignedSize = MemoryConstants::gigaByte * 3;
+    auto bos = memoryManager->createBufferObjectsForNonSvmHostPtr(realAllocationSize, alignedPtr, gpuVirtualAddress, allocationData, rootDeviceIndex, patIndex, alignedSize);
+    EXPECT_EQ(bos.size(), 2u);
+    for (auto &bo : bos) {
+        delete bo;
+    }
+}
+
+TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocatingSmallerThan2GBThenCreateOneBo) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    allocationData.size = MemoryConstants::gigaByte;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    size_t realAllocationSize = allocationData.size;
+    const void *alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
+    uint64_t gpuVirtualAddress = reinterpret_cast<uint64_t>(alignedPtr);
+    uint32_t rootDeviceIndex = 0;
+    uint8_t patIndex = 0;
+    size_t alignedSize = allocationData.size;
+    auto bos = memoryManager->createBufferObjectsForNonSvmHostPtr(realAllocationSize, alignedPtr, gpuVirtualAddress, allocationData, rootDeviceIndex, patIndex, alignedSize);
+    EXPECT_EQ(bos.size(), 1u);
+    for (auto &bo : bos) {
+        delete bo;
+    }
+}
+TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocatingGreaterThan2GBAndDoNotUseChunkedBosForHugeHostPtrAllocsEnabledThenCreateOneBo) {
+    DebugManagerStateRestore dbgState;
+    debugManager.flags.DoNotUseChunkedBosForHugeHostPtrAllocs.set(1);
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    allocationData.size = MemoryConstants::gigaByte * 3;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    size_t realAllocationSize = MemoryConstants::gigaByte * 3;
+    const void *alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
+    uint64_t gpuVirtualAddress = reinterpret_cast<uint64_t>(alignedPtr);
+    uint32_t rootDeviceIndex = 0;
+    uint8_t patIndex = 0;
+    size_t alignedSize = MemoryConstants::gigaByte * 3;
+    auto bos = memoryManager->createBufferObjectsForNonSvmHostPtr(realAllocationSize, alignedPtr, gpuVirtualAddress, allocationData, rootDeviceIndex, patIndex, alignedSize);
+    EXPECT_EQ(bos.size(), 1u);
+    for (auto &bo : bos) {
+        delete bo;
+    }
+}
 TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrThenObjectAlignedSizeIsUsedByAllocUserPtrWhenBiggerSizeAllocatedInHeap) {
     AllocationData allocationData;
     allocationData.rootDeviceIndex = rootDeviceIndex;

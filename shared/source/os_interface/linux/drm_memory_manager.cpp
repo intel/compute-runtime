@@ -43,6 +43,7 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -692,6 +693,56 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const Allo
     return allocation;
 }
 
+BufferObjects DrmMemoryManager::createBufferObjectsForNonSvmHostPtr(size_t realAllocationSize, const void *alignedPtr, uint64_t gpuVirtualAddress, const AllocationData &allocationData, uint32_t rootDeviceIndex, uint8_t patIndex, size_t alignedSize) {
+    BufferObjects bos;
+    size_t remainingSize = realAllocationSize;
+    uintptr_t currentPtr = reinterpret_cast<uintptr_t>(alignedPtr);
+    size_t chunkSize = MemoryConstants::gigaByte * 2;
+    uint64_t chunkGpuAddress = gpuVirtualAddress;
+    auto ioctlHelper = getDrm(rootDeviceIndex).getIoctlHelper();
+    if (debugManager.flags.DoNotUseChunkedBosForHugeHostPtrAllocs.get() ||
+        !ioctlHelper->requireBoChunksForLargeHostPtrs()) {
+        chunkSize = realAllocationSize;
+    }
+    while (remainingSize > 0) {
+        size_t currentChunkSize = std::min(chunkSize, remainingSize);
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(ioctlHelper->allocUserptr(*this, allocationData, currentPtr, currentChunkSize, rootDeviceIndex));
+        if (!bo) {
+            releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, rootDeviceIndex);
+            for (auto &boToUnreference : bos) {
+                unreference(boToUnreference, true);
+            }
+            bos.clear();
+            return bos;
+        }
+
+        bo->setAddress(chunkGpuAddress);
+        bo->setPatIndex(patIndex);
+
+        if (validateHostPtrMemory) {
+            auto boPtr = bo.get();
+            auto vmHandleId = Math::getMinLsbSet(static_cast<uint32_t>(allocationData.storageInfo.subDeviceBitfield.to_ulong()));
+            auto defaultContext = getDefaultEngineContext(rootDeviceIndex, allocationData.storageInfo.subDeviceBitfield);
+
+            int result = pinBBs.at(rootDeviceIndex)->validateHostPtr(&boPtr, 1, defaultContext, vmHandleId, static_cast<OsContextLinux *>(defaultContext)->getDrmContextIds()[0]);
+            if (result != 0) {
+                unreference(bo.release(), true);
+                releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, rootDeviceIndex);
+                for (auto &boToUnreference : bos) {
+                    unreference(boToUnreference, true);
+                }
+                bos.clear();
+                return bos;
+            }
+        }
+        bos.push_back(bo.release());
+        remainingSize -= currentChunkSize;
+        currentPtr += currentChunkSize;
+        chunkGpuAddress += currentChunkSize;
+    }
+    return bos;
+}
+
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
     if (allocationData.size == 0 || !allocationData.hostPtr) {
         return nullptr;
@@ -714,38 +765,20 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     if (!gpuVirtualAddress) {
         return nullptr;
     }
-    auto ioctlHelper = getDrm(rootDeviceIndex).getIoctlHelper();
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(ioctlHelper->allocUserptr(*this, allocationData, reinterpret_cast<uintptr_t>(alignedPtr), realAllocationSize, rootDeviceIndex));
-    if (!bo) {
-        releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, rootDeviceIndex);
-        return nullptr;
-    }
-
-    bo->setAddress(gpuVirtualAddress);
 
     auto usageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, productHelper);
     auto patIndex = rootDeviceEnvironment->getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, false, true);
-    bo->setPatIndex(patIndex);
 
-    if (validateHostPtrMemory) {
-        auto boPtr = bo.get();
-        auto vmHandleId = Math::getMinLsbSet(static_cast<uint32_t>(allocationData.storageInfo.subDeviceBitfield.to_ulong()));
-        auto defaultContext = getDefaultEngineContext(rootDeviceIndex, allocationData.storageInfo.subDeviceBitfield);
-
-        int result = pinBBs.at(rootDeviceIndex)->validateHostPtr(&boPtr, 1, defaultContext, vmHandleId, static_cast<OsContextLinux *>(defaultContext)->getDrmContextIds()[0]);
-        if (result != 0) {
-            unreference(bo.release(), true);
-            releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, rootDeviceIndex);
-            return nullptr;
-        }
+    auto bos = createBufferObjectsForNonSvmHostPtr(realAllocationSize, alignedPtr, gpuVirtualAddress, allocationData, rootDeviceIndex, patIndex, alignedSize);
+    if (bos.empty()) {
+        return nullptr;
     }
 
-    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bo.get(), const_cast<void *>(allocationData.hostPtr),
+    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bos, const_cast<void *>(allocationData.hostPtr),
                                         gpuVirtualAddress, allocationData.size, MemoryPool::system4KBPages);
     allocation->setAllocationOffset(offsetInPage);
 
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize);
-    bo.release();
     return allocation;
 }
 
