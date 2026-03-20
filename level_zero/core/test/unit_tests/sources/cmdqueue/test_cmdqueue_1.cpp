@@ -558,7 +558,11 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDi
             pipeControlsPostSync = true;
         }
     }
-    EXPECT_TRUE(pipeControlsPostSync);
+    if (!commandQueue->getCsr()->getOsContext().isPartOfContextGroup()) {
+        EXPECT_TRUE(pipeControlsPostSync);
+    } else {
+        EXPECT_FALSE(pipeControlsPostSync);
+    }
 
     commandQueue->destroy();
 }
