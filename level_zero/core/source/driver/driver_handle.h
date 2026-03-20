@@ -112,7 +112,8 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
                                                NEO::SvmAllocationData *allocData,
                                                void *basePtr,
                                                uintptr_t *peerGpuAddress,
-                                               NEO::SvmAllocationData **peerAllocData);
+                                               NEO::SvmAllocationData **peerAllocData,
+                                               bool decompressP2PAllocation);
 
     NEO::GraphicsAllocation *getCounterPeerAllocation(Device *device, NEO::GraphicsAllocation &graphicsAllocation);
     void initializeVertexes();
@@ -227,7 +228,8 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
                                                NEO::SvmAllocationData *allocData,
                                                void *basePtr,
                                                uintptr_t *peerGpuAddress,
-                                               NEO::SvmAllocationData **peerAllocData);
+                                               NEO::SvmAllocationData **peerAllocData,
+                                               bool decompressP2PAllocation);
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<DriverHandle>);

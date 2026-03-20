@@ -646,7 +646,7 @@ ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr
         bool foundBuffer = this->driverHandle->findAllocationDataForRange(ptr, size, allocData);
         if (foundBuffer) {
             uintptr_t alignedPtr = reinterpret_cast<uintptr_t>(ptr);
-            allocation = this->driverHandle->getPeerAllocation(device, allocData, ptr, &alignedPtr, nullptr);
+            allocation = this->driverHandle->getPeerAllocation(device, allocData, ptr, &alignedPtr, nullptr, false);
         }
         if (allocation == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -873,6 +873,10 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
 
     auto memoryManager = this->driverHandle->getMemoryManager();
     auto alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+
+    auto rootDeviceEnv = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[alloc->getRootDeviceIndex()].get();
+    auto &l0GfxCoreHelper = rootDeviceEnv->getHelper<L0GfxCoreHelper>();
+    l0GfxCoreHelper.p2pDecompressBufferIfRequired(alloc, this->getDriverHandle());
 
     if (numIpcHandles) {
         uint32_t numHandles = alloc->getNumHandles();

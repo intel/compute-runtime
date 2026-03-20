@@ -30,7 +30,7 @@ ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsA
             // calculate possible offset
             size_t offset = reinterpret_cast<GpuAddress>(buffer) - gpuAddress;
             // gpuAddress will get new value from peer allocation
-            bufferAlloc = driverHandle->getPeerAllocation(device, allocData, buffer, &gpuAddress, nullptr);
+            bufferAlloc = driverHandle->getPeerAllocation(device, allocData, buffer, &gpuAddress, nullptr, false);
             if (bufferAlloc == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
