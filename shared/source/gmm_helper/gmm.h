@@ -85,6 +85,7 @@ class Gmm {
     MOCKABLE_VIRTUAL bool extraMemoryFlagsRequired();
     void applyExtraMemoryFlags(const StorageInfo &storageInfo);
     void applyDebugOverrides();
+    void initializeResourceParams();
     GmmHelper *gmmHelper = nullptr;
 
     bool compressionEnabled = false;

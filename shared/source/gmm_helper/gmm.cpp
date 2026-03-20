@@ -24,7 +24,7 @@
 namespace NEO {
 Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment, GmmResourceUsageType gmmResourceUsage,
          const StorageInfo &storageInfo, const GmmRequirements &gmmRequirements) : gmmHelper(gmmHelper) {
-    this->resourceParamsData.resize(sizeof(GMM_RESCREATE_PARAMS));
+    initializeResourceParams();
     auto *resourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(this->resourceParamsData.data());
     resourceParams->Type = RESOURCE_BUFFER;
     resourceParams->Format = GMM_FORMAT_GENERIC_8BIT;
@@ -79,7 +79,7 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
 Gmm::Gmm(GmmHelper *gmmHelper, GmmResourceInfo *inputGmm) : Gmm(gmmHelper, inputGmm, false) {}
 
 Gmm::Gmm(GmmHelper *gmmHelper, GmmResourceInfo *inputGmm, bool openingHandle) : gmmHelper(gmmHelper) {
-    this->resourceParamsData.resize(sizeof(GMM_RESCREATE_PARAMS));
+    initializeResourceParams();
     auto &rootDeviceEnvironment = gmmHelper->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     gmmResourceInfo.reset(GmmResourceInfo::create(gmmHelper->getClientContext(), inputGmm->peekGmmResourceInfo(), openingHandle));
@@ -92,7 +92,7 @@ Gmm::Gmm(GmmHelper *gmmHelper, GmmResourceInfo *inputGmm, bool openingHandle) : 
 Gmm::~Gmm() = default;
 
 Gmm::Gmm(GmmHelper *gmmHelper, ImageInfo &inputOutputImgInfo, const StorageInfo &storageInfo, bool preferCompressed) : gmmHelper(gmmHelper) {
-    this->resourceParamsData.resize(sizeof(GMM_RESCREATE_PARAMS));
+    initializeResourceParams();
     auto *resourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(this->resourceParamsData.data());
     preferCompressed &= !storageInfo.isLockable;
     setupImageResourceParams(inputOutputImgInfo, preferCompressed);
