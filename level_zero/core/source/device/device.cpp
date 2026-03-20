@@ -1658,6 +1658,7 @@ void Device::releaseResources() {
     deviceInOrderCounterAllocator.reset();
     hostInOrderCounterAllocator.reset();
     inOrderTimestampAllocator.reset();
+    inOrderSharableEventDataAllocator.reset();
     fillPatternAllocator.reset();
     hostFunctionAllocator.reset();
 
@@ -2321,6 +2322,19 @@ NEO::TagAllocatorBase *Device::getDeviceInOrderCounterAllocator() {
 
 NEO::TagAllocatorBase *Device::getHostInOrderCounterAllocator() {
     return getInOrderCounterAllocator<NEO::DeviceAllocNodeType<false>>(hostInOrderCounterAllocator, inOrderAllocatorMutex, *getNEODevice(), getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+}
+
+NEO::TagAllocatorBase *Device::getInOrderSharableEventDataAllocator() {
+    if (!inOrderSharableEventDataAllocator.get()) {
+        std::unique_lock<std::mutex> lock(inOrderAllocatorMutex);
+        if (!inOrderSharableEventDataAllocator.get()) {
+            RootDeviceIndicesContainer rootDeviceIndices = {getNEODevice()->getRootDeviceIndex()};
+            size_t nodeSize = alignUp(sizeof(NEO::InOrderExecEventData), MemoryConstants::cacheLineSize);
+            inOrderSharableEventDataAllocator = std::make_unique<NEO::TagAllocator<NEO::InOrderExecEventDataNodeType>>(rootDeviceIndices, getNEODevice()->getMemoryManager(), 128,
+                                                                                                                       MemoryConstants::cacheLineSize, nodeSize, 0, false, false, getNEODevice()->getDeviceBitfield());
+        }
+    }
+    return inOrderSharableEventDataAllocator.get();
 }
 
 NEO::TagAllocatorBase *Device::getInOrderTimestampAllocator() {

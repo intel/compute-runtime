@@ -92,18 +92,20 @@ struct IpcOpaqueEventPoolData {
 #pragma pack()
 static_assert(sizeof(IpcOpaqueEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
+// 2way communication uses communicator allocation to obtain indirect handles, current counter value etc.
+// 1way communication must pass all informations as part of single IPC exchange
 #pragma pack(1)
 struct IpcCounterBasedEventData {
-    uint64_t deviceHandle = 0;
-    uint64_t hostHandle = 0;
-    uint64_t counterValue = 0;
+    uint64_t oneWayAllocCounterHandle = 0;
+    uint64_t communicationAllocHandle = 0;
+    uint64_t oneWayCounterValue = 0;
+    size_t allocOffset = 0;
+    uint32_t oneWayPartitionCount = 0;
     uint32_t rootDeviceIndex = 0;
-    uint32_t counterOffset = 0;
-    uint32_t devicePartitions = 0;
-    uint32_t hostPartitions = 0;
     uint32_t counterBasedFlags = 0;
     uint32_t signalScopeFlags = 0;
     uint32_t waitScopeFlags = 0;
+    unsigned int processId = 0;
 };
 #pragma pack()
 static_assert(sizeof(IpcCounterBasedEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcCounterBasedEventData is bigger than ZE_MAX_IPC_HANDLE_SIZE");

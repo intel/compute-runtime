@@ -128,8 +128,6 @@ std::pair<NEO::GraphicsAllocation *, void *> ContextImp::getMemHandlePtr(ze_devi
     } else if (driverType == NEO::DriverModelType::wddm) {
         return {nullptr, nullptr};
     } else {
-        auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
-
         NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
         uint64_t importHandle = handle;
         uint64_t effectiveCacheID = cacheID;

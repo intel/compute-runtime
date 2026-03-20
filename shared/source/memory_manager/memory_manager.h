@@ -463,4 +463,16 @@ class MemoryManager {
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();
+
+struct GraphicsAllocationDeleter {
+    MemoryManager *memoryManager;
+    void operator()(GraphicsAllocation *allocation) const noexcept { memoryManager->freeGraphicsMemory(allocation); }
+};
+
+using UniqueGraphicsAllocation = std::unique_ptr<GraphicsAllocation, GraphicsAllocationDeleter>;
+
+inline UniqueGraphicsAllocation makeUniqueGraphicsAllocation(MemoryManager *memoryManager, GraphicsAllocation *allocation) {
+    return UniqueGraphicsAllocation(allocation, GraphicsAllocationDeleter{memoryManager});
+}
+
 } // namespace NEO

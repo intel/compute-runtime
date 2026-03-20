@@ -70,12 +70,23 @@ struct InOrderFixtureMockEvent : public EventImp<uint32_t> {
     }
 };
 
+class WhiteboxSharableEventDataHelper : public SharableEventDataHelper {
+  public:
+    using SharableEventDataHelper::allocation;
+    using SharableEventDataHelper::allocationOffset;
+    using SharableEventDataHelper::eventDataPtr;
+};
+
 class WhiteboxInOrderExecEventHelper : public InOrderExecEventHelper {
   public:
-    using InOrderExecEventHelper::eventData;
     using InOrderExecEventHelper::fromExternalMemory;
     using InOrderExecEventHelper::inOrderExecInfo;
+    using InOrderExecEventHelper::sharableEventDataHelper;
     using InOrderExecEventHelper::timestampNodes;
+
+    InOrderExecEventData *getInOrderExecEventDataPtr() {
+        return static_cast<WhiteboxSharableEventDataHelper &>(sharableEventDataHelper).eventDataPtr;
+    }
 };
 
 class WhiteboxInOrderExecInfo : public InOrderExecInfo {

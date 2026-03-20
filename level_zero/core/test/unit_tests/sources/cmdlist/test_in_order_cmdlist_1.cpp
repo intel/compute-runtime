@@ -368,7 +368,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenEventHost
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
-    static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).eventData->counterOffset = 123;
+    static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).getInOrderExecEventDataPtr()->counterOffset = 123;
 
     uint64_t hostAddress = 0;
     if (events[0]->inOrderExecHelper.isHostStorageDuplicated()) {
@@ -506,11 +506,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedTimestampEven
     auto event3 = std::make_unique<MyMockEvent>(eventPool.get(), device);
 
     event1->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event1->getInOrderExecEventHelper().initializeLocalTempStorage();
     event1->assignKernelEventCompletionDataFailCounter = 2;
     event1->setEventTimestampFlag(true);
     event1->useContextEndForVerification = true;
 
     event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event2->getInOrderExecEventHelper().initializeLocalTempStorage();
     event2->assignKernelEventCompletionDataFailCounter = 2;
     event2->setEventTimestampFlag(true);
     event2->useContextEndForVerification = false;
@@ -745,7 +747,7 @@ HWTEST_F(InOrderCmdListTests, givenInOrderModeWhenHostResetOrSignalEventCalledTh
     EXPECT_EQ(events[0]->getInOrderExecEventHelper().getDeviceCounterAllocation(), immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
     EXPECT_EQ(events[0]->getInOrderAllocationOffset(), 0u);
 
-    static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).eventData->counterOffset = 123;
+    static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).getInOrderExecEventDataPtr()->counterOffset = 123;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, events[0]->reset());
 
     EXPECT_EQ(events[0]->getInOrderExecBaseSignalValue(), immCmdList->inOrderExecInfo->getCounterValue());
@@ -6404,7 +6406,7 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAnd
     EXPECT_EQ(cmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, counterValue);
     EXPECT_EQ(deviceAlloc->getGpuAddress(), address);
 
-    static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).eventData->counterOffset = 0x12300;
+    static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).getInOrderExecEventDataPtr()->counterOffset = 0x12300;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetDeviceAddress(eventHandle, &counterValue, &address));
     EXPECT_EQ(cmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, counterValue);

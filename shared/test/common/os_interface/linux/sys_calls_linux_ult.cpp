@@ -591,7 +591,7 @@ int pidfdgetfd(int pid, int targetfd, unsigned int flags) {
     if (sysCallsPidfdGetfd != nullptr) {
         return sysCallsPidfdGetfd(pid, targetfd, flags);
     }
-    return 0;
+    return targetfd;
 }
 
 int prctl(int option, unsigned long arg) {

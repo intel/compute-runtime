@@ -353,6 +353,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) override {
         registerIpcExportedAllocationCalled++;
+        if (storeIpcAllocations) {
+            storedIpcAllocations[static_cast<MemoryAllocation *>(graphicsAllocation)->internalHandle] = graphicsAllocation;
+        }
     }
 
     void getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) override {
@@ -384,6 +387,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t successAllocatedGraphicsMemoryIndex = 0u;
     uint32_t maxSuccessAllocatedGraphicsMemoryIndex = std::numeric_limits<uint32_t>::max();
     std::vector<void *> lockResourcePointers;
+    std::map<uint64_t, GraphicsAllocation *> storedIpcAllocations;
     uint32_t handleFenceCompletionCalled = 0u;
     uint32_t waitForEnginesCompletionCalled = 0u;
     uint32_t allocateGraphicsMemoryWithPropertiesCount = 0;
@@ -435,6 +439,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failUnMapPhysicalToVirtualMemory = false;
     bool returnMockGAFromDevicePool = false;
     bool returnMockGAFromHostPool = false;
+    bool storeIpcAllocations = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;

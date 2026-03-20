@@ -92,6 +92,11 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
 
     if (eventDescriptor.counterBasedFlags != 0 || NEO::debugManager.flags.ForceInOrderEvents.get() == 1) {
         event->enableCounterBasedMode(true, eventDescriptor.counterBasedFlags);
+        if (!event->isFromIpcPool) {
+            auto node = device->getInOrderSharableEventDataAllocator()->getTag();
+            node->initialize();
+            event->getInOrderExecEventHelper().initializeFromTagNode(*node, device->getRootDeviceIndex());
+        }
         if (eventDescriptor.ipcPool) {
             event->isSharableCounterBased = true;
         }
