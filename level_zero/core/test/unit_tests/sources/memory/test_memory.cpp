@@ -4450,7 +4450,7 @@ TEST_F(MultipleDevicePeerAllocationFailTest,
     EXPECT_NE(allocData, nullptr);
 
     DriverHandleFailGetFdMock *driverHandleFailGetFdMock = static_cast<DriverHandleFailGetFdMock *>(context->getDriverHandle());
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr, false);
     EXPECT_GT(driverHandleFailGetFdMock->importFdHandleCalledTimes, 0u);
     EXPECT_EQ(peerAlloc, nullptr);
 
@@ -5153,7 +5153,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
     uintptr_t peerGpuAddress = 0u;
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr, false);
     EXPECT_EQ(peerAlloc, nullptr);
 
     result = context->freeMem(ptr);
@@ -5178,7 +5178,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
     uintptr_t peerGpuAddress = 0u;
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr, false);
     EXPECT_NE(peerAlloc, nullptr);
 
     result = context->freeMem(ptr);
@@ -5204,7 +5204,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
     NEO::SvmAllocationData *peerAllocData;
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, &peerAllocData);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, &peerAllocData, false);
     EXPECT_NE(peerAlloc, nullptr);
     EXPECT_NE(peerAllocData, nullptr);
 
@@ -5230,7 +5230,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
     uintptr_t peerGpuAddress = 0u;
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr, false);
     EXPECT_NE(peerAlloc, nullptr);
 
     Device *l0Device1 = static_cast<Device *>(device1);
@@ -5270,7 +5270,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
     Device *l0Device1 = static_cast<Device *>(device1);
     EXPECT_EQ(0u, l0Device1->peerAllocations.allocations.size());
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr, false);
     EXPECT_NE(peerAlloc, nullptr);
     EXPECT_EQ(1u, l0Device1->peerAllocations.allocations.size());
 
@@ -5280,7 +5280,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
     }
 
     uintptr_t peerGpuAddress2 = 0u;
-    peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress2, nullptr);
+    peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress2, nullptr, false);
     EXPECT_NE(peerAlloc, nullptr);
     EXPECT_EQ(1u, l0Device1->peerAllocations.allocations.size());
     EXPECT_EQ(peerGpuAddress, peerGpuAddress2);
@@ -5312,7 +5312,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
     auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, nullptr, nullptr);
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, nullptr, nullptr, false);
     EXPECT_NE(peerAlloc, nullptr);
 
     result = context->freeMem(ptr);
@@ -5338,11 +5338,11 @@ TEST_F(MultipleDevicePeerAllocationTest,
     EXPECT_NE(allocData, nullptr);
 
     uintptr_t peerGpuAddress0 = 0u;
-    auto peerAlloc0 = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress0, nullptr);
+    auto peerAlloc0 = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress0, nullptr, false);
     EXPECT_NE(peerAlloc0, nullptr);
 
     uintptr_t peerGpuAddress1 = 0u;
-    auto peerAlloc1 = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress1, nullptr);
+    auto peerAlloc1 = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress1, nullptr, false);
     EXPECT_NE(peerAlloc1, nullptr);
 
     EXPECT_EQ(peerAlloc0, peerAlloc1);

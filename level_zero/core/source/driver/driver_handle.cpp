@@ -864,15 +864,16 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                                                          NEO::SvmAllocationData *allocData,
                                                          void *basePtr,
                                                          uintptr_t *peerGpuAddress,
-                                                         NEO::SvmAllocationData **peerAllocData) {
-    return getPeerAllocation(device, device->peerAllocations, allocData, basePtr, peerGpuAddress, peerAllocData);
+                                                         NEO::SvmAllocationData **peerAllocData,
+                                                         bool decompressP2PAllocation) {
+    return getPeerAllocation(device, device->peerAllocations, allocData, basePtr, peerGpuAddress, peerAllocData, decompressP2PAllocation);
 }
 
 NEO::GraphicsAllocation *DriverHandle::getCounterPeerAllocation(Device *device, NEO::GraphicsAllocation &graphicsAllocation) {
     NEO::SvmAllocationData allocData(graphicsAllocation.getRootDeviceIndex());
     allocData.gpuAllocations.addAllocation(&graphicsAllocation);
 
-    return getPeerAllocation(device, device->peerCounterAllocations, &allocData, reinterpret_cast<void *>(graphicsAllocation.getGpuAddress()), nullptr, nullptr);
+    return getPeerAllocation(device, device->peerCounterAllocations, &allocData, reinterpret_cast<void *>(graphicsAllocation.getGpuAddress()), nullptr, nullptr, false);
 }
 
 NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
@@ -880,7 +881,8 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                                                          NEO::SvmAllocationData *allocData,
                                                          void *basePtr,
                                                          uintptr_t *peerGpuAddress,
-                                                         NEO::SvmAllocationData **peerAllocData) {
+                                                         NEO::SvmAllocationData **peerAllocData,
+                                                         bool decompressP2PAllocation) {
     NEO::GraphicsAllocation *alloc = nullptr;
     void *peerMapAddress = basePtr;
     void *peerPtr = nullptr;
@@ -906,12 +908,16 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
             peerMapAddress = nullptr;
         }
 
-        uint32_t peerAllocRootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
+        uint32_t peerAllocRootDeviceIndex = device->getRootDeviceIndex();
         if (numHandles > 1) {
             peerAllocRootDeviceIndex = device->getNEODevice()->getRootDevice()->getRootDeviceIndex();
         }
-        auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-        l0GfxCoreHelper.p2pDecompressBufferIfRequired(alloc, device->getDriverHandle());
+
+        if (decompressP2PAllocation && (alloc->getRootDeviceIndex() != peerAllocRootDeviceIndex)) {
+            auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+            l0GfxCoreHelper.p2pDecompressBufferIfRequired(alloc, device->getDriverHandle());
+        }
+
         NEO::SvmAllocationData allocDataInternal(peerAllocRootDeviceIndex);
 
         if (numHandles > 1) {
