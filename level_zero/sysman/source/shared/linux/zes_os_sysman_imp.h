@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,10 +72,9 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     decltype(&NEO::SysCalls::pwrite) pwriteFunction = NEO::SysCalls::pwrite;
     SysmanDeviceImp *getParentSysmanDeviceImp() { return pParentSysmanDeviceImp; }
     std::string &getPciRootPath() { return rootPath; }
-    std::string &getDeviceName();
+    std::string &getDevicePciBdf() { return devicePciBdf; }
     std::string &getDriverName();
     void setDriverName(const std::string &driverName) { this->driverName = driverName; }
-    std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t rootDeviceIndex;
     bool diagnosticsReset = false;
@@ -120,7 +119,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     void clearHPIE(int fd);
     ze_result_t resizeVfBar(uint8_t size);
     std::mutex fwLock;
-    std::string deviceName;
+    std::string devicePciBdf = "";
     std::string driverName;
 };
 

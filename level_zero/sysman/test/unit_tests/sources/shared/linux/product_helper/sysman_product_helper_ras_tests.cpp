@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
+#include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_ras_types.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/ras/linux/mock_sysman_ras.h"
@@ -26,6 +27,12 @@ HWTEST2_F(SysmanProductHelperRasTest, GivenSysmanProductHelperInstanceWhenQueryi
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(NEO::defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(RasInterfaceType::pmu, pSysmanProductHelper->getGtRasUtilInterface());
     EXPECT_EQ(RasInterfaceType::none, pSysmanProductHelper->getHbmRasUtilInterface());
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenSysmanProductHelperInstanceWhenQueryingRasInterfaceThenVerifyProperInterfacesAreReturned, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(NEO::defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(RasInterfaceType::netlink, pSysmanProductHelper->getGtRasUtilInterface());
+    EXPECT_EQ(RasInterfaceType::netlink, pSysmanProductHelper->getHbmRasUtilInterface());
 }
 
 HWTEST2_F(SysmanProductHelperRasTest, GivenValidRasHandleWhenRequestingCountWithRasGetStateExpThenCountIsNotZero, IsPVC) {

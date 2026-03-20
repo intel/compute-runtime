@@ -24,6 +24,9 @@ void LinuxRasSourceGt::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> 
     case RasInterfaceType::pmu:
         PmuRasUtil::getSupportedRasErrorTypes(errorType, pLinuxSysmanImp, isSubDevice, subDeviceId);
         break;
+    case RasInterfaceType::netlink:
+        NetlinkRasUtil::getSupportedRasErrorTypes(errorType, pLinuxSysmanImp, isSubDevice, subDeviceId);
+        break;
     default:
         break;
     }

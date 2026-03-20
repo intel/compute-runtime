@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -553,8 +553,26 @@ bool SysFsAccessInterface::isRootUser() {
     return FsAccessInterface::isRootUser();
 }
 
-std::string SysFsAccessInterface::getDeviceDirName() {
-    return getDirName(dirname);
+std::string SysFsAccessInterface::getDevicePciBdf() {
+    // dirname is something like /sys/class/drm/card1/
+    // We need to resolve the symlink to get the real path
+    std::string realPath;
+    ze_result_t result = getRealPath("device", realPath);
+    if (result != ZE_RESULT_SUCCESS) {
+        return "";
+    }
+
+    // realPath will be something like:
+    // /sys/devices/pci0000:4a/0000:4a:02.0/0000:4b:00.0/0000:4c:01.0/0000:4d:00.0
+    // We need to extract the last PCI BDF component (0000:4d:00.0)
+
+    // Find the last '/' to get the basename
+    const auto lastSlash = realPath.find_last_of('/');
+    if (lastSlash == std::string::npos) {
+        return "";
+    }
+
+    return realPath.substr(lastSlash + 1);
 }
 
 } // namespace Sysman

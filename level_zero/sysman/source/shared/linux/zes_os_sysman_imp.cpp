@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ ze_result_t LinuxSysmanImp::init() {
     pProcfsAccess = pSysmanKmdInterface->getProcFsAccess();
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
 
-    deviceName = pFsAccess->getBaseName(pSysfsAccess->getDeviceDirName());
+    devicePciBdf = pSysfsAccess->getDevicePciBdf();
     auto sysmanHwDeviceId = getSysmanHwDeviceIdInstance();
     int myDeviceFd = sysmanHwDeviceId.getFileDescriptor();
     rootPath = NEO::getPciRootPath(myDeviceFd).value_or("");
@@ -89,10 +89,6 @@ ze_result_t LinuxSysmanImp::getResult(int err) {
     } else {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-}
-
-std::string &LinuxSysmanImp::getDeviceName() {
-    return deviceName;
 }
 
 std::string &LinuxSysmanImp::getDriverName() {

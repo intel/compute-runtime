@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_ras_types.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include <level_zero/zes_api.h>
 
@@ -25,6 +26,8 @@ class LinuxSysmanImp;
 class FsAccessInterface;
 class SysFsAccessInterface;
 class FirmwareUtil;
+class DrmNlApi;
+struct DrmRasNode;
 
 enum class RasInterfaceType {
     pmu = 0,
@@ -106,6 +109,25 @@ class GscRasUtil : public RasUtil {
     uint64_t errorBaseline = 0;
     uint32_t subdeviceId = 0;
     uint32_t subDeviceCount = 0;
+};
+
+class NetlinkRasUtil : public RasUtil {
+  public:
+    ze_result_t rasGetState(zes_ras_state_t &state, ze_bool_t clear) override;
+    ze_result_t rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) override;
+    ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) override;
+    static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId);
+    uint32_t rasGetCategoryCount() override;
+    NetlinkRasUtil(zes_ras_error_type_t type, L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId);
+    ~NetlinkRasUtil() override;
+    static std::unique_ptr<DrmNlApi> (*createDrmNlApi)();
+
+  protected:
+    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
+    zes_ras_error_type_t rasErrorType = {};
+    std::unique_ptr<DrmNlApi> drmNl;
+    uint32_t rasNodeId = 0;
+    static std::vector<DrmRasNode> rasNodes;
 };
 
 class RasUtilNone : public RasUtil {

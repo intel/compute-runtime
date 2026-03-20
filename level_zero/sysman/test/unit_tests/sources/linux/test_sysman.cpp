@@ -648,6 +648,93 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceWhenRetrievingUuidThenValidFdIsVerif
     std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidSysFsAccessWhenCallingGetDevicePciBdfThenCorrectBdfIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0/0000:01:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0/0000:01:00.0");
+        return buf;
+    });
+
+    auto pSysFsAccess = SysFsAccessInterface::create("/dev/dri/card0");
+    ASSERT_NE(nullptr, pSysFsAccess);
+
+    std::string bdf = pSysFsAccess->getDevicePciBdf();
+    EXPECT_EQ("0000:01:00.0", bdf);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidSysFsAccessWhenCallingGetDevicePciBdfWithDifferentBdfThenCorrectBdfIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:4a/0000:4a:02.0/0000:4b:00.0/0000:4c:01.0/0000:4d:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:4a/0000:4a:02.0/0000:4b:00.0/0000:4c:01.0/0000:4d:00.0");
+        return buf;
+    });
+
+    auto pSysFsAccess = SysFsAccessInterface::create("/dev/dri/card0");
+    ASSERT_NE(nullptr, pSysFsAccess);
+
+    std::string bdf = pSysFsAccess->getDevicePciBdf();
+    EXPECT_EQ("0000:4d:00.0", bdf);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidSysFsAccessWhenCallingGetDevicePciBdfAndGetRealPathFailsThenEmptyStringIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        return nullptr;
+    });
+
+    auto pSysFsAccess = SysFsAccessInterface::create("/dev/dri/card0");
+    ASSERT_NE(nullptr, pSysFsAccess);
+
+    std::string bdf = pSysFsAccess->getDevicePciBdf();
+    EXPECT_EQ("", bdf);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidSysFsAccessWhenCallingGetDevicePciBdfWithInvalidPathFormatThenEmptyStringIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        constexpr size_t sizeofPath = sizeof("invalid_path_without_slash");
+        strcpy_s(buf, sizeofPath, "invalid_path_without_slash");
+        return buf;
+    });
+
+    auto pSysFsAccess = SysFsAccessInterface::create("/dev/dri/card0");
+    ASSERT_NE(nullptr, pSysFsAccess);
+
+    std::string bdf = pSysFsAccess->getDevicePciBdf();
+    EXPECT_EQ("", bdf);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidPathWithSlashWhenCallingGetBaseNameThenFileNameIsReturned) {
+    auto tempFsAccess = std::make_unique<PublicFsAccess>();
+    std::string path = "/path/to/some/file.txt";
+    std::string baseName = tempFsAccess->getBaseName(path);
+    EXPECT_EQ("file.txt", baseName);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidPathWithoutSlashWhenCallingGetBaseNameThenFullPathIsReturned) {
+    auto tempFsAccess = std::make_unique<PublicFsAccess>();
+    std::string path = "file.txt";
+    std::string baseName = tempFsAccess->getBaseName(path);
+    EXPECT_EQ("file.txt", baseName);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidPathWithSlashWhenCallingGetDirNameThenDirectoryPathIsReturned) {
+    auto tempFsAccess = std::make_unique<PublicFsAccess>();
+    std::string path = "/path/to/some/file.txt";
+    std::string dirName = tempFsAccess->getDirName(path);
+    EXPECT_EQ("/path/to/some", dirName);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidPathWithoutSlashWhenCallingGetDirNameThenEmptyStringIsReturned) {
+    auto tempFsAccess = std::make_unique<PublicFsAccess>();
+    std::string path = "file.txt";
+    std::string dirName = tempFsAccess->getDirName(path);
+    EXPECT_EQ("", dirName);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidLinuxSysmanImpWhenCallingGetDevicePciBdfThenBdfStringIsReturned) {
+    std::string bdf = pLinuxSysmanImp->getDevicePciBdf();
+    EXPECT_FALSE(bdf.empty());
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

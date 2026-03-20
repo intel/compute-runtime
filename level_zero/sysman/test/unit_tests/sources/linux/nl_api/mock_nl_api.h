@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,7 @@ class MockNlApi : public L0::Sysman::NlApi {
     bool isErrorCounterAvailable = false;
     bool queryErrorList = false;
     bool isErrorAvailable = false;
+    bool queryNodeList = false;
 
     int genlUnregisterFamily(struct genl_ops *ops) override;
     int genlHandleMsg(struct nl_msg *msg, void *arg) override;

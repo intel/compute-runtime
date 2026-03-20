@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,7 +128,7 @@ class SysFsAccessInterface : protected FsAccessInterface {
     MOCKABLE_VIRTUAL bool isMyDeviceFile(const std::string dev);
     bool directoryExists(const std::string path) override;
     bool isRootUser() override;
-    std::string getDeviceDirName();
+    std::string getDevicePciBdf();
 
   protected:
     SysFsAccessInterface();

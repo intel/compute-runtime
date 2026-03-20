@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,9 @@
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
 
 #include "gtest/gtest.h"
+#include "third_party/uapi/drm-next/drm/drm_ras.h"
+
+#include <cstring>
 
 namespace L0 {
 namespace Sysman {
@@ -86,7 +89,27 @@ MyNlattr *MockNlApi::addPort(struct genl_info &info, MyNlattr *next, zes_fabric_
 }
 
 void *MockNlApi::genlmsgPut(struct nl_msg *msg, uint32_t port, uint32_t seq, int family, int hdrlen, int flags, uint8_t cmd, uint8_t version) {
+    if (pOps == nullptr) {
+        return nullptr;
+    }
+
+    auto updateCmdIndex = [this, cmd]() {
+        for (int i = 0; i < pOps->o_ncmds; i++) {
+            if (pOps->o_cmds[i].c_id == cmd) {
+                cmdIndex = i;
+                break;
+            }
+        }
+    };
+
+    const bool isDrmFamily = (pOps->o_name != nullptr) && (0 == std::strcmp(pOps->o_name, DRM_RAS_FAMILY_NAME));
+
     if (!mockGenlmsgPutReturnValue.empty()) {
+        // Keep legacy IAF test behavior for mocked genlmsgPut return paths,
+        // but resolve command index for DRM to avoid command-id collisions with IAF values.
+        if (isDrmFamily) {
+            updateCmdIndex();
+        }
         void *returnPtr = mockGenlmsgPutReturnValue.front();
         if (isRepeated != true) {
             mockGenlmsgPutReturnValue.erase(mockGenlmsgPutReturnValue.begin());
@@ -94,11 +117,7 @@ void *MockNlApi::genlmsgPut(struct nl_msg *msg, uint32_t port, uint32_t seq, int
         return returnPtr;
     }
 
-    for (int i = 0; i < pOps->o_ncmds; i++) {
-        if (pOps->o_cmds[i].c_id == cmd) {
-            cmdIndex = i;
-        }
-    }
+    updateCmdIndex();
     return &pOps->o_cmds[cmdIndex];
 }
 
@@ -111,164 +130,213 @@ int MockNlApi::genlHandleMsg(struct nl_msg *msg, void *arg) {
     for (auto i = 0; i < _IAF_ATTR_COUNT; i++) {
         info.attrs[i] = nullptr;
     }
-    next = addDefaultAttribs(info, next);
+    const bool isDrmFamily = (pOps != nullptr) && (pOps->o_name != nullptr) && (0 == std::strcmp(pOps->o_name, DRM_RAS_FAMILY_NAME));
 
-    switch (pOps->o_cmds[cmdIndex].c_id) {
-    case IAF_CMD_OP_FPORT_STATUS_QUERY:
-        validateId(true, true, true);
+    if (!isDrmFamily) {
+        next = addDefaultAttribs(info, next);
 
-        for (auto i = 0U; i < 1; i++) {
-            MyNlattr *nested = new MyNlattr;
-            MyNlattr *nextNested = nested;
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_HEALTH, fportHealth);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ISSUE_LQI, fportIssueLqi);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ISSUE_LWD, fportIssueLwd);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ISSUE_RATE, fportIssueRate);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ERROR_FAILED, fportReasonFailed);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ERROR_ISOLATED, fportReasonIsolated);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ERROR_LINK_DOWN, fportReasonLinkDown);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ERROR_FLAPPING, fportReasonFlapping);
-            addAttrib(info, nextNested, IAF_ATTR_FPORT_ERROR_DID_NOT_TRAIN, fportReasonDidNotTrain);
-            next = addNested(info, next, IAF_ATTR_FABRIC_PORT, nested);
-        }
-        break;
-    case IAF_CMD_OP_FABRIC_DEVICE_PROPERTIES:
-        validateId(true, false, false);
+        switch (pOps->o_cmds[cmdIndex].c_id) {
+        case IAF_CMD_OP_FPORT_STATUS_QUERY:
+            validateId(true, true, true);
 
-        if (true == addSubDeviceCount) {
-            addAttrib(info, next, IAF_ATTR_SUBDEVICE_COUNT, 2);
-        }
-        break;
-    case IAF_CMD_OP_FPORT_PROPERTIES:
-        validateId(true, false, false);
-
-        for (auto i = 0U; i < 1; i++) {
-            MyNlattr *nested = new MyNlattr;
-            MyNlattr *nextNested = nested;
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_NEIGHBOR_GUID, testGuid);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_NEIGHBOR_PORT_NUMBER, testPortId.portNumber);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_LINK_WIDTH_ENABLED, useInvalidWidth ? 0 : linkWidth1x);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_LINK_WIDTH_ACTIVE, useInvalidWidth ? 0 : linkWidth2x);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_BPS_LINK_SPEED_ACTIVE, linkSpeed);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_LINK_WIDTH_DOWNGRADE_RX_ACTIVE, useInvalidWidth ? 0 : linkWidth3x);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_LINK_WIDTH_DOWNGRADE_TX_ACTIVE, useInvalidWidth ? 0 : linkWidth4x);
-            addAttrib(info, nextNested, IAF_ATTR_FPORT_BPS_LINK_SPEED_MAX, linkSpeed);
-            next = addNested(info, next, IAF_ATTR_FABRIC_PORT, nested);
-        }
-        break;
-    case IAF_CMD_OP_SUB_DEVICE_PROPERTIES_GET:
-        validateId(true, false, false);
-
-        if (true == addGUID) {
-            next = addAttrib(info, next, IAF_ATTR_GUID, testGuid);
-        }
-        next = addAttrib(info, next, IAF_ATTR_EXTENDED_PORT_COUNT, 13);
-        next = addAttrib(info, next, IAF_ATTR_FABRIC_PORT_COUNT, 8);
-        next = addAttrib(info, next, IAF_ATTR_SWITCH_LIFETIME, 12);
-        next = addAttrib(info, next, IAF_ATTR_ROUTING_MODE_SUPPORTED, 1);
-        next = addAttrib(info, next, IAF_ATTR_ROUTING_MODE_ENABLED, 1);
-        next = addAttrib(info, next, IAF_ATTR_EHHANCED_PORT_0_PRESENT, 1);
-        for (auto i = addPortZeroAndTypeDisconnected ? 0U : 1U; i <= 8U; i++) {
-            MyNlattr *nested = new MyNlattr;
-            MyNlattr *nextNested = nested;
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FABRIC_PORT_NUMBER, i);
-            addAttrib(info, nextNested, IAF_ATTR_FABRIC_PORT_TYPE, addPortZeroAndTypeDisconnected ? IAF_FPORT_TYPE_DISCONNECTED : IAF_FPORT_TYPE_FIXED);
-            next = addNested(info, next, IAF_ATTR_FABRIC_PORT, nested);
-        }
-        for (auto i = 9U; i <= 12U; i++) {
-            next = addAttrib(info, next, IAF_ATTR_BRIDGE_PORT_NUMBER, i);
-        }
-
-        break;
-    case IAF_CMD_OP_FPORT_XMIT_RECV_COUNTS:
-        validateId(true, true, true);
-
-        if (true == addRxTxCounters) {
-            next = addAttrib(info, next, IAF_ATTR_FPORT_TX_BYTES, txCounter);
-            addAttrib(info, next, IAF_ATTR_FPORT_RX_BYTES, rxCounter);
-        }
-        break;
-    case IAF_CMD_OP_FPORT_THROUGHPUT:
-        validateId(false, false, false);
-
-        if (true == addRxTxCounters) {
-            for (auto i = 0U; i < testMultiPortThroughputCount; i++) {
+            for (auto i = 0U; i < 1; i++) {
                 MyNlattr *nested = new MyNlattr;
                 MyNlattr *nextNested = nested;
-                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_TX_BYTES, txCounter);
-                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_RX_BYTES, rxCounter);
-                nextNested = addAttrib(info, nextNested, IAF_ATTR_FABRIC_ID, testPortId.fabricId);
-                nextNested = addAttrib(info, nextNested, IAF_ATTR_SD_INDEX, testPortId.attachId);
-                addAttrib(info, nextNested, IAF_ATTR_FABRIC_PORT_NUMBER, testPortId.portNumber + i);
-                next = addNested(info, next, IAF_ATTR_FABRIC_PORT_THROUGHPUT, nested);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_HEALTH, fportHealth);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ISSUE_LQI, fportIssueLqi);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ISSUE_LWD, fportIssueLwd);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ISSUE_RATE, fportIssueRate);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ERROR_FAILED, fportReasonFailed);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ERROR_ISOLATED, fportReasonIsolated);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ERROR_LINK_DOWN, fportReasonLinkDown);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_ERROR_FLAPPING, fportReasonFlapping);
+                addAttrib(info, nextNested, IAF_ATTR_FPORT_ERROR_DID_NOT_TRAIN, fportReasonDidNotTrain);
+                next = addNested(info, next, IAF_ATTR_FABRIC_PORT, nested);
             }
-        }
-        break;
-    case IAF_CMD_OP_PORT_STATE_QUERY:
-        validateId(true, true, true);
+            break;
+        case IAF_CMD_OP_FABRIC_DEVICE_PROPERTIES:
+            validateId(true, false, false);
 
-        for (auto i = 0U; i < 1; i++) {
-            MyNlattr *nested = new MyNlattr;
-            MyNlattr *nextNested = nested;
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FABRIC_PORT_NUMBER, testPortId.portNumber);
-            addAttrib(info, nextNested, IAF_ATTR_ENABLED_STATE, 1);
-            next = addNested(info, next, IAF_ATTR_FABRIC_PORT, nested);
-        }
-        break;
-    case IAF_CMD_OP_PORT_BEACON_STATE_QUERY:
-        validateId(true, true, true);
+            if (true == addSubDeviceCount) {
+                addAttrib(info, next, IAF_ATTR_SUBDEVICE_COUNT, 2);
+            }
+            break;
+        case IAF_CMD_OP_FPORT_PROPERTIES:
+            validateId(true, false, false);
 
-        for (auto i = 0U; i < 1; i++) {
-            MyNlattr *nested = new MyNlattr;
-            MyNlattr *nextNested = nested;
-            addAttrib(info, nextNested, IAF_ATTR_ENABLED_STATE, 1);
-            next = addNested(info, next, IAF_ATTR_FABRIC_PORT, nested);
-        }
-        break;
-    case IAF_CMD_OP_ROUTING_GEN_QUERY:
-        validateId(false, false, false);
+            for (auto i = 0U; i < 1; i++) {
+                MyNlattr *nested = new MyNlattr;
+                MyNlattr *nextNested = nested;
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_NEIGHBOR_GUID, testGuid);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_NEIGHBOR_PORT_NUMBER, testPortId.portNumber);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_LINK_WIDTH_ENABLED, useInvalidWidth ? 0 : linkWidth1x);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_LINK_WIDTH_ACTIVE, useInvalidWidth ? 0 : linkWidth2x);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_BPS_LINK_SPEED_ACTIVE, linkSpeed);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_LINK_WIDTH_DOWNGRADE_RX_ACTIVE, useInvalidWidth ? 0 : linkWidth3x);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_LINK_WIDTH_DOWNGRADE_TX_ACTIVE, useInvalidWidth ? 0 : linkWidth4x);
+                addAttrib(info, nextNested, IAF_ATTR_FPORT_BPS_LINK_SPEED_MAX, linkSpeed);
+                next = addNested(info, next, IAF_ATTR_FABRIC_PORT, nested);
+            }
+            break;
+        case IAF_CMD_OP_SUB_DEVICE_PROPERTIES_GET:
+            validateId(true, false, false);
 
-        if (true == addRoutingGenStartEnd) {
-            next = addAttrib(info, next, IAF_ATTR_ROUTING_GEN_START, genStart);
-            addAttrib(info, next, IAF_ATTR_ROUTING_GEN_END, genEnd);
-        }
-        break;
-    case IAF_CMD_OP_DEVICE_ENUM:
-        validateId(false, false, false);
+            if (true == addGUID) {
+                next = addAttrib(info, next, IAF_ATTR_GUID, testGuid);
+            }
+            next = addAttrib(info, next, IAF_ATTR_EXTENDED_PORT_COUNT, 13);
+            next = addAttrib(info, next, IAF_ATTR_FABRIC_PORT_COUNT, 8);
+            next = addAttrib(info, next, IAF_ATTR_SWITCH_LIFETIME, 12);
+            next = addAttrib(info, next, IAF_ATTR_ROUTING_MODE_SUPPORTED, 1);
+            next = addAttrib(info, next, IAF_ATTR_ROUTING_MODE_ENABLED, 1);
+            next = addAttrib(info, next, IAF_ATTR_EHHANCED_PORT_0_PRESENT, 1);
+            for (auto i = addPortZeroAndTypeDisconnected ? 0U : 1U; i <= 8U; i++) {
+                MyNlattr *nested = new MyNlattr;
+                MyNlattr *nextNested = nested;
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FABRIC_PORT_NUMBER, i);
+                addAttrib(info, nextNested, IAF_ATTR_FABRIC_PORT_TYPE, addPortZeroAndTypeDisconnected ? IAF_FPORT_TYPE_DISCONNECTED : IAF_FPORT_TYPE_FIXED);
+                next = addNested(info, next, IAF_ATTR_FABRIC_PORT, nested);
+            }
+            for (auto i = 9U; i <= 12U; i++) {
+                next = addAttrib(info, next, IAF_ATTR_BRIDGE_PORT_NUMBER, i);
+            }
 
-        next = addAttrib(info, next, IAF_ATTR_ENTRIES, testFabricIds.size());
-        for (auto i = 0U; i < testFabricIds.size(); i++) {
-            MyNlattr *nested = new MyNlattr;
-            MyNlattr *nextNested = nested;
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_FABRIC_ID, testFabricIds[i]);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_DEV_NAME, 0UL);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_PARENT_DEV_NAME, 0UL);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_SOCKET_ID, 0UL);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_PCI_SLOT_NUM, 0UL);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_SUBDEVICE_COUNT, 0UL);
-            nextNested = addAttrib(info, nextNested, IAF_ATTR_VERSION, 0UL);
-            addAttrib(info, nextNested, IAF_ATTR_PRODUCT_TYPE, 0UL);
-            next = addNested(info, next, IAF_ATTR_FABRIC_DEVICE, nested);
+            break;
+        case IAF_CMD_OP_FPORT_XMIT_RECV_COUNTS:
+            validateId(true, true, true);
+
+            if (true == addRxTxCounters) {
+                next = addAttrib(info, next, IAF_ATTR_FPORT_TX_BYTES, txCounter);
+                addAttrib(info, next, IAF_ATTR_FPORT_RX_BYTES, rxCounter);
+            }
+            break;
+        case IAF_CMD_OP_FPORT_THROUGHPUT:
+            validateId(false, false, false);
+
+            if (true == addRxTxCounters) {
+                for (auto i = 0U; i < testMultiPortThroughputCount; i++) {
+                    MyNlattr *nested = new MyNlattr;
+                    MyNlattr *nextNested = nested;
+                    nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_TX_BYTES, txCounter);
+                    nextNested = addAttrib(info, nextNested, IAF_ATTR_FPORT_RX_BYTES, rxCounter);
+                    nextNested = addAttrib(info, nextNested, IAF_ATTR_FABRIC_ID, testPortId.fabricId);
+                    nextNested = addAttrib(info, nextNested, IAF_ATTR_SD_INDEX, testPortId.attachId);
+                    addAttrib(info, nextNested, IAF_ATTR_FABRIC_PORT_NUMBER, testPortId.portNumber + i);
+                    next = addNested(info, next, IAF_ATTR_FABRIC_PORT_THROUGHPUT, nested);
+                }
+            }
+            break;
+        case IAF_CMD_OP_PORT_STATE_QUERY:
+            validateId(true, true, true);
+
+            for (auto i = 0U; i < 1; i++) {
+                MyNlattr *nested = new MyNlattr;
+                MyNlattr *nextNested = nested;
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FABRIC_PORT_NUMBER, testPortId.portNumber);
+                addAttrib(info, nextNested, IAF_ATTR_ENABLED_STATE, 1);
+                next = addNested(info, next, IAF_ATTR_FABRIC_PORT, nested);
+            }
+            break;
+        case IAF_CMD_OP_PORT_BEACON_STATE_QUERY:
+            validateId(true, true, true);
+
+            for (auto i = 0U; i < 1; i++) {
+                MyNlattr *nested = new MyNlattr;
+                MyNlattr *nextNested = nested;
+                addAttrib(info, nextNested, IAF_ATTR_ENABLED_STATE, 1);
+                next = addNested(info, next, IAF_ATTR_FABRIC_PORT, nested);
+            }
+            break;
+        case IAF_CMD_OP_ROUTING_GEN_QUERY:
+            validateId(false, false, false);
+
+            if (true == addRoutingGenStartEnd) {
+                next = addAttrib(info, next, IAF_ATTR_ROUTING_GEN_START, genStart);
+                addAttrib(info, next, IAF_ATTR_ROUTING_GEN_END, genEnd);
+            }
+            break;
+        case IAF_CMD_OP_DEVICE_ENUM:
+            validateId(false, false, false);
+
+            next = addAttrib(info, next, IAF_ATTR_ENTRIES, testFabricIds.size());
+            for (auto i = 0U; i < testFabricIds.size(); i++) {
+                MyNlattr *nested = new MyNlattr;
+                MyNlattr *nextNested = nested;
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_FABRIC_ID, testFabricIds[i]);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_DEV_NAME, 0UL);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_PARENT_DEV_NAME, 0UL);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_SOCKET_ID, 0UL);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_PCI_SLOT_NUM, 0UL);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_SUBDEVICE_COUNT, 0UL);
+                nextNested = addAttrib(info, nextNested, IAF_ATTR_VERSION, 0UL);
+                addAttrib(info, nextNested, IAF_ATTR_PRODUCT_TYPE, 0UL);
+                next = addNested(info, next, IAF_ATTR_FABRIC_DEVICE, nested);
+            }
+            break;
+        case IAF_CMD_OP_PORT_BEACON_ENABLE:
+        case IAF_CMD_OP_PORT_BEACON_DISABLE:
+        case IAF_CMD_OP_PORT_ENABLE:
+        case IAF_CMD_OP_PORT_DISABLE:
+        case IAF_CMD_OP_PORT_USAGE_ENABLE:
+        case IAF_CMD_OP_PORT_USAGE_DISABLE:
+            validateId(true, true, true);
+            copyId(info, next, true, true, true);
+            break;
+        case IAF_CMD_OP_REM_REQUEST:
+            validateId(false, false, false);
+            break;
         }
-        break;
-    case IAF_CMD_OP_PORT_BEACON_ENABLE:
-    case IAF_CMD_OP_PORT_BEACON_DISABLE:
-    case IAF_CMD_OP_PORT_ENABLE:
-    case IAF_CMD_OP_PORT_DISABLE:
-    case IAF_CMD_OP_PORT_USAGE_ENABLE:
-    case IAF_CMD_OP_PORT_USAGE_DISABLE:
-        validateId(true, true, true);
-        copyId(info, next, true, true, true);
-        break;
-    case IAF_CMD_OP_REM_REQUEST:
-        validateId(false, false, false);
-        break;
     }
 
     info.nlh = reinterpret_cast<struct nlmsghdr *>(head);
     bool succeeded = false;
-    if (0 == (pOps->o_cmds[cmdIndex].c_msg_parser)(reinterpret_cast<struct nl_cache_ops *>(this), &pOps->o_cmds[cmdIndex], &info, arg)) {
-        succeeded = true;
+
+    if (readSingleError) {
+        if (isErrorCounterAvailable) {
+            next = addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_NODE_ID, 0);
+            next = addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID, 1);
+            next = addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_NAME, 7);
+            addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_VALUE, 1);
+        }
+        for (int i = 0; i < pOps->o_ncmds; i++) {
+            if (pOps->o_cmds[i].c_id == DRM_RAS_CMD_GET_ERROR_COUNTER) {
+                if (0 == (pOps->o_cmds[i].c_msg_parser)(reinterpret_cast<struct nl_cache_ops *>(this), &pOps->o_cmds[i], &info, arg)) {
+                    succeeded = true;
+                }
+            }
+        }
+    } else if (queryErrorList) {
+        for (int errorIdx = 0; errorIdx < 3; errorIdx++) {
+            next = addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_NODE_ID, 0);
+            if (isErrorAvailable) {
+                next = addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_NAME, 7);
+            }
+            next = addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID, 5 + errorIdx);
+            next = addAttrib(info, next, DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_VALUE, 10 + errorIdx);
+        }
+        for (int i = 0; i < pOps->o_ncmds; i++) {
+            if (pOps->o_cmds[i].c_id == DRM_RAS_CMD_GET_ERROR_COUNTER) {
+                if (0 == (pOps->o_cmds[i].c_msg_parser)(reinterpret_cast<struct nl_cache_ops *>(this), &pOps->o_cmds[i], &info, arg)) {
+                    succeeded = true;
+                }
+            }
+        }
+    } else if (queryNodeList) {
+        next = addAttrib(info, next, DRM_RAS_A_NODE_ATTRS_NODE_ID, 0);
+        next = addAttrib(info, next, DRM_RAS_A_NODE_ATTRS_DEVICE_NAME, 0);
+        next = addAttrib(info, next, DRM_RAS_A_NODE_ATTRS_NODE_NAME, 0);
+        addAttrib(info, next, DRM_RAS_A_NODE_ATTRS_NODE_TYPE, 1);
+        for (int i = 0; i < pOps->o_ncmds; i++) {
+            if (pOps->o_cmds[i].c_id == DRM_RAS_CMD_LIST_NODES) {
+                if (0 == (pOps->o_cmds[i].c_msg_parser)(reinterpret_cast<struct nl_cache_ops *>(this), &pOps->o_cmds[i], &info, arg)) {
+                    succeeded = true;
+                }
+            }
+        }
+    } else {
+        if (0 == (pOps->o_cmds[cmdIndex].c_msg_parser)(reinterpret_cast<struct nl_cache_ops *>(this), &pOps->o_cmds[cmdIndex], &info, arg)) {
+            succeeded = true;
+        }
     }
 
     delete head;

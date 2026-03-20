@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,8 @@ std::unique_ptr<RasUtil> RasUtil::create(RasInterfaceType rasInterface, LinuxSys
         return std::make_unique<PmuRasUtil>(type, pLinuxSysmanImp, onSubdevice, subdeviceId);
     case RasInterfaceType::gsc:
         return std::make_unique<GscRasUtil>(type, pLinuxSysmanImp, subdeviceId);
+    case RasInterfaceType::netlink:
+        return std::make_unique<NetlinkRasUtil>(type, pLinuxSysmanImp, subdeviceId);
     default:
         return std::make_unique<RasUtilNone>();
     }
