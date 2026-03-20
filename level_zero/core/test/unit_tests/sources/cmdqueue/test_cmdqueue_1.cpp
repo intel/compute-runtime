@@ -563,6 +563,36 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDi
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueCreate, givenRegularCmdListWhenExecutingThenTaskCountIsSavedInQueue) {
+
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+
+    static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr)->taskCount = 5;
+    static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr)->latestFlushedTaskCount = 4;
+
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    ASSERT_NE(nullptr, commandList);
+    commandList->close();
+
+    EXPECT_EQ(0u, commandQueue->taskCount);
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+
+    EXPECT_EQ(6u, commandQueue->taskCount);
+
+    commandQueue->destroy();
+}
+
 HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainerIsEmptyThenMakeResidentWasNotCalled) {
     auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);

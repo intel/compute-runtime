@@ -1628,10 +1628,11 @@ void CommandQueueHw<gfxCoreFamily>::updateTaskCountAndPostSync(bool isDispatchTa
                                                                uint32_t numCommandLists,
                                                                ze_command_list_handle_t *commandListHandles) {
 
+    this->taskCount = this->csr->peekTaskCount();
     if (!isDispatchTaskCountPostSyncRequired) {
         return;
     }
-    this->taskCount = this->csr->peekTaskCount();
+
     this->csr->setLatestFlushedTaskCount(this->taskCount);
 
     this->saveTagAndTaskCountForCommandLists(numCommandLists, commandListHandles, this->csr->getTagAllocation(), this->taskCount);
