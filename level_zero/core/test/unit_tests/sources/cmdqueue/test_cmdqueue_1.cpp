@@ -558,7 +558,53 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDi
             pipeControlsPostSync = true;
         }
     }
-    EXPECT_TRUE(pipeControlsPostSync);
+    if (!commandQueue->getCsr()->getOsContext().isPartOfContextGroup()) {
+        EXPECT_TRUE(pipeControlsPostSync);
+    } else {
+        EXPECT_FALSE(pipeControlsPostSync);
+    }
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDispatchTaskCountWriteThenMiFlushDwIsAdded) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          true,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    ASSERT_NE(nullptr, commandList);
+    commandList->close();
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), commandQueue->commandStream.getUsed()));
+
+    auto miFlushes = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    bool miFlushWriteFound = false;
+    for (size_t i = 0; i < miFlushes.size(); i++) {
+        auto miFlush = reinterpret_cast<MI_FLUSH_DW *>(*miFlushes[i]);
+        if (miFlush->getPostSyncOperation() != MI_FLUSH_DW::POST_SYNC_OPERATION_NO_WRITE) {
+            miFlushWriteFound = true;
+            EXPECT_EQ(reinterpret_cast<uint64_t>(commandQueue->getCsr()->getTagAddress()), miFlush->getDestinationAddress());
+        }
+    }
+    EXPECT_TRUE(miFlushWriteFound);
 
     commandQueue->destroy();
 }
