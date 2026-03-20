@@ -2626,7 +2626,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     const bool isHeapless = this->isHeaplessModeEnabled();
     const bool shouldUseCopyOffload = (isCopyOffloadForFillOrStagingPreferred() && isCopyOffloadForFillPreferred(size)) || doParamsRequireCopyOnly(memoryCopyParams);
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && (patternSize <= this->maxFillPatternSizeForCopyEngine) && shouldUseCopyOffload;
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && (patternSize <= this->maxFillPatternSizeForCopyEngine) && (0 == size % patternSize) && shouldUseCopyOffload;
 
     NEO::Device *neoDevice = device->getNEODevice();
     bool sharedSystemEnabled = isSharedSystemEnabled();

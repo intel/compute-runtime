@@ -1872,6 +1872,27 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInterruptEventWhenDispatchingTheProgramU
     EXPECT_NE(cmdList.end(), itor);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenBufferDataSizeNotAlignedToPatternSizeWhenAppendFillCalledThenCopyOffloadIsNotUsed, IsAtLeastXeCore) {
+    if (device->getProductHelper().useAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+    auto data = allocHostMem(MemoryConstants::kiloByte * 10);
+    immCmdList->appendMemoryFill(data, data, 11, MemoryConstants::kiloByte * 8, nullptr, 0, nullptr, copyParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto fillItor = findBltFillCmd<FamilyType>(cmdList.begin(), cmdList.end());
+
+    EXPECT_EQ(cmdList.end(), fillItor);
+
+    context->freeMem(data);
+}
+
 using InOrderRegularCmdListTests = InOrderCmdListFixture;
 
 HWTEST_F(InOrderRegularCmdListTests, givenInOrderFlagWhenCreatingCmdListThenEnableInOrderMode) {
