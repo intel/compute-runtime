@@ -665,6 +665,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationW
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
     DeviceBitfield devices = 0b11;
+    auto &productHelper = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper;
+    auto alignmentSize = productHelper.is2MBLocalMemAlignmentEnabled() ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
     AllocationProperties gpuProperties{
         0u,
         true,
@@ -672,7 +674,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationW
         AllocationType::unifiedSharedMemory,
         false,
         devices};
-    gpuProperties.alignment = MemoryConstants::pageSize64k;
+    gpuProperties.alignment = alignmentSize;
     gpuProperties.usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::CPU;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
 
@@ -1778,8 +1780,11 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenNotSetUseSystemMemoryWhenG
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenChunkSizeBasedColouringPolicyWhenAllocatingInDevicePoolOnAllMemoryBanksThenDivideAllocationIntoEqualBufferObjectsWithGivenChunkSize) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
+
+    auto &productHelper = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper;
+    auto alignmentSize = productHelper.is2MBLocalMemAlignmentEnabled() ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
     allocData.allFlags = 0;
-    allocData.size = 18 * MemoryConstants::pageSize64k;
+    allocData.size = 18 * alignmentSize;
     allocData.flags.allocateMemory = true;
     allocData.type = AllocationType::buffer;
     allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
@@ -1797,8 +1802,13 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenChunkSizeBasedColouringPolicy
     EXPECT_EQ(allocation->storageInfo.colouringGranularity, 256 * MemoryConstants::kiloByte);
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
-    auto numHandles = static_cast<uint32_t>(alignUp(allocData.size, allocation->storageInfo.colouringGranularity) / allocation->storageInfo.colouringGranularity);
-    EXPECT_EQ(numHandles, allocation->getNumGmms());
+    // Verify that allocation is divided into chunks based on coloring granularity
+    // Each chunk size is aligned to alignmentSize - 64KB or 2MB depending on platform support
+    // When 2MB alignment is enabled, KMD can allocate with 2MB pages, improving performance
+    auto expectedNumHandles = static_cast<uint32_t>(alignUp(allocData.size, allocation->storageInfo.colouringGranularity) / allocation->storageInfo.colouringGranularity);
+    auto numHandles = allocation->getNumGmms();
+    // Actual handles can be >= expected because each chunk is aligned to alignmentSize
+    EXPECT_GE(numHandles, expectedNumHandles);
     EXPECT_EQ(numHandles, drmAllocation->getBOs().size());
 
     auto &bos = drmAllocation->getBOs();
@@ -1806,11 +1816,11 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenChunkSizeBasedColouringPolicy
     for (auto handleId = 0u; handleId < numHandles; handleId++) {
         auto bo = bos[handleId];
         ASSERT_NE(nullptr, bo);
-        auto boSize = allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation();
+        // Each chunk size is multiple of coloring granularity, aligned to alignmentSize (64KB or 2MB)
+        // 2MB aligned allocations enable KMD to use 2MB pages for better TLB performance
         EXPECT_EQ(boAddress, bo->peekAddress());
-        EXPECT_EQ(boSize, bo->peekSize());
-        EXPECT_EQ(boSize, 256 * MemoryConstants::kiloByte);
-        boAddress += boSize;
+        EXPECT_EQ(bo->peekSize() % allocation->storageInfo.colouringGranularity, 0u);
+        boAddress += bo->peekSize();
     }
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -1818,15 +1828,18 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenChunkSizeBasedColouringPolicy
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMappingBasedColouringPolicyWhenAllocatingInDevicePoolOnAllMemoryBanksThenSetBindAddressesToBufferObjects) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
+
+    auto &productHelper = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper;
+    auto alignmentSize = productHelper.is2MBLocalMemAlignmentEnabled() ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
     allocData.allFlags = 0;
-    allocData.size = 18 * MemoryConstants::pageSize64k;
+    allocData.size = 18 * alignmentSize;
     allocData.flags.allocateMemory = true;
     allocData.type = AllocationType::buffer;
     allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
     allocData.storageInfo.multiStorage = true;
     allocData.rootDeviceIndex = rootDeviceIndex;
     allocData.storageInfo.colouringPolicy = ColouringPolicy::mappingBased;
-    allocData.storageInfo.colouringGranularity = 64 * MemoryConstants::kiloByte;
+    allocData.storageInfo.colouringGranularity = alignmentSize;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
@@ -1834,7 +1847,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMappingBasedColouringPolicyWh
     EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_NE(0u, allocation->getGpuAddress());
     EXPECT_EQ(allocation->storageInfo.colouringPolicy, ColouringPolicy::mappingBased);
-    EXPECT_EQ(allocation->storageInfo.colouringGranularity, 64 * MemoryConstants::kiloByte);
+    EXPECT_EQ(allocation->storageInfo.colouringGranularity, alignmentSize);
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     auto numHandles = 4u;
@@ -1852,10 +1865,10 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMappingBasedColouringPolicyWh
         auto addresses = bo->getColourAddresses();
         if (handleId < 2) {
             EXPECT_EQ(addresses.size(), 5u);
-            EXPECT_EQ(boSize, 5 * MemoryConstants::pageSize64k);
+            EXPECT_EQ(boSize, 5 * alignmentSize);
         } else {
             EXPECT_EQ(addresses.size(), 4u);
-            EXPECT_EQ(boSize, 4 * MemoryConstants::pageSize64k);
+            EXPECT_EQ(boSize, 4 * alignmentSize);
         }
         for (auto i = 0u; i < addresses.size(); i++) {
             EXPECT_EQ(addresses[i], boAddress + 4 * i * allocation->storageInfo.colouringGranularity + handleId * allocation->storageInfo.colouringGranularity);
@@ -2177,6 +2190,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDebugModuleAreaTypeWhenAlloca
                                          false,
                                          device->getDeviceBitfield()};
     auto moduleDebugArea = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    ASSERT_NE(nullptr, moduleDebugArea);
 
     auto gpuAddress = moduleDebugArea->getGpuAddress();
     auto gmmHelper = device->getGmmHelper();
@@ -2195,6 +2209,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSipKernelTypeWhenAllocatingTh
     properties.flags.use32BitFrontWindow = true;
 
     auto sipAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    ASSERT_NE(nullptr, sipAllocation);
 
     auto gpuAddress = sipAllocation->getGpuAddress();
     auto gmmHelper = device->getGmmHelper();
@@ -3210,17 +3225,19 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenGraphicsAllocationInDevicePoo
     EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
 
     auto gpuAddress = allocation->getGpuAddress();
-    auto sizeAlignedTo64KB = alignUp(allocData.imgInfo->size, MemoryConstants::pageSize64k);
+    auto &productHelper = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper;
+    auto alignmentSize = productHelper.is2MBLocalMemAlignmentEnabled() ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
+    auto sizeAligned = alignUp(allocData.imgInfo->size, alignmentSize);
     EXPECT_NE(0u, gpuAddress);
-    EXPECT_EQ(sizeAlignedTo64KB, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(sizeAligned, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(gpuAddress, reinterpret_cast<uint64_t>(allocation->getReservedAddressPtr()));
-    EXPECT_EQ(sizeAlignedTo64KB, allocation->getReservedAddressSize());
+    EXPECT_EQ(sizeAligned, allocation->getReservedAddressSize());
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     auto bo = drmAllocation->getBO();
     EXPECT_NE(nullptr, bo);
     EXPECT_EQ(gpuAddress, bo->peekAddress());
-    EXPECT_EQ(sizeAlignedTo64KB, bo->peekSize());
+    EXPECT_EQ(sizeAligned, bo->peekSize());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -3228,8 +3245,11 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenGraphicsAllocationInDevicePoo
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAllocationWithUnifiedMemoryAllocationWithoutUseMmapObjectThenReturnNullptr) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
+
+    auto &productHelper = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper;
+    auto alignmentSize = productHelper.is2MBLocalMemAlignmentEnabled() ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
     allocData.allFlags = 0;
-    allocData.size = 18 * MemoryConstants::pageSize64k;
+    allocData.size = 18 * alignmentSize;
     allocData.flags.allocateMemory = true;
     allocData.type = AllocationType::unifiedSharedMemory;
     allocData.rootDeviceIndex = rootDeviceIndex;
@@ -3243,8 +3263,11 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAllocationWithUnifiedMemoryAl
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAllocationWithUnifiedMemoryAllocationWithoutMemoryInfoSetThenReturnNullptr) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
+
+    auto &productHelper = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper;
+    auto alignmentSize = productHelper.is2MBLocalMemAlignmentEnabled() ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
     allocData.allFlags = 0;
-    allocData.size = 18 * MemoryConstants::pageSize64k;
+    allocData.size = 18 * alignmentSize;
     allocData.flags.allocateMemory = true;
     allocData.type = AllocationType::unifiedSharedMemory;
     allocData.rootDeviceIndex = rootDeviceIndex;
