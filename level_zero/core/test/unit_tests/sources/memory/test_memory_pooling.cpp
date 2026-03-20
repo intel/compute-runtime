@@ -97,26 +97,25 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     constexpr static auto poolAllocationThreshold = 1 * MemoryConstants::megaByte;
 };
 
-using AllocUsmHostDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0, true>;
-TEST_F(AllocUsmHostDefaultMemoryTest, givenDriverHandleWhenCallinginitHostUsmAllocPoolThenInitIfEnabledForAllDevicesAndNoDebugger) {
+using AllocUsmHostDefaultMultiDeviceMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0, true>;
+TEST_F(AllocUsmHostDefaultMultiDeviceMemoryTest, givenDriverHandleWhenCallingInitHostUsmAllocPoolThenDoNotInit) {
     L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = false;
     mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = false;
-    driverHandle->initHostUsmAllocPool();
+    driverHandle->initHostUsmAllocPool(true);
     EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
 
     L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
     mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = false;
-    driverHandle->initHostUsmAllocPool();
+    driverHandle->initHostUsmAllocPool(true);
     EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
 
     L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
     mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = true;
-    driverHandle->initHostUsmAllocPool();
-    ASSERT_NE(nullptr, driverHandle->usmHostMemAllocPool.get());
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
+    driverHandle->initHostUsmAllocPool(true);
+    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
 
     for (int32_t csrType = 0; csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum); ++csrType) {
         DebugManagerStateRestore restorer;
@@ -124,7 +123,7 @@ TEST_F(AllocUsmHostDefaultMemoryTest, givenDriverHandleWhenCallinginitHostUsmAll
         L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
         mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
         mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = true;
-        driverHandle->initHostUsmAllocPool();
+        driverHandle->initHostUsmAllocPool(false);
         if (NEO::DeviceFactory::isHwModeSelected()) {
             ASSERT_NE(nullptr, driverHandle->usmHostMemAllocPool.get());
             EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
@@ -136,7 +135,41 @@ TEST_F(AllocUsmHostDefaultMemoryTest, givenDriverHandleWhenCallinginitHostUsmAll
     L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     auto debuggerL0 = DebuggerL0::create(l0Devices[1]->getNEODevice());
     executionEnvironment->rootDeviceEnvironments[1]->debugger.reset(debuggerL0.release());
-    driverHandle->initHostUsmAllocPool();
+    driverHandle->initHostUsmAllocPool(false);
+    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
+}
+
+using AllocUsmHostDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0, false>;
+TEST_F(AllocUsmHostDefaultMemoryTest, givenDriverHandleWhenCallingInitHostUsmAllocPoolThenInitIfEnabledAndNoDebugger) {
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
+    mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = false;
+    driverHandle->initHostUsmAllocPool(false);
+    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
+
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
+    mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
+    driverHandle->initHostUsmAllocPool(false);
+    ASSERT_NE(nullptr, driverHandle->usmHostMemAllocPool.get());
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
+
+    for (int32_t csrType = 0; csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum); ++csrType) {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
+        L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
+        mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
+        driverHandle->initHostUsmAllocPool(false);
+        if (NEO::DeviceFactory::isHwModeSelected()) {
+            ASSERT_NE(nullptr, driverHandle->usmHostMemAllocPool.get());
+            EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
+        } else {
+            EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
+        }
+    }
+
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
+    auto debuggerL0 = DebuggerL0::create(l0Devices[0]->getNEODevice());
+    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(debuggerL0.release());
+    driverHandle->initHostUsmAllocPool(false);
     EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
 }
 

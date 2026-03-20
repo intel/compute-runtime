@@ -377,7 +377,7 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
 
 void DriverHandle::initHostUsmAllocPoolOnce() {
     std::call_once(this->hostUsmPoolOnceFlag, [this]() {
-        this->initHostUsmAllocPool();
+        this->initHostUsmAllocPool(this->numDevices > 1);
     });
 }
 
@@ -393,7 +393,7 @@ void DriverHandle::initDeviceUsmAllocPoolOnce() {
     });
 }
 
-void DriverHandle::initHostUsmAllocPool() {
+void DriverHandle::initHostUsmAllocPool(bool multiDevice) {
     bool useUsmPoolManager = true;
     if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
         useUsmPoolManager = !!NEO::debugManager.flags.EnableUsmAllocationPoolManager.get();
@@ -402,7 +402,8 @@ void DriverHandle::initHostUsmAllocPool() {
     for (auto device : this->devices) {
         usmHostAllocPoolingEnabled &= device->getNEODevice()->getProductHelper().isHostUsmPoolAllocatorSupported() &&
                                       nullptr == device->getL0Debugger() &&
-                                      NEO::DeviceFactory::isHwModeSelected();
+                                      NEO::DeviceFactory::isHwModeSelected() &&
+                                      !multiDevice;
     }
     auto poolParams = NEO::UsmPoolParams::getUsmPoolParams(this->devices[0]->getNEODevice()->getGfxCoreHelper());
     if (NEO::debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {

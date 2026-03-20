@@ -136,7 +136,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
-    void initHostUsmAllocPool();
+    void initHostUsmAllocPool(bool multiDevice);
     void initHostUsmAllocPoolOnce();
     void initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice);
     void initDeviceUsmAllocPoolOnce();

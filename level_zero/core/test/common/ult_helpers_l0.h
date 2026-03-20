@@ -33,7 +33,7 @@ struct L0UltHelper {
     }
 
     static void initUsmAllocPools(DriverHandle *driverHandle) {
-        driverHandle->initHostUsmAllocPool();
+        driverHandle->initHostUsmAllocPool(driverHandle->numDevices > 1);
         for (auto device : driverHandle->devices) {
             driverHandle->initDeviceUsmAllocPool(*device->getNEODevice(), driverHandle->numDevices > 1);
         }
