@@ -1025,7 +1025,6 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         if (getDevice()->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv() == false) {
             NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::optDisableSendWarWa);
         }
-        createBuildExtraOptions(apiOptions, internalBuildOptions);
     }
     if (NEO::ApiSpecificConfig::getBindlessMode(*device->getNEODevice())) {
         NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::bindlessMode.str());
