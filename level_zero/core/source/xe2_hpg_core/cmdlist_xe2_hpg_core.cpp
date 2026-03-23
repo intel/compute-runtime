@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_gen12lp_to_xe3.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_gen12lp_to_xe3p.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_xe2_hpg_and_later.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_xe_hpc_and_later.inl"

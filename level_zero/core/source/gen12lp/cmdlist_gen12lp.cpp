@@ -14,6 +14,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_gen12lp_to_xe3.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_gen12lp_to_xe3p.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.inl"
 #include "level_zero/core/source/gen12lp/definitions/cache_flush_gen12lp.inl"

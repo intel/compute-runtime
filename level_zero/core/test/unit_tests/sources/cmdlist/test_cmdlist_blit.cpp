@@ -609,7 +609,7 @@ class MockCommandListForAdditionalBlitProperties : public WhiteBox<::L0::Command
     using BaseClass::useAdditionalBlitProperties;
 };
 
-HWTEST_F(AppendMemoryCopyTests, givenBlitPropertiesWhenCallingSetAdditionalBlitPropertiesThenSyncPropertiesExtRemainsUnchanged) {
+HWTEST2_F(AppendMemoryCopyTests, givenBlitPropertiesWhenCallingSetAdditionalBlitPropertiesThenSyncPropertiesExtRemainsUnchanged, IsAtMostXe3pCore) {
     NEO::BlitProperties blitProperties{}, blitProperties2{}, blitPropertiesExpected{};
     EncodePostSyncArgs &postSyncArgs = blitProperties.blitSyncProperties.postSyncArgs;
     EncodePostSyncArgs &postSyncArgs2 = blitProperties2.blitSyncProperties.postSyncArgs;
@@ -630,6 +630,12 @@ HWTEST_F(AppendMemoryCopyTests, givenBlitPropertiesWhenCallingSetAdditionalBlitP
     EXPECT_EQ(postSyncArgs2.interruptEvent, postSyncArgsExpected.interruptEvent);
     EXPECT_EQ(postSyncArgs2.eventAddress, postSyncArgsExpected.eventAddress);
     EXPECT_EQ(nullptr, postSyncArgs2.inOrderExecInfo);
+}
+
+HWTEST2_F(AppendMemoryCopyTests, givenBlitPropertiesWhenCallingDoParamsRequireCopyOnlyThenReturnFalse, IsAtMostXe3pCore) {
+    L0::CmdListMemoryCopyParams memoryCopyParams;
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    EXPECT_FALSE(commandList->doParamsRequireCopyOnly(memoryCopyParams));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

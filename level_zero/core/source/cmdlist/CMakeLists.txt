@@ -27,6 +27,7 @@ if(SUPPORT_GEN12LP OR SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE OR SUPPORT_XE2_
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_gen12lp_to_xe3.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_gen12lp_to_xe3p.inl
   )
 endif()
 

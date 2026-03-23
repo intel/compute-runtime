@@ -9,6 +9,7 @@
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_gen12lp_to_xe3p.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_xe2_hpg_and_later.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_xe3p_and_later.inl"
@@ -35,30 +36,6 @@ size_t CommandListCoreFamily<IGFX_XE3P_CORE>::getReserveSshSize() {
     }
 
     return (maxPtssSteps * numSlotsPerStep + startSlotIndex) * numSteps * sizeof(RENDER_SURFACE_STATE);
-}
-
-template <>
-void CommandListCoreFamily<IGFX_XE3P_CORE>::setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint64_t forceAggregatedEventIncValue, bool useAdditionalTimestamp) {}
-
-template <>
-bool CommandListCoreFamily<IGFX_XE3P_CORE>::kernelMemoryPrefetchEnabled() const { return NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1; }
-
-template <>
-bool CommandListCoreFamily<IGFX_XE3P_CORE>::useZeroedPatternInMemoryFill(CmdListMemoryCopyParams &memoryCopyParams) const {
-    return false;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::doParamsRequireCopyOnly(CmdListMemoryCopyParams &memoryCopyParams) const {
-    return false;
-}
-
-template <>
-ze_result_t CommandListCoreFamily<IGFX_XE3P_CORE>::appendCustomOperation(const void *pNext,
-                                                                         ze_event_handle_t hSignalEvent,
-                                                                         uint32_t numWaitEvents,
-                                                                         ze_event_handle_t *phWaitEvents) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 template struct CommandListCoreFamily<IGFX_XE3P_CORE>;
