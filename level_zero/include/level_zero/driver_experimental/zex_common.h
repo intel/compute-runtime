@@ -120,7 +120,7 @@ typedef struct _ze_intel_media_communication_desc_t ze_intel_media_communication
 /// @brief ze_intel_media_communication_desc_t
 typedef struct _ze_intel_media_communication_desc_t {
     ze_structure_type_ext_t stype;          ///< [in] type of this structure
-    void *pNext;                            ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
+    const void *pNext;                      ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
     void *controlSharedMemoryBuffer;        ///< [in] control shared memory buffer pointer, must be USM address
     uint32_t controlSharedMemoryBufferSize; ///< [in] control shared memory buffer size
     void *controlBatchBuffer;               ///< [in] control batch buffer pointer, must be USM address
@@ -136,7 +136,7 @@ typedef struct _ze_intel_media_doorbell_handle_desc_t ze_intel_media_doorbell_ha
 /// @details Handle of the doorbell. This structure is passed as argument of zeIntelMediaCommunicationCreate and zeIntelMediaCommunicationDestroy
 typedef struct _ze_intel_media_doorbell_handle_desc_t {
     ze_structure_type_ext_t stype; ///< [in] type of this structure
-    void *pNext;                   ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
+    const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
     void *doorbell;                ///< [in,out] handle of the doorbell
 } ze_intel_media_doorbell_handle_desc_t;
 
@@ -157,7 +157,7 @@ typedef struct _ze_intel_device_media_exp_properties_t ze_intel_device_media_exp
 /// @brief  May be passed to ze_device_properties_t through pNext.
 typedef struct _ze_intel_device_media_exp_properties_t {
     ze_structure_type_ext_t stype;           ///< [in] type of this structure
-    const void *pNext;                       ///< [in][optional] must be null or a pointer to an extension-specific
+    void *pNext;                             ///< [in][optional] must be null or a pointer to an extension-specific
     ze_intel_device_media_exp_flags_t flags; ///< [out] device media flags
     uint32_t numEncoderCores;                ///< [out] number of encoder cores
     uint32_t numDecoderCores;                ///< [out] number of decoder cores
@@ -254,7 +254,7 @@ typedef struct _zex_counter_based_event_external_sync_alloc_properties_t {
 ///        passed as pNext member of ::zex_counter_based_event_desc_t.
 typedef struct _zex_counter_based_event_external_storage_properties_t {
     ze_structure_type_ext_t stype; ///< [in] type of this structure
-    const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific
+    void *pNext;                   ///< [in][optional] must be null or a pointer to an extension-specific
     uint64_t *deviceAddress;       ///< [in] device address that would be updated with atomic_add upon signaling of this event, must be device USM memory
     uint64_t incrementValue;       ///< [in] value which would by atomically added upon each completion
     uint64_t completionValue;      ///< [in] final completion value, when value under deviceAddress is equal or greater then this value then event is considered as completed

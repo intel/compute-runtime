@@ -374,7 +374,7 @@ typedef enum _ze_intel_drm_format_modifier_exp_version_t {
 ///     - The application can use this information to choose a DRM format modifier for the image during creation
 typedef struct _ze_intel_image_selected_format_modifier_exp_properties_t {
     ze_structure_type_t stype;  ///< [in] type of this structure
-    const void *pNext;          ///< [in][optional] must be null or a pointer to an extension-specific
+    void *pNext;                ///< [in][optional] must be null or a pointer to an extension-specific
                                 ///< structure (i.e. contains stype and pNext).
     uint64_t drmFormatModifier; ///< [out] DRM format modifier
 } ze_intel_image_selected_format_modifier_exp_properties_t;
@@ -453,7 +453,7 @@ typedef struct _ze_intel_mem_format_modifier_import_exp_desc_t {
 ///     - The application can query the chosen DRM format modifier for the buffer via zeMemGetAllocProperties API
 typedef struct _ze_intel_mem_selected_format_modifier_exp_properties_t {
     ze_structure_type_t stype;  ///< [in] type of this structure
-    const void *pNext;          ///< [in][optional] must be null or a pointer to an extension-specific
+    void *pNext;                ///< [in][optional] must be null or a pointer to an extension-specific
                                 ///< structure (i.e. contains stype and pNext).
     uint64_t drmFormatModifier; ///< [out] DRM format modifier
 } ze_intel_mem_selected_format_modifier_exp_properties_t;
