@@ -82,6 +82,7 @@ NEO::ConstStringRef optAutoGrf = "-ze-intel-enable-auto-large-GRF-mode";
 NEO::ConstStringRef enableLibraryCompile = "-library-compilation";
 NEO::ConstStringRef enableGlobalVariableSymbols = "-ze-take-global-address";
 NEO::ConstStringRef enableFP64GenEmu = "-ze-fp64-gen-emu";
+NEO::ConstStringRef registerFileSize = "-ze-exp-register-file-size";
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)

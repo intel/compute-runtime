@@ -16,6 +16,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/driver_experimental/zex_module.h"
@@ -67,7 +68,7 @@ XE3P_CORETEST_F(AUBVariableRegisterPerThreadL0Xe3p, givenZeOptRegisterFileSizeOp
 
     for (const auto &grfSize : grfSizes) {
         std::string filename = "grf_" + std::to_string(grfSize) + "_kernel_variable_register_per_thread";
-        std::string buildFlags = "-ze-exp-register-file-size " + std::to_string(grfSize);
+        std::string buildFlags = BuildOptions::registerFileSize.str() + " " + std::to_string(grfSize);
         ze_module_handle_t module = createModuleFromFile(filename, context, device, buildFlags);
         ASSERT_NE(nullptr, module);
 

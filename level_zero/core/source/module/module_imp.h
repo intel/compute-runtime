@@ -50,7 +50,7 @@ extern NEO::ConstStringRef optAutoGrf;
 extern NEO::ConstStringRef enableLibraryCompile;
 extern NEO::ConstStringRef enableGlobalVariableSymbols;
 extern NEO::ConstStringRef enableFP64GenEmu;
-
+extern NEO::ConstStringRef registerFileSize;
 } // namespace BuildOptions
 
 struct ModuleTranslationUnit {
