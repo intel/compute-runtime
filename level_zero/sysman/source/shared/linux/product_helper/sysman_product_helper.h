@@ -93,6 +93,7 @@ class SysmanProductHelper {
 
     // standby
     virtual bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) = 0;
+    virtual bool isSetStandbyModeSupported() = 0;
 
     // Firmware
     virtual void getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) = 0;

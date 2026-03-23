@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,6 +56,10 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
 
 ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    if (!pSysmanProductHelper->isSetStandbyModeSupported()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     if (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) {
         result = pSysfsAccess->write(standbyModeFile, standbyModeDefault);
     } else {

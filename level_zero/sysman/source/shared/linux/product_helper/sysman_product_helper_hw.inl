@@ -387,6 +387,11 @@ bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *p
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isSetStandbyModeSupported() {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void SysmanProductHelperHw<gfxProduct>::getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) {
     fwTypes.clear();
     pFwInterface->getDeviceSupportedFwTypes(fwTypes);

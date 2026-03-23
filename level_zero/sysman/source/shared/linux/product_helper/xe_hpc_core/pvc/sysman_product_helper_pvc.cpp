@@ -425,6 +425,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysm
 }
 
 template <>
+bool SysmanProductHelperHw<gfxProduct>::isSetStandbyModeSupported() {
+    return true;
+}
+
+template <>
 RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
     return RasInterfaceType::pmu;
 }
