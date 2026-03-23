@@ -90,7 +90,8 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
         bool typeMatch = (req->allocationType == curr->getAllocationType());
         bool sizeMatch = (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize);
         if (typeMatch && curr->getAllocationType() == NEO::AllocationType::externalHostPtr) {
-            sizeMatch = (alignSizeWholePage(curr->getUnderlyingBuffer(), curr->getUnderlyingBufferSize()) >= req->requiredMinimalSize);
+            auto availableSize = alignSizeWholePage(curr->getUnderlyingBuffer(), curr->getUnderlyingBufferSize()) - static_cast<size_t>(curr->getAllocationOffset());
+            sizeMatch = (availableSize >= req->requiredMinimalSize);
         }
         bool memMatch = (curr->storageInfo.systemMemoryForced == req->forceSystemMemoryFlag);
 
