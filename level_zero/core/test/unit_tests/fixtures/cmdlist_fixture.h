@@ -341,7 +341,7 @@ struct CommandListAppendLaunchRayTracingKernelFixture : ModuleFixture {
     void setUp();
     void tearDown();
 
-    ContextImp *contextImp = nullptr;
+    Context *contextImp = nullptr;
     WhiteBox<::L0::CommandList> *commandList = nullptr;
 
     ze_group_count_t dispatchKernelArguments;

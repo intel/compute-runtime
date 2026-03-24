@@ -10,18 +10,18 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 namespace L0 {
 namespace ult {
 
-class ContextWhiteboxForWindowsIpcTest : public ::L0::ContextImp {
+class ContextWhiteboxForWindowsIpcTest : public ::L0::Context {
   public:
-    ContextWhiteboxForWindowsIpcTest(L0::DriverHandle *driverHandle) : L0::ContextImp(driverHandle) {}
+    ContextWhiteboxForWindowsIpcTest(L0::DriverHandle *driverHandle) : L0::Context(driverHandle) {}
 
-    using ::L0::ContextImp::setIPCHandleData;
+    using ::L0::Context::setIPCHandleData;
 };
 
 using DriverHandleIpcSocketWindowsTest = Test<DeviceFixture>;
@@ -175,11 +175,11 @@ class MockDriverHandleForIpcSocket : public L0::DriverHandle {
     int lastRegisteredFd = 0;
 };
 
-class ContextWhiteboxForMockDriverHandle : public ::L0::ContextImp {
+class ContextWhiteboxForMockDriverHandle : public ::L0::Context {
   public:
-    ContextWhiteboxForMockDriverHandle(L0::DriverHandle *driverHandle) : L0::ContextImp(driverHandle) {}
+    ContextWhiteboxForMockDriverHandle(L0::DriverHandle *driverHandle) : L0::Context(driverHandle) {}
 
-    using ::L0::ContextImp::setIPCHandleData;
+    using ::L0::Context::setIPCHandleData;
 };
 
 TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketServerInitSucceedsAndRegisterSucceedsThenHandleIsRegistered) {

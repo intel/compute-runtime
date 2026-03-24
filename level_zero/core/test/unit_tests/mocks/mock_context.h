@@ -9,7 +9,7 @@
 
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
@@ -17,23 +17,18 @@ namespace L0 {
 namespace ult {
 
 template <>
-struct WhiteBox<::L0::Context> : public ::L0::Context {};
-
-using Context = WhiteBox<::L0::Context>;
-
-template <>
-struct WhiteBox<::L0::ContextImp> : public ::L0::ContextImp {
-    using ::L0::ContextImp::devices;
-    using ::L0::ContextImp::numDevices;
-    using ::L0::ContextImp::setIPCHandleData;
+struct WhiteBox<::L0::Context> : public ::L0::Context {
+    using ::L0::Context::Context;
+    using ::L0::Context::devices;
+    using ::L0::Context::numDevices;
+    using ::L0::Context::setIPCHandleData;
 };
 
 using IpcDataPair = std::pair<NEO::GraphicsAllocation *, void *>;
 
-template <>
-struct Mock<Context> : public Context {
-    Mock() = default;
-    ~Mock() override = default;
+struct ContextStubMock : public ::L0::Context {
+    ContextStubMock() : ::L0::Context(nullptr) {}
+    ~ContextStubMock() override = default;
 
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getStatus, ze_result_t, ZE_RESULT_SUCCESS, ());
@@ -96,10 +91,10 @@ struct Mock<Context> : public Context {
 };
 
 template <>
-struct Mock<ContextImp> : public ContextImp {
-    Mock(DriverHandle *driverHandle) : ContextImp(driverHandle) {};
+struct Mock<Context> : public Context {
+    Mock(DriverHandle *driverHandle) : Context(driverHandle) {};
     ~Mock() override = default;
-    using BaseClass = ContextImp;
+    using BaseClass = Context;
 
     ADDMETHOD(destroy, ze_result_t, false, ZE_RESULT_SUCCESS, (), ());
     ADDMETHOD(getStatus, ze_result_t, false, ZE_RESULT_SUCCESS, (), ());
@@ -161,8 +156,8 @@ struct Mock<ContextImp> : public ContextImp {
     ADDMETHOD(systemBarrier, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice), (hDevice));
 };
 
-struct ContextShareableMock : public L0::ContextImp {
-    ContextShareableMock(L0::DriverHandle *driverHandle) : L0::ContextImp(driverHandle) {}
+struct ContextShareableMock : public L0::Context {
+    ContextShareableMock(L0::DriverHandle *driverHandle) : L0::Context(driverHandle) {}
     bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override {
         return true;
     }

@@ -52,7 +52,7 @@
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/fabric/fabric.h"
@@ -731,7 +731,7 @@ ze_result_t Device::getMemoryAccessProperties(ze_device_memory_access_properties
     pMemAccessProperties->sharedSingleDeviceAllocCapabilities =
         static_cast<ze_memory_access_cap_flags_t>(productHelper.getSingleDeviceSharedMemCapabilities(isKmdMigrationAvailable));
 
-    auto defaultContext = static_cast<ContextImp *>(getDriverHandle()->getDefaultContext());
+    auto defaultContext = Context::fromHandle(getDriverHandle()->getDefaultContext());
     auto multiDeviceWithSingleRoot = defaultContext->rootDeviceIndices.size() == 1 && (defaultContext->getNumDevices() > 1 || isSubdevice);
 
     pMemAccessProperties->sharedCrossDeviceAllocCapabilities = {};

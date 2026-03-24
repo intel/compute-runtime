@@ -21,7 +21,7 @@
 #include "shared/test/common/tests_configuration.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -95,7 +95,7 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    context = Context::fromHandle(hContext);
 
     ze_result_t returnValue;
     commandList.reset(ult::CommandList::whiteboxCast(CommandList::create(hwInfo.platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));

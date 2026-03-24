@@ -10,7 +10,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 
 namespace L0 {
-struct ContextImp;
+struct Context;
 struct Device;
 struct CommandList;
 
@@ -23,7 +23,7 @@ struct MultiTileCommandListAppendLaunchKernelFixture : public MultiDeviceModuleF
     void setUp();
     void tearDown();
 
-    ContextImp *contextImp = nullptr;
+    Context *contextImp = nullptr;
     WhiteBox<::L0::CommandList> *commandList = nullptr;
     L0::Device *device = nullptr;
     VariableBackup<bool> backup;
@@ -34,7 +34,7 @@ struct MultiTileImmediateCommandListAppendLaunchKernelFixture : public MultiDevi
     void setUp();
     void tearDown();
 
-    ContextImp *contextImp = nullptr;
+    Context *contextImp = nullptr;
     L0::Device *device = nullptr;
     VariableBackup<bool> backupApiSupport;
 };

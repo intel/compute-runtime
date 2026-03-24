@@ -19,7 +19,7 @@
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
@@ -208,7 +208,7 @@ struct MemoryExportImportObtainFdTest : public ::testing::Test {
         currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
         driverHandle->svmAllocsManager = currSvmAllocsManager;
 
-        context = std::make_unique<L0::ContextImp>(driverHandle.get());
+        context = std::make_unique<L0::Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         for (auto i = 0u; i < numRootDevices; i++) {
             auto dev = driverHandle->devices[i];
@@ -244,7 +244,7 @@ struct MemoryExportImportObtainFdTest : public ::testing::Test {
     std::unique_ptr<L0::DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    std::unique_ptr<L0::ContextImp> context;
+    std::unique_ptr<L0::Context> context;
 };
 
 TEST_F(MemoryExportImportObtainFdTest,
@@ -642,7 +642,7 @@ struct MemoryObtainFdTest : public ::testing::Test {
         currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
         driverHandle->svmAllocsManager = currSvmAllocsManager;
 
-        context = std::make_unique<L0::ContextImp>(driverHandle.get());
+        context = std::make_unique<L0::Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         for (auto i = 0u; i < numRootDevices; i++) {
             auto dev = driverHandle->devices[i];
@@ -678,7 +678,7 @@ struct MemoryObtainFdTest : public ::testing::Test {
     std::unique_ptr<DriverHandleObtaindFdMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    std::unique_ptr<L0::ContextImp> context;
+    std::unique_ptr<L0::Context> context;
 };
 
 TEST_F(MemoryObtainFdTest,

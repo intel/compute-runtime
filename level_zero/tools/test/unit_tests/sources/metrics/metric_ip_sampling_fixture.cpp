@@ -9,7 +9,7 @@
 
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
@@ -119,7 +119,7 @@ void MetricIpSamplingCalculateBaseFixture::initRawReports(IpSamplingTestProductH
     rawReportsBytesSize = sizeof(rawReports[0][0]) * rawReports[0].size() * rawReports.size();
 }
 
-void MetricIpSamplingCalculateOperationFixture::initCalcDescHandles(L0::ContextImp *context,
+void MetricIpSamplingCalculateOperationFixture::initCalcDescHandles(L0::Context *context,
                                                                     L0::Device *device) {
 
     uint32_t metricScopesCount = 0;

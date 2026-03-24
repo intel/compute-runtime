@@ -46,7 +46,6 @@ namespace L0 {
 typedef uint64_t FlushStamp;
 struct EventPool;
 struct MetricCollectorEventNotify;
-struct ContextImp;
 struct Context;
 struct CommandQueue;
 class DriverHandle;
@@ -181,7 +180,7 @@ struct Event : _ze_event_handle_t {
     static ze_result_t counterBasedOpenIpcHandle(ze_context_handle_t hContext, ze_ipc_event_counter_based_handle_t hIpc, ze_event_handle_t *phEvent);
 
     static ze_result_t openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *eventHandle,
-                                                 DriverHandle *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
+                                                 DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
 
     ze_result_t getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData);
 
@@ -479,7 +478,7 @@ struct Event : _ze_event_handle_t {
 struct EventPool : _ze_event_pool_handle_t {
     static EventPool *create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles, const ze_event_pool_desc_t *desc, ze_result_t &result);
     static ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle,
-                                              DriverHandle *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
+                                              DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
     EventPool(const ze_event_pool_desc_t *desc) : EventPool(desc->count) {
         setupDescriptorFlags(desc);
     }
@@ -557,7 +556,7 @@ struct EventPool : _ze_event_pool_handle_t {
     std::unique_ptr<NEO::SharedPoolAllocation> sharedTimestampAllocation;
 
     void *eventPoolPtr = nullptr;
-    ContextImp *context = nullptr;
+    Context *context = nullptr;
 
     size_t numEvents = 1;
     size_t eventPoolSize = 0;

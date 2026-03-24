@@ -10,7 +10,7 @@
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -65,7 +65,7 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
 }
 
 ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
-    auto context = static_cast<ContextImp *>(L0::Context::fromHandle(toInternalType(hContext)));
+    auto context = L0::Context::fromHandle(toInternalType(hContext));
 
     if (!context) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -79,7 +79,7 @@ ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hCon
 }
 
 ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId) {
-    auto context = static_cast<ContextImp *>(L0::Context::fromHandle(toInternalType(hContext)));
+    auto context = L0::Context::fromHandle(toInternalType(hContext));
 
     if (!context || !context->getDriverHandle()->getMemoryManager()->releaseInterrupt(networkInterruptId, context->rootDeviceIndices[0])) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

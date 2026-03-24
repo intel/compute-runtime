@@ -51,7 +51,7 @@ struct GraphDotExporterFixture : public DeviceFixture {
     }
 
     GraphsCleanupGuard graphCleanup;
-    Mock<Context> ctx;
+    ContextStubMock ctx;
     MockGraphDotExporter exporter{GraphExportStyle::detailed};
     const std::string testFilePath = "test_graph_export.gv";
 };
@@ -132,7 +132,7 @@ struct GraphDotExporterSimpleStyleFixture : public DeviceFixture {
     }
 
     GraphsCleanupGuard graphCleanup;
-    Mock<Context> ctx;
+    ContextStubMock ctx;
     MockGraphDotExporter exporter{GraphExportStyle::simple};
 };
 

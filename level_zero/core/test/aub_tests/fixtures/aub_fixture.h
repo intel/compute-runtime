@@ -38,7 +38,7 @@ template <typename Type>
 struct WhiteBox;
 } // namespace ult
 
-struct ContextImp;
+struct Context;
 class DriverHandle;
 struct CommandQueue;
 struct CommandList;
@@ -115,7 +115,7 @@ class AUBFixtureL0 {
     std::unique_ptr<ult::WhiteBox<L0::CommandList>> commandList;
 
     Device *device = nullptr;
-    ContextImp *context = nullptr;
+    Context *context = nullptr;
     CommandQueue *pCmdq = nullptr;
 
     NEO::CommandStreamReceiver *csr = nullptr;

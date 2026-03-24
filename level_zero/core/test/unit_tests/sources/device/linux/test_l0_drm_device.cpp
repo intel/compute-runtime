@@ -192,7 +192,7 @@ struct MultiDeviceQueryPeerAccessDrmFixture {
         ze_context_desc_t desc{ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+        context = Context::fromHandle(hContext);
 
         ASSERT_EQ(numRootDevices, driverHandle->devices.size());
         device0 = driverHandle->devices[0];
@@ -229,7 +229,7 @@ struct MultiDeviceQueryPeerAccessDrmFixture {
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<DriverHandle>> driverHandle;
-    L0::ContextImp *context = nullptr;
+    L0::Context *context = nullptr;
 
     NEO::MemoryManager *prevMemoryManager = nullptr;
     MemoryManagerFdMock *currMemoryManager = nullptr;
@@ -262,7 +262,7 @@ TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenQueryPeerAccessCalledTwiceThe
 }
 
 TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenDeviceFailsAllocateMemoryThenQueryPeerAccessReturnsFalse) {
-    Mock<Context> failingContext;
+    ContextStubMock failingContext;
     failingContext.allocDeviceMemResult = ZE_RESULT_ERROR_DEVICE_LOST;
 
     VariableBackup<ze_context_handle_t> backupContext(&driverHandle->defaultContext, failingContext.toHandle());

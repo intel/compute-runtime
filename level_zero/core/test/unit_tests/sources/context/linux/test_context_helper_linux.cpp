@@ -10,7 +10,7 @@
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
@@ -30,7 +30,7 @@ TEST_F(ContextGetVirtualAddressSpaceTests, givenDrmDriverModelWhenCallingGetVirt
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_ipc_mem_handle_t ipcHandle{};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, contextImp->getVirtualAddressSpaceIpcHandle(static_cast<Device *>(device)->toHandle(), &ipcHandle));

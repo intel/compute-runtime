@@ -14,7 +14,7 @@
 
 #include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
@@ -295,7 +295,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
         ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         ASSERT_NE(nullptr, hContext);
-        context.reset(static_cast<ContextImp *>(Context::fromHandle(hContext)));
+        context.reset(Context::fromHandle(hContext));
 
         ze_result_t returnValue;
         commandList.reset(ult::CommandList::whiteboxCast(CommandList::create(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, NEO::EngineGroupType::compute, 0u, returnValue, false)));
@@ -358,7 +358,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
         return DestroyableZeUniquePtr<Event>(Event::fromHandle(outEvent));
     }
 
-    DestroyableZeUniquePtr<ContextImp> context;
+    DestroyableZeUniquePtr<Context> context;
     DestroyableZeUniquePtr<L0::CommandList> commandList;
 };
 

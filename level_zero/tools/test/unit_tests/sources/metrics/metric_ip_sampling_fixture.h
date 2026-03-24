@@ -85,7 +85,7 @@ struct MetricIpSamplingCalculateOperationFixture : public MetricIpSamplingCalcul
   public:
     void SetUp() override;
     void TearDown() override;
-    void initCalcDescHandles(L0::ContextImp *context,
+    void initCalcDescHandles(L0::Context *context,
                              L0::Device *device);
     void cleanUpHandles();
 

@@ -9,7 +9,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
 #include "gtest/gtest.h"
@@ -38,7 +38,7 @@ void MultiTileCommandListAppendLaunchKernelFixture::setUp() {
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = device->getDriverHandle()->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    contextImp = Context::fromHandle(hContext);
 
     ze_result_t returnValue;
     commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
@@ -69,7 +69,7 @@ void MultiTileImmediateCommandListAppendLaunchKernelFixture::setUp() {
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = device->getDriverHandle()->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    contextImp = Context::fromHandle(hContext);
 }
 
 void MultiTileImmediateCommandListAppendLaunchKernelFixture::tearDown() {

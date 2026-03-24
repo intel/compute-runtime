@@ -11,7 +11,7 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "level_zero/api/internal/l0_event.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"

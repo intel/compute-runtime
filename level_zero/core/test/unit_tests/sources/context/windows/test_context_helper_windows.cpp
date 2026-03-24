@@ -14,7 +14,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -37,7 +37,7 @@ TEST_F(ContextGetVirtualAddressSpaceTests, givenWddmDriverModelWhenCallingGetVir
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_ipc_mem_handle_t ipcHandle{};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, contextImp->getVirtualAddressSpaceIpcHandle(device, &ipcHandle));
@@ -54,7 +54,7 @@ TEST_F(ContextGetVirtualAddressSpaceTests, givenWddmDriverModelWhenCallingPutVir
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_ipc_mem_handle_t ipcHandle{};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, contextImp->putVirtualAddressSpaceIpcHandle(ipcHandle));
@@ -73,7 +73,7 @@ HWTEST2_F(ContextTestWindows, whenCreatingContextWithSvmHeapDisabledThenContextS
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     EXPECT_FALSE(contextImp->settings.enableSvmHeapReservation);
 
     res = contextImp->destroy();
@@ -89,7 +89,7 @@ TEST_F(ContextGetVirtualAddressSpaceTests, givenWddmDriverModelWhenCallingSystem
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_result_t barrierRes = contextImp->systemBarrier(static_cast<Device *>(device)->toHandle());
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, barrierRes);

@@ -33,7 +33,7 @@ class Device;
 namespace L0 {
 struct Context;
 struct Device;
-struct ContextImp;
+struct Context;
 struct DeviceImp;
 
 namespace ult {
@@ -49,7 +49,7 @@ struct DeviceFixture {
     std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    L0::ContextImp *context = nullptr;
+    L0::Context *context = nullptr;
     MockBuiltins *mockBuiltIns = nullptr;
     NEO::ExecutionEnvironment *execEnv = nullptr;
     HardwareInfo *hardwareInfo = nullptr;
@@ -106,7 +106,7 @@ struct GetMemHandlePtrTestFixture {
     std::unique_ptr<DriverHandleGetMemHandlePtrMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    std::unique_ptr<L0::ContextImp> context;
+    std::unique_ptr<L0::Context> context;
 };
 
 struct PageFaultDeviceFixture {
@@ -120,7 +120,7 @@ struct PageFaultDeviceFixture {
     std::unique_ptr<MockMemoryManager> mockMemoryManager;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    L0::ContextImp *context = nullptr;
+    L0::Context *context = nullptr;
     MockPageFaultManager *mockPageFaultManager = nullptr;
     NEO::MemoryManager *memoryManager = nullptr;
 };
@@ -134,7 +134,7 @@ struct MultiDeviceFixture {
     std::unique_ptr<Mock<L0::DriverHandle>> driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     uint32_t numRootDevices = 4u;
     uint32_t numSubDevices = 2u;
-    L0::ContextImp *context = nullptr;
+    L0::Context *context = nullptr;
     NEO::DeviceHierarchyMode deviceHierarchyMode = NEO::DeviceHierarchyMode::composite;
 };
 
@@ -199,7 +199,7 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl : public MultiDevi
     std::vector<NEO::Device *> devices;
     uint32_t numRootDevices = 1u;
     uint32_t numSubDevices = 2u;
-    L0::ContextImp *context = nullptr;
+    L0::Context *context = nullptr;
 
     L0::Device *device = nullptr;
     NEO::Device *neoDevice = nullptr;

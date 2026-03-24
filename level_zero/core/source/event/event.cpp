@@ -25,7 +25,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event_impl.inl"
@@ -40,7 +40,7 @@ template Event *Event::create<uint64_t>(const EventDescriptor &, Device *, ze_re
 template Event *Event::create<uint32_t>(const EventDescriptor &, Device *, ze_result_t &);
 
 ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
-    this->context = static_cast<ContextImp *>(context);
+    this->context = context;
 
     const bool counterBased = (counterBasedFlags != 0);
 
@@ -390,7 +390,7 @@ ze_result_t Event::counterBasedGetIpcHandle(ze_event_handle_t hEvent, ze_ipc_eve
 }
 
 ze_result_t Event::counterBasedOpenIpcHandle(ze_context_handle_t hContext, ze_ipc_event_counter_based_handle_t hIpc, ze_event_handle_t *phEvent) {
-    auto context = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    auto context = L0::Context::fromHandle(hContext);
 
     if (!context || !phEvent) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -402,7 +402,7 @@ ze_result_t Event::counterBasedOpenIpcHandle(ze_context_handle_t hContext, ze_ip
 }
 
 ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *eventHandle,
-                                             DriverHandle *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
+                                             DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
 
     auto device = Device::fromHandle(*deviceHandles);
     auto neoDevice = device->getNEODevice();
@@ -520,7 +520,7 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
 
     auto &sharableEventDataHelper = inOrderExecHelper.getSharableEventDataHelper();
     auto memoryManager = device->getNEODevice()->getMemoryManager();
-    auto context = static_cast<ContextImp *>(Context::fromHandle(device->getDriverHandle()->getDefaultContext()));
+    auto context = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
 
     auto useOpaqueHandle = (context->settings.useOpaqueHandle != OpaqueHandlingType::none);
 
@@ -618,7 +618,7 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
 }
 
 ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle,
-                                              DriverHandle *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
+                                              DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
     const IpcEventPoolData &poolData = *reinterpret_cast<const IpcEventPoolData *>(ipcEventPoolHandle.data);
 
     ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};

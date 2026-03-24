@@ -385,8 +385,8 @@ TEST_F(MemoryIPCTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-struct ContextOpaqueHandleMock : public L0::ContextImp {
-    ContextOpaqueHandleMock(DriverHandleGetFdMock *inDriverHandle) : L0::ContextImp(static_cast<L0::DriverHandle *>(inDriverHandle)) {
+struct ContextOpaqueHandleMock : public L0::Context {
+    ContextOpaqueHandleMock(DriverHandleGetFdMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
     }
 
@@ -394,7 +394,7 @@ struct ContextOpaqueHandleMock : public L0::ContextImp {
                                const ze_device_mem_alloc_desc_t *deviceDesc,
                                size_t size,
                                size_t alignment, void **ptr) override {
-        ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
+        ze_result_t res = L0::Context::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
         if (ZE_RESULT_SUCCESS == res) {
             driverHandle->allocationMap.first = *ptr;
             driverHandle->allocationMap.second = driverHandle->mockFd;

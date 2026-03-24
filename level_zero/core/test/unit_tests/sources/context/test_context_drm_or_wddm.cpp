@@ -19,7 +19,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/context/context.h"
-#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -37,7 +36,7 @@ TEST_F(ContextIsShareable, whenCallingisSharedMemoryThenCorrectResultIsReturned)
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     bool exportableMemoryFalse = false;
     bool exportableMemoryTrue = true;
@@ -70,7 +69,7 @@ TEST_F(ContextIsShareable, whenCreatingContextWithPidfdApproachTrueThenContextSe
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     // Always true for WDDM (pidfd setting ignored); should be true for non-WDDM when pidfd is enabled.
     EXPECT_TRUE(contextImp->settings.useOpaqueHandle);
 
@@ -92,7 +91,7 @@ TEST_F(ContextIsShareable, whenCreatingContextWithPidfdApproachFalseThenContextS
     auto driverType = rootEnv->osInterface ? rootEnv->osInterface->getDriverModel()->getDriverModelType()
                                            : NEO::DriverModelType::unknown;
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     uint8_t useOpaque = contextImp->settings.useOpaqueHandle;
     // Always nthandle for WDDM; should be none/pidfd/sockets for others depending on support
     if (driverType == NEO::DriverModelType::wddm) {
@@ -657,7 +656,7 @@ TEST_F(ContextSystemBarrierTest, whenCallingSystemBarrierWithUnknownDriverModelT
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&desc, 0u, nullptr, &hContext));
 
-    auto *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    auto *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, contextImp->systemBarrier(device->toHandle()));
 
@@ -674,7 +673,7 @@ TEST_F(ContextSystemBarrierTest, whenCallingSystemBarrierWithNullDeviceThenInval
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_result_t barrierRes = contextImp->systemBarrier(nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, barrierRes);
@@ -703,7 +702,7 @@ TEST_F(ContextSystemBarrierTest, givenDiscreteDeviceWhenCallingSystemBarrierThen
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_result_t barrierRes = contextImp->systemBarrier(static_cast<Device *>(device)->toHandle());
 
@@ -976,11 +975,11 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdSucceedsThenSocketFallbackNotU
     EXPECT_EQ(0, NEO::SysCalls::socketCalled); // Socket should not be used
 }
 
-class ContextWhiteboxForSetIPCHandleData : public ::L0::ContextImp {
+class ContextWhiteboxForSetIPCHandleData : public ::L0::Context {
   public:
-    ContextWhiteboxForSetIPCHandleData(L0::DriverHandle *driverHandle) : L0::ContextImp(driverHandle) {}
+    ContextWhiteboxForSetIPCHandleData(L0::DriverHandle *driverHandle) : L0::Context(driverHandle) {}
 
-    using ::L0::ContextImp::setIPCHandleData;
+    using ::L0::Context::setIPCHandleData;
 };
 
 using SetIPCHandleDataSocketTest = Test<DeviceFixture>;

@@ -12,7 +12,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
@@ -50,7 +50,7 @@ struct UsmReuseMemoryTest : public ::testing::Test {
         ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+        context = Context::fromHandle(hContext);
     }
 
     void TearDown() override {
@@ -59,7 +59,7 @@ struct UsmReuseMemoryTest : public ::testing::Test {
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
-    L0::ContextImp *context = nullptr;
+    L0::Context *context = nullptr;
     std::vector<MockProductHelper *> mockProductHelpers;
     NEO::ExecutionEnvironment *executionEnvironment;
     NEO::MockSVMAllocsManager *svmAllocsManager;

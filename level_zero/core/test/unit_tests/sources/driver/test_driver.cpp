@@ -824,7 +824,7 @@ TEST(DriverTest, whenCreatingDriverThenDefaultContextWithAllDevicesIsCreated) {
     auto defaultContext = driverHandle->getDefaultContext();
     ASSERT_NE(nullptr, defaultContext);
 
-    auto context = static_cast<WhiteBox<::L0::ContextImp> *>(defaultContext);
+    auto context = static_cast<WhiteBox<::L0::Context> *>(defaultContext);
 
     EXPECT_NE(0u, context->numDevices);
     EXPECT_EQ(context->numDevices, context->devices.size());

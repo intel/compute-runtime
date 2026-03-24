@@ -12,7 +12,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -34,7 +34,7 @@ ze_result_t ContextFdMock::allocDeviceMem(ze_device_handle_t hDevice,
                                           const ze_device_mem_alloc_desc_t *deviceDesc,
                                           size_t size,
                                           size_t alignment, void **ptr) {
-    ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
+    ze_result_t res = L0::Context::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
     if (ZE_RESULT_SUCCESS == res) {
         driverHandle->allocationMap.first = *ptr;
         driverHandle->allocationMap.second = driverHandle->mockFd;
@@ -58,7 +58,7 @@ ze_result_t ContextFdMock::allocDeviceMem(ze_device_handle_t hDevice,
 ze_result_t ContextFdMock::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                         size_t size,
                                         size_t alignment, void **ptr) {
-    ze_result_t res = L0::ContextImp::allocHostMem(hostDesc, size, alignment, ptr);
+    ze_result_t res = L0::Context::allocHostMem(hostDesc, size, alignment, ptr);
     if (ZE_RESULT_SUCCESS == res) {
         driverHandle->allocationMap.first = *ptr;
         driverHandle->allocationMap.second = driverHandle->mockFd;
@@ -82,7 +82,7 @@ ze_result_t ContextFdMock::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc
 ze_result_t ContextFdMock::getMemAllocProperties(const void *ptr,
                                                  ze_memory_allocation_properties_t *pMemAllocProperties,
                                                  ze_device_handle_t *phDevice) {
-    ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
+    ze_result_t res = Context::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
     if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext && !memPropTest) {
         ze_base_properties_t *baseProperties =
             reinterpret_cast<ze_base_properties_t *>(pMemAllocProperties->pNext);
@@ -99,7 +99,7 @@ ze_result_t ContextFdMock::getMemAllocProperties(const void *ptr,
 ze_result_t ContextFdMock::getImageAllocProperties(Image *image,
                                                    ze_image_allocation_ext_properties_t *pAllocProperties) {
 
-    ze_result_t res = ContextImp::getImageAllocProperties(image, pAllocProperties);
+    ze_result_t res = Context::getImageAllocProperties(image, pAllocProperties);
     if (ZE_RESULT_SUCCESS == res && pAllocProperties->pNext) {
         ze_base_properties_t *baseProperties =
             reinterpret_cast<ze_base_properties_t *>(pAllocProperties->pNext);
@@ -150,7 +150,7 @@ ze_result_t ContextMemHandleMock::allocDeviceMem(ze_device_handle_t hDevice,
                                                  const ze_device_mem_alloc_desc_t *deviceDesc,
                                                  size_t size,
                                                  size_t alignment, void **ptr) {
-    ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
+    ze_result_t res = L0::Context::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
     if (ZE_RESULT_SUCCESS == res) {
         driverHandle->allocationFdMap.first = *ptr;
         driverHandle->allocationFdMap.second = driverHandle->mockFd;
@@ -164,7 +164,7 @@ ze_result_t ContextMemHandleMock::allocDeviceMem(ze_device_handle_t hDevice,
 ze_result_t ContextMemHandleMock::getMemAllocProperties(const void *ptr,
                                                         ze_memory_allocation_properties_t *pMemAllocProperties,
                                                         ze_device_handle_t *phDevice) {
-    ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
+    ze_result_t res = Context::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
     if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext) {
         ze_base_properties_t *baseProperties =
             reinterpret_cast<ze_base_properties_t *>(pMemAllocProperties->pNext);
@@ -181,7 +181,7 @@ ze_result_t ContextMemHandleMock::getMemAllocProperties(const void *ptr,
 ze_result_t ContextMemHandleMock::getImageAllocProperties(Image *image,
                                                           ze_image_allocation_ext_properties_t *pAllocProperties) {
 
-    ze_result_t res = ContextImp::getImageAllocProperties(image, pAllocProperties);
+    ze_result_t res = Context::getImageAllocProperties(image, pAllocProperties);
     if (ZE_RESULT_SUCCESS == res && pAllocProperties->pNext) {
         ze_base_properties_t *baseProperties =
             reinterpret_cast<ze_base_properties_t *>(pAllocProperties->pNext);
@@ -234,7 +234,7 @@ ze_result_t ContextHandleMock::allocDeviceMem(ze_device_handle_t hDevice,
                                               const ze_device_mem_alloc_desc_t *deviceDesc,
                                               size_t size,
                                               size_t alignment, void **ptr) {
-    ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
+    ze_result_t res = L0::Context::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
     if (ZE_RESULT_SUCCESS == res) {
         driverHandle->allocationMap.first = *ptr;
         driverHandle->allocationMap.second = driverHandle->mockHandle;
@@ -246,7 +246,7 @@ ze_result_t ContextHandleMock::allocDeviceMem(ze_device_handle_t hDevice,
 ze_result_t ContextHandleMock::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                             size_t size,
                                             size_t alignment, void **ptr) {
-    ze_result_t res = L0::ContextImp::allocHostMem(hostDesc, size, alignment, ptr);
+    ze_result_t res = L0::Context::allocHostMem(hostDesc, size, alignment, ptr);
     if (ZE_RESULT_SUCCESS == res) {
         driverHandle->allocationMap.first = *ptr;
         driverHandle->allocationMap.second = driverHandle->mockHandle;
@@ -258,7 +258,7 @@ ze_result_t ContextHandleMock::allocHostMem(const ze_host_mem_alloc_desc_t *host
 ze_result_t ContextHandleMock::getMemAllocProperties(const void *ptr,
                                                      ze_memory_allocation_properties_t *pMemAllocProperties,
                                                      ze_device_handle_t *phDevice) {
-    ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
+    ze_result_t res = Context::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
     if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext) {
         ze_external_memory_export_win32_handle_t *extendedMemoryExportProperties =
             reinterpret_cast<ze_external_memory_export_win32_handle_t *>(pMemAllocProperties->pNext);
@@ -271,7 +271,7 @@ ze_result_t ContextHandleMock::getMemAllocProperties(const void *ptr,
 ze_result_t ContextHandleMock::getImageAllocProperties(Image *image,
                                                        ze_image_allocation_ext_properties_t *pAllocProperties) {
 
-    ze_result_t res = ContextImp::getImageAllocProperties(image, pAllocProperties);
+    ze_result_t res = Context::getImageAllocProperties(image, pAllocProperties);
     if (ZE_RESULT_SUCCESS == res && pAllocProperties->pNext) {
         ze_external_memory_export_win32_handle_t *extendedMemoryExportProperties =
             reinterpret_cast<ze_external_memory_export_win32_handle_t *>(pAllocProperties->pNext);
@@ -282,7 +282,7 @@ ze_result_t ContextHandleMock::getImageAllocProperties(Image *image,
 }
 
 ze_result_t ContextHandleMock::freeMem(const void *ptr) {
-    L0::ContextImp::freeMem(ptr);
+    L0::Context::freeMem(ptr);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -326,7 +326,7 @@ ze_result_t ContextGetIpcHandleMock::allocDeviceMem(ze_device_handle_t hDevice,
                                                     const ze_device_mem_alloc_desc_t *deviceDesc,
                                                     size_t size,
                                                     size_t alignment, void **ptr) {
-    ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
+    ze_result_t res = L0::Context::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
     if (ZE_RESULT_SUCCESS == res) {
         driverHandle->allocationMap.first = *ptr;
         driverHandle->allocationMap.second = driverHandle->mockFd;
@@ -628,7 +628,7 @@ void MemoryGetIpcHandlePidfdTest::SetUp() {
     driverHandle->setMemoryManager(currMemoryManager);
     device = driverHandle->devices[0];
 
-    context = std::make_unique<ContextImp>(driverHandle.get());
+    context = std::make_unique<Context>(driverHandle.get());
     EXPECT_NE(context, nullptr);
     context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
     auto neoDevice = device->getNEODevice();

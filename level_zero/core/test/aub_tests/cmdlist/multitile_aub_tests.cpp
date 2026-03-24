@@ -11,7 +11,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/module/module.h"
@@ -38,7 +38,7 @@ struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
         ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         ASSERT_NE(nullptr, hContext);
-        context.reset(static_cast<ContextImp *>(Context::fromHandle(hContext)));
+        context.reset(Context::fromHandle(hContext));
 
         ze_module_handle_t hModule = AUBFixtureL0::createModuleFromFile("test_kernel", context.get(), rootDevice, "");
         ASSERT_NE(nullptr, hModule);
@@ -60,7 +60,7 @@ struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
         ASSERT_NE(nullptr, cmdQ.get());
     }
 
-    DestroyableZeUniquePtr<ContextImp> context;
+    DestroyableZeUniquePtr<Context> context;
     DestroyableZeUniquePtr<Module> module;
     DestroyableZeUniquePtr<Kernel> kernel;
     DestroyableZeUniquePtr<ult::WhiteBox<L0::CommandList>> commandList;

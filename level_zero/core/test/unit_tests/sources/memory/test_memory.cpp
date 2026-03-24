@@ -26,7 +26,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -1812,7 +1812,7 @@ struct SystemSharedAtomicAccessTests : public ::testing::Test {
         ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+        context = Context::fromHandle(hContext);
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
@@ -1833,7 +1833,7 @@ struct SystemSharedAtomicAccessTests : public ::testing::Test {
     std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    L0::ContextImp *context = nullptr;
+    L0::Context *context = nullptr;
 };
 
 TEST_F(SystemSharedAtomicAccessTests, whenCallingGetAtomicAccessAttributeWithSystemAllocatorThenCorrectAttributeIsReturned) {
@@ -2127,8 +2127,8 @@ struct SVMAllocsManagerSharedAllocZexPointerMock : public NEO::SVMAllocsManager 
     uint32_t sharedUnifiedMemoryAllocationTimes = 0;
 };
 
-struct ContextZexPointerMock : public ContextImp {
-    ContextZexPointerMock(L0::DriverHandle *driverHandle) : ContextImp(driverHandle) {}
+struct ContextZexPointerMock : public Context {
+    ContextZexPointerMock(L0::DriverHandle *driverHandle) : Context(driverHandle) {}
     ze_result_t freeMem(const void *ptr) override {
         alignedFree(const_cast<void *>(ptr));
         return ZE_RESULT_SUCCESS;
@@ -2420,7 +2420,7 @@ struct FreeExtTests : public ::testing::Test {
         ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+        context = Context::fromHandle(hContext);
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
@@ -2441,7 +2441,7 @@ struct FreeExtTests : public ::testing::Test {
     std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    L0::ContextImp *context = nullptr;
+    L0::Context *context = nullptr;
 };
 
 TEST_F(FreeExtTests,
@@ -2938,7 +2938,7 @@ struct OutOfMemoryTests : public ::testing::Test {
         driverHandle->svmAllocsManager = currSvmAllocsManager;
         device = driverHandle->devices[0];
 
-        context = std::make_unique<ContextImp>(driverHandle.get());
+        context = std::make_unique<Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
@@ -2955,7 +2955,7 @@ struct OutOfMemoryTests : public ::testing::Test {
     std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    std::unique_ptr<ContextImp> context;
+    std::unique_ptr<Context> context;
 };
 
 TEST_F(OutOfMemoryTests,
@@ -3004,8 +3004,8 @@ struct SVMAllocsManagerRelaxedSizeMock : public NEO::SVMAllocsManager {
     MockGraphicsAllocation mockUnifiedMemoryAllocation{};
 };
 
-struct ContextRelaxedSizeMock : public ContextImp {
-    ContextRelaxedSizeMock(L0::DriverHandle *driverHandle) : ContextImp(driverHandle) {}
+struct ContextRelaxedSizeMock : public Context {
+    ContextRelaxedSizeMock(L0::DriverHandle *driverHandle) : Context(driverHandle) {}
     ze_result_t freeMem(const void *ptr) override {
         alignedFree(const_cast<void *>(ptr));
         return ZE_RESULT_SUCCESS;
@@ -3628,15 +3628,15 @@ struct DriverHandleFailGetFdMock : public L0::DriverHandle {
     uint32_t importFdHandleCalledTimes = 0;
 };
 
-struct ContextFailFdMock : public L0::ContextImp {
-    ContextFailFdMock(DriverHandleFailGetFdMock *inDriverHandle) : L0::ContextImp(static_cast<L0::DriverHandle *>(inDriverHandle)) {
+struct ContextFailFdMock : public L0::Context {
+    ContextFailFdMock(DriverHandleFailGetFdMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
     }
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
                                const ze_device_mem_alloc_desc_t *deviceDesc,
                                size_t size,
                                size_t alignment, void **ptr) override {
-        ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
+        ze_result_t res = L0::Context::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
         if (ZE_RESULT_SUCCESS == res) {
             driverHandle->allocationMap.first = *ptr;
             driverHandle->allocationMap.second = driverHandle->mockFd;
@@ -5416,7 +5416,7 @@ struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
         driverHandle->setMemoryManager(currMemoryManager);
         device = driverHandle->devices[0];
 
-        context = std::make_unique<ContextImp>(driverHandle.get());
+        context = std::make_unique<Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
@@ -5433,7 +5433,7 @@ struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
     std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    std::unique_ptr<ContextImp> context;
+    std::unique_ptr<Context> context;
 };
 
 struct MemoryFailedOpenIpcHandleImplicitScalingTest : public ::testing::Test {
@@ -5454,7 +5454,7 @@ struct MemoryFailedOpenIpcHandleImplicitScalingTest : public ::testing::Test {
         driverHandle->setMemoryManager(currMemoryManager);
         device = driverHandle->devices[0];
 
-        context = std::make_unique<ContextImp>(driverHandle.get());
+        context = std::make_unique<Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
@@ -5471,7 +5471,7 @@ struct MemoryFailedOpenIpcHandleImplicitScalingTest : public ::testing::Test {
     std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    std::unique_ptr<ContextImp> context;
+    std::unique_ptr<Context> context;
 };
 
 TEST_F(MemoryFailedOpenIpcHandleTest,
@@ -5673,7 +5673,7 @@ struct MemoryBitfieldTest : testing::Test {
         ASSERT_NE(nullptr, driverHandle->devices[0]->toHandle());
         EXPECT_NE(neoDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
 
-        context = std::make_unique<ContextImp>(driverHandle.get());
+        context = std::make_unique<Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
@@ -5693,7 +5693,7 @@ struct MemoryBitfieldTest : testing::Test {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
-    std::unique_ptr<ContextImp> context;
+    std::unique_ptr<Context> context;
     NEO::ExecutionEnvironment *executionEnvironment;
 };
 
@@ -5742,8 +5742,8 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     driverHandle->initialize(std::move(devices));
 
     auto device = driverHandle->devices[0];
-    std::unique_ptr<ContextImp> context;
-    context = std::make_unique<ContextImp>(driverHandle.get());
+    std::unique_ptr<Context> context;
+    context = std::make_unique<Context>(driverHandle.get());
     EXPECT_NE(context, nullptr);
     context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
     auto neoDevice = device->getNEODevice();
@@ -5803,7 +5803,7 @@ struct AllocHostMemoryTest : public ::testing::Test {
         ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+        context = Context::fromHandle(hContext);
     }
 
     void TearDown() override {
@@ -5812,7 +5812,7 @@ struct AllocHostMemoryTest : public ::testing::Test {
 
     std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     const uint32_t numRootDevices = 2u;
-    L0::ContextImp *context = nullptr;
+    L0::Context *context = nullptr;
 };
 
 TEST_F(AllocHostMemoryTest,
@@ -6181,7 +6181,7 @@ struct SharedAllocFailTests : public ::testing::Test {
         driverHandle->svmAllocsManager = currSvmAllocsManager;
         device = driverHandle->devices[0];
 
-        context = std::make_unique<ContextImp>(driverHandle.get());
+        context = std::make_unique<Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
@@ -6198,7 +6198,7 @@ struct SharedAllocFailTests : public ::testing::Test {
     std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    std::unique_ptr<ContextImp> context;
+    std::unique_ptr<Context> context;
 };
 
 TEST_F(SharedAllocFailTests, whenAllocatinSharedMemoryAndAllocationFailsThenOutOfDeviceMemoryIsReturned) {
@@ -6221,13 +6221,13 @@ struct SVMAllocsManagerSharedAllocMultiDeviceMock : public NEO::SVMAllocsManager
     uint32_t createHostUnifiedMemoryAllocationTimes = 0;
 };
 
-struct ContextMultiDeviceMock : public L0::ContextImp {
-    ContextMultiDeviceMock(L0::DriverHandle *driverHandle) : L0::ContextImp(driverHandle) {}
+struct ContextMultiDeviceMock : public L0::Context {
+    ContextMultiDeviceMock(L0::DriverHandle *driverHandle) : L0::Context(driverHandle) {}
     ze_result_t freeMem(const void *ptr) override {
         SVMAllocsManagerSharedAllocMultiDeviceMock *currSvmAllocsManager =
             static_cast<SVMAllocsManagerSharedAllocMultiDeviceMock *>(this->driverHandle->svmAllocsManager);
         if (currSvmAllocsManager->createHostUnifiedMemoryAllocationTimes == 0) {
-            return ContextImp::freeMem(ptr);
+            return Context::freeMem(ptr);
         }
         alignedFree(const_cast<void *>(ptr));
         return ZE_RESULT_SUCCESS;

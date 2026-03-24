@@ -13,7 +13,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 
 #include "gtest/gtest.h"
@@ -42,8 +42,8 @@ struct DriverHandleGetFdMock : public L0::DriverHandle {
     NEO::AllocationType allocationTypeRequested = NEO::AllocationType::unknown;
 };
 
-struct ContextFdMock : public L0::ContextImp {
-    ContextFdMock(DriverHandleGetFdMock *inDriverHandle) : L0::ContextImp(static_cast<L0::DriverHandle *>(inDriverHandle)) {
+struct ContextFdMock : public L0::Context {
+    ContextFdMock(DriverHandleGetFdMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
     }
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
@@ -93,8 +93,8 @@ struct DriverHandleGetMemHandleMock : public L0::DriverHandle {
     std::pair<void *, uint64_t> allocationHandleMap;
 };
 
-struct ContextMemHandleMock : public L0::ContextImp {
-    ContextMemHandleMock(DriverHandleGetMemHandleMock *inDriverHandle) : L0::ContextImp(static_cast<L0::DriverHandle *>(inDriverHandle)) {
+struct ContextMemHandleMock : public L0::Context {
+    ContextMemHandleMock(DriverHandleGetMemHandleMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
     }
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
@@ -137,8 +137,8 @@ struct DriverHandleGetWinHandleMock : public L0::DriverHandle {
     std::pair<void *, uint64_t> allocationMap;
 };
 
-struct ContextHandleMock : public L0::ContextImp {
-    ContextHandleMock(DriverHandleGetWinHandleMock *inDriverHandle) : L0::ContextImp(static_cast<L0::DriverHandle *>(inDriverHandle)) {
+struct ContextHandleMock : public L0::Context {
+    ContextHandleMock(DriverHandleGetWinHandleMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
     }
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
@@ -183,8 +183,8 @@ struct DriverHandleGetIpcHandleMock : public DriverHandle {
     std::pair<void *, int> allocationMap;
 };
 
-struct ContextGetIpcHandleMock : public L0::ContextImp {
-    ContextGetIpcHandleMock(DriverHandleGetIpcHandleMock *inDriverHandle) : L0::ContextImp(static_cast<L0::DriverHandle *>(inDriverHandle)) {
+struct ContextGetIpcHandleMock : public L0::Context {
+    ContextGetIpcHandleMock(DriverHandleGetIpcHandleMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
     }
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
@@ -322,8 +322,8 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
     bool failOnCreateGraphicsAllocationFromSharedHandle = false;
 };
 
-struct ContextIpcMock : public L0::ContextImp {
-    ContextIpcMock(DriverHandle *inDriverHandle) : L0::ContextImp(static_cast<L0::DriverHandle *>(inDriverHandle)) {
+struct ContextIpcMock : public L0::Context {
+    ContextIpcMock(DriverHandle *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
     }
 
@@ -451,7 +451,7 @@ struct MemoryGetIpcHandlePidfdTest : public ::testing::Test {
     std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    std::unique_ptr<ContextImp> context;
+    std::unique_ptr<Context> context;
 };
 
 } // namespace ult

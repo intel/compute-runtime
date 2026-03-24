@@ -19,7 +19,7 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image.h"
@@ -40,7 +40,7 @@ TEST_F(ContextIsShareable, whenCallingisSharedMemoryThenCorrectResultIsReturned)
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     bool exportableMemoryFalse = false;
     bool exportableMemoryTrue = true;
@@ -61,7 +61,7 @@ TEST_F(ContextIsShareable, whenCreatingContextWithPidfdApproachTrueThenContextSe
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     EXPECT_TRUE(contextImp->settings.useOpaqueHandle);
 
     res = contextImp->destroy();
@@ -78,7 +78,7 @@ TEST_F(ContextIsShareable, whenCreatingContextWithPidfdApproachFalseThenContextS
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     EXPECT_FALSE(contextImp->settings.useOpaqueHandle);
 
     res = contextImp->destroy();
@@ -209,7 +209,7 @@ TEST_F(ContextSystemBarrierTest, whenCallingSystemBarrierWithNullOsInterfaceThen
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&desc, 0u, nullptr, &hContext));
 
-    auto *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    auto *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, contextImp->systemBarrier(device->toHandle()));
 
@@ -228,7 +228,7 @@ TEST_F(ContextSystemBarrierTest, whenCallingSystemBarrierWithNullDeviceThenInval
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_result_t barrierRes = contextImp->systemBarrier(nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, barrierRes);
@@ -257,7 +257,7 @@ TEST_F(ContextSystemBarrierTest, givenDiscreteDeviceWhenCallingSystemBarrierThen
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_result_t barrierRes = contextImp->systemBarrier(device->toHandle());
 

@@ -45,7 +45,7 @@
 
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/driver/extension_function_address.h"
@@ -2997,7 +2997,7 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
         driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
         driverHandle->initialize(std::move(devices));
 
-        context = std::make_unique<ContextImp>(driverHandle.get());
+        context = std::make_unique<Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         for (auto i = 0u; i < numRootDevices; i++) {
             auto device = driverHandle->devices[i];
@@ -3014,7 +3014,7 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
     std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     MockMemoryManagerMultiDevice *memoryManager = nullptr;
     std::unique_ptr<UltDeviceFactory> deviceFactory;
-    std::unique_ptr<ContextImp> context;
+    std::unique_ptr<Context> context;
 
     const uint32_t numRootDevices = 2u;
     const uint32_t numSubDevices = 2u;

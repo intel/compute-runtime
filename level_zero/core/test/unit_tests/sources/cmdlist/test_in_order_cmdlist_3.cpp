@@ -42,7 +42,7 @@ struct InOrderIpcTests : public InOrderCmdListFixture {
     void setOpaqueHandleSupport(bool enable) {
         context->settings.useOpaqueHandle = enable ? (OpaqueHandlingType::nthandle | OpaqueHandlingType::pidfd) : OpaqueHandlingType::none;
 
-        auto defaultContext = static_cast<ContextImp *>(Context::fromHandle(device->getDriverHandle()->getDefaultContext()));
+        auto defaultContext = Context::fromHandle(Context::fromHandle(device->getDriverHandle()->getDefaultContext()));
         defaultContext->settings.useOpaqueHandle = context->settings.useOpaqueHandle;
     }
 };

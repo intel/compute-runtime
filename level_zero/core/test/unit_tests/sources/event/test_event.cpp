@@ -27,7 +27,7 @@
 
 #include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -154,7 +154,7 @@ struct EventPoolFailTests : public ::testing::Test {
 
         device = driverHandle->devices[0];
 
-        context = std::make_unique<ContextImp>(driverHandle.get());
+        context = std::make_unique<Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
@@ -179,7 +179,7 @@ struct EventPoolFailTests : public ::testing::Test {
     std::unique_ptr<DriverHandle> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    std::unique_ptr<ContextImp> context;
+    std::unique_ptr<Context> context;
 };
 
 TEST_F(EventPoolFailTests, whenCreatingEventPoolAndAllocationFailsThenOutOfDeviceMemoryIsReturned) {
@@ -3469,7 +3469,7 @@ struct EventPoolCreateNegativeTest : public ::testing::Test {
         ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+        context = Context::fromHandle(hContext);
     }
     void TearDown() override {
         context->destroy();
@@ -3480,7 +3480,7 @@ struct EventPoolCreateNegativeTest : public ::testing::Test {
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     const uint32_t numRootDevices = 2u;
-    L0::ContextImp *context = nullptr;
+    L0::Context *context = nullptr;
 };
 
 TEST_F(EventPoolCreateNegativeTest, whenCreatingEventPoolButMemoryManagerFailsThenErrorIsReturned) {

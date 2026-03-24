@@ -25,7 +25,7 @@
 #include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/extension_function_address.h"
@@ -50,7 +50,7 @@ ze_result_t DriverHandle::createContext(const ze_context_desc_t *desc,
                                         uint32_t numDevices,
                                         ze_device_handle_t *phDevices,
                                         ze_context_handle_t *phContext) {
-    ContextImp *context = new ContextImp(this);
+    Context *context = new Context(this);
     if (nullptr == context) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
@@ -382,7 +382,7 @@ void DriverHandle::initHostUsmAllocPoolOnce() {
 }
 
 NEO::UsmMemAllocPool::CustomCleanupFn DriverHandle::getPoolCleanupFn() {
-    return [this](const void *ptr) { static_cast<ContextImp *>(this->defaultContext)->freePeerAllocationsFromAll(ptr, false); };
+    return [this](const void *ptr) { Context::fromHandle(this->defaultContext)->freePeerAllocationsFromAll(ptr, false); };
 }
 
 void DriverHandle::initDeviceUsmAllocPoolOnce() {

@@ -17,7 +17,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -475,7 +475,7 @@ void CommandListAppendLaunchRayTracingKernelFixture::setUp() {
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = device->getDriverHandle()->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    contextImp = Context::fromHandle(hContext);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = contextImp->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &allocSrc);

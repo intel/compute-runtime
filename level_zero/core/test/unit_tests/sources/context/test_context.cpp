@@ -22,7 +22,7 @@
 
 #include "level_zero/api/internal/l0_context.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
@@ -51,7 +51,7 @@ TEST_F(MultiDeviceContextTests,
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(hContext);
 
     for (size_t i = 0; i < driverHandle->devices.size(); i++) {
         EXPECT_NE(contextImp->getDevices().find(driverHandle->devices[i]->getRootDeviceIndex()), contextImp->getDevices().end());
@@ -93,7 +93,7 @@ TEST_F(MultiDeviceContextTests,
     res = driverHandle->createContext(&desc, 1u, &device1, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(hContext);
 
     uint32_t expectedDeviceCountInContext = 1;
     EXPECT_EQ(contextImp->getDevices().size(), expectedDeviceCountInContext);
@@ -127,7 +127,7 @@ TEST_F(MultiDeviceContextTests,
     ze_result_t res = driverHandle->createContext(&desc, 1u, &device, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(hContext);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     size_t size = 4096;
@@ -152,7 +152,7 @@ TEST_F(MultiDeviceContextTests,
     driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -220,7 +220,7 @@ TEST_F(MultiDeviceContextTests,
     driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     const size_t size = 4096;
     void *ptr = nullptr;
@@ -255,7 +255,7 @@ TEST_F(MultiDeviceContextTests,
     driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     const size_t size = 4096;
     void *ptr = reinterpret_cast<void *>(0x1234);
@@ -280,7 +280,7 @@ TEST_F(MultiDeviceContextTests,
     driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -358,7 +358,7 @@ TEST_F(MultiDeviceContextTests,
     ze_result_t res = driverHandle->createContext(&desc, 1u, &device, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(hContext);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -501,7 +501,7 @@ TEST_F(ContextTest, givenEmptyCacheWhenTryGetCachedImportHandleIsCalledThenRetur
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto contextImp = static_cast<L0::ContextImp *>(L0::Context::fromHandle(hContext));
+    auto contextImp = L0::Context::fromHandle(hContext);
 
     uint64_t exportHandle = 5678;
     unsigned int processId = 1234;
@@ -524,7 +524,7 @@ TEST_F(ContextTest, givenPopulatedCacheWhenTryGetCachedImportHandleIsCalledWithM
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto contextImp = static_cast<L0::ContextImp *>(L0::Context::fromHandle(hContext));
+    auto contextImp = L0::Context::fromHandle(hContext);
 
     uint64_t exportHandle = 5678;
     unsigned int processId = 1234;
@@ -551,7 +551,7 @@ TEST_F(ContextTest, givenPopulatedCacheWhenTryGetCachedImportHandleIsCalledWithN
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto contextImp = static_cast<L0::ContextImp *>(L0::Context::fromHandle(hContext));
+    auto contextImp = L0::Context::fromHandle(hContext);
 
     uint64_t exportHandle = 6666;
     unsigned int processId1 = 5678;
@@ -578,7 +578,7 @@ TEST_F(ContextTest, givenMultipleEntriesInCacheWhenTryGetCachedImportHandleIsCal
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto contextImp = static_cast<L0::ContextImp *>(L0::Context::fromHandle(hContext));
+    auto contextImp = L0::Context::fromHandle(hContext);
 
     // Populate cache with multiple entries
     unsigned int processId1 = 1000;
@@ -622,7 +622,7 @@ TEST_F(ContextTest, givenCacheKeyWithZeroProcessIdWhenTryGetCachedImportHandleIs
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto contextImp = static_cast<L0::ContextImp *>(L0::Context::fromHandle(hContext));
+    auto contextImp = L0::Context::fromHandle(hContext);
 
     // Test with processId = 0
     uint64_t exportHandle = 42;
@@ -648,7 +648,7 @@ TEST_F(ContextTest, givenCacheKeyWithMaxValuesWhenTryGetCachedImportHandleIsCall
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto contextImp = static_cast<L0::ContextImp *>(L0::Context::fromHandle(hContext));
+    auto contextImp = L0::Context::fromHandle(hContext);
 
     // Test with max values
     uint64_t exportHandle = 0xFFFFFFFFULL;
@@ -1277,7 +1277,7 @@ TEST_F(ContextTest, whenGettingDriverThenDriverIsRetrievedSuccessfully) {
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     L0::DriverHandle *driverHandleFromContext = contextImp->getDriverHandle();
     EXPECT_EQ(driverHandleFromContext, driverHandle.get());
 
@@ -1292,7 +1292,7 @@ HWTEST2_F(ContextTest, whenCreatingContextWithSvmHeapReservationTrueThenContextS
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     EXPECT_TRUE(contextImp->settings.enableSvmHeapReservation);
 
     res = contextImp->destroy();
@@ -1306,7 +1306,7 @@ TEST_F(ContextTest, whenCallingVirtualMemInterfacesThenSuccessIsReturned) {
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -1332,7 +1332,7 @@ TEST_F(ContextTest, whenCallingQueryVirtualMemPageSizeCorrectAlignmentIsReturned
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     size_t size = 1024;
     size_t pagesize = 0u;
@@ -1363,7 +1363,7 @@ TEST_F(ContextTest, whenCallingQueryVirtualMemPageSizeWithStartAddressThenCorrec
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     size_t size = 1024;
     size_t pagesize = 0u;
@@ -1398,11 +1398,11 @@ TEST_F(ContextTest, whenCallingQueryVirtualMemPageSizeWithInvalidStartAddressThe
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    struct MockContextImp : public ContextImp {
-        using ContextImp::getPageAlignedSizeRequired;
+    struct MockContextForPageAlign : public Context {
+        using Context::getPageAlignedSizeRequired;
     };
 
-    MockContextImp *contextImp = static_cast<MockContextImp *>(L0::Context::fromHandle(hContext));
+    MockContextForPageAlign *contextImp = static_cast<MockContextForPageAlign *>(L0::Context::fromHandle(hContext));
 
     size_t size = 1024;
     size_t defaultPageSize = 0u;
@@ -1432,7 +1432,7 @@ TEST_F(ContextTest, whenCallingPhysicalMemInterfacesThenSuccessIsReturned) {
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     size_t size = 1024;
     size_t pagesize = 0u;
@@ -1458,7 +1458,7 @@ TEST_F(ContextTest, whenCallingPhysicalMemCreateWithInvalisSizeThenUnsupportedSi
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     size_t size = 1024;
     size_t pagesize = 0u;
@@ -1485,7 +1485,7 @@ TEST_F(ContextTest, whenCallingDestroyPhysicalMemWithIncorrectPointerThenMemoryN
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     size_t size = 1024;
     size_t pagesize = 0u;
@@ -1520,7 +1520,7 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesOnPhysicalDeviceMemoryThe
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -1589,7 +1589,7 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesOnPhysicalDeviceMemoryThe
     NEO::MockMemoryOperations *mockMemoryInterface = static_cast<NEO::MockMemoryOperations *>(
         device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -1644,7 +1644,7 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesOnPhysicalHostMemoryThenS
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -1707,7 +1707,7 @@ TEST_F(ContextTest, whenCallingVirtualMemorySetAttributeWithValidEnumerationsThe
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096;
@@ -1754,7 +1754,7 @@ TEST_F(ContextTest, whenCallingVirtualMemorySetAttributeWithInvalidValuesThenFai
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -1787,7 +1787,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryGetAttributeWithInvalidValuesThenFai
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -1818,7 +1818,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryFreeWithInvalidValuesThenFailuresRet
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -1972,7 +1972,7 @@ HWTEST2_F(ContextTest, whenCallingVirtualMemReserveWithPStartInSvmRangeWithSucce
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = reinterpret_cast<void *>(0x1234);
     size_t size = 4096u;
@@ -2003,7 +2003,7 @@ TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartAboveSvmRangeWithSucce
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     auto reserveMemoryManager = std::make_unique<ReserveMemoryManagerMock>(*neoDevice->executionEnvironment);
     auto memoryManager = driverHandle->getMemoryManager();
     reserveMemoryManager->failReserveGpuAddress = false;
@@ -2035,7 +2035,7 @@ TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryThenMappingIsSucces
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -2098,7 +2098,7 @@ TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryWithMultiplePhysica
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -2173,7 +2173,7 @@ HWTEST2_F(ContextTest, whenCallingVirtualMemoryReservationWhenOutOfMemoryThenOut
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 0u;
@@ -2211,7 +2211,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithInvalidArgumentsThenU
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 64u;
@@ -2241,7 +2241,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithInvalidMultiPageSizeI
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 64u;
@@ -2281,7 +2281,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationOnNonSvmHeapWithUnAligned
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 64u;
@@ -2317,7 +2317,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationOnNonSvmHeapUsingPstartWi
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     auto heapIndex = HeapIndex::heapStandard64KB;
     const auto &gfxPartition = driverHandle->getMemoryManager()->getGfxPartition(neoDevice->getRootDeviceIndex());
@@ -2360,7 +2360,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationOnNonSvmHeapUsingPstartWi
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     auto heapIndex = HeapIndex::heapStandard;
     const auto &gfxPartition = driverHandle->getMemoryManager()->getGfxPartition(neoDevice->getRootDeviceIndex());
@@ -2399,7 +2399,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationOnNonSvmHeapWithAlignedSi
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 64u;
@@ -2427,7 +2427,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithValidMultiPageSizeInA
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 64u;
@@ -2455,7 +2455,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithOverlappingReservatio
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 0;
@@ -2517,7 +2517,7 @@ HWTEST2_F(ContextTest, Given32BitCpuAddressWidthWhenCallingVirtualMemoryReservat
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = addrToPtr(0x1234);
     size_t size = MemoryConstants::pageSize2M;
@@ -2562,7 +2562,7 @@ HWTEST2_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservat
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = addrToPtr(0x1234);
     size_t size = MemoryConstants::pageSize2M;
@@ -2607,7 +2607,7 @@ HWTEST2_F(ContextTest, Given57BitCpuAddressWidthWhenCallingVirtualMemoryReservat
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = addrToPtr(0x1234);
     size_t size = MemoryConstants::pageSize2M;
@@ -2652,7 +2652,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithUnAlignedPstartThenNe
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     auto reserveMemoryManager = new ReserveMemoryManagerMock(*neoDevice->executionEnvironment);
     auto memoryManager = driverHandle->getMemoryManager();
@@ -2687,7 +2687,7 @@ TEST_F(ContextTest, whenCallingPhysicalMemoryAllocateWhenOutOfMemoryThenOutofMem
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     size_t size = 0u;
     size_t pagesize = 0u;
@@ -2719,7 +2719,7 @@ TEST_F(ContextTest, whenCallingMapVirtualDeviceMemoryWithFailedMapThenOutOfMemor
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     mockMemoryManager = std::make_unique<MockMemoryManager>();
 
@@ -2771,7 +2771,7 @@ TEST_F(ContextTest, whenCallingMapVirtualHostMemoryWithFailedMapThenOutOfMemoryr
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     mockMemoryManager = std::make_unique<MockMemoryManager>();
 
@@ -2822,7 +2822,7 @@ TEST_F(ContextTest, whenCallingMapVirtualMemoryWithInvalidValuesThenFailureRetur
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
     size_t size = 4096u;
@@ -2907,7 +2907,7 @@ TEST_F(ContextTest, whenCallingUnmapVirtualMemoryWithFailedUnmapThenUnknownError
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     // Use a mock memory manager that returns a failure for unmapVirtualMem.
     auto memManager = driverHandle->getMemoryManager();
@@ -2967,7 +2967,7 @@ HWTEST2_F(ContextTest, WhenCreatingImageThenSuccessIsReturned, IsAtMostProductDG
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_image_handle_t image = {};
     ze_image_desc_t imageDesc = {};
@@ -3004,7 +3004,7 @@ HWTEST_F(ContextTest, givenBindlessModeDisabledWhenMakeImageResidentAndEvictThen
     mockMemoryOperationsInterface->captureGfxAllocationsForMakeResident = true;
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(mockMemoryOperationsInterface);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_image_handle_t image = {};
     ze_image_desc_t imageDesc = {};
@@ -3061,7 +3061,7 @@ HWTEST_F(ContextTest, givenBindlessImageWhenMakeImageResidentAndEvictThenImageIm
     // Reset ResidentCalledCount to 0 since bindlessHeapsHelper constructor changes the value.
     mockMemoryOperationsInterface->makeResidentCalledCount = 0;
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_image_handle_t image = {};
     ze_image_bindless_exp_desc_t bindlessExtDesc = {};
@@ -3115,7 +3115,7 @@ TEST_F(ContextTest, givenImageWhenEvictImageWithoutMakeResidentThenSuccessReturn
     auto mockMemoryOperationsInterface = new NEO::MockMemoryOperations();
     mockMemoryOperationsInterface->captureGfxAllocationsForMakeResident = true;
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(mockMemoryOperationsInterface);
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_image_handle_t image = {};
 
@@ -3160,7 +3160,7 @@ HWTEST_F(ContextTest, givenMakeImageResidentThenMakeImageResidentIsCalledWithFor
     mockMemoryOperationsInterface->captureGfxAllocationsForMakeResident = true;
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(mockMemoryOperationsInterface);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     ze_image_handle_t image = {};
     ze_image_desc_t imageDesc = {};
@@ -3180,11 +3180,11 @@ HWTEST_F(ContextTest, givenMakeImageResidentThenMakeImageResidentIsCalledWithFor
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-class ContextWhiteboxForIpcTesting : public ::L0::ContextImp {
+class ContextWhiteboxForIpcTesting : public ::L0::Context {
   public:
-    ContextWhiteboxForIpcTesting(L0::DriverHandle *driverHandle) : L0::ContextImp(driverHandle) {}
+    ContextWhiteboxForIpcTesting(L0::DriverHandle *driverHandle) : L0::Context(driverHandle) {}
 
-    using ::L0::ContextImp::setIPCHandleData;
+    using ::L0::Context::setIPCHandleData;
 };
 
 TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcMemoryDataTypeThenIpcDataIsSetInHandleTracking) {
@@ -3243,7 +3243,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcMemoryDataTypeThenIpcDataI
     delete handleTracking;
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -3323,7 +3323,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcOpaqueMemoryDataTypeThenIp
     delete handleTracking;
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -3389,7 +3389,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithInvalidIpcHandleTypeThenHandl
     delete handleIterator->second;
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -3479,7 +3479,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithNtHandleTypeThenHandleUnionIs
     delete handleTracking;
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -3491,7 +3491,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueFdHandleThenCorrectHa
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ::L0::ContextImp contextWhitebox{driverHandle.get()};
+    ::L0::Context contextWhitebox{driverHandle.get()};
 
     // Configure for opaque handle with fd type
     contextWhitebox.settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
@@ -3531,7 +3531,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueFdHandleThenCorrectHa
     delete handleTracking;
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -3543,7 +3543,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleThenCorrectF
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ::L0::ContextImp contextWhitebox(driverHandle.get());
+    ::L0::Context contextWhitebox(driverHandle.get());
 
     // Configure for non-opaque handle
     contextWhitebox.settings.useOpaqueHandle = OpaqueHandlingType::none;
@@ -3581,7 +3581,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleThenCorrectF
     delete handleTracking;
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -3593,7 +3593,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueNtHandleThenErrorIsRe
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ::L0::ContextImp contextWhitebox(driverHandle.get());
+    ::L0::Context contextWhitebox(driverHandle.get());
 
     // Configure for opaque handle with NT type (should fail since getFdFromIpcHandle expects fd)
     contextWhitebox.settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
@@ -3611,7 +3611,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueNtHandleThenErrorIsRe
     // Should return error since NT handle is not supported for fd extraction
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -3623,7 +3623,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithInvalidHandleNotInMapThenEr
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ::L0::ContextImp contextWhitebox(driverHandle.get());
+    ::L0::Context contextWhitebox(driverHandle.get());
 
     // Configure for opaque handle with fd type
     contextWhitebox.settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
@@ -3641,7 +3641,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithInvalidHandleNotInMapThenEr
     // Should return error since handle is not found in map
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -3653,7 +3653,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleNotInMapThen
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ::L0::ContextImp contextWhitebox(driverHandle.get());
+    ::L0::Context contextWhitebox(driverHandle.get());
 
     // Configure for non-opaque handle
     contextWhitebox.settings.useOpaqueHandle = OpaqueHandlingType::none;
@@ -3671,7 +3671,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleNotInMapThen
     // Should return error since handle is not found in map
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -3683,7 +3683,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithOpaqueIpcHandleThenUnregisterI
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
@@ -3727,7 +3727,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNonOpaqueIpcHandleThenUnregist
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
 
@@ -3769,7 +3769,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithMultipleRefCountThenHandleNotR
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
@@ -4068,7 +4068,7 @@ TEST_F(ContextTest, whenSettingVirtualMemAccessAttributeWithChangedFlagsAndMappe
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     // Reserve virtual memory
     void *pStart = 0x0;
@@ -4114,7 +4114,7 @@ TEST_F(ContextTest, whenSettingVirtualMemAccessAttributeWithChangedFlagsAndMappe
 }
 
 TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeThenUnmapAndMapAreCalled) {
-    auto ctx = std::make_unique<Mock<ContextImp>>(driverHandle.get());
+    auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
     ctx->createPhysicalMemCallBase = true;
     ctx->queryVirtualMemPageSizeCallBase = true;
     ctx->reserveVirtualMemCallBase = true;
@@ -4160,7 +4160,7 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeThenUnmapAn
 }
 
 TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToNoneThenUnmapAndMapAreCalled) {
-    auto ctx = std::make_unique<Mock<ContextImp>>(driverHandle.get());
+    auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
     ctx->createPhysicalMemCallBase = true;
     ctx->queryVirtualMemPageSizeCallBase = true;
     ctx->reserveVirtualMemCallBase = true;
@@ -4206,7 +4206,7 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToNoneThenU
 }
 
 TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToReadWriteThenUnmapAndMapAreCalled) {
-    auto ctx = std::make_unique<Mock<ContextImp>>(driverHandle.get());
+    auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
     ctx->createPhysicalMemCallBase = true;
     ctx->queryVirtualMemPageSizeCallBase = true;
     ctx->reserveVirtualMemCallBase = true;
@@ -4259,7 +4259,7 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeToReadWrite
 }
 
 TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndNoMappedAllocationsThenUnmapAndMapAreNotCalled) {
-    auto ctx = std::make_unique<Mock<ContextImp>>(driverHandle.get());
+    auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
     ctx->queryVirtualMemPageSizeCallBase = true;
     ctx->reserveVirtualMemCallBase = true;
     ctx->setVirtualMemAccessAttributeCallBase = true;
@@ -4288,7 +4288,7 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndNoMapped
 }
 
 TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndFlagsUnchangedThenUnmapAndMapAreNotCalled) {
-    auto ctx = std::make_unique<Mock<ContextImp>>(driverHandle.get());
+    auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
     ctx->queryVirtualMemPageSizeCallBase = true;
     ctx->reserveVirtualMemCallBase = true;
     ctx->createPhysicalMemCallBase = true;
@@ -4334,7 +4334,7 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndFlagsUnc
 }
 
 TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndPtrNotInMappedAllocationsThenUnmapAndMapAreNotCalled) {
-    auto ctx = std::make_unique<Mock<ContextImp>>(driverHandle.get());
+    auto ctx = std::make_unique<Mock<Context>>(driverHandle.get());
     ctx->queryVirtualMemPageSizeCallBase = true;
     ctx->reserveVirtualMemCallBase = true;
     ctx->createPhysicalMemCallBase = true;
@@ -4388,7 +4388,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithOpaqueIpcHandleThenUnregisterIpcHandle
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
@@ -4436,7 +4436,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithNonOpaqueIpcHandleThenUnregisterIpcHan
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
     contextImp->settings.handleType = IpcHandleType::maxHandle;
@@ -4483,7 +4483,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithOpaqueNtHandleThenUnregisterIpcHandleW
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
     contextImp->settings.handleType = IpcHandleType::ntHandle;
@@ -4574,7 +4574,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndNullUsmPoolThenHandleIsRem
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
@@ -4624,7 +4624,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNonSocketsOpaqueHandleThenUnre
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     // Set to use pidfd instead of sockets
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
@@ -4710,7 +4710,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithUsmPoolThenPoolOffsetIsSet) {
     }
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -4766,7 +4766,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithExistingHandleInMapThenRefCou
         ipcHandleMap.clear();
     }
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -4783,7 +4783,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndNonNullUsmPoolAndRefCountG
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     size_t size = 4096;
     size_t alignment = 4096;
@@ -4864,7 +4864,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNtHandleTypeThenUnregisterIsNo
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     // Set to use sockets but with ntHandle type (not fdHandle)
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
@@ -4909,7 +4909,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndSocketsAndFdHandleThenUnre
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     // Set both conditions to true for the nested if in freeMem line 559
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
@@ -4966,7 +4966,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithCachedImportThenCacheIsCleared
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     uint64_t exportHandle = 5678;
     unsigned int processId = 1234;
@@ -5030,7 +5030,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithCachedImportThenCacheIsCleared) {
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     uint64_t exportHandle = 8888;
     unsigned int processId = 5678;
@@ -5096,7 +5096,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithExactlySocketsOpaqueHandleAndF
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     // Set ONLY sockets, not a combination - this is needed to hit line 783
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
@@ -5148,7 +5148,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsAndFdHandleThenServerR
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     // Set conditions to hit setIPCHandleData line 300
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
@@ -5195,7 +5195,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsButNtHandleThenServerR
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     // Set conditions to make line 300 condition FALSE (sockets but not fdHandle)
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
@@ -5237,7 +5237,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithSocketsOpaqueHandleButNtHandleTypeThen
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     // Set sockets but with ntHandle (not fdHandle) - this makes second part of condition false
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
@@ -5326,7 +5326,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleThenSocketS
     }
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -5375,7 +5375,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleDisabledThe
     }
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -5424,7 +5424,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueNtHandleThenSocketServe
     }
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -5463,7 +5463,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueHandleAndSocketsEnabled
     delete handleIterator->second;
     driverHandle->getIPCHandleMap().clear();
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
@@ -5475,7 +5475,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataThenCloseInt
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
@@ -5522,7 +5522,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataAndMultipleR
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
@@ -5582,7 +5582,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithHasReservedDataTrueThenHandle
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
@@ -5623,7 +5623,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithHasReservedDataFalseThenHandl
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
@@ -5662,7 +5662,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataThenHandleTr
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
@@ -5721,7 +5721,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithoutReservedHandleDataThenHandl
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
     contextImp->settings.handleType = IpcHandleType::fdHandle;

@@ -49,7 +49,7 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    context = Context::fromHandle(hContext);
     executionEnvironment.incRefInternal();
     if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
         for (auto &engine : neoDevice->getAllEngines()) {
@@ -95,7 +95,7 @@ void PageFaultDeviceFixture::setUp() {
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    context = Context::fromHandle(hContext);
     mockPageFaultManager = new MockPageFaultManager;
     mockMemoryManager = std::make_unique<MockMemoryManager>();
     memoryManager = device->getDriverHandle()->getMemoryManager();
@@ -127,7 +127,7 @@ void MultiDeviceFixture::setUp() {
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    context = Context::fromHandle(hContext);
 }
 
 void MultiDeviceFixture::tearDown() {
@@ -154,7 +154,7 @@ void MultiDeviceFixtureHierarchy::setUp() {
         ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
         res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+        context = Context::fromHandle(hContext);
     } else {
         delete executionEnvironment;
         return;
@@ -257,7 +257,7 @@ void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::setUp() {
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    context = Context::fromHandle(hContext);
 
     device = driverHandle->devices[0];
     neoDevice = device->getNEODevice();
@@ -300,7 +300,7 @@ void GetMemHandlePtrTestFixture::setUp() {
     driverHandle->setMemoryManager(currMemoryManager);
     device = driverHandle->devices[0];
 
-    context = std::make_unique<L0::ContextImp>(driverHandle.get());
+    context = std::make_unique<L0::Context>(driverHandle.get());
     EXPECT_NE(context, nullptr);
     context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
     auto neoDevice = device->getNEODevice();

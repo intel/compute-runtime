@@ -15,8 +15,9 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
 
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 #include <fcntl.h>
 
@@ -82,7 +83,7 @@ bool queryPeerAccessDrm(NEO::Device &device, NEO::Device &peerDevice, void **han
     }
 
     auto driverHandle = l0Device->getDriverHandle();
-    auto context = static_cast<ContextImp *>(driverHandle->getDefaultContext());
+    auto context = Context::fromHandle(driverHandle->getDefaultContext());
 
     if (*handlePtr == nullptr) {
         ze_external_memory_export_desc_t exportDesc = {};
