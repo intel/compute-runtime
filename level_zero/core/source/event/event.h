@@ -100,7 +100,6 @@ struct IpcCounterBasedEventData {
     uint64_t oneWayCounterValue = 0;
     size_t allocOffset = 0;
     uint32_t oneWayPartitionCount = 0;
-    uint32_t rootDeviceIndex = 0;
     uint32_t counterBasedFlags = 0;
     uint32_t signalScopeFlags = 0;
     uint32_t waitScopeFlags = 0;
@@ -403,6 +402,8 @@ struct Event : _ze_event_handle_t {
 
     ze_result_t enableExtensions(const EventDescriptor &eventDescriptor);
     NEO::GraphicsAllocation *getExternalCounterAllocationFromAddress(uint64_t *address) const;
+    ze_result_t exportCbAllocationsFor2WayIpcSharing();
+    bool isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa) const;
     MOCKABLE_VIRTUAL uint64_t getCompletionTimeout() const { return completionTimeoutMs; }
 
     void unsetCmdQueue();

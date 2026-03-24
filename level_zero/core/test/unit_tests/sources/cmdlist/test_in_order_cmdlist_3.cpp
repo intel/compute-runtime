@@ -23,19 +23,23 @@ struct InOrderIpcTests : public InOrderCmdListFixture {
         setOpaqueHandleSupport(true);
     }
 
+    void assignInternalHandle(GraphicsAllocation *allocation) {
+        auto memoryAllocation = static_cast<MemoryAllocation *>(allocation);
+        if (memoryAllocation && memoryAllocation->internalHandle == 0) {
+            memoryAllocation->internalHandle = ++internalHandleCounter;
+        }
+    }
+
     void enableEventSharing(InOrderFixtureMockEvent &event) {
         event.isSharableCounterBased = true;
 
         if (event.getInOrderExecEventHelper().isDataAssigned()) {
-            if (event.getInOrderExecEventHelper().getDeviceCounterAllocation()) {
-                static_cast<MemoryAllocation *>(event.getInOrderExecEventHelper().getDeviceCounterAllocation())->internalHandle = 1;
-            }
-            if (event.getInOrderExecEventHelper().getHostCounterAllocation()) {
-                static_cast<MemoryAllocation *>(event.getInOrderExecEventHelper().getHostCounterAllocation())->internalHandle = 2;
-            }
+            assignInternalHandle(event.getInOrderExecEventHelper().getDeviceCounterAllocation());
+            assignInternalHandle(event.getInOrderExecEventHelper().getHostCounterAllocation());
+
             auto &inOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(event.inOrderExecHelper);
             auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(inOrderEventHelper.sharableEventDataHelper);
-            static_cast<MemoryAllocation *>(sharableEventDataHelper.allocation)->internalHandle = 3;
+            assignInternalHandle(sharableEventDataHelper.allocation);
         }
     }
 
@@ -45,6 +49,8 @@ struct InOrderIpcTests : public InOrderCmdListFixture {
         auto defaultContext = Context::fromHandle(Context::fromHandle(device->getDriverHandle()->getDefaultContext()));
         defaultContext->settings.useOpaqueHandle = context->settings.useOpaqueHandle;
     }
+
+    uint64_t internalHandleCounter = 0;
 };
 
 HWTEST_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError) {
@@ -179,7 +185,6 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData)
 
     EXPECT_TRUE(static_cast<MemoryAllocation *>(communicationAllocation)->internalHandle == ipcData.communicationAllocHandle);
     EXPECT_TRUE(sharableEventDataHelper.allocationOffset == ipcData.allocOffset);
-    EXPECT_TRUE(device->getRootDeviceIndex() == ipcData.rootDeviceIndex);
     EXPECT_TRUE(events[1]->counterBasedFlags == ipcData.counterBasedFlags);
     EXPECT_TRUE(events[1]->signalScope == ipcData.signalScopeFlags);
     EXPECT_TRUE(events[1]->waitScope == ipcData.waitScopeFlags);
@@ -201,6 +206,98 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData)
         EXPECT_EQ(expectedHostOffset, eventDataPtr->hostIpcAllocOffset);
     } else {
         EXPECT_EQ(eventDataPtr->hostIpcAllocOffset, 0u);
+    }
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList2.get());
+}
+
+HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenSignalingThenRefreshIpcData) {
+    NEO::TagAllocatorBase *deviceAllocator = device->getDeviceInOrderCounterAllocator();
+    NEO::TagAllocatorBase *hostAllocator = device->getHostInOrderCounterAllocator();
+
+    deviceAllocator->getTag();
+    hostAllocator->getTag();
+
+    auto immCmdList1 = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto allocator = device->getDeviceInOrderCounterAllocator();
+    while (allocator->getGfxAllocations().size() == 1) {
+        allocator->getTag();
+    }
+    allocator->getTag();
+
+    if (immCmdList1->inOrderExecInfo->isHostStorageDuplicated()) {
+        while (hostAllocator->getGfxAllocations().size() == 1) {
+            hostAllocator->getTag();
+        }
+        hostAllocator->getTag();
+    }
+
+    auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(2, false);
+
+    immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
+
+    enableEventSharing(*events[1]);
+    assignInternalHandle(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation());
+    assignInternalHandle(immCmdList1->inOrderExecInfo->getHostCounterAllocation());
+
+    EXPECT_NE(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation(), immCmdList2->inOrderExecInfo->getDeviceCounterAllocation());
+
+    auto &inOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[1]->inOrderExecHelper);
+
+    auto eventDataPtr = inOrderEventHelper.getInOrderExecEventDataPtr();
+
+    static_cast<WhiteboxInOrderExecInfo *>(inOrderEventHelper.inOrderExecInfo.get())->initializeAllocationsFromHost();
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[1]->toHandle(), &zeIpcData));
+
+    {
+        auto deviceAlloc = static_cast<MemoryAllocation *>(inOrderEventHelper.getDeviceCounterAllocation());
+        EXPECT_EQ(deviceAlloc, immCmdList2->inOrderExecInfo->getDeviceCounterAllocation());
+        auto hostAlloc = static_cast<MemoryAllocation *>(inOrderEventHelper.getHostCounterAllocation());
+
+        EXPECT_EQ(eventDataPtr->deviceAllocIpcHandle, deviceAlloc->internalHandle);
+        EXPECT_TRUE(events[1]->getInOrderExecEventHelper().isHostStorageDuplicated() ? hostAlloc->internalHandle : 0u == eventDataPtr->hostAllocIpcHandle);
+
+        auto expectedOffset = static_cast<uint32_t>(events[1]->getInOrderExecEventHelper().getBaseDeviceAddress() - events[1]->getInOrderExecEventHelper().getDeviceCounterAllocation()->getGpuAddress());
+        EXPECT_NE(0u, expectedOffset);
+
+        EXPECT_TRUE(expectedOffset == eventDataPtr->deviceIpcAllocOffset);
+
+        if (events[1]->getInOrderExecEventHelper().isHostStorageDuplicated()) {
+            auto expectedHostOffset = ptrDiff(events[1]->getInOrderExecEventHelper().getBaseHostAddress(), events[1]->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
+            EXPECT_NE(0u, expectedHostOffset);
+            EXPECT_EQ(expectedHostOffset, eventDataPtr->hostIpcAllocOffset);
+        } else {
+            EXPECT_EQ(eventDataPtr->hostIpcAllocOffset, 0u);
+        }
+    }
+
+    immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
+
+    {
+        auto deviceAlloc = static_cast<MemoryAllocation *>(inOrderEventHelper.getDeviceCounterAllocation());
+        EXPECT_EQ(deviceAlloc, immCmdList1->inOrderExecInfo->getDeviceCounterAllocation());
+        auto hostAlloc = static_cast<MemoryAllocation *>(inOrderEventHelper.getHostCounterAllocation());
+
+        EXPECT_EQ(eventDataPtr->deviceAllocIpcHandle, deviceAlloc->internalHandle);
+        EXPECT_TRUE(events[1]->getInOrderExecEventHelper().isHostStorageDuplicated() ? hostAlloc->internalHandle : 0u == eventDataPtr->hostAllocIpcHandle);
+
+        auto expectedOffset = static_cast<uint32_t>(events[1]->getInOrderExecEventHelper().getBaseDeviceAddress() - events[1]->getInOrderExecEventHelper().getDeviceCounterAllocation()->getGpuAddress());
+        EXPECT_NE(0u, expectedOffset);
+
+        EXPECT_TRUE(expectedOffset == eventDataPtr->deviceIpcAllocOffset);
+
+        if (events[1]->getInOrderExecEventHelper().isHostStorageDuplicated()) {
+            auto expectedHostOffset = ptrDiff(events[1]->getInOrderExecEventHelper().getBaseHostAddress(), events[1]->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
+            EXPECT_NE(0u, expectedHostOffset);
+            EXPECT_EQ(expectedHostOffset, eventDataPtr->hostIpcAllocOffset);
+        } else {
+            EXPECT_EQ(eventDataPtr->hostIpcAllocOffset, 0u);
+        }
     }
 
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList2.get());
@@ -250,7 +347,6 @@ HWTEST_F(InOrderIpcTests, givenNonOpaqueHandleAndCounterOffsetWhenOpenIsCalledTh
 
         EXPECT_EQ(0u, ipcData.communicationAllocHandle);
         EXPECT_EQ(expectedOffset, ipcData.allocOffset);
-        EXPECT_TRUE(device->getRootDeviceIndex() == ipcData.rootDeviceIndex);
         EXPECT_TRUE(events[1]->counterBasedFlags == ipcData.counterBasedFlags);
         EXPECT_TRUE(events[1]->signalScope == ipcData.signalScopeFlags);
         EXPECT_TRUE(events[1]->waitScope == ipcData.waitScopeFlags);

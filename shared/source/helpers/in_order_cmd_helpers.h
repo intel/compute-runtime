@@ -270,6 +270,9 @@ class InOrderExecEventHelper : public NonCopyableClass {
 
     const SharableEventDataHelper &getSharableEventDataHelper() const { return sharableEventDataHelper; }
 
+    void set2WayIpcSharingEnabled(bool enabled) { twoWayIpcSharing = enabled; }
+    bool is2WayIpcSharingEnabled() const { return twoWayIpcSharing; }
+
   protected:
     void assignInOrderExecInfo(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo);
     void moveTimestampNodesToReleaseList(std::vector<NEO::TagNodeBase *> &nodes);
@@ -286,6 +289,7 @@ class InOrderExecEventHelper : public NonCopyableClass {
     uint64_t baseDeviceAddress = 0;
     uint64_t incrementValue = 0;
     uint64_t aggregatedEventUsageCounter = 0;
+    bool twoWayIpcSharing = false;
     bool hostStorageDuplicated = false;
     bool fromExternalMemory = false;
     bool dataAssigned = false;
