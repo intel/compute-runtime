@@ -354,7 +354,7 @@ bool BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(const EncodeDummyBlitWaA
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(LinearStream &linearStream, EncodeDummyBlitWaArgs &waArgs) {
+void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(void *&cmdBuffer, EncodeDummyBlitWaArgs &waArgs) {
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
 
     if (BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(waArgs)) {
@@ -377,8 +377,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(LinearStream &linearStream
 
         appendBlitFillCommand(blitProperties, blitCmd);
 
-        auto cmd = linearStream.getSpaceForCmd<XY_COLOR_BLT>();
-        *cmd = blitCmd;
+        *reinterpret_cast<XY_COLOR_BLT *>(cmdBuffer) = blitCmd;
+        cmdBuffer = ptrOffset(cmdBuffer, sizeof(XY_COLOR_BLT));
     }
 }
 

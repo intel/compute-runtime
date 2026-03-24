@@ -63,6 +63,7 @@ struct BlitCommandsHelper {
     static BlitCommandsResult dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
     static BlitCommandsResult dispatchBlitMemoryColorFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
     static void dispatchDummyBlit(LinearStream &linearStream, EncodeDummyBlitWaArgs &waArgs);
+    static void dispatchDummyBlit(void *&cmdBuffer, EncodeDummyBlitWaArgs &waArgs);
     static size_t getDummyBlitSize(const EncodeDummyBlitWaArgs &waArgs);
     static bool isDummyBlitWaNeeded(const EncodeDummyBlitWaArgs &waArgs);
 

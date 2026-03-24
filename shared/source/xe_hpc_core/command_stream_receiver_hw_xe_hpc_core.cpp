@@ -209,7 +209,7 @@ uint64_t BlitCommandsHelper<Family>::getMaxBlitHeightOverride(const RootDeviceEn
 }
 
 template <>
-void BlitCommandsHelper<Family>::dispatchDummyBlit(LinearStream &linearStream, EncodeDummyBlitWaArgs &waArgs) {
+void BlitCommandsHelper<Family>::dispatchDummyBlit(void *&cmdBuffer, EncodeDummyBlitWaArgs &waArgs) {
     using MEM_SET = typename Family::MEM_SET;
 
     if (BlitCommandsHelper<Family>::isDummyBlitWaNeeded(waArgs)) {
@@ -224,8 +224,8 @@ void BlitCommandsHelper<Family>::dispatchDummyBlit(LinearStream &linearStream, E
         blitCmd.setFillWidth(memSetSize);
         blitCmd.setDestinationPitch(memSetSize);
 
-        auto cmd = linearStream.getSpaceForCmd<MEM_SET>();
-        *cmd = blitCmd;
+        *reinterpret_cast<MEM_SET *>(cmdBuffer) = blitCmd;
+        cmdBuffer = ptrOffset(cmdBuffer, sizeof(MEM_SET));
     }
 }
 

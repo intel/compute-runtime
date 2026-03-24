@@ -192,7 +192,7 @@ template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const uint32_t sliceIndex) {}
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(LinearStream &linearStream, EncodeDummyBlitWaArgs &waArgs) {}
+void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(void *&cmdBuffer, EncodeDummyBlitWaArgs &waArgs) {}
 
 template <typename GfxFamily>
 bool BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(const EncodeDummyBlitWaArgs &waArgs) {

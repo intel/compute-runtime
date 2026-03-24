@@ -672,6 +672,8 @@ struct EncodeBatchBufferStartOrEnd {
 template <typename GfxFamily>
 struct EncodeMiFlushDW {
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
+    static void programWithWa(void *&cmdBuffer, uint64_t immediateDataGpuAddress, uint64_t immediateData,
+                              MiFlushArgs &args);
     static void programWithWa(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData,
                               MiFlushArgs &args);
 
@@ -679,7 +681,7 @@ struct EncodeMiFlushDW {
 
   protected:
     static size_t getWaSize(const EncodeDummyBlitWaArgs &waArgs);
-    static void appendWa(LinearStream &commandStream, MiFlushArgs &args);
+    static void appendWa(void *&cmdBuffer, MiFlushArgs &args);
     static void adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper);
 };
 

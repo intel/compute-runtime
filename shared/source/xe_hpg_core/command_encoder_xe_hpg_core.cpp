@@ -165,10 +165,11 @@ void adjustL3ControlField<Family>(void *l3ControlBuffer) {
 }
 
 template <>
-void EncodeMiFlushDW<Family>::appendWa(LinearStream &commandStream, MiFlushArgs &args) {
-    BlitCommandsHelper<Family>::dispatchDummyBlit(commandStream, args.waArgs);
-    auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
-    *miFlushDwCmd = Family::cmdInitMiFlushDw;
+void EncodeMiFlushDW<Family>::appendWa(void *&cmdBuffer, MiFlushArgs &args) {
+    BlitCommandsHelper<Family>::dispatchDummyBlit(cmdBuffer, args.waArgs);
+
+    *reinterpret_cast<MI_FLUSH_DW *>(cmdBuffer) = Family::cmdInitMiFlushDw;
+    cmdBuffer = ptrOffset(cmdBuffer, sizeof(MI_FLUSH_DW));
 }
 
 template <>

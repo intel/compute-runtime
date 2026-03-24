@@ -1058,18 +1058,25 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer
 }
 
 template <typename GfxFamily>
-void EncodeMiFlushDW<GfxFamily>::appendWa(LinearStream &commandStream, MiFlushArgs &args) {
-    BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(commandStream, args.waArgs);
+void EncodeMiFlushDW<GfxFamily>::appendWa(void *&cmdBuffer, MiFlushArgs &args) {
+    BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(cmdBuffer, args.waArgs);
 }
 
 template <typename Family>
 void EncodeMiFlushDW<Family>::programWithWa(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData,
                                             MiFlushArgs &args) {
+    void *cmdBuffer = commandStream.getSpace(EncodeMiFlushDW<Family>::getCommandSizeWithWa(args.waArgs));
+    EncodeMiFlushDW<Family>::programWithWa(cmdBuffer, immediateDataGpuAddress, immediateData, args);
+}
+
+template <typename Family>
+void EncodeMiFlushDW<Family>::programWithWa(void *&cmdBuffer, uint64_t immediateDataGpuAddress, uint64_t immediateData,
+                                            MiFlushArgs &args) {
     UNRECOVERABLE_IF(args.waArgs.isWaRequired && !args.commandWithPostSync);
-    appendWa(commandStream, args);
+    EncodeMiFlushDW<Family>::appendWa(cmdBuffer, args);
     args.waArgs.isWaRequired = false;
 
-    auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
+    auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(cmdBuffer);
     MI_FLUSH_DW miFlush = Family::cmdInitMiFlushDw;
     if (args.commandWithPostSync) {
         auto postSyncType = args.timeStampOperation ? MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER : MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD;
@@ -1081,6 +1088,8 @@ void EncodeMiFlushDW<Family>::programWithWa(LinearStream &commandStream, uint64_
     miFlush.setTlbInvalidate(args.tlbFlush);
     adjust(&miFlush, args.waArgs.rootDeviceEnvironment->getProductHelper());
     *miFlushDwCmd = miFlush;
+
+    cmdBuffer = ptrOffset(cmdBuffer, sizeof(MI_FLUSH_DW));
 }
 
 template <typename Family>

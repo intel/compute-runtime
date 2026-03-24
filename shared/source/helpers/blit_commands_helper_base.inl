@@ -632,4 +632,10 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const B
     }
 }
 
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(LinearStream &linearStream, EncodeDummyBlitWaArgs &waArgs) {
+    void *cmdBuffer = linearStream.getSpace(BlitCommandsHelper<GfxFamily>::getDummyBlitSize(waArgs));
+    BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(cmdBuffer, waArgs);
+}
+
 } // namespace NEO
