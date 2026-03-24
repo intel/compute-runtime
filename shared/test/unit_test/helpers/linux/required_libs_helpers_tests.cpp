@@ -19,6 +19,20 @@
 
 namespace NEO {
 
+TEST_F(RequiredLibsHelpersTest, givenRequiredLibsWhenGettingDefaultSearchPathsThenTheyAreCorrect) {
+    auto cachedLdLibraryPaths = RequiredLibsHelpers::LockableSearchPaths{};
+    auto pathsSpan = RequiredLibsHelpers::getDefaultBinarySearchPaths();
+    EXPECT_EQ(pathsSpan.size(), 8U);
+    EXPECT_EQ(pathsSpan[0], "/usr/lib/intel-gpu");
+    EXPECT_EQ(pathsSpan[1], "/lib");
+    EXPECT_EQ(pathsSpan[2], "/lib64");
+    EXPECT_EQ(pathsSpan[3], "/lib/x86_64-linux-gnu");
+    EXPECT_EQ(pathsSpan[4], "/usr/lib");
+    EXPECT_EQ(pathsSpan[5], "/usr/lib64");
+    EXPECT_EQ(pathsSpan[6], "/usr/lib/x86_64-linux-gnu");
+    EXPECT_EQ(pathsSpan[7], "/usr/local/lib");
+}
+
 TEST_F(RequiredLibsHelpersTest, givenLdLibraryPathEnvUsedWhenSearchingForLibThenTheSpecifiedPathsAreReturned) {
     auto envVal = std::string{};
     auto mockedEnv = std::unordered_map<std::string, std::string>{

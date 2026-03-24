@@ -20,7 +20,8 @@ namespace NEO {
 
 const std::span<const std::string_view> RequiredLibsHelpers::getDefaultBinarySearchPaths() {
     using namespace std::string_view_literals;
-    static constexpr auto fixedPaths = std::to_array({"/lib"sv,
+    static constexpr auto fixedPaths = std::to_array({"/usr/lib/intel-gpu"sv,
+                                                      "/lib"sv,
                                                       "/lib64"sv,
                                                       "/lib/x86_64-linux-gnu"sv,
                                                       "/usr/lib"sv,
