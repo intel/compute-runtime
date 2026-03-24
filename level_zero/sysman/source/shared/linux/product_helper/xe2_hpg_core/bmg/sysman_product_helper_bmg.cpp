@@ -1432,9 +1432,10 @@ static ze_result_t getMemoryMaxBandwidth(const std::map<std::string, uint64_t> &
     if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, maxBandwidth)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
-
     maxBandwidth = maxBandwidth >> 16;
-    pBandwidth->maxBandwidth = static_cast<uint64_t>(maxBandwidth) * megaBytesToBytes * 100;
+
+    // PMT reports maxBandwidth in units of 100 Mbps (decimal). Need to convert it into Bytes/sec, unit to be returned by sysman.
+    pBandwidth->maxBandwidth = static_cast<uint64_t>(maxBandwidth) * mbpsToBytesPerSec * 100;
 
     return ZE_RESULT_SUCCESS;
 }

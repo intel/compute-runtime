@@ -255,7 +255,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
         uint64_t telem2Offset = 0;
         uint64_t telem3Offset = 0;
         std::string validOobmsmGuid = "0x5e2f8210";
-        std::string validPunitGuid = "0x1e2f8200";
+        std::string validPunitGuid = "0x1e2f8202";
         uint32_t mockMsuBitMask = 0x3;
         uint32_t mockKeyValue = 0;
 
@@ -311,22 +311,16 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     zes_mem_bandwidth_t memBandwidth;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidth(&memBandwidth, pLinuxSysmanImp, subdeviceId));
 
-    uint64_t outputReadCounter32Bit = packInto64Bit(readCounterUpper32Bit, readCounterLower32Bit);
-    outputReadCounter32Bit *= 32;
-    uint64_t outputReadCounter64Bit = packInto64Bit(readCounterUpper64Bit, readCounterLower64Bit);
-    outputReadCounter64Bit *= 64;
-    EXPECT_EQ((outputReadCounter32Bit + outputReadCounter64Bit), memBandwidth.readCounter);
-
+    uint64_t outputReadCounter32Bit = packInto64Bit(readCounterUpper32Bit, readCounterLower32Bit) * 32;
+    uint64_t outputReadCounter64Bit = packInto64Bit(readCounterUpper64Bit, readCounterLower64Bit) * 64;
     uint64_t outputWriteCounter32Bit = packInto64Bit(writeCounterUpper32Bit, writeCounterLower32Bit) * 32;
     uint64_t outputWriteCounter64Bit = packInto64Bit(writeCounterUpper64Bit, writeCounterLower64Bit) * 64;
+    uint64_t outputMaxBandwidth = static_cast<uint64_t>(vramBandwidth >> 16);
+
+    EXPECT_EQ((outputReadCounter32Bit + outputReadCounter64Bit), memBandwidth.readCounter);
     EXPECT_EQ((outputWriteCounter32Bit + outputWriteCounter64Bit), memBandwidth.writeCounter);
-
-    uint64_t outputMaxBandwidth = vramBandwidth;
-    outputMaxBandwidth = outputMaxBandwidth >> 16;
-    outputMaxBandwidth = static_cast<uint64_t>(outputMaxBandwidth) * megaBytesToBytes * 100;
-    EXPECT_EQ(outputMaxBandwidth, memBandwidth.maxBandwidth);
-
     EXPECT_GT(memBandwidth.timestamp, 0u);
+    EXPECT_EQ(outputMaxBandwidth * mbpsToBytesPerSec * 100, memBandwidth.maxBandwidth);
 }
 
 HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenCallingGetNumberOfMemoryChannelsAndTelemNodesAreNotAvailableThenErrorIsReturned, IsBMG) {
