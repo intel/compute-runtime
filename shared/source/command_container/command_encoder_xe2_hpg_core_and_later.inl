@@ -32,6 +32,51 @@ uint32_t EncodeDispatchKernel<Family>::alignPreferredSlmSize(uint32_t slmSize) {
 }
 
 template <typename Family>
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const uint32_t threadsPerDssCount = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
+    const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
+
+    slmTotalSize = EncodeDispatchKernel<Family>::alignPreferredSlmSize(slmTotalSize);
+
+    uint32_t slmSize = 0u;
+
+    switch (slmPolicy) {
+    case SlmPolicy::slmPolicyLargeData:
+        slmSize = slmTotalSize;
+        break;
+    case SlmPolicy::slmPolicyLargeSlm:
+    default:
+        slmSize = slmTotalSize * workGroupCountPerDss;
+        break;
+    }
+
+    uint32_t actualHwSlmSizeKb = rootDeviceEnvironment.getProductHelper().getActualHwSlmSize(rootDeviceEnvironment);
+    slmSize = std::min(slmSize, static_cast<uint32_t>(actualHwSlmSizeKb * MemoryConstants::kiloByte));
+
+    constexpr bool isHeapless = Family::template isInterfaceDescriptorHeaplessMode<InterfaceDescriptorType>();
+
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &sizeToPreferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue(isHeapless);
+
+    uint32_t programmableIdPreferredSlmSize = 0;
+    for (auto &range : sizeToPreferredSlmValueArray) {
+        if (slmSize <= range.upperLimit) {
+            programmableIdPreferredSlmSize = range.valueToProgram;
+            break;
+        }
+    }
+
+    if (debugManager.flags.OverridePreferredSlmAllocationSizePerDss.get() != -1) {
+        programmableIdPreferredSlmSize = static_cast<uint32_t>(debugManager.flags.OverridePreferredSlmAllocationSizePerDss.get());
+    }
+
+    pInterfaceDescriptor->setPreferredSlmAllocationSize(static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(programmableIdPreferredSlmSize));
+}
+
+template <typename Family>
 template <typename WalkerType, typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerType &walkerCmd, const InterfaceDescriptorType *idd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs) {
     bool computeDispatchAllWalkerEnable = walkerArgs.kernelExecutionType == KernelExecutionType::concurrent || (rootDeviceEnvironment.getProductHelper().adjustDispatchAllRequired(*rootDeviceEnvironment.getHardwareInfo()) &&
