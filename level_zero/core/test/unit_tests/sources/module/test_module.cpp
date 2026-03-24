@@ -4395,6 +4395,80 @@ TEST(BuildOptions, givenSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenOptionI
     EXPECT_EQ(std::string::npos, srcNames.find(BuildOptions::optDisable.str()));
 }
 
+TEST(BuildOptions, givenNoSrcOptionNameInSrcNamesWhenExtractingBuildOptionWithValueThenFalseIsReturned) {
+    std::string srcNames = NEO::CompilerOptions::concatenate(BuildOptions::optAutoGrf, BuildOptions::optLevel);
+    std::string outOption;
+
+    auto result = extractBuildOptionWithValue(outOption, srcNames, BuildOptions::registerFileSize);
+    EXPECT_FALSE(result);
+}
+
+TEST(BuildOptions, givenNoValueForSrcOptionNameInSrcNamesWhenExtractingBuildOptionWithValueThenFalseIsReturned) {
+    std::string srcNames = NEO::CompilerOptions::concatenate(BuildOptions::optAutoGrf, BuildOptions::registerFileSize);
+    std::string outOption;
+
+    auto result = extractBuildOptionWithValue(outOption, srcNames, BuildOptions::registerFileSize);
+    EXPECT_FALSE(result);
+}
+
+TEST(BuildOptions, givenSrcOptionNameWithValueInSrcNamesWhenExtractingBuildOptionWithValueThenOptionIsExtracted) {
+    std::string srcNames = NEO::CompilerOptions::concatenate(BuildOptions::optAutoGrf, BuildOptions::registerFileSize) + "=2";
+    std::string outOption;
+
+    std::string expectedOutOption = NEO::CompilerOptions::concatenate(BuildOptions::registerFileSize) + " 2";
+
+    auto result = extractBuildOptionWithValue(outOption, srcNames, BuildOptions::registerFileSize);
+    EXPECT_TRUE(result);
+
+    EXPECT_EQ(expectedOutOption, outOption);
+}
+
+TEST_F(ModuleTest, GivenCorrectRegisterFileSizeInBuildFlagWhenInitializeModuleIsCalledThenInvalidArgumentIsNotReturned) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    const auto registerFileSizes = productHelper.getSupportedNumGrfs(device->getNEODevice()->getReleaseHelper());
+    ze_module_desc_t moduleDesc = {};
+
+    for (const auto &registerFileSize : registerFileSizes) {
+        auto pModule = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
+        ASSERT_NE(nullptr, pModule);
+
+        std::string buildOptions = std::string(BuildOptions::registerFileSize) + "=" + std::to_string(registerFileSize);
+        moduleDesc.pBuildFlags = buildOptions.c_str();
+
+        EXPECT_NE(ZE_RESULT_ERROR_INVALID_ARGUMENT, pModule->initialize(&moduleDesc, device->getNEODevice()));
+        std::string expectedRegisterString = std::string(BuildOptions::registerFileSize) + "=" + std::to_string(registerFileSize);
+        EXPECT_STREQ(expectedRegisterString.c_str(), pModule->getTranslationUnit()->options.c_str());
+    }
+}
+
+TEST_F(ModuleTest, GivenIncorrectRegisterFileSizeInBuildFlagWhenInitializeModuleIsCalledThenInvalidArgumentIsReturned) {
+    auto pModule = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
+    ASSERT_NE(nullptr, pModule);
+
+    std::string buildOptions = std::string(BuildOptions::registerFileSize) + "=0";
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.pBuildFlags = buildOptions.c_str();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pModule->initialize(&moduleDesc, device->getNEODevice()));
+}
+
+TEST_F(ModuleTest, GivenIncorrectBuildFlagsCombinationWhenInitializeModuleIsCalledThenInvalidArgumentIsReturned) {
+    auto pModule = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
+    ASSERT_NE(nullptr, pModule);
+
+    ze_module_desc_t moduleDesc = {};
+    auto registerFileSizeOption = std::string(BuildOptions::registerFileSize) + "=128";
+    std::array<std::string, 3> testParams{{{NEO::CompilerOptions::concatenate(BuildOptions::optLargeRegisterFile, registerFileSizeOption)},
+                                           {NEO::CompilerOptions::concatenate(BuildOptions::optAutoGrf, registerFileSizeOption)},
+                                           {NEO::CompilerOptions::concatenate(BuildOptions::optLargeRegisterFile, BuildOptions::optAutoGrf, registerFileSizeOption)}}};
+
+    for (const auto &buildOptions : testParams) {
+        moduleDesc.pBuildFlags = buildOptions.c_str();
+
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pModule->initialize(&moduleDesc, device->getNEODevice()));
+    }
+}
+
 TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPassed) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseBindlessMode.set(1);

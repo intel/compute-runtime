@@ -36,6 +36,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -2181,6 +2182,49 @@ ze_result_t ModulesPackage::getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebug
         memcpy_s(pDebugData, *pDebugDataSize, debugInfo.data(), debugInfo.size());
         return ZE_RESULT_SUCCESS;
     }
+}
+
+bool extractBuildOptionWithValue(std::string &outOption, std::string &srcOptionSet, NEO::ConstStringRef optionName) {
+    const char optDelim = ' ';
+    const char valDelim = '=';
+
+    auto optInSrcPos = srcOptionSet.find(optionName.begin());
+    if (std::string::npos == optInSrcPos) {
+        return false;
+    }
+
+    std::string dstOptionStr(optionName);
+    auto valInSrcPos = srcOptionSet.find(valDelim, optInSrcPos);
+    auto optInSrcEndPos = srcOptionSet.find(optDelim, optInSrcPos);
+    if (std::string::npos == valInSrcPos) {
+        return false;
+    }
+    NEO::CompilerOptions::concatenateAppend(dstOptionStr, srcOptionSet.substr(valInSrcPos + 1, (optInSrcEndPos - (valInSrcPos + 1))));
+    srcOptionSet.erase(optInSrcPos, (optInSrcEndPos + 1 - optInSrcPos));
+    NEO::CompilerOptions::concatenateAppend(outOption, dstOptionStr);
+    return true;
+}
+
+bool ModuleImp::verifyBuildOptions(std::string buildOptions) const {
+    const auto &productHelper = this->device->getProductHelper();
+    std::string grfOption;
+    std::string registerFileSizeOption;
+    bool grfOptionUsed{}, registerFileSizeOptionUsed{};
+    grfOptionUsed |= (buildOptions.find(BuildOptions::optLargeRegisterFile.begin()) != std::string::npos);
+    grfOptionUsed |= (buildOptions.find(BuildOptions::optAutoGrf.begin()) != std::string::npos);
+    registerFileSizeOptionUsed |= extractBuildOptionWithValue(registerFileSizeOption, buildOptions, BuildOptions::registerFileSize);
+    if (registerFileSizeOptionUsed && grfOptionUsed) {
+        return false;
+    } else if (registerFileSizeOptionUsed) {
+        const auto optionSplit = StringHelpers::split(registerFileSizeOption, " ");
+        const auto inputRegisterFileSize = StringHelpers::toUint32t(optionSplit[1]);
+        const auto registerFileSizes = productHelper.getSupportedNumGrfs(device->getNEODevice()->getReleaseHelper());
+        if (std::find(registerFileSizes.begin(), registerFileSizes.end(), inputRegisterFileSize) == registerFileSizes.end()) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 } // namespace L0

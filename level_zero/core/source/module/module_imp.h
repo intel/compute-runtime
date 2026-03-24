@@ -449,5 +449,6 @@ struct ModulesPackage : public Module {
 };
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName);
+bool extractBuildOptionWithValue(std::string &outOption, std::string &srcOptionSet, NEO::ConstStringRef optionName);
 
 } // namespace L0

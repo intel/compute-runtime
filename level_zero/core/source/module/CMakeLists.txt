@@ -15,7 +15,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/modules_package_binary.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/modules_package_binary.h
                ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/translation_unit_ext.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}module_imp_helper.cpp
 )
 
 add_subdirectories()
