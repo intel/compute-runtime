@@ -123,6 +123,19 @@ TEST_F(ModuleTest, GivenKernelRegisterFileDescriptorWhenGetPropertiesIsCalledThe
     EXPECT_EQ(kernelDescriptor.kernelAttributes.numGrfRequired, descriptor.registerFileSize);
 }
 
+TEST_F(ModuleTest, GivenBfloat16AtomicPropertiesWhenGetKernelPropertiesIsCalledThenCorrectPropertiesFromReleaseHelperAreReturnedOrNone) {
+    zex_bfloat16_atomic_ext_properties_t bfloat16Properties{ZEX_STRUCTURE_TYPE_BFLOAT16_ATOMIC_EXT_PROPERTIES};
+    ze_device_module_properties_t properties{};
+    properties.pNext = &bfloat16Properties;
+
+    auto releaseHelper = device->getNEODevice()->getReleaseHelper();
+    uint32_t extraCaps = (releaseHelper) ? releaseHelper->getAdditionalExtraCaps() : 0u;
+
+    ze_result_t result = device->getKernelProperties(&properties);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(extraCaps, bfloat16Properties.bfloat16Flags);
+}
+
 HWTEST_F(ModuleTest, givenBinaryWithDebugDataWhenModuleCreatedFromNativeBinaryThenDebugDataIsStored) {
     size_t size = 0;
     std::unique_ptr<uint8_t[]> data;

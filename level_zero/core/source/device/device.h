@@ -207,7 +207,6 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     bool toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &subslice, uint32_t deviceIndex);
     uint32_t getPhysicalSubDeviceId();
 
-    void getExtendedDeviceModuleProperties(ze_base_desc_t *pExtendedProperties);
     uint32_t getAdditionalEngines(uint32_t numAdditionalEnginesRequested,
                                   ze_command_queue_group_properties_t *pCommandQueueGroupProperties);
 

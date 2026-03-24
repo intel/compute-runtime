@@ -881,8 +881,9 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
                 const auto sizeToCopy = sizeof(*properties->registerFileSizes) * properties->registerFileSizesCount;
                 memcpy_s(properties->registerFileSizes, sizeToCopy, supportedNumGrfs.data(), sizeToCopy);
             }
-        } else {
-            getExtendedDeviceModuleProperties(extendedProperties);
+        } else if (static_cast<uint32_t>(extendedProperties->stype) == ZEX_STRUCTURE_TYPE_BFLOAT16_ATOMIC_EXT_PROPERTIES) {
+            zex_bfloat16_atomic_ext_properties_t *properties = reinterpret_cast<zex_bfloat16_atomic_ext_properties_t *>(extendedProperties);
+            compilerProductHelper.getKernelCapabilitiesExtra(releaseHelper, properties->bfloat16Flags);
         }
 
         pNext = const_cast<void *>(extendedProperties->pNext);

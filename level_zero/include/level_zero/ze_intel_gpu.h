@@ -603,6 +603,15 @@ typedef struct _ze_intel_xe_device_exp_properties_t {
     uint32_t maxNumLanesPerHwThread;            ///< [out] maximal number of lanes (virtual SIMD size) per HW thread
 } ze_intel_xe_device_exp_properties_t;
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device brain floating-point atomic capabilities
+/// Must be passed to zeDeviceGetModuleProperties via pNext member of ze_device_module_properties_t
+typedef struct _zex_bfloat16_atomic_ext_properties_t {
+    ze_structure_type_ext_t stype;                 ///< [in] type of this structure
+    void *pNext;                                   ///< [in, out][optional] pointer to extension-specific structure
+    ze_device_fp_atomic_ext_flags_t bfloat16Flags; ///< [out] Capabilities for brain floating-point atomic operations
+} zex_bfloat16_atomic_ext_properties_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
