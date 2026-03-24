@@ -80,9 +80,13 @@ class WhiteboxSharableEventDataHelper : public SharableEventDataHelper {
 class WhiteboxInOrderExecEventHelper : public InOrderExecEventHelper {
   public:
     using InOrderExecEventHelper::fromExternalMemory;
+    using InOrderExecEventHelper::imported2WayCounterOffset;
+    using InOrderExecEventHelper::imported2WayDeviceCounterHandle;
+    using InOrderExecEventHelper::imported2WayExportedPid;
     using InOrderExecEventHelper::inOrderExecInfo;
     using InOrderExecEventHelper::sharableEventDataHelper;
     using InOrderExecEventHelper::timestampNodes;
+    using InOrderExecEventHelper::twoWayIpcSharing;
 
     InOrderExecEventData *getInOrderExecEventDataPtr() {
         return static_cast<WhiteboxSharableEventDataHelper &>(sharableEventDataHelper).eventDataPtr;

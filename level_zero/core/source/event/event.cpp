@@ -401,6 +401,49 @@ ze_result_t Event::counterBasedOpenIpcHandle(ze_context_handle_t hContext, ze_ip
     return context->openCounterBasedIpcHandle(*ipcData, phEvent);
 }
 
+ze_result_t Event::importCbAllocationsForIpcFor2WaySharing(Device &device, const NEO::InOrderExecEventData &importedInOrderExecEventData, NEO::GraphicsAllocation *&outDeviceAlloc, NEO::GraphicsAllocation *&outHostAlloc) {
+    NEO::UniqueGraphicsAllocation deviceAlloc;
+
+    auto memoryManager = device.getNEODevice()->getMemoryManager();
+    auto context = Context::fromHandle(device.getDriverHandle()->getDefaultContext());
+    const auto isTbxMode = device.getNEODevice()->getDefaultEngine().commandStreamReceiver->isTbxMode();
+
+    auto cacheId = Context::computeIpcCacheId(importedInOrderExecEventData.deviceAllocIpcHandle, 0, importedInOrderExecEventData.exporterProcessId, static_cast<uint8_t>(context->settings.handleType),
+                                              static_cast<uint8_t>(InternalMemoryType::notSpecified));
+
+    deviceAlloc = NEO::makeUniqueGraphicsAllocation(memoryManager,
+                                                    context->getMemHandlePtr(device.toHandle(), importedInOrderExecEventData.deviceAllocIpcHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(),
+                                                                             importedInOrderExecEventData.exporterProcessId, 0, cacheId, nullptr, false)
+                                                        .first);
+
+    if (!deviceAlloc) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    if (isTbxMode) {
+        deviceAlloc->setWriteMemoryOnly(true);
+    }
+
+    if (importedInOrderExecEventData.hostAllocIpcHandle != 0) {
+        cacheId = Context::computeIpcCacheId(importedInOrderExecEventData.hostAllocIpcHandle, 0, importedInOrderExecEventData.exporterProcessId, static_cast<uint8_t>(context->settings.handleType),
+                                             static_cast<uint8_t>(InternalMemoryType::notSpecified));
+        outHostAlloc = context->getMemHandlePtr(device.toHandle(), importedInOrderExecEventData.hostAllocIpcHandle, NEO::AllocationType::bufferHostMemory, importedInOrderExecEventData.exporterProcessId, 0, cacheId, nullptr, false).first;
+
+        if (!outHostAlloc) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+        if (isTbxMode) {
+            outHostAlloc->setWriteMemoryOnly(true);
+        }
+    } else {
+        outHostAlloc = deviceAlloc.get();
+    }
+
+    outDeviceAlloc = deviceAlloc.release();
+
+    return ZE_RESULT_SUCCESS;
+}
+
 bool Event::isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa) const {
     return (inOrderExecHelper.is2WayIpcSharingEnabled() &&
             inOrderExecHelper.isDataAssigned() &&
@@ -425,9 +468,12 @@ ze_result_t Event::exportCbAllocationsFor2WayIpcSharing() {
 
     memoryManager->registerIpcExportedAllocation(deviceAlloc);
 
-    auto deviceOffset = inOrderExecHelper.getBaseDeviceAddress() - deviceAlloc->getGpuAddress();
-    inOrderExecHelper.setDeviceAllocIpcHandle(handle, static_cast<size_t>(deviceOffset));
+    auto deviceOffset = static_cast<size_t>(inOrderExecHelper.getBaseDeviceAddress() - deviceAlloc->getGpuAddress());
+    inOrderExecHelper.setDeviceAllocIpcHandle(handle, deviceOffset, NEO::SysCalls::getProcessId());
     context->registerIpcHandleWithServer(handle);
+
+    // make sure that exporter will not attempt to refresh itself
+    inOrderExecHelper.setLatestImported2WayIpcData(handle, deviceOffset, NEO::SysCalls::getProcessId());
 
     if (inOrderExecHelper.isHostStorageDuplicated()) {
         auto hostAlloc = inOrderExecHelper.getHostCounterAllocation();
@@ -444,6 +490,25 @@ ze_result_t Event::exportCbAllocationsFor2WayIpcSharing() {
     return ZE_RESULT_SUCCESS;
 }
 
+void Event::refreshImported2WayIpcCbData() {
+    if (!inOrderExecHelper.is2WayIpcImportRefreshNeeded()) {
+        return;
+    }
+
+    NEO::GraphicsAllocation *deviceAlloc = nullptr;
+    NEO::GraphicsAllocation *hostAlloc = nullptr;
+
+    auto inOrderExecEventData = inOrderExecHelper.getEventData();
+
+    if (auto ret = importCbAllocationsForIpcFor2WaySharing(*device, *inOrderExecEventData, deviceAlloc, hostAlloc); ret != ZE_RESULT_SUCCESS) {
+        UNRECOVERABLE_IF(true);
+    }
+
+    inOrderExecHelper.assignAllocationsFromImport(*device->getNEODevice()->getMemoryManager(), *deviceAlloc, *hostAlloc);
+
+    inOrderExecHelper.setLatestImported2WayIpcData(inOrderExecEventData->deviceAllocIpcHandle, inOrderExecEventData->deviceIpcAllocOffset, inOrderExecEventData->exporterProcessId);
+}
+
 ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *eventHandle,
                                              DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
 
@@ -452,10 +517,9 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     auto memoryManager = driver->getMemoryManager();
 
     NEO::UniqueGraphicsAllocation communicationAlloc;
-    NEO::UniqueGraphicsAllocation deviceAlloc;
+    NEO::GraphicsAllocation *deviceAlloc = nullptr;
     NEO::GraphicsAllocation *hostAlloc = nullptr;
     NEO::InOrderExecEventData *inOrderExecEventData = nullptr;
-    size_t hostAllocOffset = 0;
 
     auto useOpaqueHandle = (context->settings.useOpaqueHandle != OpaqueHandlingType::none);
 
@@ -470,41 +534,20 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
 
         inOrderExecEventData = reinterpret_cast<NEO::InOrderExecEventData *>(ptrOffset(communicationAlloc->getUnderlyingBuffer(), ipcData.allocOffset));
 
-        cacheId = Context::computeIpcCacheId(inOrderExecEventData->deviceAllocIpcHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
-        deviceAlloc = NEO::makeUniqueGraphicsAllocation(memoryManager,
-                                                        context->getMemHandlePtr(device->toHandle(), inOrderExecEventData->deviceAllocIpcHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(), ipcData.processId, 0, cacheId, nullptr, false).first);
-
-        if (!deviceAlloc) {
-            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-        }
-
-        hostAllocOffset = inOrderExecEventData->deviceIpcAllocOffset;
-        if (inOrderExecEventData->hostAllocIpcHandle != 0) {
-            cacheId = Context::computeIpcCacheId(inOrderExecEventData->hostAllocIpcHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
-            hostAlloc = context->getMemHandlePtr(device->toHandle(), inOrderExecEventData->hostAllocIpcHandle, NEO::AllocationType::bufferHostMemory, ipcData.processId, 0, cacheId, nullptr, false).first;
-
-            if (!hostAlloc) {
-                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-            }
-            if (neoDevice->getDefaultEngine().commandStreamReceiver->isTbxMode()) {
-                hostAlloc->setWriteMemoryOnly(true);
-            }
-            hostAllocOffset = inOrderExecEventData->hostIpcAllocOffset;
-        } else {
-            hostAlloc = deviceAlloc.get();
+        if (auto ret = importCbAllocationsForIpcFor2WaySharing(*device, *inOrderExecEventData, deviceAlloc, hostAlloc); ret != ZE_RESULT_SUCCESS) {
+            return ret;
         }
     } else {
         auto cacheId = Context::computeIpcCacheId(ipcData.oneWayAllocCounterHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
-        deviceAlloc = NEO::makeUniqueGraphicsAllocation(memoryManager,
-                                                        context->getMemHandlePtr(device->toHandle(), ipcData.oneWayAllocCounterHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(), ipcData.processId, 0, cacheId, nullptr, false).first);
+        deviceAlloc = context->getMemHandlePtr(device->toHandle(), ipcData.oneWayAllocCounterHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(), ipcData.processId, 0, cacheId, nullptr, false).first;
 
         if (!deviceAlloc) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
-    }
 
-    if (neoDevice->getDefaultEngine().commandStreamReceiver->isTbxMode()) {
-        deviceAlloc->setWriteMemoryOnly(true);
+        if (neoDevice->getDefaultEngine().commandStreamReceiver->isTbxMode()) {
+            deviceAlloc->setWriteMemoryOnly(true);
+        }
     }
 
     const EventDescriptor eventDescriptor = {
@@ -527,30 +570,34 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
 
     auto event = Event::create<uint64_t>(eventDescriptor, device, result);
 
-    auto deviceAllocToPass = deviceAlloc.release();
+    auto &inOrderExecHelper = event->getInOrderExecEventHelper();
 
     if (useOpaqueHandle) {
-        event->getInOrderExecEventHelper().initializeFromExternalAllocation(*communicationAlloc.release(), ipcData.allocOffset);
+        inOrderExecHelper.set2WayIpcSharingEnabled(true);
+        size_t hostAllocOffset = inOrderExecEventData->hostAllocIpcHandle ? inOrderExecEventData->hostIpcAllocOffset : inOrderExecEventData->deviceIpcAllocOffset;
 
-        uint64_t deviceGpuVa = deviceAllocToPass->getGpuAddress() + inOrderExecEventData->deviceIpcAllocOffset;
+        inOrderExecHelper.initializeFromExternalAllocation(*communicationAlloc.release(), ipcData.allocOffset);
+        uint64_t deviceGpuVa = deviceAlloc->getGpuAddress() + inOrderExecEventData->deviceIpcAllocOffset;
         uint64_t hostGpuVa = hostAlloc->getGpuAddress() + hostAllocOffset;
         uint64_t *hostCpuVa = static_cast<uint64_t *>(ptrOffset(hostAlloc->getUnderlyingBuffer(), hostAllocOffset));
 
-        event->getInOrderExecEventHelper().assignData(inOrderExecEventData->counterValue, inOrderExecEventData->counterOffset, inOrderExecEventData->devicePartitions, inOrderExecEventData->hostPartitions,
-                                                      deviceAllocToPass, hostAlloc, deviceGpuVa, hostGpuVa, hostCpuVa, 0, 0, (deviceAllocToPass != hostAlloc), true);
+        inOrderExecHelper.assignData(inOrderExecEventData->counterValue, inOrderExecEventData->counterOffset, inOrderExecEventData->devicePartitions, inOrderExecEventData->hostPartitions,
+                                     deviceAlloc, hostAlloc, deviceGpuVa, hostGpuVa, hostCpuVa, 0, 0, (deviceAlloc != hostAlloc), true);
+
+        inOrderExecHelper.setLatestImported2WayIpcData(inOrderExecEventData->deviceAllocIpcHandle, inOrderExecEventData->deviceIpcAllocOffset, inOrderExecEventData->exporterProcessId);
     } else {
         auto node = device->getInOrderSharableEventDataAllocator()->getTag();
         node->initialize();
-        event->getInOrderExecEventHelper().initializeFromTagNode(*node, device->getRootDeviceIndex());
+        inOrderExecHelper.initializeFromTagNode(*node, device->getRootDeviceIndex());
 
-        UNRECOVERABLE_IF(!deviceAllocToPass->getUnderlyingBuffer());
+        UNRECOVERABLE_IF(!deviceAlloc->getUnderlyingBuffer());
 
-        uint64_t deviceGpuVa = deviceAllocToPass->getGpuAddress() + ipcData.allocOffset;
+        uint64_t deviceGpuVa = deviceAlloc->getGpuAddress() + ipcData.allocOffset;
         uint64_t hostGpuVa = deviceGpuVa;
-        uint64_t *hostCpuVa = static_cast<uint64_t *>(ptrOffset(deviceAllocToPass->getUnderlyingBuffer(), ipcData.allocOffset));
+        uint64_t *hostCpuVa = static_cast<uint64_t *>(ptrOffset(deviceAlloc->getUnderlyingBuffer(), ipcData.allocOffset));
 
-        event->getInOrderExecEventHelper().assignData(ipcData.oneWayCounterValue, 0, ipcData.oneWayPartitionCount, ipcData.oneWayPartitionCount,
-                                                      deviceAllocToPass, deviceAllocToPass, deviceGpuVa, hostGpuVa, hostCpuVa, 0, 0, false, true);
+        inOrderExecHelper.assignData(ipcData.oneWayCounterValue, 0, ipcData.oneWayPartitionCount, ipcData.oneWayPartitionCount,
+                                     deviceAlloc, deviceAlloc, deviceGpuVa, hostGpuVa, hostCpuVa, 0, 0, false, true);
     }
 
     *eventHandle = event;

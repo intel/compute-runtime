@@ -164,6 +164,7 @@ struct InOrderExecEventData {
     uint32_t counterOffset = 0;
     uint32_t devicePartitions = 0;
     uint32_t hostPartitions = 0;
+    unsigned int exporterProcessId = 0;
 };
 #pragma pack()
 
@@ -231,7 +232,7 @@ class InOrderExecEventHelper : public NonCopyableClass {
 
     const InOrderExecEventData *getEventData() const { return sharableEventDataHelper.eventDataPtr; }
 
-    void setDeviceAllocIpcHandle(uint64_t handle, size_t offset);
+    void setDeviceAllocIpcHandle(uint64_t handle, size_t offset, unsigned int exportedPid);
     void setHostAllocIpcHandle(uint64_t handle, size_t offset);
 
     uint64_t *getBaseHostCpuAddress() const { return baseHostCpuAddress; }
@@ -274,6 +275,16 @@ class InOrderExecEventHelper : public NonCopyableClass {
     void set2WayIpcSharingEnabled(bool enabled) { twoWayIpcSharing = enabled; }
     bool is2WayIpcSharingEnabled() const { return twoWayIpcSharing; }
 
+    void setLatestImported2WayIpcData(uint64_t deviceCounterHandle, size_t deviceCounterOffset, unsigned int exporterPid) {
+        imported2WayDeviceCounterHandle = deviceCounterHandle;
+        imported2WayCounterOffset = deviceCounterOffset;
+        imported2WayExportedPid = exporterPid;
+    }
+
+    bool is2WayIpcImportRefreshNeeded() const;
+
+    void assignAllocationsFromImport(NEO::MemoryManager &memoryManager, NEO::GraphicsAllocation &deviceAlloc, NEO::GraphicsAllocation &hostAlloc);
+
   protected:
     void assignInOrderExecInfo(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo);
     void moveTimestampNodesToReleaseList(std::vector<NEO::TagNodeBase *> &nodes);
@@ -291,6 +302,9 @@ class InOrderExecEventHelper : public NonCopyableClass {
     uint64_t baseDeviceAddress = 0;
     uint64_t incrementValue = 0;
     uint64_t aggregatedEventUsageCounter = 0;
+    uint64_t imported2WayDeviceCounterHandle = 0;
+    size_t imported2WayCounterOffset = 0;
+    unsigned int imported2WayExportedPid = 0;
     bool twoWayIpcSharing = false;
     bool hostStorageDuplicated = false;
     bool fromExternalMemory = false;

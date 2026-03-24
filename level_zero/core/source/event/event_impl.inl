@@ -500,9 +500,12 @@ void EventImp<TagSizeT>::tbxDownload(NEO::Device &device, bool &downloadedAlloca
 
 template <typename TagSizeT>
 bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
+    refreshImported2WayIpcCbData();
+
     if (metricNotification != nullptr && eventPoolAllocation) {
         hostEventSetValue(metricNotification->getNotificationState());
     }
+
     if (this->tbxMode) {
         bool downloadedAllocation = (eventPoolAllocation == nullptr);
         bool downloadedInOrdedAllocation = (inOrderExecHelper.getDeviceCounterAllocation() == nullptr);

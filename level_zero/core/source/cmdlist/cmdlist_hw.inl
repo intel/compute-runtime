@@ -3427,6 +3427,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
 
         if (event->isCounterBased() && (this->heaplessModeEnabled || !event->hasInOrderTimestampNode())) {
+            event->refreshImported2WayIpcCbData();
+
             auto &inOrderExecHelper = event->getInOrderExecEventHelper();
             CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecHelper.getDeviceCounterAllocation(), inOrderExecHelper.getBaseDeviceAddress(), inOrderExecHelper.getEventData()->devicePartitions, outWaitCmds,
                                                                                 event->getInOrderExecBaseSignalValue(), event->getInOrderAllocationOffset(),

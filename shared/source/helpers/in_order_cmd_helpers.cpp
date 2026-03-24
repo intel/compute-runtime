@@ -355,14 +355,47 @@ void InOrderExecEventHelper::initializeLocalTempStorage() {
     sharableEventDataHelper.initializeLocalTempStorage();
 }
 
-void InOrderExecEventHelper::setDeviceAllocIpcHandle(uint64_t handle, size_t offset) {
+void InOrderExecEventHelper::setDeviceAllocIpcHandle(uint64_t handle, size_t offset, unsigned int exportedPid) {
     sharableEventDataHelper.eventDataPtr->deviceAllocIpcHandle = handle;
     sharableEventDataHelper.eventDataPtr->deviceIpcAllocOffset = offset;
+    sharableEventDataHelper.eventDataPtr->exporterProcessId = exportedPid;
 }
 
 void InOrderExecEventHelper::setHostAllocIpcHandle(uint64_t handle, size_t offset) {
     sharableEventDataHelper.eventDataPtr->hostAllocIpcHandle = handle;
     sharableEventDataHelper.eventDataPtr->hostIpcAllocOffset = offset;
+}
+
+void InOrderExecEventHelper::assignAllocationsFromImport(NEO::MemoryManager &memoryManager, NEO::GraphicsAllocation &deviceAlloc, NEO::GraphicsAllocation &hostAlloc) {
+    memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(this->deviceCounterAllocation);
+
+    this->deviceCounterAllocation = &deviceAlloc;
+    this->baseDeviceAddress = deviceAlloc.getGpuAddress() + sharableEventDataHelper.eventDataPtr->deviceIpcAllocOffset;
+
+    if (&deviceAlloc == &hostAlloc) {
+        this->hostCounterAllocation = &hostAlloc;
+        this->baseHostGpuAddress = hostAlloc.getGpuAddress() + sharableEventDataHelper.eventDataPtr->deviceIpcAllocOffset;
+        this->baseHostCpuAddress = reinterpret_cast<uint64_t *>(ptrOffset(hostAlloc.getUnderlyingBuffer(), sharableEventDataHelper.eventDataPtr->deviceIpcAllocOffset));
+    } else {
+        memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(this->hostCounterAllocation);
+        this->hostCounterAllocation = &hostAlloc;
+        this->baseHostGpuAddress = hostAlloc.getGpuAddress() + sharableEventDataHelper.eventDataPtr->hostIpcAllocOffset;
+        this->baseHostCpuAddress = reinterpret_cast<uint64_t *>(ptrOffset(hostAlloc.getUnderlyingBuffer(), sharableEventDataHelper.eventDataPtr->hostIpcAllocOffset));
+    }
+}
+
+bool InOrderExecEventHelper::is2WayIpcImportRefreshNeeded() const {
+    if (!is2WayIpcSharingEnabled()) {
+        return false;
+    }
+
+    const auto eventDataPtr = sharableEventDataHelper.eventDataPtr;
+
+    const bool dataIsDifferent = (eventDataPtr->exporterProcessId != this->imported2WayExportedPid) ||
+                                 (eventDataPtr->deviceAllocIpcHandle != this->imported2WayDeviceCounterHandle) ||
+                                 (eventDataPtr->deviceIpcAllocOffset != this->imported2WayCounterOffset);
+
+    return dataIsDifferent;
 }
 
 } // namespace NEO

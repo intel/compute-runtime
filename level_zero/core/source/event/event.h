@@ -183,6 +183,8 @@ struct Event : _ze_event_handle_t {
 
     ze_result_t getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData);
 
+    static ze_result_t importCbAllocationsForIpcFor2WaySharing(Device &device, const NEO::InOrderExecEventData &importedInOrderExecEventData, NEO::GraphicsAllocation *&outDeviceAlloc, NEO::GraphicsAllocation *&outHostAlloc);
+
     inline ze_event_handle_t toHandle() { return this; }
 
     MOCKABLE_VIRTUAL NEO::GraphicsAllocation *getAllocation(Device *device) const;
@@ -365,6 +367,7 @@ struct Event : _ze_event_handle_t {
     bool hasInOrderTimestampNode() const;
 
     bool isIpcImported() const { return isFromIpcPool; }
+    void refreshImported2WayIpcCbData();
 
     virtual ze_result_t hostEventSetValue(State eventState) = 0;
 
