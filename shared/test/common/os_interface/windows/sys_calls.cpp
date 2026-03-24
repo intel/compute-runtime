@@ -165,6 +165,12 @@ HANDLE(*sysCallsOpenProcess)
 DWORD(*sysCallsWaitForSingleObject)
 (HANDLE hHandle, DWORD dwMilliseconds) = nullptr;
 
+DWORD(*sysCallsRegisterWaitForSingleObject)
+(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK Callback, PVOID Context, ULONG dwMilliseconds, ULONG dwFlags) = nullptr;
+
+DWORD(*sysCallsUnregisterWait)
+(HANDLE waitHandle) = nullptr;
+
 bool isShutdownInProgress() {
     return isShutdownInProgressRetVal;
 }
@@ -194,6 +200,20 @@ DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
         return sysCallsWaitForSingleObject(hHandle, dwMilliseconds);
     }
     return WAIT_OBJECT_0;
+}
+
+BOOL registerWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK callback, PVOID context, ULONG dwMilliseconds, ULONG dwFlags) {
+    if (sysCallsRegisterWaitForSingleObject) {
+        return sysCallsRegisterWaitForSingleObject(phNewWaitObject, hObject, callback, context, dwMilliseconds, dwFlags);
+    }
+    return TRUE;
+}
+
+BOOL unregisterWait(HANDLE waitHandle) {
+    if (sysCallsUnregisterWait) {
+        return sysCallsUnregisterWait(waitHandle);
+    }
+    return TRUE;
 }
 
 BOOL closeHandle(HANDLE hObject) {

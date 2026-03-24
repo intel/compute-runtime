@@ -49,6 +49,14 @@ DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
     return ::WaitForSingleObject(hHandle, dwMilliseconds);
 }
 
+BOOL registerWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK callback, PVOID context, ULONG dwMilliseconds, ULONG dwFlags) {
+    return ::RegisterWaitForSingleObject(phNewWaitObject, hObject, callback, context, dwMilliseconds, dwFlags);
+}
+
+BOOL unregisterWait(HANDLE waitHandle) {
+    return ::UnregisterWait(waitHandle);
+}
+
 BOOL closeHandle(HANDLE hObject) {
     return CloseHandle(hObject);
 }
