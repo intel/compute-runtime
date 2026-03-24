@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -370,13 +370,20 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         src = deviceInfo.spirvCapabilities.data();
         retSize = srcSize = deviceInfo.spirvCapabilities.size() * sizeof(cl_uint);
         break;
+    case CL_DEVICE_BFLOAT16_FP_ATOMIC_CAPABILITIES_EXT: {
+        uint32_t caps32Bit = 0u;
+        const auto &compilerProductHelper = this->getCompilerProductHelper();
+        auto releaseHelper = this->getDevice().getReleaseHelper();
+        compilerProductHelper.getKernelCapabilitiesExtra(releaseHelper, caps32Bit);
+        param.bitfield = caps32Bit;
+        src = &param.bitfield;
+        srcSize = retSize = sizeof(cl_device_atomic_capabilities);
+    } break;
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize)) {
             if (false == getSharedDeviceInfo().imageSupport) {
                 src = &value;
             }
-        } else if (getDeviceInfoExtra(paramName, param, src, srcSize, retSize)) {
-            break;
         }
         break;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1159,6 +1159,24 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
     cl_device_info param;
     DebugManagerStateRestore restorer;
 };
+
+TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFromReleaseHelperIsReturnedOrNone) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto releaseHelper = device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getReleaseHelper();
+    uint32_t extraKernelCapabilities = releaseHelper ? releaseHelper->getAdditionalExtraCaps() : 0u;
+    uint64_t value = 0u;
+    size_t retSize = 0u;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_BFLOAT16_FP_ATOMIC_CAPABILITIES_EXT,
+        sizeof(cl_device_atomic_capabilities),
+        &value,
+        &retSize);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(extraKernelCapabilities, value);
+    EXPECT_EQ(sizeof(cl_device_atomic_capabilities), retSize);
+}
 
 TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedOnRootDeviceAndSubDevicesThenReturnCorrectAttributeValues) {
     debugManager.flags.CreateMultipleSubDevices.set(2);

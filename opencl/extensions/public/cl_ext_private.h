@@ -417,3 +417,8 @@ typedef struct _cl_kernel_allocation_info_intel {
 /* cl_kernel_workgroup_info */
 #define CL_KERNEL_ALLOCATIONS_INFO_INTEL 0x425A
 #endif
+
+// cl_device bfloat16 atomic capabilities
+#if !defined(CL_DEVICE_BFLOAT16_FP_ATOMIC_CAPABILITIES_EXT)
+#define CL_DEVICE_BFLOAT16_FP_ATOMIC_CAPABILITIES_EXT 0x10012
+#endif
