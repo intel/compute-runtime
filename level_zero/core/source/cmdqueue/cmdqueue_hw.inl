@@ -569,8 +569,7 @@ void CommandQueueHw<gfxCoreFamily>::programPipelineSelectIfGpgpuDisabled(NEO::Li
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList, bool containsParentImmediateStream) const {
-    bool postSyncRequired = containsAnyRegularCmdList && (!csr->getOsContext().isPartOfContextGroup() || getPatchingPreamble());
-    return (!containsParentImmediateStream) && (postSyncRequired || !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || isSynchronousMode());
+    return (!containsParentImmediateStream) && (containsAnyRegularCmdList || !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || isSynchronousMode());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
