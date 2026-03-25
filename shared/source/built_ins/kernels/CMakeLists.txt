@@ -21,6 +21,7 @@ set(GENERATED_BUILTINS_STATELESS ${GENERATED_BUILTINS_STATELESS} PARENT_SCOPE)
 
 set(BUILTIN_OPTIONS_STATELESS "-cl-intel-greater-than-4GB-buffer-required")
 set(BUILTIN_OPTIONS_STATEFUL "-force_stos_opt")
+set(USE_INTRINSICS_WB_POLICY "-DUSE_LSC_INTRINSICS_WB")
 
 set(stateless_INTERNAL_OPTIONS "")
 set(wide_stateless_INTERNAL_OPTIONS "")
@@ -98,9 +99,9 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
   else()
     list(APPEND __ocloc__options__ ${KERNEL_TYPES})
   endif()
-
-  if(platform_it_lower STREQUAL "bmg")
-    list(APPEND __ocloc__options__ "-DUSE_LSC_INTRINSICS_WB")
+  if(${platform_it_lower} STREQUAL "bmg")
+    list(APPEND __ocloc__options__ ${LSC_STORE_INTRINSICS})
+    list(APPEND __ocloc__options__ ${USE_INTRINSICS_WB_POLICY})
   endif()
 
   list(APPEND __ocloc__options__ "-cl-kernel-arg-info")

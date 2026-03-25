@@ -6,7 +6,6 @@
 
 set(SHARED_TEST_PROJECTS_SUB_FOLDER "prepare test files")
 function(compile_kernels_gen device revision_id platform_name use_stateless use_heapless use_wide_stateless)
-
   set(outputdir "${TargetDir}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/")
   set(compiled_kernels)
 
@@ -53,10 +52,6 @@ function(compile_kernels_gen device revision_id platform_name use_stateless use_
       endif()
 
       list(APPEND __ocloc__options__ ${SELECTED_KERNEL_TYPES})
-
-      if(platform_it_lower STREQUAL "bmg")
-        list(APPEND __ocloc__options__ "-DUSE_LSC_INTRINSICS_WB")
-      endif()
 
       add_custom_command(
                          OUTPUT ${output_files}
@@ -145,4 +140,3 @@ endmacro()
 
 set(PREVIOUS_TARGET "")
 apply_macro_for_each_core_type("TESTED")
-
