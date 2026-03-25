@@ -241,6 +241,16 @@ typedef ze_result_t(ZE_APICALL *zeImageGetDeviceOffsetExp_pfn)(
 
 zeImageGetDeviceOffsetExp_pfn zeImageGetDeviceOffsetExpFunctionPtr = nullptr;
 
+typedef ze_result_t(ZE_APICALL *zeMemGetPitchFor2dImage_pfn)(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    size_t imageWidth,
+    size_t imageHeight,
+    unsigned int elementSizeInBytes,
+    size_t *rowPitch);
+
+zeMemGetPitchFor2dImage_pfn zeMemGetPitchFor2dImageFunctionPtr = nullptr;
+
 void createModule(const char *sourceCode, AddressingMode addressing, const ze_context_handle_t context, const ze_device_handle_t device,
                   const std::string &deviceName, const std::string &revisionId, ze_module_handle_t &module, const std::string &internalOption, bool forceScratch) {
     std::string buildLog;
@@ -1407,13 +1417,13 @@ bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_han
             LevelZeroBlackBoxTests::CommandHandler commandHandler;
             bool isImmediateCmdList = false;
             SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
-            SUCCESS_OR_TERMINATE(zeMemGetPitchFor2dImage(context, device, imageWidth, imageHeight, elementSizeInBytes, &rowPitch));
+            SUCCESS_OR_TERMINATE(zeMemGetPitchFor2dImageFunctionPtr(context, device, imageWidth, imageHeight, elementSizeInBytes, &rowPitch));
 
             if (LevelZeroBlackBoxTests::verbose) {
-                std::cout << "zeMemGetPitchFor2dImage()  with " << std::dec << // image dimensions
-                    "\n\t imageWidth = " << imageWidth <<                      //
-                    "\n\t imageHeight = " << imageHeight <<                    //
-                    "\n\t elementSizeInBytes = " << elementSizeInBytes <<      //
+                std::cout << "zeMemGetPitchFor2dImageFunctionPtr()  with " << std::dec << // image dimensions
+                    "\n\t imageWidth = " << imageWidth <<                                 //
+                    "\n\t imageHeight = " << imageHeight <<                               //
+                    "\n\t elementSizeInBytes = " << elementSizeInBytes <<                 //
                     "\n returned rowPitch = " << rowPitch << std::endl;
 
                 std::cout << " imageWidth * elementSizeInBytes = " << imageWidth * elementSizeInBytes << std::endl;
@@ -1674,11 +1684,13 @@ int main(int argc, char *argv[]) {
             }
 
             if (extensionFound) {
+                auto extensionResult = zeDriverGetExtensionFunctionAddress(driverHandle, "zeMemGetPitchFor2dImage", (void **)&zeMemGetPitchFor2dImageFunctionPtr);
+                std::cout << "zeDriverGetExtensionFunctionAddress(\"zeMemGetPitchFor2dImage\") returned: " << extensionResult << std::endl;
                 auto extensionResult2 = zeDriverGetExtensionFunctionAddress(driverHandle, "zeImageGetDeviceOffsetExp", (void **)&zeImageGetDeviceOffsetExpFunctionPtr);
                 std::cout << "zeDriverGetExtensionFunctionAddress(\"zeImageGetDeviceOffsetExp\") returned: " << extensionResult2 << std::endl;
 
-                if (zeImageGetDeviceOffsetExpFunctionPtr == nullptr ||
-                    extensionResult2 != ZE_RESULT_SUCCESS) {
+                if (zeMemGetPitchFor2dImageFunctionPtr == nullptr || zeImageGetDeviceOffsetExpFunctionPtr == nullptr ||
+                    extensionResult != ZE_RESULT_SUCCESS || extensionResult2 != ZE_RESULT_SUCCESS) {
                     std::cout << "Failed getting " << extensionName << " extension function address" << std::endl;
                     extensionFound = false;
                 }

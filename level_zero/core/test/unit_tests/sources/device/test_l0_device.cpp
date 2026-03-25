@@ -6237,6 +6237,7 @@ TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZexCommandListAppendWaitOnM
 }
 
 TEST(ExtensionLookupTest, givenLookupMapWhenAskingForBindlessImageExtensionFunctionsThenValidPointersReturned) {
+    EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeMemGetPitchFor2dImage"));
     EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeImageGetDeviceOffsetExp"));
 }
 
