@@ -115,7 +115,7 @@ void CommandList::storeFillPatternResourcesForReuse() {
     this->patternTags.clear();
 }
 
-NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload) {
+NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload, bool *nonUsmHostPtrPartialOverlapFound) {
     auto allocation = hostPtrMap.lower_bound(buffer);
     if (allocation != hostPtrMap.end()) {
         if (buffer == allocation->first && ptrOffset(allocation->first, allocation->second->getUnderlyingBufferSize()) >= ptrOffset(buffer, bufferSize)) {
@@ -130,7 +130,7 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
     }
     if (isImmediateType()) {
         auto csr = getCsr(copyOffload);
-        auto allocation = csr->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::AllocationType::externalHostPtr);
+        auto allocation = csr->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::AllocationType::externalHostPtr, nonUsmHostPtrPartialOverlapFound);
         if (allocation != nullptr) {
             auto alloc = allocation.get();
             alloc->incrementHostPtrTaskCountAssignment();
@@ -139,6 +139,10 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
         }
     }
     return nullptr;
+}
+
+NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload) {
+    return getAllocationFromHostPtrMap(buffer, bufferSize, copyOffload, nullptr);
 }
 
 NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload) {

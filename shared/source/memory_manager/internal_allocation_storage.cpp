@@ -84,13 +84,17 @@ std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAll
 }
 
 std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainTemporaryAllocationWithPtr(size_t requiredSize, const void *requiredPtr, AllocationType allocationType) {
+    return obtainTemporaryAllocationWithPtr(requiredSize, requiredPtr, allocationType, nullptr);
+}
+
+std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainTemporaryAllocationWithPtr(size_t requiredSize, const void *requiredPtr, AllocationType allocationType, bool *nonUsmHostPtrPartialOverlapFound) {
     auto memoryManager = commandStreamReceiver.getMemoryManager();
 
     if (memoryManager->isSingleTemporaryAllocationsListEnabled()) {
-        return memoryManager->obtainTemporaryAllocationWithPtr(&commandStreamReceiver, requiredSize, requiredPtr, allocationType);
+        return memoryManager->obtainTemporaryAllocationWithPtr(&commandStreamReceiver, requiredSize, requiredPtr, allocationType, nonUsmHostPtrPartialOverlapFound);
     }
 
-    auto allocation = allocationLists[TEMPORARY_ALLOCATION].detachAllocation(requiredSize, requiredPtr, &commandStreamReceiver, allocationType);
+    auto allocation = allocationLists[TEMPORARY_ALLOCATION].detachAllocation(requiredSize, requiredPtr, &commandStreamReceiver, allocationType, nonUsmHostPtrPartialOverlapFound);
     return allocation;
 }
 

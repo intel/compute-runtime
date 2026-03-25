@@ -40,6 +40,8 @@ struct CpuMemCopyInfo {
     MemAllocInfo srcAllocInfo{};
     bool dstIsImportedHostPtr = false;
     bool srcIsImportedHostPtr = false;
+    bool dstIsPartialOverlapNonUsmHostPtr = false;
+    bool srcIsPartialOverlapNonUsmHostPtr = false;
 
     CpuMemCopyInfo(void *dstPtr, void *srcPtr, size_t size) : dstPtr(dstPtr), srcPtr(srcPtr), size(size) {}
 };

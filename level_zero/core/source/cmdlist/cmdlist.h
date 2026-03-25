@@ -612,6 +612,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) = 0;
 
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
+    NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload, bool *nonUsmHostPtrPartialOverlapFound);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
     bool setupTimestampEventForMultiTile(Event *signalEvent);
     bool isTimestampEventForMultiTile(Event *signalEvent);

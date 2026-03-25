@@ -1411,7 +1411,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenOb
     EXPECT_NE(nullptr, memCopyInfo.dstAllocInfo.cachedHostAlloc);
 }
 
-HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenObtainAllocDataWithLargerSizeExceedingPageBoundaryThenCachedAllocationNotReused) {
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenObtainAllocDataWithLargerSizeExceedingPageBoundaryThenOverlapFlagSetAndCachedAllocationNotReused) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
@@ -1431,10 +1431,104 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenOb
     CpuMemCopyInfo memCopyInfo(dstBuffer, srcBuffer, requestedSize);
     cmdList.obtainAllocData(memCopyInfo, false);
 
-    EXPECT_FALSE(memCopyInfo.srcIsImportedHostPtr);
-    EXPECT_FALSE(memCopyInfo.dstIsImportedHostPtr);
+    EXPECT_TRUE(memCopyInfo.srcIsPartialOverlapNonUsmHostPtr);
+    EXPECT_TRUE(memCopyInfo.dstIsPartialOverlapNonUsmHostPtr);
     EXPECT_EQ(nullptr, memCopyInfo.srcAllocInfo.cachedHostAlloc);
     EXPECT_EQ(nullptr, memCopyInfo.dstAllocInfo.cachedHostAlloc);
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenObtainAllocDataWithNonOverlappingPtrThenOverlapFlagNotSet) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
+    size_t bufferSize = 0x8d0;
+    size_t requestedSize = 0x1000;
+
+    auto srcAllocation = cmdList.getHostPtrAlloc(srcBuffer, bufferSize, true, false);
+    ASSERT_NE(nullptr, srcAllocation);
+    auto dstAllocation = cmdList.getHostPtrAlloc(dstBuffer, bufferSize, false, false);
+    ASSERT_NE(nullptr, dstAllocation);
+
+    void *srcBufferOutsideRange = reinterpret_cast<void *>(0x7890);
+    void *dstBufferOutsideRange = reinterpret_cast<void *>(0x8900);
+    CpuMemCopyInfo memCopyInfo(dstBufferOutsideRange, srcBufferOutsideRange, requestedSize);
+    cmdList.obtainAllocData(memCopyInfo, false);
+
+    EXPECT_FALSE(memCopyInfo.srcIsPartialOverlapNonUsmHostPtr);
+    EXPECT_FALSE(memCopyInfo.dstIsPartialOverlapNonUsmHostPtr);
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSrcIsPartialOverlappingPtrWhenAppendMemoryCopyThenReturnsSuccess) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.copyThroughLockedPtrEnabled = false;
+
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x10000);
+    size_t bufferSize = 0x8d0;
+    size_t copySize = 0x1000;
+
+    auto srcAllocation = cmdList.getHostPtrAlloc(srcBuffer, bufferSize, true, false);
+    ASSERT_NE(nullptr, srcAllocation);
+
+    CmdListMemoryCopyParams params = {};
+    auto ret = cmdList.appendMemoryCopy(dstBuffer, srcBuffer, copySize, nullptr, 0, nullptr, params);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndDstIsPartialOverlappingPtrWhenAppendMemoryCopyThenReturnsSuccess) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.copyThroughLockedPtrEnabled = false;
+
+    void *srcBuffer = reinterpret_cast<void *>(0x10000);
+    void *dstBuffer = reinterpret_cast<void *>(0x1234);
+    size_t bufferSize = 0x8d0;
+    size_t copySize = 0x1000;
+
+    auto dstAllocation = cmdList.getHostPtrAlloc(dstBuffer, bufferSize, false, false);
+    ASSERT_NE(nullptr, dstAllocation);
+
+    CmdListMemoryCopyParams params = {};
+    auto ret = cmdList.appendMemoryCopy(dstBuffer, srcBuffer, copySize, nullptr, 0, nullptr, params);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNoPartialOverlappingPtrsWhenAppendMemoryCopyThenReturnsSuccess) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.copyThroughLockedPtrEnabled = false;
+
+    void *srcBuffer = reinterpret_cast<void *>(0x10000);
+    void *dstBuffer = reinterpret_cast<void *>(0x20000);
+    size_t copySize = 0x1000;
+
+    CmdListMemoryCopyParams params = {};
+    auto ret = cmdList.appendMemoryCopy(dstBuffer, srcBuffer, copySize, nullptr, 0, nullptr, params);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenSettingFillPropertiesThenAllGroupsCountEqualSizeToFill) {

@@ -123,6 +123,43 @@ TEST_F(InternalAllocationStorageTest, givenTemporaryAllocationWhenAllocationIsOb
     memoryManager->freeGraphicsMemory(newAllocation.release());
 }
 
+TEST_F(InternalAllocationStorageTest, givenSingleTemporaryAllocationsListNotEnabledWhenObtainTemporaryAllocationWithPtrThenUseLocalAllocationsList) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseSingleListForTemporaryAllocations.set(0);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield});
+    storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION, 2u);
+
+    *csr->getTagAddress() = 2u;
+
+    auto obtainedAllocation = storage->obtainTemporaryAllocationWithPtr(MemoryConstants::pageSize, allocation->getUnderlyingBuffer(), AllocationType::buffer);
+
+    EXPECT_EQ(allocation, obtainedAllocation.get());
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+    memoryManager->freeGraphicsMemory(obtainedAllocation.release());
+}
+
+TEST_F(InternalAllocationStorageTest, givenSingleTemporaryAllocationsListNotEnabledWhenObtainTemporaryAllocationWithPtrAndOverlapFlagThenUseLocalAllocationsListAndDetectOverlap) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseSingleListForTemporaryAllocations.set(0);
+
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *overlappingPtr = reinterpret_cast<void *>(0x1800);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, overlappingPtr, AllocationType::externalHostPtr, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_TRUE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
+}
+
 TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromEmptyReuseListThenReturnNullptr) {
     auto allocation2 = storage->obtainReusableAllocation(1, AllocationType::buffer);
     EXPECT_EQ(nullptr, allocation2);
@@ -430,4 +467,211 @@ TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenTaskCountMetsEx
     storage->cleanAllocationList(expectedTaskCount, TEMPORARY_ALLOCATION);
     EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
     allocation->setHostPtrTaskCountAssignment(0);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenDetectingOverlapWithExternalHostPtrThenOverlapIsDetected) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *overlappingNonUsmHostPtr = reinterpret_cast<void *>(0x1800);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, overlappingNonUsmHostPtr, AllocationType::externalHostPtr, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_TRUE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenRequestedAllocationIsOutsideImportedPageBoundaryThenOverlapIsNotDetected) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *nonOverlappingNonUsmHostPtr = reinterpret_cast<void *>(0x3000);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, nonOverlappingNonUsmHostPtr, AllocationType::externalHostPtr, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_FALSE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenOverlapAtStartBoundaryThenOverlapIsDetected) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *overlappingNonUsmHostPtr = reinterpret_cast<void *>(0x800);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, overlappingNonUsmHostPtr, AllocationType::externalHostPtr, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_TRUE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenOverlapAtEndBoundaryThenOverlapIsDetected) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *overlappingNonUsmHostPtr = ptrOffset(hostPtr, allocSize - 0x100);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, overlappingNonUsmHostPtr, AllocationType::externalHostPtr, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_TRUE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhennonUsmHostPtrPartialOverlapFoundIsNullptrThenNoOverlapDetection) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    void *overlappingNonUsmHostPtr = reinterpret_cast<void *>(0x1800);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, overlappingNonUsmHostPtr, AllocationType::externalHostPtr, nullptr);
+
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenTypeMatchesButIsNotExternalHostPtrThenNoOverlapDetection) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::buffer, mockDeviceBitfield});
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *overlappingNonUsmHostPtr = reinterpret_cast<void *>(0x1800);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, overlappingNonUsmHostPtr, AllocationType::buffer, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_FALSE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenAllocationUsageIsOtherThanTemporaryThenNoOverlapDetection) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *overlappingNonUsmHostPtr = reinterpret_cast<void *>(0x1800);
+    auto result = csr->getAllocationsForReuse().detachAllocation(allocSize * 2, overlappingNonUsmHostPtr, csr, AllocationType::externalHostPtr, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_FALSE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenSystemMemoryFlagMismatchThenNoOverlapDetection) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    allocation->storageInfo.systemMemoryForced = true;
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *overlappingNonUsmHostPtr = reinterpret_cast<void *>(0x1800);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, overlappingNonUsmHostPtr, AllocationType::externalHostPtr, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_FALSE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenImportedStartPtrIsGreaterThanRequiredEndPtrThenNoOverlapDetected) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *importedHostPtr = reinterpret_cast<void *>(0x4000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = importedHostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *requiredHostPtr = reinterpret_cast<void *>(0x1000);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, requiredHostPtr, AllocationType::externalHostPtr, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_FALSE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenImportedEndPtrIsLessThanRequiredStartPtrThenNoOverlapDetected) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *importedHostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = importedHostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *requiredHostPtr = reinterpret_cast<void *>(0x4000);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, requiredHostPtr, AllocationType::externalHostPtr, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_FALSE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenImportedStartPtrIsLessThanRequiredEndPtrAndImportedEndPtrIsGreaterThanRequiredStartPtrThenOverlapDetected) {
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    void *importedHostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, allocSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = importedHostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    bool nonUsmHostPtrPartialOverlapFound = false;
+    void *requiredHostPtr = reinterpret_cast<void *>(0x1800);
+    auto result = storage->obtainTemporaryAllocationWithPtr(allocSize * 2, requiredHostPtr, AllocationType::externalHostPtr, &nonUsmHostPtrPartialOverlapFound);
+
+    EXPECT_TRUE(nonUsmHostPtrPartialOverlapFound);
+    EXPECT_EQ(nullptr, result);
 }

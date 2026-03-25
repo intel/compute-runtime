@@ -142,8 +142,12 @@ void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, 
     }
 }
 
+std::unique_ptr<GraphicsAllocation> MemoryManager::obtainTemporaryAllocationWithPtr(CommandStreamReceiver *csr, size_t requiredSize, const void *requiredPtr, AllocationType allocationType, bool *nonUsmHostPtrPartialOverlapFound) {
+    return temporaryAllocations->detachAllocation(requiredSize, requiredPtr, csr, allocationType, nonUsmHostPtrPartialOverlapFound);
+}
+
 std::unique_ptr<GraphicsAllocation> MemoryManager::obtainTemporaryAllocationWithPtr(CommandStreamReceiver *csr, size_t requiredSize, const void *requiredPtr, AllocationType allocationType) {
-    return temporaryAllocations->detachAllocation(requiredSize, requiredPtr, csr, allocationType);
+    return temporaryAllocations->detachAllocation(requiredSize, requiredPtr, csr, allocationType, nullptr);
 }
 
 MemoryManager::~MemoryManager() {

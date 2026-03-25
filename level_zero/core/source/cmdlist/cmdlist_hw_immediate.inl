@@ -1982,6 +1982,9 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(co
     if (cpuMemCopyInfo.dstIsImportedHostPtr || cpuMemCopyInfo.srcIsImportedHostPtr) {
         return false;
     }
+    if (cpuMemCopyInfo.dstIsPartialOverlapNonUsmHostPtr || cpuMemCopyInfo.srcIsPartialOverlapNonUsmHostPtr) {
+        return false;
+    }
     auto neoDevice = this->getDevice()->getNEODevice();
     auto driver = this->getDevice()->getDriverHandle();
     return driver->getStagingBufferManager()->isValidForCopy(*neoDevice, cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, hasDependencies);
@@ -2030,7 +2033,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainAllocData(CpuMemCopyIn
             cpuMemCopyInfo.srcIsImportedHostPtr = true;
             cpuMemCopyInfo.srcAllocInfo.importedHostAlloc = hostAlloc;
         } else {
-            auto cachedAlloc = this->getAllocationFromHostPtrMap(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, copyOffload);
+            auto cachedAlloc = this->getAllocationFromHostPtrMap(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, copyOffload, &cpuMemCopyInfo.srcIsPartialOverlapNonUsmHostPtr);
             cpuMemCopyInfo.srcIsImportedHostPtr = cachedAlloc != nullptr;
             cpuMemCopyInfo.srcAllocInfo.cachedHostAlloc = cachedAlloc;
         }
@@ -2042,7 +2045,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainAllocData(CpuMemCopyIn
             cpuMemCopyInfo.dstIsImportedHostPtr = true;
             cpuMemCopyInfo.dstAllocInfo.importedHostAlloc = hostAlloc;
         } else {
-            auto cachedAlloc = this->getAllocationFromHostPtrMap(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, copyOffload);
+            auto cachedAlloc = this->getAllocationFromHostPtrMap(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, copyOffload, &cpuMemCopyInfo.dstIsPartialOverlapNonUsmHostPtr);
             cpuMemCopyInfo.dstIsImportedHostPtr = cachedAlloc != nullptr;
             cpuMemCopyInfo.dstAllocInfo.cachedHostAlloc = cachedAlloc;
         }
