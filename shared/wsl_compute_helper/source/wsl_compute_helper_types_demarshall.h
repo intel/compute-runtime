@@ -1901,6 +1901,9 @@ struct Demarshaller<TOK_S_SKU_FEATURE_TABLE> {
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WALKER_MTP:
                     dst.FtrWalkerMTP = readTokValue<decltype(dst.FtrWalkerMTP)>(*tok);
                     break;
+                case TOK_FBD_SKU_FEATURE_TABLE__FTR_EFFICIENT64_BIT_ADDRESSING:
+                    dst.FtrEfficient64BitAddressing = readTokValue<decltype(dst.FtrEfficient64BitAddressing)>(*tok);
+                    break;
                 };
                 tok = tok + 1 + tok->valueDwordCount;
             } else {
@@ -3118,6 +3121,9 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                             } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WALKER_MTP:
                                 dst.SkuTable.FtrWalkerMTP = readTokValue<decltype(dst.SkuTable.FtrWalkerMTP)>(*tokSkuTable);
+                                break;
+                            case TOK_FBD_SKU_FEATURE_TABLE__FTR_EFFICIENT64_BIT_ADDRESSING:
+                                dst.SkuTable.FtrEfficient64BitAddressing = readTokValue<decltype(dst.SkuTable.FtrEfficient64BitAddressing)>(*tokSkuTable);
                                 break;
                             };
                             tokSkuTable = tokSkuTable + 1 + tokSkuTable->valueDwordCount;

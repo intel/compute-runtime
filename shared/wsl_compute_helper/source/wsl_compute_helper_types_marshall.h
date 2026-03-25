@@ -1108,6 +1108,7 @@ inline void marshall(TOKSTR__SKU_FEATURE_TABLE &dst, const _SKU_FEATURE_TABLET &
     dst.FtrDisplayEngineS3d.setValue(src.FtrDisplayEngineS3d);
     dst.FtrVgt.setValue(src.FtrVgt);
     dst.FtrAssignedGpuTile.setValue(src.FtrAssignedGpuTile);
+    dst.FtrEfficient64BitAddressing.setValue(src.FtrEfficient64BitAddressing);
 }
 template <>
 struct Marshaller<TOK_S_SKU_FEATURE_TABLE> {
@@ -1425,6 +1426,7 @@ inline void marshall(TOKSTR__ADAPTER_INFO &dst, const _ADAPTER_INFOT &src) {
     dst.SkuTable.FtrDisplayEngineS3d.setValue(src.SkuTable.FtrDisplayEngineS3d);
     dst.SkuTable.FtrVgt.setValue(src.SkuTable.FtrVgt);
     dst.SkuTable.FtrAssignedGpuTile.setValue(src.SkuTable.FtrAssignedGpuTile);
+    dst.SkuTable.FtrEfficient64BitAddressing.setValue(src.SkuTable.FtrEfficient64BitAddressing);
     dst.WaTable.WaAlignIndexBuffer.setValue(src.WaTable.WaAlignIndexBuffer);
     dst.WaTable.WaSendMIFLUSHBeforeVFE.setValue(src.WaTable.WaSendMIFLUSHBeforeVFE);
     dst.WaTable.WaDisablePerCtxtPreemptionGranularityControl.setValue(src.WaTable.WaDisablePerCtxtPreemptionGranularityControl);
