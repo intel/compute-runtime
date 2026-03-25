@@ -326,6 +326,8 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
         localCmd.setRegisterPollMode(registerPollMode ? MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL : MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL);
         localCmd.setIndirectSemaphoreDataDword(indirect);
         localCmd.set64BCompareDisable(useQwordData ? MI_SEMAPHORE_WAIT::_64B_COMPARE_DISABLE::_64B_COMPARE_DISABLE_64B_COMPARE : MI_SEMAPHORE_WAIT::_64B_COMPARE_DISABLE::_64B_COMPARE_DISABLE_32B_COMPARE);
+        localCmd.setCommandControlledInhibitContextSwitch(true);
+        localCmd.setSemaphoreInterrupt(true);
 
         if (switchOnUnsuccessful) {
             localCmd.setQueueSwitchMode(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);

@@ -342,10 +342,14 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, whenProgrammingSemaphore64ThenSetSwi
 
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
     EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
+    EXPECT_TRUE(semaphoreCmd->getCommandControlledInhibitContextSwitch());
+    EXPECT_TRUE(semaphoreCmd->getSemaphoreInterrupt());
 
     linearStream.replaceBuffer(buffer, sizeof(buffer));
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, true, useSemaphore64bCmd, nullptr);
     EXPECT_EQ(MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
+    EXPECT_TRUE(semaphoreCmd->getCommandControlledInhibitContextSwitch());
+    EXPECT_TRUE(semaphoreCmd->getSemaphoreInterrupt());
 }
 
 XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenIndirectModeAndQwordDataWhenProgrammingSemaphoreLegacyThenEnable64bGprMode) {
