@@ -234,7 +234,8 @@ class InOrderExecEventHelper : public NonCopyableClass {
     void setDeviceAllocIpcHandle(uint64_t handle, size_t offset);
     void setHostAllocIpcHandle(uint64_t handle, size_t offset);
 
-    uint64_t *getBaseHostAddress() const { return baseHostAddress; }
+    uint64_t *getBaseHostCpuAddress() const { return baseHostCpuAddress; }
+    uint64_t getBaseHostGpuAddress() const { return baseHostGpuAddress; }
     uint64_t getBaseDeviceAddress() const { return baseDeviceAddress; }
 
     NEO::GraphicsAllocation *getDeviceCounterAllocation() const { return deviceCounterAllocation; }
@@ -265,7 +266,7 @@ class InOrderExecEventHelper : public NonCopyableClass {
     void resetAggregatedEventUsageCounter() { aggregatedEventUsageCounter = 0; }
 
     void assignData(uint64_t counterValue, uint32_t counterOffset, uint32_t devicePartitions, uint32_t hostPartitions, NEO::GraphicsAllocation *deviceCounterAllocation,
-                    NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t *baseHostAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
+                    NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t baseHostGpuAddress, uint64_t *baseHostCpuAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
                     bool hostStorageDuplicated, bool fromExternalMemory);
 
     const SharableEventDataHelper &getSharableEventDataHelper() const { return sharableEventDataHelper; }
@@ -285,7 +286,8 @@ class InOrderExecEventHelper : public NonCopyableClass {
     NEO::GraphicsAllocation *deviceCounterAllocation = nullptr;
     NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
 
-    uint64_t *baseHostAddress = nullptr;
+    uint64_t *baseHostCpuAddress = nullptr;
+    uint64_t baseHostGpuAddress = 0;
     uint64_t baseDeviceAddress = 0;
     uint64_t incrementValue = 0;
     uint64_t aggregatedEventUsageCounter = 0;

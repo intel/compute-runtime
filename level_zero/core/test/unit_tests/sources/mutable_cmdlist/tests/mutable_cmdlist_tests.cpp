@@ -1924,7 +1924,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     MockGraphicsAllocation counterDeviceAlloc(this->device->getRootDeviceIndex(), nullptr, 0x1);
 
-    this->events[0]->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &counterDeviceAlloc, &counterDeviceAlloc, 1, 0, 0, 0, false, true);
+    this->events[0]->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &counterDeviceAlloc, &counterDeviceAlloc, 1, 0, nullptr, 0, 0, false, true);
 
     result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &hEvent, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1951,7 +1951,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     uint32_t peerDeviceIndex = this->device->getRootDeviceIndex() + 1;
     MockGraphicsAllocation peerCounterDeviceAlloc(peerDeviceIndex, reinterpret_cast<void *>(0x1234), 0x0u);
 
-    this->events[0]->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &peerCounterDeviceAlloc, &peerCounterDeviceAlloc, 1, 0, 0, 0, false, true);
+    this->events[0]->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &peerCounterDeviceAlloc, &peerCounterDeviceAlloc, 1, 0, nullptr, 0, 0, false, true);
 
     result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &hEvent, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

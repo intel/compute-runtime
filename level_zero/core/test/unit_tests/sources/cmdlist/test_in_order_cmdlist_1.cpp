@@ -417,7 +417,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenEventHost
 
     uint64_t hostAddress = 0;
     if (events[0]->inOrderExecHelper.isHostStorageDuplicated()) {
-        hostAddress = castToUint64(ptrOffset(events[0]->inOrderExecHelper.getBaseHostAddress(), events[0]->inOrderExecHelper.getEventData()->counterOffset));
+        hostAddress = castToUint64(ptrOffset(events[0]->inOrderExecHelper.getBaseHostCpuAddress(), events[0]->inOrderExecHelper.getEventData()->counterOffset));
     } else {
         hostAddress = castToUint64(ptrOffset(events[0]->inOrderExecHelper.getDeviceCounterAllocation()->getUnderlyingBuffer(), events[0]->inOrderExecHelper.getEventData()->counterOffset));
     }
@@ -5517,7 +5517,8 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenRetu
     EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(counterValue, eventObj->getInOrderExecEventHelper().getEventData()->counterValue);
-    EXPECT_EQ(hostAddress, eventObj->getInOrderExecEventHelper().getBaseHostAddress());
+    EXPECT_EQ(hostAddress, eventObj->getInOrderExecEventHelper().getBaseHostCpuAddress());
+    EXPECT_EQ(0u, eventObj->getInOrderExecEventHelper().getBaseHostGpuAddress());
     EXPECT_EQ(castToUint64(gpuAddress), eventObj->getInOrderExecEventHelper().getBaseDeviceAddress());
 
     uint64_t address = 0;
@@ -5584,7 +5585,8 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEvent2ThenRet
     EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(counterValue, eventObj->getInOrderExecEventHelper().getEventData()->counterValue);
-    EXPECT_EQ(hostAddress, eventObj->getInOrderExecEventHelper().getBaseHostAddress());
+    EXPECT_EQ(hostAddress, eventObj->getInOrderExecEventHelper().getBaseHostCpuAddress());
+    EXPECT_EQ(0u, eventObj->getInOrderExecEventHelper().getBaseHostGpuAddress());
     EXPECT_EQ(castToUint64(gpuAddress), eventObj->getInOrderExecEventHelper().getBaseDeviceAddress());
     EXPECT_EQ(nullptr, eventObj->getInOrderExecEventHelper().getDeviceCounterAllocation());
 
@@ -5667,7 +5669,8 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCoreCbEventThen
     EXPECT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
 
     EXPECT_EQ(counterValue, eventObj->getInOrderExecEventHelper().getEventData()->counterValue);
-    EXPECT_EQ(hostAddress, eventObj->getInOrderExecEventHelper().getBaseHostAddress());
+    EXPECT_EQ(hostAddress, eventObj->getInOrderExecEventHelper().getBaseHostCpuAddress());
+    EXPECT_EQ(0u, eventObj->getInOrderExecEventHelper().getBaseHostGpuAddress());
     EXPECT_EQ(castToUint64(gpuAddress), eventObj->getInOrderExecEventHelper().getBaseDeviceAddress());
     EXPECT_EQ(nullptr, eventObj->getInOrderExecEventHelper().getDeviceCounterAllocation());
 
@@ -5755,7 +5758,8 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
     auto offset = ptrDiff(devAddress, deviceAlloc->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
     auto lockedPtr = reinterpret_cast<uint64_t *>(ptrOffset(inOrderExecHelper.getDeviceCounterAllocation()->getLockedPtr(), sizeof(uint64_t) + offset));
 
-    EXPECT_EQ(inOrderExecHelper.getBaseHostAddress(), lockedPtr);
+    EXPECT_EQ(inOrderExecHelper.getBaseHostCpuAddress(), lockedPtr);
+    EXPECT_EQ(inOrderExecHelper.getBaseHostGpuAddress(), inOrderExecHelper.getBaseDeviceAddress());
     EXPECT_EQ(inOrderExecHelper.getHostCounterAllocation(), inOrderExecHelper.getDeviceCounterAllocation());
 
     zeEventDestroy(handle);

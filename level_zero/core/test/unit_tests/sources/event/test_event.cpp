@@ -5268,12 +5268,12 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     uint64_t counter = 2;
 
     event1->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event1->getInOrderExecEventHelper().assignData(1, 0, 1, 1, nullptr, nullptr, 1, &counter, 0, 0, false, true);
+    event1->getInOrderExecEventHelper().assignData(1, 0, 1, 1, nullptr, nullptr, 1, 0, &counter, 0, 0, false, true);
 
     MockGraphicsAllocation mockAlloc(rootDeviceIndex, nullptr, 1);
 
     event2->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event2->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &mockAlloc, &mockAlloc, 1, &counter, 0, 0, false, true);
+    event2->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &mockAlloc, &mockAlloc, 1, 0, &counter, 0, 0, false, true);
 
     ultCsr0->makeResident(*inOrderExecInfo0->getDeviceCounterAllocation());
 

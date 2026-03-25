@@ -1010,7 +1010,7 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
         ASSERT_TRUE(index.has_value());
         EXPECT_EQ(i, *index);
 
-        EXPECT_EQ(0u, *bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostAddress());
+        EXPECT_EQ(0u, *bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostCpuAddress());
         EXPECT_FALSE(bcsSplit->events.getEventResources().subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
         EXPECT_TRUE(bcsSplit->events.getEventResources().subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
         EXPECT_EQ(subCopySplitValue, bcsSplit->events.getEventResources().subcopy[i]->getInOrderIncrementValue(1));
@@ -1036,7 +1036,7 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
     EXPECT_EQ(1u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
 
     for (size_t i = 0; i < 16; i++) {
-        EXPECT_EQ(0u, *bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostAddress());
+        EXPECT_EQ(0u, *bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostCpuAddress());
 
         if (i <= 8) {
             EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.getEventResources().marker[i].event->queryStatus(0));
@@ -1069,7 +1069,8 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMultipleEventsWhenObtainIsCalledTheAssig
 
     for (size_t i = 0; i < bcsSplit->events.getEventResources().subcopy.size(); i++) {
         EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress());
-        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostAddress());
+        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostCpuAddress());
+        EXPECT_EQ(bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress(), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostGpuAddress());
     }
 
     auto &eventResource = const_cast<BcsSplitParams::EventsResources &>(bcsSplit->events.getEventResources());
@@ -1088,14 +1089,16 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMultipleEventsWhenObtainIsCalledTheAssig
 
     for (size_t i = 0; i < 8; i++) {
         EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress());
-        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostAddress());
+        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostCpuAddress());
+        EXPECT_EQ(bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress(), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostGpuAddress());
     }
 
     for (size_t i = 8; i < 16; i++) {
         auto offset = MemoryConstants::cacheLineSize * (i - 8);
 
         EXPECT_EQ(castToUint64(ptrOffset(alloc2, offset)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress());
-        EXPECT_EQ(ptrOffset(alloc2, offset), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostAddress());
+        EXPECT_EQ(ptrOffset(alloc2, offset), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostCpuAddress());
+        EXPECT_EQ(bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress(), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostGpuAddress());
     }
 }
 

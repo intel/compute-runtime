@@ -201,7 +201,7 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData)
     EXPECT_TRUE(expectedOffset == eventDataPtr->deviceIpcAllocOffset);
 
     if (events[1]->getInOrderExecEventHelper().isHostStorageDuplicated()) {
-        auto expectedHostOffset = ptrDiff(events[1]->getInOrderExecEventHelper().getBaseHostAddress(), events[1]->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
+        auto expectedHostOffset = ptrDiff(events[1]->getInOrderExecEventHelper().getBaseHostCpuAddress(), events[1]->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
         EXPECT_NE(0u, expectedHostOffset);
         EXPECT_EQ(expectedHostOffset, eventDataPtr->hostIpcAllocOffset);
     } else {
@@ -268,7 +268,7 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenSignalingThenRefreshIpcData) {
         EXPECT_TRUE(expectedOffset == eventDataPtr->deviceIpcAllocOffset);
 
         if (events[1]->getInOrderExecEventHelper().isHostStorageDuplicated()) {
-            auto expectedHostOffset = ptrDiff(events[1]->getInOrderExecEventHelper().getBaseHostAddress(), events[1]->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
+            auto expectedHostOffset = ptrDiff(events[1]->getInOrderExecEventHelper().getBaseHostCpuAddress(), events[1]->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
             EXPECT_NE(0u, expectedHostOffset);
             EXPECT_EQ(expectedHostOffset, eventDataPtr->hostIpcAllocOffset);
         } else {
@@ -292,7 +292,7 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenSignalingThenRefreshIpcData) {
         EXPECT_TRUE(expectedOffset == eventDataPtr->deviceIpcAllocOffset);
 
         if (events[1]->getInOrderExecEventHelper().isHostStorageDuplicated()) {
-            auto expectedHostOffset = ptrDiff(events[1]->getInOrderExecEventHelper().getBaseHostAddress(), events[1]->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
+            auto expectedHostOffset = ptrDiff(events[1]->getInOrderExecEventHelper().getBaseHostCpuAddress(), events[1]->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
             EXPECT_NE(0u, expectedHostOffset);
             EXPECT_EQ(expectedHostOffset, eventDataPtr->hostIpcAllocOffset);
         } else {
@@ -405,7 +405,8 @@ HWTEST_F(InOrderIpcTests, givenNonOpaqueIpcHandleWhenCreatingNewEventThenSetCorr
         EXPECT_TRUE(newInOrderEventHelper.isFromExternalMemory());
 
         EXPECT_EQ(newInOrderEventHelper.getDeviceCounterAllocation(), newInOrderEventHelper.getHostCounterAllocation());
-        EXPECT_EQ(ptrOffset(newInOrderEventHelper.getHostCounterAllocation()->getUnderlyingBuffer(), expectedDeviceOffset), newInOrderEventHelper.getBaseHostAddress());
+        EXPECT_EQ(ptrOffset(newInOrderEventHelper.getHostCounterAllocation()->getUnderlyingBuffer(), expectedDeviceOffset), newInOrderEventHelper.getBaseHostCpuAddress());
+        EXPECT_EQ(newInOrderEventHelper.getBaseDeviceAddress(), newInOrderEventHelper.getBaseHostGpuAddress());
 
         EXPECT_TRUE(newEventMock->isFromIpcPool);
         EXPECT_EQ(newEventMock->signalScope, events[1]->signalScope);
@@ -469,11 +470,13 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
     if (eventInOrderInfo->isHostStorageDuplicated()) {
         EXPECT_NE(newInOrderEventHelper.getDeviceCounterAllocation(), newInOrderEventHelper.getHostCounterAllocation());
 
-        auto expectedHostOffset = ptrDiff(inOrderEventHelper.getBaseHostAddress(), inOrderEventHelper.getHostCounterAllocation()->getUnderlyingBuffer());
-        EXPECT_EQ(ptrOffset(newInOrderEventHelper.getHostCounterAllocation()->getUnderlyingBuffer(), expectedHostOffset), newInOrderEventHelper.getBaseHostAddress());
+        auto expectedHostOffset = ptrDiff(inOrderEventHelper.getBaseHostCpuAddress(), inOrderEventHelper.getHostCounterAllocation()->getUnderlyingBuffer());
+        EXPECT_EQ(ptrOffset(newInOrderEventHelper.getHostCounterAllocation()->getUnderlyingBuffer(), expectedHostOffset), newInOrderEventHelper.getBaseHostCpuAddress());
+        EXPECT_EQ(newInOrderEventHelper.getHostCounterAllocation()->getGpuAddress() + expectedHostOffset, newInOrderEventHelper.getBaseHostGpuAddress());
     } else {
         EXPECT_EQ(newInOrderEventHelper.getDeviceCounterAllocation(), newInOrderEventHelper.getHostCounterAllocation());
-        EXPECT_EQ(ptrOffset(newInOrderEventHelper.getHostCounterAllocation()->getUnderlyingBuffer(), expectedDeviceOffset), newInOrderEventHelper.getBaseHostAddress());
+        EXPECT_EQ(ptrOffset(newInOrderEventHelper.getHostCounterAllocation()->getUnderlyingBuffer(), expectedDeviceOffset), newInOrderEventHelper.getBaseHostCpuAddress());
+        EXPECT_EQ(newInOrderEventHelper.getBaseDeviceAddress(), newInOrderEventHelper.getBaseHostGpuAddress());
     }
 
     EXPECT_TRUE(newEventMock->isFromIpcPool);

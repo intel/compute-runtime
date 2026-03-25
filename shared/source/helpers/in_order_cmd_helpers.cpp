@@ -163,7 +163,7 @@ NEO::GraphicsAllocation *InOrderExecInfo::getHostCounterAllocation() const {
 }
 
 uint64_t InOrderExecInfo::getBaseHostGpuAddress() const {
-    return hostCounterNode->getGpuAddress();
+    return hostCounterNode ? hostCounterNode->getGpuAddress() : 0;
 }
 
 void InOrderExecInfo::pushTempTimestampNode(TagNodeBase *node, uint64_t value, uint32_t allocationOffset) {
@@ -257,7 +257,7 @@ void InOrderExecEventHelper::releaseResources(MemoryManager &memoryManager) {
 }
 
 void InOrderExecEventHelper::assignData(uint64_t counterValue, uint32_t counterOffset, uint32_t devicePartitions, uint32_t hostPartitions, NEO::GraphicsAllocation *deviceCounterAllocation,
-                                        NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t *baseHostAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
+                                        NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t baseHostGpuAddress, uint64_t *baseHostCpuAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
                                         bool hostStorageDuplicated, bool fromExternalMemory) {
 
     UNRECOVERABLE_IF(!sharableEventDataHelper.eventDataPtr);
@@ -269,7 +269,8 @@ void InOrderExecEventHelper::assignData(uint64_t counterValue, uint32_t counterO
     eventDataPtr->hostPartitions = hostPartitions;
 
     this->incrementValue = incrementValue;
-    this->baseHostAddress = baseHostAddress;
+    this->baseHostGpuAddress = baseHostGpuAddress;
+    this->baseHostCpuAddress = baseHostCpuAddress;
     this->baseDeviceAddress = baseDeviceAddress;
     this->hostStorageDuplicated = hostStorageDuplicated;
     this->fromExternalMemory = fromExternalMemory;
@@ -290,7 +291,7 @@ void InOrderExecEventHelper::updateInOrderExecState(std::shared_ptr<InOrderExecI
     assignInOrderExecInfo(newInOrderExecInfo);
 
     assignData(newSignalValue, newAllocationOffset, inOrderExecInfo->getNumDevicePartitionsToWait(), inOrderExecInfo->getNumHostPartitionsToWait(), inOrderExecInfo->getDeviceCounterAllocation(),
-               inOrderExecInfo->getHostCounterAllocation(), inOrderExecInfo->getBaseDeviceAddress(), inOrderExecInfo->getBaseHostAddress(), 0, 0, inOrderExecInfo->isHostStorageDuplicated(),
+               inOrderExecInfo->getHostCounterAllocation(), inOrderExecInfo->getBaseDeviceAddress(), inOrderExecInfo->getBaseHostGpuAddress(), inOrderExecInfo->getBaseHostAddress(), 0, 0, inOrderExecInfo->isHostStorageDuplicated(),
                inOrderExecInfo->isExternalMemoryExecInfo());
 }
 
@@ -298,7 +299,7 @@ void InOrderExecEventHelper::unsetInOrderExecInfo() {
     inOrderExecInfo.reset();
 
     if (dataAssigned) {
-        assignData(0, 0, 0, 0, nullptr, nullptr, 0, nullptr, 0, 0, false, false);
+        assignData(0, 0, 0, 0, nullptr, nullptr, 0, 0, nullptr, 0, 0, false, false);
         dataAssigned = false;
     }
 }
@@ -338,7 +339,7 @@ void InOrderExecEventHelper::copyData(InOrderExecEventHelper &output) {
     auto eventDataPtr = sharableEventDataHelper.eventDataPtr;
 
     output.assignData(eventDataPtr->counterValue, eventDataPtr->counterOffset, eventDataPtr->devicePartitions, eventDataPtr->hostPartitions,
-                      getDeviceCounterAllocation(), getHostCounterAllocation(), getBaseDeviceAddress(), getBaseHostAddress(),
+                      getDeviceCounterAllocation(), getHostCounterAllocation(), getBaseDeviceAddress(), getBaseHostGpuAddress(), getBaseHostCpuAddress(),
                       incrementValue, getAggregatedEventUsageCounter(), isHostStorageDuplicated(), isFromExternalMemory());
 }
 

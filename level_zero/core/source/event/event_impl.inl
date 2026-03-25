@@ -321,7 +321,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
             signaled = this->isTimestampPopulated();
             this->heapfullCbEventWithProfiling = !signaled;
         } else {
-            const uint64_t *hostAddress = ptrOffset(inOrderExecHelper.getBaseHostAddress(), inOrderExecHelper.getEventData()->counterOffset);
+            const uint64_t *hostAddress = ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset);
             for (uint32_t i = 0; i < inOrderExecHelper.getEventData()->hostPartitions; i++) {
                 if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>(), timeSinceWait)) {
                     signaled = false;
@@ -716,7 +716,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
         return ZE_RESULT_SUCCESS;
     }
 
-    uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecHelper.getBaseHostAddress(), inOrderExecHelper.getEventData()->counterOffset));
+    uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset));
     NEO::GraphicsAllocation *hostAlloc = inOrderExecHelper.isHostStorageDuplicated() ? inOrderExecHelper.getHostCounterAllocation() : inOrderExecHelper.getDeviceCounterAllocation();
 
     if (!csrs[0]->waitUserFence(getInOrderExecBaseSignalValue(), waitAddress, timeout, true, this->externalInterruptId, hostAlloc, inOrderExecHelper.getInterruptFence())) {

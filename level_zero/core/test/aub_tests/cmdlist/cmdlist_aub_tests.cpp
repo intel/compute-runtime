@@ -388,7 +388,7 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSigna
     zeDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
     auto event = createAggregatedEvent(incValue, incValue * 2);
     auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecEventHelper().getBaseDeviceAddress());
-    *event->getInOrderExecEventHelper().getBaseHostAddress() = 0;
+    *event->getInOrderExecEventHelper().getBaseHostCpuAddress() = 0;
 
     auto csr = getRootSimulatedCsr<FamilyType>();
     csr->writeMemory(*event->getInOrderExecEventHelper().getDeviceCounterAllocation());
@@ -528,7 +528,7 @@ HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEve
     zeDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
     auto event = createAggregatedEvent(incValue, incValue * 2);
     auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecEventHelper().getBaseDeviceAddress());
-    *event->getInOrderExecEventHelper().getBaseHostAddress() = 0;
+    *event->getInOrderExecEventHelper().getBaseHostCpuAddress() = 0;
 
     auto csr = getRootSimulatedCsr<FamilyType>();
     csr->writeMemory(*event->getInOrderExecEventHelper().getDeviceCounterAllocation());

@@ -200,7 +200,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     uint64_t eventAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderExecEventHelper().getEventData()->counterOffset;
     if (event->getInOrderExecEventHelper().isHostStorageDuplicated()) {
-        auto offset = ptrDiff(event->getInOrderExecEventHelper().getBaseHostAddress(), event->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
+        auto offset = ptrDiff(event->getInOrderExecEventHelper().getBaseHostCpuAddress(), event->getInOrderExecEventHelper().getHostCounterAllocation()->getUnderlyingBuffer());
         eventAddress = event->getInOrderExecEventHelper().getHostCounterAllocation()->getGpuAddress() + offset;
     }
 

@@ -161,7 +161,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         auto event = static_cast<InOrderFixtureMockEvent *>(Event::create<uint64_t>(eventDescriptor, device, result));
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        event->getInOrderExecEventHelper().assignData(1, 0, 1, 1, nullptr, nullptr, castToUint64(deviceAddress), hostAddress, 0, 0, true, true);
+        event->getInOrderExecEventHelper().assignData(1, 0, 1, 1, nullptr, nullptr, castToUint64(deviceAddress), 0, hostAddress, 0, 0, true, true);
 
         return DestroyableZeUniquePtr<InOrderFixtureMockEvent>(event);
     }

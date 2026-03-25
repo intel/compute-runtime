@@ -437,7 +437,7 @@ ze_result_t Event::exportCbAllocationsFor2WayIpcSharing() {
         memoryManager->registerIpcExportedAllocation(hostAlloc);
         context->registerIpcHandleWithServer(handle);
 
-        auto hostOffset = ptrDiff(inOrderExecHelper.getBaseHostAddress(), hostAlloc->getUnderlyingBuffer());
+        auto hostOffset = ptrDiff(inOrderExecHelper.getBaseHostCpuAddress(), hostAlloc->getUnderlyingBuffer());
         inOrderExecHelper.setHostAllocIpcHandle(handle, hostOffset);
     }
 
@@ -532,9 +532,12 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     if (useOpaqueHandle) {
         event->getInOrderExecEventHelper().initializeFromExternalAllocation(*communicationAlloc.release(), ipcData.allocOffset);
 
+        uint64_t deviceGpuVa = deviceAllocToPass->getGpuAddress() + inOrderExecEventData->deviceIpcAllocOffset;
+        uint64_t hostGpuVa = hostAlloc->getGpuAddress() + hostAllocOffset;
+        uint64_t *hostCpuVa = static_cast<uint64_t *>(ptrOffset(hostAlloc->getUnderlyingBuffer(), hostAllocOffset));
+
         event->getInOrderExecEventHelper().assignData(inOrderExecEventData->counterValue, inOrderExecEventData->counterOffset, inOrderExecEventData->devicePartitions, inOrderExecEventData->hostPartitions,
-                                                      deviceAllocToPass, hostAlloc, deviceAllocToPass->getGpuAddress() + inOrderExecEventData->deviceIpcAllocOffset,
-                                                      static_cast<uint64_t *>(ptrOffset(hostAlloc->getUnderlyingBuffer(), hostAllocOffset)), 0, 0, (deviceAllocToPass != hostAlloc), true);
+                                                      deviceAllocToPass, hostAlloc, deviceGpuVa, hostGpuVa, hostCpuVa, 0, 0, (deviceAllocToPass != hostAlloc), true);
     } else {
         auto node = device->getInOrderSharableEventDataAllocator()->getTag();
         node->initialize();
@@ -542,9 +545,12 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
 
         UNRECOVERABLE_IF(!deviceAllocToPass->getUnderlyingBuffer());
 
+        uint64_t deviceGpuVa = deviceAllocToPass->getGpuAddress() + ipcData.allocOffset;
+        uint64_t hostGpuVa = deviceGpuVa;
+        uint64_t *hostCpuVa = static_cast<uint64_t *>(ptrOffset(deviceAllocToPass->getUnderlyingBuffer(), ipcData.allocOffset));
+
         event->getInOrderExecEventHelper().assignData(ipcData.oneWayCounterValue, 0, ipcData.oneWayPartitionCount, ipcData.oneWayPartitionCount,
-                                                      deviceAllocToPass, deviceAllocToPass, deviceAllocToPass->getGpuAddress() + ipcData.allocOffset,
-                                                      static_cast<uint64_t *>(ptrOffset(deviceAllocToPass->getUnderlyingBuffer(), ipcData.allocOffset)), 0, 0, false, true);
+                                                      deviceAllocToPass, deviceAllocToPass, deviceGpuVa, hostGpuVa, hostCpuVa, 0, 0, false, true);
     }
 
     *eventHandle = event;
@@ -1021,7 +1027,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
-            inOrderExecHelper.assignData(completionValue, 0, 1, 1, deviceAlloc, hostAlloc, castToUint64(deviceAddress), hostAddress, 0, 0, (deviceAlloc != hostAlloc), true);
+            inOrderExecHelper.assignData(completionValue, 0, 1, 1, deviceAlloc, hostAlloc, castToUint64(deviceAddress), 0, hostAddress, 0, 0, (deviceAlloc != hostAlloc), true);
 
             disableHostCaching(true);
         } else if (stype == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES || stype == ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC) {
@@ -1049,7 +1055,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
             auto offset = ptrDiff(deviceAddress, deviceAlloc->getGpuAddress());
             auto hostAddress = ptrOffset(device->getNEODevice()->getMemoryManager()->lockResource(deviceAlloc), offset);
 
-            inOrderExecHelper.assignData(completionValue, 0, 1, 1, deviceAlloc, deviceAlloc, castToUint64(deviceAddress), reinterpret_cast<uint64_t *>(hostAddress), incrementValue, 0, false, true);
+            inOrderExecHelper.assignData(completionValue, 0, 1, 1, deviceAlloc, deviceAlloc, castToUint64(deviceAddress), castToUint64(deviceAddress), reinterpret_cast<uint64_t *>(hostAddress), incrementValue, 0, false, true);
             disableHostCaching(true);
         }
 

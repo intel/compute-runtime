@@ -1470,7 +1470,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     uint32_t peerDeviceIndex = this->device->getRootDeviceIndex() + 1;
     MockGraphicsAllocation peerCounterDeviceAlloc(peerDeviceIndex, reinterpret_cast<void *>(0x1234), 0x0u);
 
-    event->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &peerCounterDeviceAlloc, &peerCounterDeviceAlloc, 1, nullptr, 0, 0, false, true);
+    event->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &peerCounterDeviceAlloc, &peerCounterDeviceAlloc, 1, 0, nullptr, 0, 0, false, true);
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
     auto ret = this->variable->setAsWaitEvent(event);
