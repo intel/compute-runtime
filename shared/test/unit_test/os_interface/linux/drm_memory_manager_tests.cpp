@@ -4868,15 +4868,12 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldS
     allocation.storageInfo.subDeviceBitfield = 0b0010;
     allocation.bufferObjects[0] = &bo;
 
+    MockOsContextLinux::contextIdForOfflineDump.store(0u);
     MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(DeviceBitfield{0b11}));
     allocation.setOsContext(&osContext);
 
-    osContext.drmContextIds.clear();
-    osContext.drmContextIds.push_back(3u);
-    osContext.drmContextIds.push_back(5u);
-    osContext.initializeOfflineDumpContextIds();
     const auto processId = 0xABCEDF;
-    uint64_t offlineDumpContextId = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(5u);
+    uint64_t offlineDumpContextId = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(1u);
 
     allocation.registerBOBindExtHandle(&drm);
     EXPECT_EQ(2u, bo.bindExtHandles.size());
@@ -4908,13 +4905,10 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldN
     allocation.storageInfo.tileInstanced = false;
     allocation.bufferObjects[0] = &bo;
 
+    MockOsContextLinux::contextIdForOfflineDump.store(3u);
     MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     allocation.setOsContext(&osContext);
 
-    osContext.drmContextIds.clear();
-    osContext.drmContextIds.push_back(3u);
-    osContext.drmContextIds.push_back(5u);
-    osContext.initializeOfflineDumpContextIds();
     const auto processId = 0xABCEDF;
     uint64_t offlineDumpContextId = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(3u);
 
@@ -4952,15 +4946,12 @@ TEST_F(DrmAllocationTests, givenTwoBufferObjectsAndTileInstancedSbaAndSubDeviceB
     allocation.bufferObjects[0] = &bo0;
     allocation.bufferObjects[1] = &bo1;
 
+    MockOsContextLinux::contextIdForOfflineDump.store(5u);
     MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(DeviceBitfield{0b0011}));
     allocation.setOsContext(&osContext);
 
-    osContext.drmContextIds.clear();
-    osContext.drmContextIds.push_back(3u);
-    osContext.drmContextIds.push_back(5u);
-    osContext.initializeOfflineDumpContextIds();
     const auto processId = 0xABCEDF;
-    uint64_t offlineDumpContextIdBo1 = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(5u);
+    uint64_t offlineDumpContextIdBo1 = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(6u);
 
     allocation.registerBOBindExtHandle(&drm);
     EXPECT_EQ(2u, bo0.bindExtHandles.size());

@@ -11,6 +11,7 @@
 namespace NEO {
 class MockOsContextLinux : public OsContextLinux {
   public:
+    using OsContextLinux::contextIdForOfflineDump;
     using OsContextLinux::drmContextIds;
     using OsContextLinux::drmVmIds;
     using OsContextLinux::fenceVal;

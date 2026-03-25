@@ -65,5 +65,6 @@ class OsContextLinux : public OsContext {
     Drm &drm;
     bool contextHangDetected = false;
     bool ovLoaded = false;
+    static std::atomic<uint32_t> contextIdForOfflineDump;
 };
 } // namespace NEO
