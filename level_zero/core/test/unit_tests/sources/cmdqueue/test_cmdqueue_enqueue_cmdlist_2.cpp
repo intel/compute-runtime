@@ -1080,6 +1080,65 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngineWhenSingleCmdListExecutedThenPatchPreambleContainsMiFlushCommand) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                                                 device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 true,
+                                                                                 false,
+                                                                                 false,
+                                                                                 returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
+    commandList->close();
+
+    auto startGpuAddress = commandList->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
+
+    commandQueue->setPatchingPreamble(true);
+
+    void *queueCpuBase = commandQueue->commandStream.getCpuBase();
+
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        queueCpuBase,
+        usedSpaceAfter));
+
+    auto miFlushCmds = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, miFlushCmds.size());
+
+    // ensure that MI_FLUSH_DW command is before BATCH_BUFFER_START command jumping to the command list
+    auto bbStarts = findAll<MI_BATCH_BUFFER_START *>(miFlushCmds[0], cmdList.end());
+    ASSERT_NE(0u, bbStarts.size());
+
+    auto startingBbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStarts[0]);
+    EXPECT_EQ(startGpuAddress, startingBbStart->getBatchBufferStartAddress());
+
+    commandList->destroy();
+    commandQueue->destroy();
+}
+
 HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenTwoCmdListsExecutedThenPatchPreambleContainsEncodingReturningAndChainingBbStartCmd) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;

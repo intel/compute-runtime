@@ -1503,6 +1503,76 @@ bool testSingleWrappedEngineDeepFork(GraphApi &graphApi,
     return validRet;
 }
 
+bool testCopyEngineSimpleGraph(GraphApi &graphApi,
+                               ze_context_handle_t &context,
+                               ze_device_handle_t &device,
+                               bool aubMode,
+                               const GraphDumpSettings &dumpSettings) {
+    using ElemType = uint32_t;
+    bool validRet = true;
+
+    constexpr size_t allocSize = 4096;
+    constexpr size_t elemCount = allocSize / sizeof(ElemType);
+
+    ElemType initialValue = 10;
+
+    if (LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device) == LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
+        std::cout << "Device does not support copy only engine, skipping test." << std::endl;
+        return validRet;
+    }
+
+    void *srcBuffer = nullptr;
+    void *dstBuffer = nullptr;
+    void *zeBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &dstBuffer));
+    for (size_t i = 0; i < elemCount; i++) {
+        reinterpret_cast<ElemType *>(srcBuffer)[i] = initialValue;
+    }
+    memset(dstBuffer, 0x0, allocSize);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
+
+    ze_command_list_handle_t copyIcl = nullptr;
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, false, true, copyIcl);
+
+    // begin recording graph
+    ze_graph_handle_t virtualGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(copyIcl, virtualGraph, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(copyIcl, zeBuffer, srcBuffer, allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(copyIcl, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(copyIcl, dstBuffer, zeBuffer, allocSize, nullptr, 0, nullptr));
+
+    // instantiate graph
+    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(copyIcl, nullptr, nullptr));
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+
+    // Dispatch and wait
+    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(copyIcl, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(copyIcl, std::numeric_limits<uint64_t>::max()));
+
+    if (aubMode == false) {
+        validRet = LevelZeroBlackBoxTests::validateToValue(initialValue, dstBuffer, elemCount);
+    }
+
+    std::stringstream ss;
+    ss << __func__;
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, ss.str(), dumpSettings);
+
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(copyIcl));
+    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
+    return validRet;
+}
+
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestStandardMemoryCopy = 0u;
     constexpr uint32_t bitNumberTestStandardMemoryCopyMultigraph = 1u;
@@ -1515,6 +1585,7 @@ int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestMultiJoinGraph = 8u;
     constexpr uint32_t bitNumberTestMultiExecForkedGraph = 9u;
     constexpr uint32_t bitNumberTestWrappedMultipleEngines = 10u;
+    constexpr uint32_t bitNumberTestCopyEngineSimpleGraph = 11u;
 
     constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max();
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
@@ -1733,6 +1804,13 @@ int main(int argc, char *argv[]) {
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }
+    }
+
+    if (testMask.test(bitNumberTestCopyEngineSimpleGraph)) {
+        auto testTitle = "Copy Engine Simple Graph";
+        casePass = testCopyEngineSimpleGraph(graphApi, context, device0, aubMode, graphDumpSettings);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, testTitle);
+        boxPass &= casePass;
     }
 
     for (auto kernel : kernelsMap) {

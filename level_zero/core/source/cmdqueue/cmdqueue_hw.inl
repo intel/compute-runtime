@@ -915,7 +915,12 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalCommandListPatchPreamb
         encodeSize = singleBbStartEncodeSize * numCommandLists;
 
         // barrier command to pause between patch preamble completion and execution of command lists
-        encodeSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+        if (this->isCopyOnlyCommandQueue) {
+            NEO::EncodeDummyBlitWaArgs waArgs{false, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
+            encodeSize += NEO::EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+        } else {
+            encodeSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+        }
         encodeSize += 2 * NEO::EncodeMiArbCheck<GfxFamily>::getCommandSize();
 
         if (ctx.totalNoopSpaceForPatchPreamble > 0) {
@@ -958,10 +963,18 @@ void CommandQueueHw<gfxCoreFamily>::retrivePatchPreambleSpace(CommandListExecuti
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecutionContext &ctx) {
     if (ctx.patchPreambleEnabled) {
-        NEO::PipeControlArgs args;
 
-        NEO::MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(ctx.currentPatchPreambleBuffer, args);
-        ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier());
+        if (this->isCopyOnlyCommandQueue) {
+            NEO::EncodeDummyBlitWaArgs waArgs{false, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
+            NEO::MiFlushArgs args{waArgs};
+
+            NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(ctx.currentPatchPreambleBuffer, 0, 0, args);
+        } else {
+            NEO::PipeControlArgs args;
+
+            NEO::MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(ctx.currentPatchPreambleBuffer, args);
+            ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier());
+        }
 
         NEO::EncodeMiArbCheck<GfxFamily>::program(ctx.currentPatchPreambleBuffer, false);
         ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::EncodeMiArbCheck<GfxFamily>::getCommandSize());
