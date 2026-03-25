@@ -37,6 +37,7 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t rootDeviceIndex, uint32_t cont
     pagingFence.fill(0u);
     fenceVal.fill(0u);
     this->isOpenVinoLoaded();
+    initializeOfflineDumpContextIds();
 }
 
 bool OsContextLinux::initializeContext(bool allocateInterrupt) {
@@ -88,7 +89,6 @@ bool OsContextLinux::initializeContext(bool allocateInterrupt) {
             this->drmContextIds.push_back(drmContextId);
         }
     }
-    initializeOfflineDumpContextIds();
     return true;
 }
 
@@ -169,19 +169,14 @@ uint64_t OsContextLinux::getOfflineDumpContextId(uint32_t deviceIndex) const {
     return offlineDumpCtxIds[deviceIndex];
 }
 
+std::atomic<uint32_t> OsContextLinux::contextIdForOfflineDump{0};
+
 void OsContextLinux::initializeOfflineDumpContextIds() {
-    auto contextId = 0u;
     const auto processId = SysCalls::getProcessId();
     for (auto index = 0u; index < deviceBitfield.size(); index++) {
         offlineDumpCtxIds[index] = 0;
-
         if (deviceBitfield.test(index)) {
-            if (contextId < drmContextIds.size()) {
-
-                const auto drmContextId = drmContextIds[contextId];
-                offlineDumpCtxIds[index] = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(drmContextId);
-            }
-            contextId++;
+            offlineDumpCtxIds[index] = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(OsContextLinux::contextIdForOfflineDump++);
         }
     }
 }
