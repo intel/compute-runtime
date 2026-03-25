@@ -317,6 +317,51 @@ HWTEST_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCou
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList1.get());
 }
 
+struct HeapfullCbProfilingEventMatch {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsAtLeastXeHpcCore::isMatched<productFamily>() && HeapfulSupportedMatch::isMatched<productFamily>();
+    }
+};
+
+HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingFillThenMarkCmdChainingProperly, HeapfullCbProfilingEventMatch) {
+    auto immCmdList0 = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto event = createEvents<FamilyType>(1, true);
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 128, 128, &deviceAlloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    uint32_t hostCopyData = 0;
+    CmdListMemoryCopyParams copyParams = {};
+    immCmdList0->appendMemoryFill(deviceAlloc, &hostCopyData, 4, 4, events[0].get(), 0, nullptr, copyParams);
+
+    EXPECT_TRUE(immCmdList0->latestOperationHasHeapfullCbEventWithProfiling);
+    EXPECT_FALSE(immCmdList0->latestOperationRequiredNonWalkerInOrderCmdsChaining);
+
+    context->freeMem(deviceAlloc);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingMemcpyThenMarkCmdChainingProperly, HeapfullCbProfilingEventMatch) {
+    auto immCmdList0 = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto event = createEvents<FamilyType>(1, true);
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 128, 128, &deviceAlloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    uint32_t hostCopyData = 0;
+    CmdListMemoryCopyParams copyParams = {};
+    immCmdList0->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, events[0].get(), 0, nullptr, copyParams);
+
+    EXPECT_TRUE(immCmdList0->latestOperationHasHeapfullCbEventWithProfiling);
+    EXPECT_FALSE(immCmdList0->latestOperationRequiredNonWalkerInOrderCmdsChaining);
+
+    context->freeMem(deviceAlloc);
+}
+
 HWTEST_F(InOrderCmdListTests, givenCounterBasedEventsWhenHostWaitsAreCalledThenLatestWaitIsRecorded) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto eventPool = createEvents<FamilyType>(2, false);

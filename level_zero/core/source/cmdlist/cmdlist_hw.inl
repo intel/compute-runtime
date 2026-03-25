@@ -2241,7 +2241,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
 
         if (!isCopyOnlyEnabled || inOrderCopyOnlySignalingAllowed) {
-            bool nonWalkerInOrderCmdChaining = !isCopyOnlyEnabled && isInOrderNonWalkerSignalingRequired(signalEvent) && !emitPipeControl;
+            bool nonWalkerInOrderCmdChaining = !isCopyOnlyEnabled && isInOrderNonWalkerSignalingRequired(signalEvent) && !emitPipeControl && !this->latestOperationHasHeapfullCbEventWithProfiling;
             handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdChaining, isCopyOnlyEnabled);
         }
     } else {
@@ -2897,7 +2897,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnly(false));
             appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
         } else {
-            nonWalkerInOrderCmdChaining = isInOrderNonWalkerSignalingRequired(signalEvent);
+            nonWalkerInOrderCmdChaining = isInOrderNonWalkerSignalingRequired(signalEvent) && !this->latestOperationHasHeapfullCbEventWithProfiling;
         }
     }
     handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdChaining, false);
