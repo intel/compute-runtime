@@ -26,7 +26,6 @@ struct OOQTaskTypedTestsMt : public HelloWorldTest<OOQFixtureFactory> {
 typedef OOQTaskTypedTestsMt<EnqueueKernelHelper<>> OOQTaskTestsMt;
 
 TEST_F(OOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTaskCountIsIncrementedAndTaskLevelIsUnchanged) {
-    USE_REAL_FILE_SYSTEM();
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);

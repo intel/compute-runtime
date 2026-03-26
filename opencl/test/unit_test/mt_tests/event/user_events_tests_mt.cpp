@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,8 +70,6 @@ TEST_F(MockEventTests, GivenEventCreatedFromUserEventsThatIsNotSignaledThenDoNot
 }
 
 TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsCompletedAfterBlockedPathIsChosenThenBlockingFlagDoesNotCauseStall) {
-    USE_REAL_FILE_SYSTEM();
-
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create());
     std::unique_ptr<char[]> dst(new char[srcBuffer->getSize()]);
 
@@ -92,8 +90,6 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
 }
 
 TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsCompletedAfterUpdateFromCompletionStampThenBlockingFlagDoesNotCauseStall) {
-    USE_REAL_FILE_SYSTEM();
-
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create());
     std::unique_ptr<char[]> dst(new char[srcBuffer->getSize()]);
 
@@ -120,7 +116,6 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
 }
 
 HWTEST_F(EventTests, givenOneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFinishIsCalledThenItWaitsForCorrectTaskCount) {
-    USE_REAL_FILE_SYSTEM();
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create());
     std::unique_ptr<char[]> dst(new char[srcBuffer->getSize()]);

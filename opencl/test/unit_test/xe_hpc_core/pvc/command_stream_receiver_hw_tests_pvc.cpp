@@ -162,8 +162,6 @@ using PvcMultiRootDeviceCommandStreamReceiverBufferTests = MultiRootDeviceFixtur
 HWTEST_EXCLUDE_PRODUCT(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToEnqueueWithSubmissionThenCsIsWaitingForEventsFromPreviousDevices, IGFX_PVC);
 
 PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMultiRootDeviceEnvironmentOnPvcWhenTheyArePassedToEnqueueWithSubmissionThenCsIsWaitingForEventsFromPreviousDevices) {
-    USE_REAL_FILE_SYSTEM();
-
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     cl_int retVal = 0;
     size_t offset = 0;

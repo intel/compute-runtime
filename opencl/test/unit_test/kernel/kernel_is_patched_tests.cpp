@@ -20,7 +20,6 @@ using namespace NEO;
 class PatchedKernelTest : public ::testing::Test {
   public:
     void SetUp() override {
-        USE_REAL_FILE_SYSTEM();
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), rootDeviceIndex));
         context.reset(new MockContext(device.get()));
         program.reset(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));

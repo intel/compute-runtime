@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,6 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     using ProgramFixture::setUp;
 
     void setUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr) {
-        FORBID_REAL_FILE_SYSTEM_CALLS();
         setUp(pDevice, kernelFilenameStr, kernelNameStr, nullptr);
     }
     void setUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr, const char *options) {
@@ -138,7 +137,5 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     MockMultiDeviceKernel *pMultiDeviceKernel = nullptr;
     MockKernel *pKernel = nullptr;
     MockContext *pContext = nullptr;
-
-    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 } // namespace NEO

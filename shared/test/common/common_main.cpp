@@ -484,18 +484,26 @@ int main(int argc, char **argv) {
             return sigOut;
         }
 
-        std::string testFilename;
         {
             USE_REAL_FILE_SYSTEM();
-            for (std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
-                                                     "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16"}) {
+            for (const std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
+                                                           "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16",
+                                                           "stateless_copy_buffer", "indirect_access_kernel", "system_memfence",
+                                                           "simple_spill_fill_kernel", "spill_fill_kernel_large_grf", "simple_kernel_large_grf"}) {
+                std::string testFilename;
                 retrieveBinaryKernelFilename(testFilename, binaryFileCommonName + "_", ".bin", "");
                 size_t retFileNsize = 0;
                 auto retFiledata = NEO::loadDataFromFile(testFilename.c_str(), retFileNsize);
                 if (retFiledata) {
+                    if (retFileNsize == 0) {
+                        std::cout << "ERROR: kernel file is empty: " << testFilename << "\n";
+                        return -1;
+                    }
                     virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
-                    UNRECOVERABLE_IF(retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size());
-                    DEBUG_BREAK_IF(0 == retFileNsize);
+                    if (retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size()) {
+                        std::cout << "ERROR: failed to load kernel file: " << testFilename << "\n";
+                        return -1;
+                    }
                 }
             }
             std::string kernelOptions = CompilerOptions::kernelOptions;

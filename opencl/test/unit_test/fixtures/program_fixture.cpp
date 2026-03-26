@@ -82,7 +82,6 @@ void ProgramFixture::createProgramFromBinary(Context *pContext,
                                              const std::string &binaryFileName,
                                              cl_int &retVal,
                                              const std::string &options) {
-    USE_REAL_FILE_SYSTEM();
     retVal = CL_SUCCESS;
 
     std::string testFile;
@@ -91,11 +90,6 @@ void ProgramFixture::createProgramFromBinary(Context *pContext,
     knownSource = loadDataFromVirtualFileTestKernelsOnly(
         testFile.c_str(),
         knownSourceSize);
-    if (!knownSource) {
-        knownSource = NEO::loadDataFromFile(
-            testFile.c_str(),
-            knownSourceSize);
-    }
     ASSERT_NE(0u, knownSourceSize);
     ASSERT_NE(nullptr, knownSource);
 

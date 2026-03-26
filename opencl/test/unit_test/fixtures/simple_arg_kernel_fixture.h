@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,7 +88,6 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
 
   protected:
     void setUp(ClDevice *device, Context *context) {
-        USE_REAL_FILE_SYSTEM();
         ProgramFixture::setUp();
 
         createProgramFromBinary(
