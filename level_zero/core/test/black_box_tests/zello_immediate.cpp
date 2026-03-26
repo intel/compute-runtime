@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     deviceDesc.ordinal = 0;
     deviceDesc.flags = 0;
     deviceDesc.pNext = nullptr;
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &deviceBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, 1, device, &deviceBuffer));
 
     for (size_t i = 0; i < allocSize; ++i) {
         hostBuffer[i] = static_cast<char>(i + 1);
