@@ -531,15 +531,11 @@ class CompilerInterfaceOclElfCacheTest : public ::testing::Test, public Compiler
     using CompilerCacheHelper::processPackedCacheBinary;
 
     void SetUp() override {
-        hwInfoBackup.reset(new VariableBackup<HardwareInfo>(defaultHwInfo.get()));
         std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
         cache->config.enabled = true;
         compilerInterface = std::make_unique<MockCompilerInterface>();
         bool initRet = compilerInterface->initialize(std::move(cache), true);
         ASSERT_TRUE(initRet);
-
-        auto compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
-        compilerProductHelper->adjustHwInfoForIgc(*defaultHwInfo);
 
         mockCompilerCache = static_cast<CompilerCacheMock *>(compilerInterface->cache.get());
 
