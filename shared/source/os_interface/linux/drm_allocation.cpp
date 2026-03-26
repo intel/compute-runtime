@@ -338,27 +338,19 @@ int DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHan
 
 int DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence) {
     int retVal = 0;
-    if (this->storageInfo.getNumBanks() > 1) {
-        auto &bos = this->getBOs();
-        if (this->storageInfo.tileInstanced) {
-            auto bo = bos[vmHandleId];
+    auto &bos = this->getBOs();
+    if (this->storageInfo.getNumBanks() > 1 && this->storageInfo.tileInstanced) {
+        auto bo = bos[vmHandleId];
+        retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
+        if (retVal) {
+            return retVal;
+        }
+    } else {
+        for (auto bo : bos) {
             retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
             if (retVal) {
                 return retVal;
             }
-        } else {
-            for (auto bo : bos) {
-                retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
-                if (retVal) {
-                    return retVal;
-                }
-            }
-        }
-    } else {
-        auto bo = this->getBO();
-        retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
-        if (retVal) {
-            return retVal;
         }
     }
     return 0;

@@ -941,6 +941,67 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOFailsWithMultipleMem
     mm->freeGraphicsMemory(allocation);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenSingleMemoryBankWhenBindBOsCalledThenAllBOsFromGetBOsAreIterated) {
+    auto size = 1024u;
+    auto bo = this->createBO(size);
+    BufferObjects bos{bo};
+
+    auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
+    EXPECT_EQ(allocation->storageInfo.getNumBanks(), 1u);
+    EXPECT_FALSE(allocation->storageInfo.tileInstanced);
+
+    auto res = allocation->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false, false);
+    EXPECT_EQ(res, 0);
+    EXPECT_EQ(allocation->bindBOCalled, static_cast<uint32_t>(allocation->getBOs().size()));
+
+    mm->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMultipleMemoryBanksNotTileInstancedWhenBindBOsCalledThenAllBOsAreIterated) {
+    auto size = 1024u;
+    auto bo = this->createBO(size);
+    auto bo2 = this->createBO(size);
+    BufferObjects bos{bo, bo2};
+
+    auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
+    allocation->storageInfo.memoryBanks = 0b11;
+    allocation->storageInfo.tileInstanced = false;
+    EXPECT_EQ(allocation->storageInfo.getNumBanks(), 2u);
+
+    auto res = allocation->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false, false);
+    EXPECT_EQ(res, 0);
+    EXPECT_EQ(allocation->bindBOCalled, static_cast<uint32_t>(allocation->getBOs().size()));
+
+    mm->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenSingleBankAndMultipleBanksNotTileInstancedWhenBindBOsCalledThenBindBOCalledOncePerBO) {
+    auto size = 1024u;
+
+    auto bo1 = this->createBO(size);
+    BufferObjects bosSingle{bo1};
+    auto allocationSingle = new MockDrmAllocationBindBO(0, AllocationType::unknown, bosSingle, nullptr, 0u, size, MemoryPool::localMemory);
+    EXPECT_EQ(allocationSingle->storageInfo.getNumBanks(), 1u);
+    allocationSingle->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false, false);
+    auto singleBankCallCount = allocationSingle->bindBOCalled;
+
+    auto bo2 = this->createBO(size);
+    auto bo3 = this->createBO(size);
+    BufferObjects bosMulti{bo2, bo3};
+    auto allocationMulti = new MockDrmAllocationBindBO(0, AllocationType::unknown, bosMulti, nullptr, 0u, size, MemoryPool::localMemory);
+    allocationMulti->storageInfo.memoryBanks = 0b11;
+    allocationMulti->storageInfo.tileInstanced = false;
+    EXPECT_EQ(allocationMulti->storageInfo.getNumBanks(), 2u);
+    allocationMulti->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false, false);
+    auto multiBankCallCount = allocationMulti->bindBOCalled;
+
+    EXPECT_EQ(singleBankCallCount, static_cast<uint32_t>(allocationSingle->getBOs().size()));
+    EXPECT_EQ(multiBankCallCount, static_cast<uint32_t>(allocationMulti->getBOs().size()));
+
+    mm->freeGraphicsMemory(allocationSingle);
+    mm->freeGraphicsMemory(allocationMulti);
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithSingleBufferObjectWhenMakeResidentBufferObjectsIsCalledThenTheBufferObjectIsMadeResident) {
     auto size = 1024u;
     auto bo = this->createBO(size);
