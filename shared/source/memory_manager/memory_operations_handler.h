@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class MemoryOperationsHandler {
     virtual ~MemoryOperationsHandler() = default;
 
     virtual MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) = 0;
+    virtual MemoryOperationsStatus decompress(Device *device, GraphicsAllocation &gfxAllocation) = 0;
     virtual MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) = 0;
     virtual MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) = 0;
     virtual MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) = 0;

@@ -18,6 +18,7 @@ class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
 
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) override;
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override;
+    MemoryOperationsStatus decompress(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override;

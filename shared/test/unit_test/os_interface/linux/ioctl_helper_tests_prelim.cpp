@@ -283,7 +283,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingFlagsForVmBindThenProperValuesAreRetur
             for (auto &bindMakeResident : ::testing::Bool()) {
                 for (auto &bindLockedMemory : ::testing::Bool()) {
                     for (auto &readOnlyResource : ::testing::Bool()) {
-                        auto flags = ioctlHelper.getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLockedMemory, readOnlyResource);
+                        auto flags = ioctlHelper.getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLockedMemory, readOnlyResource, false);
                         if (bindCapture) {
                             EXPECT_EQ(PRELIM_I915_GEM_VM_BIND_CAPTURE, (flags & PRELIM_I915_GEM_VM_BIND_CAPTURE));
                         }

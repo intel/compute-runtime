@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -174,6 +174,9 @@ class BufferObject {
     bool isReadOnlyGpuResource() {
         return readOnlyGpuResource;
     }
+    bool isResourceDecompressRequired() {
+        return requiresResourceDecompress;
+    }
 
     void setAsReadOnly(bool isReadOnly) {
         readOnlyGpuResource = isReadOnly;
@@ -181,6 +184,9 @@ class BufferObject {
 
     void requireImmediateBinding(bool required) {
         requiresImmediateBinding = required;
+    }
+    void requireResourceDecompress(bool required) {
+        requiresResourceDecompress = required;
     }
 
     bool isExplicitResidencyRequired() {
@@ -288,6 +294,7 @@ class BufferObject {
     bool boHandleShared = false;
     bool allowCapture = false;
     bool requiresImmediateBinding = false;
+    bool requiresResourceDecompress = false;
     bool requiresExplicitResidency = false;
     bool requiresLocked = false;
     bool chunked = false;

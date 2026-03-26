@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,8 @@ struct MockIoctlHelperXeDebug : IoctlHelperXe {
     using IoctlHelperXe::getEudebugExtPropertyValue;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::tileIdToGtId;
+
+    bool isVmBindDecompressAvailable(uint32_t vmId) override { return false; }
 };
 
 inline constexpr int testValueVmId = 0x5764;
@@ -57,7 +59,7 @@ struct DrmMockXeDebug : public DrmMockCustom {
         drm->isVmBindAvailable();
         drm->reset();
 
-        drm->ioctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+        drm->ioctlHelper = std::make_unique<MockIoctlHelperXeDebug>(*drm);
 
         auto xeQueryConfig = reinterpret_cast<drm_xe_query_config *>(drm->queryConfig);
         xeQueryConfig->num_params = 6;

@@ -449,6 +449,11 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isVmBindResourceDecompressionSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDisableScratchPagesRequiredForDebugger() const {
     return true;
 }

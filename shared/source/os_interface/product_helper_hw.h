@@ -97,6 +97,7 @@ class ProductHelperHw : public ProductHelper {
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
     bool adjustDispatchAllRequired(const HardwareInfo &hwInfo) const override;
     bool isVmBindPatIndexProgrammingSupported() const override;
+    bool isVmBindResourceDecompressionSupported() const override;
     bool isIpSamplingSupported(const HardwareInfo &hwInfo) const override;
     bool isGrfNumReportedWithScm() const override;
     bool isThreadArbitrationPolicyReportedWithScm() const override;

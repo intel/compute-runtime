@@ -90,6 +90,10 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinDevice(Arra
     return MemoryOperationsStatus::success;
 }
 
+MemoryOperationsStatus AubMemoryOperationsHandler::decompress(Device *device, GraphicsAllocation &gfxAllocation) {
+    return MemoryOperationsStatus::unsupported;
+}
+
 MemoryOperationsStatus AubMemoryOperationsHandler::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     return makeResident(device, gfxAllocations, false, false);
 }

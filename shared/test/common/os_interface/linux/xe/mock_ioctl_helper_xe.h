@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,8 @@ struct MockIoctlHelperXe : IoctlHelperXe {
         }
         return IoctlHelperXe::ioctl(fd, request, arg);
     }
+
+    bool isVmBindDecompressAvailable(uint32_t vmId) override { return false; }
 
     void testLog(auto &&...args) {
         XELOG(args...);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,8 +40,6 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
     void whenShouldQueryPeerAccessCalledThenFalseReturned();
     void whenShouldQueryPeerAccessCalledThenTrueReturned();
-    void whenIsUsmCompressionSupportedOnPeerAccessCalledThenFalseReturned();
-    void whenIsUsmCompressionSupportedOnPeerAccessCalledThenTrueReturned();
     void whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
     void whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned();
     void whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,10 @@ uint64_t L0GfxCoreHelperHw<Family>::getOaTimestampValidBits() const {
 template <typename Family>
 ze_record_replay_graph_exp_flags_t L0GfxCoreHelperHw<Family>::getPlatformRecordReplayGraphCapabilities() const {
     return 0u;
+}
+
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, DriverHandle *driverHandle) const {
 }
 
 } // namespace L0

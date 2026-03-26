@@ -510,7 +510,7 @@ std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<
     return extensionsBuffer;
 }
 
-uint64_t IoctlHelperPrelim20::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLockedMemory, bool readOnlyResource) {
+uint64_t IoctlHelperPrelim20::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLockedMemory, bool readOnlyResource, bool resolveResource) {
     uint64_t flags = 0u;
     if (bindCapture) {
         flags |= PRELIM_I915_GEM_VM_BIND_CAPTURE;

@@ -46,6 +46,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool isSetPairAvailable() override;
     bool isChunkingAvailable() override;
     bool isVmBindAvailable() override;
+    bool isVmBindDecompressAvailable(uint32_t vmId) override;
     int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) override;
     uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) override;
     CacheRegion closAlloc(CacheLevel cacheLevel) override;
@@ -69,7 +70,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool getGemTiling(void *setTiling) override;
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint64_t cookie) override;
-    uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource) override;
+    uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource, bool resolveResource) override;
     virtual std::string xeGetBindFlagNames(int bindFlags);
     int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
@@ -147,6 +148,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool is2MBSizeAlignmentRequired(AllocationType allocationType) const override;
     uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override;
     EuDebugInterfaceType getEuDebugInterfaceType() override;
+    virtual uint32_t getVmBindDecompressFlag() const;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
@@ -202,6 +204,8 @@ class IoctlHelperXe : public IoctlHelper {
     std::mutex gemCloseLock;
     mutable std::once_flag checkDeferBackingOnce;
     mutable bool deferBackingEnabled = false;
+    mutable std::once_flag checkVmBindDecompressOnce;
+    mutable bool vmBindDecompressAvailable = false;
     std::vector<BindInfo> bindInfo;
     std::vector<uint32_t> hwconfig;
     std::vector<XeDrm::drm_xe_engine_class_instance> contextParamEngine;
