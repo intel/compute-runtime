@@ -15,8 +15,6 @@
 #include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/path.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -36,7 +34,6 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/test/unit_test/built_ins/built_ins_file_names.h"
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
@@ -63,12 +60,6 @@ class BuiltInTests
     using ContextFixture::setUp;
 
   public:
-    BuiltInTests() {
-        // reserving space here to avoid the appearance of a memory management
-        // leak being reported
-        allBuiltIns.reserve(5000);
-    }
-
     void SetUp() override {
         debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::builtin));
         ClDeviceFixture::setUp();
@@ -82,7 +73,6 @@ class BuiltInTests
     }
 
     void TearDown() override {
-        allBuiltIns.clear();
         auto builders = pClDevice->peekBuilders();
         if (builders) {
             for (uint32_t i = 0; i < static_cast<uint32_t>(BuiltIn::Group::count); ++i) {
@@ -92,27 +82,6 @@ class BuiltInTests
         BuiltInFixture::tearDown();
         ContextFixture::tearDown();
         ClDeviceFixture::tearDown();
-    }
-
-    void appendBuiltInStringFromFile(std::string builtInFile, size_t &size) {
-        std::string src;
-        auto pData = NEO::loadDataFromFile(
-            builtInFile.c_str(),
-            size);
-
-        ASSERT_NE(nullptr, pData);
-
-        src = (const char *)pData.get();
-        size_t start = src.find("R\"===(");
-        size_t stop = src.find(")===\"");
-
-        // assert that pattern was found
-        ASSERT_NE(std::string::npos, start);
-        ASSERT_NE(std::string::npos, stop);
-
-        start += strlen("R\"===(");
-        size = stop - start;
-        allBuiltIns.append(src, start, size);
     }
 
     bool compareBuiltinOpParams(const BuiltIn::OpParams &left,
@@ -128,7 +97,6 @@ class BuiltInTests
 
     BuiltIn::Group copyBufferToBufferBuiltin;
     DebugManagerStateRestore restore;
-    std::string allBuiltIns;
 };
 
 struct AuxBuiltInTests : BuiltInTests, public ::testing::WithParamInterface<KernelObjForAuxTranslation::Type> {
@@ -233,44 +201,6 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTransla
         sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
         surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
         EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
-    }
-}
-
-TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
-    USE_REAL_FILE_SYSTEM();
-    for (auto supportsImages : ::testing::Bool()) {
-        allBuiltIns.clear();
-        size_t size = 0;
-
-        for (auto &fileName : getBuiltInFileNames(supportsImages)) {
-            appendBuiltInStringFromFile(sharedBuiltinsDir + "/" + fileName, size);
-            ASSERT_NE(0u, size);
-        }
-
-        // convert /r/n to /n
-        size_t startPos = 0;
-        while ((startPos = allBuiltIns.find("\r\n", startPos)) != std::string::npos) {
-            allBuiltIns.replace(startPos, 2, "\n");
-        }
-
-        // convert /r to /n
-        startPos = 0;
-        while ((startPos = allBuiltIns.find("\r", startPos)) != std::string::npos) {
-            allBuiltIns.replace(startPos, 1, "\n");
-        }
-
-        uint64_t hash = Hash::hash(allBuiltIns.c_str(), allBuiltIns.length());
-        auto hashName = getBuiltInHashFileName(hash, supportsImages);
-
-        // First fail, if we are inconsistent
-        EXPECT_EQ(true, NEO::fileExists(hashName)) << "**********\nBuilt in kernels need to be regenerated for the mock compilers!\n**********";
-
-        // then write to file if needed
-#define GENERATE_NEW_HASH_FOR_BUILT_INS 0
-#if GENERATE_NEW_HASH_FOR_BUILT_INS
-        std::cout << "writing builtins to file: " << hashName << std::endl;
-        NEO::writeDataToFile(hashName.c_str(), allBuiltIns);
-#endif
     }
 }
 

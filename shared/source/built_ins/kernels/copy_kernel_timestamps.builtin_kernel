@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-R"===(
 void SetDstData(__global ulong* dst, uint currentOffset, ulong contextStart, ulong globalStart, ulong contextEnd, ulong globalEnd, uint useOnlyGlobalTimestamps) {
     dst[currentOffset] = globalStart;
     dst[currentOffset + 1] = globalEnd;
@@ -109,4 +108,3 @@ __kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __glob
 
     SetDstData(dst, currentOffset, contextStart, globalStart, contextEnd, globalEnd, useOnlyGlobalTimestamps);
 }
-)==="

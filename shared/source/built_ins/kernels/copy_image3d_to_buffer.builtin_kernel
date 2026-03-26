@@ -5,8 +5,6 @@
  *
  */
 
-R"===(
-
 __kernel void CopyImage3dToBufferBytes(__read_only image3d_t input,
                                        __global uchar *dst,
                                        int4 srcOffset,
@@ -232,4 +230,3 @@ __kernel void CopyImage3dToBuffer16BytesAligned(__read_only image3d_t input,
 
     dst[(DstOffset >> 4) + x] = c;
 }
-)==="

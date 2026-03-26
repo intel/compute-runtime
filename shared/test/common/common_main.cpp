@@ -498,6 +498,39 @@ int main(int argc, char **argv) {
                     DEBUG_BREAK_IF(0 == retFileNsize);
                 }
             }
+            std::string kernelOptions = CompilerOptions::kernelOptions;
+            std::replace(kernelOptions.begin(), kernelOptions.end(), ' ', '_');
+            std::string kernelTypeOptions;
+            if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
+                kernelTypeOptions = std::string("-heapless_") + CompilerOptions::kernelStatelessOptions;
+                std::replace(kernelTypeOptions.begin(), kernelTypeOptions.end(), ' ', '_');
+            }
+            auto loadBuiltInsKernels = [&](const std::string &name) -> bool {
+                for (const std::string &opts : {options, kernelOptions, kernelTypeOptions}) {
+                    for (const std::string &extension : {std::string(".spv"), std::string(".bin")}) {
+                        std::string filename;
+                        retrieveBinaryKernelFilename(filename, name + "_", extension, opts);
+                        size_t retFileNsize = 0;
+                        auto retFiledata = NEO::loadDataFromFile(filename.c_str(), retFileNsize);
+                        if (retFiledata) {
+                            if (retFileNsize == 0) {
+                                std::cout << "ERROR: built-in kernel file is empty: " << filename << "\n";
+                                return false;
+                            }
+                            virtualFileListTestKernelsOnly[filename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
+                            if (retFileNsize != virtualFileListTestKernelsOnly[filename].str().size()) {
+                                std::cout << "ERROR: failed to load built-in kernel file: " << filename << "\n";
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            };
+            if (!loadBuiltInsKernels(KernelBinaryHelper::BUILT_INS) ||
+                !loadBuiltInsKernels(KernelBinaryHelper::BUILT_INS_WITH_IMAGES)) {
+                return -1;
+            }
         }
 
         retVal = RUN_ALL_TESTS();

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-R"===(
 __kernel void FillImage2d(
     __write_only image2d_t output,
     uint4 color,
@@ -16,4 +15,3 @@ __kernel void FillImage2d(
     const int2 dstCoord = (int2)(x, y) + (int2)(dstOffset.x, dstOffset.y);
     write_imageui(output, dstCoord, color);
 }
-)==="

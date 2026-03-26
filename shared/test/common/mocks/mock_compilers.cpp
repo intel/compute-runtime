@@ -176,7 +176,13 @@ std::unique_ptr<unsigned char[]> loadVirtualBinaryFile(StrT &&fileName, size_t &
     std::filesystem::path filePath = std::forward<StrT>(fileName);
     std::string fileNameWithExtension = filePath.filename().string();
     if (!virtualFileExists(fileNameWithExtension)) {
-        return loadBinaryFile(fileName, fileSize);
+        auto kernelData = loadDataFromVirtualFileTestKernelsOnly(filePath.string().c_str(), fileSize);
+        if (kernelData) {
+            std::unique_ptr<unsigned char[]> ucharData(new unsigned char[fileSize]);
+            std::memcpy(ucharData.get(), kernelData.get(), fileSize);
+            return ucharData;
+        }
+        return loadBinaryFile(filePath.string(), fileSize);
     }
 
     std::unique_ptr<char[]> charData = loadDataFromVirtualFile(fileNameWithExtension.c_str(), fileSize);

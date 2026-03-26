@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-R"===(
 #pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
 
 __kernel void CopyImage3dToImage3d(
@@ -67,4 +66,3 @@ __kernel void CopyImage1dBufferToImage1dBuffer(
     const uint4 c = read_imageui(input, srcCoord.x);
     write_imageui(output, dstCoord.x, c);
 }
-)==="

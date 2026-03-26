@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-R"===(
 #pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
 
 __kernel void FillImage3d(
@@ -19,4 +18,3 @@ __kernel void FillImage3d(
     const int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     write_imageui(output, dstCoord, color);
 }
-)==="

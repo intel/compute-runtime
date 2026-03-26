@@ -5,7 +5,6 @@
  *
  */
 
-R"===(
 #ifdef USE_LSC_INTRINSICS_WB
 void __builtin_IB_lsc_store_global_uint4(__global uint4 *base, int immElemOff, uint4 val, int cacheOpt);
 #endif
@@ -20,4 +19,3 @@ __kernel void fullCopy(__global const uint* src, __global uint* dst) {
     vstore4(loaded, gid, dst);
 #endif
 }
-)==="

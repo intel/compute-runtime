@@ -52,6 +52,7 @@ function(compile_kernels_gen device revision_id platform_name use_stateless use_
       endif()
 
       list(APPEND __ocloc__options__ ${SELECTED_KERNEL_TYPES})
+      list(APPEND __ocloc__options__ "-I ${NEO_SOURCE_DIR}/shared/source/built_ins/kernels")
 
       add_custom_command(
                          OUTPUT ${output_files}

@@ -1,11 +1,14 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/helpers/kernel_binary_helper.h"
+
+const std::string KernelBinaryHelper::BUILT_INS("all_builtins");
+const std::string KernelBinaryHelper::BUILT_INS_WITH_IMAGES("all_builtins_with_images");
 
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"

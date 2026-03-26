@@ -12,8 +12,7 @@
 
 namespace NEO {
 
-static constexpr const char copyBufferToBufferSrc[] =
-#include "shared/source/built_ins/kernels/copy_buffer_to_buffer.builtin_kernel"
+static constexpr const char copyBufferToBufferSrc[] = R"===(@COPY_BUFFER_TO_BUFFER_SRC@)==="
     ;
 static constexpr size_t copyBufferToBufferSrcSize = sizeof(copyBufferToBufferSrc);
 
@@ -25,8 +24,7 @@ static RegisterEmbeddedResource registerCopyBufferToBufferSrc(
     copyBufferToBufferSrc,
     copyBufferToBufferSrcSize);
 
-static constexpr const char copyBufferToBufferStatelessSrc[] =
-#include "shared/source/built_ins/kernels/copy_buffer_to_buffer.builtin_kernel"
+static constexpr const char copyBufferToBufferStatelessSrc[] = R"===(@COPY_BUFFER_TO_BUFFER_SRC@)==="
     ;
 static constexpr size_t copyBufferToBufferStatelessSrcSize = sizeof(copyBufferToBufferStatelessSrc);
 
@@ -38,8 +36,7 @@ static RegisterEmbeddedResource registerCopyBufferToBufferStatelessSrc(
     copyBufferToBufferStatelessSrc,
     copyBufferToBufferStatelessSrcSize);
 
-static constexpr const char copyBufferToBufferStatelessHeaplessSrc[] =
-#include "shared/source/built_ins/kernels/copy_buffer_to_buffer.builtin_kernel"
+static constexpr const char copyBufferToBufferStatelessHeaplessSrc[] = R"===(@COPY_BUFFER_TO_BUFFER_SRC@)==="
     ;
 static constexpr size_t copyBufferToBufferStatelessHeaplessSrcSize = sizeof(copyBufferToBufferStatelessHeaplessSrc);
 
@@ -51,8 +48,7 @@ static RegisterEmbeddedResource registerCopyBufferToBufferStatelessHeaplessSrc(
     copyBufferToBufferStatelessHeaplessSrc,
     copyBufferToBufferStatelessHeaplessSrcSize);
 
-static constexpr const char copyBufferRectSrc[] =
-#include "shared/source/built_ins/kernels/copy_buffer_rect.builtin_kernel"
+static constexpr const char copyBufferRectSrc[] = R"===(@COPY_BUFFER_RECT_SRC@)==="
     ;
 static constexpr size_t copyBufferRectSrcSize = sizeof(copyBufferRectSrc);
 
@@ -64,8 +60,7 @@ static RegisterEmbeddedResource registerCopyBufferRectSrc(
     copyBufferRectSrc,
     copyBufferRectSrcSize);
 
-static constexpr const char copyBufferRectStatelessSrc[] =
-#include "shared/source/built_ins/kernels/copy_buffer_rect.builtin_kernel"
+static constexpr const char copyBufferRectStatelessSrc[] = R"===(@COPY_BUFFER_RECT_SRC@)==="
     ;
 static constexpr size_t copyBufferRectStatelessSrcSize = sizeof(copyBufferRectStatelessSrc);
 
@@ -77,8 +72,7 @@ static RegisterEmbeddedResource registerCopyBufferRectStatelessSrc(
     copyBufferRectStatelessSrc,
     copyBufferRectStatelessSrcSize);
 
-static constexpr const char copyBufferRectStatelessHeaplessSrc[] =
-#include "shared/source/built_ins/kernels/copy_buffer_rect.builtin_kernel"
+static constexpr const char copyBufferRectStatelessHeaplessSrc[] = R"===(@COPY_BUFFER_RECT_SRC@)==="
     ;
 static constexpr size_t copyBufferRectStatelessHeaplessSrcSize = sizeof(copyBufferRectStatelessHeaplessSrc);
 
@@ -90,8 +84,7 @@ static RegisterEmbeddedResource registerCopyBufferRectStatelessHeaplessSrc(
     copyBufferRectStatelessHeaplessSrc,
     copyBufferRectStatelessHeaplessSrcSize);
 
-static constexpr const char fillBufferSrc[] =
-#include "shared/source/built_ins/kernels/fill_buffer.builtin_kernel"
+static constexpr const char fillBufferSrc[] = R"===(@FILL_BUFFER_SRC@)==="
     ;
 static constexpr size_t fillBufferSrcSize = sizeof(fillBufferSrc);
 
@@ -103,8 +96,7 @@ static RegisterEmbeddedResource registerFillBufferSrc(
     fillBufferSrc,
     fillBufferSrcSize);
 
-static constexpr const char fillBufferStatelessSrc[] =
-#include "shared/source/built_ins/kernels/fill_buffer.builtin_kernel"
+static constexpr const char fillBufferStatelessSrc[] = R"===(@FILL_BUFFER_SRC@)==="
     ;
 static constexpr size_t fillBufferStatelessSrcSize = sizeof(fillBufferStatelessSrc);
 
@@ -116,8 +108,7 @@ static RegisterEmbeddedResource registerFillBufferStatelessSrc(
     fillBufferStatelessSrc,
     fillBufferStatelessSrcSize);
 
-static constexpr const char fillBufferStatelessHeaplessSrc[] =
-#include "shared/source/built_ins/kernels/fill_buffer.builtin_kernel"
+static constexpr const char fillBufferStatelessHeaplessSrc[] = R"===(@FILL_BUFFER_SRC@)==="
     ;
 static constexpr size_t fillBufferStatelessHeaplessSrcSize = sizeof(fillBufferStatelessHeaplessSrc);
 
@@ -129,8 +120,7 @@ static RegisterEmbeddedResource registerFillBufferStatelessHeaplessSrc(
     fillBufferStatelessHeaplessSrc,
     fillBufferStatelessHeaplessSrcSize);
 
-static constexpr const char copyBufferToImage3dSrc[] =
-#include "shared/source/built_ins/kernels/copy_buffer_to_image3d.builtin_kernel"
+static constexpr const char copyBufferToImage3dSrc[] = R"===(@COPY_BUFFER_TO_IMAGE3D_SRC@)==="
     ;
 static constexpr size_t copyBufferToImage3dSrcSize = sizeof(copyBufferToImage3dSrc);
 
@@ -142,8 +132,7 @@ static RegisterEmbeddedResource registerCopyBufferToImage3dSrc(
     copyBufferToImage3dSrc,
     copyBufferToImage3dSrcSize);
 
-static constexpr const char copyBufferToImage3dStatelessSrc[] =
-#include "shared/source/built_ins/kernels/copy_buffer_to_image3d.builtin_kernel"
+static constexpr const char copyBufferToImage3dStatelessSrc[] = R"===(@COPY_BUFFER_TO_IMAGE3D_SRC@)==="
     ;
 static constexpr size_t copyBufferToImage3dStatelessSrcSize = sizeof(copyBufferToImage3dStatelessSrc);
 
@@ -155,8 +144,7 @@ static RegisterEmbeddedResource registerCopyBufferToImage3dStatelessSrc(
     copyBufferToImage3dStatelessSrc,
     copyBufferToImage3dStatelessSrcSize);
 
-static constexpr const char copyImage3dToBufferSrc[] =
-#include "shared/source/built_ins/kernels/copy_image3d_to_buffer.builtin_kernel"
+static constexpr const char copyImage3dToBufferSrc[] = R"===(@COPY_IMAGE3D_TO_BUFFER_SRC@)==="
     ;
 static constexpr size_t copyImage3dToBufferSrcSize = sizeof(copyImage3dToBufferSrc);
 
@@ -168,8 +156,7 @@ static RegisterEmbeddedResource registerCopyImage3dToBufferSrc(
     copyImage3dToBufferSrc,
     copyImage3dToBufferSrcSize);
 
-static constexpr const char copyImage3dToBufferStatelessSrc[] =
-#include "shared/source/built_ins/kernels/copy_image3d_to_buffer.builtin_kernel"
+static constexpr const char copyImage3dToBufferStatelessSrc[] = R"===(@COPY_IMAGE3D_TO_BUFFER_SRC@)==="
     ;
 static constexpr size_t copyImage3dToBufferStatelessSrcSize = sizeof(copyImage3dToBufferStatelessSrc);
 
@@ -181,8 +168,7 @@ static RegisterEmbeddedResource registerCopyImage3dToBufferStatelessSrc(
     copyImage3dToBufferStatelessSrc,
     copyImage3dToBufferStatelessSrcSize);
 
-static constexpr const char copyImageToImage1dSrc[] =
-#include "shared/source/built_ins/kernels/copy_image_to_image1d.builtin_kernel"
+static constexpr const char copyImageToImage1dSrc[] = R"===(@COPY_IMAGE_TO_IMAGE1D_SRC@)==="
     ;
 static constexpr size_t copyImageToImage1dSrcSize = sizeof(copyImageToImage1dSrc);
 
@@ -194,8 +180,7 @@ static RegisterEmbeddedResource registerCopyImageToImage1dSrc(
     copyImageToImage1dSrc,
     copyImageToImage1dSrcSize);
 
-static constexpr const char copyImageToImage2dSrc[] =
-#include "shared/source/built_ins/kernels/copy_image_to_image2d.builtin_kernel"
+static constexpr const char copyImageToImage2dSrc[] = R"===(@COPY_IMAGE_TO_IMAGE2D_SRC@)==="
     ;
 static constexpr size_t copyImageToImage2dSrcSize = sizeof(copyImageToImage2dSrc);
 
@@ -207,8 +192,7 @@ static RegisterEmbeddedResource registerCopyImageToImage2dSrc(
     copyImageToImage2dSrc,
     copyImageToImage2dSrcSize);
 
-static constexpr const char copyImageToImage3dSrc[] =
-#include "shared/source/built_ins/kernels/copy_image_to_image3d.builtin_kernel"
+static constexpr const char copyImageToImage3dSrc[] = R"===(@COPY_IMAGE_TO_IMAGE3D_SRC@)==="
     ;
 static constexpr size_t copyImageToImage3dSrcSize = sizeof(copyImageToImage3dSrc);
 
@@ -220,8 +204,7 @@ static RegisterEmbeddedResource registerCopyImageToImage3dSrc(
     copyImageToImage3dSrc,
     copyImageToImage3dSrcSize);
 
-static constexpr const char fillImage1dSrc[] =
-#include "shared/source/built_ins/kernels/fill_image1d.builtin_kernel"
+static constexpr const char fillImage1dSrc[] = R"===(@FILL_IMAGE1D_SRC@)==="
     ;
 static constexpr size_t fillImage1dSrcSize = sizeof(fillImage1dSrc);
 
@@ -233,8 +216,7 @@ static RegisterEmbeddedResource registerFillImage1dSrc(
     fillImage1dSrc,
     fillImage1dSrcSize);
 
-static constexpr const char fillImage2dSrc[] =
-#include "shared/source/built_ins/kernels/fill_image2d.builtin_kernel"
+static constexpr const char fillImage2dSrc[] = R"===(@FILL_IMAGE2D_SRC@)==="
     ;
 static constexpr size_t fillImage2dSrcSize = sizeof(fillImage2dSrc);
 
@@ -246,8 +228,7 @@ static RegisterEmbeddedResource registerFillImage2dSrc(
     fillImage2dSrc,
     fillImage2dSrcSize);
 
-static constexpr const char fillImage3dSrc[] =
-#include "shared/source/built_ins/kernels/fill_image3d.builtin_kernel"
+static constexpr const char fillImage3dSrc[] = R"===(@FILL_IMAGE3D_SRC@)==="
     ;
 static constexpr size_t fillImage3dSrcSize = sizeof(fillImage3dSrc);
 
@@ -259,8 +240,7 @@ static RegisterEmbeddedResource registerFillImage3dSrc(
     fillImage3dSrc,
     fillImage3dSrcSize);
 
-static constexpr const char auxTranslationSrc[] =
-#include "shared/source/built_ins/kernels/aux_translation.builtin_kernel"
+static constexpr const char auxTranslationSrc[] = R"===(@AUX_TRANSLATION_SRC@)==="
     ;
 static constexpr size_t auxTranslationSrcSize = sizeof(auxTranslationSrc);
 
@@ -272,8 +252,7 @@ static RegisterEmbeddedResource registerAuxTranslationSrc(
     auxTranslationSrc,
     auxTranslationSrcSize);
 
-static constexpr const char copyKernelTimestampsSrc[] =
-#include "shared/source/built_ins/kernels/copy_kernel_timestamps.builtin_kernel"
+static constexpr const char copyKernelTimestampsSrc[] = R"===(@COPY_KERNEL_TIMESTAMPS_SRC@)==="
     ;
 static constexpr size_t copyKernelTimestampsSrcSize = sizeof(copyKernelTimestampsSrc);
 
@@ -285,8 +264,7 @@ static RegisterEmbeddedResource registerCopyKernelTimestampsSrc(
     copyKernelTimestampsSrc,
     copyKernelTimestampsSrcSize);
 
-static constexpr const char fillImage1dBufferSrc[] =
-#include "shared/source/built_ins/kernels/fill_image1d_buffer.builtin_kernel"
+static constexpr const char fillImage1dBufferSrc[] = R"===(@FILL_IMAGE1D_BUFFER_SRC@)==="
     ;
 static constexpr size_t fillImage1dBufferSrcSize = sizeof(fillImage1dBufferSrc);
 
