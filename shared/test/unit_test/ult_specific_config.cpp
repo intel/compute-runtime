@@ -93,3 +93,6 @@ bool isChangeDirectoryRequired() {
 void addUltListener(::testing::TestEventListeners &listeners) {
     listeners.Append(new BaseUltConfigListener);
 }
+
+void populateApiSpecificVirtualFileList(const NEO::HardwareInfo &hwInfo) {
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,4 +54,7 @@ bool isChangeDirectoryRequired() {
 
 void addUltListener(::testing::TestEventListeners &listeners) {
     listeners.Append(new UltConfigListener);
+}
+
+void populateApiSpecificVirtualFileList(const NEO::HardwareInfo &hwInfo) {
 }

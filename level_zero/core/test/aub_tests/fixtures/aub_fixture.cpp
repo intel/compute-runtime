@@ -16,6 +16,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/tests_configuration.h"
@@ -111,8 +112,6 @@ void AUBFixtureL0::tearDown() {
 }
 
 ze_module_handle_t AUBFixtureL0::createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags, bool useSharedFile) {
-    USE_REAL_FILE_SYSTEM();
-
     ze_module_handle_t moduleHandle;
     std::string testFile;
     if (useSharedFile) {
@@ -122,7 +121,7 @@ ze_module_handle_t AUBFixtureL0::createModuleFromFile(const std::string &fileNam
     }
 
     size_t size = 0;
-    auto src = NEO::loadDataFromFile(testFile.c_str(), size);
+    auto src = loadDataFromVirtualFileTestKernelsOnly(testFile.c_str(), size);
 
     EXPECT_NE(0u, size);
     EXPECT_NE(nullptr, src);

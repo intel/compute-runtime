@@ -1,14 +1,26 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/tests_configuration.h"
 
 #include "level_zero/core/test/common/ult_config_listener_l0.h"
+
+#include <map>
+#include <sstream>
+#include <string>
+
+namespace NEO {
+extern std::map<std::string, std::stringstream> virtualFileListTestKernelsOnly;
+}
 
 struct _ze_driver_handle_t;
 
@@ -66,4 +78,27 @@ bool isChangeDirectoryRequired() {
 
 void addUltListener(::testing::TestEventListeners &listeners) {
     listeners.Append(new L0::UltConfigListenerL0);
+}
+
+void populateApiSpecificVirtualFileList(const NEO::HardwareInfo &hwInfo) {
+    auto loadApiSpecificKernel = [](const std::string &name) {
+        std::string testFilename;
+        retrieveBinaryKernelFilenameApiSpecific(testFilename, name + "_", ".bin");
+        size_t retFileNsize = 0;
+        auto retFiledata = NEO::loadDataFromFile(testFilename.c_str(), retFileNsize);
+        if (retFiledata && retFileNsize > 0) {
+            NEO::virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
+        }
+    };
+
+    for (const std::string name : {"test_kernel", "bindless_stateful_copy_buffer", "simple_spill_fill_kernel"}) {
+        loadApiSpecificKernel(name);
+    }
+
+    auto productHelper = NEO::ProductHelper::create(hwInfo.platform.eProductFamily);
+    auto releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
+    const auto supportedGrfSizes = productHelper->getSupportedNumGrfs(releaseHelper.get());
+    for (const auto grfSize : supportedGrfSizes) {
+        loadApiSpecificKernel("grf_" + std::to_string(grfSize) + "_kernel_variable_register_per_thread");
+    }
 }

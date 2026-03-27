@@ -94,6 +94,7 @@ bool isChangeDirectoryRequired();
 
 void addUltListener(::testing::TestEventListeners &listener);
 void cleanTestHelpers();
+void populateApiSpecificVirtualFileList(const NEO::HardwareInfo &hwInfo);
 
 bool generateRandomInput = false;
 extern std::optional<uint32_t> blitterMaskOverride;
@@ -539,6 +540,7 @@ int main(int argc, char **argv) {
                 !loadBuiltInsKernels(KernelBinaryHelper::BUILT_INS_WITH_IMAGES)) {
                 return -1;
             }
+            populateApiSpecificVirtualFileList(hwInfoForTests);
         }
 
         retVal = RUN_ALL_TESTS();
