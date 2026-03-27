@@ -18,7 +18,6 @@
     snprintf(buffer.get(), NEO::maxErrorDescriptionSize, format, __VA_ARGS__)
 
 namespace NEO {
-class Kernel;
 struct MultiDispatchInfo;
 class GraphicsAllocation;
 class MemoryManager;
