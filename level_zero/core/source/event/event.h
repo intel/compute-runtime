@@ -183,7 +183,7 @@ struct Event : _ze_event_handle_t {
 
     ze_result_t getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData);
 
-    static ze_result_t importCbAllocationsForIpcFor2WaySharing(Device &device, const NEO::InOrderExecEventData &importedInOrderExecEventData, NEO::GraphicsAllocation *&outDeviceAlloc, NEO::GraphicsAllocation *&outHostAlloc);
+    static ze_result_t importCbAllocationsForIpcFor2WaySharing(Device &device, const NEO::InOrderExecEventData &importedInOrderExecEventData, NEO::GraphicsAllocation *&outDeviceAlloc, NEO::GraphicsAllocation *&outHostAlloc, bool allowEventWithoutAssignedData);
 
     inline ze_event_handle_t toHandle() { return this; }
 
@@ -405,7 +405,7 @@ struct Event : _ze_event_handle_t {
 
     ze_result_t enableExtensions(const EventDescriptor &eventDescriptor);
     NEO::GraphicsAllocation *getExternalCounterAllocationFromAddress(uint64_t *address) const;
-    ze_result_t exportCbAllocationsFor2WayIpcSharing();
+    ze_result_t exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAssignedData);
     bool isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa) const;
     MOCKABLE_VIRTUAL uint64_t getCompletionTimeout() const { return completionTimeoutMs; }
 

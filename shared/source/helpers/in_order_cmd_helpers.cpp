@@ -366,8 +366,23 @@ void InOrderExecEventHelper::setHostAllocIpcHandle(uint64_t handle, size_t offse
     sharableEventDataHelper.eventDataPtr->hostIpcAllocOffset = offset;
 }
 
+void InOrderExecEventHelper::releaseImportedAllocations(NEO::MemoryManager &memoryManager) {
+    if (!hasImportedIpcAllocs) {
+        return;
+    }
+
+    if (this->deviceCounterAllocation) {
+        memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(this->deviceCounterAllocation);
+        this->deviceCounterAllocation = nullptr;
+    }
+    if (this->hostCounterAllocation && hostStorageDuplicated) {
+        memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(this->hostCounterAllocation);
+        this->hostCounterAllocation = nullptr;
+    }
+}
+
 void InOrderExecEventHelper::assignAllocationsFromImport(NEO::MemoryManager &memoryManager, NEO::GraphicsAllocation &deviceAlloc, NEO::GraphicsAllocation &hostAlloc) {
-    memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(this->deviceCounterAllocation);
+    releaseImportedAllocations(memoryManager);
 
     this->deviceCounterAllocation = &deviceAlloc;
     this->baseDeviceAddress = deviceAlloc.getGpuAddress() + sharableEventDataHelper.eventDataPtr->deviceIpcAllocOffset;
@@ -376,12 +391,16 @@ void InOrderExecEventHelper::assignAllocationsFromImport(NEO::MemoryManager &mem
         this->hostCounterAllocation = &hostAlloc;
         this->baseHostGpuAddress = hostAlloc.getGpuAddress() + sharableEventDataHelper.eventDataPtr->deviceIpcAllocOffset;
         this->baseHostCpuAddress = reinterpret_cast<uint64_t *>(ptrOffset(hostAlloc.getUnderlyingBuffer(), sharableEventDataHelper.eventDataPtr->deviceIpcAllocOffset));
+        this->hostStorageDuplicated = false;
     } else {
-        memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(this->hostCounterAllocation);
         this->hostCounterAllocation = &hostAlloc;
         this->baseHostGpuAddress = hostAlloc.getGpuAddress() + sharableEventDataHelper.eventDataPtr->hostIpcAllocOffset;
         this->baseHostCpuAddress = reinterpret_cast<uint64_t *>(ptrOffset(hostAlloc.getUnderlyingBuffer(), sharableEventDataHelper.eventDataPtr->hostIpcAllocOffset));
+        this->hostStorageDuplicated = true;
     }
+
+    hasImportedIpcAllocs = true;
+    dataAssigned = true;
 }
 
 bool InOrderExecEventHelper::is2WayIpcImportRefreshNeeded() const {

@@ -61,12 +61,12 @@ HWTEST_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError) {
 
     ze_ipc_event_counter_based_handle_t zexIpcData = {};
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
 
     enableEventSharing(*events[0]);
     enableEventSharing(*events[1]);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
@@ -75,11 +75,11 @@ HWTEST_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError) {
     enableEventSharing(*events[1]);
 
     auto mockMemoryManager = static_cast<NEO::MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
-    EXPECT_EQ(0u, mockMemoryManager->registerIpcExportedAllocationCalled);
+    EXPECT_EQ(events[0]->getInOrderExecEventHelper().isHostStorageDuplicated() ? 3u : 2u, mockMemoryManager->registerIpcExportedAllocationCalled);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
 
-    EXPECT_EQ(events[0]->getInOrderExecEventHelper().isHostStorageDuplicated() ? 3u : 2u, mockMemoryManager->registerIpcExportedAllocationCalled);
+    EXPECT_EQ(events[0]->getInOrderExecEventHelper().isHostStorageDuplicated() ? 6u : 4u, mockMemoryManager->registerIpcExportedAllocationCalled);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(events[1]->toHandle(), &zexIpcData));
 
@@ -119,7 +119,7 @@ HWTEST_F(InOrderIpcTests, givenCbEventWhenCreatingFromApiThenOpenIpcHandle) {
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nonIpcEvent, 0, nullptr, launchParams);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, ipcEvent, 0, nullptr, launchParams);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeEventCounterBasedGetIpcHandle(nonIpcEvent, &zexIpcData));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeEventCounterBasedGetIpcHandle(nonIpcEvent, &zexIpcData));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(ipcEvent, &zexIpcData));
 
     zeEventDestroy(ipcEvent);
@@ -546,27 +546,6 @@ HWTEST_F(InOrderIpcTests, givenTbxModeWhenOpenIsCalledThenSetAllocationParams) {
     if (newEventMock->getInOrderExecEventHelper().isHostStorageDuplicated()) {
         EXPECT_TRUE(newEventMock->getInOrderExecEventHelper().getHostCounterAllocation()->getAubInfo().writeMemoryOnly);
     }
-
-    zeEventCounterBasedCloseIpcHandle(newEvent);
-}
-
-HWTEST_F(InOrderIpcTests, givenIpcImportedEventWhenSignalingThenReturnError) {
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    auto pool = createEvents<FamilyType>(1, false);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    enableEventSharing(*events[0]);
-
-    ze_ipc_event_counter_based_handle_t zexIpcData = {};
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zexIpcData));
-
-    ze_event_handle_t newEvent = nullptr;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zexIpcData, &newEvent));
-
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, newEvent, 0, nullptr, launchParams));
 
     zeEventCounterBasedCloseIpcHandle(newEvent);
 }
@@ -1010,6 +989,128 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(storeDataHostInOrderNoop->getStoreQword());
     EXPECT_EQ(0u, storeDataHostInOrderNoop->getDataDword0());
     EXPECT_EQ(0u, storeDataHostInOrderNoop->getDataDword1());
+}
+
+HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenExporterSignalsThenImporterRefreshesAllocations) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
+    auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(exporterHelper.sharableEventDataHelper);
+
+    events[0]->isSharableCounterBased = true;
+    assignInternalHandle(immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
+    assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation());
+    assignInternalHandle(sharableEventDataHelper.allocation);
+
+    // get IPC handle - exports allocs normally
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    // open IPC handle - should succeed creating event with null allocs (zero handles in shared data)
+    ze_event_handle_t importedEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zeIpcData, &importedEventHandle));
+
+    auto importedEvent = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(importedEventHandle));
+    auto &importedHelper = static_cast<WhiteboxInOrderExecEventHelper &>(importedEvent->getInOrderExecEventHelper());
+
+    EXPECT_TRUE(importedHelper.twoWayIpcSharing);
+    EXPECT_EQ(nullptr, importedHelper.getDeviceCounterAllocation());
+    EXPECT_EQ(nullptr, importedHelper.getHostCounterAllocation());
+    EXPECT_EQ(0u, importedHelper.getBaseDeviceAddress());
+    EXPECT_EQ(0u, importedHelper.getBaseHostGpuAddress());
+    EXPECT_EQ(nullptr, importedHelper.getBaseHostCpuAddress());
+    EXPECT_FALSE(importedHelper.isHostStorageDuplicated());
+
+    // no refresh needed yet - shared data still zeroed
+    EXPECT_FALSE(importedHelper.is2WayIpcImportRefreshNeeded());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    auto exporterEventDataPtr = exporterHelper.getInOrderExecEventDataPtr();
+
+    // importer should detect refresh is needed (shared data now has non-zero handle)
+    EXPECT_TRUE(importedHelper.is2WayIpcImportRefreshNeeded());
+
+    // appendWaitOnEvents triggers implicit refresh via refreshImported2WayIpcCbData
+    auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList2->appendWaitOnEvents(1, &importedEventHandle, nullptr, false, true, true, false, false, false));
+
+    // verify refresh happened: allocs populated, hostStorageDuplicated correct
+    EXPECT_FALSE(importedHelper.is2WayIpcImportRefreshNeeded());
+    EXPECT_NE(nullptr, importedHelper.getDeviceCounterAllocation());
+    EXPECT_NE(nullptr, importedHelper.getHostCounterAllocation());
+    EXPECT_NE(0u, importedHelper.getBaseDeviceAddress());
+
+    EXPECT_EQ(exporterHelper.isHostStorageDuplicated(), importedHelper.isHostStorageDuplicated());
+    EXPECT_EQ(exporterHelper.hostStorageDuplicated, importedHelper.isHostStorageDuplicated());
+
+    EXPECT_EQ(exporterEventDataPtr->deviceAllocIpcHandle, importedHelper.imported2WayDeviceCounterHandle);
+    EXPECT_EQ(exporterEventDataPtr->deviceIpcAllocOffset, importedHelper.imported2WayCounterOffset);
+    EXPECT_EQ(exporterEventDataPtr->exporterProcessId, importedHelper.imported2WayExportedPid);
+
+    zeEventCounterBasedCloseIpcHandle(importedEventHandle);
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList2.get());
+}
+
+HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenImporterSignalsThenExporterRefreshesAllocations) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
+    auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(exporterHelper.sharableEventDataHelper);
+    auto exporterEventDataPtr = exporterHelper.getInOrderExecEventDataPtr();
+
+    events[0]->isSharableCounterBased = true;
+    assignInternalHandle(immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
+    assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation());
+    assignInternalHandle(sharableEventDataHelper.allocation);
+
+    // get IPC handle - exports allocs normally
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    // open IPC handle - succeeds with null allocs (zero handles in shared data)
+    ze_event_handle_t importedEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zeIpcData, &importedEventHandle));
+
+    auto importedEvent = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(importedEventHandle));
+    auto &importedHelper = static_cast<WhiteboxInOrderExecEventHelper &>(importedEvent->getInOrderExecEventHelper());
+
+    EXPECT_TRUE(importedHelper.twoWayIpcSharing);
+    EXPECT_EQ(nullptr, importedHelper.getDeviceCounterAllocation());
+    EXPECT_EQ(nullptr, importedHelper.getHostCounterAllocation());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, importedEventHandle, 0, nullptr, launchParams);
+
+    // importer should detect refresh needed (shared data now has non-zero handles)
+    EXPECT_TRUE(exporterHelper.is2WayIpcImportRefreshNeeded());
+
+    // appendWaitOnEvents on imported event triggers refresh
+    auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto exporterEventHandle = events[0]->toHandle();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList2->appendWaitOnEvents(1, &exporterEventHandle, nullptr, false, true, true, false, false, false));
+
+    // verify exporter refresh happened
+    EXPECT_FALSE(exporterHelper.is2WayIpcImportRefreshNeeded());
+    EXPECT_NE(nullptr, exporterHelper.getDeviceCounterAllocation());
+    EXPECT_NE(nullptr, exporterHelper.getHostCounterAllocation());
+    EXPECT_NE(0u, exporterHelper.getBaseDeviceAddress());
+    EXPECT_EQ(exporterEventDataPtr->deviceAllocIpcHandle, importedHelper.imported2WayDeviceCounterHandle);
+    EXPECT_EQ(exporterEventDataPtr->deviceIpcAllocOffset, importedHelper.imported2WayCounterOffset);
+    EXPECT_EQ(exporterEventDataPtr->exporterProcessId, importedHelper.imported2WayExportedPid);
+
+    EXPECT_EQ(exporterHelper.isHostStorageDuplicated(), importedHelper.isHostStorageDuplicated());
+    EXPECT_EQ(exporterHelper.hostStorageDuplicated, importedHelper.isHostStorageDuplicated());
+
+    zeEventCounterBasedCloseIpcHandle(importedEventHandle);
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList2.get());
 }
 
 } // namespace ult

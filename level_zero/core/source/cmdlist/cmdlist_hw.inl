@@ -3417,8 +3417,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
 
-        if (!event || (event->isCounterBased() && !event->getInOrderExecEventHelper().isDataAssigned())) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
+        if (!event) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
+        if (event->isCounterBased()) {
+            event->refreshImported2WayIpcCbData();
+            if (!event->getInOrderExecEventHelper().isDataAssigned()) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
+            }
         }
 
         if ((isImmediateType() && event->isAlreadyCompleted()) ||
@@ -3427,8 +3434,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
 
         if (event->isCounterBased() && (this->heaplessModeEnabled || !event->hasInOrderTimestampNode())) {
-            event->refreshImported2WayIpcCbData();
-
             auto &inOrderExecHelper = event->getInOrderExecEventHelper();
             CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecHelper.getDeviceCounterAllocation(), inOrderExecHelper.getBaseDeviceAddress(), inOrderExecHelper.getEventData()->devicePartitions, outWaitCmds,
                                                                                 event->getInOrderExecBaseSignalValue(), event->getInOrderAllocationOffset(),
@@ -4811,7 +4816,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
     signalEvent->setHeapfullCbEventWithProfiling(false);
 
     if (signalEvent->isCounterBased()) {
-        if (!isInOrderExecutionEnabled() || signalEvent->isIpcImported()) {
+        if (!isInOrderExecutionEnabled() || (signalEvent->isIpcImported() && !signalEvent->getInOrderExecEventHelper().is2WayIpcSharingEnabled())) {
             return false;
         }
 

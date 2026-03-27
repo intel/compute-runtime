@@ -79,7 +79,11 @@ class WhiteboxSharableEventDataHelper : public SharableEventDataHelper {
 
 class WhiteboxInOrderExecEventHelper : public InOrderExecEventHelper {
   public:
+    using InOrderExecEventHelper::baseDeviceAddress;
+    using InOrderExecEventHelper::deviceCounterAllocation;
     using InOrderExecEventHelper::fromExternalMemory;
+    using InOrderExecEventHelper::hostCounterAllocation;
+    using InOrderExecEventHelper::hostStorageDuplicated;
     using InOrderExecEventHelper::imported2WayCounterOffset;
     using InOrderExecEventHelper::imported2WayDeviceCounterHandle;
     using InOrderExecEventHelper::imported2WayExportedPid;

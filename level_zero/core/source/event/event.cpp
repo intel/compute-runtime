@@ -401,7 +401,17 @@ ze_result_t Event::counterBasedOpenIpcHandle(ze_context_handle_t hContext, ze_ip
     return context->openCounterBasedIpcHandle(*ipcData, phEvent);
 }
 
-ze_result_t Event::importCbAllocationsForIpcFor2WaySharing(Device &device, const NEO::InOrderExecEventData &importedInOrderExecEventData, NEO::GraphicsAllocation *&outDeviceAlloc, NEO::GraphicsAllocation *&outHostAlloc) {
+ze_result_t Event::importCbAllocationsForIpcFor2WaySharing(Device &device, const NEO::InOrderExecEventData &importedInOrderExecEventData, NEO::GraphicsAllocation *&outDeviceAlloc, NEO::GraphicsAllocation *&outHostAlloc, bool allowEventWithoutAssignedData) {
+    if (importedInOrderExecEventData.deviceAllocIpcHandle == 0) {
+        if (allowEventWithoutAssignedData) {
+            outDeviceAlloc = nullptr;
+            outHostAlloc = nullptr;
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
+
     NEO::UniqueGraphicsAllocation deviceAlloc;
 
     auto memoryManager = device.getNEODevice()->getMemoryManager();
@@ -446,12 +456,10 @@ ze_result_t Event::importCbAllocationsForIpcFor2WaySharing(Device &device, const
 
 bool Event::isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa) const {
     return (inOrderExecHelper.is2WayIpcSharingEnabled() &&
-            inOrderExecHelper.isDataAssigned() &&
-            (inOrderExecHelper.getEventData()->deviceAllocIpcHandle != 0) &&
             (newCounterDeviceGpuVa != inOrderExecHelper.getBaseDeviceAddress()));
 }
 
-ze_result_t Event::exportCbAllocationsFor2WayIpcSharing() {
+ze_result_t Event::exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAssignedData) {
     if (inOrderExecHelper.isHostStorageDuplicated() && !inOrderExecHelper.is2WayIpcSharingEnabled()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
@@ -460,6 +468,15 @@ ze_result_t Event::exportCbAllocationsFor2WayIpcSharing() {
     auto context = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
 
     auto deviceAlloc = inOrderExecHelper.getDeviceCounterAllocation();
+
+    if (!deviceAlloc) {
+        if (allowEventWithoutAssignedData) {
+            // not yet assigned, nothing to export
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
 
     uint64_t handle = 0;
     if (int retCode = deviceAlloc->createInternalHandle(memoryManager, 0, handle, nullptr); retCode != 0) {
@@ -485,7 +502,11 @@ ze_result_t Event::exportCbAllocationsFor2WayIpcSharing() {
 
         auto hostOffset = ptrDiff(inOrderExecHelper.getBaseHostCpuAddress(), hostAlloc->getUnderlyingBuffer());
         inOrderExecHelper.setHostAllocIpcHandle(handle, hostOffset);
+    } else {
+        inOrderExecHelper.setHostAllocIpcHandle(0, 0);
     }
+
+    inOrderExecHelper.setHasImportedIpcAllocs(false);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -500,7 +521,7 @@ void Event::refreshImported2WayIpcCbData() {
 
     auto inOrderExecEventData = inOrderExecHelper.getEventData();
 
-    if (auto ret = importCbAllocationsForIpcFor2WaySharing(*device, *inOrderExecEventData, deviceAlloc, hostAlloc); ret != ZE_RESULT_SUCCESS) {
+    if (auto ret = importCbAllocationsForIpcFor2WaySharing(*device, *inOrderExecEventData, deviceAlloc, hostAlloc, false); ret != ZE_RESULT_SUCCESS) {
         UNRECOVERABLE_IF(true);
     }
 
@@ -534,7 +555,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
 
         inOrderExecEventData = reinterpret_cast<NEO::InOrderExecEventData *>(ptrOffset(communicationAlloc->getUnderlyingBuffer(), ipcData.allocOffset));
 
-        if (auto ret = importCbAllocationsForIpcFor2WaySharing(*device, *inOrderExecEventData, deviceAlloc, hostAlloc); ret != ZE_RESULT_SUCCESS) {
+        if (auto ret = importCbAllocationsForIpcFor2WaySharing(*device, *inOrderExecEventData, deviceAlloc, hostAlloc, true); ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
     } else {
@@ -572,14 +593,18 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
 
     auto &inOrderExecHelper = event->getInOrderExecEventHelper();
 
+    if (deviceAlloc) {
+        inOrderExecHelper.setHasImportedIpcAllocs(true);
+    }
+
     if (useOpaqueHandle) {
         inOrderExecHelper.set2WayIpcSharingEnabled(true);
         size_t hostAllocOffset = inOrderExecEventData->hostAllocIpcHandle ? inOrderExecEventData->hostIpcAllocOffset : inOrderExecEventData->deviceIpcAllocOffset;
 
         inOrderExecHelper.initializeFromExternalAllocation(*communicationAlloc.release(), ipcData.allocOffset);
-        uint64_t deviceGpuVa = deviceAlloc->getGpuAddress() + inOrderExecEventData->deviceIpcAllocOffset;
-        uint64_t hostGpuVa = hostAlloc->getGpuAddress() + hostAllocOffset;
-        uint64_t *hostCpuVa = static_cast<uint64_t *>(ptrOffset(hostAlloc->getUnderlyingBuffer(), hostAllocOffset));
+        uint64_t deviceGpuVa = deviceAlloc ? deviceAlloc->getGpuAddress() + inOrderExecEventData->deviceIpcAllocOffset : 0;
+        uint64_t hostGpuVa = hostAlloc ? hostAlloc->getGpuAddress() + hostAllocOffset : 0;
+        uint64_t *hostCpuVa = hostAlloc ? static_cast<uint64_t *>(ptrOffset(hostAlloc->getUnderlyingBuffer(), hostAllocOffset)) : nullptr;
 
         inOrderExecHelper.assignData(inOrderExecEventData->counterValue, inOrderExecEventData->counterOffset, inOrderExecEventData->devicePartitions, inOrderExecEventData->hostPartitions,
                                      deviceAlloc, hostAlloc, deviceGpuVa, hostGpuVa, hostCpuVa, 0, 0, (deviceAlloc != hostAlloc), true);
@@ -607,10 +632,10 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
 
 ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
     if (!this->isSharableCounterBased) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (!isCounterBasedExplicitlyEnabled() || !inOrderExecHelper.isDataAssigned() || isEventTimestampFlagSet() || inOrderExecHelper.isFromExternalMemory()) {
+    if (!isCounterBasedExplicitlyEnabled() || isEventTimestampFlagSet() || inOrderExecHelper.isFromExternalMemory()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -620,13 +645,17 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
 
     inOrderExecHelper.set2WayIpcSharingEnabled(context->settings.useOpaqueHandle != OpaqueHandlingType::none);
 
+    if (!inOrderExecHelper.is2WayIpcSharingEnabled() && !inOrderExecHelper.isDataAssigned()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     ipcData = {};
     ipcData.counterBasedFlags = this->counterBasedFlags;
     ipcData.signalScopeFlags = this->signalScope;
     ipcData.waitScopeFlags = this->waitScope;
     ipcData.processId = NEO::SysCalls::getCurrentProcessId();
 
-    if (auto ret = exportCbAllocationsFor2WayIpcSharing(); ret != ZE_RESULT_SUCCESS) {
+    if (auto ret = exportCbAllocationsFor2WayIpcSharing(inOrderExecHelper.is2WayIpcSharingEnabled()); ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
 
@@ -812,7 +841,7 @@ ze_result_t Event::destroy() {
     inOrderExecHelper.releaseNotUsedTempTimestampNodes();
 
     if (isCounterBasedExplicitlyEnabled()) {
-        if (isFromIpcPool) {
+        if (inOrderExecHelper.containsImportedIpcAllocs()) {
             auto memoryManager = device->getNEODevice()->getMemoryManager();
 
             memoryManager->freeGraphicsMemory(inOrderExecHelper.getDeviceCounterAllocation());
@@ -922,10 +951,14 @@ void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInO
 
     const bool ipcExportUpdateNeeded = isCbIpcCommunicationUpdateNeeded(newInOrderExecInfo->getBaseDeviceAddress());
 
+    if (ipcExportUpdateNeeded) {
+        inOrderExecHelper.releaseImportedAllocations(*device->getNEODevice()->getMemoryManager());
+    }
+
     inOrderExecHelper.updateInOrderExecState(newInOrderExecInfo, signalValue, allocationOffset);
 
     if (ipcExportUpdateNeeded) {
-        exportCbAllocationsFor2WayIpcSharing();
+        exportCbAllocationsFor2WayIpcSharing(false);
     }
 }
 

@@ -284,6 +284,10 @@ class InOrderExecEventHelper : public NonCopyableClass {
     bool is2WayIpcImportRefreshNeeded() const;
 
     void assignAllocationsFromImport(NEO::MemoryManager &memoryManager, NEO::GraphicsAllocation &deviceAlloc, NEO::GraphicsAllocation &hostAlloc);
+    void releaseImportedAllocations(NEO::MemoryManager &memoryManager);
+
+    bool containsImportedIpcAllocs() const { return hasImportedIpcAllocs; }
+    void setHasImportedIpcAllocs(bool hasImported) { hasImportedIpcAllocs = hasImported; }
 
   protected:
     void assignInOrderExecInfo(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo);
@@ -309,6 +313,7 @@ class InOrderExecEventHelper : public NonCopyableClass {
     bool hostStorageDuplicated = false;
     bool fromExternalMemory = false;
     bool dataAssigned = false;
+    bool hasImportedIpcAllocs = false;
 };
 
 namespace InOrderProgrammingHelpers {
