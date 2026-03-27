@@ -82,6 +82,7 @@ set(TEST_TARGETS
     zello_scratch
     zello_stress_commandlist
     zello_timestamp
+    zello_usablemem_properties
     zello_world_global_work_offset
     zello_world_gpu
     zello_world_jitc_ocloc
