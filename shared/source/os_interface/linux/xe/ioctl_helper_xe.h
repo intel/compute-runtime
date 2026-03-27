@@ -151,7 +151,6 @@ class IoctlHelperXe : public IoctlHelper {
     EuDebugInterfaceType getEuDebugInterfaceType() override;
     int bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataVec, uint32_t vmHandleId, VmBindExtUserFenceT *vmBindExtUserFence, bool isAdd) override;
     std::optional<std::vector<VmBindOpExtDebugData>> addDebugDataAndCreateBindOpVec(BufferObject *bo, uint32_t vmId, bool isAdd) override;
-    virtual uint32_t getNoVmOvercommitFlag() const;
     virtual uint32_t getVmBindDecompressFlag() const;
     MOCKABLE_VIRTUAL void setNoVmOvercommitFlagAllowed(bool value) { this->noVmOvercommitFlagAllowed = value; }
     MOCKABLE_VIRTUAL bool getNoVmOvercommitFlagAllowed() { return noVmOvercommitFlagAllowed; }

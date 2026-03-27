@@ -766,7 +766,7 @@ TEST_F(IoctlHelperXeTest, whenGettingFlagsForVmCreateThenPropertValueIsReturned)
                 auto flags = xeIoctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
                 EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), (flags & DRM_XE_VM_CREATE_FLAG_LR_MODE));
                 if (enablePageFault) {
-                    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE | xeIoctlHelper->getNoVmOvercommitFlag()), (flags & (DRM_XE_VM_CREATE_FLAG_FAULT_MODE | xeIoctlHelper->getNoVmOvercommitFlag())));
+                    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE | DRM_XE_VM_CREATE_FLAG_NO_VM_OVERCOMMIT), (flags & (DRM_XE_VM_CREATE_FLAG_FAULT_MODE | DRM_XE_VM_CREATE_FLAG_NO_VM_OVERCOMMIT)));
                 }
                 if (!disableScratch) {
                     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), (flags & DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE));
@@ -781,7 +781,7 @@ TEST_F(IoctlHelperXeTest, whenGettingFlagsForVmCreateThenPropertValueIsReturned)
                 auto flags = xeIoctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
                 EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), (flags & DRM_XE_VM_CREATE_FLAG_LR_MODE));
                 if (enablePageFault) {
-                    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE), (flags & (DRM_XE_VM_CREATE_FLAG_FAULT_MODE | xeIoctlHelper->getNoVmOvercommitFlag())));
+                    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE), (flags & (DRM_XE_VM_CREATE_FLAG_FAULT_MODE | DRM_XE_VM_CREATE_FLAG_NO_VM_OVERCOMMIT)));
                 }
                 if (!disableScratch) {
                     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), (flags & DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE));

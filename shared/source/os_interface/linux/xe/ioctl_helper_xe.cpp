@@ -1252,7 +1252,7 @@ uint32_t IoctlHelperXe::getFlagsForVmCreate(bool disableScratch, bool enablePage
     if (enablePageFault || debuggingEnabled) {
         flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
         if (getNoVmOvercommitFlagAllowed()) {
-            flags |= getNoVmOvercommitFlag();
+            flags |= DRM_XE_VM_CREATE_FLAG_NO_VM_OVERCOMMIT;
         }
     }
     if (!disableScratch) {
