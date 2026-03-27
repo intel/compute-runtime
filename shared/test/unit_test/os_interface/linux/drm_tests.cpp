@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/command_stream/submission_status.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gpu_page_fault_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -1217,117 +1217,234 @@ TEST(DrmQueryTest, GivenMultiSliceConfigWhenQueryingTopologyInfoThenSubsliceIndi
 }
 
 TEST(DrmQueryTest, GivenNonTileArchitectureWhenFrequencyIsQueriedThenFallbackToLegacyInterface) {
-    int expectedMaxFrequency = 2000;
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.setPciPath("device");
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return std::string(pathname) == std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt_max_freq_mhz" ? 1 : -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view content = "2000";
+        memcpy_s(buf, count, content.data(), content.size());
+        return content.size();
+    });
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
-    std::string gtMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt_max_freq_mhz");
-    EXPECT_TRUE(NEO::fileExists(gtMaxFreqFile));
-
-    drm.setPciPath("device");
-
     int maxFrequency = 0;
-    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
-    EXPECT_EQ(0, ret);
-
-    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
+    EXPECT_EQ(0, drm.getMaxGpuFrequency(hwInfo, maxFrequency));
+    EXPECT_EQ(2000, maxFrequency);
 }
 
 TEST(DrmQueryTest, GivenTileArchitectureIsInvalidWhenFrequencyIsQueriedThenFallbackToLegacyInterface) {
-    int expectedMaxFrequency = 2000;
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.setPciPath("device");
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return std::string(pathname) == std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt_max_freq_mhz" ? 1 : -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view content = "2000";
+        memcpy_s(buf, count, content.data(), content.size());
+        return content.size();
+    });
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 2;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
 
-    std::string gtMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt_max_freq_mhz");
-    EXPECT_TRUE(NEO::fileExists(gtMaxFreqFile));
-
-    drm.setPciPath("device");
-
     int maxFrequency = 0;
-    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
-    EXPECT_EQ(0, ret);
-
-    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
+    EXPECT_EQ(0, drm.getMaxGpuFrequency(hwInfo, maxFrequency));
+    EXPECT_EQ(2000, maxFrequency);
 }
 
 TEST(DrmQueryTest, GivenRpsMaxFreqFileExistsWhenFrequencyIsQueriedThenValidValueIsReturned) {
-    int expectedMaxFrequency = 3000;
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.setPciPath("device");
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return std::string(pathname) == std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt/gt0/rps_max_freq_mhz" ? 1 : -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view content = "3000";
+        memcpy_s(buf, count, content.data(), content.size());
+        return content.size();
+    });
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 1;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
-    std::string rpsMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt/gt0/rps_max_freq_mhz");
-    EXPECT_TRUE(NEO::fileExists(rpsMaxFreqFile));
-
-    drm.setPciPath("device");
-
     int maxFrequency = 0;
-    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
-    EXPECT_EQ(0, ret);
-
-    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
+    EXPECT_EQ(0, drm.getMaxGpuFrequency(hwInfo, maxFrequency));
+    EXPECT_EQ(3000, maxFrequency);
 }
 
 TEST(DrmQueryTest, GivenRpsMaxFreqFilesExistWhenFrequenciesAreQueriedThenValidValueIsReturned) {
-    int expectedMaxFrequency = 4000;
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.setPciPath("device");
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::vector<std::string> supportedFiles = {
+            std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt/gt0/rps_max_freq_mhz",
+            std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt/gt1/rps_max_freq_mhz"};
+        auto itr = std::find(supportedFiles.begin(), supportedFiles.end(), std::string(pathname));
+        if (itr != supportedFiles.end()) {
+            return static_cast<int>(std::distance(supportedFiles.begin(), itr)) + 1;
+        }
+        return -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::vector<std::pair<std::string, std::string>> supportedFiles = {
+            {std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt/gt0/rps_max_freq_mhz", "3000"},
+            {std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt/gt1/rps_max_freq_mhz", "4000"}};
+        fd -= 1;
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
+            memcpy_s(buf, count, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
+            return supportedFiles[fd].second.size();
+        }
+        return -1;
+    });
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 2;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
-    std::string rpsMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt/gt1/rps_max_freq_mhz");
-    EXPECT_TRUE(NEO::fileExists(rpsMaxFreqFile));
-
-    drm.setPciPath("device");
-
     int maxFrequency = 0;
-    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
-    EXPECT_EQ(0, ret);
-
-    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
+    EXPECT_EQ(0, drm.getMaxGpuFrequency(hwInfo, maxFrequency));
+    EXPECT_EQ(4000, maxFrequency);
 }
 
 TEST(DrmQueryTest, GivenRpsMaxFreqFileDoesntExistWhenFrequencyIsQueriedThenFallbackToLegacyInterface) {
-    USE_REAL_FILE_SYSTEM();
-    int expectedMaxFrequency = 2000;
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.setPciPath("device");
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::vector<std::string> supportedFiles = {
+            std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt/gt0/rps_max_freq_mhz",
+            std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt/gt1/rps_max_freq_mhz",
+            std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt_max_freq_mhz"};
+        auto itr = std::find(supportedFiles.begin(), supportedFiles.end(), std::string(pathname));
+        if (itr != supportedFiles.end()) {
+            return static_cast<int>(std::distance(supportedFiles.begin(), itr)) + 1;
+        }
+        return -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::vector<std::pair<std::string, std::string>> supportedFiles = {
+            {std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt/gt0/rps_max_freq_mhz", "3000"},
+            {std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt/gt1/rps_max_freq_mhz", "4000"},
+            {std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt_max_freq_mhz", "2000"}};
+        fd -= 1;
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
+            memcpy_s(buf, count, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
+            return supportedFiles[fd].second.size();
+        }
+        return -1;
+    });
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 3;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
-    std::string rpsMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt/gt2/rps_max_freq_mhz");
-    EXPECT_FALSE(NEO::fileExists(rpsMaxFreqFile));
+    int maxFrequency = 0;
+    EXPECT_EQ(0, drm.getMaxGpuFrequency(hwInfo, maxFrequency));
+    EXPECT_EQ(2000, maxFrequency);
+}
 
-    std::string gtMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt_max_freq_mhz");
-    EXPECT_TRUE(NEO::fileExists(gtMaxFreqFile));
-
+TEST(DrmQueryTest, GivenNonNumericContentInFrequencyFileWhenMaxGpuFrequencyOfDeviceIsQueriedThenFailureIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.setPciPath("device");
 
-    int maxFrequency = 0;
-    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
-    EXPECT_EQ(0, ret);
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return std::string(pathname) == std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt_max_freq_mhz" ? 1 : -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view content = "invalid";
+        memcpy_s(buf, count, content.data(), content.size());
+        return content.size();
+    });
 
-    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+
+    int maxFrequency = 0;
+    EXPECT_NE(0, drm.getMaxGpuFrequency(hwInfo, maxFrequency));
+}
+
+TEST(DrmQueryTest, GivenValueOverflowingLongWhenMaxGpuFrequencyOfDeviceIsQueriedThenFailureIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.setPciPath("device");
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return std::string(pathname) == std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt_max_freq_mhz" ? 1 : -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view content = "99999999999999999999"; // overflows long, strtol sets errno=ERANGE
+        memcpy_s(buf, count, content.data(), content.size());
+        return content.size();
+    });
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+
+    int maxFrequency = 0;
+    EXPECT_NE(0, drm.getMaxGpuFrequency(hwInfo, maxFrequency));
+}
+
+TEST(DrmQueryTest, GivenNegativeValueInFrequencyFileWhenMaxGpuFrequencyOfDeviceIsQueriedThenFailureIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.setPciPath("device");
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return std::string(pathname) == std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt_max_freq_mhz" ? 1 : -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view content = "-1";
+        memcpy_s(buf, count, content.data(), content.size());
+        return content.size();
+    });
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+
+    int maxFrequency = 0;
+    EXPECT_NE(0, drm.getMaxGpuFrequency(hwInfo, maxFrequency));
+}
+
+TEST(DrmQueryTest, GivenValueExceedingIntMaxInFrequencyFileWhenMaxGpuFrequencyOfDeviceIsQueriedThenFailureIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.setPciPath("device");
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return std::string(pathname) == std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/gt_max_freq_mhz" ? 1 : -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view content = "2147483648"; // INT_MAX + 1: fits in long but not in int
+        memcpy_s(buf, count, content.data(), content.size());
+        return content.size();
+    });
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+
+    int maxFrequency = 0;
+    EXPECT_NE(0, drm.getMaxGpuFrequency(hwInfo, maxFrequency));
 }
 
 TEST(DrmTest, whenCheckedIfResourcesCleanupCanBeSkippedThenReturnsFalse) {
@@ -1341,11 +1458,16 @@ TEST(DrmTest, whenCheckedIfResourcesCleanupCanBeSkippedThenReturnsFalse) {
 TEST(DrmQueryTest, givenUapiPrelimVersionThenReturnCorrectString) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    std::string prelimVersionFile = getLinuxDevicesPath("device/drm/card1/prelim_uapi_version");
-    EXPECT_TRUE(NEO::fileExists(prelimVersionFile));
-
     drm.setPciPath("device");
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return std::string(pathname) == std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/prelim_uapi_version" ? 1 : -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view content = "2.0";
+        memcpy_s(buf, count, content.data(), content.size());
+        return content.size();
+    });
 
     std::string prelimVersion = "";
     drm.getPrelimVersion(prelimVersion);

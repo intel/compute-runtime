@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,6 +76,7 @@ void LinuxEngineImp::init() {
     }
     vfConfigs.clear();
     // I915_PMU_ENGINE_BUSY macro provides the perf type config which we want to listen to get the engine busyness.
+    errno = 0;
     auto fd = pPmuInterface->pmuInterfaceOpen(I915_PMU_ENGINE_BUSY(i915EngineClass->second, engineInstance), -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
     if (fd >= 0) {
         fdList.push_back(std::make_pair(fd, -1));

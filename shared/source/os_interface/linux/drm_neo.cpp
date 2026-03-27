@@ -57,7 +57,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
-#include <fstream>
+#include <limits>
 #include <map>
 #include <sstream>
 
@@ -1041,50 +1041,45 @@ int Drm::getEuDebugSysFsEnable() {
     return ioctlHelper->getEuDebugSysFsEnable();
 }
 
-int getMaxGpuFrequencyOfDevice(Drm &drm, std::string &sysFsPciPath, int &maxGpuFrequency) {
+static int readMaxGpuFrequencyFromFile(Drm &drm, const std::string &file, int &maxGpuFrequency) {
     maxGpuFrequency = 0;
-    std::string clockSysFsPath = sysFsPciPath + drm.getIoctlHelper()->getFileForMaxGpuFrequency();
-
-    std::ifstream ifs(clockSysFsPath.c_str(), std::ifstream::in);
-    if (ifs.fail()) {
+    std::string readString(32, '\0');
+    if (!drm.readSysFsAsString(file, readString)) {
         return -1;
     }
-
-    ifs >> maxGpuFrequency;
-    ifs.close();
+    char *endPtr = nullptr;
+    errno = 0;
+    long val = std::strtol(readString.c_str(), &endPtr, 10);
+    if ((endPtr == readString.c_str()) || (errno != 0) || (val < 0) || (val > std::numeric_limits<int>::max())) {
+        return -1;
+    }
+    maxGpuFrequency = static_cast<int>(val);
     return 0;
 }
 
-int getMaxGpuFrequencyOfSubDevice(Drm &drm, std::string &sysFsPciPath, int subDeviceId, int &maxGpuFrequency) {
-    maxGpuFrequency = 0;
-    std::string clockSysFsPath = sysFsPciPath + drm.getIoctlHelper()->getFileForMaxGpuFrequencyOfSubDevice(subDeviceId);
+int getMaxGpuFrequencyOfDevice(Drm &drm, int &maxGpuFrequency) {
+    return readMaxGpuFrequencyFromFile(drm, drm.getIoctlHelper()->getFileForMaxGpuFrequency(), maxGpuFrequency);
+}
 
-    std::ifstream ifs(clockSysFsPath.c_str(), std::ifstream::in);
-    if (ifs.fail()) {
-        return -1;
-    }
-
-    ifs >> maxGpuFrequency;
-    ifs.close();
-    return 0;
+int getMaxGpuFrequencyOfSubDevice(Drm &drm, int subDeviceId, int &maxGpuFrequency) {
+    return readMaxGpuFrequencyFromFile(drm, drm.getIoctlHelper()->getFileForMaxGpuFrequencyOfSubDevice(subDeviceId), maxGpuFrequency);
 }
 
 int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
     int ret = 0;
-    std::string sysFsPciPath = getSysFsPciPath();
     auto tileCount = hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount;
 
     if (hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid && tileCount > 0) {
         for (auto tileId = 0; tileId < tileCount; tileId++) {
             int maxGpuFreqOfSubDevice = 0;
-            ret |= getMaxGpuFrequencyOfSubDevice(*this, sysFsPciPath, tileId, maxGpuFreqOfSubDevice);
+            ret |= getMaxGpuFrequencyOfSubDevice(*this, tileId, maxGpuFreqOfSubDevice);
             maxGpuFrequency = std::max(maxGpuFrequency, maxGpuFreqOfSubDevice);
         }
         if (ret == 0) {
             return 0;
         }
     }
-    return getMaxGpuFrequencyOfDevice(*this, sysFsPciPath, maxGpuFrequency);
+    return getMaxGpuFrequencyOfDevice(*this, maxGpuFrequency);
 }
 
 bool Drm::getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate) {
@@ -1186,17 +1181,12 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
 }
 
 void Drm::getPrelimVersion(std::string &prelimVersion) {
-    std::string sysFsPciPath = getSysFsPciPath();
-    std::string prelimVersionPath = sysFsPciPath + "/prelim_uapi_version";
-
-    std::ifstream ifs(prelimVersionPath.c_str(), std::ifstream::in);
-
-    if (ifs.fail()) {
+    std::string readString(32, '\0');
+    if (!readSysFsAsString("/prelim_uapi_version", readString)) {
         prelimVersion = "";
-    } else {
-        ifs >> prelimVersion;
+        return;
     }
-    ifs.close();
+    prelimVersion = readString.c_str();
 }
 
 int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {

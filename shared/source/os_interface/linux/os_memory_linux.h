@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_memory.h"
 
 #include <fcntl.h>
+#include <istream>
 #include <sys/mman.h>
 
 namespace NEO {
@@ -23,6 +24,7 @@ class OSMemoryLinux : public OSMemory {
   protected:
     void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve, bool topDownHint) override;
     void osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) override;
+    void parseMemoryMaps(std::istream &stream, MemoryMaps &memoryMaps);
 
     MOCKABLE_VIRTUAL void *mmapWrapper(void *, size_t, int, int, int, off_t);
     MOCKABLE_VIRTUAL int munmapWrapper(void *, size_t);

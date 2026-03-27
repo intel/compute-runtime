@@ -5,10 +5,12 @@
  *
  */
 
+#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "gtest/gtest.h"
 
@@ -31,6 +33,25 @@ void mockGetCpuFlags(std::string &cpuFlags) {
             break;
         }
     }
+}
+
+TEST(CpuInfoX86Linux, GivenCpuinfoContentWhenGetCpuFlagsLinuxIsCalledThenFlagsAreExtracted) {
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view content = "processor\t: 0\nflags : sse2 avx\n";
+        memcpy_s(buf, count, content.data(), content.size());
+        return static_cast<ssize_t>(content.size());
+    });
+    VariableBackup<decltype(SysCalls::sysCallsClose)> closeBkp(&SysCalls::sysCallsClose, [](int fd) -> int {
+        return 0;
+    });
+
+    std::string cpuFlags;
+    CpuInfo::getCpuFlagsFunc(cpuFlags);
+    EXPECT_FALSE(cpuFlags.empty());
+    EXPECT_NE(std::string::npos, cpuFlags.find("flags"));
 }
 
 TEST(CpuInfo, givenProcCpuinfoFileExistsWhenIsCpuFlagPresentIsCalledThenValidValueIsReturned) {
