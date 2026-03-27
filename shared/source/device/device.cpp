@@ -900,6 +900,19 @@ uint64_t Device::getGlobalMemorySize(uint32_t deviceBitfield) const {
     return globalMemorySize;
 }
 
+uint64_t Device::getUsableMemorySize() const {
+    const auto totalMemorySize = getDeviceInfo().globalMemSize;
+    const auto usedMemorySize = getMemoryManager()->isLocalMemorySupported(this->getRootDeviceIndex())
+                                    ? getMemoryManager()->getCurrentUsedLocalMemorySize(this->getRootDeviceIndex(), static_cast<uint32_t>(getDeviceBitfield().to_ulong()))
+                                    : getMemoryManager()->getCurrentUsedSystemSharedMemorySize(this->getRootDeviceIndex());
+
+    if (usedMemorySize > totalMemorySize) {
+        return 0;
+    }
+
+    return totalMemorySize - usedMemorySize;
+}
+
 double Device::getPercentOfGlobalMemoryAvailable() const {
     if (debugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get() != -1) {
         return 0.01 * static_cast<double>(debugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get());

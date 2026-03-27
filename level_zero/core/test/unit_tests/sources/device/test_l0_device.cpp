@@ -5964,6 +5964,21 @@ TEST_F(DeviceTest, givenDeviceWhenQueryingMediaPropertiesThenReturnZero) {
     EXPECT_EQ(0u, mediaProps.numEncoderCores);
 }
 
+TEST_F(DeviceTest, givenDeviceWhenQueryingUsableMemSizePropertiesThenPNextChainIsHandledCorrectly) {
+    ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_usablemem_size_ext_properties_t usableMemProps = {ZE_STRUCTURE_TYPE_DEVICE_USABLEMEM_SIZE_EXT_PROPERTIES};
+    usableMemProps.currUsableMemSize = std::numeric_limits<uint64_t>::max();
+
+    devProps.pNext = &usableMemProps;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+
+    EXPECT_NE(std::numeric_limits<uint64_t>::max(), usableMemProps.currUsableMemSize);
+
+    const auto totalMemory = device->getNEODevice()->getDeviceInfo().globalMemSize;
+    EXPECT_LE(usableMemProps.currUsableMemSize, totalMemory);
+}
+
 struct RTASDeviceTest : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);

@@ -3435,3 +3435,66 @@ HWTEST2_F(DeviceTests, givenSkipHpBcsInitializationWhenDeviceCreatedThenHpCopyEn
 
     EXPECT_EQ(nullptr, device->getHpCopyEngine());
 }
+
+namespace {
+class MockMemoryManagerWithUsage : public MockMemoryManager {
+  public:
+    static constexpr uint64_t systemMemUsedSize = 4 * MemoryConstants::gigaByte;
+    static constexpr uint64_t localMemUsedSize = 8 * MemoryConstants::gigaByte;
+
+    MockMemoryManagerWithUsage(ExecutionEnvironment &executionEnvironment, bool enableLocalMemory)
+        : MockMemoryManager(executionEnvironment) {
+        localMemorySupported[0] = enableLocalMemory;
+    }
+
+    uint64_t getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) override {
+        return systemMemUsedSize;
+    }
+
+    uint64_t getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override {
+        return localMemUsedSize;
+    }
+};
+} // namespace
+
+TEST_F(DeviceTest, givenDeviceWithSharedSystemMemoryWhenQueryingUsableMemorySizeThenExpectValidValue) {
+    auto device = std::make_unique<MockDevice>();
+    auto originalMemoryManager = device->getExecutionEnvironment()->memoryManager.release();
+    device->getExecutionEnvironment()->memoryManager.reset(
+        new MockMemoryManagerWithUsage(*device->getExecutionEnvironment(), false));
+
+    device->deviceInfo.globalMemSize = 16 * MemoryConstants::gigaByte;
+    const uint64_t expectedUsableMemSize = device->deviceInfo.globalMemSize - MockMemoryManagerWithUsage::systemMemUsedSize;
+    auto usableMemSize = device->getUsableMemorySize();
+
+    EXPECT_EQ(expectedUsableMemSize, usableMemSize);
+
+    device->getExecutionEnvironment()->memoryManager.reset(originalMemoryManager);
+}
+
+TEST_F(DeviceTest, givenDeviceWithLocalMemoryEnabledWhenQueryingUsableMemorySizeThenExpectValidValue) {
+    auto device = std::make_unique<MockDevice>();
+    auto originalMemoryManager = device->getExecutionEnvironment()->memoryManager.release();
+    device->getExecutionEnvironment()->memoryManager.reset(
+        new MockMemoryManagerWithUsage(*device->getExecutionEnvironment(), true));
+
+    device->deviceInfo.globalMemSize = 16 * MemoryConstants::gigaByte;
+    const uint64_t expectedUsableMemSize = device->deviceInfo.globalMemSize - MockMemoryManagerWithUsage::localMemUsedSize;
+    auto usableMemSize = device->getUsableMemorySize();
+
+    EXPECT_EQ(expectedUsableMemSize, usableMemSize);
+
+    device->getExecutionEnvironment()->memoryManager.reset(originalMemoryManager);
+}
+
+TEST_F(DeviceTest, givenUsedMemoryExceedsTotalMemoryWhenQueryingUsableMemorySizeThenExpectZeroUsableMemory) {
+    auto originalMemoryManager = pDevice->getExecutionEnvironment()->memoryManager.release();
+    pDevice->getExecutionEnvironment()->memoryManager.reset(
+        new MockMemoryManagerWithUsage(*pDevice->getExecutionEnvironment(), false));
+
+    pDevice->deviceInfo.globalMemSize = MockMemoryManagerWithUsage::systemMemUsedSize - 1;
+    auto usableMemSize = pDevice->getUsableMemorySize();
+    EXPECT_EQ(0u, usableMemSize);
+
+    pDevice->getExecutionEnvironment()->memoryManager.reset(originalMemoryManager);
+}

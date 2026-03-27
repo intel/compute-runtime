@@ -195,6 +195,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     void allocateRTDispatchGlobals(uint32_t maxBvhLevels);
 
     MOCKABLE_VIRTUAL uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
+    uint64_t getUsableMemorySize() const;
     const std::vector<SubDevice *> &getSubDevices() const { return subdevices; }
     bool getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid);
     void generateUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid);
