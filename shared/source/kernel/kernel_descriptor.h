@@ -143,7 +143,8 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool hasSample : 1;
                 bool usesAssert : 1;
                 // 3
-                bool reserved : 8;
+                bool hasBindlessImageRead : 1;
+                bool reserved : 7;
             };
             std::array<bool, 4> packed;
         } flags = {};

@@ -719,6 +719,8 @@ DecodeError readZeInfoExecutionEnvironment(const Yaml::YamlParser &parser, const
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.requireAssertBuffer, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::requireSyncBuffer == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.requireSyncBuffer, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::hasBindlessImageRead == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasBindlessImageRead, context, outErrReason);
         } else {
             readZeInfoValueCheckedExtra(parser, execEnvMetadataNd, outExecEnv, context, key, outErrReason, outWarning, validExecEnv, err);
         }
@@ -754,6 +756,7 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     dst.kernelAttributes.flags.usesPrintf = execEnv.hasPrintfCalls;
     dst.kernelAttributes.flags.usesAssert = execEnv.requireAssertBuffer;
     dst.kernelAttributes.flags.usesSyncBuffer = execEnv.requireSyncBuffer;
+    dst.kernelAttributes.flags.hasBindlessImageRead = execEnv.hasBindlessImageRead;
     dst.kernelAttributes.barrierCount = execEnv.barrierCount;
     dst.kernelAttributes.bufferAddressingMode = (execEnv.has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless;
     dst.kernelAttributes.inlineDataPayloadSize = static_cast<uint16_t>(execEnv.inlineDataPayloadSize);

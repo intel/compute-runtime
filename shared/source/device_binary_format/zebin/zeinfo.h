@@ -71,6 +71,7 @@ inline constexpr ConstStringRef hasPrintfCalls("has_printf_calls");
 inline constexpr ConstStringRef hasIndirectCalls("has_indirect_calls");
 inline constexpr ConstStringRef requireAssertBuffer("require_assert_buffer");
 inline constexpr ConstStringRef requireSyncBuffer("require_sync_buffer");
+inline constexpr ConstStringRef hasBindlessImageRead("has_bindless_image_read");
 
 namespace ThreadSchedulingMode {
 inline constexpr ConstStringRef ageBased("age_based");
@@ -370,6 +371,7 @@ using HasPrintfCallsT = bool;
 using HasIndirectCallsT = bool;
 using RequireAssertBufferT = bool;
 using RequireSyncBufferT = bool;
+using HasBindlessImageReadT = bool;
 
 namespace Defaults {
 inline constexpr BarrierCountT barrierCount = 0;
@@ -409,6 +411,7 @@ inline constexpr HasPrintfCallsT hasPrintfCalls = false;
 inline constexpr HasIndirectCallsT hasIndirectCalls = false;
 inline constexpr RequireAssertBufferT requireAssertBuffer = false;
 inline constexpr RequireSyncBufferT requireSyncBuffer = false;
+inline constexpr HasBindlessImageReadT hasBindlessImageRead = false;
 } // namespace Defaults
 
 inline constexpr ConstStringRef required[] = {
@@ -456,6 +459,7 @@ struct ExecutionEnvBaseT final : NEO::NonCopyableAndNonMovableClass {
     HasIndirectCallsT hasIndirectCalls = Defaults::hasIndirectCalls;
     RequireAssertBufferT requireAssertBuffer = Defaults::requireAssertBuffer;
     RequireSyncBufferT requireSyncBuffer = Defaults::requireSyncBuffer;
+    HasBindlessImageReadT hasBindlessImageRead = Defaults::hasBindlessImageRead;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<ExecutionEnvBaseT>);

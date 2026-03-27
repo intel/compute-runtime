@@ -1981,6 +1981,7 @@ kernels:
         has_indirect_calls: true
         require_assert_buffer: true
         require_sync_buffer: true
+        has_bindless_image_read: true
 ...
 )===";
 
@@ -1994,6 +1995,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv{};
     EXPECT_FALSE(execEnv.hasSample);
+    EXPECT_FALSE(execEnv.hasBindlessImageRead);
 
     auto err = NEO::Zebin::ZeInfo::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::success, err);
@@ -2033,6 +2035,7 @@ kernels:
     EXPECT_TRUE(execEnv.hasIndirectCalls);
     EXPECT_TRUE(execEnv.requireAssertBuffer);
     EXPECT_TRUE(execEnv.requireSyncBuffer);
+    EXPECT_TRUE(execEnv.hasBindlessImageRead);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenMinimalExecutionEnvThenSetProperMembersToDefaults) {
@@ -2095,6 +2098,7 @@ kernels:
     EXPECT_EQ(Defaults::hasIndirectCalls, execEnv.hasIndirectCalls);
     EXPECT_EQ(Defaults::requireAssertBuffer, execEnv.requireAssertBuffer);
     EXPECT_EQ(Defaults::requireSyncBuffer, execEnv.requireSyncBuffer);
+    EXPECT_EQ(Defaults::hasBindlessImageRead, execEnv.hasBindlessImageRead);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenUnknownEntryThenEmitsError) {
