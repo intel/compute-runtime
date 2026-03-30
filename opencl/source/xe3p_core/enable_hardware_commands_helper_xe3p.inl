@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendCrossThreadDat
     uint64_t scratchAddress,
     const RootDeviceEnvironment &rootDeviceEnvironment);
 
-template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendInterfaceDescriptorData<NEO::FamilyType::COMPUTE_WALKER, NEO::FamilyType::INTERFACE_DESCRIPTOR_DATA>(
+template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendInterfaceDescriptorData<NEO::FamilyType::COMPUTE_WALKER_2, NEO::FamilyType::INTERFACE_DESCRIPTOR_DATA_2>(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
     uint64_t kernelStartOffset,
@@ -50,5 +50,5 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendInterfaceDescr
     uint32_t bindingTablePrefetchSize,
     PreemptionMode preemptionMode,
     const Device &device,
-    FamilyType::COMPUTE_WALKER *walkerCmd,
-    FamilyType::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
+    FamilyType::COMPUTE_WALKER_2 *walkerCmd,
+    FamilyType::INTERFACE_DESCRIPTOR_DATA_2 *inlineInterfaceDescriptor);

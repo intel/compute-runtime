@@ -589,17 +589,6 @@ XE3P_CORETEST_F(CommandEncodeStatesXe3pTest, givenEncodeDispatchKernelWhenGettin
     EXPECT_EQ(expectedOffset, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
 }
 
-XE3P_CORETEST_F(CommandEncodeStatesXe3pTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetInNotHeaplessModeThenReturnWalkerInlineOffset) {
-    using WalkerType = typename FamilyType::COMPUTE_WALKER;
-
-    EncodeDispatchKernelArgs dispatchArgs = {};
-    dispatchArgs.isHeaplessModeEnabled = false;
-
-    size_t expectedOffset = offsetof(WalkerType, TheStructure.Common.InlineData);
-
-    EXPECT_EQ(expectedOffset, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
-}
-
 XE3P_CORETEST_F(CommandEncodeStatesXe3pTest, givenEncodeSurfaceStateAndFlagEnableExtendedScratchSurfaceSizeDisabledWhenSetPitchForScratchThenPitchIsCorrect) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.EnableExtendedScratchSurfaceSize.set(0);
@@ -697,10 +686,6 @@ static void whenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorr
     }
 }
 
-XE3P_CORETEST_F(WalkerDispatchTestsXe3pCore, whenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorrectlySet) {
-    whenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorrectlySetFunction<typename FamilyType::COMPUTE_WALKER, typename FamilyType::INTERFACE_DESCRIPTOR_DATA, FamilyType>();
-}
-
 XE3P_CORETEST_F(Walker2DispatchTestsXe3pCore, whenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorrectlySet) {
     whenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorrectlySetFunction<typename FamilyType::DefaultWalkerType, typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2, FamilyType>();
 }
@@ -731,10 +716,6 @@ static void givenSampleSetWhenEncodingExtraParamsThenSetCorrectFieldsFunction() 
         EXPECT_EQ(DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_MORTON_WALK, walkerCmd.getDispatchWalkOrder());
         EXPECT_EQ(THREAD_GROUP_BATCH_SIZE::THREAD_GROUP_BATCH_SIZE_TG_BATCH_4, walkerCmd.getThreadGroupBatchSize());
     }
-}
-
-XE3P_CORETEST_F(WalkerDispatchTestsXe3pCore, givenSampleSetWhenEncodingExtraParamsThenSetCorrectFields) {
-    givenSampleSetWhenEncodingExtraParamsThenSetCorrectFieldsFunction<typename FamilyType::COMPUTE_WALKER, FamilyType>();
 }
 
 XE3P_CORETEST_F(Walker2DispatchTestsXe3pCore, givenSampleSetWhenEncodingExtraParamsThenSetCorrectFields) {

@@ -55,26 +55,6 @@ XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, whenMiFlushDwIsProgrammedThenSetAndFl
     EXPECT_EQ(1u, miFlushDwCmd->getFlushLlc());
 }
 
-XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenInterfaceDescriptorDataWhenEncodeComputeWalkerAndAdjustInterfaceDescriptoDataIsCalledThenArgsDoesntChange) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    using INTERFACE_DESCRIPTOR_DATA = typename COMPUTE_WALKER::InterfaceDescriptorType;
-    INTERFACE_DESCRIPTOR_DATA iddArg;
-    COMPUTE_WALKER walkerCmd{};
-    walkerCmd.setThreadGroupIdXDimension(1);
-    walkerCmd.setThreadGroupIdYDimension(1);
-    walkerCmd.setThreadGroupIdZDimension(1);
-    iddArg = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
-    auto samplerCount = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>(1u);
-    iddArg.setSamplerCount(samplerCount);
-    iddArg.setBindingTableEntryCount(2u);
-    MockDevice mockDevice;
-    uint32_t threadsPerGroup = 1;
-    uint32_t threadGroups[] = {walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension()};
-    EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, mockDevice, *defaultHwInfo, threadGroups, 0, 1, 0, threadsPerGroup, walkerCmd);
-    EXPECT_EQ(2u, iddArg.getBindingTableEntryCount());
-    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_BETWEEN_1_AND_4_SAMPLERS_USED, iddArg.getSamplerCount());
-}
-
 XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenDebugVariableSetwhenProgramingStatePrefetchThenSetCorrectFields) {
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
     MockExecutionEnvironment mockExecutionEnvironment{};

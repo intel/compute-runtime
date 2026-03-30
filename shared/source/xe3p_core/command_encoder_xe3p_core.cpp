@@ -31,22 +31,14 @@ namespace NEO {
 
 template <>
 void EncodeDispatchKernel<Family>::encodeCommon(CommandContainer &container, EncodeDispatchKernelArgs &args) {
-    if (args.isHeaplessModeEnabled) {
-        EncodeDispatchKernel<Family>::template encode<typename Family::COMPUTE_WALKER_2>(container, args);
-    } else {
-        EncodeDispatchKernel<Family>::template encode<typename Family::COMPUTE_WALKER>(container, args);
-    }
+    EncodeDispatchKernel<Family>::template encode<typename Family::COMPUTE_WALKER_2>(container, args);
 }
 
 template <>
 size_t EncodeDispatchKernel<Family>::getInlineDataOffset(EncodeDispatchKernelArgs &args) {
-    if (args.isHeaplessModeEnabled) {
-        using WalkerType = typename Family::COMPUTE_WALKER_2;
-        return offsetof(WalkerType, TheStructure.Common.InlineData);
-    } else {
-        using WalkerType = typename Family::COMPUTE_WALKER;
-        return offsetof(WalkerType, TheStructure.Common.InlineData);
-    }
+
+    using WalkerType = typename Family::COMPUTE_WALKER_2;
+    return offsetof(WalkerType, TheStructure.Common.InlineData);
 }
 
 template <>
@@ -375,31 +367,6 @@ void EncodePostSync<Family>::setCommandLevelInterrupt(CommandType &cmd, bool int
 #include "shared/source/command_container/command_encoder_enablers.inl"
 
 namespace NEO {
-template void NEO::EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields<Family::COMPUTE_WALKER>(const RootDeviceEnvironment &rootDeviceEnvironment, Family::COMPUTE_WALKER &walkerCmd, const EncodeWalkerArgs &walkerArgs);
-template void NEO::EncodeDispatchKernel<Family>::setGrfInfo<Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER::InterfaceDescriptorType *pInterfaceDescriptor, uint32_t grfCount, const size_t &sizeCrossThreadData, const size_t &sizePerThreadData, const RootDeviceEnvironment &rootDeviceEnvironment);
-template void NEO::EncodeDispatchKernel<Family>::setupPreferredSlmSize<Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER::InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
-template void NEO::EncodeDispatchKernel<Family>::setupProgrammableSlmSize<Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER::InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSize, bool heaplessModeEnabled);
-template void NEO::EncodeDispatchKernel<Family>::encodeThreadGroupDispatch<Family::COMPUTE_WALKER, Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER::InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t *threadGroupDimensions, const uint32_t threadGroupCount, const uint32_t requiredThreadGroupDispatchSize, const uint32_t grfCount, const uint32_t threadsPerThreadGroup, Family::COMPUTE_WALKER &walkerCmd);
-template void NEO::EncodeDispatchKernel<Family>::encode<Family::COMPUTE_WALKER>(CommandContainer &container, EncodeDispatchKernelArgs &args);
-template void NEO::EncodeDispatchKernel<Family>::encodeThreadData<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const uint32_t *startWorkGroup, const uint32_t *numWorkGroups, const uint32_t *workGroupSizes, uint32_t simd, uint32_t localIdDimensions, uint32_t threadsPerThreadGroup, uint32_t threadExecutionMask, bool localIdsGenerationByRuntime, bool inlineDataProgrammingRequired, bool isIndirect, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
-template void NEO::EncodeDispatchKernel<Family>::adjustWalkOrder<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
-template void NEO::EncodeDispatchKernel<Family>::programBarrierEnable<Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER::InterfaceDescriptorType &interfaceDescriptor, const KernelDescriptor &kernelDescriptor, const HardwareInfo &hwInfo);
-template void NEO::EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy<Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER::InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy);
-template void NEO::EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd);
-template void NEO::EncodeDispatchKernel<Family>::overrideDefaultValues<Family::COMPUTE_WALKER, Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER &walkerCmd, Family::COMPUTE_WALKER::InterfaceDescriptorType &interfaceDescriptor);
-template void NEO::EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs);
-template void NEO::EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker<Family::COMPUTE_WALKER, Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER &walkerCmd, const Family::COMPUTE_WALKER::InterfaceDescriptorType *idd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs);
-
 template void NEO::EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs<true>(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
-template void NEO::EncodeDispatchKernelWithHeap<Family>::adjustBindingTablePrefetch<Family::COMPUTE_WALKER::InterfaceDescriptorType>(Family::COMPUTE_WALKER::InterfaceDescriptorType &, unsigned int, unsigned int);
-
-template void NEO::EncodePostSync<Family>::adjustTimestampPacket<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const EncodePostSyncArgs &args);
-template void NEO::EncodePostSync<Family>::setupPostSyncForRegularEvent<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const EncodePostSyncArgs &args);
-template void NEO::EncodePostSync<Family>::encodeL3Flush<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const EncodePostSyncArgs &args);
-template void NEO::EncodePostSync<Family>::setupPostSyncForInOrderExec<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &walkerCmd, const EncodePostSyncArgs &args);
-
-template struct EncodeDispatchKernelWithHeap<Family>;
-
 template void NEO::EncodePostSync<Family>::setCommandLevelInterrupt<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, bool interrupt);
-template void NEO::EncodePostSync<Family>::setCommandLevelInterrupt<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER &cmd, bool interrupt);
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,9 +18,9 @@ using FamilyType = Xe3pCoreFamily;
 
 } // namespace NEO
 
-template struct NEO::HardwareCommandsHelperWithHeap<NEO::FamilyType>;
+template struct NEO::HardwareCommandsHelper<NEO::FamilyType>;
+template struct NEO::HardwareCommandsHelperNoHeap<NEO::FamilyType>;
 
-#include "opencl/source/helpers/enable_hardware_commands_helper_cw.inl"
 #include "opencl/source/helpers/hardware_commands_helper_xe3p_and_later.inl"
 
 #include "enable_hardware_commands_helper_xe3p.inl"
