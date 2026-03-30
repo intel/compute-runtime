@@ -1602,13 +1602,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
     GraphicsAllocation *offloadCsrDownloadedAlloc = nullptr;
     uint32_t offloadCsrCallCounter = 0;
 
-    mainQueueCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
+    mainQueueCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation, uint64_t, size_t) {
         mainCsrCallCounter++;
 
         mainCsrDownloadedAlloc = &graphicsAllocation;
     };
 
-    offloadCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
+    offloadCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation, uint64_t, size_t) {
         offloadCsrCallCounter++;
 
         offloadCsrDownloadedAlloc = &graphicsAllocation;

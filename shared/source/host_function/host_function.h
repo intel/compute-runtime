@@ -62,7 +62,7 @@ class HostFunctionStreamer {
     HostFunctionStreamer(CommandStreamReceiver *csr,
                          GraphicsAllocation *allocation,
                          void *hostFunctionIdAddress,
-                         const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
+                         const std::function<void(GraphicsAllocation &, uint64_t, size_t)> &downloadAllocationImpl,
                          uint32_t activePartition,
                          uint32_t partitionOffset,
                          bool isTbx,
@@ -98,7 +98,7 @@ class HostFunctionStreamer {
     uint64_t *hostFunctionIdAddress = nullptr; // 0 bit - used to signal that host function is pending or completed
     CommandStreamReceiver *csr = nullptr;
     GraphicsAllocation *allocation = nullptr;
-    std::function<void(GraphicsAllocation &)> downloadAllocationImpl;
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl;
     std::atomic<uint64_t> nextHostFunctionId{1};
     std::atomic<uint32_t> pendingHostFunctions{0};
     uint32_t activePartitions{1};

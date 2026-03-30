@@ -55,7 +55,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
             std::vector<uint64_t> hostFunctionId(nPartitions, 0u);
             auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
 
-            std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
+            std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
             bool isTbx = false;
 
             auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
@@ -137,7 +137,7 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
             MockGraphicsAllocation allocation;
             std::vector<uint64_t> hostFunctionId(nPartitions, 0u);
             auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
-            std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
+            std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
             bool isTbx = false;
 
             auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
@@ -287,7 +287,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                 uint64_t hostFunctionIdAddress = reinterpret_cast<uint64_t>(hostFunctionData.data());
                 MockGraphicsAllocation mockAllocation;
                 bool downloadAllocationCalled = false;
-                std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [&](GraphicsAllocation &) { downloadAllocationCalled = true; };
+                std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [&](GraphicsAllocation &, uint64_t, size_t) { downloadAllocationCalled = true; };
 
                 ultCsr.writeMemoryParams.totalCallCount = 0;
 
@@ -411,6 +411,48 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
     }
 }
 
+HWTEST_F(HostFunctionTests, givenTbxModeWhenDownloadingHostFunctionAllocationThenOnlyChunkIsDownloaded) {
+    constexpr uint32_t nPartitions = 2u;
+    constexpr uint32_t partitionOffset = HostFunctionAllocator::partitionOffset;
+
+    constexpr size_t allocSize = MemoryConstants::pageSize;
+    uint8_t backingBuffer[allocSize] = {};
+    MockGraphicsAllocation allocation(backingBuffer, allocSize);
+
+    constexpr size_t chunkOffsetInAlloc = HostFunctionAllocator::chunkAlignment;
+    auto hostFunctionIdAddress = backingBuffer + chunkOffsetInAlloc;
+
+    uint64_t receivedOffset = std::numeric_limits<uint64_t>::max();
+    size_t receivedSize = std::numeric_limits<size_t>::max();
+    GraphicsAllocation *receivedAllocation = nullptr;
+
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl =
+        [&](GraphicsAllocation &alloc, uint64_t offset, size_t size) {
+            receivedAllocation = &alloc;
+            receivedOffset = offset;
+            receivedSize = size;
+        };
+
+    bool isTbx = true;
+    auto dcFlushRequired = pDevice->getGpgpuCommandStreamReceiver().getDcFlushSupport();
+
+    auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
+                                                                       &allocation,
+                                                                       hostFunctionIdAddress,
+                                                                       downloadAllocationImpl,
+                                                                       nPartitions,
+                                                                       partitionOffset,
+                                                                       isTbx,
+                                                                       dcFlushRequired,
+                                                                       HasSemaphore64bCmd<FamilyType>);
+
+    hostFunctionStreamer->downloadHostFunctionAllocation();
+
+    EXPECT_EQ(&allocation, receivedAllocation);
+    EXPECT_EQ(chunkOffsetInAlloc, receivedOffset);
+    EXPECT_EQ(static_cast<size_t>(partitionOffset) * nPartitions, receivedSize);
+}
+
 TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWhenEnsureHostFunctionDataInitializationCalledThenHostFunctionAllocationIsBeingAllocatedOnlyOnce) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     DeviceBitfield devices(0b11);
@@ -497,7 +539,7 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
     std::vector<uint64_t> hostFunctionId(1u, 0u);
     auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
 
-    std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
     bool isTbx = false;
 
     auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
@@ -560,7 +602,7 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
     std::vector<uint64_t> hostFunctionId(1u, 0u);
     auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
 
-    std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
     bool isTbx = false;
 
     auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,

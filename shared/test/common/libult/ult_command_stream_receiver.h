@@ -201,7 +201,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), recursiveLockCounter(0),
           recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()),
           recordedBcsDispatchFlags(DispatchFlagsHelper::createDefaultBcsDispatchFlags()) {
-        this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation) {
+        this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation, uint64_t, size_t) {
             this->downloadAllocationUlt(graphicsAllocation);
         };
         gpuHangCheckPeriod = {};

@@ -5104,7 +5104,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenCallingSyn
     uint32_t callCounter = 0;
     bool forceFail = false;
 
-    ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
+    ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation, uint64_t, size_t) {
         callCounter++;
         if (callCounter >= failCounter && !forceFail) {
             (*hostAddress)++;
@@ -5203,7 +5203,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenCallingSy
 
     GraphicsAllocation *downloadedAlloc = nullptr;
 
-    ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
+    ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation, uint64_t, size_t) {
         callCounter++;
         if (callCounter >= failCounter && !forceFail) {
             (*hostAddress)++;
@@ -5290,7 +5290,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenDoingCpuCo
     const uint32_t failCounter = 3;
     uint32_t callCounter = 0;
 
-    ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
+    ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation, uint64_t, size_t) {
         callCounter++;
         if (callCounter >= failCounter) {
             (*hostAddress)++;

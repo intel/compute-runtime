@@ -773,7 +773,7 @@ bool CommandStreamReceiver::isTlbFlushRequiredForStateCacheFlush() {
 
 void CommandStreamReceiver::downloadAllocation(GraphicsAllocation &gfxAllocation) {
     if (this->downloadAllocationImpl) {
-        this->downloadAllocationImpl(gfxAllocation);
+        this->downloadAllocationImpl(gfxAllocation, 0, gfxAllocation.getUnderlyingBufferSize());
     }
 }
 

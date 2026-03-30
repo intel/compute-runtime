@@ -21,7 +21,7 @@ namespace NEO {
 HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
                                            GraphicsAllocation *allocation,
                                            void *hostFunctionIdAddress,
-                                           const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
+                                           const std::function<void(GraphicsAllocation &, uint64_t, size_t)> &downloadAllocationImpl,
                                            uint32_t activePartitions,
                                            uint32_t partitionOffset,
                                            bool isTbx,
@@ -167,7 +167,9 @@ GraphicsAllocation *HostFunctionStreamer::getHostFunctionIdAllocation() const {
 
 void HostFunctionStreamer::downloadHostFunctionAllocation() const {
     if (isTbx) {
-        downloadAllocationImpl(*allocation);
+        auto chunkOffset = ptrDiff(hostFunctionIdAddress, allocation->getUnderlyingBuffer());
+        auto chunkSize = static_cast<size_t>(partitionOffset) * activePartitions;
+        downloadAllocationImpl(*allocation, chunkOffset, chunkSize);
     }
 }
 

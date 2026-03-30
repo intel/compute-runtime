@@ -65,8 +65,8 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
     ppgtt = std::make_unique<std::conditional<is64bit, PML4, PDPE>::type>(physicalAddressAllocator.get());
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator.get());
 
-    this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation) {
-        this->downloadAllocationTbx(graphicsAllocation);
+    this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation, uint64_t chunkOffset, size_t chunkSize) {
+        this->downloadAllocationChunkTbx(graphicsAllocation, chunkOffset, chunkSize);
     };
 }
 
@@ -439,20 +439,25 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::processResidency(Residen
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAllocation &gfxAllocation) {
+void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationChunkTbx(GraphicsAllocation &gfxAllocation, uint64_t chunkOffset, size_t chunkSize) {
 
     uint64_t gpuAddress = 0;
     void *cpuAddress = nullptr;
-    size_t size = 0;
+    size_t allocSize = 0;
 
-    this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, size);
+    this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, allocSize);
 
-    this->allowCPUMemoryAccessIfTbxFaultable(&gfxAllocation, cpuAddress, size);
+    DEBUG_BREAK_IF(chunkOffset + chunkSize > allocSize);
+
+    gpuAddress += chunkOffset;
+    cpuAddress = ptrOffset(cpuAddress, static_cast<size_t>(chunkOffset));
+
+    this->allowCPUMemoryAccessIfTbxFaultable(&gfxAllocation, cpuAddress, chunkSize);
 
     if (hardwareContextController) {
-        hardwareContextController->readMemory(gpuAddress, cpuAddress, size,
+        hardwareContextController->readMemory(gpuAddress, cpuAddress, chunkSize,
                                               this->getMemoryBank(&gfxAllocation), gfxAllocation.getUsedPageSize());
-        this->protectCPUMemoryFromWritesIfTbxFaultable(&gfxAllocation, cpuAddress, size);
+        this->protectCPUMemoryFromWritesIfTbxFaultable(&gfxAllocation, cpuAddress, chunkSize);
     }
 }
 

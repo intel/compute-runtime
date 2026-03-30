@@ -28,7 +28,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
                uint32_t rootDeviceIndex,
                const DeviceBitfield deviceBitfield)
         : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {
-        this->downloadAllocationImpl = [this](GraphicsAllocation &gfxAllocation) {
+        this->downloadAllocationImpl = [this](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
             this->downloadAllocationTbxMock(gfxAllocation);
         };
         writeMemoryWithAubManagerCalled = std::make_unique<bool>(false);
@@ -75,7 +75,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         pollForCompletionCalled = true;
     }
     void downloadAllocationTbxMock(GraphicsAllocation &gfxAllocation) {
-        TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(gfxAllocation);
+        TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationChunkTbx(gfxAllocation, 0, gfxAllocation.getUnderlyingBufferSize());
         makeCoherentCalled = true;
     }
     void dumpAllocation(GraphicsAllocation &gfxAllocation) override {
@@ -112,7 +112,7 @@ struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxF
 
     MockTbxCsrRegisterDownloadedAllocations(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
         : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {
-        this->downloadAllocationImpl = [this](GraphicsAllocation &gfxAllocation) {
+        this->downloadAllocationImpl = [this](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
             this->downloadAllocationTbxMock(gfxAllocation);
         };
     }

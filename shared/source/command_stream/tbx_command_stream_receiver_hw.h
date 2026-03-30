@@ -54,7 +54,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override;
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override;
     void downloadAllocations(bool blockingWait, TaskCountType taskCount) override;
-    void downloadAllocationTbx(GraphicsAllocation &gfxAllocation);
+    void downloadAllocationChunkTbx(GraphicsAllocation &gfxAllocation, uint64_t chunkOffset, size_t chunkSize);
     void removeDownloadAllocation(GraphicsAllocation *alloc) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 

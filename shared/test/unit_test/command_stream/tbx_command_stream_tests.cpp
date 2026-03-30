@@ -1450,7 +1450,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxWithModeWhenHostBufferNotWritableAndProt
     EXPECT_TRUE(tbxCsr->getParametersForMemory(*gfxAlloc1, gpuAddress, cpuAddress, size));
 
     tbxCsr->writeMemory(*gfxAlloc1);
-    tbxCsr->downloadAllocationTbx(*gfxAlloc1);
+    tbxCsr->downloadAllocationChunkTbx(*gfxAlloc1, 0, gfxAlloc1->getUnderlyingBufferSize());
     EXPECT_TRUE(!tbxCsr->isTbxWritable(*gfxAlloc1));
 
     static_cast<float *>(cpuAddress)[0] = 1.0f;

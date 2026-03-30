@@ -3941,8 +3941,8 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
     ultCsr->initializeResources(false, device->getDevicePreemptionMode());
-    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
-    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
+    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
@@ -4026,7 +4026,7 @@ HWTEST_F(EventContextGroupTests, givenSecondaryCsrWhenDownloadingAllocationThenU
     ultCsr->initializeResources(false, device->getDevicePreemptionMode());
 
     uint32_t downloadCounter = 0;
-    ultCsr->downloadAllocationImpl = [&downloadCounter](GraphicsAllocation &gfxAllocation) {
+    ultCsr->downloadAllocationImpl = [&downloadCounter](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         downloadCounter++;
     };
 
@@ -4066,8 +4066,8 @@ HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenA
     ultCsr->initializeResources(false, device->getDevicePreemptionMode());
     EXPECT_NE(event->csrs[0], ultCsr);
 
-    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
-    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
+    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
@@ -4140,8 +4140,8 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
     ultCsr->initializeResources(false, device->getDevicePreemptionMode());
 
-    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
-    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
+    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
@@ -4243,8 +4243,8 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
     ultCsr->initializeResources(false, device->getDevicePreemptionMode());
-    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
-    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
+    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
@@ -5186,16 +5186,16 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     uint32_t downloadCounter1 = 0;
     uint32_t downloadCounter2 = 0;
 
-    rootCsr->downloadAllocationImpl = [&rootDownloadCounter](GraphicsAllocation &gfxAllocation) {
+    rootCsr->downloadAllocationImpl = [&rootDownloadCounter](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         rootDownloadCounter++;
     };
-    ultCsr0->downloadAllocationImpl = [&downloadCounter0](GraphicsAllocation &gfxAllocation) {
+    ultCsr0->downloadAllocationImpl = [&downloadCounter0](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         downloadCounter0++;
     };
-    ultCsr1->downloadAllocationImpl = [&downloadCounter1](GraphicsAllocation &gfxAllocation) {
+    ultCsr1->downloadAllocationImpl = [&downloadCounter1](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         downloadCounter1++;
     };
-    ultCsr2->downloadAllocationImpl = [&downloadCounter2](GraphicsAllocation &gfxAllocation) {
+    ultCsr2->downloadAllocationImpl = [&downloadCounter2](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
         downloadCounter2++;
     };
 
