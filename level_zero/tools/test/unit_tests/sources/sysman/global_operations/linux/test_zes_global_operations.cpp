@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -910,7 +910,14 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceNotInUseWhenCallingRe
     constexpr auto deviceFd = 0xF00;
     pProcfsAccess->ourDeviceFd = deviceFd;
 
-    NEO::SysCalls::closeFuncCalled = 0u;
+    static bool deviceFdWasClosed;
+    deviceFdWasClosed = false;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
+                                                                          if (fd == deviceFd) {
+                                                                              deviceFdWasClosed = true;
+                                                                          }
+                                                                          return 0; });
+
     // The first time we get the process list, include our own process, that has the file open
     // Reset should close the file (we verify after reset). On subsequent calls, return
     // the process list without our process
@@ -921,8 +928,7 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceNotInUseWhenCallingRe
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     // Check that reset closed the device
-    EXPECT_LT(0u, NEO::SysCalls::closeFuncCalled);
-    EXPECT_EQ(deviceFd, NEO::SysCalls::closeFuncArgPassed);
+    EXPECT_TRUE(deviceFdWasClosed);
 }
 
 TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
