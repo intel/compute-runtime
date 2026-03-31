@@ -3345,6 +3345,98 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenGlobalZeroInitDataSectionThenSetUpZeroI
     EXPECT_EQ(0u, programInfo.globalVariables.size);
 }
 
+TEST(DecodeSingleDeviceBinaryZebin, GivenGlobalZeroInitDataSectionAligmentThenAlignUpDataGlobalSize) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    const uint8_t mockData[0x10]{0u};
+
+    {
+        ZebinTestData::ValidEmptyProgram zebin;
+        auto &bssGlobalHeader = zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, mockData);
+        bssGlobalHeader.size = 4u;
+        auto &bssGlobalZeroInitHeader = zebin.appendSection(NEO::Elf::SHT_NOBITS, NEO::Zebin::Elf::SectionNames::dataGlobalZeroInit, mockData);
+        bssGlobalZeroInitHeader.addralign = 8U;
+
+        NEO::ProgramInfo programInfo;
+        NEO::SingleDeviceBinary singleBinary;
+        singleBinary.deviceBinary = zebin.storage;
+        std::string errors;
+        std::string warnings;
+        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
+        EXPECT_EQ(NEO::DecodeError::success, error);
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        EXPECT_TRUE(errors.empty()) << errors;
+
+        EXPECT_EQ(8u, programInfo.globalVariables.size);
+    }
+
+    {
+        ZebinTestData::ValidEmptyProgram zebin;
+        auto &bssGlobalHeader = zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, mockData);
+        bssGlobalHeader.size = 4u;
+        auto &bssGlobalZeroInitHeader = zebin.appendSection(NEO::Elf::SHT_NOBITS, NEO::Zebin::Elf::SectionNames::dataGlobalZeroInit, mockData);
+        bssGlobalZeroInitHeader.addralign = 0U;
+
+        NEO::ProgramInfo programInfo;
+        NEO::SingleDeviceBinary singleBinary;
+        singleBinary.deviceBinary = zebin.storage;
+        std::string errors;
+        std::string warnings;
+        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
+        EXPECT_EQ(NEO::DecodeError::success, error);
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        EXPECT_TRUE(errors.empty()) << errors;
+
+        EXPECT_EQ(4u, programInfo.globalVariables.size);
+    }
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, GivenConstZeroInitDataSectionAligmentThenAlignUpDataConstSize) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    const uint8_t mockData[0x10]{0u};
+
+    {
+        ZebinTestData::ValidEmptyProgram zebin;
+        auto &bssConstHeader = zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, mockData);
+        bssConstHeader.size = 4u;
+        auto &bssConstZeroInitHeader = zebin.appendSection(NEO::Elf::SHT_NOBITS, NEO::Zebin::Elf::SectionNames::dataConstZeroInit, mockData);
+        bssConstZeroInitHeader.addralign = 8U;
+
+        NEO::ProgramInfo programInfo;
+        NEO::SingleDeviceBinary singleBinary;
+        singleBinary.deviceBinary = zebin.storage;
+        std::string errors;
+        std::string warnings;
+        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
+        EXPECT_EQ(NEO::DecodeError::success, error);
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        EXPECT_TRUE(errors.empty()) << errors;
+
+        EXPECT_EQ(8u, programInfo.globalConstants.size);
+    }
+
+    {
+        ZebinTestData::ValidEmptyProgram zebin;
+        auto &bssConstHeader = zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, mockData);
+        bssConstHeader.size = 4u;
+        auto &bssConstZeroInitHeader = zebin.appendSection(NEO::Elf::SHT_NOBITS, NEO::Zebin::Elf::SectionNames::dataConstZeroInit, mockData);
+        bssConstZeroInitHeader.addralign = 0U;
+
+        NEO::ProgramInfo programInfo;
+        NEO::SingleDeviceBinary singleBinary;
+        singleBinary.deviceBinary = zebin.storage;
+        std::string errors;
+        std::string warnings;
+        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
+        EXPECT_EQ(NEO::DecodeError::success, error);
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        EXPECT_TRUE(errors.empty()) << errors;
+
+        EXPECT_EQ(4u, programInfo.globalConstants.size);
+    }
+}
+
 TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataStringsSectionThenSetsUpInitDataAndSize) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
