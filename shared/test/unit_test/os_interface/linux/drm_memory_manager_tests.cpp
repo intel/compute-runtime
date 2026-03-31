@@ -10066,6 +10066,78 @@ TEST_F(DrmMemoryManagerTest, givenMmapAlignmentLessOrEqual2MBWhenAllocatingGraph
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, givenLargeAllocationWhen2MBLocalMemAlignmentDisabledThenMmapAlignmentIs2MB) {
+    auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    auto rootDeviceEnvironment = mockExecutionEnvironment->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMock(*rootDeviceEnvironment)));
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(*mockExecutionEnvironment);
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    rootDeviceEnvironment->productHelper.reset(mockProductHelper.release());
+    AllocationData allocationData;
+    allocationData.size = 4 * MemoryConstants::megaByte;
+    allocationData.alignment = MemoryConstants::pageSize64k;
+    allocationData.type = AllocationType::buffer;
+    allocationData.rootDeviceIndex = 0;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignmentImpl(allocationData);
+
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(2 * MemoryConstants::megaByte, memoryManager->passedAlignment);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenSmallAllocationWhenAllocatingGraphicsMemoryWithAlignmentImplThenMmapAlignmentIsNotChanged) {
+    auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    auto rootDeviceEnvironment = mockExecutionEnvironment->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMock(*rootDeviceEnvironment)));
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(*mockExecutionEnvironment);
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    rootDeviceEnvironment->productHelper.reset(mockProductHelper.release());
+    AllocationData allocationData;
+    allocationData.size = 1 * MemoryConstants::megaByte;
+    allocationData.alignment = MemoryConstants::pageSize64k;
+    allocationData.type = AllocationType::buffer;
+    allocationData.rootDeviceIndex = 0;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignmentImpl(allocationData);
+
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryConstants::pageSize64k, memoryManager->passedAlignment);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenExactly2MBAllocationWhenAllocatingGraphicsMemoryWithAlignmentImplThenMmapAlignmentIs2MB) {
+    auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    auto rootDeviceEnvironment = mockExecutionEnvironment->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMock(*rootDeviceEnvironment)));
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(*mockExecutionEnvironment);
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    rootDeviceEnvironment->productHelper.reset(mockProductHelper.release());
+    AllocationData allocationData;
+    allocationData.size = 2 * MemoryConstants::megaByte;
+    allocationData.alignment = MemoryConstants::pageSize64k;
+    allocationData.type = AllocationType::buffer;
+    allocationData.rootDeviceIndex = 0;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignmentImpl(allocationData);
+
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(2 * MemoryConstants::megaByte, memoryManager->passedAlignment);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, given2MBAlignmentRequiredWhenUnalignedSizePassedToAllocateWithAlignmentThenSizeAlignedTo2MB) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemWait = 1;

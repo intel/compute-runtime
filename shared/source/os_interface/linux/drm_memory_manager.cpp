@@ -539,6 +539,10 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
         alignedVirtualAddressRangeSize = alignedStorageSize + cAlignment;
     }
 
+    if (alignedStorageSize >= 2 * MemoryConstants::megaByte && mmapAlignment <= 2 * MemoryConstants::megaByte) {
+        mmapAlignment = MemoryConstants::pageSize2M;
+    }
+
     // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     if ((isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) && !allocationData.flags.isUSMHostAllocation) {
         gpuReservationAddress = acquireGpuRange(alignedVirtualAddressRangeSize, allocationData.rootDeviceIndex, HeapIndex::heapStandard);
