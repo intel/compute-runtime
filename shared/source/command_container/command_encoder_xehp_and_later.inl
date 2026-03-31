@@ -253,7 +253,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         if (!args.makeCommandView) {
             auto heap = container.getIndirectHeap(HeapType::indirectObject);
             UNRECOVERABLE_IF(!heap);
-            heap->align(Family::cacheLineSize);
+            if (container.isIndirectHeapInLocalMemory()) {
+                heap->align(MemoryConstants::cacheLineSize);
+            } else {
+                heap->align(Family::cacheLineSize);
+            }
 
             if (args.isKernelDispatchedFromImmediateCmdList) {
                 ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, Family::indirectDataAlignment)->getSpace(iohRequiredSize);
@@ -355,7 +359,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             walkerCmd.setIndirectDataLength(sizeThreadData);
         }
     }
-    container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment());
+    container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment(container.isIndirectHeapInLocalMemory()));
 
     EncodeDispatchKernel<Family>::encodeThreadData(walkerCmd,
                                                    nullptr,

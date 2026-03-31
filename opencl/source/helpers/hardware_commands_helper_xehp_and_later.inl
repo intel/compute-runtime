@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,11 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     const RootDeviceEnvironment &rootDeviceEnvironment) {
     constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
-    indirectHeap.align(GfxFamily::cacheLineSize);
+    if (indirectHeap.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()) {
+        indirectHeap.align(MemoryConstants::cacheLineSize);
+    } else {
+        indirectHeap.align(GfxFamily::cacheLineSize);
+    }
 
     auto offsetCrossThreadData = indirectHeap.getUsed();
     char *dest = nullptr;

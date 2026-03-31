@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,6 +48,11 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, whenDebugFlagIsEnabledForAdjustPip
     const auto usedSpaceAfter = cmdContainer->getCommandStream()->getUsed();
 
     EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe2AndLater, whenGetDefaultIOHAlignmentThenReturnCorrectValue, IsAtLeastXe2HpgCore) {
+    EXPECT_EQ(FamilyType::cacheLineSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false));
+    EXPECT_EQ(MemoryConstants::cacheLineSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(true));
 }
 
 HWTEST2_F(CommandEncodeStatesTestXe2AndLater, whenDebugFlagIsDisabledForAdjustPipelineSelectThenNoCommandIsAdded, IsAtLeastXe2HpgCore) {

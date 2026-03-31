@@ -196,7 +196,7 @@ HWTEST2_F(EnqueueKernelTest, GivenIndirectAccessBufferVersion1WhenExecutingKerne
         auto sizePerThread = HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numGrf, numChannels, Math::computeTotalElementsCount(localWorkSize), pDevice->getRootDeviceEnvironment());
         auto sizeImplicitArgs = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel->getImplicitArgs(), kernel->getDescriptor(), false, pDevice->getRootDeviceEnvironment());
 
-        auto size = alignUp(sizeCrossThread + sizePerThread + sizeImplicitArgs, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment());
+        auto size = alignUp(sizeCrossThread + sizePerThread + sizeImplicitArgs, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false));
 
         EXPECT_EQ(size, pCmdQ2->getIndirectHeap(NEO::IndirectHeapType::indirectObject, 0).getUsed());
         EXPECT_EQ(0u, kernel->getImplicitArgs()->getAlignedSize() % 64u);

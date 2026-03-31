@@ -12,7 +12,7 @@
 
 namespace NEO {
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment() {
+size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment(bool isLocalMemory) {
     return 1;
 }
 

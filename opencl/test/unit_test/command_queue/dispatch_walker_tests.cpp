@@ -1385,7 +1385,7 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
                     HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numGrf, numChannels, Math::computeTotalElementsCount(workGroupSize), rootDeviceEnvironment) +
                     ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernelWithImplicitArgs.getImplicitArgs(), kernelWithImplicitArgs.getDescriptor(), false, rootDeviceEnvironment);
 
-        size = alignUp(size, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment());
+        size = alignUp(size, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false));
         EXPECT_EQ(size, iohSizeWithImplicitArgs);
     }
 }

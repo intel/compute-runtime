@@ -261,7 +261,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenComputeWalker2WhenEncodingWa
 
     auto usedAfter = heap->getUsed();
     auto iohDiff = usedAfter - usedBefore;
-    auto iohDiffAligned = alignUp(iohDiff, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment());
+    auto iohDiffAligned = alignUp(iohDiff, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false));
 
     EXPECT_EQ(iohDiffAligned, iohDiff);
 }

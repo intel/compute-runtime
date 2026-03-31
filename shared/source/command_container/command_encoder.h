@@ -295,7 +295,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
         return GfxFamily::cacheLineSize;
     }
 
-    static size_t getDefaultIOHAlignment();
+    static size_t getDefaultIOHAlignment(bool isLocalMemory);
     template <bool isHeapless>
     static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr);
     template <bool isHeapless>

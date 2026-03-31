@@ -76,7 +76,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kerne
     if (pImplicitArgs) {
         size += ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, rootDeviceEnvironment);
     }
-    return alignUp(size, NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment());
+    return alignUp(size, NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment(false));
 }
 
 template <typename GfxFamily>
@@ -351,7 +351,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
                                           WalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
         walkerCmd->setIndirectDataLength(indirectDataLength);
     }
-    ioh.align(NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment());
+    ioh.align(NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment(ioh.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()));
 
     return offsetCrossThreadData;
 }

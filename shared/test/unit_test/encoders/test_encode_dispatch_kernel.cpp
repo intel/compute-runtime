@@ -1628,18 +1628,22 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenEncodeDispatchKerne
     EXPECT_EQ(0u, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
 }
 HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGetIohAlignmentThenOneReturned, IsAtMostXeCore) {
-    EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(), 1u);
+    EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false), 1u);
 }
 
 HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGetIohAlignmentThenCacheLineSizeReturned, IsAtLeastXe2HpgCore) {
-    EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(), FamilyType::cacheLineSize);
+    EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false), FamilyType::cacheLineSize);
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGetIohAlignmentWithLocalMemoryThenSmallCacheLineSizeReturned, IsAtLeastXe2HpgCore) {
+    EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(true), MemoryConstants::cacheLineSize);
 }
 
 HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenForcingDifferentIohAlignmentThenExpectedAlignmentReturned, IsAtLeastXe2HpgCore) {
     DebugManagerStateRestore restorer;
     auto expectedAlignment = 1024u;
     debugManager.flags.ForceIOHAlignment.set(expectedAlignment);
-    EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(), expectedAlignment);
+    EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false), expectedAlignment);
 }
 
 HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCountPerSubsliceThenUseDualSubSliceAsDenominator, IsAtMostXeCore) {

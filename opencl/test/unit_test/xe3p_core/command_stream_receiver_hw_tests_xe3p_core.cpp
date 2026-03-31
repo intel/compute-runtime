@@ -915,6 +915,6 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pCoreComputeWalker2Tests, GivenComputeWa
 
     auto usedAfterIOH = ioh.getUsed();
     auto iohDiff = usedAfterIOH - usedBeforeIOH;
-    auto iohDiffAligned = alignUp(iohDiff, EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment());
+    auto iohDiffAligned = alignUp(iohDiff, EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false));
     EXPECT_EQ(iohDiffAligned, iohDiff);
 }
