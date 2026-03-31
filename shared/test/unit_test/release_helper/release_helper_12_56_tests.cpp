@@ -110,11 +110,8 @@ TEST_F(ReleaseHelper1256Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
         EXPECT_EQ(64 * kB, preferredSlmValueArray[3].upperLimit);
         EXPECT_EQ(11u, preferredSlmValueArray[3].valueToProgram);
 
-        EXPECT_EQ(96 * kB, preferredSlmValueArray[4].upperLimit);
+        EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[4].upperLimit);
         EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
-
-        EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[5].upperLimit);
-        EXPECT_EQ(13u, preferredSlmValueArray[5].valueToProgram);
     }
 }
 
