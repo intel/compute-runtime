@@ -214,7 +214,6 @@ HWTEST2_F(EnqueueKernelTest, GivenIndirectAccessBufferVersion1WhenExecutingKerne
 }
 
 TEST(EnqueueMultiDeviceKernelTest, givenMultiDeviceKernelWhenSetArgDeviceUSMThenOnlyOneKernelIsPatched) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(3, 0);
     auto device0 = deviceFactory->rootDevices[0];
     auto device1 = deviceFactory->rootDevices[1];

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,9 +48,6 @@ class ProgramFixture {
                                  const ClDeviceVector &deviceVector,
                                  const std::string &binaryFileName,
                                  const std::string &options = "");
-
-    void createProgramWithSource(Context *pContext,
-                                 const std::string &sourceFileName);
 
     void createProgramWithSource(Context *pContext);
 

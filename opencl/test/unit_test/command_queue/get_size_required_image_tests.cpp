@@ -78,12 +78,9 @@ class GetSizeRequiredImageMockedZebinTest : public GetSizeRequiredImageTest {
 
     typedef MockZebinImageWrapper<> MockZebinImageWrapperDefaultTemplateParamsType;
     MockZebinImageWrapperDefaultTemplateParamsType mockZebin{*defaultHwInfo};
-
-    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 
 HWTEST_F(GetSizeRequiredImageMockedZebinTest, WhenCopyingImageThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);
@@ -136,7 +133,6 @@ HWTEST_F(GetSizeRequiredImageMockedZebinTest, WhenCopyingImageThenHeapsAndComman
 }
 
 HWTEST_F(GetSizeRequiredImageMockedZebinTest, WhenCopyingReadWriteImageThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);
@@ -187,7 +183,6 @@ HWTEST_F(GetSizeRequiredImageMockedZebinTest, WhenCopyingReadWriteImageThenHeaps
 }
 
 HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);
@@ -245,7 +240,6 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndComman
 }
 
 HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);
@@ -303,7 +297,6 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBu
 }
 
 HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageNonBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);
@@ -360,7 +353,6 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageNonBlockingThenHeapsAndComman
 }
 
 HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);

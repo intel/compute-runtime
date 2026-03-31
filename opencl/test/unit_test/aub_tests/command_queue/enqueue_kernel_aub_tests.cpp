@@ -206,7 +206,6 @@ struct AUBHelloWorldIntegrateTest : public AUBHelloWorldFixture<AUBHelloWorldFix
 };
 
 HWTEST_P(AUBHelloWorldIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     if (this->simd < UnitTestHelper<FamilyType>::smallestTestableSimdSize) {
         GTEST_SKIP();
     }
@@ -333,7 +332,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, AUBSimpleArg, WhenEnqueingKernelThenAddressesAreA
 }
 
 HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIsForcedThenDumpedAubIsStillValid) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -524,7 +522,6 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
 using AUBSimpleKernelStatelessTest = Test<KernelAUBFixture<SimpleKernelStatelessFixture>>;
 
 HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedThenExpectCorrectBuffer) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
 
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     cl_uint workDim = 1;
@@ -571,7 +568,6 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
 using AUBSimpleAtomicTest = Test<AUBSimpleArgNonUniformFixture>;
 
 HWTEST_F(AUBSimpleAtomicTest, givenKernelWithAtomicWhenExecutedThenExpectAtomicValueIsCorrect) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {64, 1, 1};
@@ -606,7 +602,6 @@ HWTEST_F(AUBSimpleAtomicTest, givenKernelWithAtomicWhenExecutedThenExpectAtomicV
 using AUBSimpleArgNonUniformTest = Test<AUBSimpleArgNonUniformFixture>;
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 1, 1};
@@ -638,7 +633,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 1};
@@ -670,7 +664,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 1};
@@ -702,7 +695,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 1};
@@ -734,7 +726,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 32};
@@ -766,7 +757,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 32};
@@ -798,7 +788,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInZDimensionThenExpectTwoWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 32, 39};
@@ -830,7 +819,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 32};
@@ -862,7 +850,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandZDimensionThenExpectFourWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 39};
@@ -894,7 +881,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYandZDimensionThenExpectFourWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 39};
@@ -926,7 +912,6 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYandZDimensionThenExpectEightWalkers) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 39};

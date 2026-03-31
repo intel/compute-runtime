@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,8 +61,6 @@ class ClCompilerInterfaceTestMockedBinaryFilesTest : public ClDeviceFixture,
     MockCompilerDebugVars igcDebugVars;
     MockCompilerDebugVars fclDebugVars;
     char fakeBinFile[1] = {8};
-
-    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 
 TEST_F(ClCompilerInterfaceTestMockedBinaryFilesTest, WhenBuildIsInvokedThenFclReceivesListOfExtensionsInInternalOptions) {

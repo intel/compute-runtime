@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,8 +54,6 @@ struct ClGetKernelWorkGroupInfoTest : public ApiFixture, public FixtureWithMockZ
 
     cl_program pProgram = nullptr;
     cl_kernel kernel = nullptr;
-
-    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 
 struct ClGetKernelWorkGroupInfoTests : public ClGetKernelWorkGroupInfoTest,

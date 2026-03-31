@@ -165,13 +165,6 @@ IgcOptionsAndCapabilities<0>::IgcOptionsAndCapabilities(ArgsT &&...args) {}
 namespace NEO {
 
 template <typename StrT>
-std::unique_ptr<unsigned char[]> loadBinaryFile(StrT &&fileName, size_t &fileSize) {
-
-    std::unique_ptr<char[]> data = NEO::loadDataFromFile(fileName.c_str(), fileSize);
-    return std::unique_ptr<unsigned char[]>(reinterpret_cast<unsigned char *>(data.release()));
-};
-
-template <typename StrT>
 std::unique_ptr<unsigned char[]> loadVirtualBinaryFile(StrT &&fileName, size_t &fileSize) {
     std::filesystem::path filePath = std::forward<StrT>(fileName);
     std::string fileNameWithExtension = filePath.filename().string();
@@ -182,7 +175,8 @@ std::unique_ptr<unsigned char[]> loadVirtualBinaryFile(StrT &&fileName, size_t &
             std::memcpy(ucharData.get(), kernelData.get(), fileSize);
             return ucharData;
         }
-        return loadBinaryFile(filePath.string(), fileSize);
+        fileSize = 0;
+        return nullptr;
     }
 
     std::unique_ptr<char[]> charData = loadDataFromVirtualFile(fileNameWithExtension.c_str(), fileSize);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -849,7 +849,6 @@ TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEn
 }
 
 HWTEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueKernelIsCalledWithWorkDim3ThenContextProvidesProperHint) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     size_t preferredWorkGroupSize[3];
     auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getClDevice(0)->getSharedDeviceInfo().maxWorkGroupSize);
     if (debugManager.flags.EnableComputeWorkSizeND.get()) {

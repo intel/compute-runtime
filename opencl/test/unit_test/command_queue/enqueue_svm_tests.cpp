@@ -106,8 +106,6 @@ class EnqueueSvmMockedZebinTest : public EnqueueSvmTest {
     typedef MockZebinWrapper<> MockZebinWrapperDefaultTemplateParamsType;
     MockZebinWrapperDefaultTemplateParamsType::Descriptor desc{};
     MockZebinWrapperDefaultTemplateParamsType mockZebin{*defaultHwInfo};
-
-    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 
 TEST_F(EnqueueSvmTest, GivenInvalidSvmPtrWhenMappingSvmThenInvalidValueErrorIsReturned) {
@@ -993,7 +991,6 @@ TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThen
 }
 
 TEST_F(EnqueueSvmMockedZebinTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
     GraphicsAllocation *svmAllocation = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
@@ -1022,7 +1019,6 @@ TEST_F(EnqueueSvmMockedZebinTest, GivenSvmAllocationWhenEnqueingKernelThenSucces
 }
 
 TEST_F(EnqueueSvmMockedZebinTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSurfacesAreMadeResident) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
 
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableIsaAllocationPool.set(false);

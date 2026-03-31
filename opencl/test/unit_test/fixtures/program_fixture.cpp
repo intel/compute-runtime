@@ -7,7 +7,6 @@
 
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 
-#include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/test_files.h"
 
@@ -27,36 +26,6 @@ void ProgramFixture::createProgramWithSource(Context *pContext) {
     knownSourceSize = std::strlen(sampleKernel) + 1;
     knownSource = std::make_unique<char[]>(knownSourceSize);
     std::copy(sampleKernel, sampleKernel + knownSourceSize, knownSource.get());
-
-    const char *sources[1] = {knownSource.get()};
-    pProgram = Program::create<MockProgram>(
-        pContext,
-        1,
-        sources,
-        &knownSourceSize,
-        retVal);
-
-    ASSERT_NE(nullptr, pProgram);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-}
-
-void ProgramFixture::createProgramWithSource(Context *pContext,
-                                             const std::string &sourceFileName) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
-    cleanup();
-    cl_int retVal = CL_SUCCESS;
-    std::string testFile;
-
-    testFile.append(clFiles);
-    testFile.append(sourceFileName);
-    ASSERT_EQ(true, NEO::fileExists(testFile));
-
-    knownSource = NEO::loadDataFromFile(
-        testFile.c_str(),
-        knownSourceSize);
-
-    ASSERT_NE(0u, knownSourceSize);
-    ASSERT_NE(nullptr, knownSource);
 
     const char *sources[1] = {knownSource.get()};
     pProgram = Program::create<MockProgram>(

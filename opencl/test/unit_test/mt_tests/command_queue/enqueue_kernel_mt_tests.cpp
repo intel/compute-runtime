@@ -12,7 +12,6 @@
 #include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
@@ -131,13 +130,8 @@ HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAn
     cl_uint workDim = 1;
 
     KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    std::string testFile;
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    size_t sourceSize = 0;
-    auto pSource = NEO::loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    const char *pSource = "example_kernel(){}";
+    size_t sourceSize = strlen(pSource);
 
     MockClDevice mockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, pDevice->executionEnvironment, 0)};
 
@@ -150,7 +144,7 @@ HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAn
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, queue);
 
-    const char *sources[1] = {pSource.get()};
+    const char *sources[1] = {pSource};
     auto program = clCreateProgramWithSource(
         context,
         1,
@@ -252,13 +246,8 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThrea
     cl_uint workDim = 1;
 
     KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    std::string testFile;
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    size_t sourceSize = 0;
-    auto pSource = NEO::loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    const char *pSource = "example_kernel(){}";
+    size_t sourceSize = strlen(pSource);
 
     MockClDevice mockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, pDevice->executionEnvironment, 0)};
 
@@ -271,7 +260,7 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThrea
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, queue);
 
-    const char *sources[1] = {pSource.get()};
+    const char *sources[1] = {pSource};
     auto program = clCreateProgramWithSource(
         context,
         1,
@@ -382,13 +371,8 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBuff
     cl_uint workDim = 1;
 
     KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    std::string testFile;
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    size_t sourceSize = 0;
-    auto pSource = NEO::loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    const char *pSource = "example_kernel(){}";
+    size_t sourceSize = strlen(pSource);
 
     MockClDevice mockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, pDevice->executionEnvironment, 0)};
 
@@ -397,7 +381,7 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBuff
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
 
-    const char *sources[1] = {pSource.get()};
+    const char *sources[1] = {pSource};
     auto program = clCreateProgramWithSource(
         context,
         1,
@@ -500,13 +484,8 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueu
     cl_uint workDim = 1;
 
     KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    std::string testFile;
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    size_t sourceSize = 0;
-    auto pSource = NEO::loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
+    const char *pSource = "example_kernel(){}";
+    size_t sourceSize = strlen(pSource);
 
     MockClDevice mockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, pDevice->executionEnvironment, 0)};
 
@@ -515,7 +494,7 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueu
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
 
-    const char *sources[1] = {pSource.get()};
+    const char *sources[1] = {pSource};
     auto program = clCreateProgramWithSource(
         context,
         1,
