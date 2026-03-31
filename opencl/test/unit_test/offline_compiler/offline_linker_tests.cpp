@@ -41,9 +41,9 @@ void OfflineLinkerTest::SetUp() {
     constexpr unsigned char mockByteArray[] = {0x01, 0x02, 0x03, 0x04};
     std::string_view byteArrayView(reinterpret_cast<const char *>(mockByteArray), sizeof(mockByteArray));
 
-    NEO::writeDataToFile(spvFile.c_str(), byteArrayView);
-    NEO::writeDataToFile(binFile.c_str(), byteArrayView);
-    NEO::writeDataToFile(dbgFile.c_str(), byteArrayView);
+    NEO::writeDataToFile(spvFile.c_str(), byteArrayView, false);
+    NEO::writeDataToFile(binFile.c_str(), byteArrayView, false);
+    NEO::writeDataToFile(dbgFile.c_str(), byteArrayView, false);
 
     MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
     igcDebugVars.binaryToReturn = binaryToReturn;

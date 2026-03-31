@@ -40,7 +40,7 @@ TEST(SettingsReader, GivenSettingsFileExistsWhenCreatingSettingsReaderThenReader
     ASSERT_FALSE(virtualFileExists(SettingsReader::settingsFileName));
 
     constexpr std::string_view data = "ProductFamilyOverride = test";
-    NEO::writeDataToFile(SettingsReader::settingsFileName, data);
+    NEO::writeDataToFile(SettingsReader::settingsFileName, data, false);
 
     auto reader = std::unique_ptr<SettingsReader>(MockSettingsReader::create(ApiSpecificConfig::getRegistryPath()));
     EXPECT_NE(nullptr, reader.get());
@@ -54,7 +54,7 @@ TEST(SettingsReader, WhenCreatingFileReaderThenReaderIsCreated) {
     ASSERT_FALSE(virtualFileExists(SettingsReader::settingsFileName));
     char data = 0;
     std::string_view emptyView(&data, 0);
-    NEO::writeDataToFile(SettingsReader::settingsFileName, emptyView);
+    NEO::writeDataToFile(SettingsReader::settingsFileName, emptyView, false);
 
     auto reader = std::unique_ptr<SettingsReader>(MockSettingsReader::createFileReader());
     EXPECT_NE(nullptr, reader.get());
@@ -67,7 +67,7 @@ TEST(SettingsReader, WhenCreatingFileReaderUseNeoFileIfNoDefault) {
     ASSERT_FALSE(virtualFileExists(SettingsReader::neoSettingsFileName));
     char data = 0;
     std::string_view emptyView(&data, 0);
-    NEO::writeDataToFile(SettingsReader::neoSettingsFileName, emptyView);
+    NEO::writeDataToFile(SettingsReader::neoSettingsFileName, emptyView, false);
 
     auto reader = std::unique_ptr<SettingsReader>(MockSettingsReader::createFileReader());
     EXPECT_NE(nullptr, reader.get());

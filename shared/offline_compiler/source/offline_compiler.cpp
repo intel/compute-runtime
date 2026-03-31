@@ -1655,7 +1655,7 @@ void OfflineCompiler::createTempSourceFileForDebug() {
     std::string tempFilePath = "main_" + std::to_string(sourceHash) + ".cl";
     std::filesystem::path absTempFilePath = std::filesystem::absolute(tempFilePath);
 
-    NEO::writeDataToFile(absTempFilePath.string().c_str(), std::string_view(sourceCode.c_str(), sourceCode.size()));
+    NEO::writeDataToFile(absTempFilePath.string().c_str(), std::string_view(sourceCode.c_str(), sourceCode.size()), false);
 
     if (argHelper && !isQuiet()) {
         argHelper->printf("Temporary source file for debug info created: %s\n", absTempFilePath.string().c_str());

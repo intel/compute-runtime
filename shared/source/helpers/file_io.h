@@ -20,7 +20,7 @@ namespace NEO {
 
 bool fileExists(const std::string &fileName);
 bool fileExistsHasSize(const std::string &fileName);
-size_t writeDataToFile(const char *filename, std::string_view data);
+size_t writeDataToFile(const char *filename, std::string_view data, bool append);
 std::unique_ptr<char[]> loadDataFromFile(const char *filename, size_t &retSize);
 void dumpFileIncrement(const char *data, size_t dataSize, const std::string &filename, const std::string &extension);
 

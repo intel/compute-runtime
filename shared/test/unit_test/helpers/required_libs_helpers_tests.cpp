@@ -31,7 +31,7 @@ TEST_F(RequiredLibsHelpersTest, givenRequiredLibPathWhenOptionalSearchPathsDefin
 
     constexpr auto exampleLibName = "exampleRequiredLib.so.8.7.6";
     const auto exampleLibPath = NEO::joinPath(std::string{fakeOptionalPaths[1]}, exampleLibName);
-    writeDataToFile(exampleLibPath.c_str(), "fakeData");
+    writeDataToFile(exampleLibPath.c_str(), "fakeData", false);
     EXPECT_TRUE(virtualFileExists(exampleLibPath));
 
     RequiredLibsHelpers::LockableSearchPaths cachedSearchPaths;
@@ -61,7 +61,7 @@ TEST_F(RequiredLibsHelpersTest, givenRequiredLibPathWhenOptionalSearchPathsDoNot
 
     constexpr auto exampleLibName = "exampleRequiredLib.so.8.7.6";
     const auto exampleLibPath = NEO::joinPath(std::string{fakeDefaultPaths[1]}, exampleLibName);
-    writeDataToFile(exampleLibPath.c_str(), "fakeData");
+    writeDataToFile(exampleLibPath.c_str(), "fakeData", false);
     EXPECT_TRUE(virtualFileExists(exampleLibPath));
 
     RequiredLibsHelpers::LockableSearchPaths cachedSearchPaths;
@@ -86,7 +86,7 @@ TEST_F(RequiredLibsHelpersTest, givenRequiredLibPathWhenOptionalSearchPathsEmpty
 
     constexpr auto exampleLibName = "exampleRequiredLib.so.8.7.6";
     const auto exampleLibPath = NEO::joinPath(std::string{fakeDefaultPaths[1]}, exampleLibName);
-    writeDataToFile(exampleLibPath.c_str(), "fakeData");
+    writeDataToFile(exampleLibPath.c_str(), "fakeData", false);
     EXPECT_TRUE(virtualFileExists(exampleLibPath));
 
     RequiredLibsHelpers::LockableSearchPaths cachedSearchPaths;

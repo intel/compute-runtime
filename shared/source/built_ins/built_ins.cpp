@@ -48,7 +48,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
         if (NEO::debugManager.flags.DumpSipHeaderFile.get() != "unk") {
             std::string name = NEO::debugManager.flags.DumpSipHeaderFile.get() + "_header.bin";
-            NEO::writeDataToFile(name.c_str(), std::string_view(stateSaveAreaHeader.data(), stateSaveAreaHeader.size()));
+            NEO::writeDataToFile(name.c_str(), std::string_view(stateSaveAreaHeader.data(), stateSaveAreaHeader.size()), false);
         }
 
         const auto allocType = AllocationType::kernelIsaInternal;

@@ -1073,7 +1073,7 @@ void DebugSessionImp::dumpDebugSurfaceToFile(uint64_t vmHandle, uint64_t gpuVa, 
         PRINT_DEBUGGER_ERROR_LOG("Reading context state save area failed, error = %d\n", retVal);
         return;
     }
-    NEO::writeDataToFile(path.c_str(), std::string_view(data.data(), data.size()));
+    NEO::writeDataToFile(path.c_str(), std::string_view(data.data(), data.size()), false);
 }
 
 void DebugSessionImp::validateAndSetStateSaveAreaHeader(uint64_t vmHandle, uint64_t gpuVa) {

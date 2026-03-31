@@ -21,7 +21,7 @@ namespace NEO {
 
 TEST(DebugSettingsManager, givenDisabledDebugManagerAndMockEnvVariableWhenCreateThenAllVariablesAreRead) {
     constexpr std::string_view data = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
-    NEO::writeDataToFile(SettingsReader::settingsFileName, data);
+    NEO::writeDataToFile(SettingsReader::settingsFileName, data, false);
 
     SettingsReader *reader = MockSettingsReader::createFileReader();
 

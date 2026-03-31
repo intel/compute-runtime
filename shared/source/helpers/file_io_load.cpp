@@ -59,7 +59,7 @@ void dumpFileIncrement(const char *data, size_t dataSize, const std::string &fil
         filenameWithExt = filename + "_" + std::to_string(suffix) + extension;
         suffix++;
     }
-    NEO::writeDataToFile(filenameWithExt.c_str(), std::string_view(data, dataSize));
+    NEO::writeDataToFile(filenameWithExt.c_str(), std::string_view(data, dataSize), false);
 }
 
 } // namespace NEO

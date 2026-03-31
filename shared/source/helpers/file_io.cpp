@@ -11,7 +11,6 @@
 #include "shared/source/helpers/stdio.h"
 
 #include <cstring>
-#include <fstream>
 #include <new>
 
 namespace NEO {
@@ -47,13 +46,14 @@ bool fileExistsHasSize(const std::string &fileName) {
 
 size_t writeDataToFile(
     const char *filename,
-    std::string_view data) {
+    std::string_view data,
+    bool append) {
     FILE *fp = nullptr;
     size_t nsize = 0;
 
     DEBUG_BREAK_IF(nullptr == filename);
 
-    fopen_s(&fp, filename, "wb");
+    fopen_s(&fp, filename, append ? "ab" : "wb");
     if (fp) {
         nsize = fwrite(data.data(), sizeof(unsigned char), data.size(), fp);
         fclose(fp);

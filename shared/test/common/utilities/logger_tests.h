@@ -39,7 +39,7 @@ class TestFileLogger : public NEO::FileLogger<debugLevel> {
                      const char *str,
                      size_t length,
                      std::ios_base::openmode mode) override {
-        NEO::writeDataToFile(filename.c_str(), std::string_view(str, length));
+        NEO::writeDataToFile(filename.c_str(), std::string_view(str, length), (mode & std::ios::app) != 0);
     }
 
     int32_t createdFilesCount() {

@@ -13,9 +13,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/utilities/io_functions.h"
 
-#include <fstream>
 #include <memory>
 #include <string>
 
@@ -60,11 +58,7 @@ FileLogger<debugLevel>::~FileLogger() = default;
 template <DebugFunctionalityLevel debugLevel>
 void FileLogger<debugLevel>::writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode) {
     std::lock_guard theLock(mutex);
-    std::ofstream outFile(filename, mode);
-    if (outFile.is_open()) {
-        outFile.write(str, length);
-        outFile.close();
-    }
+    writeDataToFile(filename.c_str(), {str, length}, (mode & std::ios::app) != 0);
 }
 
 template <DebugFunctionalityLevel debugLevel>

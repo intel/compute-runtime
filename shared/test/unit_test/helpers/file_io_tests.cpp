@@ -21,7 +21,7 @@ TEST(FileIO, GivenNonEmptyFileWhenCheckingIfHasSizeThenReturnTrue) {
     ASSERT_FALSE(virtualFileExists(fileName.c_str()));
 
     constexpr std::string_view data = "TEST";
-    NEO::writeDataToFile(fileName.c_str(), data);
+    NEO::writeDataToFile(fileName.c_str(), data, false);
 
     EXPECT_TRUE(virtualFileExists(fileName.c_str()));
     EXPECT_TRUE(NEO::fileExistsHasSize(fileName.c_str()));
@@ -37,7 +37,7 @@ TEST(FileIO, GivenEmptyFileWhenCheckingIfHasSizeThenReturnFalse) {
     ASSERT_FALSE(virtualFileExists(fileName.c_str()));
 
     constexpr std::string_view data = "";
-    NEO::writeDataToFile(fileName.c_str(), data);
+    NEO::writeDataToFile(fileName.c_str(), data, false);
 
     EXPECT_TRUE(virtualFileExists(fileName.c_str()));
     EXPECT_FALSE(NEO::fileExistsHasSize(fileName.c_str()));

@@ -14,6 +14,7 @@
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -23,7 +24,6 @@
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include <cstdio>
-#include <fstream>
 #include <memory>
 #include <regex>
 #include <sstream>
@@ -381,18 +381,11 @@ TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementation
 }
 
 TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVariablesAreRead) {
-    USE_REAL_FILE_SYSTEM();
+    ASSERT_FALSE(virtualFileExists(SettingsReader::settingsFileName));
+    constexpr std::string_view data = "LogApiCalls = 1\nNEO_CAL_ENABLED=1";
+    NEO::writeDataToFile(SettingsReader::settingsFileName, data, false);
 
-    bool settingsFileExists = NEO::fileExists(SettingsReader::settingsFileName);
-    if (!settingsFileExists) {
-        const char data[] = "LogApiCalls = 1\nNEO_CAL_ENABLED=1";
-        std::ofstream file;
-        file.open(SettingsReader::settingsFileName);
-        file << data;
-        file.close();
-    }
-
-    SettingsReader *reader = SettingsReader::createFileReader();
+    SettingsReader *reader = MockSettingsReader::createFileReader();
     EXPECT_NE(nullptr, reader);
 
     FullyDisabledTestDebugManager debugManager;
@@ -401,14 +394,12 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVar
     EXPECT_EQ(1, debugManager.flags.NEO_CAL_ENABLED.get());
     EXPECT_EQ(0, debugManager.flags.LogApiCalls.get());
 
-    if (!settingsFileExists) {
-        std::remove(SettingsReader::settingsFileName);
-    }
+    removeVirtualFile(SettingsReader::settingsFileName);
 }
 
 TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAreRead) {
     constexpr std::string_view data = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
-    NEO::writeDataToFile(SettingsReader::settingsFileName, data);
+    NEO::writeDataToFile(SettingsReader::settingsFileName, data, false);
 
     SettingsReader *reader = MockSettingsReader::createFileReader();
     EXPECT_NE(nullptr, reader);
@@ -424,7 +415,6 @@ TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAre
 }
 
 TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCalledThenStringPrintedToFile) {
-    USE_REAL_FILE_SYSTEM();
     if (!NEO::fileLoggerInstance().enabled()) {
         GTEST_SKIP();
     }
@@ -433,7 +423,7 @@ TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCall
 
     auto logFile = NEO::fileLoggerInstance().getLogFileName();
 
-    std::remove(logFile);
+    removeVirtualFile(logFile);
 
     StreamCapture capture;
     capture.captureStdout();
@@ -445,14 +435,13 @@ TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCall
     EXPECT_TRUE(logFileExists);
 
     size_t retSize;
-    auto data = NEO::loadDataFromFile(logFile, retSize);
+    auto data = loadDataFromVirtualFile(logFile, retSize);
 
     EXPECT_STREQ("test log", data.get());
-    std::remove(logFile);
+    removeVirtualFile(logFile);
 }
 
 TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCalledThenStringIsNotPrintedToFile) {
-    USE_REAL_FILE_SYSTEM();
     if (!NEO::debugManager.disabled()) {
         GTEST_SKIP();
     }
@@ -460,7 +449,7 @@ TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCal
     NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_TO_FILE);
 
     auto logFile = NEO::fileLoggerInstance().getLogFileName();
-    std::remove(logFile);
+    removeVirtualFile(logFile);
 
     StreamCapture capture;
     capture.captureStdout();
@@ -469,19 +458,17 @@ TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCal
     auto output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
-    auto logFileExists = NEO::fileExists(logFile);
-    ASSERT_FALSE(logFileExists);
+    ASSERT_FALSE(virtualFileExists(logFile));
 }
 
 TEST(DebugSettingsManager, GivenLogsEnabledWhenLogCacheOperationCalledThenStringPrintedToFile) {
-    USE_REAL_FILE_SYSTEM();
     if (!NEO::usmReusePerfLoggerInstance().enabled()) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
 
     auto logFile = NEO::usmReusePerfLoggerInstance().getLogFileName();
-    std::remove(logFile);
+    removeVirtualFile(logFile);
 
     SVMAllocsManager::SvmAllocationCache svmAllocationCache;
     auto timePoint = std::chrono::high_resolution_clock::now();
@@ -495,7 +482,7 @@ TEST(DebugSettingsManager, GivenLogsEnabledWhenLogCacheOperationCalledThenString
     EXPECT_TRUE(logFileExists);
 
     size_t retSize;
-    auto data = NEO::loadDataFromFile(logFile, retSize);
+    auto data = loadDataFromVirtualFile(logFile, retSize);
     auto retString = std::string(data.get(), data.get() + retSize);
     std::stringstream expectedString;
     expectedString << timePoint.time_since_epoch().count() << " , "
@@ -508,7 +495,7 @@ TEST(DebugSettingsManager, GivenLogsEnabledWhenLogCacheOperationCalledThenString
                    << "TRUE";
 
     EXPECT_NE(std::string::npos, retString.find(expectedString.str()));
-    std::remove(logFile);
+    removeVirtualFile(logFile);
 }
 
 TEST(DebugLog, WhenLogDebugStringCalledThenNothingIsPrintedToStdout) {

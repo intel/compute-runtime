@@ -38,7 +38,7 @@ TEST(CpuInfo, givenProcCpuinfoFileExistsWhenIsCpuFlagPresentIsCalledThenValidVal
     std::string cpuinfoFile = "cpuinfo";
     EXPECT_FALSE(virtualFileExists(cpuinfoFile));
     constexpr std::string_view cpuinfoData = "processor\t\t: 0\nFeatures\t\t: flag1 flag2 flag3\n";
-    NEO::writeDataToFile(cpuinfoFile.c_str(), cpuinfoData);
+    NEO::writeDataToFile(cpuinfoFile.c_str(), cpuinfoData, false);
 
     EXPECT_TRUE(virtualFileExists(cpuinfoFile));
 

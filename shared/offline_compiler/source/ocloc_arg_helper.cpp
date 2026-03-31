@@ -211,6 +211,6 @@ void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, 
     if (outputEnabled()) {
         addOutput(filename, pData, dataSize);
     } else {
-        NEO::writeDataToFile(filename.c_str(), std::string_view(static_cast<const char *>(pData), dataSize));
+        NEO::writeDataToFile(filename.c_str(), std::string_view(static_cast<const char *>(pData), dataSize), false);
     }
 }

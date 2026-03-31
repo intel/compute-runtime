@@ -62,10 +62,14 @@ bool fileExistsHasSize(const std::string &fileName) {
 
 size_t writeDataToFile(
     const char *filename,
-    std::string_view data) {
+    std::string_view data,
+    bool append) {
 
     DEBUG_BREAK_IF(nullptr == filename);
 
+    if (!append) {
+        NEO::virtualFileList[filename].str({});
+    }
     NEO::virtualFileList[filename] << data;
 
     return NEO::virtualFileList[filename].str().size();
