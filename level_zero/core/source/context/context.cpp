@@ -847,8 +847,9 @@ ze_result_t Context::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
             delete trackIPC;
             ipcMap.erase(handle);
         }
+        return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_SUCCESS;
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
 ze_result_t Context::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) {
