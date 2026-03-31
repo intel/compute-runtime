@@ -1203,7 +1203,7 @@ TEST(ImageFormatDescHelperTest, givenSupportedSwizzlesThenProperClEnumIsReturned
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
-    format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
     EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_A));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
@@ -1215,7 +1215,7 @@ TEST(ImageFormatDescHelperTest, givenSupportedSwizzlesThenProperClEnumIsReturned
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
-    format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    format.w = ZE_IMAGE_FORMAT_SWIZZLE_G;
     EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_RA));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
@@ -1253,6 +1253,18 @@ TEST(ImageFormatDescHelperTest, givenSupportedSwizzlesThenProperClEnumIsReturned
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
     EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_DEPTH));
+
+    format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.y = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.z = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_LUMINANCE));
+
+    format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.y = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.z = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_INTENSITY));
 }
 
 using ImageGetMemoryProperties = Test<DeviceFixture>;
