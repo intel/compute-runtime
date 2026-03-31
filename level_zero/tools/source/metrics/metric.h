@@ -161,7 +161,7 @@ class MetricDeviceContext {
 
   public:
     MetricDeviceContext(Device &device);
-    ~MetricDeviceContext() {}
+    virtual ~MetricDeviceContext() {}
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups);
     ze_result_t activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
     ze_result_t activateMetricGroups();

@@ -91,7 +91,6 @@ bool OaMetricSourceImp::loadDependencies() {
         result = false;
         DEBUG_BREAK_IF(!result);
     }
-
     // Set metric context initialization state.
     setInitializationState(result
                                ? ZE_RESULT_SUCCESS

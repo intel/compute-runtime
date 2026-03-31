@@ -230,6 +230,10 @@ struct OaMetricGroupImp : public MetricGroupImp {
     void setCachedExportDataHeapSize(size_t size);
     void addMetricGroupType(zet_metric_group_type_exp_flags_t type) { metricGroupType |= type; }
     zet_metric_group_type_exp_flags_t getMetricGroupType() const { return metricGroupType; }
+    ze_result_t calculateMetricValuesImpl(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
+                                          const uint8_t *pRawData, uint32_t *pSetCount,
+                                          uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
+                                          zet_typed_value_t *pMetricValues);
 
   protected:
     void copyProperties(const zet_metric_group_properties_t &source,

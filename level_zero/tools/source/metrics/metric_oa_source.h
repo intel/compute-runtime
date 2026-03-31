@@ -24,7 +24,7 @@ class OaMetricSourceImp : public MetricSource {
     bool isAvailable() override;
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) override;
     ze_result_t appendMetricMemoryBarrier(CommandList &commandList) override;
-    bool loadDependencies();
+    virtual bool loadDependencies();
     bool isInitialized();
     void setInitializationState(const ze_result_t state);
     Device &getDevice();

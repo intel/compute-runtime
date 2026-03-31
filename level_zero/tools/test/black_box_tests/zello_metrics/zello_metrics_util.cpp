@@ -408,9 +408,14 @@ void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *raw
         const uint32_t metricCount = properties.metricCount;
         const uint32_t metricCountForSet = metricCounts[i];
 
+        uint32_t previousMetricSetMetricCount = 0;
+        if (i > 0) {
+            previousMetricSetMetricCount = metricCounts[i - 1];
+        }
+
         for (uint32_t j = 0; j < metricCountForSet; j++) {
 
-            const uint32_t resultIndex = j + metricCount * i;
+            const uint32_t resultIndex = j + previousMetricSetMetricCount;
             const uint32_t metricIndex = j % metricCount;
             zet_metric_properties_t metricProperties = {};
 
