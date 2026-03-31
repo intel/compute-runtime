@@ -3648,6 +3648,33 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenDontAppendAllowZebi
     EXPECT_STREQ(expectedOptions, moduleTu.options.c_str());
 }
 
+HWTEST_F(ModuleTranslationUnitTest, GivenZebinWithSpecConstantsWhenCreatingFromNativeBinaryThenSpecConstantsValuesArePopulated) {
+    ZebinTestData::ValidEmptyProgram zebin;
+
+    auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
+
+    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+
+    const uint32_t specConstIds[] = {1u, 2u, 3u};
+    const uint64_t specConstValues[] = {100u, 200u, 300u};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::specConstantsIds,
+                        ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstIds), sizeof(specConstIds)));
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::specConstantsValues,
+                        ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstValues), sizeof(specConstValues)));
+
+    L0::ModuleTranslationUnit moduleTu(this->device);
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), "");
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    ASSERT_EQ(3u, moduleTu.specConstantsValues.size());
+    EXPECT_EQ(100u, moduleTu.specConstantsValues[1u]);
+    EXPECT_EQ(200u, moduleTu.specConstantsValues[2u]);
+    EXPECT_EQ(300u, moduleTu.specConstantsValues[3u]);
+}
+
 HWTEST_F(ModuleTranslationUnitTest, GivenOneApiPvcSendWarWaEnvFalseAndFileWithIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiledWithInternalOption) {
 
     auto pMockCompilerInterface = new MockCompilerInterface;

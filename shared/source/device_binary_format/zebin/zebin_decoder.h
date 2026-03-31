@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,8 @@ struct ZebinSections {
     StackVec<SectionHeaderData *, 1> spirvSections;
     StackVec<SectionHeaderData *, 1> noteIntelGTSections;
     StackVec<SectionHeaderData *, 1> buildOptionsSection;
+    StackVec<SectionHeaderData *, 1> specConstantsIdsSection;
+    StackVec<SectionHeaderData *, 1> specConstantsValuesSection;
 };
 
 template <Elf::ElfIdentifierClass numBits>

@@ -2365,6 +2365,37 @@ TEST_F(ProgramTests, whenCreatingFromZebinThenDontAppendEnableZebinFlagToBuildOp
     EXPECT_STREQ(expectedOptions, program->options.c_str());
 }
 
+TEST_F(ProgramTests, GivenZebinWithSpecConstantsWhenCreatingProgramFromBinaryThenSpecConstantsValuesArePopulated) {
+    if (sizeof(void *) != 8U) {
+        GTEST_SKIP();
+    }
+
+    auto copyHwInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+
+    const uint32_t specConstIds[] = {1u, 2u, 3u};
+    const uint64_t specConstValues[] = {100u, 200u, 300u};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::specConstantsIds,
+                        ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstIds), sizeof(specConstIds)));
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::specConstantsValues,
+                        ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstValues), sizeof(specConstValues)));
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, mockRootDeviceIndex));
+    auto program = std::make_unique<MockProgram>(toClDeviceVector(*device));
+    cl_int retVal = program->createProgramFromBinary(zebin.storage.data(), zebin.storage.size(), *device);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_EQ(3u, program->specConstantsValues.size());
+    EXPECT_EQ(100u, program->specConstantsValues[1u]);
+    EXPECT_EQ(200u, program->specConstantsValues[2u]);
+    EXPECT_EQ(300u, program->specConstantsValues[3u]);
+}
+
 TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenPrintDebugMsgAndReturnError) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.PrintDebugMessages.set(true);

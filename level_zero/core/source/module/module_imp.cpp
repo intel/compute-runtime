@@ -368,6 +368,8 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         this->irBinarySize = singleDeviceBinary.intermediateRepresentation.size();
         this->options = singleDeviceBinary.buildOptions.str();
 
+        this->specConstantsValues = NEO::getSpecConstantsFromBinary(singleDeviceBinary);
+
         if (false == singleDeviceBinary.debugData.empty()) {
             this->debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
             this->debugDataSize = singleDeviceBinary.debugData.size();

@@ -14,8 +14,10 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/compiler_interface/spec_const_values_map.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -267,6 +269,8 @@ cl_int Program::createProgramFromBinary(
             this->irBinarySize = singleDeviceBinary.intermediateRepresentation.size();
             this->isSpirV = NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize));
             this->options = singleDeviceBinary.buildOptions.str();
+
+            this->specConstantsValues = NEO::getSpecConstantsFromBinary(singleDeviceBinary);
 
             auto deviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
             auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(deviceBinary.get()), singleDeviceBinary.deviceBinary.size());

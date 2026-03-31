@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -459,4 +459,58 @@ TEST(PackDeviceBinary, GivenRequestToPackWhenFormatIsAlreadyPackedThenReturnsInp
     EXPECT_TRUE(packWarnings.empty());
     EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::oclElf>(packed));
     EXPECT_EQ(packed, packed2);
+}
+
+TEST(GetSpecConstantsFromBinary, GivenMismatchedSpecConstantsSizesThenReturnsEmptyMap) {
+    NEO::SingleDeviceBinary binary;
+
+    const uint32_t specConstIds[] = {1u, 2u, 3u};
+    const uint64_t specConstValues[] = {100u, 200u};
+    binary.specConstantsIds = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstIds), sizeof(specConstIds));
+    binary.specConstantsValues = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstValues), sizeof(specConstValues));
+
+    auto result = NEO::getSpecConstantsFromBinary(binary);
+    EXPECT_TRUE(result.empty());
+}
+
+TEST(GetSpecConstantsFromBinary, GivenOnlySpecConstantsIdsSetThenReturnsEmptyMap) {
+    NEO::SingleDeviceBinary binary;
+
+    const uint32_t specConstIds[] = {1u, 2u, 3u};
+    binary.specConstantsIds = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstIds), sizeof(specConstIds));
+
+    auto result = NEO::getSpecConstantsFromBinary(binary);
+    EXPECT_TRUE(result.empty());
+}
+
+TEST(GetSpecConstantsFromBinary, GivenOnlySpecConstantsValuesSetThenReturnsEmptyMap) {
+    NEO::SingleDeviceBinary binary;
+
+    const uint64_t specConstValues[] = {100u, 200u, 300u};
+    binary.specConstantsValues = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstValues), sizeof(specConstValues));
+
+    auto result = NEO::getSpecConstantsFromBinary(binary);
+    EXPECT_TRUE(result.empty());
+}
+
+TEST(GetSpecConstantsFromBinary, GivenBothSpecConstantsSectionsEmptyThenReturnsEmptyMap) {
+    NEO::SingleDeviceBinary binary;
+
+    auto result = NEO::getSpecConstantsFromBinary(binary);
+    EXPECT_TRUE(result.empty());
+}
+
+TEST(GetSpecConstantsFromBinary, GivenMatchingSpecConstantsIdAndValueSizesThenReturnsPopulatedMap) {
+    NEO::SingleDeviceBinary binary;
+
+    const uint32_t specConstIds[] = {1u, 2u, 3u};
+    const uint64_t specConstValues[] = {100u, 200u, 300u};
+    binary.specConstantsIds = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstIds), sizeof(specConstIds));
+    binary.specConstantsValues = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstValues), sizeof(specConstValues));
+
+    auto result = NEO::getSpecConstantsFromBinary(binary);
+    EXPECT_EQ(3u, result.size());
+    EXPECT_EQ(100u, result[1u]);
+    EXPECT_EQ(200u, result[2u]);
+    EXPECT_EQ(300u, result[3u]);
 }

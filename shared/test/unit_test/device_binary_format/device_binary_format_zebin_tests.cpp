@@ -471,6 +471,54 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithSpirvAndBuildOptionsThenUnpack
     EXPECT_EQ(spirvPtr, unpackResult.intermediateRepresentation.begin());
 }
 
+TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithSpecConstantsIdsThenUnpackThemProperly) {
+    ZebinTestData::ValidEmptyProgram zebin;
+    const uint32_t specConstIds[] = {1u, 2u, 3u};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::specConstantsIds,
+                        ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstIds), sizeof(specConstIds)));
+
+    zebin.elfHeader->type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
+    zebin.elfHeader->machine = IGFX_BMG;
+    NEO::TargetDevice targetDevice = {};
+    targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.elfHeader->machine);
+    targetDevice.maxPointerSizeInBytes = 8;
+
+    std::string unpackErrors;
+    std::string unpackWarnings;
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
+    EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
+    EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
+
+    EXPECT_FALSE(unpackResult.specConstantsIds.empty());
+    EXPECT_EQ(sizeof(specConstIds), unpackResult.specConstantsIds.size());
+    EXPECT_EQ(0, memcmp(specConstIds, unpackResult.specConstantsIds.begin(), sizeof(specConstIds)));
+}
+
+TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithSpecConstantsValuesThenUnpackThemProperly) {
+    ZebinTestData::ValidEmptyProgram zebin;
+    const uint64_t specConstValues[] = {10u, 20u, 30u};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::specConstantsValues,
+                        ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(specConstValues), sizeof(specConstValues)));
+
+    zebin.elfHeader->type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
+    zebin.elfHeader->machine = IGFX_BMG;
+    NEO::TargetDevice targetDevice = {};
+    targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.elfHeader->machine);
+    targetDevice.maxPointerSizeInBytes = 8;
+
+    std::string unpackErrors;
+    std::string unpackWarnings;
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
+    EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
+    EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
+
+    EXPECT_FALSE(unpackResult.specConstantsValues.empty());
+    EXPECT_EQ(sizeof(specConstValues), unpackResult.specConstantsValues.size());
+    EXPECT_EQ(0, memcmp(specConstValues, unpackResult.specConstantsValues.begin(), sizeof(specConstValues)));
+}
+
 TEST(UnpackSingleDeviceBinaryZebin, GivenZebinForDifferentTargetDeviceWithIntermediateRepresentationThenDeviceBinaryIsEmptyIrIsSetAndWarningAboutRebuildIsReturned) {
     ZebinTestData::ValidEmptyProgram zebin;
     const uint8_t spirvData[30] = {0xd};

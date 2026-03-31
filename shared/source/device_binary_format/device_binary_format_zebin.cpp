@@ -54,6 +54,12 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
         } else if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_MISC &&
                    Zebin::Elf::SectionNames::buildOptions == elf.getSectionName(static_cast<uint32_t>(sectionId))) {
             ret.buildOptions = ConstStringRef(reinterpret_cast<const char *>(elfSH.data.begin()), elfSH.data.size());
+        } else if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_MISC &&
+                   Zebin::Elf::SectionNames::specConstantsIds == elf.getSectionName(static_cast<uint32_t>(sectionId))) {
+            ret.specConstantsIds = elfSH.data;
+        } else if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_MISC &&
+                   Zebin::Elf::SectionNames::specConstantsValues == elf.getSectionName(static_cast<uint32_t>(sectionId))) {
+            ret.specConstantsValues = elfSH.data;
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,8 @@ inline constexpr ConstStringRef zeInfo = ".ze_info";
 inline constexpr ConstStringRef gtpinInfo = ".gtpin_info.";
 inline constexpr ConstStringRef noteIntelGT = ".note.intelgt.compat";
 inline constexpr ConstStringRef buildOptions = ".misc.buildOptions";
+inline constexpr ConstStringRef specConstantsIds = ".misc.specConstantsIds";
+inline constexpr ConstStringRef specConstantsValues = ".misc.specConstantsValues";
 inline constexpr ConstStringRef vIsaAsmPrefix = ".visaasm.";
 inline constexpr ConstStringRef externalFunctions = "Intel_Symbol_Table_Void_Program";
 } // namespace SectionNames

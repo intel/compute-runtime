@@ -300,8 +300,12 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
         case Elf::SHT_ZEBIN_MISC:
             if (sectionName == Elf::SectionNames::buildOptions) {
                 out.buildOptionsSection.push_back(&elfSectionHeader);
+            } else if (sectionName == Elf::SectionNames::specConstantsIds) {
+                out.specConstantsIdsSection.push_back(&elfSectionHeader);
+            } else if (sectionName == Elf::SectionNames::specConstantsValues) {
+                out.specConstantsValuesSection.push_back(&elfSectionHeader);
             } else {
-                outWarning.append("DeviceBinaryFormat::zebin : unhandled SHT_ZEBIN_MISC section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::buildOptions.str() + ".\n");
+                outWarning.append("DeviceBinaryFormat::zebin : unhandled SHT_ZEBIN_MISC section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::buildOptions.str() + ", " + Elf::SectionNames::specConstantsIds.str() + ", " + Elf::SectionNames::specConstantsValues.str() + ".\n");
             }
             break;
         case NEO::Elf::SHT_STRTAB:
@@ -363,6 +367,8 @@ DecodeError validateZebinSectionsCount(const ZebinSections<numBits> &sections, s
     valid &= validateZebinSectionsCountAtMost(sections.spirvSections, Elf::SectionNames::spv, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.noteIntelGTSections, Elf::SectionNames::noteIntelGT, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.textSections, Elf::SectionNames::text, 1U, outErrReason, outWarning);
+    valid &= validateZebinSectionsCountAtMost(sections.specConstantsIdsSection, Elf::SectionNames::specConstantsIds, 1U, outErrReason, outWarning);
+    valid &= validateZebinSectionsCountAtMost(sections.specConstantsValuesSection, Elf::SectionNames::specConstantsValues, 1U, outErrReason, outWarning);
     return valid ? DecodeError::success : DecodeError::invalidBinary;
 }
 

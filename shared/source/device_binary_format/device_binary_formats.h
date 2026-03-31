@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/compiler_interface/spec_const_values_map.h"
 #include "shared/source/device_binary_format/zebin/zeinfo.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/utilities/arrayref.h"
@@ -90,10 +91,26 @@ struct SingleDeviceBinary {
     ArrayRef<const uint8_t> intermediateRepresentation;
     ArrayRef<const uint8_t> packedTargetDeviceBinary;
     ConstStringRef buildOptions;
+    ArrayRef<const uint8_t> specConstantsIds;
+    ArrayRef<const uint8_t> specConstantsValues;
     TargetDevice targetDevice;
     GeneratorType generator = GeneratorType::igc;
     GeneratorFeatureVersions generatorFeatureVersions;
 };
+
+inline specConstValuesMap getSpecConstantsFromBinary(const SingleDeviceBinary &binary) {
+    specConstValuesMap result;
+    if (!binary.specConstantsIds.empty() && !binary.specConstantsValues.empty() &&
+        binary.specConstantsIds.size() / sizeof(uint32_t) == binary.specConstantsValues.size() / sizeof(uint64_t)) {
+        auto ids = reinterpret_cast<const uint32_t *>(binary.specConstantsIds.begin());
+        auto values = reinterpret_cast<const uint64_t *>(binary.specConstantsValues.begin());
+        auto numEntries = binary.specConstantsIds.size() / sizeof(uint32_t);
+        for (size_t i = 0; i < numEntries; i++) {
+            result[ids[i]] = values[i];
+        }
+    }
+    return result;
+}
 
 template <DeviceBinaryFormat format>
 bool isDeviceBinaryFormat(const ArrayRef<const uint8_t> binary);
