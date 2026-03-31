@@ -225,7 +225,6 @@ void LinuxEngineImpPrelim::init() {
     int64_t fd[2];
 
     // Fds for global busyness
-    errno = 0;
     fd[0] = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
     if (fd[0] < 0) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);

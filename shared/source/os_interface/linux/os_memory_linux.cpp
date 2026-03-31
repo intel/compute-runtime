@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <cinttypes>
-#include <sstream>
+#include <fstream>
 #include <string>
 
 namespace NEO {
@@ -52,42 +52,9 @@ void OSMemoryLinux::getMemoryMaps(MemoryMaps &memoryMaps) {
 
     */
 
-    auto fd = SysCalls::open((std::string(Os::sysFsProcPathPrefix) + "/self/maps").c_str(), O_RDONLY);
-    if (fd < 0) {
-        return;
-    }
-
-    constexpr size_t chunkSize = 1024 * 1024;
-    std::string content;
-    off_t offset = 0;
-
-    while (true) {
-        content.resize(static_cast<size_t>(offset) + chunkSize);
-        auto bytesRead = SysCalls::pread(fd, content.data() + offset, chunkSize, offset);
-        if (bytesRead <= 0) {
-            content.resize(static_cast<size_t>(offset));
-            break;
-        }
-        offset += static_cast<off_t>(bytesRead);
-        content.resize(static_cast<size_t>(offset));
-        if (static_cast<size_t>(bytesRead) < chunkSize) {
-            break;
-        }
-    }
-
-    SysCalls::close(fd);
-
-    if (content.empty()) {
-        return;
-    }
-
-    std::istringstream iss(content);
-    parseMemoryMaps(iss, memoryMaps);
-}
-
-void OSMemoryLinux::parseMemoryMaps(std::istream &stream, MemoryMaps &memoryMaps) {
+    std::ifstream ifs(std::string(Os::sysFsProcPathPrefix) + "/self/maps");
     std::string line;
-    while (std::getline(stream, line)) {
+    while (std::getline(ifs, line)) {
         uint64_t start = 0, end = 0;
         sscanf(line.c_str(), "%" SCNx64 "-%" SCNx64, &start, &end);
         memoryMaps.push_back({start, end});

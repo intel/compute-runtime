@@ -8,10 +8,9 @@
 #include "shared/source/utilities/cpu_info.h"
 
 #include "shared/source/os_interface/linux/os_inc.h"
-#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <cpuid.h>
-#include <sstream>
+#include <fstream>
 
 namespace NEO {
 
@@ -24,20 +23,9 @@ void cpuidexLinuxWrapper(int *cpuInfo, int functionId, int subfunctionId) {
 }
 
 void getCpuFlagsLinux(std::string &cpuFlags) {
-    auto fd = SysCalls::open((std::string(Os::sysFsProcPathPrefix) + "/cpuinfo").c_str(), O_RDONLY);
-    if (fd < 0) {
-        return;
-    }
-    std::string content(65536, '\0');
-    auto bytesRead = SysCalls::pread(fd, content.data(), content.size(), 0);
-    SysCalls::close(fd);
-    if (bytesRead <= 0) {
-        return;
-    }
-    content.resize(bytesRead);
-    std::istringstream stream(content);
+    std::ifstream cpuinfo(std::string(Os::sysFsProcPathPrefix) + "/cpuinfo");
     std::string line;
-    while (std::getline(stream, line)) {
+    while (std::getline(cpuinfo, line)) {
         if (line.substr(0, 5) == "flags") {
             cpuFlags = line;
             break;
