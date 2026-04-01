@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -17,6 +18,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -1105,4 +1107,30 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenIsWalkerPostSyncSkipEnabledCalle
 
     debugManager.flags.EnableWalkerPostSyncSkip.set(0);
     EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+}
+
+using CompilerProductHelperTestsXe3pCore = Test<DeviceFixture>;
+
+XE3P_CORETEST_F(CompilerProductHelperTestsXe3pCore, givenHeaplessModeWhenApplyExtraInternalOptionsIsCalledThenInternalOptionsAreCorrect) {
+    std::string enable64bitAddressing = "-ze-intel-64bit-addressing";
+
+    auto &compilerProductHelper = getHelper<CompilerProductHelper>();
+
+    {
+        std::string internalOptions;
+        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
+        EXPECT_TRUE(hasSubstr(internalOptions, enable64bitAddressing));
+    }
+    {
+        std::string internalOptions;
+        NEO::CompilerOptions::HeaplessMode heaplessMode = NEO::CompilerOptions::HeaplessMode::disabled;
+        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, compilerProductHelper, heaplessMode);
+        EXPECT_FALSE(hasSubstr(internalOptions, enable64bitAddressing));
+    }
+    {
+        std::string internalOptions;
+        NEO::CompilerOptions::HeaplessMode heaplessMode = NEO::CompilerOptions::HeaplessMode::enabled;
+        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, compilerProductHelper, heaplessMode);
+        EXPECT_TRUE(hasSubstr(internalOptions, enable64bitAddressing));
+    }
 }

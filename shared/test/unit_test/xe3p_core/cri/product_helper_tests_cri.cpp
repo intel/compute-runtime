@@ -111,56 +111,6 @@ CRITEST_F(CriProductHelper, givenFtrHeaplessModeFalseWhenIsHeaplessModeEnabledTh
     EXPECT_FALSE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
 }
 
-CRITEST_F(CriProductHelper, whenApplyExtraInternalOptionsIsCalledThenInternalOptionsAreCorrect) {
-    DebugManagerStateRestore restorer;
-    std::string enable64bitAddressing = "-ze-intel-64bit-addressing";
-    {
-        debugManager.flags.Enable64BitAddressing.set(-1);
-        std::string internalOptions;
-        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, *compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
-        EXPECT_TRUE(hasSubstr(internalOptions, enable64bitAddressing));
-    }
-    {
-        debugManager.flags.Enable64BitAddressing.set(0);
-        std::string internalOptions;
-        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, *compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
-        EXPECT_FALSE(hasSubstr(internalOptions, enable64bitAddressing));
-    }
-    {
-        debugManager.flags.Enable64BitAddressing.set(1);
-        std::string internalOptions;
-        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, *compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
-        EXPECT_TRUE(hasSubstr(internalOptions, enable64bitAddressing));
-    }
-}
-
-CRITEST_F(CriProductHelper, givenHeaplessModeWhenApplyExtraInternalOptionsIsCalledThenInternalOptionsAreCorrect) {
-    DebugManagerStateRestore restorer;
-    std::string enable64bitAddressing = "-ze-intel-64bit-addressing";
-    {
-        debugManager.flags.Enable64BitAddressing.set(-1);
-        std::string internalOptions;
-        NEO::CompilerOptions::HeaplessMode heaplessMode = NEO::CompilerOptions::HeaplessMode::disabled;
-        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, *compilerProductHelper, heaplessMode);
-        EXPECT_FALSE(hasSubstr(internalOptions, enable64bitAddressing));
-    }
-    {
-        debugManager.flags.Enable64BitAddressing.set(1);
-        std::string internalOptions;
-        NEO::CompilerOptions::HeaplessMode heaplessMode = NEO::CompilerOptions::HeaplessMode::disabled;
-
-        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, *compilerProductHelper, heaplessMode);
-        EXPECT_FALSE(hasSubstr(internalOptions, enable64bitAddressing));
-    }
-    {
-        debugManager.flags.Enable64BitAddressing.set(0);
-        std::string internalOptions;
-        NEO::CompilerOptions::HeaplessMode heaplessMode = NEO::CompilerOptions::HeaplessMode::enabled;
-        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, *compilerProductHelper, heaplessMode);
-        EXPECT_TRUE(hasSubstr(internalOptions, enable64bitAddressing));
-    }
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenGettingDefaultCopyEngineThenEngineBCS1IsReturned) {
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, productHelper->getDefaultCopyEngine());
 }

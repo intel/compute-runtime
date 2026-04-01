@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,7 +9,6 @@ if(TESTS_CRI)
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/device_info_tests_cri.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/excludes_ocl_cri.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/program_tests_cri.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cl_device_caps_cri.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_cri.cpp
   )
