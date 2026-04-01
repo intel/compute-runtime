@@ -14,14 +14,12 @@
 namespace NEO {
 template <>
 bool ProductHelperHw<gfxProduct>::isInterruptSupported(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto wddm = (rootDeviceEnvironment.osInterface != nullptr && rootDeviceEnvironment.osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::wddm)
                     ? rootDeviceEnvironment.osInterface->getDriverModel()->as<Wddm>()
                     : nullptr;
     if (wddm == nullptr) {
         return false;
     }
-    return wddm->isNativeFenceAvailable() && compilerProductHelper.isHeaplessModeEnabled(hwInfo);
+    return wddm->isNativeFenceAvailable();
 }
 } // namespace NEO
