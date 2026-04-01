@@ -98,7 +98,7 @@ void ReleaseHelperTestsBase::whenGettingPreferredSlmSizeThenAllEntriesEmpty() {
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
 
-        auto &preferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue(false);
+        auto &preferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue();
         for (const auto &elem : preferredSlmValueArray) {
             EXPECT_EQ(0u, elem.upperLimit);
             EXPECT_EQ(0u, elem.valueToProgram);

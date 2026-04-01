@@ -56,10 +56,8 @@ void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType
     uint32_t actualHwSlmSizeKb = rootDeviceEnvironment.getProductHelper().getActualHwSlmSize(rootDeviceEnvironment);
     slmSize = std::min(slmSize, static_cast<uint32_t>(actualHwSlmSizeKb * MemoryConstants::kiloByte));
 
-    constexpr bool isHeapless = Family::template isInterfaceDescriptorHeaplessMode<InterfaceDescriptorType>();
-
     auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    const auto &sizeToPreferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue(isHeapless);
+    const auto &sizeToPreferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue();
 
     uint32_t programmableIdPreferredSlmSize = 0;
     for (auto &range : sizeToPreferredSlmValueArray) {

@@ -50,7 +50,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isStateCacheInvalidationWaRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isAvailableSemaphore64, bool, false, ());
 
-    const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override {
+    const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const override {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};
         return sizeToPreferredSlmValue;
     }

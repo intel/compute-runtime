@@ -61,7 +61,7 @@ class ReleaseHelper {
     virtual bool isLocalOnlyAllowed() const = 0;
     virtual bool isDummyBlitWaRequired() const = 0;
     virtual bool isDirectSubmissionLightSupported() const = 0;
-    virtual const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const = 0;
+    virtual const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const = 0;
     virtual bool isNumRtStacksPerDssFixedValue() const = 0;
     virtual bool getFtrXe2Compression() const = 0;
     virtual bool programmAdditionalStallPriorToBarrierWithTimestamp() const = 0;
@@ -111,7 +111,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isLocalOnlyAllowed() const override;
     bool isDummyBlitWaRequired() const override;
     bool isDirectSubmissionLightSupported() const override;
-    const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override;
+    const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const override;
     bool isNumRtStacksPerDssFixedValue() const override;
     bool getFtrXe2Compression() const override;
     bool programmAdditionalStallPriorToBarrierWithTimestamp() const override;

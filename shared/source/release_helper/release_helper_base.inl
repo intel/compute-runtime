@@ -143,7 +143,7 @@ bool ReleaseHelperHw<releaseType>::isDummyBlitWaRequired() const {
 }
 
 template <ReleaseType releaseType>
-const SizeToPreferredSlmValueArray &ReleaseHelperHw<releaseType>::getSizeToPreferredSlmValue(bool isHeapless) const {
+const SizeToPreferredSlmValueArray &ReleaseHelperHw<releaseType>::getSizeToPreferredSlmValue() const {
     static const SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};
     return sizeToPreferredSlmValue;
 }

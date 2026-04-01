@@ -94,7 +94,7 @@ TEST_F(ReleaseHelper1270Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
 
         constexpr uint32_t kB = 1024;
 
-        auto &preferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue(false);
+        auto &preferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue();
         EXPECT_EQ(0u, preferredSlmValueArray[0].upperLimit);
         EXPECT_EQ(8u, preferredSlmValueArray[0].valueToProgram);
 
