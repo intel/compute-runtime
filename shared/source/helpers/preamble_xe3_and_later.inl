@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,14 +43,5 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
 template <typename Family>
 void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {
-    if constexpr (Family::isHeaplessRequired() == false) {
-        using CFE_STATE = typename Family::CFE_STATE;
-        using STACK_ID_CONTROL = typename CFE_STATE::STACK_ID_CONTROL;
-        auto command = static_cast<CFE_STATE *>(cmd);
-
-        if (debugManager.flags.CFEStackIDControl.get() != -1) {
-            command->setStackIdControl(static_cast<STACK_ID_CONTROL>(debugManager.flags.CFEStackIDControl.get()));
-        }
-    }
 }
 } // namespace NEO
