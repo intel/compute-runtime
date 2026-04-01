@@ -144,6 +144,19 @@ loads IGC at runtime via `dlopen` and will find the old system-installed IGC
 instead of the local one. To enable built-in kernel compilation, either replace
 the system IGC libraries or run `make` with `LD_LIBRARY_PATH=$HOME/local/lib`.
 
+### Automated build script
+
+A script that automates the entire process (cloning sources, building GmmLib,
+downloading IGC, and building compute-runtime) is available at `build_local.sh`:
+
+```shell
+./build_local.sh <release-tag> [install-prefix]
+./build_local.sh 26.09.37435.1
+./build_local.sh 26.09.37435.1 $HOME/my_prefix
+```
+
+The latest release tag can be found at https://github.com/intel/compute-runtime/releases/latest.
+
 ## Optional - Building NEO with support for XeKMD EU Debugging
 
 NEO Driver has build options to enable support for EU Debugging with XeKMD. Kernel support for this feature is currently only available via a topic branch hosted at https://gitlab.freedesktop.org/miku/kernel/-/tree/eudebug-dev 
