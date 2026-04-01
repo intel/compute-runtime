@@ -510,8 +510,6 @@ struct FlushTaskNonHeaplessMatcher {
 };
 
 HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, WhenFlushingThenScratchAllocationIsReused, FlushTaskNonHeaplessMatcher) {
-    DebugManagerStateRestore restorer{};
-    UnitTestSetter::disableHeapless(restorer);
 
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     commandStreamReceiver->heaplessModeEnabled = false;
@@ -646,9 +644,6 @@ struct MockScratchController : public ScratchSpaceController {
 
 HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, whenScratchIsRequiredForFirstFlushAndPrivateScratchForSecondFlushThenHandleResidencyProperly, FlushTaskNonHeaplessMatcher) {
 
-    DebugManagerStateRestore restorer{};
-    UnitTestSetter::disableHeapless(restorer);
-
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     commandStreamReceiver->heaplessModeEnabled = false;
     auto scratchController = new MockScratchController(pDevice->getRootDeviceIndex(), *pDevice->executionEnvironment, *commandStreamReceiver->getInternalAllocationStorage());
@@ -685,8 +680,6 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, whenScratc
 
 HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, whenPrivateScratchIsRequiredForFirstFlushAndCommonScratchForSecondFlushThenHandleResidencyProperly, FlushTaskNonHeaplessMatcher) {
 
-    DebugManagerStateRestore restorer{};
-    UnitTestSetter::disableHeapless(restorer);
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     commandStreamReceiver->heaplessModeEnabled = false;
     auto scratchController = new MockScratchController(pDevice->getRootDeviceIndex(), *pDevice->executionEnvironment, *commandStreamReceiver->getInternalAllocationStorage());

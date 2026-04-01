@@ -184,8 +184,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicyS
     debugManager.flags.OverrideThreadArbitrationPolicy.set(0);
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
-    UnitTestSetter::disableHeapless(restorer);
-
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
