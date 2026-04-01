@@ -372,7 +372,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
     uint32_t slmSize = 4u * MemoryConstants::kiloByte;
-    auto expectedSlmSizeValue = NEO::EncodeDispatchKernel<FamilyType>::computeSlmValues(neoDevice->getHardwareInfo(), slmSize, neoDevice->getReleaseHelper(), this->isHeapless);
+    auto expectedSlmSizeValue = NEO::EncodeDispatchKernel<FamilyType>::computeSlmValues(neoDevice->getHardwareInfo(), slmSize, neoDevice->getReleaseHelper());
 
     this->stageCommit = true;
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
@@ -410,7 +410,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     uint32_t slmSize = 4u * MemoryConstants::kiloByte;
     constexpr uint32_t overrideSlmSize = 16u * MemoryConstants::kiloByte;
 
-    auto expectedSlmSizeValue = NEO::EncodeDispatchKernel<FamilyType>::computeSlmValues(neoDevice->getHardwareInfo(), overrideSlmSize, neoDevice->getReleaseHelper(), this->isHeapless);
+    auto expectedSlmSizeValue = NEO::EncodeDispatchKernel<FamilyType>::computeSlmValues(neoDevice->getHardwareInfo(), overrideSlmSize, neoDevice->getReleaseHelper());
 
     debugManager.flags.OverrideSlmAllocationSize.set(expectedSlmSizeValue);
 

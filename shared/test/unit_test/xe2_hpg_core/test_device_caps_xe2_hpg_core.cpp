@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,8 +76,8 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorre
         {11, 128 * MemoryConstants::kiloByte}};
 
     for (const auto &testInput : computeSlmValuesXe2AndLaterTestsInput) {
-        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
+        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, testInput.slmSize, nullptr));
     }
 
-    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1, nullptr, false), std::exception);
+    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1, nullptr), std::exception);
 }

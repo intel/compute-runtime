@@ -164,7 +164,7 @@ bool ReleaseHelperHw<releaseType>::programmAdditionalStallPriorToBarrierWithTime
 }
 
 template <ReleaseType releaseType>
-uint32_t ReleaseHelperHw<releaseType>::computeSlmValues(uint32_t slmSize, bool isHeapless) const {
+uint32_t ReleaseHelperHw<releaseType>::computeSlmValues(uint32_t slmSize) const {
     return 0u;
 }
 template <ReleaseType releaseType>

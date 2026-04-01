@@ -454,7 +454,7 @@ void EncodeDispatchKernel<Family>::setupProgrammableSlmSize(InterfaceDescriptorT
     auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, actualHwSlmSizeKb);
     auto programmableSlmSize = std::min(slmTotalSize, static_cast<uint32_t>(maxProgrammableSlmSizeKb * MemoryConstants::kiloByte));
 
-    auto programmableIDSLMSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, programmableSlmSize, nullptr, heaplessModeEnabled);
+    auto programmableIDSLMSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, programmableSlmSize, nullptr);
 
     if (debugManager.flags.OverrideSlmAllocationSize.get() != -1) {
         programmableIDSLMSize = static_cast<uint32_t>(debugManager.flags.OverrideSlmAllocationSize.get());
@@ -657,7 +657,7 @@ uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper, bool isHeapless) {
+uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper) {
     auto value = std::max(slmSize, 1024u);
     value = Math::nextPowerOfTwo(value);
     value = Math::getMinLsbSet(value);

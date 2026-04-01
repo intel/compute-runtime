@@ -63,10 +63,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterTha
     auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
     auto releaseHelper = ReleaseHelper::create(pDevice->getHardwareInfo().ipVersion);
-    bool isHeapless = pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo);
 
     uint32_t expectedValue = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
-        EncodeDispatchKernel<FamilyType>::computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize, releaseHelper.get(), isHeapless));
+        EncodeDispatchKernel<FamilyType>::computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize, releaseHelper.get()));
 
     EXPECT_EQ(expectedValue, idd.getSharedLocalMemorySize());
 }

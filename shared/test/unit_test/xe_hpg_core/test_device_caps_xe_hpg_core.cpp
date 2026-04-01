@@ -73,6 +73,6 @@ XE_HPG_CORETEST_F(XeHpgCoreDeviceCaps, GivenVariousValuesWhenComputeSlmSizeIsCal
 
     auto hardwareInfo = *defaultHwInfo;
     for (auto &testInput : computeSlmValuesXeHpgTestsInput) {
-        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hardwareInfo, testInput.slmSize, nullptr, false));
+        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hardwareInfo, testInput.slmSize, nullptr));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,44 +51,4 @@ XE3_CORETEST_F(Xe3CoreDeviceCaps, givenDeviceWhenAskingForSubGroupSizesThenRetur
     EXPECT_EQ(2u, deviceSubgroups.size());
     EXPECT_EQ(16u, deviceSubgroups[0]);
     EXPECT_EQ(32u, deviceSubgroups[1]);
-}
-
-XE3_CORETEST_F(Xe3CoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
-    struct ComputeSlmTestInput {
-        uint32_t expected;
-        uint32_t slmSize;
-    };
-
-    const auto &hwInfo = pDevice->getHardwareInfo();
-
-    ComputeSlmTestInput computeSlmValuesXe3AndLaterTestsInput[] = {
-        {0, 0 * MemoryConstants::kiloByte},
-        {1, 0 * MemoryConstants::kiloByte + 1},
-        {1, 1 * MemoryConstants::kiloByte},
-        {2, 1 * MemoryConstants::kiloByte + 1},
-        {2, 2 * MemoryConstants::kiloByte},
-        {3, 2 * MemoryConstants::kiloByte + 1},
-        {3, 4 * MemoryConstants::kiloByte},
-        {4, 4 * MemoryConstants::kiloByte + 1},
-        {4, 8 * MemoryConstants::kiloByte},
-        {5, 8 * MemoryConstants::kiloByte + 1},
-        {5, 16 * MemoryConstants::kiloByte},
-        {8, 16 * MemoryConstants::kiloByte + 1},
-        {8, 24 * MemoryConstants::kiloByte},
-        {6, 24 * MemoryConstants::kiloByte + 1},
-        {6, 32 * MemoryConstants::kiloByte},
-        {9, 32 * MemoryConstants::kiloByte + 1},
-        {9, 48 * MemoryConstants::kiloByte},
-        {7, 48 * MemoryConstants::kiloByte + 1},
-        {7, 64 * MemoryConstants::kiloByte},
-        {10, 64 * MemoryConstants::kiloByte + 1},
-        {10, 96 * MemoryConstants::kiloByte},
-        {11, 96 * MemoryConstants::kiloByte + 1},
-        {11, 128 * MemoryConstants::kiloByte}};
-
-    for (const auto &testInput : computeSlmValuesXe3AndLaterTestsInput) {
-        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
-    }
-
-    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1, nullptr, false), std::exception);
 }

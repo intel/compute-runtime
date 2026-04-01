@@ -77,8 +77,8 @@ XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrect
     auto hwInfo = *defaultHwInfo;
 
     for (auto &testInput : computeSlmValuesXeHpcTestsInput) {
-        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
+        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, testInput.slmSize, nullptr));
     }
 
-    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 129 * MemoryConstants::kiloByte, nullptr, false), std::exception);
+    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 129 * MemoryConstants::kiloByte, nullptr), std::exception);
 }

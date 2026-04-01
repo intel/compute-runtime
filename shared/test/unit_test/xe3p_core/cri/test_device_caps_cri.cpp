@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,6 @@ CRITEST_F(CriDeviceTest, givenSlmSizeAndHeaplessWhenEncodingThenReturnCorrectVal
 
     const auto &hwInfo = pDevice->getHardwareInfo();
     auto releaseHelper = pDevice->getReleaseHelper();
-    bool isHeapless = true;
 
     ComputeSlmTestInput computeSlmValuesXe3pAndLaterTestsInput[] = {
         {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K), 0 * MemoryConstants::kiloByte},
@@ -105,8 +104,8 @@ CRITEST_F(CriDeviceTest, givenSlmSizeAndHeaplessWhenEncodingThenReturnCorrectVal
         {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_384K), 384 * MemoryConstants::kiloByte}};
 
     for (const auto &testInput : computeSlmValuesXe3pAndLaterTestsInput) {
-        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, testInput.slmSize, releaseHelper, isHeapless));
+        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, testInput.slmSize, releaseHelper));
     }
 
-    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 384 * MemoryConstants::kiloByte + 1, releaseHelper, isHeapless), std::exception);
+    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 384 * MemoryConstants::kiloByte + 1, releaseHelper), std::exception);
 }

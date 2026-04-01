@@ -40,7 +40,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isBlitImageAllowedForDepthFormat, bool, true, ());
     ADDMETHOD_CONST_NOBASE(getFtrXe2Compression, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDirectSubmissionLightSupported, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(computeSlmValues, uint32_t, {}, (uint32_t slmSize, bool isHeapless));
+    ADDMETHOD_CONST_NOBASE(computeSlmValues, uint32_t, {}, (uint32_t slmSize));
     ADDMETHOD_CONST_NOBASE(programmAdditionalStallPriorToBarrierWithTimestamp, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isPostImageWriteFlushRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(adjustMaxThreadsPerEuCount, uint32_t, 8u, (uint32_t maxThreadsPerEuCount, uint32_t grfCount));

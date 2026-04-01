@@ -10,7 +10,6 @@
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/release_helper/release_helper_base.inl"
-#include "shared/source/release_helper/release_helper_common_xe3p.h"
 #include "shared/source/xe3p_core/hw_cmds_base.h"
 
 #include "release_definitions.h"
@@ -92,14 +91,6 @@ const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferred
 template <>
 bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
     return false;
-}
-
-template <>
-uint32_t ReleaseHelperHw<release>::computeSlmValues(uint32_t slmSize, bool isHeapless) const {
-    if (isHeapless) {
-        return computeSlmValuesXe3pHeapless(slmSize);
-    }
-    return computeSlmValuesXe3p(slmSize);
 }
 
 } // namespace NEO
