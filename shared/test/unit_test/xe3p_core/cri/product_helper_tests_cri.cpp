@@ -262,12 +262,9 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAskingForSharingWith3dOrMediaS
 CRITEST_F(CriProductHelper, givenGrfCount512WhenCallAdjustMaxThreadsPerThreadGroupThenAdjustThreadsPerThreadGroup) {
     uint32_t threadsPerThreadGroup = 22;
     uint32_t expectedMaxThreadsPerThreadGroup = 32u;
-    std::array<std::array<uint32_t, 2>, 4> values = {{{32, true}, // simt, isHeaplessModeEnabled
-                                                      {32, false},
-                                                      {16, true},
-                                                      {16, false}}};
-    for (auto &[simt, isHeaplessModeEnabled] : values) {
-        EXPECT_EQ(expectedMaxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, simt, 512, isHeaplessModeEnabled));
+    std::array<uint32_t, 2> values = {32, 16};
+    for (auto simt : values) {
+        EXPECT_EQ(expectedMaxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, simt, 512));
     }
 }
 

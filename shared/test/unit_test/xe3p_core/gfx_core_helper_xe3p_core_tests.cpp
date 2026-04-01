@@ -858,68 +858,9 @@ XE3P_CORETEST_F(LriHelperTestsXe3pCore, whenProgrammingLriCommandThenExpectMmioR
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
 
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeAndDisabled64BitAddressingThenCorrectWorkGroupSizeIsReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.Enable64BitAddressing.set(0);
-    auto defaultMaxWorkGroupSize = 2048u;
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    std::array<std::array<uint32_t, 3>, 15> values = {{
-        {128u, 16u, 1024u}, // Grf Size, SIMT Size, Max Num of threads
-        {128u, 32u, 1024u},
-        {160u, 16u, 768u},
-        {160u, 32u, 1024u},
-        {192u, 16u, 640u},
-        {192u, 32u, 1024u},
-        {256u, 16u, 512u},
-        {256u, 32u, 1024u},
-        {512u, 16u, 512},
-        {512u, 32u, 1024u},
-        {128u, 1u, 64u},
-        {160u, 1u, 48u},
-        {192u, 1u, 40u},
-        {256u, 1u, 32u},
-        {512u, 1u, 32u},
-    }};
-
-    for (auto &[grfSize, simtSize, expectedNumThreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.adjustMaxWorkGroupSize(grfSize, simtSize, defaultMaxWorkGroupSize, rootDeviceEnvironment));
-    }
-}
-
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenAskedForMinimialGrfSizeThen32IsReturned) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(32u, gfxCoreHelper.getMinimalGrfSize());
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenParamsAndE64DisabledWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.Enable64BitAddressing.set(0);
-
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto totalWgSize = 2048u;
-    std::array<std::array<uint32_t, 3>, 15> values = {{
-        {128u, 16u, 64u}, // Grf Size, SIMT Size, Max Num of threads
-        {128u, 32u, 32u},
-        {128u, 1u, 64u},
-        {160u, 16u, 48u},
-        {160u, 32u, 32u},
-        {160u, 1u, 48u},
-        {192u, 16u, 40u},
-        {192u, 32u, 32u},
-        {192u, 1u, 40u},
-        {256u, 16u, 32u},
-        {256u, 32u, 32u},
-        {256u, 1u, 32u},
-        {512u, 16u, 32u},
-        {512u, 32u, 32u},
-        {512u, 1u, 32u},
-    }};
-
-    for (auto &[grfSize, simtSize, expectedNumThreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfSize, rootDeviceEnvironment));
-    }
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenAskingForImplicitScalingImmWriteOffsetThenAlwaysReturnTsSize) {
@@ -1064,16 +1005,12 @@ XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenAskingForIsIpSa
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenGrfCount512WhenHeaplessModeDisabledThenAdjustedMaxThreadsPerThreadGroup) {
     uint32_t threadsPerThreadGroup = 22;
-    uint32_t expectedMaxThreadsPerThreadGroup = 32u;
     const auto &productHelper = getHelper<ProductHelper>();
     auto values = {16, 32};
-    for (auto simt : values) {
-        EXPECT_EQ(expectedMaxThreadsPerThreadGroup, productHelper.adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, simt, 512, false));
-    }
 
     // adjust is not done
     for (auto simt : values) {
-        EXPECT_EQ(threadsPerThreadGroup, productHelper.adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, simt, 512, true));
+        EXPECT_EQ(threadsPerThreadGroup, productHelper.adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, simt, 512));
     }
 }
 

@@ -109,11 +109,11 @@ bool ProductHelperHw<gfxProduct>::isSharingWith3dOrMediaAllowed() const {
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount, bool isHeaplessModeEnabled) const {
+uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
     auto adjustedMaxThreadsPerThreadGroup = maxThreadsPerThreadGroup;
     if (grfCount == 512) {
         adjustedMaxThreadsPerThreadGroup = 32u;
-    } else if (isHeaplessModeEnabled && isSimd1(simt) && (grfCount == 160 || grfCount == 192)) {
+    } else if (isSimd1(simt) && (grfCount == 160 || grfCount == 192)) {
         adjustedMaxThreadsPerThreadGroup = 64u;
     }
     return adjustedMaxThreadsPerThreadGroup;

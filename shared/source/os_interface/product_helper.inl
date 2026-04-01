@@ -977,7 +977,7 @@ bool ProductHelperHw<gfxProduct>::isL3FlushAfterPostSyncSupported(bool heaplessE
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount, bool isHeaplessModeEnabled) const {
+uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
     return maxThreadsPerThreadGroup;
 }
 

@@ -70,10 +70,7 @@ uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t sim
         return numThreadsPerThreadGroup;
     }
 
-    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     const auto &productHelper = rootDeviceEnvironment.getProductHelper();
-    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto isHeaplessMode = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
 
     uint32_t maxThreadsPerThreadGroup = 64u;
     if (grfCount == 512) {
@@ -87,7 +84,7 @@ uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t sim
         maxThreadsPerThreadGroup = 48u;
     }
 
-    maxThreadsPerThreadGroup = productHelper.adjustMaxThreadsPerThreadGroup(maxThreadsPerThreadGroup, simd, grfCount, isHeaplessMode);
+    maxThreadsPerThreadGroup = productHelper.adjustMaxThreadsPerThreadGroup(maxThreadsPerThreadGroup, simd, grfCount);
 
     numThreadsPerThreadGroup = std::min(numThreadsPerThreadGroup, maxThreadsPerThreadGroup);
     DEBUG_BREAK_IF(numThreadsPerThreadGroup * simd > CommonConstants::maxWorkgroupSize);
