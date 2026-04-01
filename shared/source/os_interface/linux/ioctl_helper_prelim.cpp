@@ -116,6 +116,7 @@ bool IoctlHelperPrelim20::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTo
         }
 
         if (success) {
+            topologyData.regionCount = 1;
             topologyData.sliceCount = sliceCount;
             topologyData.subSliceCount = subSliceCount;
             topologyData.euCount = euCount;

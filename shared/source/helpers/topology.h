@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ struct TopologyBitmap {
 };
 
 struct TopologyInfo {
+    int regionCount;
     int sliceCount;
     int subSliceCount;
     int euCount;
@@ -31,6 +32,7 @@ struct TopologyInfo {
 };
 
 struct TopologyLimits {
+    int maxRegions;
     int maxSlices;
     int maxSubSlicesPerSlice;
     int maxEusPerSubSlice;

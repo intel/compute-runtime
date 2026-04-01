@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,57 +27,74 @@ TopologyInfo getTopologyInfo(HardwareInfo &hwInfo, const TopologyBitmap &topolog
     std::vector<int> subSliceIndices;
     subSliceIndices.reserve(topologyLimits.maxSubSlicesPerSlice);
 
-    auto processSubSlices = [&](std::span<const uint8_t> subSliceBitmap) -> std::pair<int, int> {
+    auto processSubSlices = [&](std::span<const uint8_t> subSliceBitmap) -> std::tuple<int, int, int> {
+        int regionCount = 0;
         int sliceCount = 0;
-        int subSliceCountTotal = 0;
+        int subSliceCount = 0;
 
         if (!scanFullBitmap) {
-            for (auto sliceId = 0; sliceId < topologyLimits.maxSlices; ++sliceId) {
-                int subSliceCount = 0;
+            UNRECOVERABLE_IF(topologyLimits.maxRegions == 0);
+            DEBUG_BREAK_IF(topologyLimits.maxSlices % topologyLimits.maxRegions != 0);
+            const auto maxSlicesPerRegion = topologyLimits.maxSlices / topologyLimits.maxRegions;
 
-                for (auto subSliceId = 0; subSliceId < topologyLimits.maxSubSlicesPerSlice; ++subSliceId) {
-                    const auto idx = sliceId * topologyLimits.maxSubSlicesPerSlice + subSliceId;
-                    const auto byte = idx / 8u;
-                    const auto bit = idx % 8u;
+            for (auto regionId = 0; regionId < topologyLimits.maxRegions; ++regionId) {
+                auto sliceCountPerRegion = 0;
 
-                    if (idx >= std::ssize(subSliceBitmap) * 8) {
-                        break;
-                    }
+                for (auto sliceIdPerRegion = 0; sliceIdPerRegion < maxSlicesPerRegion; ++sliceIdPerRegion) {
+                    int sliceId = regionId * maxSlicesPerRegion + sliceIdPerRegion;
+                    int subSliceCountPerSlice = 0;
 
-                    if (subSliceBitmap[byte] & (1u << bit)) {
-                        subSliceIndices.push_back(subSliceId);
-                        subSliceCount += 1;
-                        if (sliceId < GT_MAX_SLICE && subSliceId < GT_MAX_SUBSLICE_PER_SLICE) {
-                            hwInfo.gtSystemInfo.SliceInfo[sliceId].SubSliceInfo[subSliceId].Enabled = true;
+                    for (auto subSliceIdPerSlice = 0; subSliceIdPerSlice < topologyLimits.maxSubSlicesPerSlice; ++subSliceIdPerSlice) {
+                        const auto subSliceId = sliceId * topologyLimits.maxSubSlicesPerSlice + subSliceIdPerSlice;
+                        const auto byte = subSliceId / 8u;
+                        const auto bit = subSliceId % 8u;
+
+                        if (subSliceId >= std::ssize(subSliceBitmap) * 8) {
+                            break;
+                        }
+
+                        if (subSliceBitmap[byte] & (1u << bit)) {
+                            subSliceIndices.push_back(subSliceIdPerSlice);
+                            subSliceCountPerSlice += 1;
+                            if (sliceId < GT_MAX_SLICE && subSliceIdPerSlice < GT_MAX_SUBSLICE_PER_SLICE) {
+                                hwInfo.gtSystemInfo.SliceInfo[sliceId].SubSliceInfo[subSliceIdPerSlice].Enabled = true;
+                            }
                         }
                     }
-                }
 
-                if (subSliceCount) {
-                    sliceIndices.push_back(sliceId);
-                    sliceCount += 1;
-                    subSliceCountTotal += subSliceCount;
-                    if (sliceId < GT_MAX_SLICE) {
-                        hwInfo.gtSystemInfo.SliceInfo[sliceId].Enabled = true;
+                    if (subSliceCountPerSlice) {
+                        sliceIndices.push_back(sliceId);
+                        sliceCountPerRegion += 1;
+                        subSliceCount += subSliceCountPerSlice;
+                        if (sliceId < GT_MAX_SLICE) {
+                            hwInfo.gtSystemInfo.SliceInfo[sliceId].Enabled = true;
+                        }
+
+                        if (sliceCountPerRegion == 1) {
+                            topologyMapping.subsliceIndices = std::move(subSliceIndices);
+                        }
                     }
 
-                    if (sliceCount == 1) {
-                        topologyMapping.subsliceIndices = std::move(subSliceIndices);
-                    }
+                    subSliceIndices.clear();
                 }
 
-                subSliceIndices.clear();
+                if (sliceCountPerRegion) {
+                    regionCount += 1;
+                    sliceCount += sliceCountPerRegion;
+                }
             }
         } else {
+            regionCount = topologyLimits.maxRegions;
+
             for (int byteIdx = 0; byteIdx < std::ssize(subSliceBitmap); ++byteIdx) {
                 for (int bitIdx = 0; bitIdx < 8; ++bitIdx) {
                     if (subSliceBitmap[byteIdx] & (1u << bitIdx)) {
-                        subSliceIndices.push_back(subSliceCountTotal++);
+                        subSliceIndices.push_back(subSliceCount++);
                     }
                 }
             }
 
-            sliceCount = static_cast<int>(Math::divideAndRoundUp(static_cast<size_t>(subSliceCountTotal), static_cast<size_t>(topologyLimits.maxSubSlicesPerSlice)));
+            sliceCount = static_cast<int>(Math::divideAndRoundUp(static_cast<size_t>(subSliceCount), static_cast<size_t>(topologyLimits.maxSubSlicesPerSlice)));
 
             for (int sliceId = 0; sliceId < sliceCount; ++sliceId) {
                 sliceIndices.push_back(sliceId);
@@ -89,13 +106,13 @@ TopologyInfo getTopologyInfo(HardwareInfo &hwInfo, const TopologyBitmap &topolog
             }
         }
 
-        return {sliceCount, subSliceCountTotal};
+        return {regionCount, sliceCount, subSliceCount};
     };
 
-    auto [sliceCount, subSliceCount] = processSubSlices(topologyBitmap.dssCompute);
+    auto [regionCount, sliceCount, subSliceCount] = processSubSlices(topologyBitmap.dssCompute);
 
     if (!subSliceCount) {
-        std::tie(sliceCount, subSliceCount) = processSubSlices(topologyBitmap.dssGeometry);
+        std::tie(regionCount, sliceCount, subSliceCount) = processSubSlices(topologyBitmap.dssGeometry);
     }
 
     hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
@@ -108,6 +125,7 @@ TopologyInfo getTopologyInfo(HardwareInfo &hwInfo, const TopologyBitmap &topolog
         return std::transform_reduce(bitmap.begin(), bitmap.end(), 0, std::plus{}, std::popcount<uint8_t>);
     };
 
+    topologyInfo.regionCount = regionCount;
     topologyInfo.sliceCount = sliceCount;
     topologyInfo.subSliceCount = subSliceCount;
     topologyInfo.euCount = bitmapCount(topologyBitmap.eu) * topologyInfo.subSliceCount;
@@ -131,6 +149,7 @@ TopologyInfo getTopologyInfoMultiTile(HardwareInfo &hwInfo, std::span<const Topo
     }
 
     TopologyInfo topologyInfo{
+        .regionCount = std::numeric_limits<decltype(TopologyInfo::regionCount)>::max(),
         .sliceCount = std::numeric_limits<decltype(TopologyInfo::sliceCount)>::max(),
         .subSliceCount = std::numeric_limits<decltype(TopologyInfo::subSliceCount)>::max(),
         .euCount = std::numeric_limits<decltype(TopologyInfo::euCount)>::max(),
@@ -139,6 +158,7 @@ TopologyInfo getTopologyInfoMultiTile(HardwareInfo &hwInfo, std::span<const Topo
 
     topologyInfo = std::reduce(topologyInfos.cbegin(), topologyInfos.cend(), topologyInfo, [](const TopologyInfo &topoInfo1, const TopologyInfo &topoInfo2) {
         return TopologyInfo{
+            .regionCount = std::min(topoInfo1.regionCount, topoInfo2.regionCount),
             .sliceCount = std::min(topoInfo1.sliceCount, topoInfo2.sliceCount),
             .subSliceCount = std::min(topoInfo1.subSliceCount, topoInfo2.subSliceCount),
             .euCount = std::min(topoInfo1.euCount, topoInfo2.euCount),

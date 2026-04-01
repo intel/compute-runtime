@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -146,6 +146,7 @@ DG2TEST_F(Dg2ProductHelper, givenDssComputeBitmapNotStartingWithOnesWhenGetTopol
     };
 
     TopologyLimits topologyLimits = {
+        .maxRegions = 1,
         .maxSlices = 4,
         .maxSubSlicesPerSlice = 4,
         .maxEusPerSubSlice = 16,
@@ -175,6 +176,7 @@ DG2TEST_F(Dg2ProductHelper, givenBitmapDssComputeEmptyAndDssGeometryNotStartingW
     };
 
     TopologyLimits topologyLimits = {
+        .maxRegions = 1,
         .maxSlices = 4,
         .maxSubSlicesPerSlice = 4,
         .maxEusPerSubSlice = 16,
@@ -184,6 +186,7 @@ DG2TEST_F(Dg2ProductHelper, givenBitmapDssComputeEmptyAndDssGeometryNotStartingW
 
     auto topologyInfo = getTopologyInfo(pInHwInfo, topologyBitmap, topologyLimits, topologyMapping, productHelper->scanFullTopologyBitmap());
 
+    EXPECT_EQ(topologyInfo.regionCount, 1);
     EXPECT_EQ(topologyInfo.sliceCount, 4);
     EXPECT_EQ(topologyInfo.subSliceCount, 16);
     EXPECT_EQ(topologyInfo.euCount, 256);

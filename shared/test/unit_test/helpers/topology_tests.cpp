@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,7 @@ TEST(TopologyTest, givenGeometryAndComputeSlicesWhenGetTopologyInfoThenOnlyCompu
     };
 
     TopologyLimits topologyLimits = {
+        .maxRegions = 1,
         .maxSlices = 2,
         .maxSubSlicesPerSlice = 8,
         .maxEusPerSubSlice = 4,
@@ -72,6 +73,7 @@ TEST(TopologyTest, givenGeometryAndComputeSlicesWhenGetTopologyInfoThenOnlyCompu
     auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping, productHelper.scanFullTopologyBitmap());
     validateSliceInfo(dssCompute, hwinfo, topologyLimits);
 
+    EXPECT_EQ(topologyInfo.regionCount, 1);
     EXPECT_EQ(topologyInfo.sliceCount, 2);
     EXPECT_EQ(topologyInfo.subSliceCount, 16);
     EXPECT_EQ(topologyInfo.euCount, 64);
@@ -102,6 +104,7 @@ TEST(TopologyTest, givenComputeSlicesBeyondLimitWhenGetTopologyInfoThenNoCorrupt
     };
 
     TopologyLimits topologyLimits = {
+        .maxRegions = 1,
         .maxSlices = 18,
         .maxSubSlicesPerSlice = 8,
         .maxEusPerSubSlice = 4,
@@ -127,6 +130,7 @@ TEST(TopologyTest, givenGeometrySlicesAndNoComputeSlicesWhenGetTopologyInfoThenI
     };
 
     TopologyLimits topologyLimits = {
+        .maxRegions = 1,
         .maxSlices = 2,
         .maxSubSlicesPerSlice = 8,
         .maxEusPerSubSlice = 4,
@@ -136,6 +140,7 @@ TEST(TopologyTest, givenGeometrySlicesAndNoComputeSlicesWhenGetTopologyInfoThenI
     HardwareInfo hwinfo;
     auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping, productHelper.scanFullTopologyBitmap());
 
+    EXPECT_EQ(topologyInfo.regionCount, 1);
     EXPECT_EQ(topologyInfo.sliceCount, 2);
     EXPECT_EQ(topologyInfo.subSliceCount, 14);
     EXPECT_EQ(topologyInfo.euCount, 42);
@@ -165,6 +170,7 @@ TEST(TopologyTest, givenSingleSliceEnabledWhenGetTopologyInfoThenInfoIsReturnedA
         .eu = eu,
     };
     TopologyLimits topologyLimits = {
+        .maxRegions = 1,
         .maxSlices = 2,
         .maxSubSlicesPerSlice = 8,
         .maxEusPerSubSlice = 4,
@@ -174,6 +180,7 @@ TEST(TopologyTest, givenSingleSliceEnabledWhenGetTopologyInfoThenInfoIsReturnedA
     HardwareInfo hwinfo;
     auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping, productHelper.scanFullTopologyBitmap());
 
+    EXPECT_EQ(topologyInfo.regionCount, 1);
     EXPECT_EQ(topologyInfo.sliceCount, 1);
     EXPECT_EQ(topologyInfo.subSliceCount, 4);
     EXPECT_EQ(topologyInfo.euCount, 16);
@@ -192,6 +199,36 @@ TEST(TopologyTest, givenSingleSliceEnabledWhenGetTopologyInfoThenInfoIsReturnedA
     }
 }
 
+TEST(TopologyTest, givenDisabledRegionWhenGetTopologyInfoThenOnlyEnabledRegionsAreCounted) {
+    uint8_t dssCompute[]{0, 0b1010'1010};
+    uint8_t l3Banks[]{0b0000'1111};
+    uint8_t eu[]{0b0000'1111};
+
+    MockProductHelper productHelper;
+
+    TopologyBitmap topologyBitmap = {
+        .dssCompute = dssCompute,
+        .l3Banks = l3Banks,
+        .eu = eu,
+    };
+    TopologyLimits topologyLimits = {
+        .maxRegions = 2,
+        .maxSlices = 4,
+        .maxSubSlicesPerSlice = 4,
+        .maxEusPerSubSlice = 4,
+    };
+
+    TopologyMapping topologyMapping{};
+    HardwareInfo hwinfo;
+    auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping, productHelper.scanFullTopologyBitmap());
+
+    EXPECT_EQ(topologyInfo.regionCount, 1);
+    EXPECT_EQ(topologyInfo.sliceCount, 2);
+    EXPECT_EQ(topologyInfo.subSliceCount, 4);
+    EXPECT_EQ(topologyInfo.euCount, 16);
+    EXPECT_EQ(topologyInfo.l3BankCount, 4);
+}
+
 TEST(TopologyTest, givenTilesWithTheSameTopologyWhenGetTopologyInfoMultiTileThenCommonInfoIsReturnedAndIndicesAreSetRespectively) {
     uint8_t dssCompute[]{0b0111'1111, 0b1111'1111};
     uint8_t l3Banks[]{0b0000'1111};
@@ -208,6 +245,7 @@ TEST(TopologyTest, givenTilesWithTheSameTopologyWhenGetTopologyInfoMultiTileThen
     std::array<TopologyBitmap, 2> topologyBitmaps{topologyBitmap, topologyBitmap};
 
     TopologyLimits topologyLimits = {
+        .maxRegions = 2,
         .maxSlices = 2,
         .maxSubSlicesPerSlice = 8,
         .maxEusPerSubSlice = 4,
@@ -217,6 +255,7 @@ TEST(TopologyTest, givenTilesWithTheSameTopologyWhenGetTopologyInfoMultiTileThen
     HardwareInfo hwinfo;
     auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmaps, topologyLimits, topologyMap, productHelper.scanFullTopologyBitmap());
 
+    EXPECT_EQ(topologyInfo.regionCount, 2);
     EXPECT_EQ(topologyInfo.sliceCount, 2);
     EXPECT_EQ(topologyInfo.subSliceCount, 15);
     EXPECT_EQ(topologyInfo.euCount, 60);
@@ -261,6 +300,7 @@ TEST(TopologyTest, givenTilesWithDifferentTopologyCountsWhenGetTopologyInfoMulti
     std::array<TopologyBitmap, 2> topologyBitmaps{topologyBitmapT0, topologyBitmapT1};
 
     TopologyLimits topologyLimits = {
+        .maxRegions = 2,
         .maxSlices = 2,
         .maxSubSlicesPerSlice = 8,
         .maxEusPerSubSlice = 4,
@@ -270,6 +310,7 @@ TEST(TopologyTest, givenTilesWithDifferentTopologyCountsWhenGetTopologyInfoMulti
     HardwareInfo hwinfo;
     auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmaps, topologyLimits, topologyMap, productHelper.scanFullTopologyBitmap());
 
+    EXPECT_EQ(topologyInfo.regionCount, 1);
     EXPECT_EQ(topologyInfo.sliceCount, 1);
     EXPECT_EQ(topologyInfo.subSliceCount, 8);
     EXPECT_EQ(topologyInfo.euCount, 32);
@@ -307,6 +348,7 @@ TEST(TopologyTest, givenNoTilesWhenGetTopologyInfoMultiTileThenEmptyInfoIsReturn
     std::array<TopologyBitmap, 0> topologyBitmap;
 
     TopologyLimits topologyLimits = {
+        .maxRegions = 1,
         .maxSlices = 2,
         .maxSubSlicesPerSlice = 8,
         .maxEusPerSubSlice = 4,
@@ -316,6 +358,7 @@ TEST(TopologyTest, givenNoTilesWhenGetTopologyInfoMultiTileThenEmptyInfoIsReturn
     HardwareInfo hwinfo;
     auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmap, topologyLimits, topologyMap, productHelper.scanFullTopologyBitmap());
 
+    EXPECT_EQ(topologyInfo.regionCount, 0);
     EXPECT_EQ(topologyInfo.sliceCount, 0);
     EXPECT_EQ(topologyInfo.subSliceCount, 0);
     EXPECT_EQ(topologyInfo.euCount, 0);

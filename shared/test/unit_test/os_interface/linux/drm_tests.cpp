@@ -2899,3 +2899,31 @@ TEST(DrmTest, givenCallToIoctlCheckNoVmOvercommitFlagThenNothingDone) {
     auto ioctlHelper{drm.getIoctlHelper()};
     ioctlHelper->checkNoVmOvercommitFlag();
 }
+
+TEST(DrmTest, givenSetupHardwareInfoWhenTopologyDataHasRegionCountThenFeatureTableRegionCountIsSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    auto ioctlHelper = static_cast<MockIoctlHelper *>(drm.ioctlHelper.get());
+
+    ioctlHelper->topologyDataToSet.sliceCount = 1;
+    ioctlHelper->topologyDataToSet.subSliceCount = 2;
+    ioctlHelper->topologyDataToSet.euCount = 8;
+    ioctlHelper->topologyDataToSet.maxSlices = 1;
+    ioctlHelper->topologyDataToSet.maxSubSlicesPerSlice = 2;
+    ioctlHelper->topologyDataToSet.maxEusPerSubSlice = 4;
+    ioctlHelper->topologyDataToSet.regionCount = 2;
+
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+
+    drm.systemInfoQueried = true;
+    drm.overrideDeviceDescriptor = &device;
+    drm.setupHardwareInfo(0, false);
+
+    EXPECT_EQ(2u, hwInfo->featureTable.regionCount);
+}

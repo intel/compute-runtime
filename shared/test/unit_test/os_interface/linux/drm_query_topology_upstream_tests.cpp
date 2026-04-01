@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -47,4 +48,18 @@ TEST(DrmQueryTopologyTest, givenDrmWhenGettingSliceMappingsThenCorrectMappingRet
     for (int i = 0; i < topologyData.maxSlices; i++) {
         EXPECT_EQ(i, device0SliceMapping[i]);
     }
+}
+
+TEST(DrmQueryTopologyTest, givenUpstreamIoctlHelperWhenQueryTopologyCalledThenRegionCountIsOne) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper = std::make_unique<IoctlHelperUpstream>(drm);
+
+    DrmQueryTopologyData topologyData = {};
+    drm.engineInfoQueried = true;
+    drm.systemInfoQueried = true;
+    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), topologyData));
+
+    EXPECT_EQ(1, topologyData.regionCount);
 }

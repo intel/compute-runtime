@@ -594,6 +594,7 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
     DrmQueryTopologyData topologyData = {};
 
     if (!queryTopology(*hwInfo, topologyData)) {
+        topologyData.regionCount = hwInfo->featureTable.regionCount;
         topologyData.sliceCount = hwInfo->gtSystemInfo.SliceCount;
         PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
 
@@ -610,6 +611,7 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
         }
     }
 
+    hwInfo->featureTable.regionCount = static_cast<uint32_t>(topologyData.regionCount);
     hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
     if (!topologyMap.empty() && !hwInfo->gtSystemInfo.IsDynamicallyPopulated) {
         hwInfo->gtSystemInfo.IsDynamicallyPopulated = true;

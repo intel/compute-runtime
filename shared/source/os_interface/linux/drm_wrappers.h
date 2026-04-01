@@ -86,6 +86,7 @@ struct QueryTopologyInfo {
 };
 
 struct DrmQueryTopologyData {
+    int regionCount = 0;
     int sliceCount = 0;
     int subSliceCount = 0;
     int euCount = 0;

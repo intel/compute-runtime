@@ -623,6 +623,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopology
     }
 
     const TopologyLimits topologyLimits{
+        .maxRegions = static_cast<int>(hwInfo.featureTable.regionCount),
         .maxSlices = static_cast<int>(hwInfo.gtSystemInfo.MaxSlicesSupported),
         .maxSubSlicesPerSlice = static_cast<int>(hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported),
         .maxEusPerSubSlice = static_cast<int>(hwInfo.gtSystemInfo.MaxEuPerSubSlice),
@@ -630,6 +631,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopology
 
     const auto topologyInfo = getTopologyInfoMultiTile(hwInfo, topologyBitmap, topologyLimits, topologyMap, drm.getRootDeviceEnvironment().getProductHelper().scanFullTopologyBitmap());
 
+    topologyData.regionCount = topologyInfo.regionCount;
     topologyData.sliceCount = topologyInfo.sliceCount;
     topologyData.subSliceCount = topologyInfo.subSliceCount;
     topologyData.numL3Banks = topologyInfo.l3BankCount;

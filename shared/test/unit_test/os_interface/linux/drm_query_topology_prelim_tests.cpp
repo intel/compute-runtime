@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,20 @@ TEST(DrmQueryTopologyTest, givenDrmWhenQueryTopologyCalledThenPassNoFlags) {
 
     constexpr uint32_t expectedFlag = 0;
     EXPECT_EQ(expectedFlag, drm.storedQueryItem.flags);
+}
+
+TEST(DrmQueryTopologyTest, givenPrelimIoctlHelperWhenQueryTopologyCalledThenRegionCountIsOne) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper = std::make_unique<IoctlHelperPrelim20>(drm);
+
+    DrmQueryTopologyData topologyData = {};
+    drm.engineInfoQueried = true;
+    drm.systemInfoQueried = true;
+    EXPECT_TRUE(drm.queryTopology(*drm.context.hwInfo, topologyData));
+
+    EXPECT_EQ(1, topologyData.regionCount);
 }
 
 struct QueryTopologyTests : ::testing::Test {

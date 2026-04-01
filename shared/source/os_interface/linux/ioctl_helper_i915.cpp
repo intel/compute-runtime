@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -563,6 +563,7 @@ bool IoctlHelperI915::translateTopologyInfo(const QueryTopologyInfo *queryTopolo
         mapping.subsliceIndices.clear();
     }
 
+    topologyData.regionCount = 1;
     topologyData.sliceCount = sliceCount;
     topologyData.subSliceCount = subSliceCount;
     topologyData.euCount = euCount;
