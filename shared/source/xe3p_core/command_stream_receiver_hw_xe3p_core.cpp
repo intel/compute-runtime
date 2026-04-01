@@ -48,9 +48,8 @@ bool CommandStreamReceiverHw<Family>::isPerQueuePrologueEnabled() const {
 template <>
 void CommandStreamReceiverHw<Family>::programEnginePrologue(LinearStream &csr) {
     if (!this->isEnginePrologueSent) {
-        auto &compilerProductHelper = this->peekRootDeviceEnvironment().getHelper<CompilerProductHelper>();
 
-        bool skip = (this->primaryCsr != nullptr) && compilerProductHelper.isHeaplessModeEnabled(this->peekHwInfo());
+        bool skip = (this->primaryCsr != nullptr);
 
         if (!skip && getGlobalFenceAllocation()) {
             EncodeMemoryFence<Family>::encodeSystemMemoryFence(csr, getGlobalFenceAllocation());
