@@ -642,7 +642,7 @@ void CommandList::enableInOrderExecution() {
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
 
-    if (gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(device->getNEODevice()->getRootDeviceEnvironment())) {
+    if (gfxCoreHelper.duplicatedInOrderCounterStorageEnabled()) {
         hostCounterNode = this->device->getHostInOrderCounterAllocator()->getTag();
     }
 

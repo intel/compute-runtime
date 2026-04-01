@@ -821,12 +821,12 @@ bool GfxCoreHelperHw<GfxFamily>::singleTileExecImplicitScalingRequired(bool coop
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::duplicatedInOrderCounterStorageEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+bool GfxCoreHelperHw<GfxFamily>::duplicatedInOrderCounterStorageEnabled() const {
     return (debugManager.flags.InOrderDuplicatedCounterStorageEnabled.get() == 1);
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::inOrderAtomicSignallingEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+bool GfxCoreHelperHw<GfxFamily>::inOrderAtomicSignallingEnabled() const {
     return (debugManager.flags.InOrderAtomicSignallingEnabled.get() == 1);
 }
 

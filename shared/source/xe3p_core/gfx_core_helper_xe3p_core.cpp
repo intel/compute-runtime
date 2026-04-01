@@ -92,26 +92,6 @@ uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t sim
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::duplicatedInOrderCounterStorageEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    if (debugManager.flags.InOrderDuplicatedCounterStorageEnabled.get() != -1) {
-        return !!debugManager.flags.InOrderDuplicatedCounterStorageEnabled.get();
-    }
-
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    return rootDeviceEnvironment.getHelper<CompilerProductHelper>().isHeaplessModeEnabled(hwInfo);
-}
-
-template <>
-bool GfxCoreHelperHw<Family>::inOrderAtomicSignallingEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    if (debugManager.flags.InOrderAtomicSignallingEnabled.get() != -1) {
-        return !!debugManager.flags.InOrderAtomicSignallingEnabled.get();
-    }
-
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    return rootDeviceEnvironment.getHelper<CompilerProductHelper>().isHeaplessModeEnabled(hwInfo);
-}
-
-template <>
 void MemorySynchronizationCommands<Family>::setPipeControlRequiredFields(typename Family::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
     pipeControl.setDataportFlush(true);
     pipeControl.setUnTypedDataPortCacheFlush(true);

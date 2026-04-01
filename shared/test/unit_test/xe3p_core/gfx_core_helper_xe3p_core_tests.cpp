@@ -909,48 +909,28 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugVariableSetWhenAskingForDu
     DebugManagerStateRestore restore;
 
     auto &helper = getHelper<GfxCoreHelper>();
-    auto &rootExecEnv = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
-    const auto &compilerProductHelper = rootExecEnv.getHelper<CompilerProductHelper>();
 
-    EXPECT_EQ(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo), helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
-
-    debugManager.flags.Enable64BitAddressing.set(1);
-    EXPECT_EQ(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo), helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
-
-    debugManager.flags.Enable64BitAddressing.set(0);
-    EXPECT_EQ(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo), helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
-
-    debugManager.flags.Enable64BitAddressing.set(-1);
+    EXPECT_TRUE(helper.duplicatedInOrderCounterStorageEnabled());
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
-    EXPECT_TRUE(helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
+    EXPECT_TRUE(helper.duplicatedInOrderCounterStorageEnabled());
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
-    EXPECT_FALSE(helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
+    EXPECT_FALSE(helper.duplicatedInOrderCounterStorageEnabled());
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugVariableSetWhenAskingForInOrderAtomicSignalingThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
     auto &helper = getHelper<GfxCoreHelper>();
-    auto &rootExecEnv = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
-    const auto &compilerProductHelper = rootExecEnv.getHelper<CompilerProductHelper>();
 
-    EXPECT_EQ(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo), helper.inOrderAtomicSignallingEnabled(rootExecEnv));
-
-    debugManager.flags.Enable64BitAddressing.set(1);
-    EXPECT_EQ(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo), helper.inOrderAtomicSignallingEnabled(rootExecEnv));
-
-    debugManager.flags.Enable64BitAddressing.set(0);
-    EXPECT_EQ(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo), helper.inOrderAtomicSignallingEnabled(rootExecEnv));
-
-    debugManager.flags.Enable64BitAddressing.set(-1);
+    EXPECT_TRUE(helper.inOrderAtomicSignallingEnabled());
 
     debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
-    EXPECT_TRUE(helper.inOrderAtomicSignallingEnabled(rootExecEnv));
+    EXPECT_TRUE(helper.inOrderAtomicSignallingEnabled());
 
     debugManager.flags.InOrderAtomicSignallingEnabled.set(0);
-    EXPECT_FALSE(helper.inOrderAtomicSignallingEnabled(rootExecEnv));
+    EXPECT_FALSE(helper.inOrderAtomicSignallingEnabled());
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDisabledFlagEnableExtendedScratchSurfaceSizeWhenCallGetMaxScratchSizeThenSizeIsCorrect) {

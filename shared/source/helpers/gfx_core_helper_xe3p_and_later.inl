@@ -235,6 +235,24 @@ aub_stream::MMIOList GfxCoreHelperHw<Family>::getExtraMmioList(const HardwareInf
 }
 
 template <>
+bool GfxCoreHelperHw<Family>::duplicatedInOrderCounterStorageEnabled() const {
+    if (debugManager.flags.InOrderDuplicatedCounterStorageEnabled.get() != -1) {
+        return !!debugManager.flags.InOrderDuplicatedCounterStorageEnabled.get();
+    }
+
+    return true;
+}
+
+template <>
+bool GfxCoreHelperHw<Family>::inOrderAtomicSignallingEnabled() const {
+    if (debugManager.flags.InOrderAtomicSignallingEnabled.get() != -1) {
+        return !!debugManager.flags.InOrderAtomicSignallingEnabled.get();
+    }
+
+    return true;
+}
+
+template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();

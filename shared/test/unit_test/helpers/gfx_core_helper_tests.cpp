@@ -1758,30 +1758,28 @@ HWTEST_F(GfxCoreHelperTest, givenDebugVariableSetWhenAskingForDuplicatedInOrderH
     DebugManagerStateRestore restore;
 
     auto &helper = getHelper<GfxCoreHelper>();
-    auto &rootExecEnv = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
 
-    EXPECT_FALSE(helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
+    EXPECT_FALSE(helper.duplicatedInOrderCounterStorageEnabled());
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
-    EXPECT_TRUE(helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
+    EXPECT_TRUE(helper.duplicatedInOrderCounterStorageEnabled());
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
-    EXPECT_FALSE(helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
+    EXPECT_FALSE(helper.duplicatedInOrderCounterStorageEnabled());
 }
 
 HWTEST_F(GfxCoreHelperTest, givenDebugVariableSetWhenAskingForInOrderAtomicSignalingThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
     auto &helper = getHelper<GfxCoreHelper>();
-    auto &rootExecEnv = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
 
-    EXPECT_FALSE(helper.inOrderAtomicSignallingEnabled(rootExecEnv));
+    EXPECT_FALSE(helper.inOrderAtomicSignallingEnabled());
 
     debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
-    EXPECT_TRUE(helper.inOrderAtomicSignallingEnabled(rootExecEnv));
+    EXPECT_TRUE(helper.inOrderAtomicSignallingEnabled());
 
     debugManager.flags.InOrderAtomicSignallingEnabled.set(0);
-    EXPECT_FALSE(helper.inOrderAtomicSignallingEnabled(rootExecEnv));
+    EXPECT_FALSE(helper.inOrderAtomicSignallingEnabled());
 }
 
 TEST_F(GfxCoreHelperTest, whenOnlyPerThreadPrivateMemorySizeIsDefinedThenItIsReturnedAsKernelPrivateMemorySize) {

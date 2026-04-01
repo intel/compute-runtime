@@ -247,7 +247,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
         EXPECT_NE(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
         EXPECT_NE(deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), inOrderExecInfo->getHostCounterAllocation());
         EXPECT_NE(0u, inOrderExecInfo->getDeviceNodeGpuAddress());
-        size_t deviceNodeSize = sizeof(uint64_t) * (mockDevice.getGfxCoreHelper().inOrderAtomicSignallingEnabled(mockDevice.getRootDeviceEnvironment()) ? 1u : partitionCount);
+        size_t deviceNodeSize = sizeof(uint64_t) * (mockDevice.getGfxCoreHelper().inOrderAtomicSignallingEnabled() ? 1u : partitionCount);
         EXPECT_EQ(deviceNodeSize, inOrderExecInfo->getDeviceNodeWriteSize());
         EXPECT_NE(0u, inOrderExecInfo->getHostNodeGpuAddress());
         EXPECT_EQ(sizeof(uint64_t) * partitionCount, inOrderExecInfo->getHostNodeWriteSize());

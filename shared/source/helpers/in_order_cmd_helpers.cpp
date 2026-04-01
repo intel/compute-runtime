@@ -19,7 +19,7 @@
 namespace NEO {
 
 std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount) {
-    bool atomicDeviceSignalling = device.getGfxCoreHelper().inOrderAtomicSignallingEnabled(device.getRootDeviceEnvironment());
+    bool atomicDeviceSignalling = device.getGfxCoreHelper().inOrderAtomicSignallingEnabled();
 
     UNRECOVERABLE_IF(!deviceCounterNode);
 

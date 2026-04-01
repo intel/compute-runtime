@@ -189,8 +189,8 @@ class GfxCoreHelper {
     virtual uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const = 0;
 
     virtual bool singleTileExecImplicitScalingRequired(bool cooperativeKernel) const = 0;
-    virtual bool duplicatedInOrderCounterStorageEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual bool inOrderAtomicSignallingEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+    virtual bool duplicatedInOrderCounterStorageEnabled() const = 0;
+    virtual bool inOrderAtomicSignallingEnabled() const = 0;
     virtual bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                      const size_t *lws,
                                                      std::array<uint8_t, 3> &walkOrder,
@@ -459,8 +459,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const override;
 
     bool singleTileExecImplicitScalingRequired(bool cooperativeKernel) const override;
-    bool duplicatedInOrderCounterStorageEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
-    bool inOrderAtomicSignallingEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
+    bool duplicatedInOrderCounterStorageEnabled() const override;
+    bool inOrderAtomicSignallingEnabled() const override;
 
     bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                              const size_t *lws,

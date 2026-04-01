@@ -423,7 +423,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenInOrderImmediateCmdListWhenAppending
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorPC);
     GenCmdList::iterator itorSignalCmd = cmdList.end();
-    if (neoDevice->getGfxCoreHelper().inOrderAtomicSignallingEnabled(neoDevice->getRootDeviceEnvironment())) {
+    if (neoDevice->getGfxCoreHelper().inOrderAtomicSignallingEnabled()) {
         itorSignalCmd = find<MI_ATOMIC *>(itorPC, cmdList.end());
     } else {
         itorSignalCmd = find<MI_STORE_DATA_IMM *>(itorPC, cmdList.end());
