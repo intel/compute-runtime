@@ -219,44 +219,34 @@ void EncodePostSync<Family>::setPostSyncData(PostSyncT &postSyncData, typename P
     postSyncData.setMocs(mocs);
     postSyncData.setSystemMemoryFenceRequest(requiresSystemMemoryFence);
 
-    if constexpr (std::is_same_v<PostSyncT, POSTSYNC_DATA_2>) {
-        postSyncData.setAtomicOpcode(static_cast<typename POSTSYNC_DATA_2::ATOMIC_OPCODE>(atomicOpcode)); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
-        postSyncData.setAtomicDataSize(POSTSYNC_DATA_2::ATOMIC_DATA_SIZE_QWORD);
-        postSyncData.setInterruptSignalEnable(interrupt);
+    postSyncData.setAtomicOpcode(static_cast<typename POSTSYNC_DATA_2::ATOMIC_OPCODE>(atomicOpcode)); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    postSyncData.setAtomicDataSize(POSTSYNC_DATA_2::ATOMIC_DATA_SIZE_QWORD);
+    postSyncData.setInterruptSignalEnable(interrupt);
 
-        postSyncData.setSerializePostsyncOps(debugManager.flags.SerializeWalkerPostSyncOps.get() == 1);
-    }
+    postSyncData.setSerializePostsyncOps(debugManager.flags.SerializeWalkerPostSyncOps.get() == 1);
 }
 
 template <typename Family>
 template <typename CommandType>
 void EncodePostSync<Family>::adjustTimestampPacket(CommandType &cmd, const EncodePostSyncArgs &args) {
-    if constexpr (std::is_same_v<CommandType, typename Family::COMPUTE_WALKER_2>) {
-        cmd.getPostSync().setInterruptSignalEnable(args.interruptEvent);
-    }
+    cmd.getPostSync().setInterruptSignalEnable(args.interruptEvent);
 }
 
 template <typename Family>
 template <typename CommandType>
 inline auto &EncodePostSync<Family>::getPostSync(CommandType &cmd, size_t index) {
-    using PostSyncType = decltype(Family::template getPostSyncType<CommandType>());
-    if constexpr (std::is_same_v<PostSyncType, typename Family::POSTSYNC_DATA>) {
-        DEBUG_BREAK_IF(index != 0);
+
+    switch (index) {
+    case 0:
         return cmd.getPostSync();
-    } else {
-        static_assert(std::is_same_v<PostSyncType, typename Family::POSTSYNC_DATA_2>);
-        switch (index) {
-        case 0:
-            return cmd.getPostSync();
-        case 1:
-            return cmd.getPostSyncOpn1();
-        case 2:
-            return cmd.getPostSyncOpn2();
-        case 3:
-            return cmd.getPostSyncOpn3();
-        default:
-            UNRECOVERABLE_IF(true);
-        }
+    case 1:
+        return cmd.getPostSyncOpn1();
+    case 2:
+        return cmd.getPostSyncOpn2();
+    case 3:
+        return cmd.getPostSyncOpn3();
+    default:
+        UNRECOVERABLE_IF(true);
     }
 }
 
