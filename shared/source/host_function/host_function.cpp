@@ -26,7 +26,8 @@ HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
                                            uint32_t partitionOffset,
                                            bool isTbx,
                                            bool dcFlushRequired,
-                                           bool useSemaphore64bCmd)
+                                           bool useSemaphore64bCmd,
+                                           std::mutex &tbxWriteMutex)
     : hostFunctionIdAddress(reinterpret_cast<uint64_t *>(hostFunctionIdAddress)),
       csr(csr),
       allocation(allocation),
@@ -36,7 +37,8 @@ HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
       partitionOffset(partitionOffset),
       isTbx(isTbx),
       dcFlushRequired(dcFlushRequired),
-      useSemaphore64bCmd(useSemaphore64bCmd) {
+      useSemaphore64bCmd(useSemaphore64bCmd),
+      tbxWriteMutex(tbxWriteMutex) {
 }
 
 uint64_t HostFunctionStreamer::getHostFunctionIdGpuAddress(uint32_t partitionId) const {
@@ -81,14 +83,15 @@ bool HostFunctionStreamer::getDcFlushRequired() const { return dcFlushRequired; 
 
 void HostFunctionStreamer::updateTbxData() {
     constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
-    allocation->setTbxWritable(true, allBanks);
+
+    std::lock_guard<std::mutex> lock(tbxWriteMutex);
 
     for (auto partitionId = 0u; partitionId < activePartitions; partitionId++) {
+        allocation->setTbxWritable(true, allBanks);
         auto offset = ptrDiff(getHostFunctionIdGpuAddress(partitionId), allocation->getGpuAddress());
         csr->writeMemory(*allocation, true, offset, sizeof(uint64_t));
+        allocation->setTbxWritable(false, allBanks);
     }
-
-    allocation->setTbxWritable(false, allBanks);
 }
 
 void HostFunctionStreamer::setHostFunctionIdAsCompleted() {

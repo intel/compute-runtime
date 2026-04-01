@@ -865,7 +865,8 @@ void CommandStreamReceiver::createHostFunctionStreamer(HostFunctionAllocator *al
                                                                         partitionOffset,
                                                                         isTbxMode(),
                                                                         dcFlushRequired,
-                                                                        useSemaphore64bCmd);
+                                                                        useSemaphore64bCmd,
+                                                                        allocator->getTbxWriteMutex());
 }
 
 HostFunctionStreamer &CommandStreamReceiver::getHostFunctionStreamer() {

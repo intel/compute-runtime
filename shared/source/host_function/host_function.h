@@ -67,7 +67,8 @@ class HostFunctionStreamer {
                          uint32_t partitionOffset,
                          bool isTbx,
                          bool dcFlushRequired,
-                         bool useSemaphore64bCmd);
+                         bool useSemaphore64bCmd,
+                         std::mutex &tbxWriteMutex);
     ~HostFunctionStreamer() = default;
 
     std::optional<uint64_t> getHostFunctionReadyToExecute() const;
@@ -85,6 +86,7 @@ class HostFunctionStreamer {
     void prepareForExecution(const HostFunction &hostFunction);
     uint32_t getActivePartitions() const;
     bool getDcFlushRequired() const;
+    std::mutex &getTbxWriteMutex() const { return tbxWriteMutex; }
 
   private:
     void updateTbxData();
@@ -107,6 +109,7 @@ class HostFunctionStreamer {
     const bool isTbx = false;
     bool dcFlushRequired = false;
     const bool useSemaphore64bCmd = false;
+    std::mutex &tbxWriteMutex;
 };
 
 enum class HostFunctionWorkerMode : int32_t {

@@ -57,7 +57,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
 
             std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
             bool isTbx = false;
-
+            std::mutex tbxWriteMutex;
             auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
                                                                                &allocation,
                                                                                hostFunctionId.data(),
@@ -66,7 +66,8 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
                                                                                partitionOffset,
                                                                                isTbx,
                                                                                dcFlushRequired,
-                                                                               HasSemaphore64bCmd<FamilyType>);
+                                                                               HasSemaphore64bCmd<FamilyType>,
+                                                                               tbxWriteMutex);
 
             HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction), isMemorySynchronizationRequired);
 
@@ -139,7 +140,7 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
             auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
             std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
             bool isTbx = false;
-
+            std::mutex tbxWriteMutex;
             auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
                                                                                &allocation,
                                                                                hostFunctionId.data(),
@@ -148,7 +149,8 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
                                                                                partitionOffset,
                                                                                isTbx,
                                                                                dcFlushRequired,
-                                                                               HasSemaphore64bCmd<FamilyType>);
+                                                                               HasSemaphore64bCmd<FamilyType>,
+                                                                               tbxWriteMutex);
 
             constexpr auto size = 1024u;
             std::byte buff[size] = {};
@@ -291,6 +293,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
 
                 ultCsr.writeMemoryParams.totalCallCount = 0;
 
+                std::mutex tbxWriteMutex;
                 auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&csr,
                                                                                    &mockAllocation,
                                                                                    hostFunctionData.data(),
@@ -299,7 +302,8 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                                                                                    partitionOffset,
                                                                                    isTbx,
                                                                                    dcFlushRequired,
-                                                                                   HasSemaphore64bCmd<FamilyType>);
+                                                                                   HasSemaphore64bCmd<FamilyType>,
+                                                                                   tbxWriteMutex);
 
                 EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
 
@@ -435,7 +439,7 @@ HWTEST_F(HostFunctionTests, givenTbxModeWhenDownloadingHostFunctionAllocationThe
 
     bool isTbx = true;
     auto dcFlushRequired = pDevice->getGpgpuCommandStreamReceiver().getDcFlushSupport();
-
+    std::mutex tbxWriteMutex;
     auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
                                                                        &allocation,
                                                                        hostFunctionIdAddress,
@@ -444,7 +448,8 @@ HWTEST_F(HostFunctionTests, givenTbxModeWhenDownloadingHostFunctionAllocationThe
                                                                        partitionOffset,
                                                                        isTbx,
                                                                        dcFlushRequired,
-                                                                       HasSemaphore64bCmd<FamilyType>);
+                                                                       HasSemaphore64bCmd<FamilyType>,
+                                                                       tbxWriteMutex);
 
     hostFunctionStreamer->downloadHostFunctionAllocation();
 
@@ -541,7 +546,7 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
 
     std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
     bool isTbx = false;
-
+    std::mutex tbxWriteMutex;
     auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
                                                                        &allocation,
                                                                        hostFunctionId.data(),
@@ -550,7 +555,8 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
                                                                        partitionOffset,
                                                                        isTbx,
                                                                        dcFlushRequired,
-                                                                       HasSemaphore64bCmd<FamilyType>);
+                                                                       HasSemaphore64bCmd<FamilyType>,
+                                                                       tbxWriteMutex);
 
     bool memorySynchronizationRequired = true;
     if (debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
@@ -604,7 +610,7 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
 
     std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
     bool isTbx = false;
-
+    std::mutex tbxWriteMutex;
     auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
                                                                        &allocation,
                                                                        hostFunctionId.data(),
@@ -613,7 +619,8 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
                                                                        partitionOffset,
                                                                        isTbx,
                                                                        dcFlushRequired,
-                                                                       HasSemaphore64bCmd<FamilyType>);
+                                                                       HasSemaphore64bCmd<FamilyType>,
+                                                                       tbxWriteMutex);
 
     bool memorySynchronizationRequired = true;
     if (debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
@@ -828,4 +835,86 @@ TEST(HostFunctionAllocatorTests, givenMultipleObtainChunksWhenAllocatorIsDestroy
     }
 
     EXPECT_GE(mockMemoryManager->freeGraphicsMemoryCalled, 1u);
+}
+
+TEST(HostFunctionStreamerTests, givenMultiplePartitionsInTbxModeWhenUpdateTbxDataCalledThenTbxWritableIsSetBeforeEachWriteMemoryCall) {
+
+    class HostFunctionCsr : public MockCommandStreamReceiver {
+      public:
+        using MockCommandStreamReceiver::MockCommandStreamReceiver;
+
+        bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+            constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+            wasTbxWritableBeforeWrite.push_back(gfxAllocation.isTbxWritable(allBanks));
+            writeOffsets.push_back(gpuVaChunkOffset);
+            return true;
+        }
+
+        std::vector<bool> wasTbxWritableBeforeWrite;
+        std::vector<uint64_t> writeOffsets;
+    };
+
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get()};
+    executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    DeviceBitfield deviceBitfield(1u);
+    HostFunctionCsr csr(executionEnvironment, 0u, deviceBitfield);
+
+    constexpr uint32_t nPartitions = 2u;
+    constexpr uint32_t partitionOffset = HostFunctionAllocator::partitionOffset;
+
+    alignas(64) uint8_t buffer[1024] = {};
+    MockGraphicsAllocation allocation(buffer, sizeof(buffer));
+
+    auto *hostFunctionIdAddress = buffer;
+
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+
+    std::mutex tbxWriteMutex;
+    auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&csr,
+                                                                       &allocation,
+                                                                       hostFunctionIdAddress,
+                                                                       downloadAllocationImpl,
+                                                                       nPartitions,
+                                                                       partitionOffset,
+                                                                       true,
+                                                                       false,
+                                                                       false,
+                                                                       tbxWriteMutex);
+
+    HostFunction hostFunction{.hostFunctionAddress = 1024, .userDataAddress = 2048};
+    hostFunctionStreamer->signalHostFunctionCompletion(hostFunction);
+
+    ASSERT_EQ(nPartitions, csr.wasTbxWritableBeforeWrite.size());
+    for (auto i = 0u; i < nPartitions; i++) {
+        EXPECT_TRUE(csr.wasTbxWritableBeforeWrite[i]);
+    }
+
+    EXPECT_EQ(0u, csr.writeOffsets[0]);
+    EXPECT_EQ(static_cast<uint64_t>(partitionOffset), csr.writeOffsets[1]);
+
+    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+    EXPECT_FALSE(allocation.isTbxWritable(allBanks));
+}
+
+TEST(HostFunctionStreamerTests, WhenHostFunctionStreamerCreatedThenTbxWriteMutexFromAllocatorIsSetCorrectly) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    DeviceBitfield devices(0b11);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
+    executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    MockMemoryManager mockMemoryManager(executionEnvironment);
+    uint32_t rootDeviceIndex = csr->getRootDeviceIndex();
+    uint32_t maxRootDeviceIndex = static_cast<uint32_t>(executionEnvironment.rootDeviceEnvironments.size() - 1);
+
+    MockHostFunctionAllocator hostFunctionAllocator(&mockMemoryManager,
+                                                    csr.get(),
+                                                    MemoryConstants::pageSize64k,
+                                                    rootDeviceIndex,
+                                                    maxRootDeviceIndex,
+                                                    csr->getActivePartitions(),
+                                                    true);
+
+    csr->ensureHostFunctionWorkerStarted(&hostFunctionAllocator);
+    auto &streamer = csr->getHostFunctionStreamer();
+
+    EXPECT_EQ(&hostFunctionAllocator.getTbxWriteMutex(), &streamer.getTbxWriteMutex());
 }

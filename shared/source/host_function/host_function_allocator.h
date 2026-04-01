@@ -41,6 +41,7 @@ class HostFunctionAllocator : public NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL ~HostFunctionAllocator();
     MOCKABLE_VIRTUAL HostFunctionChunk obtainChunk();
+    std::mutex &getTbxWriteMutex() { return tbxWriteMutex; }
 
   protected:
     void allocateStorage();
@@ -55,6 +56,7 @@ class HostFunctionAllocator : public NonCopyableAndNonMovableClass {
     uint32_t activePartitions = 0u;
     bool isTbx = false;
     std::mutex allocationMutex;
+    std::mutex tbxWriteMutex;
 };
 
 static_assert(NonCopyableAndNonMovable<HostFunctionAllocator>);
