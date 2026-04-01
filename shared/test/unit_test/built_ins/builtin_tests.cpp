@@ -167,9 +167,15 @@ TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinRe
     }
 }
 
-TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {
+HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {
     auto builtinsLib = std::make_unique<MockBuiltInResourceLoader>();
-    auto builtinCode = builtinsLib->getBuiltinCode(BuiltIn::Group::copyBufferToBuffer, BuiltIn::CodeType::any, *pDevice);
+
+    auto builtInGroup = BuiltIn::Group::copyBufferToBuffer;
+    if constexpr (FamilyType::isHeaplessRequired()) {
+        builtInGroup = BuiltIn::Group::copyBufferToBufferStatelessHeapless;
+    }
+
+    auto builtinCode = builtinsLib->getBuiltinCode(builtInGroup, BuiltIn::CodeType::any, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::binary, builtinCode.type);
     EXPECT_NE(0U, builtinCode.resource.size());
 }

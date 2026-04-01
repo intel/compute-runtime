@@ -83,9 +83,10 @@ const char *BuiltIn::getAsString(BuiltIn::Group builtInGroup) {
     case BuiltIn::Group::fillImage3dHeapless:
         return "fill_image3d.builtin_kernel";
     case BuiltIn::Group::queryKernelTimestamps:
+        return "copy_kernel_timestamps.builtin_kernel";
     case BuiltIn::Group::queryKernelTimestampsStateless:
     case BuiltIn::Group::queryKernelTimestampsStatelessHeapless:
-        return "copy_kernel_timestamps.builtin_kernel";
+        return "copy_kernel_timestamps_stateless.builtin_kernel";
     case BuiltIn::Group::fillImage1dBuffer:
     case BuiltIn::Group::fillImage1dBufferHeapless:
         return "fill_image1d_buffer.builtin_kernel";

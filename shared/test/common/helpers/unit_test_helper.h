@@ -135,8 +135,6 @@ struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
     template <typename WalkerType>
     static uint64_t getWalkerActivePostSyncAddress(WalkerType *walkerCmd);
     static void skipStatePrefetch(GenCmdList::iterator &iter);
-
-    static bool isHeaplessAllowed();
 };
 
 } // namespace NEO

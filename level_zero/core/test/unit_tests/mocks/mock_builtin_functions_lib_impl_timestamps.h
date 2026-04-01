@@ -25,28 +25,6 @@ struct MockBuiltInKernelLibImplTimestamps : BuiltInKernelLibImpl {
 
     using BuiltInKernelLibImpl::BuiltInKernelLibImpl;
 
-    void initBuiltinKernel(BufferBuiltIn func) override {
-        auto builtId = static_cast<uint32_t>(func);
-        switch (static_cast<BufferBuiltIn>(func)) {
-        case BufferBuiltIn::queryKernelTimestamps:
-        case BufferBuiltIn::queryKernelTimestampsStateless:
-        case BufferBuiltIn::queryKernelTimestampsStatelessHeapless:
-            if (builtins[builtId].get() == nullptr) {
-                builtins[builtId] = loadBuiltIn(NEO::BuiltIn::Group::queryKernelTimestamps, "QueryKernelTimestamps");
-            }
-            break;
-        case BufferBuiltIn::queryKernelTimestampsWithOffsets:
-        case BufferBuiltIn::queryKernelTimestampsWithOffsetsStateless:
-        case BufferBuiltIn::queryKernelTimestampsWithOffsetsStatelessHeapless:
-            if (builtins[builtId].get() == nullptr) {
-                builtins[builtId] = loadBuiltIn(NEO::BuiltIn::Group::queryKernelTimestamps, "QueryKernelTimestampsWithOffsets");
-            }
-            break;
-        default:
-            break;
-        };
-    }
-
     void initBuiltinImageKernel(ImageBuiltIn func) override {
     }
 

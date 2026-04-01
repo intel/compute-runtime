@@ -227,11 +227,7 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImage1dBufferThenCorrectBuiltInIsSelec
     EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "FillImage1dBuffer");
 }
 
-HWTEST_F(EnqueueFillImageTest, givenHeaplessWhenFillingImage1dBufferThenCorrectBuiltInIsSelected) {
-    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
-    if (!heaplessAllowed) {
-        GTEST_SKIP();
-    }
+HWTEST2_F(EnqueueFillImageTest, givenHeaplessWhenFillingImage1dBufferThenCorrectBuiltInIsSelected, HeaplessSupport) {
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());

@@ -26,6 +26,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/utilities/base_object_utils.h"
@@ -70,6 +71,11 @@ class BuiltInTests
         bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
         bool isForceStateless = compilerProductHelper.isForceToStatelessRequired();
         copyBufferToBufferBuiltin = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isForceStateless, heaplessAllowed);
+        copyBufferToImage3dStatelessBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(true, heaplessAllowed);
+        copyImage3dToBufferStatelessBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(true, heaplessAllowed);
+        fillBufferStatelessBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(true, heaplessAllowed);
+        copyBufferRectStatelessBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferRect>(true, heaplessAllowed);
+        copyBufferToBufferStatelessBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(true, heaplessAllowed);
     }
 
     void TearDown() override {
@@ -96,6 +102,12 @@ class BuiltInTests
     }
 
     BuiltIn::Group copyBufferToBufferBuiltin;
+    BuiltIn::Group copyBufferToImage3dStatelessBuiltIn;
+    BuiltIn::Group copyImage3dToBufferStatelessBuiltIn;
+    BuiltIn::Group fillBufferStatelessBuiltIn;
+    BuiltIn::Group copyBufferRectStatelessBuiltIn;
+    BuiltIn::Group copyBufferToBufferStatelessBuiltIn;
+
     DebugManagerStateRestore restore;
 };
 
@@ -805,7 +817,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferStateless
         GTEST_SKIP();
     }
 
-    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferToBufferStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToBufferStatelessBuiltIn, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -835,7 +847,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToSystemBufferRec
         GTEST_SKIP();
     }
 
-    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferRectStatelessBuiltIn, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -875,7 +887,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToLocalBufferRect
         GTEST_SKIP();
     }
 
-    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferRectStatelessBuiltIn, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -915,7 +927,7 @@ TEST_F(BuiltInTests, givenMisalignedDstPitchWhenBuilderCopyBufferRectSplitIsUsed
         GTEST_SKIP();
     }
 
-    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferRectStatelessBuiltIn, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t size = 4ull * MemoryConstants::gigaByte;
@@ -950,7 +962,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillSystemBufferStatelessIs
         GTEST_SKIP();
     }
 
-    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::fillBufferStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(fillBufferStatelessBuiltIn, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -985,7 +997,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsU
         GTEST_SKIP();
     }
 
-    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::fillBufferStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(fillBufferStatelessBuiltIn, *pClDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -1016,7 +1028,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsU
 }
 
 TEST_F(BuiltInTests, givenSystemPtrWhenBuilderFillBufferStatelessIsUsedThenParamsAreCorrect) {
-    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::fillBufferStateless, *pClDevice);
+    BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(fillBufferStatelessBuiltIn, *pClDevice);
 
     size_t size = 1024 * 1024 * 1024;
     void *systemPtr = &size;
@@ -1039,7 +1051,7 @@ TEST_F(BuiltInTests, givenSystemPtrWhenBuilderFillBufferStatelessIsUsedThenParam
     }
 }
 
-HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessIsUsedThenParamsAreCorrect) {
+HWTEST2_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessIsUsedThenParamsAreCorrect, IsHeapfulRequired) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
@@ -1050,7 +1062,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStateles
     std ::unique_ptr<Image> pDstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pDstImage.get());
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferToImage3dStateless, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBufferToImage3dStatelessBuiltIn, *pClDevice);
 
     BuiltIn::OpParams dc;
     dc.srcPtr = &srcBuffer;
@@ -1072,12 +1084,9 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStateles
     EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
 }
 
-HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyBufferToImageHeaplessIsUsedThenParamsAreCorrect) {
+HWTEST2_F(BuiltInTests, givenHeaplessWhenBuilderCopyBufferToImageHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
-    if (!heaplessAllowed) {
-        GTEST_SKIP();
-    }
+
     MockBuffer buffer;
     std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
@@ -1099,12 +1108,9 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyBufferToImageHeaplessIsUsedTh
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
 }
 
-HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToBufferHeaplessIsUsedThenParamsAreCorrect) {
+HWTEST2_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToBufferHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
-    if (!heaplessAllowed) {
-        GTEST_SKIP();
-    }
+
     MockBuffer buffer;
     std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
@@ -1216,7 +1222,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferSt
     std ::unique_ptr<Image> pSrcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImage3dToBufferStateless, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyImage3dToBufferStatelessBuiltIn, *pClDevice);
 
     BuiltIn::OpParams dc;
     dc.srcMemObj = pSrcImage.get();
@@ -1254,7 +1260,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
     std ::unique_ptr<Image> pSrcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImage3dToBufferStateless, *pClDevice);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyImage3dToBufferStatelessBuiltIn, *pClDevice);
 
     BuiltIn::OpParams dc;
     dc.srcMemObj = pSrcImage.get();
@@ -1389,9 +1395,6 @@ TEST_F(BuiltInTests, WhenGettingBuilderInfoTwiceThenPointerIsSame) {
 
 HWTEST_F(BuiltInTests, GivenBuiltInOperationWhenGettingBuilderThenCorrectBuiltInBuilderIsReturned) {
 
-    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
-    bool isForceStateless = pClDevice->getCompilerProductHelper().isForceToStatelessRequired();
-
     auto verifyBuilder = [&](auto operation) {
         auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(operation, *pClDevice);
         auto *expectedBuilder = pClDevice->peekBuilders()[static_cast<uint32_t>(operation)].first.get();
@@ -1399,49 +1402,75 @@ HWTEST_F(BuiltInTests, GivenBuiltInOperationWhenGettingBuilderThenCorrectBuiltIn
         EXPECT_EQ(expectedBuilder, &builder);
     };
 
-    auto verifyBuilderIfSupported = [&](auto operation) {
-        if (BuiltIn::isHeapless(operation) && (heaplessAllowed == false)) {
-            return;
+    // heapless platforms
+    if (FamilyType::isHeaplessRequired()) {
+
+        BuiltIn::Group operationsBuffers[] = {
+            BuiltIn::Group::copyBufferToBufferStatelessHeapless,
+            BuiltIn::Group::copyBufferRectStatelessHeapless,
+            BuiltIn::Group::fillBufferStatelessHeapless};
+
+        BuiltIn::Group operationsImages[] = {
+            BuiltIn::Group::copyBufferToImage3dStatelessHeapless,
+            BuiltIn::Group::copyImage3dToBufferStatelessHeapless,
+            BuiltIn::Group::copyImageToImage3dHeapless,
+            BuiltIn::Group::fillImage3dHeapless,
+            BuiltIn::Group::fillImage1dBufferHeapless};
+
+        for (auto operation : operationsBuffers) {
+            verifyBuilder(operation);
         }
-        if ((!BuiltIn::isHeapless(operation) && !BuiltIn::isStateless(operation)) && isForceStateless) {
-            return;
+
+        if (pClDevice->getHardwareInfo().capabilityTable.supportsImages) {
+            for (auto operation : operationsImages) {
+                verifyBuilder(operation);
+            }
         }
 
-        verifyBuilder(operation);
-    };
-
-    BuiltIn::Group operationsBuffers[] = {
-        BuiltIn::Group::copyBufferToBufferStateless,
-        BuiltIn::Group::copyBufferToBufferStatelessHeapless,
-        BuiltIn::Group::copyBufferToBuffer,
-        BuiltIn::Group::copyBufferRect,
-        BuiltIn::Group::copyBufferRectStateless,
-        BuiltIn::Group::copyBufferRectStatelessHeapless,
-        BuiltIn::Group::fillBuffer,
-        BuiltIn::Group::fillBufferStateless,
-        BuiltIn::Group::fillBufferStatelessHeapless};
-
-    BuiltIn::Group operationsImages[] = {
-        BuiltIn::Group::copyBufferToImage3d,
-        BuiltIn::Group::copyBufferToImage3dStateless,
-        BuiltIn::Group::copyBufferToImage3dStatelessHeapless,
-        BuiltIn::Group::copyImage3dToBuffer,
-        BuiltIn::Group::copyImage3dToBufferStateless,
-        BuiltIn::Group::copyImage3dToBufferStatelessHeapless,
-        BuiltIn::Group::copyImageToImage3d,
-        BuiltIn::Group::copyImageToImage3dHeapless,
-        BuiltIn::Group::fillImage3d,
-        BuiltIn::Group::fillImage3dHeapless,
-        BuiltIn::Group::fillImage1dBuffer,
-        BuiltIn::Group::fillImage1dBufferHeapless};
-
-    for (auto operation : operationsBuffers) {
-        verifyBuilderIfSupported(operation);
+        return;
     }
 
-    if (pClDevice->getHardwareInfo().capabilityTable.supportsImages) {
-        for (auto operation : operationsImages) {
-            verifyBuilderIfSupported(operation);
+    // stateless preferred platforms has stateless and stateful builtIns
+    if (pClDevice->getCompilerProductHelper().isForceToStatelessRequired()) {
+        BuiltIn::Group operationsBuffers[] = {BuiltIn::Group::copyBufferToBufferStateless,
+                                              BuiltIn::Group::copyBufferRectStateless,
+                                              BuiltIn::Group::fillBufferStateless};
+
+        BuiltIn::Group operationsImages[] = {
+            BuiltIn::Group::copyBufferToImage3dStateless,
+            BuiltIn::Group::copyImage3dToBufferStateless};
+
+        for (auto operation : operationsBuffers) {
+            verifyBuilder(operation);
+        }
+
+        if (pClDevice->getHardwareInfo().capabilityTable.supportsImages) {
+            for (auto operation : operationsImages) {
+                verifyBuilder(operation);
+            }
+        }
+    }
+
+    {
+        BuiltIn::Group operationsBuffers[] = {BuiltIn::Group::copyBufferToBuffer,
+                                              BuiltIn::Group::copyBufferRect,
+                                              BuiltIn::Group::fillBuffer};
+
+        BuiltIn::Group operationsImages[] = {
+            BuiltIn::Group::copyBufferToImage3d,
+            BuiltIn::Group::copyImage3dToBuffer,
+            BuiltIn::Group::copyImageToImage3d,
+            BuiltIn::Group::fillImage3d,
+            BuiltIn::Group::fillImage1dBuffer};
+
+        for (auto operation : operationsBuffers) {
+            verifyBuilder(operation);
+        }
+
+        if (pClDevice->getHardwareInfo().capabilityTable.supportsImages) {
+            for (auto operation : operationsImages) {
+                verifyBuilder(operation);
+            }
         }
     }
 }

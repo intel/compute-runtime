@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,11 +125,6 @@ template <typename GfxFamily>
 size_t UnitTestHelper<GfxFamily>::getWalkerSize(bool isHeaplessEnabled) {
     using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
     return sizeof(DefaultWalkerType);
-}
-
-template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::isHeaplessAllowed() {
-    return false;
 }
 
 } // namespace NEO

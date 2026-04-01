@@ -29,8 +29,8 @@ set(stateless_heapless_INTERNAL_OPTIONS -internal_options "-cl-intel-use-bindles
 set(wide_stateless_heapless_INTERNAL_OPTIONS ${stateless_heapless_INTERNAL_OPTIONS})
 set(bindful_INTERNAL_OPTIONS "")
 set(bindless_INTERNAL_OPTIONS -internal_options "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode")
-macro(additional_heapless_checker)
-endmacro()
+
+set(HEAPLESS_ONLY_CORE_TYPES "XE3P_CORE")
 
 add_subdirectories()
 
@@ -258,7 +258,9 @@ macro(macro_for_each_platform)
   foreach(MODE ${ADDRESSING_MODES})
     unset(BUILTINS_COMMANDS)
 
-    additional_heapless_checker()
+    if("${CORE_TYPE}" IN_LIST HEAPLESS_ONLY_CORE_TYPES AND NOT (${MODE} IN_LIST HEAPLESS_ADDRESSING_MODES))
+      continue()
+    endif()
 
     if((${MODE} STREQUAL "bindless") AND (NOT BUILD_WITH_L0))
       continue()

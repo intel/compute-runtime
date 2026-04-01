@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,11 +126,6 @@ void *UnitTestHelper<Family>::getInitWalkerCmd(bool heapless) {
     } else {
         return new COMPUTE_WALKER;
     }
-}
-
-template <>
-bool UnitTestHelper<Family>::isHeaplessAllowed() {
-    return true;
 }
 
 template <>

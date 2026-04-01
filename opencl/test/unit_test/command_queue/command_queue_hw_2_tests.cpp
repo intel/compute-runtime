@@ -186,7 +186,7 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueWriteImageCallWhenBuiltin
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
 
-    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
+    constexpr bool heaplessAllowed = FamilyType::isHeaplessRequired();
     const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
 
     for (auto useHeapless : {false, heaplessAllowed}) {
