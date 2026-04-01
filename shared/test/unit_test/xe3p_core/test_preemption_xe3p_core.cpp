@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,39 +91,27 @@ XE3P_CORETEST_F(Xe3pPreemptionTests, givenXe3pAndMidThreadPreemptionWhenProgramS
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     VariableBackup<bool> mockSipBackup{&MockSipData::useMockSip, false};
-    DebugManagerStateRestore restorer;
 
-    for (bool enableHeapless : {true, false}) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
 
-        debugManager.flags.Enable64BitAddressing.set(enableHeapless);
+    StackVec<char, 64> preambleBuffer;
+    preambleBuffer.resize(cmdSizePreemptionMidThread);
+    LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-        auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-        mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-        auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice, false);
+    PreemptionHelper::programStateSip<FamilyType>(preambleStream, *mockDevice, nullptr);
 
-        StackVec<char, 64> preambleBuffer;
-        preambleBuffer.resize(cmdSizePreemptionMidThread);
-        LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(preambleStream);
+    auto itStateSip = find<STATE_SIP *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itStateSip);
+    auto stateSipCmd = static_cast<STATE_SIP *>(*itStateSip);
 
-        PreemptionHelper::programStateSip<FamilyType>(preambleStream, *mockDevice, nullptr);
+    auto sipAddress = stateSipCmd->getSystemInstructionPointer();
+    auto fullAddress = SipKernel::getSipKernel(*mockDevice, nullptr).getSipAllocation()->getGpuAddress();
+    auto offsetToHeap = SipKernel::getSipKernel(*mockDevice, nullptr).getSipAllocation()->getGpuAddressToPatch();
 
-        HardwareParse hwParser;
-        hwParser.parseCommands<FamilyType>(preambleStream);
-        auto itStateSip = find<STATE_SIP *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), itStateSip);
-        auto stateSipCmd = static_cast<STATE_SIP *>(*itStateSip);
-
-        auto sipAddress = stateSipCmd->getSystemInstructionPointer();
-        auto fullAddress = SipKernel::getSipKernel(*mockDevice, nullptr).getSipAllocation()->getGpuAddress();
-        auto offsetToHeap = SipKernel::getSipKernel(*mockDevice, nullptr).getSipAllocation()->getGpuAddressToPatch();
-        EXPECT_NE(fullAddress, offsetToHeap);
-
-        auto &compilerProductHelper = mockDevice->getCompilerProductHelper();
-
-        if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
-            EXPECT_EQ(fullAddress, sipAddress);
-        } else {
-            EXPECT_EQ(offsetToHeap, sipAddress);
-        }
-    }
+    EXPECT_NE(fullAddress, offsetToHeap);
+    EXPECT_EQ(fullAddress, sipAddress);
 }
