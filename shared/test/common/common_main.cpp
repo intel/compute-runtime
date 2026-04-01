@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/stdio.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
@@ -486,7 +487,15 @@ int main(int argc, char **argv) {
         }
 
         {
-            USE_REAL_FILE_SYSTEM();
+            VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopenSetter(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+                FILE *pFile = nullptr;
+                fopen_s(&pFile, filename, mode);
+                return pFile;
+            });
+            VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> mockFseekSetter(&NEO::IoFunctions::fseekPtr, [](FILE *stream, long int offset, int origin) -> int { return fseek(stream, offset, origin); });
+            VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtellSetter(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int { return ftell(stream); });
+            VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFreadSetter(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t { return fread(ptr, size, count, stream); });
+            VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFcloseSetter(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return fclose(stream); });
             for (const std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
                                                            "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16",
                                                            "stateless_copy_buffer", "indirect_access_kernel", "system_memfence",
