@@ -45,11 +45,7 @@ NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(con
     if (hwInfo.capabilityTable.supportsImages) {
         return NEO::HeapAddressModel::privateHeaps;
     } else {
-        if (rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().isHeaplessModeEnabled(hwInfo)) {
-            return NEO::HeapAddressModel::globalStateless;
-        } else {
-            return NEO::HeapAddressModel::privateHeaps;
-        }
+        return NEO::HeapAddressModel::globalStateless;
     }
 }
 

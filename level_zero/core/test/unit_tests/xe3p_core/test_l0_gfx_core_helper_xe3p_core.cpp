@@ -117,23 +117,12 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pCoreAndPlatforSupportsImagesWh
 }
 
 XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pHeaplessEnabledAndPlatforDoesNotSupportImagesWhenGettingPlatformDefaultHeapAddressModelThenReturnGlobalStateless) {
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.Enable64BitAddressing.set(1);
+
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     HardwareInfo *hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto variableBackupHwInfo = std::make_unique<VariableBackup<HardwareInfo>>(hwInfo);
     hwInfo->capabilityTable.supportsImages = false;
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, l0GfxCoreHelper.getPlatformHeapAddressModel(device->getNEODevice()->getRootDeviceEnvironment()));
-}
-
-XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pNotHeaplessEnabledAndPlatforDoesNotSupportImagesWhenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps) {
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.Enable64BitAddressing.set(0);
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    HardwareInfo *hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto variableBackupHwInfo = std::make_unique<VariableBackup<HardwareInfo>>(hwInfo);
-    hwInfo->capabilityTable.supportsImages = false;
-    EXPECT_EQ(NEO::HeapAddressModel::privateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel(device->getNEODevice()->getRootDeviceEnvironment()));
 }
 
 XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pWhenCheckingL0HelperForPlatformSupportsImmediateFlushTaskThenReturnTrue) {
