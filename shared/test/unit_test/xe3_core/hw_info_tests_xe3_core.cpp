@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,6 +59,7 @@ XE3_CORETEST_F(Xe3CoreHwInfoTest, givenBoolWhenCallXe3CoreHardwareInfoSetupThenF
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTile64Optimization);
             EXPECT_EQ(false, featureTable.flags.ftrTileY);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrSelectiveWmtp);
             EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
 
             EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);

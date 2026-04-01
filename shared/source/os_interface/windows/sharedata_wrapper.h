@@ -96,8 +96,9 @@ struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM { // NOLINT(readability-ide
     bool FtrLocalMemory : 1;          // NOLINT(readability-identifier-naming)
     bool FtrLocalMemoryAllows4KB : 1; // NOLINT(readability-identifier-naming)
 
-    bool FtrHwScheduling : 1; // NOLINT(readability-identifier-naming)
-    bool FtrWalkerMTP : 1;    // NOLINT(readability-identifier-naming)
+    bool FtrHwScheduling : 1;  // NOLINT(readability-identifier-naming)
+    bool FtrWalkerMTP : 1;     // NOLINT(readability-identifier-naming)
+    bool FtrSelectiveWmtp : 1; // NOLINT(readability-identifier-naming)
 };
 
 struct WA_TABLE_KMD : WA_TABLE_GMM { // NOLINT(readability-identifier-naming)

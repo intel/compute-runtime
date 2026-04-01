@@ -132,6 +132,7 @@ HWTEST2_F(XeLpgHwInfoTests, givenBoolWhenCallHardwareInfoSetupThenFeatureTableAn
         EXPECT_FALSE(featureTable.flags.ftrE2ECompression);
         EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
         EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
+        EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
     }
 }
 

@@ -42,6 +42,7 @@ NVLSTEST_F(NvlsHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_FALSE(featureTable.flags.ftrCCSNode);
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
+    EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
     NvlsHwConfig::setupHardwareInfo(&hwInfo, false, releaseHelper.get());
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
     EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
@@ -53,6 +54,7 @@ NVLSTEST_F(NvlsHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_FALSE(featureTable.flags.ftrCCSNode);
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
+    EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
     NvlsHwConfig::setupHardwareInfo(&hwInfo, true, releaseHelper.get());
     EXPECT_TRUE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);
@@ -73,6 +75,7 @@ NVLSTEST_F(NvlsHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_TRUE(featureTable.flags.ftrFbc);
     EXPECT_TRUE(featureTable.flags.ftrAstcHdr2D);
     EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
+    EXPECT_TRUE(featureTable.flags.ftrSelectiveWmtp);
     EXPECT_FALSE(featureTable.flags.ftrTileY);
     EXPECT_EQ(1u, featureTable.ftrBcsInfo.to_ulong());
     EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);

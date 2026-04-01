@@ -73,7 +73,8 @@ struct FeatureTableBase {
         uint32_t ftrHeaplessMode : 1;
         uint32_t ftrBlitterRing : 1;
         uint32_t ftrHwSemaphore64 : 1;
-        uint32_t reserved : 15;
+        uint32_t ftrSelectiveWmtp : 1;
+        uint32_t reserved : 14;
     };
 
     BcsInfoMask ftrBcsInfo = 1;
