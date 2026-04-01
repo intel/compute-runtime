@@ -533,6 +533,21 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return L0::DebugSessionImp::checkThreadIsResumed(threadID, stateSaveArea);
     }
 
+    bool getThreadSipCounterWithMemHandle(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter, uint64_t memoryHandle) override {
+        getThreadSipCounterWithMemHandleCalled++;
+        getThreadSipCounterWithMemHandleStateSaveArea = stateSaveArea;
+        getThreadSipCounterWithMemHandleThread = thread;
+        getThreadSipCounterWithMemHandleHeader = stateSaveAreaHeader;
+        getThreadSipCounterWithMemHandleMemoryHandle = memoryHandle;
+        if (skipGetThreadSipCounter) {
+            if (sipThreadCounter) {
+                *sipThreadCounter = mockSipCounter;
+            }
+            return getThreadSipCounterRetVal;
+        }
+        return L0::DebugSessionImp::getThreadSipCounterWithMemHandle(stateSaveArea, thread, stateSaveAreaHeader, sipThreadCounter, memoryHandle);
+    }
+
     bool getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter) override {
         if (skipGetThreadSipCounter) {
             if (sipThreadCounter) {
@@ -650,6 +665,11 @@ struct MockDebugSession : public L0::DebugSessionImp {
     bool skipGetThreadSipCounter = false;
     bool getThreadSipCounterRetVal = true;
     uint64_t mockSipCounter = 0;
+    uint32_t getThreadSipCounterWithMemHandleCalled = 0;
+    const void *getThreadSipCounterWithMemHandleStateSaveArea = nullptr;
+    L0::EuThread *getThreadSipCounterWithMemHandleThread = nullptr;
+    const NEO::StateSaveAreaHeader *getThreadSipCounterWithMemHandleHeader = nullptr;
+    uint64_t getThreadSipCounterWithMemHandleMemoryHandle = 0;
     std::vector<uint32_t> interruptedDevices;
     std::vector<uint32_t> resumedDevices;
     std::vector<std::vector<EuThread::ThreadId>> resumedThreads;

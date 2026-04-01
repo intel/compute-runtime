@@ -216,6 +216,7 @@ struct DebugSessionImp : DebugSession {
     ze_result_t getCommandRegisterDescriptor(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, SIP::regset_desc *regdesc);
     // Returns the SIP thread counter from the state save area for the given thread ID by also verifying the thread ID exists in the SSA with the threadid
     MOCKABLE_VIRTUAL bool getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter);
+    MOCKABLE_VIRTUAL bool getThreadSipCounterWithMemHandle(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter, uint64_t memoryHandle);
 
     uint32_t getRegisterSize(zet_debug_regset_type_intel_gpu_t type) override;
 

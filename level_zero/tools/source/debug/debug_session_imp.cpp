@@ -836,7 +836,7 @@ void DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention(EuThread::Threa
                     PRINT_DEBUGGER_INFO_LOG("SIP version == %d.%d.%d\n", (int)srMagic.version.major, (int)srMagic.version.minor, (int)srMagic.version.patch);
                 }
             } else {
-                if (!getThreadSipCounter(stateSaveArea, allThreads[threadId].get(), stateSaveAreaHeader, &counter)) {
+                if (!getThreadSipCounterWithMemHandle(stateSaveArea, allThreads[threadId].get(), stateSaveAreaHeader, &counter, memoryHandle)) {
                     PRINT_DEBUGGER_ERROR_LOG("Failed to read SIP counter\n", "");
                     return;
                 }

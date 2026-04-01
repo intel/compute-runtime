@@ -1192,6 +1192,46 @@ TEST(DebugSessionTest, givenGetThreadSipCounterFailsWhenAddThreadToNewlyStoppedF
     EXPECT_FALSE(sessionMock->allThreads[threadId]->isStopped());
 }
 
+TEST(DebugSessionTest, givenNotStoppedThreadWhenAddThreadToNewlyStoppedFromRaisedAttentionCalledForSipVersion5ThenGetThreadSipCounterWithMemHandleCalledWithCorrectArgs) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp deviceImp(neoDevice);
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    ASSERT_NE(nullptr, sessionMock);
+
+    NEO::StateSaveAreaHeader stateSaveAreaHeader5 = {};
+    stateSaveAreaHeader5.versionHeader.version.major = 5;
+    stateSaveAreaHeader5.versionHeader.version.minor = 0;
+    stateSaveAreaHeader5.versionHeader.version.patch = 0;
+    stateSaveAreaHeader5.versionHeader.size = sizeof(NEO::StateSaveAreaHeader) / 8;
+    memcpy(stateSaveAreaHeader5.versionHeader.magic, "tssarea", 8);
+
+    sessionMock->stateSaveAreaHeader.assign(reinterpret_cast<char *>(&stateSaveAreaHeader5),
+                                            reinterpret_cast<char *>(&stateSaveAreaHeader5) + sizeof(NEO::StateSaveAreaHeader));
+
+    sessionMock->skipGetThreadSipCounter = true;
+    sessionMock->getThreadSipCounterRetVal = true;
+    sessionMock->mockSipCounter = 7;
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, thread);
+
+    EXPECT_FALSE(sessionMock->allThreads[threadId]->isStopped());
+
+    const uint64_t memoryHandle = 0xABCD1234u;
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle, sessionMock->stateSaveAreaHeader.data());
+
+    EXPECT_EQ(1u, sessionMock->getThreadSipCounterWithMemHandleCalled);
+    EXPECT_EQ(sessionMock->stateSaveAreaHeader.data(), sessionMock->getThreadSipCounterWithMemHandleStateSaveArea);
+    EXPECT_EQ(sessionMock->allThreads[threadId].get(), sessionMock->getThreadSipCounterWithMemHandleThread);
+    EXPECT_EQ(sessionMock->getStateSaveAreaHeader(), sessionMock->getThreadSipCounterWithMemHandleHeader);
+    EXPECT_EQ(memoryHandle, sessionMock->getThreadSipCounterWithMemHandleMemoryHandle);
+}
+
 TEST(DebugSessionTest, givenGetThreadSipCounterSucceedsWhenAddThreadToNewlyStoppedFromRaisedAttentionCalledForSipVersion5ThenThreadAdded) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
