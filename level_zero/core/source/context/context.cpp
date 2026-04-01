@@ -1066,11 +1066,11 @@ ze_result_t Context::openIpcMemHandles(ze_device_handle_t hDevice,
     std::vector<NEO::osHandle> handles;
     handles.reserve(numIpcHandles);
 
+    uint64_t poolOffset = 0u;
     for (uint32_t i = 0; i < numIpcHandles; i++) {
         uint64_t handle;
         uint8_t type;
         unsigned int processId;
-        [[maybe_unused]] uint64_t poolOffset;
         uint64_t cacheID;
         bool compressedMemory = false;
         void *reservedHandleData = nullptr;
@@ -1093,6 +1093,8 @@ ze_result_t Context::openIpcMemHandles(ze_device_handle_t hDevice,
     if (nullptr == *pptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+
+    *pptr = ptrOffset(*pptr, poolOffset);
 
     return ZE_RESULT_SUCCESS;
 }

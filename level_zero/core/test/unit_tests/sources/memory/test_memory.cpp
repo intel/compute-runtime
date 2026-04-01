@@ -21,6 +21,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -222,17 +223,24 @@ TEST_F(IpcMemoryImplicitScalingTest,
 }
 
 TEST_F(MemoryExportImportImplicitScalingTest,
-       whenCallingOpenIpcHandlesWithIpcHandleThenAllocationCountIsIncremented) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
+       whenCallingOpenIpcHandlesWithIpcHandleThenAllocationCountIsIncrementedAndPoolOffsetIsApplied) {
+    size_t alignment = 0u;
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
+    size_t poolSize = 0x1000u;
+    auto mockUsmPool = new MockUsmMemAllocPool;
     ze_result_t result = context->allocDeviceMem(device->toHandle(),
                                                  &deviceDesc,
-                                                 size, alignment, &ptr);
+                                                 poolSize, alignment, &mockUsmPool->pool);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, mockUsmPool->pool);
+    mockUsmPool->poolEnd = ptrOffset(mockUsmPool->pool, poolSize);
+    device->getNEODevice()->resetUsmAllocationPool(mockUsmPool);
+
+    size_t size = 10;
+    void *ptr = ptrOffset(mockUsmPool->pool, poolSize - size);
+    auto poolOffset = mockUsmPool->getOffsetInPool(ptr);
+    mockUsmPool->allocations.insert(ptr, MockUsmMemAllocPool::AllocationInfo{castToUint64(ptr), size, size});
 
     uint32_t numIpcHandles = 0;
     result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
@@ -251,12 +259,17 @@ TEST_F(MemoryExportImportImplicitScalingTest,
 
     auto newAllocationCount = usmManager->allocationsCounter.load();
     EXPECT_GT(newAllocationCount, currentAllocationCount);
-    EXPECT_EQ(usmManager->getSVMAlloc(ipcPtr)->getAllocId(), newAllocationCount);
+    auto ipcSvmData = usmManager->getSVMAlloc(ipcPtr);
+    EXPECT_EQ(ipcSvmData->getAllocId(), newAllocationCount);
+    auto ipcAllocAddress = ipcSvmData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+    EXPECT_EQ(ptrOffset(ipcAllocAddress, poolOffset), castToUint64(ipcPtr));
 
     result = context->closeIpcMemHandle(ipcPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = context->freeMem(ptr);
+    auto poolPtr = mockUsmPool->pool;
+    device->getNEODevice()->resetUsmAllocationPool(nullptr);
+    result = context->freeMem(poolPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
