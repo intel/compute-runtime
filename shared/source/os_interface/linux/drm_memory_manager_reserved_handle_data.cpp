@@ -12,11 +12,9 @@
 
 namespace NEO {
 
-void DrmMemoryManager::obtainReservedHandleData(int fd, uint32_t rootDeviceindex, void *reservedHandleData) {
-    if (reservedHandleData) {
-        auto &drm = getDrm(rootDeviceindex);
-        drm.getDrmFabric()->fdToHandle(fd, reservedHandleData);
-    }
+int DrmMemoryManager::obtainReservedHandleData(int fd, uint32_t rootDeviceindex, void *reservedHandleData) {
+    auto &drm = getDrm(rootDeviceindex);
+    return drm.getDrmFabric()->fdToHandle(fd, reservedHandleData);
 }
 
 void DrmMemoryManager::closeInternalHandleWithReservedData(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation, void *reservedHandleData) {
