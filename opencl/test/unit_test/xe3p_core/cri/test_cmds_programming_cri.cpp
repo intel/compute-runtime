@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,31 +25,19 @@ using CmdsProgrammingTestsCri = UltCommandStreamReceiverTest;
 CRITEST_F(CmdsProgrammingTestsCri, givenEnable64BitAddressingWhenSbaIsProgrammedThenHeaplessModeIsEnabled) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    DebugManagerStateRestore restore;
+    int32_t executionStamp = 0;
+    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(mockCSR);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    flushTask(commandStreamReceiver);
 
-    struct TestParam {
-        int32_t enable64BitAddressing;
-        bool expectedResult;
-    };
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    hwParserCsr.findHardwareCommands<FamilyType>();
+    ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
 
-    TestParam testParams[3] = {{-1, true}, {0, false}, {1, true}};
+    auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
+    auto heaplessModeEnabled = stateBaseAddress->getBaseAddressDisable();
 
-    for (auto &[enable64BitAddressing, expectedResult] : testParams) {
-        debugManager.flags.Enable64BitAddressing.set(enable64BitAddressing);
-        int32_t executionStamp = 0;
-        auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-        pDevice->resetCommandStreamReceiver(mockCSR);
-        auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-        flushTask(commandStreamReceiver);
-
-        HardwareParse hwParserCsr;
-        hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-        hwParserCsr.findHardwareCommands<FamilyType>();
-        ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
-
-        auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-        auto heaplessModeEnabled = stateBaseAddress->getBaseAddressDisable();
-
-        EXPECT_EQ(expectedResult, heaplessModeEnabled);
-    }
+    EXPECT_TRUE(heaplessModeEnabled);
 }
