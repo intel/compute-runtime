@@ -746,3 +746,183 @@ TEST(PrintsRedirection, GivenForcePrintsRedirectionWhenFileOutputForcedThenItWor
     EXPECT_STREQ(capturedStderr.c_str(), "");
     EXPECT_STREQ(capturedFileOutput.c_str(), "redirected: 4\n");
 }
+
+TEST(FileLogger, givenLogAllocationSummaryReportWhenSysAndLocalAllocationsTrackedThenFullReportPrinted) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationSummaryReport.set(true);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    {
+        FullyEnabledFileLogger fileLogger(testFile, flags);
+        fileLogger.trackAllocationForSummary("BUFFER", 1024, false);
+        fileLogger.trackAllocationForSummary("LINEAR_STREAM", 512, false);
+        fileLogger.trackAllocationForSummary("KERNEL_ISA", 2048, true);
+        fileLogger.trackLiveAllocation("BUFFER", 1024, false);
+        fileLogger.trackLiveAllocation("KERNEL_ISA", 2048, true);
+    }
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_TRUE(output.find("Allocation Summary Report") != std::string::npos);
+    EXPECT_TRUE(output.find("System Memory Allocations") != std::string::npos);
+    EXPECT_TRUE(output.find("Local Memory Allocations") != std::string::npos);
+    EXPECT_TRUE(output.find("BUFFER") != std::string::npos);
+    EXPECT_TRUE(output.find("KERNEL_ISA") != std::string::npos);
+    EXPECT_TRUE(output.find("Peak Live Memory") != std::string::npos);
+    EXPECT_TRUE(output.find("Peak System Memory") != std::string::npos);
+    EXPECT_TRUE(output.find("Peak Local Memory") != std::string::npos);
+}
+
+TEST(FileLogger, givenLogAllocationSummaryReportWhenOnlyLocalLiveAllocationsTrackedThenPeakLocalConditionEvaluated) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationSummaryReport.set(true);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    {
+        FullyEnabledFileLogger fileLogger(testFile, flags);
+        fileLogger.trackAllocationForSummary("KERNEL_ISA", 2048, true);
+        fileLogger.trackLiveAllocation("KERNEL_ISA", 2048, true);
+    }
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_TRUE(output.find("Peak Live Memory") != std::string::npos);
+    EXPECT_TRUE(output.find("Peak Local Memory") != std::string::npos);
+    EXPECT_FALSE(output.find("Peak System Memory") != std::string::npos);
+}
+
+TEST(FileLogger, givenLogAllocationSummaryReportWhenUntrackExceedsTrackedThenSysMemClampedToZero) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationSummaryReport.set(true);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    {
+        FullyEnabledFileLogger fileLogger(testFile, flags);
+        fileLogger.trackAllocationForSummary("BUFFER", 100, false);
+        fileLogger.trackLiveAllocation("BUFFER", 100, false);
+        fileLogger.untrackLiveAllocation("BUFFER", 50, false);
+        fileLogger.untrackLiveAllocation("BUFFER", 200, false);
+    }
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_TRUE(output.find("Peak System Memory") != std::string::npos);
+    EXPECT_TRUE(output.find("100") != std::string::npos);
+}
+
+TEST(FileLogger, givenLogAllocationSummaryReportWhenNoLiveAllocationsTrackedThenNoPeakSectionPrinted) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationSummaryReport.set(true);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    {
+        FullyEnabledFileLogger fileLogger(testFile, flags);
+        fileLogger.trackAllocationForSummary("BUFFER", 1024, false);
+    }
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_TRUE(output.find("Allocation Summary Report") != std::string::npos);
+    EXPECT_FALSE(output.find("Peak Live Memory") != std::string::npos);
+}
+
+TEST(FileLogger, givenLogAllocationSummaryReportWhenSysLiveAllocBelowPeakThenPeakNotUpdatedAndMissingTypeHandled) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationSummaryReport.set(true);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    {
+        FullyEnabledFileLogger fileLogger(testFile, flags);
+        fileLogger.trackAllocationForSummary("BUFFER", 100, false);
+        fileLogger.trackLiveAllocation("BUFFER", 100, false);
+        fileLogger.untrackLiveAllocation("BUFFER", 90, false);
+        fileLogger.trackLiveAllocation("BUFFER", 50, false);
+        fileLogger.untrackLiveAllocation("LINEAR_STREAM", 50, false);
+    }
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_TRUE(output.find("Peak System Memory") != std::string::npos);
+    EXPECT_TRUE(output.find("100 bytes") != std::string::npos);
+}
+
+TEST(FileLogger, givenLogAllocationSummaryReportWhenNoSummaryAllocationsTrackedThenEarlyReturnWithNoOutput) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationSummaryReport.set(true);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    {
+        FullyEnabledFileLogger fileLogger(testFile, flags);
+        fileLogger.trackLiveAllocation("BUFFER", 100, false);
+    }
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_FALSE(output.find("Allocation Summary Report") != std::string::npos);
+}
+
+TEST(FileLogger, givenLogAllocationSummaryReportWhenLocalLiveBelowPeakAndUnderflowThenClampedToZero) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationSummaryReport.set(true);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    {
+        FullyEnabledFileLogger fileLogger(testFile, flags);
+        fileLogger.trackAllocationForSummary("KERNEL_ISA", 100, true);
+        fileLogger.trackLiveAllocation("KERNEL_ISA", 100, true);
+        fileLogger.untrackLiveAllocation("KERNEL_ISA", 200, true);
+        fileLogger.trackLiveAllocation("KERNEL_ISA", 50, true);
+    }
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_TRUE(output.find("Peak Local Memory") != std::string::npos);
+    EXPECT_TRUE(output.find("100 bytes") != std::string::npos);
+}
+
+TEST(FileLogger, givenLogAllocationSummaryReportWhenLocalUntrackWithinBudgetThenLocalMemoryDecremented) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationSummaryReport.set(true);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    {
+        FullyEnabledFileLogger fileLogger(testFile, flags);
+        fileLogger.trackAllocationForSummary("KERNEL_ISA", 200, true);
+        fileLogger.trackLiveAllocation("KERNEL_ISA", 200, true);
+        fileLogger.untrackLiveAllocation("KERNEL_ISA", 50, true);
+        fileLogger.untrackLiveAllocation("BUFFER", 50, true);
+    }
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_TRUE(output.find("Peak Local Memory") != std::string::npos);
+    EXPECT_TRUE(output.find("200 bytes") != std::string::npos);
+}
+
+TEST(FileLogger, givenLogAllocationSummaryReportWhenFreeAllocationCalledWithReportEnabledThenLiveTrackingUpdated) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationSummaryReport.set(true);
+
+    GraphicsAllocation sysAllocation(0u, 1u, AllocationType::buffer, nullptr, uint64_t{0}, uint64_t{0}, size_t{1024}, MemoryPool::system64KBPages, MemoryManager::maxOsContextCount);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    {
+        FullyEnabledFileLogger fileLogger(testFile, flags);
+        logAllocation(fileLogger, &sysAllocation, nullptr);
+        logFreeAllocation(fileLogger, &sysAllocation);
+    }
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_TRUE(output.find("Peak System Memory") != std::string::npos);
+    EXPECT_TRUE(output.find("BUFFER") != std::string::npos);
+}

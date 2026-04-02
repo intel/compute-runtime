@@ -370,6 +370,7 @@ DECLARE_DEBUG_VARIABLE(bool, LogAlignedAllocations, false, "Logs alignedMalloc a
 DECLARE_DEBUG_VARIABLE(bool, LogAllocationMemoryPool, false, "Logs memory pool for allocations")
 DECLARE_DEBUG_VARIABLE(bool, LogAllocationType, false, "Logs allocation type to stdout")
 DECLARE_DEBUG_VARIABLE(bool, LogAllocationStdout, false, "Log allocations to stdout instead of file")
+DECLARE_DEBUG_VARIABLE(bool, LogAllocationSummaryReport, false, "Log allocation summary report at end of execution: allocation types, sizes and % of total local/system memory")
 DECLARE_DEBUG_VARIABLE(bool, LogMemoryObject, false, "Logs memory object ptrs, sizes and operations")
 DECLARE_DEBUG_VARIABLE(bool, LogWaitingForCompletion, false, "Logs waiting for completion")
 DECLARE_DEBUG_VARIABLE(bool, LogUsmReuse, false, "Logs operations of usm reuse to csv file")

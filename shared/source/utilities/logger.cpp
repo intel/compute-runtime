@@ -14,8 +14,11 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 
+#include <algorithm>
+#include <cstdio>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace NEO {
 
@@ -50,10 +53,129 @@ FileLogger<debugLevel>::FileLogger(std::string filename, const DebugVariables &f
     logAllocationMemoryPool = flags.LogAllocationMemoryPool.get();
     logAllocationType = flags.LogAllocationType.get();
     logAllocationStdout = flags.LogAllocationStdout.get();
+    logAllocationSummaryReport = flags.LogAllocationSummaryReport.get();
 }
 
 template <DebugFunctionalityLevel debugLevel>
-FileLogger<debugLevel>::~FileLogger() = default;
+FileLogger<debugLevel>::~FileLogger() {
+    if (logAllocationSummaryReport) {
+        printAllocationSummaryReport();
+    }
+}
+
+void AllocationSummaryTracker::printReport() {
+    std::unordered_map<std::string, size_t> sysSummarySnapshot;
+    std::unordered_map<std::string, size_t> localSummarySnapshot;
+    std::unordered_map<std::string, size_t> peakSysSnapshot;
+    std::unordered_map<std::string, size_t> peakLocalSnapshot;
+    size_t peakSysTotal = 0;
+    size_t peakLocalTotal = 0;
+
+    {
+        std::lock_guard theLock(mutex);
+        sysSummarySnapshot = systemMemoryAllocationSummary;
+        localSummarySnapshot = localMemoryAllocationSummary;
+        peakSysSnapshot = peakSystemMemoryByType;
+        peakLocalSnapshot = peakLocalMemoryByType;
+        peakSysTotal = peakTotalSystemMemory;
+        peakLocalTotal = peakTotalLocalMemory;
+    }
+
+    size_t totalSystemMemoryAllocated = 0;
+    for (auto &[allocationTypeName, totalBytes] : sysSummarySnapshot) {
+        totalSystemMemoryAllocated += totalBytes;
+    }
+    size_t totalLocalMemoryAllocated = 0;
+    for (auto &[allocationTypeName, totalBytes] : localSummarySnapshot) {
+        totalLocalMemoryAllocated += totalBytes;
+    }
+
+    if (totalSystemMemoryAllocated == 0 && totalLocalMemoryAllocated == 0) {
+        return;
+    }
+
+    PRINT_STRING(true, stdout, "=== Allocation Summary Report ===\n");
+
+    auto printMemorySection = [](const char *sectionTitle, size_t totalBytesInSection, std::unordered_map<std::string, size_t> &allocationTypeMap) {
+        PRINT_STRING(true, stdout, "%s (total: %zu bytes):\n", sectionTitle, totalBytesInSection);
+        std::vector<std::pair<std::string, size_t>> entriesSortedBySize(allocationTypeMap.begin(), allocationTypeMap.end());
+        std::sort(entriesSortedBySize.begin(), entriesSortedBySize.end(), [](const auto &a, const auto &b) { return a.second > b.second; });
+        for (auto &[allocationTypeName, totalBytes] : entriesSortedBySize) {
+            double percentageOfTotal = 100.0 * static_cast<double>(totalBytes) / static_cast<double>(totalBytesInSection);
+            PRINT_STRING(true, stdout, "  %-40s %12zu bytes  (%6.2f%%)\n", allocationTypeName.c_str(), totalBytes, percentageOfTotal);
+        }
+    };
+
+    if (totalSystemMemoryAllocated > 0) {
+        printMemorySection("System Memory Allocations", totalSystemMemoryAllocated, sysSummarySnapshot);
+    }
+    if (totalLocalMemoryAllocated > 0) {
+        printMemorySection("Local Memory Allocations", totalLocalMemoryAllocated, localSummarySnapshot);
+    }
+
+    if (peakSysTotal > 0 || peakLocalTotal > 0) {
+        PRINT_STRING(true, stdout, "=== Peak Live Memory ===\n");
+        if (peakSysTotal > 0) {
+            printMemorySection("Peak System Memory", peakSysTotal, peakSysSnapshot);
+        }
+        if (peakLocalTotal > 0) {
+            printMemorySection("Peak Local Memory", peakLocalTotal, peakLocalSnapshot);
+        }
+    }
+
+    PRINT_STRING(true, stdout, "=================================\n");
+}
+
+void AllocationSummaryTracker::trackAllocationForSummary(const char *allocTypeName, size_t allocationSize, bool isLocalMemory) {
+    std::lock_guard theLock(mutex);
+    if (isLocalMemory) {
+        localMemoryAllocationSummary[allocTypeName] += allocationSize;
+    } else {
+        systemMemoryAllocationSummary[allocTypeName] += allocationSize;
+    }
+}
+
+void AllocationSummaryTracker::trackLiveAllocation(const char *allocTypeName, size_t allocationSize, bool isLocalMemory) {
+    std::lock_guard theLock(mutex);
+    if (isLocalMemory) {
+        currentLocalMemoryByType[allocTypeName] += allocationSize;
+        currentTotalLocalMemory += allocationSize;
+        if (currentTotalLocalMemory > peakTotalLocalMemory) {
+            peakTotalLocalMemory = currentTotalLocalMemory;
+            peakLocalMemoryByType = currentLocalMemoryByType;
+        }
+    } else {
+        currentSystemMemoryByType[allocTypeName] += allocationSize;
+        currentTotalSystemMemory += allocationSize;
+        if (currentTotalSystemMemory > peakTotalSystemMemory) {
+            peakTotalSystemMemory = currentTotalSystemMemory;
+            peakSystemMemoryByType = currentSystemMemoryByType;
+        }
+    }
+}
+
+void AllocationSummaryTracker::untrackLiveAllocation(const char *allocTypeName, size_t allocationSize, bool isLocalMemory) {
+    std::lock_guard theLock(mutex);
+    if (isLocalMemory) {
+        auto it = currentLocalMemoryByType.find(allocTypeName);
+        if (it != currentLocalMemoryByType.end()) {
+            it->second = (it->second >= allocationSize) ? it->second - allocationSize : 0;
+            if (it->second == 0) {
+                currentLocalMemoryByType.erase(it);
+            }
+        }
+        currentTotalLocalMemory = (currentTotalLocalMemory >= allocationSize) ? currentTotalLocalMemory - allocationSize : 0;
+    } else {
+        auto it = currentSystemMemoryByType.find(allocTypeName);
+        if (it != currentSystemMemoryByType.end()) {
+            it->second = (it->second >= allocationSize) ? it->second - allocationSize : 0;
+            if (it->second == 0) {
+                currentSystemMemoryByType.erase(it);
+            }
+        }
+        currentTotalSystemMemory = (currentTotalSystemMemory >= allocationSize) ? currentTotalSystemMemory - allocationSize : 0;
+    }
+}
 
 template <DebugFunctionalityLevel debugLevel>
 void FileLogger<debugLevel>::writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode) {

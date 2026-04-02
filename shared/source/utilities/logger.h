@@ -11,7 +11,9 @@
 
 #include <mutex>
 #include <sstream>
+#include <string>
 #include <thread>
+#include <unordered_map>
 
 #define CREATE_DEBUG_STRING(buffer, format, ...)                            \
     std::unique_ptr<char[]> buffer(new char[NEO::maxErrorDescriptionSize]); \
@@ -26,6 +28,27 @@ static const int32_t maxErrorDescriptionSize = 1024;
 const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation);
 const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation);
 std::string getFileLoggerFileName(const DebugVariables &flags);
+
+class AllocationSummaryTracker : NEO::NonCopyableAndNonMovableClass {
+  public:
+    void trackAllocationForSummary(const char *allocTypeName, size_t allocationSize, bool isLocalMemory);
+    void trackLiveAllocation(const char *allocTypeName, size_t allocationSize, bool isLocalMemory);
+    void untrackLiveAllocation(const char *allocTypeName, size_t allocationSize, bool isLocalMemory);
+    void printReport();
+
+  private:
+    std::mutex mutex;
+    std::unordered_map<std::string, size_t> systemMemoryAllocationSummary;
+    std::unordered_map<std::string, size_t> localMemoryAllocationSummary;
+    std::unordered_map<std::string, size_t> currentSystemMemoryByType;
+    std::unordered_map<std::string, size_t> currentLocalMemoryByType;
+    std::unordered_map<std::string, size_t> peakSystemMemoryByType;
+    std::unordered_map<std::string, size_t> peakLocalMemoryByType;
+    size_t currentTotalSystemMemory = 0;
+    size_t currentTotalLocalMemory = 0;
+    size_t peakTotalSystemMemory = 0;
+    size_t peakTotalLocalMemory = 0;
+};
 
 template <DebugFunctionalityLevel debugLevel>
 class FileLogger : NEO::NonCopyableAndNonMovableClass {
@@ -141,6 +164,12 @@ class FileLogger : NEO::NonCopyableAndNonMovableClass {
     bool shouldLogAllocationType() { return logAllocationType; }
     bool shouldLogAllocationToStdout() { return logAllocationStdout; }
     bool shouldLogAllocationMemoryPool() { return logAllocationMemoryPool; }
+    bool shouldLogAllocationSummaryReport() { return logAllocationSummaryReport; }
+
+    void trackAllocationForSummary(const char *allocTypeName, size_t allocationSize, bool isLocalMemory) { allocationTracker.trackAllocationForSummary(allocTypeName, allocationSize, isLocalMemory); }
+    void trackLiveAllocation(const char *allocTypeName, size_t allocationSize, bool isLocalMemory) { allocationTracker.trackLiveAllocation(allocTypeName, allocationSize, isLocalMemory); }
+    void untrackLiveAllocation(const char *allocTypeName, size_t allocationSize, bool isLocalMemory) { allocationTracker.untrackLiveAllocation(allocTypeName, allocationSize, isLocalMemory); }
+    void printAllocationSummaryReport() { allocationTracker.printReport(); }
 
   protected:
     std::mutex mutex;
@@ -150,6 +179,8 @@ class FileLogger : NEO::NonCopyableAndNonMovableClass {
     bool logAllocationMemoryPool = false;
     bool logAllocationType = false;
     bool logAllocationStdout = false;
+    bool logAllocationSummaryReport = false;
+    AllocationSummaryTracker allocationTracker;
 
     // Required for variadic template with 0 args passed
     void printInputs(std::stringstream &ss) {}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,14 @@ template <DebugFunctionalityLevel level>
 void logAllocation(FileLogger<level> &logger, GraphicsAllocation const *graphicsAllocation, MemoryManager const *memoryManager) {
     if (logger.shouldLogAllocationType()) {
         PRINT_STRING(true, stdout, "Created Graphics Allocation of type %s\n", getAllocationTypeString(graphicsAllocation));
+    }
+
+    if (logger.shouldLogAllocationSummaryReport()) {
+        const bool isLocalMemory = graphicsAllocation->getMemoryPool() == MemoryPool::localMemory;
+        logger.trackAllocationForSummary(getAllocationTypeString(graphicsAllocation),
+                                         graphicsAllocation->getUnderlyingBufferSize(), isLocalMemory);
+        logger.trackLiveAllocation(getAllocationTypeString(graphicsAllocation),
+                                   graphicsAllocation->getUnderlyingBufferSize(), isLocalMemory);
     }
 
     if (!logger.enabled() && !logger.shouldLogAllocationToStdout()) {
@@ -69,6 +77,15 @@ void logAllocation(FileLogger<level> &logger, GraphicsAllocation const *graphics
         if (logger.enabled()) {
             logger.writeToFile(logger.getLogFileNameString(), str.c_str(), str.size(), std::ios::app);
         }
+    }
+}
+
+template <DebugFunctionalityLevel level>
+void logFreeAllocation(FileLogger<level> &logger, GraphicsAllocation const *graphicsAllocation) {
+    if (logger.shouldLogAllocationSummaryReport()) {
+        const bool isLocalMemory = graphicsAllocation->getMemoryPool() == MemoryPool::localMemory;
+        logger.untrackLiveAllocation(getAllocationTypeString(graphicsAllocation),
+                                     graphicsAllocation->getUnderlyingBufferSize(), isLocalMemory);
     }
 }
 
