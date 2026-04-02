@@ -2958,93 +2958,12 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugS
 }
 
 TEST(OfflineCompilerTest, GivenDelimitersWhenGettingStringThenParseIsCorrect) {
-    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
-        std::filesystem::path filePath = filename;
-        std::string fileNameWithExtension = filePath.filename().string();
-
-        std::vector<std::string> expectedFiles = {
-            "copy_buffer_to_buffer.builtin_kernel"};
-
-        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedFiles.end()) {
-            return reinterpret_cast<FILE *>(0x40);
-        }
-        return NULL;
-    });
-    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
-    VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> mockFseek(&NEO::IoFunctions::fseekPtr, [](FILE *stream, long int offset, int origin) -> int { return 0; });
-    VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtell(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int {
-        std::string kernelSource = R"(
-            /*
-            * Copyright (C) 2020-2023 Intel Corporation
-            *
-            * SPDX-License-Identifier: MIT
-            *
-            */
-
-            R"===(
-            #define ALIGNED4(ptr) __builtin_assume(((size_t)ptr&0b11) == 0)
-
-            __kernel void CopyBufferToBufferBytes(
-                const __global uchar* pSrc,
-                __global uchar* pDst,
-                uint srcOffsetInBytes,
-                uint dstOffsetInBytes,
-                uint bytesToRead )
-            {
-                ALIGNED4(pSrc);
-                ALIGNED4(pDst);
-                pSrc += ( srcOffsetInBytes + get_global_id(0) );
-                pDst += ( dstOffsetInBytes + get_global_id(0) );
-                pDst[ 0 ] = pSrc[ 0 ];
-            }
-            )===")";
-        std::stringstream fileStream(kernelSource);
-        fileStream.seekg(0, std::ios::end);
-        return static_cast<long int>(fileStream.tellg());
-    });
-    VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
-        std::string kernelSource = R"(
-            /*
-            * Copyright (C) 2020-2023 Intel Corporation
-            *
-            * SPDX-License-Identifier: MIT
-            *
-            */
-
-            R"===(
-            #define ALIGNED4(ptr) __builtin_assume(((size_t)ptr&0b11) == 0)
-
-            __kernel void CopyBufferToBufferBytes(
-                const __global uchar* pSrc,
-                __global uchar* pDst,
-                uint srcOffsetInBytes,
-                uint dstOffsetInBytes,
-                uint bytesToRead )
-            {
-                ALIGNED4(pSrc);
-                ALIGNED4(pDst);
-                pSrc += ( srcOffsetInBytes + get_global_id(0) );
-                pDst += ( dstOffsetInBytes + get_global_id(0) );
-                pDst[ 0 ] = pSrc[ 0 ];
-            }
-            )===")";
-        std::stringstream fileStream(kernelSource);
-        size_t totalBytes = size * count;
-        fileStream.read(static_cast<char *>(ptr), totalBytes);
-        return static_cast<size_t>(fileStream.gcount() / size);
-    });
-
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    std::string kernelFileName(sharedBuiltinsDir + "/copy_buffer_to_buffer.builtin_kernel");
-
-    size_t srcSize = 0;
-    auto ptrSrc = NEO::loadDataFromFile(kernelFileName.c_str(), srcSize);
-
-    const std::string src = ptrSrc.get();
-    ASSERT_EQ(srcSize, src.size());
+    const std::string src = R"x(R"===(
+example_kernel(){}
+)===" )x";
 
     // assert that pattern was found
     ASSERT_NE(std::string::npos, src.find("R\"===("));
