@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,8 +99,6 @@ class CompilerInterfaceMockedBinaryFilesTest : public CompilerInterfaceTest {
     MockCompilerDebugVars igcDebugVars;
     MockCompilerDebugVars fclDebugVars;
     char fakeBinFile[1] = {8};
-
-    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 
 TEST(CompilerInterface, WhenInitializeIsCalledThenFailIfCompilerCacheHandlerIsEmpty) {

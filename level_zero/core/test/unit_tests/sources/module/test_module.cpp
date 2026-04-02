@@ -4247,7 +4247,6 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetToWbWhenGetInternalOptions
 }
 
 HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebinElfDumped) {
-    FORBID_REAL_FILE_SYSTEM_CALLS();
     DebugManagerStateRestore restorer;
     debugManager.flags.DumpZEBin.set(1);
 

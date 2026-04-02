@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/required_libs_helpers.h"
 #include "shared/test/common/helpers/mock_file_io.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/unit_test/mocks/mock_required_libs_helpers.h"
 
