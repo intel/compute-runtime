@@ -185,27 +185,19 @@ void EncodeDispatchKernel<Family>::overrideDefaultValues(WalkerType &walkerCmd, 
 
     interfaceDescriptor.setDynamicPrefSlmIncrease(dynamicPerfSlmSizeCtrl);
 
-    constexpr bool heaplessModeEnabled = Family::isHeaplessMode<WalkerType>();
-    if constexpr (heaplessModeEnabled) {
-        if (debugManager.flags.OverDispatchControl.get() != -1) {
-            walkerCmd.setOverDispatchControl(static_cast<typename WalkerType::OVER_DISPATCH_CONTROL>(debugManager.flags.OverDispatchControl.get()));
-        }
+    if (debugManager.flags.OverDispatchControl.get() != -1) {
+        walkerCmd.setOverDispatchControl(static_cast<typename WalkerType::OVER_DISPATCH_CONTROL>(debugManager.flags.OverDispatchControl.get()));
+    }
 
-        bool disableOverdispatch = true;
-        if (debugManager.flags.ComputeOverdispatchDisable.get() != -1) {
-            disableOverdispatch = static_cast<bool>(debugManager.flags.ComputeOverdispatchDisable.get());
-        }
-        walkerCmd.setComputeOverdispatchDisable(disableOverdispatch);
+    bool disableOverdispatch = true;
+    if (debugManager.flags.ComputeOverdispatchDisable.get() != -1) {
+        disableOverdispatch = static_cast<bool>(debugManager.flags.ComputeOverdispatchDisable.get());
+    }
+    walkerCmd.setComputeOverdispatchDisable(disableOverdispatch);
 
-        if (debugManager.flags.OverrideComputeWalker2ThreadArbitrationPolicy.get() != -1) {
-            using THREAD_ARBITRATION_POLICY = typename Family::COMPUTE_WALKER_2::THREAD_ARBITRATION_POLICY;
-            walkerCmd.setThreadArbitrationPolicy(static_cast<THREAD_ARBITRATION_POLICY>(debugManager.flags.OverrideComputeWalker2ThreadArbitrationPolicy.get()));
-        }
-    } else {
-        int32_t forceL3PrefetchForComputeWalker = debugManager.flags.ForceL3PrefetchForComputeWalker.get();
-        if (forceL3PrefetchForComputeWalker != -1) {
-            walkerCmd.setL3PrefetchDisable(!forceL3PrefetchForComputeWalker);
-        }
+    if (debugManager.flags.OverrideComputeWalker2ThreadArbitrationPolicy.get() != -1) {
+        using THREAD_ARBITRATION_POLICY = typename Family::COMPUTE_WALKER_2::THREAD_ARBITRATION_POLICY;
+        walkerCmd.setThreadArbitrationPolicy(static_cast<THREAD_ARBITRATION_POLICY>(debugManager.flags.OverrideComputeWalker2ThreadArbitrationPolicy.get()));
     }
 }
 
