@@ -235,13 +235,15 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
 using CommandListAppendWaitOnMem = Test<CommandListWaitOnMemFixture>;
 
 template <typename FamilyType>
-bool validateProgramming(const GenCmdList &cmdList, uint64_t compareData, uint64_t compareAddr, typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION compareMode, bool useQwordData) {
+bool validateProgramming(const GenCmdList &cmdList, uint64_t compareData, uint64_t compareAddr,
+                         typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION compareMode, bool useQwordData,
+                         bool expectLriForQwordData = false) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto itor = cmdList.begin();
 
-    if (useQwordData) {
+    if (useQwordData && expectLriForQwordData) {
         auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
         if (!lri) {
             return false;
@@ -271,7 +273,11 @@ bool validateProgramming(const GenCmdList &cmdList, uint64_t compareData, uint64
     EXPECT_EQ(semaphoreCmd->getWaitMode(), MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
 
     if (useQwordData) {
-        EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+        if (expectLriForQwordData) {
+            EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+        } else {
+            EXPECT_EQ(compareData, semaphoreCmd->getSemaphoreDataDword());
+        }
     } else {
         EXPECT_EQ(getLowPart(compareData), semaphoreCmd->getSemaphoreDataDword());
         EXPECT_EQ(0u, getHighPart(compareData));
@@ -328,8 +334,9 @@ HWTEST_F(CommandListAppendWaitOnMem, givenInvalidCmdListWhenWaitOnMemory64Called
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
-HWTEST_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenProgramLri) {
+HWTEST_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenProgramExpectedEncoding) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     if (!FamilyType::isQwordInOrderCounter) {
         GTEST_SKIP();
@@ -340,6 +347,8 @@ HWTEST_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenPr
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
 
+    const bool useSemaphore64bCmd = device->getDeviceInfo().semaphore64bCmdSupport;
+
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
 
@@ -348,11 +357,18 @@ HWTEST_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenPr
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, true));
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr),
+                                                MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                                true, !useSemaphore64bCmd));
+
+    if (useSemaphore64bCmd) {
+        EXPECT_EQ(cmdList.end(), find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end()));
+    }
 }
 
 HWTEST_F(CommandListAppendWaitOnMem, given64bValueAndOutEventWhenWaitOnMemory64CalledThenHandleEvent) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     if (!FamilyType::isQwordInOrderCounter) {
@@ -363,6 +379,8 @@ HWTEST_F(CommandListAppendWaitOnMem, given64bValueAndOutEventWhenWaitOnMemory64C
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
+
+    const bool useSemaphore64bCmd = device->getDeviceInfo().semaphore64bCmdSupport;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<EventPool> signalEventPool;
@@ -390,7 +408,13 @@ HWTEST_F(CommandListAppendWaitOnMem, given64bValueAndOutEventWhenWaitOnMemory64C
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, true));
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr),
+                                                MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                                true, !useSemaphore64bCmd));
+
+    if (useSemaphore64bCmd) {
+        EXPECT_EQ(cmdList.end(), find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end()));
+    }
 
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);

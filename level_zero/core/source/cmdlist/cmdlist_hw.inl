@@ -4477,11 +4477,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
 
     if (useQwordData) {
         if (isQwordInOrderCounter()) {
-            indirectMode = true;
+            if (!useSemaphore64bCmd) {
+                indirectMode = true;
 
-            NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), RegisterOffsets::csGprR0, getLowPart(data), true, isCopyOnly(false));
-            NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), RegisterOffsets::csGprR0 + 4, getHighPart(data), true, isCopyOnly(false));
-
+                NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), RegisterOffsets::csGprR0, getLowPart(data), true, isCopyOnly(false));
+                NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), RegisterOffsets::csGprR0 + 4, getHighPart(data), true, isCopyOnly(false));
+            }
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
