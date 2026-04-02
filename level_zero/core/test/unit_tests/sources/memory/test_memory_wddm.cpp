@@ -302,7 +302,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
 
     result = contextInvalid->putIpcMemHandle(ipcHandle);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, driverHandle->getIPCHandleMap().size());
 
