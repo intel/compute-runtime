@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/event_builder.h"
@@ -24,11 +25,9 @@
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 
 namespace NEO {
-using IsDG2AndLater = IsAtLeastXeCore;
 
-HWTEST2_F(DispatchFlagsTests, whenSubmittingKernelWithAdditionalKernelExecInfoThenCorrectDispatchFlagIsSet, IsDG2AndLater) {
+HWTEST2_F(DispatchFlagsTests, whenSubmittingKernelWithAdditionalKernelExecInfoThenCorrectDispatchFlagIsSet, IsHeapfulRequiredAndAtLeastXeCore) {
 
-    UnitTestSetter::disableHeapless(this->restore);
     using CsrType = MockCsrHw2<FamilyType>;
     setUpImpl<CsrType>();
 

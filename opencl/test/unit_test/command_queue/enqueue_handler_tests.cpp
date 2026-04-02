@@ -151,8 +151,8 @@ struct EnqueueHandlerWithAubSubCaptureTestsWithMockAubCsr : public EnqueueHandle
     DebugManagerStateRestore stateRestore;
 };
 
-HWTEST_TEMPLATED_F(EnqueueHandlerWithAubSubCaptureTestsWithMockAubCsr, givenEnqueueHandlerWithAubSubCaptureWhenSubCaptureIsNotActiveThenEnqueueIsMadeBlocking) {
-    UnitTestSetter::disableHeapless(stateRestore);
+HWTEST2_TEMPLATED_F(EnqueueHandlerWithAubSubCaptureTestsWithMockAubCsr, givenEnqueueHandlerWithAubSubCaptureWhenSubCaptureIsNotActiveThenEnqueueIsMadeBlocking, IsHeapfulRequired) {
+
     auto aubCsr = static_cast<MockAubCsr<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     AubSubCaptureCommon subCaptureCommon;

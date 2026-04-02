@@ -18,6 +18,8 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -67,12 +69,13 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThe
     EXPECT_EQ(0u, device->subdevices.at(1)->getNumGenericSubDevices());
 }
 
-TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChangedThenChangeIsPropagatedToRootDevice) {
+using SubDevicesHwTest = ::testing::Test;
+
+HWTEST2_F(SubDevicesHwTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChangedThenChangeIsPropagatedToRootDevice, IsHeapfulRequired) {
     DebugManagerStateRestore restorer;
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     debugManager.flags.CreateMultipleSubDevices.set(2);
-    UnitTestSetter::disableHeapless(restorer);
 
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     initPlatform();
@@ -108,10 +111,9 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChange
     EXPECT_EQ(baseDefaultDeviceInternalRefCount, defaultDevice->getRefInternalCount());
 }
 
-TEST(SubDevicesTest, givenDeviceWithFlatOrCombinedHierarchyWhenSubDeviceApiRefCountsAreChangedThenChangeIsNotPropagatedToRootDevice) {
+HWTEST2_F(SubDevicesHwTest, givenDeviceWithFlatOrCombinedHierarchyWhenSubDeviceApiRefCountsAreChangedThenChangeIsNotPropagatedToRootDevice, IsHeapfulRequired) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleSubDevices.set(2);
-    UnitTestSetter::disableHeapless(restorer);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
     DeviceHierarchyMode deviceHierarchyModes[] = {DeviceHierarchyMode::flat, DeviceHierarchyMode::combined};

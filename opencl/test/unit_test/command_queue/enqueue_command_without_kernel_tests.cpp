@@ -9,6 +9,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
@@ -24,7 +25,6 @@
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
-
 namespace NEO {
 class GraphicsAllocation;
 class TagNodeBase;
@@ -516,9 +516,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenA
     EXPECT_TRUE(mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
 }
 
-HWTEST_F(DispatchFlagsTests, givenMockKernelWhenSettingAdditionalKernelExecInfoThenCorrectValueIsSet) {
-
-    UnitTestSetter::disableHeapless(this->restore);
+HWTEST2_F(DispatchFlagsTests, givenMockKernelWhenSettingAdditionalKernelExecInfoThenCorrectValueIsSet, IsHeapfulRequired) {
 
     using CsrType = MockCsrHw2<FamilyType>;
     setUpImpl<CsrType>();
