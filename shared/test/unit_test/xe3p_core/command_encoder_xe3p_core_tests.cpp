@@ -788,7 +788,6 @@ XE3P_CORETEST_F(Walker2DispatchTestsXe3pCore, givenOverDispatchControlDebugFlagW
 }
 
 XE3P_CORETEST_F(Xe3pCoreCommandEncoderTests, givenHeaplessModeEnabledWhenPatchScratchAddressInImplicitArgsIsCalledThenScratchIsPatchedCorrectly) {
-
     {
         ImplicitArgs implicitArgs{};
         implicitArgs.v1.header.structVersion = 1;
@@ -796,8 +795,7 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTests, givenHeaplessModeEnabledWhenPatchSc
         uint64_t scratchAddress = 0x80;
 
         bool scratchPtrPatchingRequired = false;
-        constexpr bool heaplessModeEnabled = false;
-        EncodeDispatchKernel<FamilyType>::template patchScratchAddressInImplicitArgs<heaplessModeEnabled>(implicitArgs, scratchAddress, scratchPtrPatchingRequired);
+        EncodeDispatchKernel<FamilyType>::patchScratchAddressInImplicitArgs(implicitArgs, scratchAddress, scratchPtrPatchingRequired);
 
         EXPECT_NE(scratchAddress, implicitArgs.v1.scratchPtr);
     }
@@ -808,32 +806,7 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTests, givenHeaplessModeEnabledWhenPatchSc
         uint64_t scratchAddress = 0x80;
 
         bool scratchPtrPatchingRequired = true;
-        constexpr bool heaplessModeEnabled = false;
-        EncodeDispatchKernel<FamilyType>::template patchScratchAddressInImplicitArgs<heaplessModeEnabled>(implicitArgs, scratchAddress, scratchPtrPatchingRequired);
-
-        EXPECT_NE(scratchAddress, implicitArgs.v1.scratchPtr);
-    }
-    {
-        ImplicitArgs implicitArgs{};
-        implicitArgs.v1.header.structVersion = 1;
-        implicitArgs.v1.scratchPtr = 0u;
-        uint64_t scratchAddress = 0x80;
-
-        bool scratchPtrPatchingRequired = false;
-        constexpr bool heaplessModeEnabled = true;
-        EncodeDispatchKernel<FamilyType>::template patchScratchAddressInImplicitArgs<heaplessModeEnabled>(implicitArgs, scratchAddress, scratchPtrPatchingRequired);
-
-        EXPECT_NE(scratchAddress, implicitArgs.v1.scratchPtr);
-    }
-    {
-        ImplicitArgs implicitArgs{};
-        implicitArgs.v1.header.structVersion = 1;
-        implicitArgs.v1.scratchPtr = 0u;
-        uint64_t scratchAddress = 0x80;
-
-        bool scratchPtrPatchingRequired = true;
-        constexpr bool heaplessModeEnabled = true;
-        EncodeDispatchKernel<FamilyType>::template patchScratchAddressInImplicitArgs<heaplessModeEnabled>(implicitArgs, scratchAddress, scratchPtrPatchingRequired);
+        EncodeDispatchKernel<FamilyType>::patchScratchAddressInImplicitArgs(implicitArgs, scratchAddress, scratchPtrPatchingRequired);
 
         EXPECT_EQ(scratchAddress, implicitArgs.v1.scratchPtr);
     }

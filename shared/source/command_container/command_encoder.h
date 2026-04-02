@@ -296,11 +296,9 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     }
 
     static size_t getDefaultIOHAlignment(bool isLocalMemory);
-    template <bool isHeapless>
+
     static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr);
-    template <bool isHeapless>
     static uint64_t getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args);
-    template <bool isHeapless>
     static void patchScratchAddressInImplicitArgs(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 
     static size_t getInlineDataOffset(EncodeDispatchKernelArgs &args);

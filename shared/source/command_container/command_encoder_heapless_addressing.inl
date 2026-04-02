@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,36 +39,33 @@ void EncodeDispatchKernel<Family>::programInlineDataHeapless(uint8_t *inlineData
 }
 
 template <typename Family>
-template <bool isHeapless>
 uint64_t EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args) {
 
     uint64_t scratchAddress = 0u;
-    if constexpr (isHeapless) {
-        if (args.immediateScratchAddressPatching) {
-            const auto &kernelDescriptor = args.dispatchInterface->getKernelDescriptor();
-            auto requiredScratchSlot0Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
-            auto requiredScratchSlot1Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
-            auto csr = container.getImmediateCmdListCsr();
-            NEO::IndirectHeap *ssh = nullptr;
-            if (csr->getGlobalStatelessHeapAllocation() != nullptr) {
-                ssh = csr->getGlobalStatelessHeap();
-            } else {
-                ssh = args.surfaceStateHeap ? args.surfaceStateHeap : container.getIndirectHeap(HeapType::surfaceState);
-            }
 
-            EncodeDispatchKernel<Family>::template setScratchAddress<isHeapless>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, *csr);
+    if (args.immediateScratchAddressPatching) {
+        const auto &kernelDescriptor = args.dispatchInterface->getKernelDescriptor();
+        auto requiredScratchSlot0Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
+        auto requiredScratchSlot1Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
+        auto csr = container.getImmediateCmdListCsr();
+        NEO::IndirectHeap *ssh = nullptr;
+        if (csr->getGlobalStatelessHeapAllocation() != nullptr) {
+            ssh = csr->getGlobalStatelessHeap();
+        } else {
+            ssh = args.surfaceStateHeap ? args.surfaceStateHeap : container.getIndirectHeap(HeapType::surfaceState);
         }
+
+        EncodeDispatchKernel<Family>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, *csr);
     }
+
     return scratchAddress;
 }
 
 template <typename Family>
-template <bool isHeapless>
 void EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired) {
-    if constexpr (isHeapless) {
-        if (scratchPtrPatchingRequired) {
-            implicitArgs.setScratchBufferPtr(scratchAddress);
-        }
+
+    if (scratchPtrPatchingRequired) {
+        implicitArgs.setScratchBufferPtr(scratchAddress);
     }
 }
 

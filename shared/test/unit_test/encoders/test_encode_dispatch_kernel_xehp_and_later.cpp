@@ -1613,22 +1613,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScalingSecondaryBufferTe
     testBodyFindPrimaryBatchBuffer<FamilyType>();
 }
 
-using EncodeKernelScratchProgrammingTest = Test<ScratchProgrammingFixture>;
-
-HWTEST2_F(EncodeKernelScratchProgrammingTest, givenHeaplessModeDisabledWhenSetScratchAddressIsCalledThenDoNothing, IsAtLeastXeCore) {
-
-    static constexpr bool heaplessModeEnabled = false;
-    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    uint64_t scratchAddress = 0;
-    uint32_t requiredScratchSlot0Size = 64;
-    uint32_t requiredScratchSlot1Size = 0;
-
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
-
-    uint64_t expectedScratchAddress = 0;
-    EXPECT_EQ(expectedScratchAddress, scratchAddress);
-}
-
 HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetThenReturnWalkerInlineOffset, IsHeapfulRequiredAndAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 

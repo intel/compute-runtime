@@ -136,7 +136,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     uint64_t scratchAddress = 0u;
 
-    EncodeDispatchKernel<GfxFamily>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, queueCsr);
+    EncodeDispatchKernel<GfxFamily>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, queueCsr);
 
     auto interfaceDescriptor = &walkerCmd.getInterfaceDescriptor();
 

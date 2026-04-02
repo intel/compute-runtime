@@ -359,6 +359,5 @@ void EncodePostSync<Family>::setCommandLevelInterrupt(CommandType &cmd, bool int
 #include "shared/source/command_container/command_encoder_enablers.inl"
 
 namespace NEO {
-template void NEO::EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs<true>(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 template void NEO::EncodePostSync<Family>::setCommandLevelInterrupt<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, bool interrupt);
 } // namespace NEO

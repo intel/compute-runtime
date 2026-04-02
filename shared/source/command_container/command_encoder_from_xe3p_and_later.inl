@@ -48,33 +48,30 @@ uint32_t EncodeSurfaceState<Family>::getPitchForScratchInBytes(R_SURFACE_STATE *
 }
 
 template <typename Family>
-template <bool isHeapless>
 void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
 
-    if constexpr (isHeapless) {
-        if (requiredScratchSlot0Size > 0u || requiredScratchSlot1Size > 0u) {
-            std::unique_lock<NEO::CommandStreamReceiver::MutexType> primaryCsrLock;
-            auto primaryCsr = submissionCsr.getPrimaryCsr();
+    if (requiredScratchSlot0Size > 0u || requiredScratchSlot1Size > 0u) {
+        std::unique_lock<NEO::CommandStreamReceiver::MutexType> primaryCsrLock;
+        auto primaryCsr = submissionCsr.getPrimaryCsr();
 
-            if (primaryCsr && primaryCsr != &submissionCsr) {
-                primaryCsrLock = primaryCsr->obtainUniqueOwnership();
-            }
-
-            auto scratchController = submissionCsr.getPrimaryScratchSpaceController();
-            UNRECOVERABLE_IF(scratchController == nullptr);
-            bool sbaStateDirty = false;
-            bool frontEndStateDirty = false;
-            scratchController->setRequiredScratchSpace(ssh->getCpuBase(), 0, requiredScratchSlot0Size, requiredScratchSlot1Size,
-                                                       submissionCsr.getOsContext(), sbaStateDirty, frontEndStateDirty);
-            if (scratchController->getScratchSpaceSlot0Allocation()) {
-                submissionCsr.makeResident(*scratchController->getScratchSpaceSlot0Allocation());
-            }
-            if (scratchController->getScratchSpaceSlot1Allocation()) {
-                submissionCsr.makeResident(*scratchController->getScratchSpaceSlot1Allocation());
-            }
-
-            scratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
+        if (primaryCsr && primaryCsr != &submissionCsr) {
+            primaryCsrLock = primaryCsr->obtainUniqueOwnership();
         }
+
+        auto scratchController = submissionCsr.getPrimaryScratchSpaceController();
+        UNRECOVERABLE_IF(scratchController == nullptr);
+        bool sbaStateDirty = false;
+        bool frontEndStateDirty = false;
+        scratchController->setRequiredScratchSpace(ssh->getCpuBase(), 0, requiredScratchSlot0Size, requiredScratchSlot1Size,
+                                                   submissionCsr.getOsContext(), sbaStateDirty, frontEndStateDirty);
+        if (scratchController->getScratchSpaceSlot0Allocation()) {
+            submissionCsr.makeResident(*scratchController->getScratchSpaceSlot0Allocation());
+        }
+        if (scratchController->getScratchSpaceSlot1Allocation()) {
+            submissionCsr.makeResident(*scratchController->getScratchSpaceSlot1Allocation());
+        }
+
+        scratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
     }
 }
 

@@ -114,7 +114,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         offsetCrossThreadData += sizeForLocalIdsProgramming;
 
         auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
-        EncodeDispatchKernel<GfxFamily>::template patchScratchAddressInImplicitArgs<heaplessModeEnabled>(*pImplicitArgs, scratchAddress, true);
+        EncodeDispatchKernel<GfxFamily>::patchScratchAddressInImplicitArgs(*pImplicitArgs, scratchAddress, true);
 
         ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(!generationOfLocalIdsByRuntime, requiredWalkOrder), rootDeviceEnvironment, nullptr);
     }

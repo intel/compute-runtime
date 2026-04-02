@@ -703,7 +703,6 @@ void EncodeSurfaceState<Family>::convertSurfaceStateToPacked(R_SURFACE_STATE *su
 }
 
 template <typename Family>
-template <bool isHeapless>
 void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
 }
 

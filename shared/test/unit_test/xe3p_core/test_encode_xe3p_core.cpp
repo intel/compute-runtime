@@ -1109,29 +1109,14 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenCommandContainerWhenNumGrfRequire
 
 using EncodeKernelScratchProgrammingXe3pCoreTest = Test<ScratchProgrammingFixture>;
 
-XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenHeaplessModeDisabledWhenSetScratchAddressIsCalledThenDoNothing) {
-
-    static constexpr bool heaplessModeEnabled = false;
-    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    uint64_t scratchAddress = 0;
-    uint32_t requiredScratchSlot0Size = 64;
-    uint32_t requiredScratchSlot1Size = 0;
-
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
-
-    uint64_t expectedScratchAddress = 0;
-    EXPECT_EQ(expectedScratchAddress, scratchAddress);
-}
-
 XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenScratchSizeZeroWhenSetScratchAddressIsCalledThenDoNothing) {
 
-    static constexpr bool heaplessModeEnabled = true;
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     uint64_t scratchAddress = 0;
     uint32_t requiredScratchSlot0Size = 0;
     uint32_t requiredScratchSlot1Size = 0;
 
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
 
     uint64_t expectedScratchAddress = 0;
     EXPECT_EQ(expectedScratchAddress, scratchAddress);
@@ -1139,14 +1124,13 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenScratchSizeZero
 
 XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenScratchSlot0SizeWhenSetScratchAddressIsCalledThenScratchAddressIsCorrect) {
 
-    static constexpr bool heaplessModeEnabled = true;
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     uint64_t scratchAddress = 0u;
     uint32_t requiredScratchSlot0Size = 64u;
     uint32_t requiredScratchSlot1Size = 0u;
     auto scratchController = ultCsr.getScratchSpaceController();
 
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
 
     uint64_t expectedScratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
 
@@ -1155,14 +1139,13 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenScratchSlot0Siz
 
 XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenScratchSlot1SizeWhenSetScratchAddressIsCalledThenScratchAddressIsCorrect) {
 
-    static constexpr bool heaplessModeEnabled = true;
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     uint64_t scratchAddress = 0u;
     uint32_t requiredScratchSlot0Size = 0u;
     uint32_t requiredScratchSlot1Size = 64u;
     auto scratchController = ultCsr.getScratchSpaceController();
 
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
 
     uint64_t expectedScratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
 
@@ -1170,33 +1153,31 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenScratchSlot1Siz
 }
 
 XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenTheSameScratchSizeWhenSetScratchAddressIsCalledTwiceThenScratchAllocationIsReused) {
-    static constexpr bool heaplessModeEnabled = true;
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     uint64_t scratchAddress = 0u;
     uint32_t requiredScratchSlot0Size = 64u;
     uint32_t requiredScratchSlot1Size = 0u;
     auto scratchController = ultCsr.getScratchSpaceController();
 
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
 
     uint64_t expectedScratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
     EXPECT_EQ(expectedScratchAddress, scratchAddress);
 
     uint32_t requiredScratchSlot0Size2nd = requiredScratchSlot0Size;
     uint64_t scratchAddress2nd = 0u;
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress2nd, requiredScratchSlot0Size2nd, requiredScratchSlot1Size, ssh, ultCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress2nd, requiredScratchSlot0Size2nd, requiredScratchSlot1Size, ssh, ultCsr);
     EXPECT_EQ(scratchAddress, scratchAddress2nd);
 }
 
 XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenBiggerScratchSizeWhenSetScratchAddressIsCalledTwiceThenScratchAllocationIsNotReused) {
-    static constexpr bool heaplessModeEnabled = true;
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     uint64_t scratchAddress = 0u;
     uint32_t requiredScratchSlot0Size = 64u;
     uint32_t requiredScratchSlot1Size = 0u;
     auto scratchController = ultCsr.getScratchSpaceController();
 
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
 
     uint64_t expectedScratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
     EXPECT_EQ(expectedScratchAddress, scratchAddress);
@@ -1204,7 +1185,7 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenBiggerScratchSi
     uint32_t requiredScratchSlot0Size2nd = 128u;
     ASSERT_GT(requiredScratchSlot0Size2nd, requiredScratchSlot0Size);
     uint64_t scratchAddress2nd = 0u;
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress2nd, requiredScratchSlot0Size2nd, requiredScratchSlot1Size, ssh, ultCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress2nd, requiredScratchSlot0Size2nd, requiredScratchSlot1Size, ssh, ultCsr);
 
     EXPECT_NE(scratchAddress, scratchAddress2nd);
 
@@ -1213,14 +1194,13 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenBiggerScratchSi
 }
 
 XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenSmallerScratchSizeWhenSetScratchAddressIsCalledTwiceThenScratchAllocationIsReused) {
-    static constexpr bool heaplessModeEnabled = true;
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     uint64_t scratchAddress = 0u;
     uint32_t requiredScratchSlot0Size = 64u;
     uint32_t requiredScratchSlot1Size = 0u;
     auto scratchController = ultCsr.getScratchSpaceController();
 
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, ultCsr);
 
     uint64_t expectedScratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
     EXPECT_EQ(expectedScratchAddress, scratchAddress);
@@ -1229,12 +1209,11 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenSmallerScratchS
     ASSERT_LT(requiredScratchSlot0Size2nd, requiredScratchSlot0Size);
 
     uint64_t scratchAddress2nd = 0u;
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress2nd, requiredScratchSlot0Size2nd, requiredScratchSlot1Size, ssh, ultCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress2nd, requiredScratchSlot0Size2nd, requiredScratchSlot1Size, ssh, ultCsr);
     EXPECT_EQ(scratchAddress, scratchAddress2nd);
 }
 
 XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenPrimaryCsrWhenSetScratchAddressThenLockCalledOnPrimaryCsr) {
-    static constexpr bool heaplessModeEnabled = true;
     auto &primaryCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     MockCommandStreamReceiver submissionCsr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -1250,7 +1229,7 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenPrimaryCsrWhenS
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     submissionCsr.osContext = &osContext;
 
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, submissionCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, submissionCsr);
 
     EXPECT_EQ(nSubmissionCsrMakeResidentCalled + 1, submissionCsr.makeResidentCalledTimes);
     EXPECT_EQ(nPrimaryCsrMakeResidentCalled, primaryCsr.makeResidentCalledTimes);
@@ -1264,7 +1243,6 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenPrimaryCsrWhenS
 }
 
 XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenNoPrimaryCsrWhenSetScratchAddressThenLockCsrNotCalled) {
-    static constexpr bool heaplessModeEnabled = true;
     auto &submissionCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     uint64_t scratchAddress = 0u;
@@ -1275,7 +1253,7 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenNoPrimaryCsrWhe
     auto lockCounterPrimaryCsr = submissionCsr.recursiveLockCounter.load();
     auto nSubmissionCsrMakeResidentCalled = submissionCsr.makeResidentCalledTimes;
 
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, submissionCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, submissionCsr);
     EXPECT_EQ(nSubmissionCsrMakeResidentCalled + 1, submissionCsr.makeResidentCalledTimes);
     EXPECT_EQ(lockCounterPrimaryCsr, submissionCsr.recursiveLockCounter);
 
@@ -1287,7 +1265,6 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenNoPrimaryCsrWhe
 }
 
 XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenPrimaryCsrAsSubmissionCsrWhenSetScratchAddressThenLockCsrNotCalled) {
-    static constexpr bool heaplessModeEnabled = true;
     auto &submissionCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     uint64_t scratchAddress = 0u;
@@ -1299,7 +1276,7 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenPrimaryCsrAsSub
     auto lockCounterPrimaryCsr = submissionCsr.recursiveLockCounter.load();
     auto nSubmissionCsrMakeResidentCalled = submissionCsr.makeResidentCalledTimes;
 
-    EncodeDispatchKernel<FamilyType>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, submissionCsr);
+    EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, submissionCsr);
     EXPECT_EQ(nSubmissionCsrMakeResidentCalled + 1, submissionCsr.makeResidentCalledTimes);
     EXPECT_EQ(lockCounterPrimaryCsr, submissionCsr.recursiveLockCounter);
 
