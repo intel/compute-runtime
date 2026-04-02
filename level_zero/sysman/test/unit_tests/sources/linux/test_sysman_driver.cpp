@@ -109,6 +109,47 @@ TEST_F(SysmanDriverTestNoDeviceCreate, GivenRealpathSysCallFailWhenInitializingS
     this->executionEnvironment->decRefInternal();
 }
 
+TEST(SysmanDriverHandleCreate, GivenOneDeviceFailureWhenInitializingSysmanDriverWithArrayOfDevicesThenDriverCreatedWithRemainingDevices) {
+    const uint32_t numRootDevices = 3u;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
+        return buf;
+    });
+
+    static int readlinkPartialFailCallIndex = 0;
+    readlinkPartialFailCallIndex = 0;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        // Fail only the first device; let the rest succeed
+        if (readlinkPartialFailCallIndex++ == 0) {
+            return -1;
+        }
+        std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
+        std::memcpy(buf, str.c_str(), str.size());
+        return static_cast<int>(str.size());
+    });
+
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::make_unique<SysmanMockDrm>(*executionEnvironment->rootDeviceEnvironments[i]));
+    }
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    executionEnvironment->incRefInternal();
+    auto driverHandle = L0::Sysman::SysmanDriverHandle::create(*executionEnvironment, &returnValue);
+    EXPECT_NE(nullptr, driverHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto *driverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle);
+    EXPECT_EQ(numRootDevices - 1u, driverHandleImp->sysmanDevices.size());
+    delete driverHandle;
+    L0::Sysman::globalSysmanDriver = nullptr;
+    executionEnvironment->decRefInternal();
+}
+
 struct SysmanDriverHandleTest : public ::testing::Test {
     void SetUp() override {
         VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {

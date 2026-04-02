@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,15 +48,21 @@ void SysmanDriverImp::initialize(ze_result_t *result) {
             if (!initStatus) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                              "OsInterface initialization failed for device : %d\n", rootDeviceIndex);
-                *result = ZE_RESULT_ERROR_UNINITIALIZED;
-                executionEnvironment->decRefInternal();
-                return;
+                continue;
             }
             rootDeviceIndex++;
         }
 
-        globalSysmanDriverHandle = SysmanDriverHandle::create(*executionEnvironment, result);
-        driverCount = 1;
+        executionEnvironment->rootDeviceEnvironments.resize(rootDeviceIndex);
+
+        if (rootDeviceIndex > 0) {
+            globalSysmanDriverHandle = SysmanDriverHandle::create(*executionEnvironment, result);
+            driverCount = 1;
+        } else {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "%s\n", "No devices successfully initialized");
+            *result = ZE_RESULT_ERROR_UNINITIALIZED;
+        }
     } else {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "%s\n", "No devices found");
