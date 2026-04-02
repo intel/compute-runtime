@@ -964,6 +964,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevice
     debugManager.flags.ZE_AFFINITY_MASK.set("0,3,4,1.1,9,15,25");
 
     debugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ContextGroupSize.set(0);
+    debugManager.flags.ForcePreemptionMode.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
@@ -1007,6 +1009,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevice
     std::vector<uint32_t> expectedNumSubDevice = {4, 2, 0, 4};
 
     debugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ContextGroupSize.set(0);
+    debugManager.flags.ForcePreemptionMode.set(1);
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -1067,6 +1071,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevice
     std::vector<uint32_t> expectedNumSubDevice = {4, 2, 0, 4};
 
     debugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ContextGroupSize.set(0);
+    debugManager.flags.ForcePreemptionMode.set(1);
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -1122,6 +1128,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetThenProperSubDev
     std::vector<uint32_t> expectedNumSubDevice = {4, 2, 0, 4};
 
     debugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ContextGroupSize.set(0);
+    debugManager.flags.ForcePreemptionMode.set(1);
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -1182,6 +1190,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetThenProperSubDev
     std::vector<uint32_t> expectedNumSubDevice = {4, 2, 0, 4};
 
     debugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ContextGroupSize.set(0);
+    debugManager.flags.ForcePreemptionMode.set(1);
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -1234,6 +1244,8 @@ HWCMDTEST_F(IGFX_XE_HPC_CORE, DeviceTests, givenZeAffinityMaskSetThenProperSubDe
     debugManager.flags.ZE_AFFINITY_MASK.set("0.2,1.2,2.3,3.3,15,25");
 
     debugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ContextGroupSize.set(0);
+    debugManager.flags.ForcePreemptionMode.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
@@ -1274,6 +1286,8 @@ HWCMDTEST_F(IGFX_XE_HPC_CORE, DeviceTests, givenZeAffinityMaskSetWithoutTilesThe
     debugManager.flags.ZE_AFFINITY_MASK.set("0,1,2,3,15,25");
 
     debugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ContextGroupSize.set(0);
+    debugManager.flags.ForcePreemptionMode.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
