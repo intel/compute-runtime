@@ -809,6 +809,14 @@ uint32_t MetricDeviceContext::addMetricScope(std::string_view scopeName, std::st
     return properties.iD;
 }
 
+void MetricDeviceContext::removeMetricScope(std::string_view scopeName) {
+    auto it = std::remove_if(metricScopes.begin(), metricScopes.end(),
+                             [scopeName](const std::unique_ptr<MetricScopeImp> &scope) {
+                                 return scope->isName(scopeName);
+                             });
+    metricScopes.erase(it, metricScopes.end());
+}
+
 ze_result_t MetricScopeImp::getProperties(zet_intel_metric_scope_properties_exp_t *pProperties) {
     *pProperties = properties;
     return ZE_RESULT_SUCCESS;

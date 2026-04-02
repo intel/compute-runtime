@@ -209,6 +209,7 @@ class MetricDeviceContext {
     }
 
     uint32_t addMetricScope(std::string_view scopeName, std::string_view scopeDescription, uint32_t scopeSubDeviceIndex);
+    void removeMetricScope(std::string_view scopeName);
 
     void setComputeMetricScopeInitialized() {
         computeMetricScopesInitialized = true;
@@ -490,24 +491,6 @@ struct HomogeneousMultiDeviceMetricCreated : public MultiDeviceMetricImp {
     static MetricImp *create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics, std::vector<MetricScopeImp *> &metricScopes);
 };
 
-struct MetricCalcOp : _zet_intel_metric_calculation_operation_exp_handle_t {
-    virtual ~MetricCalcOp() = default;
-    MetricCalcOp() {}
-    static MetricCalcOp *fromHandle(zet_intel_metric_calculation_operation_exp_handle_t handle) {
-        return static_cast<MetricCalcOp *>(handle);
-    }
-    inline zet_intel_metric_calculation_operation_exp_handle_t toHandle() { return this; }
-
-    virtual ze_result_t destroy() = 0;
-    virtual ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics,
-                                        zet_intel_metric_scope_exp_handle_t *phMetricScopes) = 0;
-    virtual ze_result_t getExcludedMetrics(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
-    virtual ze_result_t metricCalculateValues(const size_t rawDataSize, const uint8_t *pRawData,
-                                              bool lastCall, size_t *usedSize,
-                                              uint32_t *pTotalMetricReportCount,
-                                              zet_intel_metric_result_exp_t *pMetricResults) = 0;
-};
-
 static constexpr std::string_view computeScopeNamePrefix = "COMPUTE_TILE_";
 static constexpr std::string_view computeScopeDescriptionPrefix = "Metrics results for tile ";
 static constexpr std::string_view aggregatedScopeName = "DEVICE_AGGREGATED";
@@ -548,6 +531,24 @@ struct MetricScopeImp : public MetricScope {
     zet_intel_metric_scope_properties_exp_t properties;
     bool aggregated = false;
     uint32_t computeSubDevIndex = 0; // valid for compute metricScopes when aggregated is false
+};
+
+struct MetricCalcOp : _zet_intel_metric_calculation_operation_exp_handle_t {
+    virtual ~MetricCalcOp() = default;
+    MetricCalcOp() {}
+    static MetricCalcOp *fromHandle(zet_intel_metric_calculation_operation_exp_handle_t handle) {
+        return static_cast<MetricCalcOp *>(handle);
+    }
+    inline zet_intel_metric_calculation_operation_exp_handle_t toHandle() { return this; }
+
+    virtual ze_result_t destroy() = 0;
+    virtual ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics,
+                                        zet_intel_metric_scope_exp_handle_t *phMetricScopes) = 0;
+    virtual ze_result_t getExcludedMetrics(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
+    virtual ze_result_t metricCalculateValues(const size_t rawDataSize, const uint8_t *pRawData,
+                                              bool lastCall, size_t *usedSize,
+                                              uint32_t *pTotalMetricReportCount,
+                                              zet_intel_metric_result_exp_t *pMetricResults) = 0;
 };
 struct MetricCalcOpImp : public MetricCalcOp {
     ~MetricCalcOpImp() override = default;

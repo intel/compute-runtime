@@ -735,6 +735,26 @@ TEST_F(MetricScopesMultiDeviceFixture, WhenCalcOperationCreateIsCalledWithDuplic
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
+TEST_F(MetricScopesMultiDeviceFixture, WhenAttemptingToDeleteANoneExistingMetricScopeThenItIsIgnored) {
+
+    uint32_t metricScopesCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockRootDeviceContext->metricScopesGet(context->toHandle(), &metricScopesCount, nullptr));
+    EXPECT_GT(metricScopesCount, 1U);
+    std::vector<zet_intel_metric_scope_exp_handle_t> hMetricScopes(metricScopesCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockRootDeviceContext->metricScopesGet(context->toHandle(), &metricScopesCount, hMetricScopes.data()));
+    zet_intel_metric_scope_properties_exp_t properties{};
+    properties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    properties.pNext = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(hMetricScopes[0], &properties));
+
+    mockRootDeviceContext->removeMetricScope(properties.name);
+    mockRootDeviceContext->removeMetricScope("DUMMY_SCOPE");
+
+    uint32_t metricScopesCount2 = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockRootDeviceContext->metricScopesGet(context->toHandle(), &metricScopesCount2, nullptr));
+    EXPECT_EQ(metricScopesCount2, metricScopesCount - 1);
+}
+
 using MetricGroupTest = Test<DeviceFixture>;
 
 TEST_F(MetricGroupTest, GivenNoMetricSourceIsAvailableThenNoMetricGroupsAreReturnedAndErrorIsReturned) {
