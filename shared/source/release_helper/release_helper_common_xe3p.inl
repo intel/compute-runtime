@@ -9,7 +9,7 @@
 
 namespace NEO {
 template <>
-void ReleaseHelperHw<release>::adjustRTDispatchGlobals(void *rtDispatchGlobals, uint32_t rtStacksPerDss, bool heaplessEnabled, uint32_t maxBvhLevels) const {
+void ReleaseHelperHw<release>::adjustRTDispatchGlobals(void *rtDispatchGlobals, uint32_t rtStacksPerDss, uint32_t maxBvhLevels) const {
 
     struct alignas(32) RTDispatchGlobals2 {
         // Cached by HW
@@ -34,10 +34,6 @@ void ReleaseHelperHw<release>::adjustRTDispatchGlobals(void *rtDispatchGlobals, 
         uint32_t callableShaderStride;      // stride of callable shader records (8-bytes alignment)
         uint32_t dispatchRaysDimensions[3]; // dispatch dimensions of the thread grid
     };
-
-    if (!heaplessEnabled) {
-        return;
-    }
 
     constexpr uint32_t maxNumDSSRTStacks = 2048u;
     constexpr uint32_t maxSyncNumDSSRTStacks = 4096u;

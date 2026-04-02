@@ -129,7 +129,7 @@ uint32_t ReleaseHelperHw<releaseType>::getStackSizePerRay() const {
 }
 
 template <ReleaseType releaseType>
-void ReleaseHelperHw<releaseType>::adjustRTDispatchGlobals(void *rtDispatchGlobals, uint32_t rtStacksPerDss, bool heaplessEnabled, uint32_t maxBvhLevels) const {
+void ReleaseHelperHw<releaseType>::adjustRTDispatchGlobals(void *rtDispatchGlobals, uint32_t rtStacksPerDss, uint32_t maxBvhLevels) const {
 }
 
 template <ReleaseType releaseType>
