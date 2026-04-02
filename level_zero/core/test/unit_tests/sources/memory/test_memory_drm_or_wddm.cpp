@@ -379,7 +379,7 @@ TEST_F(MemoryIPCTests,
 
     ze_ipc_mem_handle_t ipcHandle;
     result = context->getIpcHandleFromFd(0u, &ipcHandle);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -528,7 +528,7 @@ TEST_F(MemoryIPCOpaqueHandleTests,
 
     ze_ipc_mem_handle_t ipcHandle;
     ze_result_t result = context->getIpcHandleFromFd(nonExistentHandle, &ipcHandle);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 TEST_F(MemoryIPCOpaqueHandleTests,
@@ -610,7 +610,7 @@ TEST_F(MemoryIPCTests,
     ipcData.handle = 256;
     uint64_t readIpcHandle = 256;
     result = context->getFdFromIpcHandle(ipcHandle, &readIpcHandle);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

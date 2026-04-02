@@ -3611,7 +3611,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueNtHandleThenErrorIsRe
     res = contextWhitebox.getFdFromIpcHandle(ipcHandle, &returnedHandle);
 
     // Should return error since NT handle is not supported for fd extraction
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
@@ -3641,7 +3641,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithInvalidHandleNotInMapThenEr
     res = contextWhitebox.getFdFromIpcHandle(ipcHandle, &returnedHandle);
 
     // Should return error since handle is not found in map
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
@@ -3671,7 +3671,7 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleNotInMapThen
     res = contextWhitebox.getFdFromIpcHandle(ipcHandle, &returnedHandle);
 
     // Should return error since handle is not found in map
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();

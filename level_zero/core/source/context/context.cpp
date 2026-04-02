@@ -869,7 +869,7 @@ ze_result_t Context::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pI
             ipcData = trackIPC->ipcData;
         }
     } else {
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -882,7 +882,7 @@ ze_result_t Context::getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t 
             IpcDataOpaqueT &ipcData = *reinterpret_cast<IpcDataOpaqueT *>(ipcHandle.data);
             handle = static_cast<uint64_t>(ipcData.handle.fd);
         } else {
-            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     } else {
         using IpcDataT = IpcMemoryData;
@@ -895,7 +895,7 @@ ze_result_t Context::getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t 
     if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         *pHandle = ipcHandleIterator->first;
     } else {
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     return ZE_RESULT_SUCCESS;
 }
