@@ -189,7 +189,7 @@ class ProductHelper {
     virtual bool isHostUsmAllocationReuseSupported() const = 0;
     virtual bool useLocalPreferredForCacheableBuffers() const = 0;
     virtual bool useGemCreateExtInAllocateMemoryByKMD() const = 0;
-    virtual bool isTimestampWaitSupportedForQueues(bool heaplessEnabled) const = 0;
+    virtual bool isTimestampWaitSupportedForQueues() const = 0;
 
     virtual bool isTlbFlushRequired() const = 0;
     virtual bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t precompiledKernelIndirectDetectionVersion) const = 0;
@@ -266,7 +266,7 @@ class ProductHelper {
     virtual bool useSharedSystemUsm() const = 0;
     virtual uint32_t getGmmResourceUsageOverride(uint32_t usageType) const = 0;
     virtual bool isSharingWith3dOrMediaAllowed() const = 0;
-    virtual bool isL3FlushAfterPostSyncSupported(bool heaplessEnabled) const = 0;
+    virtual bool isL3FlushAfterPostSyncSupported() const = 0;
     virtual void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const = 0;
     virtual bool isMisalignedUserPtr2WayCoherent() const = 0;
     virtual bool isSvmHeapReservationSupported() const = 0;

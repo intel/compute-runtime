@@ -887,7 +887,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSi
 
     auto pc = genCmdCast<PIPE_CONTROL *>(*cmdList.rbegin());
 
-    auto l3FlushAfterPostSupported = device->getProductHelper().isL3FlushAfterPostSyncSupported(device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo));
+    auto l3FlushAfterPostSupported = device->getProductHelper().isL3FlushAfterPostSyncSupported();
 
     if (!l3FlushAfterPostSupported && NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         EXPECT_NE(nullptr, pc);

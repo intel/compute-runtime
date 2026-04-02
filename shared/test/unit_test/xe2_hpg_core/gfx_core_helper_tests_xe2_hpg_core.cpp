@@ -607,7 +607,7 @@ using ProductHelperTestXe2HpgCore = Test<DeviceFixture>;
 
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isTimestampWaitSupportedForQueues(false));
+    EXPECT_TRUE(productHelper.isTimestampWaitSupportedForQueues());
 }
 
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {

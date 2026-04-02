@@ -638,7 +638,7 @@ using ProductHelperTestXe3Core = Test<DeviceFixture>;
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCheckTimestampWaitForQueuesSupportThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isTimestampWaitSupportedForQueues(false));
+    EXPECT_TRUE(productHelper.isTimestampWaitSupportedForQueues());
 }
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCheckTimestampWaitSupportThenReturnTrue) {

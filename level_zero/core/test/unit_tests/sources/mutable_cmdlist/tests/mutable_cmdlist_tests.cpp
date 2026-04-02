@@ -1410,7 +1410,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto &productHelper = this->neoDevice->getProductHelper();
-    if (productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
 
@@ -1460,7 +1460,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     auto &productHelper = this->neoDevice->getProductHelper();
-    if (productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
     auto mockBaseCmdList = static_cast<L0::ult::MockCommandList *>(this->mutableCommandList.get()->base);
@@ -2321,7 +2321,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto &productHelper = this->neoDevice->getProductHelper();
-    if (productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
 
@@ -2410,7 +2410,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     auto &productHelper = this->neoDevice->getProductHelper();
-    if (productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
 

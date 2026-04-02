@@ -731,7 +731,7 @@ XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenXe3pProductWhenAdjustPlatformFor
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenCheckTimestampWaitForQueuesSupportThenResultsIsCorrect) {
     auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_EQ(productHelper.isDcFlushAllowed(), productHelper.isTimestampWaitSupportedForQueues(true));
+    EXPECT_EQ(productHelper.isDcFlushAllowed(), productHelper.isTimestampWaitSupportedForQueues());
 }
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenCheckTimestampWaitSupportThenReturnTrue) {

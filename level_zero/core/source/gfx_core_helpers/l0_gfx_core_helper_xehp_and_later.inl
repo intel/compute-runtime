@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,11 +46,9 @@ uint32_t L0GfxCoreHelperHw<Family>::getEventMaxKernelCount(const NEO::HardwareIn
 template <typename Family>
 uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
 
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
-    bool flushL3AfterPostSync = productHelper.isL3FlushAfterPostSyncSupported(heaplessEnabled);
+    bool flushL3AfterPostSync = productHelper.isL3FlushAfterPostSyncSupported();
 
     uint32_t basePackets = getEventMaxKernelCount(hwInfo);
     if (NEO::MemorySynchronizationCommands<Family>::getDcFlushEnable(true, rootDeviceEnvironment) && !flushL3AfterPostSync) {

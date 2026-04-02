@@ -110,7 +110,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
         if constexpr (heaplessModeEnabled) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-            if (productHelper.isL3FlushAfterPostSyncSupported(true)) {
+            if (productHelper.isL3FlushAfterPostSyncSupported()) {
                 GpgpuWalkerHelper<GfxFamily>::setupTimestampPacketFlushL3(walkerCmd,
                                                                           commandQueue,
                                                                           FlushL3Args{.containsPrintBuffer = kernel.hasPrintfOutput(),

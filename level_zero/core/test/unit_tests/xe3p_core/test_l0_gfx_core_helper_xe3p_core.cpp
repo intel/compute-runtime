@@ -196,7 +196,7 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, givenL3FlushInPostSyncWhenGettingMaxKer
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
 
-    if (!productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (!productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
 

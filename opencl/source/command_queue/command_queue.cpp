@@ -139,7 +139,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
 
         this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
         this->isForceStateless = compilerProductHelper.isForceToStatelessRequired();
-        this->l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported(this->heaplessModeEnabled);
+        this->l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported();
         this->shouldRegisterEnqueuedWalkerWithProfiling = productHelper.shouldRegisterEnqueuedWalkerWithProfiling();
         this->isBarrierForImplicitDependenciesAllowed = productHelper.isResolveDependenciesByPipeControlsSupported();
         this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->isBarrierForImplicitDependenciesAllowed);
@@ -1349,9 +1349,9 @@ bool CommandQueue::isWaitForTimestampsEnabled() const {
     auto &productHelper = getDevice().getProductHelper();
 
     auto enabled = CommandQueue::isTimestampWaitEnabled();
-    enabled &= productHelper.isTimestampWaitSupportedForQueues(this->heaplessModeEnabled);
+    enabled &= productHelper.isTimestampWaitSupportedForQueues();
 
-    if (productHelper.isL3FlushAfterPostSyncSupported(this->heaplessModeEnabled)) {
+    if (productHelper.isL3FlushAfterPostSyncSupported()) {
         enabled &= true;
     } else {
         enabled &= !productHelper.isDcFlushAllowed();

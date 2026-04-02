@@ -136,7 +136,7 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenE64EnabledAndTransientL3Unavail
     NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(0);
 
     auto &productHelper = this->clDevice->getDevice().getProductHelper();
-    if (!productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (!productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
 
@@ -204,7 +204,7 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenEnableL3FlushAfterPostSyncNonBl
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
 
     auto &productHelper = this->clDevice->getDevice().getProductHelper();
-    if (!productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (!productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
 
@@ -279,7 +279,7 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenForceL3FlushInPostSynchenProgra
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
 
     auto &productHelper = this->clDevice->getDevice().getProductHelper();
-    if (!productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (!productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
 
@@ -590,7 +590,7 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenL3FlushAfterPostSyncEnabledAndB
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
 
     auto &productHelper = this->clDevice->getDevice().getProductHelper();
-    if (!productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (!productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
 
@@ -636,7 +636,7 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenL3FlushAfterPostSyncEnabledAndP
     NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(0);
 
     auto &productHelper = this->clDevice->getDevice().getProductHelper();
-    if (!productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (!productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
 

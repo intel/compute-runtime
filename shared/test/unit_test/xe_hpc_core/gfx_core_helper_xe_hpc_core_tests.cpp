@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ using ProductHelperTestXeHpcCore = Test<DeviceFixture>;
 
 XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
     auto &helper = getHelper<ProductHelper>();
-    EXPECT_TRUE(helper.isTimestampWaitSupportedForQueues(false));
+    EXPECT_TRUE(helper.isTimestampWaitSupportedForQueues());
 }
 
 XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckTimestampWaitSupportForEventsThenReturnTrue) {

@@ -48,7 +48,7 @@ using ProductHelperTestXeHpgCore = Test<DeviceFixture>;
 
 XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckTimestampWaitSupportForQueuesThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isTimestampWaitSupportedForQueues(false));
+    EXPECT_TRUE(productHelper.isTimestampWaitSupportedForQueues());
 }
 
 XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {

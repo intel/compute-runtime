@@ -1335,7 +1335,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
 
     auto enabled = gfxCoreHelper.isUpdateTaskCountFromWaitSupported();
 
-    if (productHelper.isL3FlushAfterPostSyncSupported(this->heaplessModeEnabled) && ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless()) {
+    if (productHelper.isL3FlushAfterPostSyncSupported() && ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless()) {
         enabled &= true;
     } else {
         enabled &= this->isAnyDirectSubmissionEnabled();

@@ -89,7 +89,7 @@ class ProductHelperHw : public ProductHelper {
     bool isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const override;
     bool isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const override;
-    bool isTimestampWaitSupportedForQueues(bool heaplessEnabled) const override;
+    bool isTimestampWaitSupportedForQueues() const override;
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
     void adjustScratchSize(size_t &requiredScratchSize) const override;
     size_t getSvmCpuAlignment() const override;
@@ -201,7 +201,7 @@ class ProductHelperHw : public ProductHelper {
     bool useSharedSystemUsm() const override;
     uint32_t getGmmResourceUsageOverride(uint32_t usageType) const override;
     bool isSharingWith3dOrMediaAllowed() const override;
-    bool isL3FlushAfterPostSyncSupported(bool heaplessEnabled) const override;
+    bool isL3FlushAfterPostSyncSupported() const override;
     void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const override;
     bool isMisalignedUserPtr2WayCoherent() const override;
     bool isSvmHeapReservationSupported() const override;

@@ -106,7 +106,7 @@ struct DrmCommandStreamMultiTileMemExecTestWithCsr : public DrmCommandStreamMult
 HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTestWithCsr, GivenDrmSupportsCompletionFenceAndVmBindWhenCallingCsrExecThenMultipleTagAllocationIsPassed) {
 
     auto &productHelper = device->getProductHelper();
-    if (productHelper.isL3FlushAfterPostSyncSupported(true)) {
+    if (productHelper.isL3FlushAfterPostSyncSupported()) {
         GTEST_SKIP();
     }
 
