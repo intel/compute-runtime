@@ -57,7 +57,6 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
-#include <fstream>
 #include <limits>
 #include <map>
 #include <sstream>
@@ -1182,17 +1181,12 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
 }
 
 void Drm::getPrelimVersion(std::string &prelimVersion) {
-    std::string sysFsPciPath = getSysFsPciPath();
-    std::string prelimVersionPath = sysFsPciPath + "/prelim_uapi_version";
-
-    std::ifstream ifs(prelimVersionPath.c_str(), std::ifstream::in);
-
-    if (ifs.fail()) {
+    std::string readString(32, '\0');
+    if (!readSysFsAsString("/prelim_uapi_version", readString)) {
         prelimVersion = "";
-    } else {
-        ifs >> prelimVersion;
+        return;
     }
-    ifs.close();
+    prelimVersion = readString.c_str();
 }
 
 int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {

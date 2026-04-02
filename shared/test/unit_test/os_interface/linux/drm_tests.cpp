@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/submission_status.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gpu_page_fault_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -1459,11 +1458,16 @@ TEST(DrmTest, whenCheckedIfResourcesCleanupCanBeSkippedThenReturnsFalse) {
 TEST(DrmQueryTest, givenUapiPrelimVersionThenReturnCorrectString) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    std::string prelimVersionFile = getLinuxDevicesPath("device/drm/card1/prelim_uapi_version");
-    EXPECT_TRUE(NEO::fileExists(prelimVersionFile));
-
     drm.setPciPath("device");
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return std::string(pathname) == std::string(Os::sysFsPciPathPrefix) + "device/drm/card1/prelim_uapi_version" ? 1 : -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view content = "2.0";
+        memcpy_s(buf, count, content.data(), content.size());
+        return content.size();
+    });
 
     std::string prelimVersion = "";
     drm.getPrelimVersion(prelimVersion);

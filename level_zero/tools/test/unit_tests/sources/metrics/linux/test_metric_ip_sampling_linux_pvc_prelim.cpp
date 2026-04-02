@@ -253,8 +253,8 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenReadSucceedsWhenReadDataIsCalled
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenReadFailsWhenReadDataIsCalledThenReturnFailure, IsPVC) {
 
     VariableBackup<decltype(SysCalls::sysCallsRead)> mockRead(&SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
-        return -1;
         errno = EBADF;
+        return -1;
     });
     uint8_t pRawData = 0u;
     size_t pRawDataSize = 0;
