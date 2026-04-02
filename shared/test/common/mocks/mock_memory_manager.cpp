@@ -73,6 +73,7 @@ void MockMemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAll
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
     validateAllocateProperties(properties);
+    allocateGraphicsMemoryWithPropertiesCalledCount++;
     if (isMockHostMemoryManager) {
         allocateGraphicsMemoryWithPropertiesCount++;
         if (forceFailureInPrimaryAllocation) {

@@ -359,6 +359,7 @@ void CommandStreamReceiver::preallocateAllocation(AllocationType type, size_t si
     if (allocation) {
         getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
         this->makeResident(*allocation);
+        allocation->updateTaskCount(0, osContext->getContextId());
     }
 }
 

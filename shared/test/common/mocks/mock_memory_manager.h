@@ -395,6 +395,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t setSharedSystemMemAdviseCalledCount = 0;
     uint32_t setSharedSystemAtomicAccessCalledCount = 0;
     uint32_t getSharedSystemAtomicAccessCalledCount = 0;
+    uint32_t allocateGraphicsMemoryWithPropertiesCalledCount = 0;
     osHandle capturedSharedHandle = 0u;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;

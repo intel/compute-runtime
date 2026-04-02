@@ -959,21 +959,14 @@ HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGra
     *device->getDefaultEngine().commandStreamReceiver->getUcTagAddress() = commandQ->getHeaplessModeEnabled() ? 0 : 0;
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
+    auto memoryManager = static_cast<MockMemoryManager *>(context.getMemoryManager());
+    auto allocCount = memoryManager->allocateGraphicsMemoryWithPropertiesCalledCount;
 
-    auto commandStreamGraphicsAllocation = commandQ->getCS(0).getGraphicsAllocation();
-    auto isPoolView = commandStreamGraphicsAllocation->isView();
-    auto parentAllocation = commandStreamGraphicsAllocation->getParentAllocation();
     commandQ.reset(new MockCommandQueue(&context, device.get(), 0, false));
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
-    auto commandStreamGraphicsAllocation2 = commandQ->getCS(0).getGraphicsAllocation();
-    if (isPoolView) {
-        // Pool views are new objects each time, verify both use the same pool parent
-        EXPECT_TRUE(commandStreamGraphicsAllocation2->isView());
-        EXPECT_EQ(parentAllocation, commandStreamGraphicsAllocation2->getParentAllocation());
-    } else {
-        EXPECT_EQ(commandStreamGraphicsAllocation, commandStreamGraphicsAllocation2);
-    }
+
+    EXPECT_EQ(allocCount, memoryManager->allocateGraphicsMemoryWithPropertiesCalledCount);
 }
 
 HWTEST_F(CommandQueueTests, givenEngineUsageHintSetWithInvalidValueWhenCreatingCommandQueueThenReturnSuccess) {

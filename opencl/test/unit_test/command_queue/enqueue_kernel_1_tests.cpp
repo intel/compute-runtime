@@ -18,6 +18,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -1634,8 +1635,13 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenKernelWhenItIsEnqueuedT
 
     auto csrTaskCount = mockCsr->peekTaskCount();
     auto &passedAllocationPack = mockCsr->copyOfAllocations;
+    auto &reusableAllocations = mockCsr->getInternalAllocationStorage()->getAllocationsForReuse();
     for (auto &allocation : passedAllocationPack) {
-        EXPECT_EQ(csrTaskCount, allocation->getTaskCount(mockCsr->getOsContext().getContextId()));
+        if (reusableAllocations.peekContains(*allocation)) {
+            EXPECT_EQ(0u, allocation->getTaskCount(mockCsr->getOsContext().getContextId()));
+        } else {
+            EXPECT_EQ(csrTaskCount, allocation->getTaskCount(mockCsr->getOsContext().getContextId()));
+        }
     }
 }
 
