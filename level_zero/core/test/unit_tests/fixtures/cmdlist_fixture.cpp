@@ -163,7 +163,6 @@ uint32_t ModuleMutableCommandListFixture::getMocs(bool l3On) {
 }
 
 void FrontEndCommandListFixtureInit::setUp(int32_t dispatchCmdBufferPrimary) {
-    UnitTestSetter::disableHeapless(this->restorer);
 
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(dispatchCmdBufferPrimary);
     debugManager.flags.EnableFrontEndTracking.set(1);
@@ -202,8 +201,6 @@ void CommandListStateBaseAddressFixture::setUp() {
 }
 
 void CommandListPrivateHeapsFixture::setUp() {
-
-    UnitTestSetter::disableHeapless(this->restore);
 
     constexpr uint32_t storeAllocations = 4;
 

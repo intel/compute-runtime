@@ -13,9 +13,6 @@
 #include "neo_igfxfmid.h"
 
 namespace NEO {
-void UnitTestSetter::disableHeapless([[maybe_unused]] const DebugManagerStateRestore &restorer) {
-    debugManager.flags.Enable64BitAddressing.set(0);
-};
 
 void UnitTestSetter::setCcsExposure(RootDeviceEnvironment &rootDeviceEnvironment) {
     auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
