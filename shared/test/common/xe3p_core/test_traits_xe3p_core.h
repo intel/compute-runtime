@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,6 @@ struct TestTraits<IGFX_XE3P_CORE> {
     static constexpr bool imagesSupported = true;
     static constexpr bool isPipeControlExtendedPriorToNonPipelinedStateCommandSupported = false;
     static constexpr bool largeGrfModeInStateComputeModeSupported = false;
-    static constexpr bool heaplessAllowed = true;
     static constexpr bool heaplessRequired = true;
     static constexpr bool bindingTableStateSupported = true;
 };

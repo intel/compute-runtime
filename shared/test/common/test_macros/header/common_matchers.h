@@ -271,8 +271,8 @@ struct HeaplessSupport {
     template <PRODUCT_FAMILY productFamily>
     static consteval bool isMatched() {
         using T = TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>;
-        if constexpr (requires { T::heaplessAllowed; }) {
-            return static_cast<bool>(T::heaplessAllowed);
+        if constexpr (requires { T::heaplessRequired; }) {
+            return static_cast<bool>(T::heaplessRequired);
         } else {
             return false;
         }
