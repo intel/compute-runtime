@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,6 +77,18 @@ int main(int argc, char *argv[]) {
     ze_driver_handle_t driverHandle = {};
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
+
+    std::vector<ze_driver_extension_properties_t> extensionVector;
+    ze_driver_extension_properties_t hostImportExtension{};
+    std::string extensionString = "ZEX_driver_import_host_pointer";
+    strncpy(hostImportExtension.name, extensionString.c_str(), extensionString.size());
+    hostImportExtension.version = ZE_MAKE_VERSION(1, 0);
+    extensionVector.push_back(hostImportExtension);
+    bool extensionPresent = LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionVector);
+    if (!extensionPresent) {
+        std::cerr << "Driver host import extension not present" << std::endl;
+        return 1;
+    }
 
     bool outputValidationSuccessful;
 
