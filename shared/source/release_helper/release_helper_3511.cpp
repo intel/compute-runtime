@@ -69,26 +69,6 @@ bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
 }
 
 template <>
-const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferredSlmValue() const {
-    using PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2 = typename Xe3pCoreFamily::INTERFACE_DESCRIPTOR_DATA_2::PREFERRED_SLM_ALLOCATION_SIZE;
-
-    static const SizeToPreferredSlmValueArray sizeToPreferredSlmValueIdd2 = {{
-        {0, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
-        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
-        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
-        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K},
-        {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K},
-        {128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K},
-        {160 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_160K},
-        {192 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_192K},
-        {256 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_256K},
-        {320 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_320K},
-        {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_384K},
-    }};
-    return sizeToPreferredSlmValueIdd2;
-}
-
-template <>
 bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
     return false;
 }
@@ -97,4 +77,5 @@ bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
 
 #include "shared/source/release_helper/release_helper_common_xe3_and_later.inl"
 #include "shared/source/release_helper/release_helper_common_xe3p.inl"
+#include "shared/source/release_helper/release_helper_preferred_slm_xe3p_cri_384k.inl"
 template class NEO::ReleaseHelperHw<NEO::release>;

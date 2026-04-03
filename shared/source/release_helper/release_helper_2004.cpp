@@ -33,20 +33,6 @@ bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
 }
 
 template <>
-const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferredSlmValue() const {
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename Xe2HpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    static const SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {{
-        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
-        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
-        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
-        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K},
-        {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K},
-        {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K},
-    }};
-    return sizeToPreferredSlmValue;
-}
-
-template <>
 bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
     return false;
 }
@@ -54,5 +40,6 @@ bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe2.inl"
+#include "shared/source/release_helper/release_helper_preferred_slm_xe2_lpg_128k.inl"
 
 template class NEO::ReleaseHelperHw<NEO::release>;
