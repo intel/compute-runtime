@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,16 +142,18 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
 
     auto address = (int *)image->getCpuAddress();
     auto currentCounter = 0;
+    bool isLocalMem = !MemoryPoolHelper::isSystemMemoryPool(image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
     for (auto array = 0u; array < imageDesc.image_array_size; array++) {
         for (auto height = 0u; height < imageHeight; height++) {
-            for (auto element = 0u; element < imageDesc.image_width; element++) {
-                auto offset = (array * imgInfo.slicePitch + element * pixelSize + height * imgInfo.rowPitch) / 4;
-                if (MemoryPoolHelper::isSystemMemoryPool(image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool()) == false) {
-                    AUBCommandStreamFixture::expectMemory<FamilyType>(&destGpuAddress[offset], &currentCounter, pixelSize);
-                } else {
-                    EXPECT_EQ(currentCounter, address[offset]);
+            auto rowBaseOffset = (array * imgInfo.slicePitch + height * imgInfo.rowPitch) / 4;
+            if (isLocalMem) {
+                AUBCommandStreamFixture::expectMemory<FamilyType>(&destGpuAddress[rowBaseOffset], &hostPtr[currentCounter], imageDesc.image_width * pixelSize);
+                currentCounter += static_cast<int>(imageDesc.image_width);
+            } else {
+                for (auto element = 0u; element < imageDesc.image_width; element++) {
+                    EXPECT_EQ(currentCounter, address[rowBaseOffset + element]);
+                    currentCounter++;
                 }
-                currentCounter++;
             }
         }
     }
@@ -223,16 +225,18 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
 
     auto address = (int *)image->getCpuAddress();
     auto currentCounter = 0;
+    bool isLocalMem = !MemoryPoolHelper::isSystemMemoryPool(image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
     for (auto array = 0u; array < imageDesc.image_array_size; array++) {
         for (auto height = 0u; height < imageHeight; height++) {
-            for (auto element = 0u; element < imageDesc.image_width; element++) {
-                auto offset = (array * imgInfo.slicePitch + element * pixelSize + height * imgInfo.rowPitch) / 4;
-                if (MemoryPoolHelper::isSystemMemoryPool(image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool()) == false) {
-                    AUBCommandStreamFixture::expectMemory<FamilyType>(&destGpuAddress[offset], &currentCounter, pixelSize);
-                } else {
-                    EXPECT_EQ(currentCounter, address[offset]);
+            auto rowBaseOffset = (array * imgInfo.slicePitch + height * imgInfo.rowPitch) / 4;
+            if (isLocalMem) {
+                AUBCommandStreamFixture::expectMemory<FamilyType>(&destGpuAddress[rowBaseOffset], &hostPtr[currentCounter], imageDesc.image_width * pixelSize);
+                currentCounter += static_cast<int>(imageDesc.image_width);
+            } else {
+                for (auto element = 0u; element < imageDesc.image_width; element++) {
+                    EXPECT_EQ(currentCounter, address[rowBaseOffset + element]);
+                    currentCounter++;
                 }
-                currentCounter++;
             }
         }
     }
@@ -338,11 +342,12 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
         imageStorage = readMemory;
     }
 
+    auto rowSize = imageDesc.image_width * elementSize;
     while (heightToCopy--) {
-        for (unsigned int i = 0; i < imageDesc.image_width * elementSize; i++) {
-            if (isGpuCopy) {
-                AUBCommandStreamFixture::expectMemory<FamilyType>(&imageStorage[i], &data[i], 1);
-            } else {
+        if (isGpuCopy) {
+            AUBCommandStreamFixture::expectMemory<FamilyType>(imageStorage, data, rowSize);
+        } else {
+            for (unsigned int i = 0; i < rowSize; i++) {
                 EXPECT_EQ(imageStorage[i], data[i]);
             }
         }
@@ -434,11 +439,12 @@ HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThen
     bool isGpuCopy = image->isTiledAllocation() || !MemoryPoolHelper::isSystemMemoryPool(
                                                        image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
 
+    auto rowSize = imageDesc.image_width * elementSize;
     while (heightToCopy--) {
-        for (unsigned int i = 0; i < imageDesc.image_width * elementSize; i++) {
-            if (isGpuCopy) {
-                AUBCommandStreamFixture::expectMemory<FamilyType>(&imageStorage[i], &data[i], 1);
-            } else {
+        if (isGpuCopy) {
+            AUBCommandStreamFixture::expectMemory<FamilyType>(imageStorage, data, rowSize);
+        } else {
+            for (unsigned int i = 0; i < rowSize; i++) {
                 EXPECT_EQ(imageStorage[i], data[i]);
             }
         }
@@ -498,11 +504,12 @@ HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForD
         imageStorage = readMemory;
     }
 
+    auto sliceDataSize = imageDesc.image_width * 4 * imageDesc.image_height;
     while (depthToCopy--) {
-        for (unsigned int i = 0; i < imageDesc.image_width * 4 * imageDesc.image_height; i++) {
-            if (isGpuCopy) {
-                AUBCommandStreamFixture::expectMemory<FamilyType>(&imageStorage[i], &data[i], 1);
-            } else {
+        if (isGpuCopy) {
+            AUBCommandStreamFixture::expectMemory<FamilyType>(imageStorage, data, sliceDataSize);
+        } else {
+            for (unsigned int i = 0; i < sliceDataSize; i++) {
                 EXPECT_EQ(imageStorage[i], data[i]);
             }
         }
