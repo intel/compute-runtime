@@ -568,9 +568,9 @@ void CommandQueueHw<gfxCoreFamily>::programPipelineSelectIfGpgpuDisabled(NEO::Li
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList, bool containsParentImmediateStream) const {
-    bool postSyncRequired = containsAnyRegularCmdList && (!csr->getOsContext().isPartOfContextGroup() || getPatchingPreamble() || isCopyOnlyCommandQueue);
-    return (!containsParentImmediateStream) && (postSyncRequired || !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || isSynchronousMode());
+bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, CommandListExecutionContext &ctx) const {
+    bool postSyncRequired = ctx.containsAnyRegularCmdList && (!csr->getOsContext().isPartOfContextGroup() || ctx.patchPreambleEnabled || isCopyOnlyCommandQueue);
+    return (!ctx.containsParentImmediateStream) && (postSyncRequired || !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || isSynchronousMode());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -710,8 +710,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
     if (parentImmediateCommandlistLinearStream) {
         ctx.containsParentImmediateStream = true;
     }
-    ctx.isDispatchTaskCountPostSyncRequired = isDispatchTaskCountPostSyncRequired(hFence, ctx.containsAnyRegularCmdList,
-                                                                                  ctx.containsParentImmediateStream);
+    ctx.isDispatchTaskCountPostSyncRequired = isDispatchTaskCountPostSyncRequired(hFence, ctx);
 
     return ZE_RESULT_SUCCESS;
 }

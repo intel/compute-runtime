@@ -88,7 +88,7 @@ struct CommandQueueHw : public CommandQueue {
                                                      uint32_t numCommandLists,
                                                      ze_fence_handle_t hFence,
                                                      NEO::LinearStream *parentImmediateCommandlistLinearStream);
-    MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList, bool containsParentImmediateStream) const;
+    MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, CommandListExecutionContext &ctx) const;
     inline size_t estimateLinearStreamSizeTotal(CommandListExecutionContext &ctx,
                                                 ze_command_list_handle_t *commandListHandles,
                                                 uint32_t numCommandLists);
