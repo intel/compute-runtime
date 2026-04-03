@@ -95,15 +95,20 @@ class MockOSMemoryLinux : public OSMemoryLinux {
 };
 
 TEST(OSMemoryLinux, GivenOSMemoryLinuxWhenGetMemoryMapsIsCalledThenMapsAreParsed) {
+    VariableBackup<decltype(SysCalls::readFuncCalled)> readCalledBackup{&SysCalls::readFuncCalled, 0u};
+
     VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        constexpr std::string_view content =
-            "564fcd1fa000-564fcd202000 r-xp 00000000 08:03 3670041 /bin/cat\n"
-            "7ffd6dfa2000-7ffd6dfc3000 rw-p 00000000 00:00 0 [stack]\n";
-        memcpy_s(buf, count, content.data(), content.size());
-        return static_cast<ssize_t>(content.size());
+    VariableBackup<decltype(SysCalls::sysCallsRead)> readBkp(&SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (++SysCalls::readFuncCalled == 1) {
+            constexpr std::string_view content =
+                "564fcd1fa000-564fcd202000 r-xp 00000000 08:03 3670041 /bin/cat\n"
+                "7ffd6dfa2000-7ffd6dfc3000 rw-p 00000000 00:00 0 [stack]\n";
+            memcpy_s(buf, count, content.data(), content.size());
+            return static_cast<ssize_t>(content.size());
+        }
+        return 0;
     });
     VariableBackup<decltype(SysCalls::sysCallsClose)> closeBkp(&SysCalls::sysCallsClose, [](int fd) -> int {
         return 0;
@@ -118,29 +123,30 @@ TEST(OSMemoryLinux, GivenOSMemoryLinuxWhenGetMemoryMapsIsCalledThenMapsAreParsed
 }
 
 TEST(OSMemoryLinux, GivenOSMemoryLinuxWhenMapsFileSpansMultipleChunksThenAllMapsAreParsed) {
-    static int preadCallCount;
-    preadCallCount = 0;
+    VariableBackup<decltype(SysCalls::readFuncCalled)> readCalledBackup{&SysCalls::readFuncCalled, 0u};
 
     VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen,
                                                              [](const char *, int) -> int { return 1; });
-    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread,
-                                                               [](int, void *buf, size_t count, off_t offset) -> ssize_t {
-                                                                   ++preadCallCount;
-                                                                   // line is exactly 64 bytes so 1 MiB / 64 = 16384 exact repetitions
-                                                                   if (offset == 0) {
-                                                                       constexpr std::string_view line = "564fcd1fa000-564fcd202000 r-xp 00000000 08:03 03670041 /bin/cat\n";
-                                                                       char *dst = static_cast<char *>(buf);
-                                                                       size_t written = 0;
-                                                                       while (written + line.size() <= count) {
-                                                                           memcpy_s(dst + written, count - written, line.data(), line.size());
-                                                                           written += line.size();
-                                                                       }
-                                                                       return static_cast<ssize_t>(count);
-                                                                   }
-                                                                   constexpr std::string_view chunk2 = "7ffd6dfa2000-7ffd6dfc3000 rw-p 00000000 00:00 0 [stack]\n";
-                                                                   memcpy_s(buf, count, chunk2.data(), chunk2.size());
-                                                                   return static_cast<ssize_t>(chunk2.size());
-                                                               });
+    VariableBackup<decltype(SysCalls::sysCallsRead)> readBkp(&SysCalls::sysCallsRead,
+                                                             [](int, void *buf, size_t count) -> ssize_t {
+                                                                 ++SysCalls::readFuncCalled;
+                                                                 if (SysCalls::readFuncCalled == 1) {
+                                                                     constexpr std::string_view line = "564fcd1fa000-564fcd202000 r-xp 00000000 08:03 03670041 /bin/cat\n";
+                                                                     char *dst = static_cast<char *>(buf);
+                                                                     size_t written = 0;
+                                                                     while (written + line.size() <= count) {
+                                                                         memcpy_s(dst + written, count - written, line.data(), line.size());
+                                                                         written += line.size();
+                                                                     }
+                                                                     return static_cast<ssize_t>(written);
+                                                                 }
+                                                                 if (SysCalls::readFuncCalled == 2) {
+                                                                     constexpr std::string_view chunk2 = "7ffd6dfa2000-7ffd6dfc3000 rw-p 00000000 00:00 0 [stack]\n";
+                                                                     memcpy_s(buf, count, chunk2.data(), chunk2.size());
+                                                                     return static_cast<ssize_t>(chunk2.size());
+                                                                 }
+                                                                 return 0;
+                                                             });
     VariableBackup<decltype(SysCalls::sysCallsClose)> closeBkp(&SysCalls::sysCallsClose,
                                                                [](int) -> int { return 0; });
 
@@ -148,8 +154,9 @@ TEST(OSMemoryLinux, GivenOSMemoryLinuxWhenMapsFileSpansMultipleChunksThenAllMaps
     OSMemory::MemoryMaps memoryMaps;
     osMemory.getMemoryMaps(memoryMaps);
 
-    constexpr size_t chunk1Lines = 1024u * 1024u / 64u; // 16384
-    EXPECT_EQ(2, preadCallCount);
+    // buf is 4096 bytes, line is 64 bytes -> 64 lines per read call
+    constexpr size_t chunk1Lines = 4096u / 64u; // 64
+    EXPECT_EQ(3u, SysCalls::readFuncCalled);    // chunk1, chunk2, EOF
     EXPECT_EQ(chunk1Lines + 1u, memoryMaps.size());
 
     auto chunk1Count = std::count_if(memoryMaps.begin(), memoryMaps.end(),
@@ -166,7 +173,7 @@ TEST(OSMemoryLinux, GivenOSMemoryLinuxWhenMapsFileIsEmptyThenMemoryMapsIsEmpty) 
     VariableBackup<decltype(SysCalls::sysCallsOpen)> openBkp(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsPread)> preadBkp(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsRead)> readBkp(&SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
         return 0;
     });
     VariableBackup<decltype(SysCalls::sysCallsClose)> closeBkp(&SysCalls::sysCallsClose, [](int fd) -> int {

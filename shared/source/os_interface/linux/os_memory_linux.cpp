@@ -57,22 +57,11 @@ void OSMemoryLinux::getMemoryMaps(MemoryMaps &memoryMaps) {
         return;
     }
 
-    constexpr size_t chunkSize = 1024 * 1024;
     std::string content;
-    off_t offset = 0;
-
-    while (true) {
-        content.resize(static_cast<size_t>(offset) + chunkSize);
-        auto bytesRead = SysCalls::pread(fd, content.data() + offset, chunkSize, offset);
-        if (bytesRead <= 0) {
-            content.resize(static_cast<size_t>(offset));
-            break;
-        }
-        offset += static_cast<off_t>(bytesRead);
-        content.resize(static_cast<size_t>(offset));
-        if (static_cast<size_t>(bytesRead) < chunkSize) {
-            break;
-        }
+    char buf[4096];
+    ssize_t bytesRead;
+    while ((bytesRead = SysCalls::read(fd, buf, sizeof(buf))) > 0) {
+        content.append(buf, static_cast<size_t>(bytesRead));
     }
 
     SysCalls::close(fd);
