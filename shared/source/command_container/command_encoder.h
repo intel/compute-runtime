@@ -283,7 +283,6 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     template <typename WalkerType>
     static void adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    template <bool heaplessModeEnabled>
     static void programInlineDataHeapless(uint8_t *inlineDataPtr, EncodeDispatchKernelArgs &args, CommandContainer &container, uint64_t offsetThreadData, uint64_t scratchPtr);
 
     static size_t getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount);

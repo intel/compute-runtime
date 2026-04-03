@@ -12,27 +12,24 @@
 namespace NEO {
 
 template <typename Family>
-template <bool heaplessModeEnabled>
 void EncodeDispatchKernel<Family>::programInlineDataHeapless(uint8_t *inlineDataPtr, EncodeDispatchKernelArgs &args, CommandContainer &container, uint64_t offsetThreadData, uint64_t scratchPtr) {
 
-    if constexpr (heaplessModeEnabled) {
-        if (!args.makeCommandView) {
-            const auto &kernelDescriptor = args.dispatchInterface->getKernelDescriptor();
-            auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;
-            auto heap = container.getIndirectHeap(HeapType::indirectObject);
-            auto indirectDataAddress = heap->getHeapGpuBase() + offsetThreadData;
-            uint32_t inlineDataSize = DefaultWalkerType::getInlineDataSize();
-            if (isDefined(indirectDataPointerAddress.pointerSize) && isValidOffset(indirectDataPointerAddress.offset)) {
-                uint32_t maxBytesToCopy = std::max(0, static_cast<int32_t>(inlineDataSize - indirectDataPointerAddress.offset));
-                memcpy_s(inlineDataPtr + indirectDataPointerAddress.offset, maxBytesToCopy, &indirectDataAddress, indirectDataPointerAddress.pointerSize);
-            }
+    if (!args.makeCommandView) {
+        const auto &kernelDescriptor = args.dispatchInterface->getKernelDescriptor();
+        auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;
+        auto heap = container.getIndirectHeap(HeapType::indirectObject);
+        auto indirectDataAddress = heap->getHeapGpuBase() + offsetThreadData;
+        uint32_t inlineDataSize = DefaultWalkerType::getInlineDataSize();
+        if (isDefined(indirectDataPointerAddress.pointerSize) && isValidOffset(indirectDataPointerAddress.offset)) {
+            uint32_t maxBytesToCopy = std::max(0, static_cast<int32_t>(inlineDataSize - indirectDataPointerAddress.offset));
+            memcpy_s(inlineDataPtr + indirectDataPointerAddress.offset, maxBytesToCopy, &indirectDataAddress, indirectDataPointerAddress.pointerSize);
+        }
 
-            if (args.immediateScratchAddressPatching) {
-                auto scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
-                if (isDefined(scratchPointerAddress.pointerSize) && isValidOffset(scratchPointerAddress.offset)) {
-                    uint32_t maxBytesToCopy = std::max(0, static_cast<int32_t>(inlineDataSize - scratchPointerAddress.offset));
-                    memcpy_s(inlineDataPtr + scratchPointerAddress.offset, maxBytesToCopy, &scratchPtr, scratchPointerAddress.pointerSize);
-                }
+        if (args.immediateScratchAddressPatching) {
+            auto scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
+            if (isDefined(scratchPointerAddress.pointerSize) && isValidOffset(scratchPointerAddress.offset)) {
+                uint32_t maxBytesToCopy = std::max(0, static_cast<int32_t>(inlineDataSize - scratchPointerAddress.offset));
+                memcpy_s(inlineDataPtr + scratchPointerAddress.offset, maxBytesToCopy, &scratchPtr, scratchPointerAddress.pointerSize);
             }
         }
     }

@@ -9,7 +9,6 @@
 
 namespace NEO {
 template <typename Family>
-template <bool heaplessModeEnabled>
 void EncodeDispatchKernel<Family>::programInlineDataHeapless(uint8_t *inlineDataPtr, EncodeDispatchKernelArgs &args, CommandContainer &container, uint64_t offsetThreadData, uint64_t scratchPtr) {
 }
 
