@@ -8,6 +8,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -44,32 +45,69 @@ HWTEST_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenAskingForCopyOffloadThenR
         debugManager.flags.EnableBlitterForEnqueueOperations.set(flag);
         for (auto srcAlloc : allocations) {
             for (auto dstAlloc : allocations) {
-                for (bool imgToBuffer : {true, false}) {
+                for (bool imageToBuffer : {true, false}) {
                     for (bool remoteCopy : {true, false}) {
-                        bool expected = false;
+                        for (bool localToLocalAllowed : {true, false}) {
+                            bool expected = false;
 
-                        if (flag != 0) {
-                            bool preferred = productHelper.blitEnqueuePreferred(imgToBuffer);
+                            if (flag != 0) {
+                                bool preferred = productHelper.blitEnqueuePreferred(imageToBuffer);
 
-                            if (!debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(preferred)) {
-                                expected = false;
-                            } else {
-                                if (remoteCopy || srcAlloc == nullptr || dstAlloc == nullptr) {
+                                if (!debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(preferred)) {
+                                    expected = false;
+                                } else if (remoteCopy || srcAlloc == nullptr || dstAlloc == nullptr) {
                                     expected = true;
+                                } else if (srcAlloc->isAllocatedInLocalMemoryPool() && dstAlloc->isAllocatedInLocalMemoryPool()) {
+                                    expected = localToLocalAllowed;
                                 } else {
-                                    expected = !(srcAlloc->isAllocatedInLocalMemoryPool() && dstAlloc->isAllocatedInLocalMemoryPool());
+                                    expected = true;
                                 }
                             }
-                        } else {
-                            expected = false;
-                        }
 
-                        EXPECT_EQ(expected, immCmdList->isCopyOffloadAllowed(srcAlloc, dstAlloc, imgToBuffer, remoteCopy));
+                            EXPECT_EQ(expected, immCmdList->isCopyOffloadAllowed(srcAlloc, dstAlloc, imageToBuffer, remoteCopy, localToLocalAllowed));
+                        }
                     }
                 }
             }
         }
     }
+}
+
+HWTEST_F(CopyOffloadInOrderTests, givenLocalToLocalAllowedWhenCheckingCopyOffloadThenBcsAllowed) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    MockGraphicsAllocation srcAlloc;
+    srcAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
+
+    MockGraphicsAllocation dstAlloc;
+    dstAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
+
+    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, false, true));
+}
+
+HWTEST_F(CopyOffloadInOrderTests, givenLocalToLocalNotAllowedWhenCheckingCopyOffloadThenBcsBlocked) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    MockGraphicsAllocation srcAlloc;
+    srcAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
+
+    MockGraphicsAllocation dstAlloc;
+    dstAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
+
+    EXPECT_FALSE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, false, false));
+}
+
+HWTEST_F(CopyOffloadInOrderTests, givenRemoteCopyWhenCheckingCopyOffloadThenLocalToLocalFlagIgnored) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    MockGraphicsAllocation srcAlloc;
+    srcAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
+
+    MockGraphicsAllocation dstAlloc;
+    dstAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
+
+    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, true, false));
+    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, true, true));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenCmdsChainingWhenDispatchingCopyOffloadThenDontSkipImplictDependency) {
@@ -1026,7 +1064,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenFillCalledThenSk
     context->freeMem(data);
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgrammingHwCmdsThenDontUseCopyCommands, IsAtLeastXeCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndSmallD2DAllocWhenProgrammingHwCmdsThenUseCopyCommands, IsAtLeastXeCore) {
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
@@ -1035,9 +1073,11 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgram
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
+    const size_t smallSize = BlitterConstants::maxD2DBcsCopySize;
+
     ze_device_mem_alloc_desc_t deviceDesc = {};
     void *deviceMem = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 1, 1, &deviceMem));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, smallSize, 1, &deviceMem));
 
     auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
@@ -1054,7 +1094,75 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgram
     {
         auto offset = cmdStream->getUsed();
 
-        immCmdList->appendMemoryCopy(deviceMem, deviceMem, 1, nullptr, 0, nullptr, copyParams);
+        immCmdList->appendMemoryCopy(deviceMem, deviceMem, smallSize, nullptr, 0, nullptr, copyParams);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+
+        if (!device->getProductHelper().useAdditionalBlitProperties()) {
+            EXPECT_NE(cmdList.end(), copyItor);
+            EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+            EXPECT_EQ(initialCopyTaskCount + 1, copyQueueCsr->taskCount);
+        }
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        const uint32_t regionWidth = static_cast<uint32_t>(smallSize);
+        ze_copy_region_t region = {0, 0, 0, regionWidth, 1, 1};
+        immCmdList->appendMemoryCopyRegion(deviceMem, &region, regionWidth, 0, deviceMem, &region, regionWidth, 0, nullptr, 0, nullptr, copyParams);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+
+        if (!device->getProductHelper().useAdditionalBlitProperties()) {
+            EXPECT_NE(cmdList.end(), copyItor);
+            EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+            EXPECT_EQ(initialCopyTaskCount + 2, copyQueueCsr->taskCount);
+        }
+    }
+
+    context->freeMem(deviceMem);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndLargeD2DAllocWhenProgrammingHwCmdsThenDontUseCopyCommands, IsAtLeastXeCore) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    const size_t largeSize = BlitterConstants::maxD2DBcsCopySize + 1;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *deviceMem = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, largeSize, 1, &deviceMem));
+
+    auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    if (device->getProductHelper().useAdditionalBlitProperties()) {
+        ASSERT_EQ(mainQueueCsr, copyQueueCsr);
+    } else {
+        ASSERT_NE(mainQueueCsr, copyQueueCsr);
+    }
+
+    auto initialMainTaskCount = mainQueueCsr->taskCount.load();
+    auto initialCopyTaskCount = copyQueueCsr->taskCount.load();
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        immCmdList->appendMemoryCopy(deviceMem, deviceMem, largeSize, nullptr, 0, nullptr, copyParams);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
@@ -1073,8 +1181,9 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgram
     {
         auto offset = cmdStream->getUsed();
 
-        ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
-        immCmdList->appendMemoryCopyRegion(deviceMem, &region, 1, 1, deviceMem, &region, 1, 1, nullptr, 0, nullptr, copyParams);
+        const uint32_t regionWidth = static_cast<uint32_t>(largeSize);
+        ze_copy_region_t region = {0, 0, 0, regionWidth, 1, 1};
+        immCmdList->appendMemoryCopyRegion(deviceMem, &region, regionWidth, 0, deviceMem, &region, regionWidth, 0, nullptr, 0, nullptr, copyParams);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,

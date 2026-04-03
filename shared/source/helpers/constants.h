@@ -58,6 +58,7 @@ inline constexpr size_t chunkThreshold = MemoryConstants::pageSize64k;
 } // namespace MemoryConstants
 
 namespace BlitterConstants {
+inline constexpr size_t maxD2DBcsCopySize = 8 * MemoryConstants::kiloByte;
 inline constexpr uint64_t maxBlitWidth = 0x4000;
 inline constexpr uint64_t maxBlitHeight = 0x4000;
 inline constexpr uint64_t maxBlitSetWidth = 0x1FF80;  // 0x20000 aligned to 128

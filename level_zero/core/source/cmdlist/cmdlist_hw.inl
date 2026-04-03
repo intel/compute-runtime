@@ -872,7 +872,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), false, remoteCopy);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), false, remoteCopy, false);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
@@ -1091,7 +1091,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, true, remoteCopy);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, true, remoteCopy, false);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
@@ -1317,7 +1317,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), false, remoteCopy);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), false, remoteCopy, false);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->imageElementSizeInBytes);
@@ -1845,7 +1845,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool imageToBuffer, bool remoteCopy) const {
+bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool imageToBuffer, bool remoteCopy, bool localToLocalAllowed) const {
     bool preferred = device->getProductHelper().blitEnqueuePreferred(imageToBuffer);
     if (!NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(preferred)) {
         return false;
@@ -1855,7 +1855,11 @@ bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadAllowed(const NEO::Graph
         return isCopyOffloadEnabled();
     }
 
-    return !(srcAllocation->isAllocatedInLocalMemoryPool() && dstAllocation->isAllocatedInLocalMemoryPool()) && isCopyOffloadEnabled();
+    if (srcAllocation->isAllocatedInLocalMemoryPool() && dstAllocation->isAllocatedInLocalMemoryPool()) {
+        return localToLocalAllowed && isCopyOffloadEnabled();
+    }
+
+    return isCopyOffloadEnabled();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2063,7 +2067,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     emitMemAdviseForSystemCopy(srcAllocationStruct, size);
 
     if (!memoryCopyParams.copyOffloadAllowed) {
-        memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy);
+        memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy, size <= BlitterConstants::maxD2DBcsCopySize);
     }
 
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
@@ -2323,7 +2327,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     emitMemAdviseForSystemCopy(dstAllocationStruct, dstSize);
     emitMemAdviseForSystemCopy(srcAllocationStruct, srcSize);
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy, std::max(srcSize, dstSize) <= BlitterConstants::maxD2DBcsCopySize);
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
