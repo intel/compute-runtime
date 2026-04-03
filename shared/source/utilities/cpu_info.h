@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,9 +23,6 @@ struct CpuInfo {
     static const uint64_t featureNeon = 0x001000000ULL;
     static const uint64_t featureClflush = 0x2000000000ULL;
 
-    CpuInfo() : features(featureNone) {
-    }
-
     void cpuid(
         uint32_t cpuInfo[4],
         uint32_t functionId) const;
@@ -38,7 +35,7 @@ struct CpuInfo {
     void detect() const;
 
     bool isFeatureSupported(uint64_t feature) const {
-        if (features == featureNone) {
+        if (!featuresDetected) {
             detect();
         }
 
@@ -46,7 +43,7 @@ struct CpuInfo {
     }
 
     uint32_t getVirtualAddressSize() const {
-        if (features == featureNone) {
+        if (!featuresDetected) {
             detect();
         }
 
@@ -70,7 +67,8 @@ struct CpuInfo {
     static void (*getCpuFlagsFunc)(std::string &);
 
   protected:
-    mutable uint64_t features;
+    mutable uint64_t features{featureNone};
+    mutable bool featuresDetected{false};
     mutable uint32_t virtualAddressSize = is32bit ? 32 : 48;
     mutable std::string cpuFlags;
     static const CpuInfo instance;

@@ -179,8 +179,6 @@ int main(int argc, char **argv) {
     std::string dumpTestStatsFileName = "";
     applyWorkarounds();
     applyCommonWorkarounds();
-    CpuInfo::cpuidexFunc = [](int *, int, int) -> void {};
-    CpuInfo::cpuidFunc = [](int[4], int) -> void {};
 
 #if defined(__linux__)
     if (getenv("IGDRCL_TEST_SELF_EXEC") == nullptr) {
