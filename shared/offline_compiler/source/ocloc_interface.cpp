@@ -18,7 +18,6 @@
 #include "shared/offline_compiler/source/offline_compiler.h"
 #include "shared/offline_compiler/source/offline_linker.h"
 #include "shared/offline_compiler/source/utilities/safety_caller.h"
-#include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/helpers/product_config_helper_former.h"
 #include "shared/source/os_interface/os_library.h"
 
@@ -74,6 +73,7 @@ Commands:
   query                 Extracts versioning info.
   ids                   Return matching versions <major>.<minor>.<revision>.
   concat                Concatenates multiple fat binaries.
+  cache                 Manages compiler cache.
 
 Default command (when none provided) is 'compile'.
 
@@ -356,6 +356,11 @@ int concat(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
     error = arConcat.concatenate();
     return error;
 }
+
+int cache(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
+    return OfflineCompiler::cacheCommand(args.size(), args, argHelper);
+}
+
 std::optional<int> invokeFormerOcloc(const std::string &formerOclocName, unsigned int numArgs, const char *argv[],
                                      const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
                                      const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,

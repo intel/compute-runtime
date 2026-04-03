@@ -1801,3 +1801,130 @@ TEST_F(OclocFallbackTests, GivenNoFormerOclocNameWhenInvalidDeviceErrorIsReturne
     EXPECT_EQ(std::string::npos, capturedStdout.find("Couldn't load former ocloc"));
     EXPECT_TRUE(capturedStderr.empty());
 }
+
+TEST(OclocApiTests, GivenCacheCommandWithDirArgThenSuccessIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-dir",
+        "/tmp/test_cache_dir"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithoutArgumentsThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: Invalid command line. Expected ocloc cache [options]. See ocloc cache -help\n"));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithHelpParameterThenHelpMsgIsPrintedAndSuccessIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-help"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    EXPECT_NE(std::string::npos, output.find("Usage: ocloc cache [options]"));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithUnknownArgumentThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-unknown_arg"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: Invalid command line. Unknown argument -unknown_arg"));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithDirButMissingValueThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-dir"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: Invalid command line : -dir must be followed by path to directory"));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithVerboseArgThenSuccessIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-verbose",
+        "-dir",
+        "/tmp/test_cache_dir"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithVersionArgThenSuccessIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-version"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    EXPECT_NE(std::string::npos, output.find("Ocloc cache version:"));
+}

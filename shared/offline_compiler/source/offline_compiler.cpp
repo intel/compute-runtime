@@ -482,6 +482,61 @@ int OfflineCompiler::querySupportedDevices(Ocloc::SupportedDevicesMode mode, Ocl
     return 0;
 }
 
+int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper) {
+    int retVal = OCLOC_SUCCESS;
+    bool verbose = false;
+    std::string cacheDir;
+
+    if (numArgs < 3) {
+        helper->printf("Error: Invalid command line. Expected ocloc cache [options]. See ocloc cache -help\n");
+        return OCLOC_INVALID_COMMAND_LINE;
+    }
+
+    for (size_t i = 2; i < numArgs; ++i) {
+        if (allArgs[i] == "-dir") {
+            if (i + 1 >= numArgs) {
+                helper->printf("Error: Invalid command line : -dir must be followed by path to directory\n");
+                retVal = OCLOC_INVALID_COMMAND_LINE;
+                break;
+            }
+            cacheDir = std::move(allArgs[++i]);
+
+        } else if (allArgs[i] == "-verbose") {
+            verbose = true;
+
+        } else if (allArgs[i] == "-version") {
+            helper->printf("Ocloc cache version: %i\n", NEO::CompilerCache::cacheVersion);
+
+        } else if (allArgs[i] == "-help") {
+            helper->printf("Usage: ocloc cache [options]\n\n"
+                           "Options:\n"
+                           "  -dir <path>         Set the compiler cache directory.\n"
+                           "  -verbose            Show verbose messages.\n"
+                           "  -help               Print this help message.\n");
+            return OCLOC_SUCCESS;
+
+        } else {
+            retVal = OCLOC_INVALID_COMMAND_LINE;
+            helper->printf("Error: Invalid command line. Unknown argument %s\n", allArgs[i].c_str());
+            break;
+        }
+    }
+
+    if (retVal != OCLOC_SUCCESS) {
+        return retVal;
+    }
+
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    if (!cacheDir.empty()) {
+        cacheConfig.cacheDir = std::move(cacheDir);
+        if (verbose) {
+            helper->printf("Ocloc cache directory changed to: %s\n", cacheConfig.cacheDir.c_str());
+        }
+    }
+
+    return retVal;
+}
+
 struct OfflineCompiler::BuildInfo {
     std::unique_ptr<CIF::Builtins::BufferLatest, CIF::RAII::ReleaseHelper<CIF::Builtins::BufferLatest>> fclOptions;
     std::unique_ptr<CIF::Builtins::BufferLatest, CIF::RAII::ReleaseHelper<CIF::Builtins::BufferLatest>> fclInternalOptions;

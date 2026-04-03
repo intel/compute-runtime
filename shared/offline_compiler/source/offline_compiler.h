@@ -82,6 +82,7 @@ class OfflineCompiler : NEO::NonCopyableAndNonMovableClass {
     static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
     static int queryAcronymIds(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
     static int querySupportedDevices(Ocloc::SupportedDevicesMode mode, OclocArgHelper *helper);
+    static int cacheCommand(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
 
     static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper);
 
