@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,28 +128,11 @@ struct AUBWriteBufferUnaligned
     }
 
     template <typename FamilyType>
-    void testWriteBufferUnaligned(size_t offset, size_t size) {
-        MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
-
+    void testWriteBufferUnaligned(Buffer *buffer, char *bufferGPUPtr, size_t offset, size_t size) {
         char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const auto bufferSize = sizeof(srcMemory);
-        char dstMemory[bufferSize] = {0};
 
-        auto retVal = CL_INVALID_VALUE;
-
-        auto buffer = std::unique_ptr<Buffer>(Buffer::create(
-            &context,
-            CL_MEM_USE_HOST_PTR,
-            bufferSize,
-            dstMemory,
-            retVal));
-        ASSERT_NE(nullptr, buffer);
-
-        buffer->forceDisallowCPUCopy = true;
-
-        // Do unaligned write
-        retVal = pCmdQ->enqueueWriteBuffer(
-            buffer.get(),
+        auto retVal = pCmdQ->enqueueWriteBuffer(
+            buffer,
             CL_TRUE,
             offset,
             size,
@@ -160,18 +143,33 @@ struct AUBWriteBufferUnaligned
             nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        // Check the memory
-        auto bufferGPUPtr = reinterpret_cast<char *>(ptrOffset(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset()));
         expectMemory<FamilyType>(ptrOffset(bufferGPUPtr, offset), ptrOffset(srcMemory, offset), size);
     }
 };
 
 HWTEST_F(AUBWriteBufferUnaligned, GivenOffsetAndSizeWhenWritingBufferThenExpectationsAreMet) {
-    const std::vector<size_t> offsets = {0, 1, 2, 3};
-    const std::vector<size_t> sizes = {4, 3, 2, 1};
+    MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
+
+    constexpr auto bufferSize = sizeof("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    char dstMemory[bufferSize] = {};
+
+    cl_int retVal = CL_INVALID_VALUE;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(
+        &context,
+        CL_MEM_USE_HOST_PTR,
+        bufferSize,
+        dstMemory,
+        retVal));
+    ASSERT_NE(nullptr, buffer);
+    buffer->forceDisallowCPUCopy = true;
+
+    auto *bufferGPUPtr = reinterpret_cast<char *>(ptrOffset(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset()));
+
+    static constexpr size_t offsets[] = {0, 1, 2, 3};
+    static constexpr size_t sizes[] = {4, 3, 2, 1};
     for (auto offset : offsets) {
         for (auto size : sizes) {
-            testWriteBufferUnaligned<FamilyType>(offset, size);
+            testWriteBufferUnaligned<FamilyType>(buffer.get(), bufferGPUPtr, offset, size);
         }
     }
 }

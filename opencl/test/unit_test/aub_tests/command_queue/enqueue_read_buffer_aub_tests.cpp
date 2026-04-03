@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -173,15 +173,12 @@ struct AUBReadBufferUnaligned
     }
 
     template <typename FamilyType>
-    void testReadBufferUnaligned(size_t offset, size_t size) {
-        MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
-
+    void testReadBufferUnaligned(MockContext &context, size_t offset, size_t size) {
         char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const auto bufferSize = sizeof(srcMemory);
         char dstMemory[bufferSize] = {0};
 
         auto retVal = CL_INVALID_VALUE;
-
         auto buffer = std::unique_ptr<Buffer>(Buffer::create(
             &context,
             CL_MEM_USE_HOST_PTR,
@@ -189,7 +186,6 @@ struct AUBReadBufferUnaligned
             srcMemory,
             retVal));
         ASSERT_NE(nullptr, buffer);
-
         buffer->forceDisallowCPUCopy = true;
 
         // Map destination memory to GPU
@@ -218,11 +214,12 @@ struct AUBReadBufferUnaligned
 };
 
 HWTEST_F(AUBReadBufferUnaligned, GivenOffestAndSizeWhenReadingBufferThenExpectationsAreMet) {
-    const std::vector<size_t> offsets = {0, 1, 2, 3};
-    const std::vector<size_t> sizes = {4, 3, 2, 1};
+    MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
+    static constexpr size_t offsets[] = {0, 1, 2, 3};
+    static constexpr size_t sizes[] = {4, 3, 2, 1};
     for (auto offset : offsets) {
         for (auto size : sizes) {
-            testReadBufferUnaligned<FamilyType>(offset, size);
+            testReadBufferUnaligned<FamilyType>(context, offset, size);
         }
     }
 }

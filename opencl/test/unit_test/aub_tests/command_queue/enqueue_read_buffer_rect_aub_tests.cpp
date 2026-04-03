@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,11 +42,10 @@ static const size_t width = 10;
 
 HWTEST_P(AUBReadBufferRect, Given3dWhenReadingBufferThenExpectationsAreMet) {
     MockContext context(this->pClDevice);
-    size_t rowPitch = width;
-    size_t slicePitch = rowPitch * rowPitch;
-
-    size_t bufferSizeBuff = rowPitch * rowPitch * rowPitch;
-    size_t bufferSize = alignUp(bufferSizeBuff, 4096);
+    static constexpr size_t rowPitch = width;
+    static constexpr size_t slicePitch = rowPitch * rowPitch;
+    static constexpr size_t bufferSizeBuff = rowPitch * rowPitch * rowPitch;
+    static constexpr size_t bufferSize = alignUp(bufferSizeBuff, size_t{4096});
 
     size_t zHostOffs;
     size_t zBuffOffs;
@@ -55,8 +54,10 @@ HWTEST_P(AUBReadBufferRect, Given3dWhenReadingBufferThenExpectationsAreMet) {
     ASSERT_LT(zBuffOffs, width);
     ASSERT_LT(zHostOffs, width);
 
-    uint8_t *srcMemory = (uint8_t *)::alignedMalloc(bufferSize, 4096);
-    uint8_t *destMemory = (uint8_t *)::alignedMalloc(bufferSize, 4096);
+    alignas(4096) uint8_t srcRaw[bufferSize];
+    alignas(4096) uint8_t destRaw[bufferSize];
+    uint8_t *srcMemory = srcRaw;
+    uint8_t *destMemory = destRaw;
 
     for (unsigned int i = 0; i < bufferSize; i++) {
         srcMemory[i] = i;
@@ -111,9 +112,6 @@ HWTEST_P(AUBReadBufferRect, Given3dWhenReadingBufferThenExpectationsAreMet) {
         }
     }
     delete[] ptr;
-
-    ::alignedFree(srcMemory);
-    ::alignedFree(destMemory);
 }
 INSTANTIATE_TEST_SUITE_P(AUBReadBufferRect_simple,
                          AUBReadBufferRect,
@@ -134,28 +132,23 @@ struct AUBReadBufferRectUnaligned
     }
 
     template <typename FamilyType>
-    void testReadBufferUnaligned(size_t offset, size_t size) {
-        MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
-
+    void testReadBufferUnaligned(MockContext &context, size_t offset, size_t size) {
         char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const auto bufferSize = sizeof(srcMemory);
-        void *dstMemory = alignedMalloc(bufferSize, MemoryConstants::pageSize);
-        memset(dstMemory, 0, bufferSize);
+        constexpr auto bufferSize = sizeof(srcMemory);
         char referenceMemory[bufferSize] = {0};
 
-        auto retVal = CL_INVALID_VALUE;
-
-        auto buffer = std::unique_ptr<Buffer>(Buffer::create(
+        cl_int retVal = CL_INVALID_VALUE;
+        auto srcBuffer = std::unique_ptr<Buffer>(Buffer::create(
             &context,
             CL_MEM_COPY_HOST_PTR,
             bufferSize,
             srcMemory,
             retVal));
-        ASSERT_NE(nullptr, buffer);
+        ASSERT_NE(nullptr, srcBuffer);
+        srcBuffer->forceDisallowCPUCopy = true;
 
-        buffer->forceDisallowCPUCopy = true;
-
-        // Map destination memory to GPU
+        std::vector<uint8_t> rawDstMemory(bufferSize + MemoryConstants::pageSize - 1, 0);
+        void *dstMemory = alignUp(rawDstMemory.data(), MemoryConstants::pageSize);
         GraphicsAllocation *allocation = createResidentAllocationAndStoreItInCsr(dstMemory, bufferSize);
         auto dstMemoryGPUPtr = reinterpret_cast<char *>(allocation->getGpuAddress());
 
@@ -168,7 +161,7 @@ struct AUBReadBufferRectUnaligned
         size_t region[] = {size, 1, 1};
 
         retVal = pCmdQ->enqueueReadBufferRect(
-            buffer.get(),
+            srcBuffer.get(),
             blockingRead,
             bufferOrigin,
             hostOrigin,
@@ -190,16 +183,16 @@ struct AUBReadBufferRectUnaligned
         expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), &srcMemory[rowPitch * bufferOrigin[1]], size);
         expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, size + offset), referenceMemory, bufferSize - offset - size);
         pCmdQ->finish(false);
-        alignedFree(dstMemory);
     }
 };
 
 HWTEST_F(AUBReadBufferRectUnaligned, GivenMisalignedHostPtrWhenReadingBufferThenExpectationAreMet) {
-    const std::vector<size_t> offsets = {0, 1, 2, 3};
-    const std::vector<size_t> sizes = {4, 3, 2, 1};
+    MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
+    static constexpr size_t offsets[] = {0, 1, 2, 3};
+    static constexpr size_t sizes[] = {4, 3, 2, 1};
     for (auto offset : offsets) {
         for (auto size : sizes) {
-            testReadBufferUnaligned<FamilyType>(offset, size);
+            testReadBufferUnaligned<FamilyType>(context, offset, size);
         }
     }
 }

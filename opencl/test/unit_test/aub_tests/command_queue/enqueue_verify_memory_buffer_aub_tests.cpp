@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -16,6 +17,7 @@
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <tuple>
@@ -63,24 +65,16 @@ HWTEST_P(VerifyMemoryBufferHw, givenDifferentBuffersWhenValidatingMemoryThenSucc
     std::unique_ptr<uint8_t[]> invalidContent1(new uint8_t[testDataSize]);
     std::unique_ptr<uint8_t[]> invalidContent2(new uint8_t[testDataSize]);
 
-    auto pTestItem = reinterpret_cast<uint8_t *>(&testItem);
-    for (size_t offset = 0; offset < testDataSize; offset += testItemSize) {
-        for (size_t itemOffset = 0; itemOffset < testItemSize; itemOffset++) {
-            bufferContent.get()[offset + itemOffset] = pTestItem[itemOffset];
-            validContent.get()[offset + itemOffset] = pTestItem[itemOffset];
-            invalidContent1.get()[offset + itemOffset] = pTestItem[itemOffset];
-            invalidContent2.get()[offset + itemOffset] = pTestItem[itemOffset];
-        }
-    }
+    auto *buf32 = reinterpret_cast<cl_uint *>(bufferContent.get());
+    std::fill(buf32, buf32 + testDataSize / testItemSize, testItem);
+    memcpy_s(validContent.get(), testDataSize, bufferContent.get(), testDataSize);
+    memcpy_s(invalidContent1.get(), testDataSize, bufferContent.get(), testDataSize);
+    memcpy_s(invalidContent2.get(), testDataSize, bufferContent.get(), testDataSize);
 
     // set last item for invalid contents
-    auto pTestItemWrong1 = reinterpret_cast<uint8_t *>(&testItemWrong1);
-    auto pTestItemWrong2 = reinterpret_cast<uint8_t *>(&testItemWrong2);
     size_t offset = testDataSize - testItemSize;
-    for (size_t itemOffset = 0; itemOffset < testItemSize; itemOffset++) {
-        invalidContent1.get()[offset + itemOffset] = pTestItemWrong1[itemOffset];
-        invalidContent2.get()[offset + itemOffset] = pTestItemWrong2[itemOffset];
-    }
+    memcpy_s(invalidContent1.get() + offset, testItemSize, &testItemWrong1, testItemSize);
+    memcpy_s(invalidContent2.get() + offset, testItemSize, &testItemWrong2, testItemSize);
 
     MockContext context(this->pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
     cl_int retVal = CL_INVALID_VALUE;
