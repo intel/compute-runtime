@@ -143,45 +143,41 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
     const uint64_t deviceGpuVa = args.inOrderExecInfo->getBaseDeviceAddress() + args.inOrderExecInfo->getAllocationOffset();
     const uint64_t data = args.inOrderCounterValue;
 
-    if constexpr (Family::template isPostSyncData1<POSTSYNC_DATA_TYPE>()) {
-        setPostSyncData(cmd.getPostSync(), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, deviceGpuVa, data, 0, mocs, false, requiresSystemMemoryFence);
+    uint32_t postSyncId = 0;
+    const bool deviceInterrupt = (args.interruptEvent && !args.inOrderExecInfo->isHostStorageDuplicated());
+
+    if (args.inOrderExecInfo->isAtomicDeviceSignalling()) {
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, deviceGpuVa, 0, static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B),
+                        mocs, deviceInterrupt, requiresSystemMemoryFence);
     } else {
-        uint32_t postSyncId = 0;
-        const bool deviceInterrupt = (args.interruptEvent && !args.inOrderExecInfo->isHostStorageDuplicated());
-
-        if (args.inOrderExecInfo->isAtomicDeviceSignalling()) {
-            setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, deviceGpuVa, 0, static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B),
-                            mocs, deviceInterrupt, requiresSystemMemoryFence);
-        } else {
-            setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, deviceGpuVa, data, 0, mocs, deviceInterrupt, requiresSystemMemoryFence);
-        }
-
-        if (args.inOrderExecInfo->isHostStorageDuplicated()) {
-            setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getBaseHostGpuAddress(), data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
-        }
-
-        if (args.inOrderExecInfo->getInterruptFence()) {
-            setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getInterruptFence()->getGpuAddress(), data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
-        }
-
-        if (args.eventAddress) {
-            for (auto i = 0u; i < args.eventPacketsCount; ++i) {
-                auto packetAddress = args.eventAddress + i * args.eventPacketSize;
-                auto operationType = args.isTimestampEvent ? POSTSYNC_DATA_TYPE::OPERATION_WRITE_TIMESTAMP : POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA;
-                setPostSyncData(getPostSync(cmd, postSyncId++), operationType, packetAddress, args.postSyncImmValue, 0, mocs, false, requiresSystemMemoryFence);
-            }
-        }
-
-        if (args.inOrderIncrementValue > 0) {
-            setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, args.inOrderIncrementGpuAddress, args.inOrderIncrementValue,
-                            static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), mocs, false, requiresSystemMemoryFence);
-        }
-
-        UNRECOVERABLE_IF(postSyncId > 4);
-
-        setCommandLevelInterrupt(cmd, args.interruptEvent);
-        encodeL3Flush(cmd, args);
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, deviceGpuVa, data, 0, mocs, deviceInterrupt, requiresSystemMemoryFence);
     }
+
+    if (args.inOrderExecInfo->isHostStorageDuplicated()) {
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getBaseHostGpuAddress(), data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
+    }
+
+    if (args.inOrderExecInfo->getInterruptFence()) {
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getInterruptFence()->getGpuAddress(), data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
+    }
+
+    if (args.eventAddress) {
+        for (auto i = 0u; i < args.eventPacketsCount; ++i) {
+            auto packetAddress = args.eventAddress + i * args.eventPacketSize;
+            auto operationType = args.isTimestampEvent ? POSTSYNC_DATA_TYPE::OPERATION_WRITE_TIMESTAMP : POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA;
+            setPostSyncData(getPostSync(cmd, postSyncId++), operationType, packetAddress, args.postSyncImmValue, 0, mocs, false, requiresSystemMemoryFence);
+        }
+    }
+
+    if (args.inOrderIncrementValue > 0) {
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, args.inOrderIncrementGpuAddress, args.inOrderIncrementValue,
+                        static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), mocs, false, requiresSystemMemoryFence);
+    }
+
+    UNRECOVERABLE_IF(postSyncId > 4);
+
+    setCommandLevelInterrupt(cmd, args.interruptEvent);
+    encodeL3Flush(cmd, args);
 }
 
 template <typename Family>
