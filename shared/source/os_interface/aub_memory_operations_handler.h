@@ -43,7 +43,7 @@ class AubMemoryOperationsHandler : public MemoryOperationsHandler {
 
   protected:
     DeviceBitfield getMemoryBanksBitfield(GraphicsAllocation *allocation, DeviceBitfield contextDeviceBitfield, bool isMultiOsContextCapable) const;
-    MemoryOperationsStatus makeResidentWithinDevice(ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, bool forcePagingFence, DeviceBitfield deviceBitfield, bool isMultiOsContextCapable);
+    MemoryOperationsStatus makeResidentWithinDevice(ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, DeviceBitfield deviceBitfield, bool isMultiOsContextCapable);
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock) {
         return std::unique_lock<SpinLock>{lock};
     }

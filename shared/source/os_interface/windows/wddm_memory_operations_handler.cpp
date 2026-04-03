@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(Device *device,
             totalHandlesCount += wddmAllocation->getNumGmms();
         }
     }
-    return residentAllocations->makeResidentResources(handlesForResidency.begin(), totalHandlesCount, totalSize, forcePagingFence);
+    return residentAllocations->makeResidentResources(handlesForResidency.begin(), totalHandlesCount, totalSize);
 }
 
 MemoryOperationsStatus WddmMemoryOperationsHandler::evict(Device *device, GraphicsAllocation &gfxAllocation) {

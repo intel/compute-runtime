@@ -61,10 +61,10 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::evictResources(const D3
 }
 
 MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResource(const D3DKMT_HANDLE &handle, size_t size) {
-    return makeResidentResources(&handle, 1u, size, false);
+    return makeResidentResources(&handle, 1u, size);
 }
 
-MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count, size_t size, const bool forcePagingFence) {
+MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count, size_t size) {
     while (!wddm->makeResident(handles, count, false, nullptr, size)) {
         if (!isEvictionOnMakeResidentAllowed) {
             DEBUG_BREAK_IF(true);

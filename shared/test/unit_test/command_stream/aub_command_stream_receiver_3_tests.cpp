@@ -150,7 +150,7 @@ HWTEST_F(AubCsrTest, GivenCopyLockedMemoryBeforeWriteWhenAubMemoryOperationsWrit
     EXPECT_TRUE(allocation->isLocked());
     aubManager.storeAllocationParams = true;
 
-    memoryOperationsHandler->makeResidentWithinDevice(ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false, deviceBitfield, false);
+    memoryOperationsHandler->makeResidentWithinDevice(ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, deviceBitfield, false);
 
     EXPECT_TRUE(aubManager.writeMemory2Called);
     EXPECT_EQ(aub_stream::DataTypeHintValues::TraceNotype, aubManager.hintToWriteMemory);

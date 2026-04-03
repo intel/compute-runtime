@@ -40,10 +40,10 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
 
     device->getDefaultEngine().commandStreamReceiver->initializeEngine();
 
-    return makeResidentWithinDevice(gfxAllocations, isDummyExecNeeded, forcePagingFence, device->getDeviceBitfield(), device->getDefaultEngine().commandStreamReceiver->isMultiOsContextCapable());
+    return makeResidentWithinDevice(gfxAllocations, isDummyExecNeeded, device->getDeviceBitfield(), device->getDefaultEngine().commandStreamReceiver->isMultiOsContextCapable());
 }
 
-MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinDevice(ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, bool forcePagingFence, DeviceBitfield deviceBitfield, bool isMultiOsContextCapable) {
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinDevice(ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, DeviceBitfield deviceBitfield, bool isMultiOsContextCapable) {
     auto lock = acquireLock(resourcesLock);
     int hint = aub_stream::DataTypeHintValues::TraceNotype;
     for (const auto &allocation : gfxAllocations) {
@@ -124,7 +124,7 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinOsContext(O
     if (!osContext) {
         return MemoryOperationsStatus::success;
     }
-    return makeResidentWithinDevice(gfxAllocations, false, forcePagingFence, osContext->getDeviceBitfield(), osContext->getNumSupportedDevices() > 1);
+    return makeResidentWithinDevice(gfxAllocations, false, osContext->getDeviceBitfield(), osContext->getNumSupportedDevices() > 1);
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
