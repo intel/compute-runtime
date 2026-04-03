@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,6 @@ template <>
 void NEO::HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
     using WalkerType = typename GenGfxFamily::DefaultWalkerType;
     using PIPE_CONTROL = typename GenGfxFamily::PIPE_CONTROL;
-    using CFE_STATE = typename GenGfxFamily::CFE_STATE;
     using PIPELINE_SELECT = typename GenGfxFamily::PIPELINE_SELECT;
     using STATE_BASE_ADDRESS = typename GenGfxFamily::STATE_BASE_ADDRESS;
     using MI_BATCH_BUFFER_START = typename GenGfxFamily::MI_BATCH_BUFFER_START;
@@ -25,8 +24,6 @@ void NEO::HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GenGfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     itorWalker = NEO::UnitTestHelper<GenGfxFamily>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
-
-    bool isHeapless = GenGfxFamily::isHeaplessMode<WalkerType>();
 
     if (itorWalker != cmdList.end()) {
         auto walker = genCmdCast<WalkerType *>(*itorWalker);
@@ -62,13 +59,6 @@ void NEO::HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
         cmdPipelineSelect = *itorPipelineSelect;
     }
 
-    if (!isHeapless) {
-        itorMediaVfeState = find<CFE_STATE *>(requiresPipelineSelectBeforeMediaState<GenGfxFamily>() ? itorPipelineSelect : cmdList.begin(), itorWalker);
-        if (itorMediaVfeState != itorWalker) {
-            cmdMediaVfeState = *itorMediaVfeState;
-        }
-    }
-
     STATE_BASE_ADDRESS *cmdSBA = nullptr;
     uint64_t dynamicStateHeap = 0;
     itorStateBaseAddress = find<STATE_BASE_ADDRESS *>(cmdList.begin(), itorWalker);
@@ -92,20 +82,13 @@ void NEO::HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
 template <>
 const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex) {
     using DefaultWalkerType = typename GenGfxFamily::DefaultWalkerType;
-    using STATE_BASE_ADDRESS = typename GenGfxFamily::STATE_BASE_ADDRESS;
 
-    bool isHeapless = false;
     void *inlineInComputeWalker = nullptr;
 
     auto walker = genCmdCast<DefaultWalkerType *>(*itorWalker);
-    using WalkerType = std::decay_t<decltype(*walker)>;
 
     EXPECT_NE(nullptr, walker);
     inlineInComputeWalker = walker->getInlineDataPointer();
-
-    if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER_2>) {
-        isHeapless = true;
-    }
 
     auto argOffset = 0u;
     const auto &arg = kernelInfo.getArgDescriptorAt(indexArg);
@@ -116,42 +99,18 @@ const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const Kerne
     }
 
     bool inlineDataActive = kernelInfo.kernelDescriptor.kernelAttributes.flags.passInlineData;
-    auto inlineDataSize = isHeapless ? 64u : 32u;
+    auto inlineDataSize = 64u;
     bool argumentInInlineData = (argOffset < inlineDataSize);
 
-    if (isHeapless) {
-        EXPECT_TRUE(inlineDataActive);
+    EXPECT_TRUE(inlineDataActive);
 
-        if (argumentInInlineData) {
-            return ptrOffset(inlineInComputeWalker, argOffset);
-        } else {
-
-            void *crossThreadData = ioh.getGraphicsAllocation()->getUnderlyingBuffer();
-
-            return ptrOffset(crossThreadData, argOffset - inlineDataSize);
-        }
-
+    if (argumentInInlineData) {
+        return ptrOffset(inlineInComputeWalker, argOffset);
     } else {
 
-        auto cmdSBA = static_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
-        EXPECT_NE(nullptr, cmdSBA);
+        void *crossThreadData = ioh.getGraphicsAllocation()->getUnderlyingBuffer();
 
-        auto offsetCrossThreadData = static_cast<COMPUTE_WALKER *>(cmdWalker)->getIndirectDataStartAddress();
-
-        offsetCrossThreadData -= static_cast<uint32_t>(ioh.getGraphicsAllocation()->getGpuAddressToPatch());
-
-        // Get the base of cross thread
-        auto pCrossThreadData = ptrOffset(reinterpret_cast<const void *>(ioh.getCpuBase()), offsetCrossThreadData);
-
-        if (inlineDataActive) {
-            if (argOffset < inlineDataSize) {
-                return ptrOffset(inlineInComputeWalker, argOffset);
-            } else {
-                return ptrOffset(pCrossThreadData, argOffset - inlineDataSize);
-            }
-        }
-
-        return ptrOffset(pCrossThreadData, argOffset);
+        return ptrOffset(crossThreadData, argOffset - inlineDataSize);
     }
 }
 
