@@ -1,31 +1,55 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/utilities/debug_file_reader_tests.inl"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/utilities/debug_file_reader.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/test_macros/test.h"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+#include <sstream>
+#include <string>
+
+namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+} // namespace NEO
 
 using namespace NEO;
 
-TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDefaultValuesMatch) {
+class TestSettingsFileReader : public SettingsFileReader {
+  public:
+    using SettingsFileReader::parseStream;
 
-    // Use test settings file
-    std::unique_ptr<TestSettingsFileReader> reader =
-        std::unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::getTestPath().c_str()));
+    TestSettingsFileReader() : SettingsFileReader("") {}
 
-    ASSERT_NE(nullptr, reader);
+    bool hasSetting(const char *settingName) {
+        std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(settingName));
+        return (it != settingStringMap.end());
+    }
 
-    size_t debugVariableCount = 0;
-    bool variableFound = false;
-    bool compareSuccessful = false;
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)          \
-    variableFound = reader->hasSetting(#variableName);                                     \
-    EXPECT_TRUE(variableFound) << #variableName;                                           \
-    compareSuccessful = (defaultValue == reader->getSetting(#variableName, defaultValue)); \
-    EXPECT_TRUE(compareSuccessful) << #variableName;                                       \
-    debugVariableCount++;
+    size_t getStringSettingsCount() {
+        return settingStringMap.size();
+    }
+
+    void addSetting(const std::string &key, const std::string &value) {
+        settingStringMap[key] = value;
+    }
+
+    static std::string varToString(const std::string &val) { return val; }
+    template <typename T>
+    static std::string varToString(const T &val) { return std::to_string(val); }
+
+    void addDefaultSettings() {
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    addSetting(#variableName, varToString(defaultValue));
 #define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
     DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
@@ -38,7 +62,266 @@ TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDef
 #undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
+    }
+};
 
-    size_t mapCount = reader->getStringSettingsCount();
-    EXPECT_EQ(mapCount, debugVariableCount);
+TEST(SettingsFileReader, GivenFilesDoesNotExistWhenCreatingFileReaderThenCreationSucceeds) {
+    // Use current location for file read
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+}
+
+TEST(SettingsFileReader, WhenGettingSettingThenCorrectStringValueIsReturned) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+    std::istringstream fileContent("StringTestKey = TestValue\nIntTestKey = 123\nIntTestKeyHex = 0xABCD\n");
+    reader->parseStream(fileContent);
+
+    std::string retValue;
+    // StringTestKey is defined in file: unit_tests\helpers\test_debug_variables.inl
+    std::string returnedStringValue = reader->getSetting("StringTestKey", retValue);
+
+    // "Test Value" is a value that should be read from file defined in stringTestPath member
+    EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
+
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    {                                                                             \
+        dataType defaultData = defaultValue;                                      \
+        dataType tempData = reader->getSetting(#variableName, defaultData);       \
+        if (tempData == defaultData) {                                            \
+            EXPECT_TRUE(true);                                                    \
+        }                                                                         \
+    }
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#include "shared/test/unit_test/helpers/test_debug_variables.inl"
+#undef DECLARE_DEBUG_SCOPED_V
+#undef DECLARE_DEBUG_VARIABLE
+}
+
+TEST(SettingsFileReader, givenDebugFileSettingInWhichStringIsFollowedByIntegerWhenItIsParsedThenProperValuesAreObtained) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader.get());
+    std::istringstream fileContent("StringTestKey = TestValue\nIntTestKey = 123\nIntTestKeyHex = 0xABCD\n");
+    reader->parseStream(fileContent);
+
+    int32_t retValue = 0;
+    int32_t returnedIntValue = reader->getSetting("IntTestKey", retValue);
+
+    EXPECT_EQ(123, returnedIntValue);
+
+    int32_t returnedIntValueHex = reader->getSetting("IntTestKeyHex", 0);
+
+    EXPECT_EQ(0xABCD, returnedIntValueHex);
+
+    std::string retValueString;
+    std::string returnedStringValue = reader->getSetting("StringTestKey", retValueString);
+
+    EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
+}
+
+TEST(SettingsFileReader, GivenSettingNotInFileWhenGettingSettingThenProvidedDefaultIsReturned) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+
+    bool defaultBoolValue = false;
+    bool returnedBoolValue = reader->getSetting("BoolSettingNotExistingInFile", defaultBoolValue);
+
+    EXPECT_EQ(defaultBoolValue, returnedBoolValue);
+
+    int32_t defaultIntValue = 123;
+    int32_t returnedIntValue = reader->getSetting("IntSettingNotExistingInFile", defaultIntValue);
+
+    EXPECT_EQ(defaultIntValue, returnedIntValue);
+
+    std::string defaultStringValue = "ABCD";
+    std::string returnedStringValue = reader->getSetting("StringSettingNotExistingInFile", defaultStringValue);
+
+    EXPECT_EQ(defaultStringValue, returnedStringValue);
+}
+
+TEST(SettingsFileReader, WhenGettingAppSpecificLocationThenCorrectLocationIsReturned) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    std::string appSpecific = "cl_cache_dir";
+    EXPECT_EQ(appSpecific, reader->appSpecificLocation(appSpecific));
+}
+
+TEST(SettingsFileReader, givenHexNumbersSemiColonSeparatedListInInputStreamWhenParsingThenCorrectStringValueIsStored) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+
+    // No settings should be parsed initially
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+    std::stringstream inputLineWithSemiColonList("KeyName = 0x1234;0x5555");
+
+    reader->parseStream(inputLineWithSemiColonList);
+
+    std::string defaultStringValue = "FailedToParse";
+    std::string returnedStringValue = reader->getSetting("KeyName", defaultStringValue);
+
+    EXPECT_STREQ("0x1234;0x5555", returnedStringValue.c_str());
+}
+
+TEST(SettingsFileReader, given64bitKeyValueWhenGetSettingThenValueIsCorrect) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+    std::stringstream inputLine("Example64BitKey = -18764712120594");
+    reader->parseStream(inputLine);
+
+    int64_t defaultValue = 0;
+    int64_t returnedValue = reader->getSetting("Example64BitKey", defaultValue);
+
+    EXPECT_EQ(-18764712120594, returnedValue);
+}
+
+TEST(SettingsFileReader, givenKeyValueWithoutSpacesWhenGetSettingThenValueIsCorrect) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+    std::stringstream inputLine("SomeKey=12");
+    reader->parseStream(inputLine);
+
+    int64_t returnedValue = reader->getSetting("SomeKey", 0);
+    EXPECT_EQ(1u, reader->getStringSettingsCount());
+    EXPECT_EQ(12, returnedValue);
+}
+
+TEST(SettingsFileReader, givenKeyValueWithAdditionalWhitespaceCharactersWhenGetSettingThenValueIsCorrect) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+    std::stringstream inputLine("\t \t SomeKey\t \t =\t \t 12\t \t ");
+    reader->parseStream(inputLine);
+
+    int64_t returnedValue = reader->getSetting("SomeKey", 0);
+    EXPECT_EQ(1u, reader->getStringSettingsCount());
+    EXPECT_EQ(12, returnedValue);
+}
+
+TEST(SettingsFileReader, givenKeyValueWithAdditionalCharactersWhenGetSettingThenValueIsIncorrect) {
+    {
+        auto reader = std::make_unique<TestSettingsFileReader>();
+        ASSERT_NE(nullptr, reader);
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+        std::stringstream inputLine("Some Key = 12");
+        reader->parseStream(inputLine);
+
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+    }
+    {
+        auto reader = std::make_unique<TestSettingsFileReader>();
+        ASSERT_NE(nullptr, reader);
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+        std::stringstream inputLine("SomeKey = 1 2");
+        reader->parseStream(inputLine);
+
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+    }
+}
+
+TEST(SettingsFileReader, givenMultipleKeysWhenGetSettingThenInvalidKeysAreSkipped) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+    std::string testFile;
+    testFile.append("InvalidKey1 = 1 2\n");
+    testFile.append("ValidKey1 = 12\n");
+    testFile.append("InvalidKey2 = - 1\n");
+    testFile.append("ValidKey2 = 128\n");
+    std::stringstream inputFile(testFile);
+    reader->parseStream(inputFile);
+
+    EXPECT_EQ(2u, reader->getStringSettingsCount());
+    EXPECT_EQ(0, reader->getSetting("InvalidKey1", 0));
+    EXPECT_EQ(0, reader->getSetting("InvalidKey2", 0));
+    EXPECT_EQ(12, reader->getSetting("ValidKey1", 0));
+    EXPECT_EQ(128, reader->getSetting("ValidKey2", 0));
+}
+
+TEST(SettingsFileReader, givenNoKeyOrNoValueWhenGetSettingThenExceptionIsNotThrown) {
+    {
+        auto reader = std::make_unique<TestSettingsFileReader>();
+        ASSERT_NE(nullptr, reader);
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+        std::stringstream inputLine("= 12");
+        EXPECT_NO_THROW(reader->parseStream(inputLine));
+
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+    }
+    {
+        auto reader = std::make_unique<TestSettingsFileReader>();
+        ASSERT_NE(nullptr, reader);
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+        std::stringstream inputLine("SomeKey =");
+        EXPECT_NO_THROW(reader->parseStream(inputLine));
+
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+    }
+    {
+        auto reader = std::make_unique<TestSettingsFileReader>();
+        ASSERT_NE(nullptr, reader);
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+        std::stringstream inputLine("=");
+        EXPECT_NO_THROW(reader->parseStream(inputLine));
+
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+    }
+}
+
+TEST(SettingsFileReader, givenPrefixFileReadCorrectValueReturned) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader.get());
+    {
+        std::istringstream fileContent("StringTestKey = TestValue\nIntTestKey = 123\nIntTestKeyHex = 0xABCD\n");
+        reader->parseStream(fileContent);
+    }
+    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+    DebugVarPrefix type = DebugVarPrefix::none;
+    int32_t retValue = 0;
+    int32_t returnedIntValue = reader->getSetting("IntTestKey", retValue, type);
+    EXPECT_EQ(DebugVarPrefix::none, type);
+    EXPECT_EQ(123, returnedIntValue);
+
+    int32_t returnedIntValueHex = reader->getSetting("IntTestKeyHex", 0, type);
+    EXPECT_EQ(DebugVarPrefix::none, type);
+    EXPECT_EQ(0xABCD, returnedIntValueHex);
+
+    std::string retValueString = "";
+    std::string returnedStringValue = reader->getSetting("StringTestKey", retValueString, type);
+    EXPECT_EQ(DebugVarPrefix::none, type);
+    EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
+
+    auto neoReader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, neoReader.get());
+    {
+        std::istringstream neoFileContent("NEO_StringTestKey = TestValue\nNEO_IntTestKey = 123\nNEO_IntTestKeyHex = 0xABCD\n");
+        neoReader->parseStream(neoFileContent);
+    }
+
+    retValue = 0;
+    returnedIntValue = neoReader->getSetting("IntTestKey", retValue, type);
+    EXPECT_EQ(DebugVarPrefix::neo, type);
+    EXPECT_EQ(123, returnedIntValue);
+
+    returnedIntValueHex = neoReader->getSetting("IntTestKeyHex", 0, type);
+    EXPECT_EQ(DebugVarPrefix::neo, type);
+    EXPECT_EQ(0xABCD, returnedIntValueHex);
+
+    retValueString = "";
+    returnedStringValue = neoReader->getSetting("StringTestKey", retValueString, type);
+    EXPECT_EQ(DebugVarPrefix::neo, type);
+    EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
 }

@@ -6,15 +6,16 @@
  */
 
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_settings_reader.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 
-#include <fstream>
 #include <string>
 
 using namespace NEO;
@@ -29,11 +30,41 @@ TEST(SettingsReader, WhenCreatingSettingsReaderThenReaderIsCreated) {
 TEST(SettingsReader, GivenNoSettingsFileWhenCreatingSettingsReaderThenOsReaderIsCreated) {
     ASSERT_FALSE(virtualFileExists(SettingsReader::settingsFileName));
 
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> fopenBackup(&NEO::IoFunctions::fopenPtr, [](const char *, const char *) -> FILE * {
+        return nullptr;
+    });
+
     auto fileReader = std::unique_ptr<SettingsReader>(SettingsReader::createFileReader());
     EXPECT_EQ(nullptr, fileReader.get());
 
     auto osReader = std::unique_ptr<SettingsReader>(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
     EXPECT_NE(nullptr, osReader.get());
+}
+
+TEST(SettingsReader, GivenSettingsFileExistsWithZeroSizeWhenCreatingFileReaderThenReaderIsCreatedWithNoSettings) {
+    ASSERT_FALSE(virtualFileExists(SettingsReader::settingsFileName));
+
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> fopenBackup(&NEO::IoFunctions::fopenPtr, [](const char *, const char *) -> FILE * {
+        return reinterpret_cast<FILE *>(1);
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> fseekBackup(&NEO::IoFunctions::fseekPtr, [](FILE *, long int, int) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> ftellBackup(&NEO::IoFunctions::ftellPtr, [](FILE *) -> long int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::freadPtr)> freadBackup(&NEO::IoFunctions::freadPtr, [](void *, size_t, size_t, FILE *) -> size_t {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> fcloseBackup(&NEO::IoFunctions::fclosePtr, [](FILE *) -> int {
+        return 0;
+    });
+
+    auto fileReader = std::unique_ptr<SettingsReader>(SettingsReader::createFileReader());
+    EXPECT_NE(nullptr, fileReader.get());
+
+    std::string defaultValue("unk");
+    EXPECT_STREQ("unk", fileReader->getSetting("ProductFamilyOverride", defaultValue).c_str());
 }
 
 TEST(SettingsReader, GivenSettingsFileExistsWhenCreatingSettingsReaderThenReaderIsCreated) {

@@ -12,7 +12,6 @@
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 
-#include <fstream>
 #include <sstream>
 #include <vector>
 

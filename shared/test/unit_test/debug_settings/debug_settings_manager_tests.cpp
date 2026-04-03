@@ -23,7 +23,6 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
-#include <cstdio>
 #include <memory>
 #include <regex>
 #include <sstream>
@@ -150,11 +149,11 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNoPrefixWhenCalling
     debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::none);
 
     // Clear dump files and generate new
-    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     debugManager.dumpFlags();
 
     // Validate allSettingsDumpFile
-    SettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
+    MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
 #define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)                                     \
     {                                                                                                            \
         DebugVarPrefix type;                                                                                     \
@@ -168,7 +167,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNoPrefixWhenCalling
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
-    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
@@ -194,11 +193,11 @@ TEST(DebugSettingsManager, DISABLED_givenPrintDebugSettingsEnabledWithNeoPrefixW
     debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neo);
 
     // Clear dump files and generate new
-    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     debugManager.dumpFlags();
 
     // Validate allSettingsDumpFile
-    SettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
+    MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
 #define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)                                     \
     {                                                                                                            \
         DebugVarPrefix type;                                                                                     \
@@ -212,7 +211,7 @@ TEST(DebugSettingsManager, DISABLED_givenPrintDebugSettingsEnabledWithNeoPrefixW
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
-    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
@@ -238,11 +237,11 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithLevelZeroPrefixWhen
     debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neoL0);
 
     // Clear dump files and generate new
-    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     debugManager.dumpFlags();
 
     // Validate allSettingsDumpFile
-    SettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
+    MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
 #define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)                                     \
     {                                                                                                            \
         DebugVarPrefix type;                                                                                     \
@@ -256,7 +255,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithLevelZeroPrefixWhen
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
-    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
@@ -282,11 +281,11 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithOclPrefixWhenCallin
     debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neoOcl);
 
     // Clear dump files and generate new
-    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     debugManager.dumpFlags();
 
     // Validate allSettingsDumpFile
-    SettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
+    MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
 #define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)                                     \
     {                                                                                                            \
         DebugVarPrefix type;                                                                                     \
@@ -300,7 +299,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithOclPrefixWhenCallin
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
-    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
@@ -326,11 +325,11 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithMixedPrefixWhenCall
     debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neoL0);
 
     // Clear dump files and generate new
-    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     debugManager.dumpFlags();
 
     // Validate allSettingsDumpFile
-    SettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
+    MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
 #define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)                                     \
     {                                                                                                            \
         DebugVarPrefix type;                                                                                     \
@@ -344,7 +343,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithMixedPrefixWhenCall
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
-    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
@@ -360,9 +359,9 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledOnDisabledDebugManagerW
     FullyDisabledTestDebugManager debugManager;
     debugManager.flags.PrintDebugSettings.set(true);
 
-    std::remove(FullyDisabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyDisabledTestDebugManager::settingsDumpFileName);
     debugManager.dumpFlags();
-    std::remove(FullyDisabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyDisabledTestDebugManager::settingsDumpFileName);
 
     std::string output = capture.getCapturedStdout();
     ASSERT_EQ(0u, output.size());
@@ -431,8 +430,7 @@ TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCall
     auto output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
-    auto logFileExists = NEO::fileExists(logFile);
-    EXPECT_TRUE(logFileExists);
+    ASSERT_TRUE(virtualFileExists(logFile));
 
     size_t retSize;
     auto data = loadDataFromVirtualFile(logFile, retSize);

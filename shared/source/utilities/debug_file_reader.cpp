@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,21 +9,19 @@
 
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/file_io.h"
 
-#include <fstream>
 #include <sstream>
 
 namespace NEO {
 
 SettingsFileReader::SettingsFileReader(const char *filePath) {
-    std::ifstream settingsFile;
-
     UNRECOVERABLE_IF(!filePath);
-    settingsFile.open(filePath);
-
-    if (settingsFile.is_open()) {
+    size_t fileSize = 0;
+    auto fileData = loadDataFromFile(filePath, fileSize);
+    if (fileData) {
+        std::istringstream settingsFile(std::string(fileData.get(), fileSize));
         parseStream(settingsFile);
-        settingsFile.close();
     }
 }
 

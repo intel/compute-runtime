@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/debug_settings/definitions/translate_debug_settings.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 #include "shared/source/utilities/io_functions.h"
@@ -18,7 +19,6 @@
 
 #include <chrono>
 #include <cinttypes>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -143,16 +143,13 @@ void DebugSettingsManager<debugLevel>::dumpFlags() const {
         return;
     }
 
-    std::ofstream settingsDumpFile{settingsDumpFileName, std::ios::out};
-    DEBUG_BREAK_IF(!settingsDumpFile.good());
-
     std::string allFlags;
     std::string changedFlags;
 
     getStringWithFlags(allFlags, changedFlags);
     PRINT_STRING(true, stdout, "%s", changedFlags.c_str());
 
-    settingsDumpFile << allFlags;
+    NEO::writeDataToFile(settingsDumpFileName, allFlags, false);
 }
 
 template <DebugFunctionalityLevel debugLevel>

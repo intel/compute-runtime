@@ -8,13 +8,13 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/utilities/debug_file_reader.h"
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_settings_reader.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include <fstream>
 #include <unordered_map>
 
 namespace NEO {
@@ -55,11 +55,11 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsAndDebugKeysReadEnabledOnDisab
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     // Clear dump files and generate new
-    std::remove(FullyDisabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyDisabledTestDebugManager::settingsDumpFileName);
     debugManager.dumpFlags();
 
     // Validate allSettingsDumpFile
-    SettingsFileReader allSettingsReader{FullyDisabledTestDebugManager::settingsDumpFileName};
+    MockSettingsFileReader allSettingsReader{FullyDisabledTestDebugManager::settingsDumpFileName};
 #define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description) \
     EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue));
 #define DECLARE_DEBUG_SCOPED_V(dataType, varName, defaultValue, description, ...) \
@@ -69,7 +69,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsAndDebugKeysReadEnabledOnDisab
 #undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
-    std::remove(FullyDisabledTestDebugManager::settingsDumpFileName);
+    removeVirtualFile(FullyDisabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
