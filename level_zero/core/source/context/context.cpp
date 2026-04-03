@@ -333,6 +333,7 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
 
     if (lookupTable.rayTracingMemory == true) {
         unifiedMemoryProperties.allocationFlags.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
+        unifiedMemoryProperties.allocationFlags.allocFlags.rtAllocation = 1;
     }
 
     if (false == lookupTable.exportMemory) {
@@ -1901,7 +1902,7 @@ bool Context::isAllocationSuitableForCompression(const StructuresLookupTable &st
         return false;
     }
 
-    if (l0GfxCoreHelper.forceDefaultUsmCompressionSupport()) {
+    if (l0GfxCoreHelper.forceDefaultUsmCompressionSupport() && !structuresLookupTable.rayTracingMemory) {
         return true;
     }
 

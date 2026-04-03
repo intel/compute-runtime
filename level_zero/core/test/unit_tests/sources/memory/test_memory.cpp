@@ -498,6 +498,58 @@ HWTEST_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressio
     }
 }
 
+HWTEST_F(CompressionMemoryTest, givenRayTracingDeviceUsmWhenAllocatingThenCompressionIsDisabledByDefault) {
+    DebugManagerStateRestore dbgRestore;
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    NEO::debugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
+    rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
+    deviceDesc.pNext = &rtDesc;
+
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &properties) -> void {
+        EXPECT_FALSE(properties.flags.preferCompressed);
+    };
+
+    void *ptr = nullptr;
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 2048, 4096, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    context->freeMem(ptr);
+}
+
+HWTEST_F(CompressionMemoryTest, givenRayTracingDeviceUsmWithExplicitCompressedHintWhenAllocatingThenCompressionIsEnabled) {
+    DebugManagerStateRestore dbgRestore;
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    NEO::debugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
+    rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
+    ze_memory_compression_hints_ext_desc_t compressedHintDesc = {};
+    compressedHintDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+    compressedHintDesc.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+    rtDesc.pNext = &compressedHintDesc;
+    deviceDesc.pNext = &rtDesc;
+
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &properties) -> void {
+        EXPECT_TRUE(properties.flags.preferCompressed);
+    };
+
+    void *ptr = nullptr;
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 2048, 4096, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    context->freeMem(ptr);
+}
+
 TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsExpectedProperties) {
     size_t size = 10;
     size_t alignment = 1u;

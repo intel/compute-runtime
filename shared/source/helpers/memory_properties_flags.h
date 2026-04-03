@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,7 @@ struct MemoryAllocFlags {
     uint32_t allocWriteCombined : 1;
     uint32_t usmInitialPlacementCpu : 1;
     uint32_t usmInitialPlacementGpu : 1;
+    uint32_t rtAllocation : 1;
 };
 
 struct MemoryProperties {
