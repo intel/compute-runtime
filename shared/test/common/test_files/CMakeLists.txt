@@ -48,7 +48,7 @@ function(compile_kernels_gen device revision_id platform_name use_stateless use_
       set(internal_options "")
       if(${use_heapless})
         set(heapless_mode "enable")
-        set(internal_options "${HEAPLESS_INTERNAL_OPTIONS}")
+        set(internal_options "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode -ze-intel-64bit-addressing")
       endif()
 
       list(APPEND __ocloc__options__ ${SELECTED_KERNEL_TYPES})
@@ -77,8 +77,6 @@ function(compile_kernels_gen device revision_id platform_name use_stateless use_
   endforeach()
   set(compiled_kernels_${platform_name}_${revision_id} ${compiled_kernels_${platform_name}_${revision_id}} PARENT_SCOPE)
 endfunction()
-
-add_subdirectories()
 
 file(GLOB_RECURSE TEST_KERNELS *.cl)
 file(GLOB_RECURSE TEST_KERNELS_IMAGES *_images.cl)
