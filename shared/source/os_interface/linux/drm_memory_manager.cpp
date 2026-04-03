@@ -1577,7 +1577,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
         if (ret < 0) {
             return nullptr;
         }
-        return createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, ptr, true);
+        auto result = createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, ptr, true);
+        closeInternalHandle(internalHandle, 0u, defaultAlloc);
+        return result;
     } else {
         return allocateGraphicsMemoryWithProperties(properties, ptr);
     }
