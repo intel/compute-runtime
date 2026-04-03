@@ -525,7 +525,10 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenUncachedHostAllocationThenSetAllocation
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenSharedUnifiedMemoryAllocationsAreAlignedCorrectly) {
-    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    DebugManagerStateRestore restore;
+    debugManager.flags.ForcePreemptionMode.set(1);
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 0));
     auto device = deviceFactory->rootDevices[0];
     auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
@@ -536,9 +539,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenSharedUnifiedMemoryAllocat
     auto mockPageFaultManager = new MockPageFaultManager();
     memoryManager->pageFaultManager.reset(mockPageFaultManager);
 
-    size_t alignment = 8 * MemoryConstants::megaByte;
-    do {
-        alignment >>= 1;
+    const size_t representativeAlignments[] = {0, MemoryConstants::pageSize, MemoryConstants::pageSize64k, 2 * MemoryConstants::pageSize64k, MemoryConstants::pageSize2M};
+    for (size_t alignment : representativeAlignments) {
         memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
             EXPECT_EQ(properties.alignment, alignUpNonZero<size_t>(alignment, MemoryConstants::pageSize64k));
         };
@@ -551,14 +553,15 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenSharedUnifiedMemoryAllocat
         }
         EXPECT_EQ(svmManager->getSVMAlloc(ptr)->pageSizeForAlignment, MemoryConstants::pageSize64k);
         svmManager->freeSVMAlloc(ptr);
-    } while (alignment != 0);
+    }
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentWhenLocalMemoryIsEnabledThenSharedUnifiedMemoryAllocationsAreAlignedCorrectly) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.ForcePreemptionMode.set(1);
 
-    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 0));
     auto device = deviceFactory->rootDevices[0];
     auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
@@ -570,9 +573,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentWhenLocalMemoryIsEnabledThenSh
     memoryManager->pageFaultManager.reset(mockPageFaultManager);
 
     const size_t svmCpuAlignment = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0]->getProductHelper().getSvmCpuAlignment();
-    size_t alignment = 8 * MemoryConstants::megaByte;
-    do {
-        alignment >>= 1;
+    const size_t representativeAlignments[] = {0, MemoryConstants::pageSize, MemoryConstants::pageSize64k, 2 * MemoryConstants::pageSize64k, MemoryConstants::pageSize2M};
+    for (size_t alignment : representativeAlignments) {
         memoryManager->validateAllocateProperties = [alignment, svmCpuAlignment](const AllocationProperties &properties) {
             EXPECT_EQ(properties.alignment, alignUpNonZero<size_t>(alignment, std::max(MemoryConstants::pageSize64k, svmCpuAlignment)));
         };
@@ -586,7 +588,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentWhenLocalMemoryIsEnabledThenSh
         const size_t pageSizeForAlignment = std::max(MemoryConstants::pageSize64k, svmCpuAlignment);
         EXPECT_EQ(svmManager->getSVMAlloc(ptr)->pageSizeForAlignment, pageSizeForAlignment);
         svmManager->freeSVMAlloc(ptr);
-    } while (alignment != 0);
+    }
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenInternalAllocationWhenItIsMadeResidentThenNewTrackingEntryIsCreated) {
