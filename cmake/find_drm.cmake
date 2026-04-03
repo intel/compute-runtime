@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024-2025 Intel Corporation
+# Copyright (C) 2024-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -41,6 +41,12 @@ endif()
 
 message(STATUS "iaf includes dir: ${NEO_IAF_HEADERS_DIR}")
 
+if(NOT DEFINED NEO_UAPI_HEADERS_DIR OR NEO_UAPI_HEADERS_DIR STREQUAL "")
+  get_filename_component(NEO_UAPI_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party/uapi/drm-next" ABSOLUTE)
+endif()
+
+message(STATUS "neo uapi includes dir: ${NEO_UAPI_HEADERS_DIR}")
+
 set(NEO_LINUX_KMD_HEADERS_DIR
     ${NEO_DRM_HEADERS_DIR}
     ${NEO_I915_HEADERS_DIR}
@@ -48,4 +54,5 @@ set(NEO_LINUX_KMD_HEADERS_DIR
     ${NEO_XE_HEADERS_DIR}
     ${NEO_XE_PRELIM_HEADERS_DIR}
     ${NEO_IAF_HEADERS_DIR}
+    ${NEO_UAPI_HEADERS_DIR}
 )
