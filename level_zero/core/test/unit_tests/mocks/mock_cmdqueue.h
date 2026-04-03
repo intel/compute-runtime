@@ -40,6 +40,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueue {
     using BaseClass = ::L0::CommandQueue;
     using BaseClass::activeSubDevices;
     using BaseClass::buffers;
+    using BaseClass::cachedSipAllocation;
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListWithAssertExecuted;
     using BaseClass::commandStream;

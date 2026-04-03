@@ -1326,11 +1326,11 @@ void CommandQueueHw<gfxCoreFamily>::makePreemptionAllocationResidentForModeMidTh
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::makeSipIsaResidentIfSipKernelUsed(CommandListExecutionContext &ctx) {
-    NEO::Device *neoDevice = this->device->getNEODevice();
     if (ctx.isDevicePreemptionModeMidThread || ctx.isNEODebuggerActive) {
-
-        NEO::GraphicsAllocation *sipAllocation = NEO::SipKernel::getSipKernel(*neoDevice, &this->csr->getOsContext()).getSipAllocation();
-        this->csr->makeResident(*sipAllocation);
+        if (cachedSipAllocation == nullptr) {
+            cachedSipAllocation = NEO::SipKernel::getSipKernel(*this->device->getNEODevice(), &this->csr->getOsContext()).getSipAllocation();
+        }
+        this->csr->makeResident(*cachedSipAllocation);
     }
 }
 

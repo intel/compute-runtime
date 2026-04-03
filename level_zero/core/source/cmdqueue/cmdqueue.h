@@ -193,6 +193,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool isWalkerWithProfilingEnqueued = false;
     bool patchingPreamble = false;
     bool saveWaitForPreamble = false;
+
+    NEO::GraphicsAllocation *cachedSipAllocation = nullptr;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device * device, NEO::CommandStreamReceiver *csr,
