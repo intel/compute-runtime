@@ -7,16 +7,16 @@
 
 #pragma once
 
-#include "shared/offline_compiler/source/decoder/helper.h"
 #include "shared/source/utilities/const_stringref.h"
+
+#include "shared/offline_compiler/source/decoder/helper.h"
 
 #include <algorithm>
 #include <cstdint>
-#include <fstream>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
+#include <sstream>
 
 constexpr auto *oclocStdoutLogName = "stdout.log";
 
