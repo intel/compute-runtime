@@ -205,4 +205,9 @@ bool ReleaseHelperHw<releaseType>::isAvailableSemaphore64() const {
     return false;
 }
 
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isRTInvalidationWaRequired() const {
+    return false;
+}
+
 } // namespace NEO
