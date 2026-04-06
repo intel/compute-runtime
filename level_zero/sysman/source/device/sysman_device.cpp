@@ -382,7 +382,7 @@ ze_result_t SysmanDevice::fabricPortGetMultiPortThroughput(zes_device_handle_t h
     return pSysmanDevice->fabricPortGetMultiPortThroughput(numPorts, phPort, pThroughput);
 }
 
-ze_result_t SysmanDevice::memoryGetPageOfflineStateExp(zes_device_handle_t hDevice, zes_mem_page_offline_state_exp_t *pPageOfflineState) {
+ze_result_t SysmanDevice::memoryGetPageOfflineStateExp(zes_device_handle_t hDevice, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
@@ -390,7 +390,7 @@ ze_result_t SysmanDevice::memoryGetPageOfflineStateExp(zes_device_handle_t hDevi
     if (pSysmanDevice->isDeviceInSurvivabilityMode) {
         return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
-    return pSysmanDevice->memoryGetPageOfflineStateExp(pPageOfflineState);
+    return pSysmanDevice->memoryGetPageOfflineStateExp(pageStatus, pCount, pPageOfflineInfo);
 }
 
 } // namespace Sysman

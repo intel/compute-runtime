@@ -497,6 +497,23 @@ typedef enum _zes_intel_memory_page_offline_exp_version_t {
 } zes_intel_memory_page_offline_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Memory Page status
+typedef enum _zes_intel_mem_page_status_exp_t {
+    ZES_INTEL_MEM_PAGE_STATUS_EXP_OFFLINE = 1,
+    ZES_INTEL_MEM_PAGE_STATUS_EXP_PENDING_OFFLINE = 2,
+    ZES_INTEL_MEM_PAGE_STATUS_EXP_FORCE_UINT32 = 0x7fffffff
+} zes_intel_mem_page_status_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Memory Page information structure
+typedef struct _zes_intel_mem_page_info_exp_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                    ///< [in,out][optional] pointer to extension-specific  structure
+    uint64_t pageAddress;           ///< [out] Physical address of the memory page
+    uint32_t pageSize;              ///< [out] Size of the page in bytes
+} zes_intel_mem_page_info_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Get Memory Page Offline
 ///
 /// @details
@@ -518,12 +535,41 @@ typedef enum _zes_intel_memory_page_offline_exp_version_t {
 ///     - ::ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED
 ///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
 ///         + `nullptr == hDevice`
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
-///         + `nullptr == pPageOfflineState`
 ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(
-    zes_device_handle_t hDevice,                        ///< [in] handle of the device
-    zes_mem_page_offline_state_exp_t *pPageOfflineState ///< [out] Returns the memory page offline state.
+    zes_device_handle_t hDevice,                    ///< [in] handle of the device
+    zes_intel_mem_page_status_exp_t pageStatus,     ///< [in] Status of the Memory Pages to be queried
+    uint32_t *pCount,                               ///< [in,out] pointer to the number of memory pages which are already offlined or pending to be offlined.
+                                                    ///< if count is zero, then the driver shall update the value with the
+                                                    ///< total number of memory pages in the given status.
+                                                    ///< if count is non-zero, then driver shall only retrieve that number
+                                                    ///< of memory pages in the given status.
+    zes_intel_mem_page_info_exp_t *pPageOfflineInfo ///< [in,out][optional] array of memory page information structure.
+                                                    ///< if count is less than the number of memory pages in the given status, then
+                                                    ///< driver shall only retrieve that number of memory pages in the given status.
 );
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME
+/// @brief  Memory Page Offline Property extension name
+#define ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME "ZES_intel_memory_page_offline_property"
+#endif // ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Memory Page Offline Property extension Version(s)
+typedef enum _zes_intel_mem_page_offline_properties_exp_version_t {
+    ZES_INTEL_MEM_PAGE_OFFLINE_PROPERTIES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_MEM_PAGE_OFFLINE_PROPERTIES_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_MEM_PAGE_OFFLINE_PROPERTIES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_mem_page_offline_properties_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Memory Page Offline Properties structure
+typedef struct _zes_intel_mem_page_offline_properties_exp_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                    ///< [in,out][optional] must be null or a pointer to an extension-specific
+    uint32_t maxOfflinePages;       ///< [out] Maximum number of pages that can be offlined.
+                                    ///< Returns 0 if page offline is not supported.
+} zes_intel_mem_page_offline_properties_exp_t;
 
 #define ZES_INTEL_MEM_TYPE_LPDDR5X 500 ///< LPDDR5X Memory Type
 

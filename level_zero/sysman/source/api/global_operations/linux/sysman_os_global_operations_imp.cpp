@@ -773,16 +773,20 @@ ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState)
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxGlobalOperationsImp::memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t LinuxGlobalOperationsImp::memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
+    return pSysmanProductHelper->memoryGetPageOfflineStateExp(pSysfsAccess, pageStatus, pCount, memPageInfoList, pPageOfflineInfo);
+}
+
+ze_result_t LinuxGlobalOperationsImp::getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) {
+    return pSysmanProductHelper->getMaxMemoryOfflinePages(pSysfsAccess, pMaxOfflinePages);
 }
 
 LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pProcfsAccess = &pLinuxSysmanImp->getProcfsAccess();
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     devicePciBdf = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
     rootDeviceIndex = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceIndex();
 }

@@ -66,5 +66,7 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZES_INTEL_STRUCTURE_TYPE_FREQUENCY_THROTTLE_DETAILED_REASON_EXP static_cast<zes_structure_type_ext_t>(0x00040004)
 #define ZES_INTEL_STRUCTURE_TYPE_RAS_CONFIG_EXP static_cast<zes_structure_type_ext_t>(0x00040005)
 #define ZES_INTEL_STRUCTURE_TYPE_RAS_STATE_EXP static_cast<zes_structure_type_ext_t>(0x00040006)
+#define ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_INFO_EXP static_cast<zes_structure_type_ext_t>(0x00040007)
+#define ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_PROPERTIES_EXP static_cast<zes_structure_type_ext_t>(0x00040008)
 
 #endif

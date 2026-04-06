@@ -30,6 +30,12 @@ struct OsSysman;
 
 constexpr uint32_t maxUuidsPerDevice = 3;
 
+struct MemPageInfo {
+    uint64_t pageAddress;
+    uint32_t pageSize;
+    zes_intel_mem_page_status_exp_t pageStatus;
+};
+
 class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNonMovableClass {
   public:
     bool getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
@@ -50,7 +56,8 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     ze_bool_t getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) override;
     bool generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
     ze_result_t getSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) override;
-    ze_result_t memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) override;
+    ze_result_t memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) override;
+    ze_result_t getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) override;
     LinuxGlobalOperationsImp() = default;
     LinuxGlobalOperationsImp(OsSysman *pOsSysman);
     ~LinuxGlobalOperationsImp() override = default;
@@ -74,6 +81,8 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     ProcFsAccessInterface *pProcfsAccess = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
+    SysmanProductHelper *pSysmanProductHelper = nullptr;
+    std::vector<MemPageInfo> memPageInfoList = {};
     int resetTimeout = 10000; // in milliseconds
     void releaseSysmanDeviceResources();
     void releaseDeviceResources();

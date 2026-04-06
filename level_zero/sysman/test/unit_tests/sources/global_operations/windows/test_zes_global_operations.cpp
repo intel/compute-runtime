@@ -213,9 +213,21 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDebugApiUsedSetWhenGettingDevicePrope
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesIntelDeviceMemoryGetPageOfflineStateExpThenErrorIsReturned) {
     init(true);
-    zes_mem_page_offline_state_exp_t pageState = {ZES_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_STATE_EXP};
-    ze_result_t result = zesIntelDeviceMemoryGetPageOfflineStateExp(pSysmanDevice->toHandle(), &pageState);
+    zes_intel_mem_page_status_exp_t pageStatus = ZES_INTEL_MEM_PAGE_STATUS_EXP_OFFLINE;
+    uint32_t count = 0;
+    zes_intel_mem_page_info_exp_t pageOfflineInfo = {};
+    ze_result_t result = zesIntelDeviceMemoryGetPageOfflineStateExp(pSysmanDevice->toHandle(), pageStatus, &count, &pageOfflineInfo);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidExtensionStructureWhenCallingZesDeviceGetPropertiesThenProperValuesAndSuccessIsReturned) {
+    uint32_t expectedMaxOfflinePages = 0;
+    init(true);
+    zes_intel_mem_page_offline_properties_exp_t memPageOfflineProperties = {ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_PROPERTIES_EXP, nullptr, 10};
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES, &memPageOfflineProperties};
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(expectedMaxOfflinePages, memPageOfflineProperties.maxOfflinePages);
 }
 
 class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {
