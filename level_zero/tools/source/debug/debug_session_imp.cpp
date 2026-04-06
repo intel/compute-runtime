@@ -1441,6 +1441,12 @@ ze_result_t DebugSessionImp::readModeFlags(uint32_t start, uint32_t count, void 
     }
     auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
     auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
+    if (pStateSaveArea->versionHeader.version.major >= 5) {
+        uint32_t data = ZET_DEBUG_MODE_FLAG_HEAPLESS;
+        memcpy_s(pRegisterValues, sizeof(data), &data, sizeof(data));
+        return ZE_RESULT_SUCCESS;
+    }
+
     const size_t size = 4;
     memcpy_s(pRegisterValues, size, &pStateSaveArea->regHeaderV3.sip_flags, size);
     return ZE_RESULT_SUCCESS;

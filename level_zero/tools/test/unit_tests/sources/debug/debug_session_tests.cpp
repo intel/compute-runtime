@@ -4202,6 +4202,19 @@ TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingModeRegisterThenCorrectResu
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset();
 }
 
+TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingModeForSSHVersion5RegisterThenCorrectResultReturned) {
+    auto mockBuiltins = new MockBuiltins();
+    mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), mockBuiltins);
+
+    uint32_t modeFlags;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, session->readModeFlags(1, 1, &modeFlags));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, session->readModeFlags(0, 2, &modeFlags));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readModeFlags(0, 1, &modeFlags));
+    EXPECT_EQ(modeFlags, SIP::SIP_FLAG_HEAPLESS);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset();
+}
+
 TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddressesAreReturned) {
 
     {
