@@ -180,11 +180,19 @@ ze_result_t SysmanDevice::deviceReset(zes_device_handle_t hDevice, ze_bool_t for
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
-        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
-    }
+
     return pSysmanDevice->deviceReset(force);
 }
+
+ze_result_t SysmanDevice::deviceResetExt(zes_device_handle_t hDevice, zes_reset_properties_t *pProperties) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    return pSysmanDevice->deviceResetExt(pProperties);
+}
+
 ze_result_t SysmanDevice::deviceGetState(zes_device_handle_t hDevice, zes_device_state_t *pState) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
@@ -358,17 +366,6 @@ ze_result_t SysmanDevice::deviceEventRegister(zes_device_handle_t hDevice, zes_e
 uint64_t SysmanDevice::getSysmanTimestamp() {
     std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
-}
-
-ze_result_t SysmanDevice::deviceResetExt(zes_device_handle_t hDevice, zes_reset_properties_t *pProperties) {
-    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
-    if (pSysmanDevice == nullptr) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
-        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
-    }
-    return pSysmanDevice->deviceResetExt(pProperties);
 }
 
 ze_result_t SysmanDevice::fabricPortGetMultiPortThroughput(zes_device_handle_t hDevice, uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) {

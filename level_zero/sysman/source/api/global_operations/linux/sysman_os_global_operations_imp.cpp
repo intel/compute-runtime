@@ -414,7 +414,11 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
         }
     }
 
-    return pLinuxSysmanImp->reInitSysmanDeviceResources();
+    ze_result_t reinitResult = pLinuxSysmanImp->reInitSysmanDeviceResources();
+    if (reinitResult == ZE_RESULT_SUCCESS) {
+        pLinuxSysmanImp->getParentSysmanDeviceImp()->isDeviceInSurvivabilityMode = false;
+    }
+    return reinitResult;
 }
 
 ze_result_t LinuxGlobalOperationsImp::getMemoryStatsUsedByProcess(std::vector<std::string> &fdFileContents, uint64_t &memSize, uint64_t &sharedSize) {

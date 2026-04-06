@@ -71,6 +71,7 @@ std::string getErrorString(ze_result_t error) {
         {ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED, "ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED"},
         {ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE, "ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE"},
         {ZE_RESULT_ERROR_OVERLAPPING_REGIONS, "ZE_RESULT_ERROR_OVERLAPPING_REGIONS"},
+        {ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, "ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED"},
         {ZE_RESULT_ERROR_UNKNOWN, "ZE_RESULT_ERROR_UNKNOWN"}};
     auto i = mgetErrorString.find(error);
     if (i == mgetErrorString.end()) {
@@ -1607,6 +1608,9 @@ void testSysmanListenEvents(ze_driver_handle_t driver, std::vector<ze_device_han
                 if (pEvents[index] & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
                     std::cout << "Device " << index << " got memory Health event" << std::endl;
                 }
+                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED) {
+                    std::cout << "Device " << index << " got SURVIVABILITY_MODE_DETECTED event" << std::endl;
+                }
             }
         }
     }
@@ -1641,6 +1645,9 @@ void testSysmanListenEventsEx(ze_driver_handle_t driver, std::vector<ze_device_h
                 }
                 if (pEvents[index] & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
                     std::cout << "Device " << index << " got memory Health event" << std::endl;
+                }
+                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED) {
+                    std::cout << "Device " << index << " got SURVIVABILITY_MODE_DETECTED event" << std::endl;
                 }
             }
         }
@@ -2356,22 +2363,22 @@ int main(int argc, char *argv[]) {
             VALIDATECALL(zesDeviceEventRegister(device,
                                                 ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
                                                     ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
+                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
         });
         testSysmanListenEvents(driver, devices,
                                ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
                                    ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                   ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
+                                   ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             VALIDATECALL(zesDeviceEventRegister(device,
                                                 ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
                                                     ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
+                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
         });
         testSysmanListenEventsEx(driver, devices,
                                  ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
                                      ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                     ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
+                                     ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
     }
     if (isParamEnabled(argc, argv, "-F", "--fabricport", &optind)) {
         std::for_each(devices.begin(), devices.end(), [&](auto device) {

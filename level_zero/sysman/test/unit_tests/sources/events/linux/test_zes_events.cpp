@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,8 +86,8 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanEventsFixture, whenRegisteringInvalidEventsThenErrorIsReturned) {
-    zes_event_type_flags_t events = 0xFFFF;
+TEST_F(SysmanEventsFixture, GivenInvalidEventTypeFlagsWhenRegisteringEventsThenInvalidEnumerationErrorIsReturned) {
+    zes_event_type_flags_t events = 0x10000;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, pLinuxEventsImp->eventRegister(events));
 }
 
@@ -2172,6 +2172,338 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForUnsupportedEve
     EXPECT_EQ(0u, numDeviceEvents);
     delete[] phDevices;
     delete[] pDeviceEvents;
+}
+
+TEST_F(SysmanEventsFixture, GivenNullOsInterfaceWhenBuildingDevPathMapThenUnrecoverableIsCalled) {
+    PublicLinuxSysmanDriverImp driverImp{};
+    EventsUdevLibMock udevLibLocal{};
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    eventsUtil->pUdevLib = &udevLibLocal;
+
+    // Register an event so the device is not skipped by the early !registeredEvents check
+    eventsUtil->deviceEventsMap[pSysmanDeviceImp] = ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
+
+    std::vector<zes_event_type_flags_t> registeredEvents(1, 0);
+    std::map<uint32_t, std::string> mapOfDevIndexToDevPath;
+    L0::Sysman::FsAccessInterface *pFsAccess = nullptr;
+
+    zes_device_handle_t handle = device->toHandle();
+    // Null the OS interface so the null check inside getDevIndexToDevPathMap is triggered
+    VariableBackup<L0::Sysman::OsSysman *> osInterfaceBackup(&pSysmanDeviceImp->pOsSysman, nullptr);
+
+    // In test builds abortExecution() throws std::exception rather than calling abort()
+    EXPECT_THROW(eventsUtil->getDevIndexToDevPathMap(registeredEvents, 1u, &handle, mapOfDevIndexToDevPath, pFsAccess), std::exception);
+}
+
+TEST_F(SysmanEventsFixture, GivenNullFsAccessWhenWedgedEventPathReachesIsSurvivabilityModeAsExpectedThenNoEventIsReturned) {
+    PublicLinuxSysmanDriverImp driverImp = {};
+    EventsUdevLibMock udevLibLocal = {};
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    eventsUtil->pUdevLib = &udevLibLocal;
+    eventsUtil->action = "change";
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    std::vector<zes_event_type_flags_t> registeredEvents(1, ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
+    std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {{0u, "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0"}};
+    L0::Sysman::FsAccessInterface *pFsAccess = nullptr;
+    zes_event_type_flags_t pEvents[1] = {0};
+
+    int a = 0;
+    void *dev = &a;
+    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess, pEvents, dev);
+    EXPECT_FALSE(retVal);
+    EXPECT_EQ(0u, pEvents[0]);
+}
+
+TEST_F(SysmanEventsFixture, GivenDeviceAlreadyInSurvivabilityModeWhenEventsListenIsCalledThenEventIsReturnedImmediately) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = true;
+
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED, pDeviceEvents[0]);
+
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
+}
+
+TEST_F(SysmanEventsFixture, GivenDeviceNotInSurvivabilityModeWhenEventsListenIsCalledThenNoPreCheckEventIsReturned) {
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    // Use timeout=0 so listenSystemEvents returns immediately with no udev event
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 0u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenActionIsNotChangeWhenCheckingWedgedEventThenFalseIsReturned) {
+    PublicLinuxSysmanDriverImp driverImp = {};
+    EventsUdevLibMock udevLibLocal = {};
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    eventsUtil->pUdevLib = &udevLibLocal;
+    eventsUtil->action = "add";
+
+    zes_event_type_flags_t pEvent = 0;
+    int a = 0;
+    void *dev = &a;
+    bool retVal = eventsUtil->checkDeviceWedgedEvent(nullptr, "", dev, pEvent);
+    EXPECT_FALSE(retVal);
+    EXPECT_EQ(0u, pEvent);
+}
+
+TEST_F(SysmanEventsFixture, GivenWedgedPropertyIsNullWhenCheckingWedgedEventThenFalseIsReturnedWithoutCrash) {
+    PublicLinuxSysmanDriverImp driverImp = {};
+    EventsUdevLibMock udevLibLocal = {};
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    eventsUtil->pUdevLib = &udevLibLocal;
+    eventsUtil->action = "change";
+    // Empty string causes mock to return nullptr for WEDGED property
+    udevLibLocal.getEventPropertyValueResult = "";
+
+    zes_event_type_flags_t pEvent = 0;
+    int a = 0;
+    void *dev = &a;
+    bool retVal = eventsUtil->checkDeviceWedgedEvent(nullptr, "", dev, pEvent);
+    EXPECT_FALSE(retVal);
+    EXPECT_EQ(0u, pEvent);
+}
+
+TEST_F(SysmanEventsFixture, GivenWedgedPropertyIsVendorSpecificAndSurvivabilityModeIsRuntimeWhenCheckingWedgedEventThenEventFlagIsSetAndTrueIsReturned) {
+    PublicLinuxSysmanDriverImp driverImp = {};
+    EventsUdevLibMock udevLibLocal = {};
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    eventsUtil->pUdevLib = &udevLibLocal;
+    eventsUtil->action = "change";
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    pFsAccess->mockSurvivabilityModeEnabled = true;
+    const std::string devPath = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
+
+    zes_event_type_flags_t pEvent = 0;
+    int a = 0;
+    void *dev = &a;
+    bool retVal = eventsUtil->checkDeviceWedgedEvent(pFsAccess.get(), devPath, dev, pEvent);
+    EXPECT_TRUE(retVal);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED, pEvent);
+}
+
+TEST_F(SysmanEventsFixture, GivenWedgedPropertyIsVendorSpecificAndSurvivabilityModeIsNotRuntimeWhenCheckingWedgedEventThenFalseIsReturnedAndNoFlagIsSet) {
+    PublicLinuxSysmanDriverImp driverImp = {};
+    EventsUdevLibMock udevLibLocal = {};
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    eventsUtil->pUdevLib = &udevLibLocal;
+    eventsUtil->action = "change";
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    pFsAccess->mockSurvivabilityModeEnabled = false;
+    const std::string devPath = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
+
+    zes_event_type_flags_t pEvent = 0;
+    int a = 0;
+    void *dev = &a;
+    bool retVal = eventsUtil->checkDeviceWedgedEvent(pFsAccess.get(), devPath, dev, pEvent);
+    EXPECT_FALSE(retVal);
+    EXPECT_EQ(0u, pEvent);
+}
+
+TEST_F(SysmanEventsFixture, GivenWedgedPropertyIsVendorSpecificAndSurvivabilityModeSysfsReadFailsWhenCheckingWedgedEventThenFalseIsReturnedAndNoFlagIsSet) {
+    PublicLinuxSysmanDriverImp driverImp = {};
+    EventsUdevLibMock udevLibLocal = {};
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    eventsUtil->pUdevLib = &udevLibLocal;
+    eventsUtil->action = "change";
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    pFsAccess->mockSurvivabilityModeReadFail = true;
+    const std::string devPath = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
+
+    zes_event_type_flags_t pEvent = 0;
+    int a = 0;
+    void *dev = &a;
+    bool retVal = eventsUtil->checkDeviceWedgedEvent(pFsAccess.get(), devPath, dev, pEvent);
+    EXPECT_FALSE(retVal);
+    EXPECT_EQ(0u, pEvent);
+}
+
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForSurvivabilityModeEventAndSysfsNodeReadsOneAndWedgedPropertyIsVendorSpecificThenEventListenAPIReturnsEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+    EventsUdevLibMock udevLibLocal = {};
+    VariableBackup<L0::Sysman::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib, &udevLibLocal);
+    udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    pFsAccess->mockSurvivabilityModeEnabled = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED, pDeviceEvents[0]);
+}
+
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForSurvivabilityModeEventAndSysfsNodeReadsZeroThenEventListenAPIDoesNotReturnEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+    EventsUdevLibMock udevLibLocal = {};
+    VariableBackup<L0::Sysman::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib, &udevLibLocal);
+    udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    // survivability_mode sysfs node reads 0 - event should be suppressed
+    pFsAccess->mockSurvivabilityModeEnabled = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForSurvivabilityModeEventAndSysfsNodeReadFailsThenEventListenAPIDoesNotReturnEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+    EventsUdevLibMock udevLibLocal = {};
+    VariableBackup<L0::Sysman::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib, &udevLibLocal);
+    udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    // survivability_mode sysfs read fails - event should be suppressed
+    pFsAccess->mockSurvivabilityModeReadFail = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForSurvivabilityModeEventAndSysfsNodeReadsOneButWedgedPropertyIsNotVendorSpecificThenEventListenAPIDoesNotReturnEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+    EventsUdevLibMock udevLibLocal = {};
+    VariableBackup<L0::Sysman::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib, &udevLibLocal);
+    udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
+    // WEDGED property is not "vendor-specific" - event should not fire
+    udevLibLocal.getEventPropertyValueResult = "not-vendor-specific";
+
+    pFsAccess->mockSurvivabilityModeEnabled = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenInvalidDeviceRealPathWhenListeningForSurvivabilityModeEventThenEventListenAPIDoesNotReturnEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+    EventsUdevLibMock udevLibLocal = {};
+    VariableBackup<L0::Sysman::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib, &udevLibLocal);
+    udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    pFsAccess->mockSurvivabilityModeEnabled = true;
+    // Real path has no "/devices" substring - device not added to dev path map
+    pSysfsAccess->realPath = "/completely/invalid/path/without-device-substring";
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenNullDeviceHandleWhenCallingDriverEventListenThenInvalidArgumentErrorIsReturned) {
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+
+    std::vector<zes_device_handle_t> phDevices = {nullptr};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
 }
 
 } // namespace ult

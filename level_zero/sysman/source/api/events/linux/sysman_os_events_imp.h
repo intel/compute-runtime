@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ class LinuxSysmanDriverImp;
 class LinuxSysmanImp;
 class Ras;
 class UdevLib;
+class FsAccessInterface;
 struct OsSysman;
 struct SysmanDeviceImp;
 
@@ -56,20 +57,22 @@ class LinuxEventsUtil {
     bool isResetRequired(void *dev, zes_event_type_flags_t &pEvent);
     bool checkDeviceDetachEvent(zes_event_type_flags_t &pEvent);
     bool checkDeviceAttachEvent(zes_event_type_flags_t &pEvent);
+    bool checkDeviceWedgedEvent(FsAccessInterface *pFsAccess, const std::string &devPath, void *dev, zes_event_type_flags_t &pEvent);
     bool checkIfMemHealthChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool checkIfFabricPortStatusChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout);
+    bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev);
+    void getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *&pFsAccess);
+    static bool isSurvivabilityModeAsExpected(FsAccessInterface *pFsAccess, const std::string &devPath, const std::string &mode);
+    std::string action;
 
   private:
-    std::string action;
     static const std::string add;
     static const std::string remove;
     static const std::string change;
     static const std::string unbind;
     static const std::string bind;
     static bool checkRasEventOccured(Ras *rasHandle);
-    void getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath);
-    bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, std::map<uint32_t, std::string> mapOfDevIndexToDevPath, zes_event_type_flags_t *pEvents, void *dev);
     std::once_flag initEventsOnce;
     std::mutex eventsMutex;
     void init();

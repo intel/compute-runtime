@@ -27,6 +27,8 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
+#include <atomic>
+
 namespace NEO {
 class ExecutionEnvironment;
 struct HardwareInfo;
@@ -148,7 +150,7 @@ struct SysmanDevice : _ze_device_handle_t {
 
     virtual OsSysman *deviceGetOsInterface() = 0;
     virtual void getDeviceUuids(std::vector<std::string> &deviceUuids) = 0;
-    bool isDeviceInSurvivabilityMode = false;
+    std::atomic<bool> isDeviceInSurvivabilityMode = false;
 };
 
 } // namespace Sysman

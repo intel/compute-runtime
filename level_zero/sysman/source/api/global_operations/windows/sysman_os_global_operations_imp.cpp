@@ -141,7 +141,11 @@ ze_result_t WddmGlobalOperationsImp::reset(ze_bool_t force) {
     request.dataSize = sizeof(uint32_t);
     value = static_cast<uint32_t>(force);
     memcpy_s(request.dataBuffer, sizeof(uint32_t), &value, sizeof(uint32_t));
-    return pKmdSysManager->requestSingle(request, response);
+    ze_result_t result = pKmdSysManager->requestSingle(request, response);
+    if (result == ZE_RESULT_SUCCESS) {
+        pWddmSysmanImp->getSysmanDeviceImp()->isDeviceInSurvivabilityMode = false;
+    }
+    return result;
 }
 
 ze_result_t WddmGlobalOperationsImp::resetExt(zes_reset_properties_t *pProperties) {

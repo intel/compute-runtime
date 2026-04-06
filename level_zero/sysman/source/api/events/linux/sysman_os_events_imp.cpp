@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeou
 }
 
 ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
-    if (0x7fff < events) {
+    if (0xFFFF < events) {
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
 
@@ -120,7 +120,8 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
         zes_event_type_flags_t supportedEventMask = ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
                                                     ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED |
                                                     ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS;
+                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS |
+                                                    ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
         if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
             registeredEvents = deviceEventsMap[pSysmanDevice];
         }
@@ -174,6 +175,14 @@ ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_
                     return ZE_RESULT_SUCCESS;
                 }
             }
+
+            if (registeredEvents[devIndex] & ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED) {
+                if (device->isDeviceInSurvivabilityMode) {
+                    pEvents[devIndex] |= ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
+                    *pNumDeviceEvents = 1;
+                    return ZE_RESULT_SUCCESS;
+                }
+            }
         }
     }
 
@@ -204,6 +213,42 @@ bool LinuxEventsUtil::isResetRequired(void *dev, zes_event_type_flags_t &pEvent)
                 pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED;
                 return true;
             }
+        }
+    }
+
+    return false;
+}
+
+bool LinuxEventsUtil::isSurvivabilityModeAsExpected(FsAccessInterface *pFsAccess, const std::string &devPath, const std::string &mode) {
+    if (pFsAccess == nullptr) {
+        return false;
+    }
+
+    // /sys/bus/pci/devices/<device>/survivability_mode will contain either "Boot" or "Runtime".
+    const std::string survivabilityModeFilePath = "/sys" + devPath + "/survivability_mode";
+    std::string survivabilityModeVal;
+    if (pFsAccess->read(survivabilityModeFilePath, survivabilityModeVal) != ZE_RESULT_SUCCESS) {
+        return false;
+    }
+
+    return survivabilityModeVal == mode;
+}
+
+bool LinuxEventsUtil::checkDeviceWedgedEvent(FsAccessInterface *pFsAccess, const std::string &devPath, void *dev, zes_event_type_flags_t &pEvent) {
+    if (action.compare(change) != 0) {
+        return false;
+    }
+    std::string property = "WEDGED";
+
+    const char *propVal = nullptr;
+    propVal = pUdevLib->getEventPropertyValue(dev, property.c_str());
+    std::string expectedStr = "vendor-specific";
+
+    if ((propVal != nullptr) && (expectedStr == propVal)) {
+        const std::string survivabilityModeType = "Runtime";
+        if (isSurvivabilityModeAsExpected(pFsAccess, devPath, survivabilityModeType)) {
+            pEvent |= ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
+            return true;
         }
     }
 
@@ -261,7 +306,7 @@ bool LinuxEventsUtil::checkIfFabricPortStatusChanged(void *dev, zes_event_type_f
     return false;
 }
 
-void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath) {
+void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *&pFsAccess) {
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]));
         if (deviceEventsMap.find(device) != deviceEventsMap.end()) {
@@ -293,6 +338,7 @@ void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t
 
             bdf = bdf.substr(loc);
             mapOfDevIndexToDevPath.insert({devIndex, bdf});
+            pFsAccess = &osInterface->getFsAccess();
         } else {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                          "%s", "Failed to get real path of device\n");
@@ -300,7 +346,7 @@ void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t
     }
 }
 
-bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, std::map<uint32_t, std::string> mapOfDevIndexToDevPath, zes_event_type_flags_t *pEvents, void *dev) {
+bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev) {
     const char *devicePath = pUdevLib->getEventPropertyValue(dev, "DEVPATH");
     bool retVal = false;
     if (devicePath != nullptr) {
@@ -314,6 +360,11 @@ bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &reg
                 }
                 if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
                     if (checkDeviceAttachEvent(pEvents[it->first])) {
+                        retVal = true;
+                    }
+                }
+                if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED) {
+                    if (checkDeviceWedgedEvent(pFsAccess, it->second, dev, pEvents[it->first])) {
                         retVal = true;
                     }
                 }
@@ -348,6 +399,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
     struct pollfd pfd[2];
     std::vector<std::string> subsystemList;
     std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {};
+    FsAccessInterface *pFsAccess = nullptr;
 
     if (pUdevLib == nullptr) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -373,7 +425,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
 
     auto start = L0::Sysman::SteadyClock::now();
     std::chrono::duration<double, std::milli> timeElapsed;
-    getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath);
+    getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
     eventsMutex.unlock();
     while (NEO::SysCalls::poll(pfd, 2, static_cast<int>(timeout)) > 0) {
         bool eventReceived = false;
@@ -384,7 +436,8 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
                     uint8_t dummy;
                     NEO::SysCalls::read(pipeFd[0], &dummy, 1);
                     mapOfDevIndexToDevPath.clear();
-                    getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath);
+                    pFsAccess = nullptr;
+                    getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
                     eventsMutex.unlock();
                 } else {
                     eventReceived = true;
@@ -425,7 +478,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             break;
         }
 
-        retval = checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pEvents, dev);
+        retval = checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess, pEvents, dev);
         pUdevLib->dropDeviceReference(dev);
         if (retval) {
             break;

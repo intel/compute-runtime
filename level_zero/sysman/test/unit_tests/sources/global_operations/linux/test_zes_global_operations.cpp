@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1024,6 +1024,90 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseAndReInitFailsDuringResetW
 
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInSurvivabilityModeWhenReInitFailsDuringResetThenSurvivabilityFlagRemainsSet) {
+
+    initGlobalOps();
+    MockGlobalOperationsProcfsAccess *pProcFsAccess = new MockGlobalOperationsProcfsAccess();
+
+    pProcFsAccess->ourDevicePid = pProcFsAccess->pidList[0];
+    pProcFsAccess->ourDeviceFd = pProcFsAccess->extraFd;
+    pProcFsAccess->mockListProcessCall.push_back(DEVICE_UNUSED);
+    pProcFsAccess->isRepeated.push_back(false);
+    pProcFsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
+    pProcFsAccess->isRepeated.push_back(true);
+    pProcFsAccess->mockNoKill = true;
+
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
+    pSysmanKmdInterface->pProcfsAccess.reset(pProcFsAccess);
+
+    std::unique_ptr<MockGlobalOpsLinuxSysmanImp> pMockGlobalOpsLinuxSysmanImp = std::make_unique<MockGlobalOpsLinuxSysmanImp>(pLinuxSysmanImp->getSysmanDeviceImp());
+    pMockGlobalOpsLinuxSysmanImp->pProcfsAccess = pProcFsAccess;
+    pMockGlobalOpsLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp = pMockGlobalOpsLinuxSysmanImp.get();
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pProcfsAccess = pProcFsAccess;
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->resetTimeout = 0; // timeout immediate
+
+    pMockGlobalOpsLinuxSysmanImp->ourDevicePid = pProcFsAccess->ourDevicePid;
+    pMockGlobalOpsLinuxSysmanImp->ourDeviceFd = pProcFsAccess->extraFd;
+    pMockGlobalOpsLinuxSysmanImp->setMockInitDeviceError(ZE_RESULT_ERROR_UNKNOWN);
+
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = true;
+
+    ze_result_t result = zesDeviceReset(device, true);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_TRUE(pSysmanDeviceImp->isDeviceInSurvivabilityMode);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInSurvivabilityModeWhenResetSucceedsThenSurvivabilityFlagIsCleared) {
+
+    initGlobalOps();
+    auto pProcFsAccessUnique = std::make_unique<MockGlobalOperationsProcfsAccess>();
+    MockGlobalOperationsProcfsAccess *pProcFsAccess = pProcFsAccessUnique.get();
+
+    auto pSysmanKmdInterfaceUnique = std::make_unique<MockSysmanKmdInterfacePrelim>(pLinuxSysmanImp->getSysmanProductHelper());
+    pSysmanKmdInterfaceUnique->pProcfsAccess = std::move(pProcFsAccessUnique);
+
+    std::unique_ptr<MockGlobalOpsLinuxSysmanImp> pMockGlobalOpsLinuxSysmanImp = std::make_unique<MockGlobalOpsLinuxSysmanImp>(pLinuxSysmanImp->getSysmanDeviceImp());
+    pMockGlobalOpsLinuxSysmanImp->pProcfsAccess = pProcFsAccess;
+    pMockGlobalOpsLinuxSysmanImp->pSysmanKmdInterface = std::move(pSysmanKmdInterfaceUnique);
+
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp = pMockGlobalOpsLinuxSysmanImp.get();
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pProcfsAccess = pProcFsAccess;
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->resetTimeout = 0;
+
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = true;
+
+    ze_result_t result = zesDeviceReset(device, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(pSysmanDeviceImp->isDeviceInSurvivabilityMode);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInSurvivabilityModeWhenResetSucceedsButReInitFailsThenSurvivabilityFlagRemainsSet) {
+
+    initGlobalOps();
+    auto pProcFsAccessUnique = std::make_unique<MockGlobalOperationsProcfsAccess>();
+    MockGlobalOperationsProcfsAccess *pProcFsAccess = pProcFsAccessUnique.get();
+
+    auto pSysmanKmdInterfaceUnique = std::make_unique<MockSysmanKmdInterfacePrelim>(pLinuxSysmanImp->getSysmanProductHelper());
+    pSysmanKmdInterfaceUnique->pProcfsAccess = std::move(pProcFsAccessUnique);
+
+    std::unique_ptr<MockGlobalOpsLinuxSysmanImp> pMockGlobalOpsLinuxSysmanImp = std::make_unique<MockGlobalOpsLinuxSysmanImp>(pLinuxSysmanImp->getSysmanDeviceImp());
+    pMockGlobalOpsLinuxSysmanImp->pProcfsAccess = pProcFsAccess;
+    pMockGlobalOpsLinuxSysmanImp->pSysmanKmdInterface = std::move(pSysmanKmdInterfaceUnique);
+    pMockGlobalOpsLinuxSysmanImp->setMockInitDeviceError(ZE_RESULT_ERROR_UNKNOWN);
+
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp = pMockGlobalOpsLinuxSysmanImp.get();
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pProcfsAccess = pProcFsAccess;
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->resetTimeout = 0;
+
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = true;
+
+    ze_result_t result = zesDeviceReset(device, true);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_TRUE(pSysmanDeviceImp->isDeviceInSurvivabilityMode);
 }
 
 TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceNotInUseWhenCallingResetThenSuccessIsReturned) {

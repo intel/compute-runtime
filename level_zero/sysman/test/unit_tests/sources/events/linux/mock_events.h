@@ -34,6 +34,7 @@ const std::string ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
 const std::string ueventDetachFile("/var/lib/libze_intel_gpu/remove-pci-0000_03_00_0");
 const std::string ueventAttachFile("/var/lib/libze_intel_gpu/add-pci-0000_03_00_0");
 const std::string ueventFabricFile("/var/lib/libze_intel_gpu/fabric-pci-0000_03_00_0");
+const std::string survivabilityModeSysfsPath("/sys/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/survivability_mode");
 const std::string deviceDir("device");
 const std::string deviceMemoryHealth("device_memory_health");
 const std::string eventsDir("/sys/devices/i915_0000_03_00.0/events");
@@ -110,6 +111,12 @@ struct MockEventsFsAccess : public L0::Sysman::FsAccessInterface {
         } else if (file.compare(eventsDir + "/" + "error--engine-reset") == 0) {
             config = "config=0x000000000000010";
             return ZE_RESULT_SUCCESS;
+        } else if (file.compare(survivabilityModeSysfsPath) == 0) {
+            if (mockSurvivabilityModeReadFail) {
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            config = mockSurvivabilityModeEnabled ? "Runtime" : "Boot";
+            return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -139,6 +146,9 @@ struct MockEventsFsAccess : public L0::Sysman::FsAccessInterface {
         val = 23;
         return ZE_RESULT_SUCCESS;
     }
+
+    bool mockSurvivabilityModeEnabled = false;
+    bool mockSurvivabilityModeReadFail = false;
 
     ze_result_t read(const std::string file, uint32_t &val) override {
 
@@ -304,7 +314,12 @@ class PublicLinuxEventsImp : public L0::Sysman::LinuxEventsImp {
 class PublicLinuxEventsUtil : public L0::Sysman::LinuxEventsUtil {
   public:
     PublicLinuxEventsUtil(L0::Sysman::LinuxSysmanDriverImp *pLinuxSysmanDriverImp) : LinuxEventsUtil(pLinuxSysmanDriverImp) {}
+    using LinuxEventsUtil::action;
+    using LinuxEventsUtil::checkDeviceEvents;
+    using LinuxEventsUtil::checkDeviceWedgedEvent;
     using LinuxEventsUtil::deviceEventsMap;
+    using LinuxEventsUtil::getDevIndexToDevPathMap;
+    using LinuxEventsUtil::isSurvivabilityModeAsExpected;
     using LinuxEventsUtil::listenSystemEvents;
     using LinuxEventsUtil::pipeFd;
     using LinuxEventsUtil::pUdevLib;
