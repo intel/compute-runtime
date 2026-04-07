@@ -5775,6 +5775,83 @@ HWTEST_F(CommandStreamReceiverHwTest, givenUcResourceRequiresTagUpdateWhenFlushT
     EXPECT_EQ(csrAddress, address);
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenUcResourceRequiresTagUpdateWhenFlushBcsTaskWithBlitPropertiesThenMiFlushDwProgrammedWithUcTagAddress) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    MockOsContext mockOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}));
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver.setupContext(mockOsContext);
+    commandStreamReceiver.initializeTagAllocation();
+    commandStreamReceiver.ucResourceRequiresTagUpdate = true;
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
+                                                                          commandStreamReceiver, commandStreamReceiver.getTagAllocation(), nullptr,
+                                                                          commandStreamReceiver.getTagAllocation()->getUnderlyingBuffer(),
+                                                                          commandStreamReceiver.getTagAllocation()->getGpuAddress(), 0,
+                                                                          0, 0, 0, 0, 0, 0, 0);
+
+    BlitPropertiesContainer container;
+    container.push_back(blitProperties);
+    commandStreamReceiver.flushBcsTask(container, true, *pDevice);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+
+    auto ucTagAddress = commandStreamReceiver.getUcTagGPUAddress();
+    auto cmdIterator = find<MI_FLUSH_DW *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    bool ucTagAddressFound = false;
+    while (cmdIterator != hwParser.cmdList.end()) {
+        auto flush = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
+        if (flush->getDestinationAddress() == ucTagAddress) {
+            ucTagAddressFound = true;
+            break;
+        }
+        cmdIterator = find<MI_FLUSH_DW *>(++cmdIterator, hwParser.cmdList.end());
+    }
+    EXPECT_TRUE(ucTagAddressFound);
+    EXPECT_FALSE(commandStreamReceiver.ucResourceRequiresTagUpdate);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenUcResourceRequiresTagUpdateWhenFlushBcsTaskWithCommandStreamThenMiFlushDwProgrammedWithUcTagAddress) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    MockOsContext mockOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}));
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver.setupContext(mockOsContext);
+    commandStreamReceiver.initializeTagAllocation();
+
+    DispatchBcsFlags dispatchBcsFlags(false, false, false);
+
+    // first flush to initialize
+    commandStreamReceiver.flushBcsTask(commandStream,
+                                       commandStream.getUsed(),
+                                       dispatchBcsFlags,
+                                       pDevice->getHardwareInfo());
+
+    auto offset = commandStream.getUsed();
+    commandStreamReceiver.ucResourceRequiresTagUpdate = true;
+
+    commandStreamReceiver.flushBcsTask(commandStream,
+                                       commandStream.getUsed(),
+                                       dispatchBcsFlags,
+                                       pDevice->getHardwareInfo());
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream, offset);
+
+    auto ucTagAddress = commandStreamReceiver.getUcTagGPUAddress();
+    auto cmdIterator = find<MI_FLUSH_DW *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    bool ucTagAddressFound = false;
+    while (cmdIterator != hwParser.cmdList.end()) {
+        auto flush = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
+        if (flush->getDestinationAddress() == ucTagAddress) {
+            ucTagAddressFound = true;
+            break;
+        }
+        cmdIterator = find<MI_FLUSH_DW *>(++cmdIterator, hwParser.cmdList.end());
+    }
+    EXPECT_TRUE(ucTagAddressFound);
+    EXPECT_FALSE(commandStreamReceiver.ucResourceRequiresTagUpdate);
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, GivenFlushHeapStorageRequiresRecyclingTagWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.recordFlushedBatchBuffer = true;

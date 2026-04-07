@@ -224,6 +224,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
 
     LinearStream &epilogueCommandStream = dispatchBcsFlags.optionalEpilogueCmdStream != nullptr ? *dispatchBcsFlags.optionalEpilogueCmdStream : commandStreamTask;
 
+    if (this->ucResourceRequiresTagUpdate) {
+        this->emitTagUpdateWithoutDCFlush(epilogueCommandStream);
+    }
+
     if (dispatchBcsFlags.flushTaskCount) {
         uint64_t postSyncAddress = getTagAllocation()->getGpuAddress();
         TaskCountType postSyncData = peekTaskCount() + 1;
@@ -1033,6 +1037,11 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
     auto estimatedCsSize = BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, blitPropertiesContainer[0].blitSyncProperties.isTimestampMode(), debugPauseEnabled, blitterDirectSubmission,
                                                                                    relaxedOrderingAllowed, *rootDeviceEnvironment.get());
+    if (this->ucResourceRequiresTagUpdate) {
+        NEO::EncodeDummyBlitWaArgs ucWaArgs{false, rootDeviceEnvironment.get()};
+        estimatedCsSize += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditionalSynchronization(NEO::FenceType::release, *rootDeviceEnvironment.get());
+        estimatedCsSize += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(ucWaArgs);
+    }
     auto &commandStream = getCS(estimatedCsSize);
 
     auto commandStreamStart = commandStream.getUsed();
@@ -1131,6 +1140,10 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
             args.notifyEnable = isUsedNotifyEnableForPostSync();
             EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, blitProperties.multiRootDeviceEventSync->getGpuAddress() + blitProperties.multiRootDeviceEventSync->getContextEndOffset(), std::numeric_limits<uint64_t>::max(), args);
         }
+    }
+
+    if (this->ucResourceRequiresTagUpdate) {
+        this->emitTagUpdateWithoutDCFlush(commandStream);
     }
 
     BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(commandStream, device.getDeviceInfo().semaphore64bCmdSupport);
@@ -1850,16 +1863,25 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitTagUpdateWithoutDCFlush(Line
     auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
     auto address = this->getUcTagGPUAddress();
 
-    PipeControlArgs args = {};
-    args.notifyEnable = isUsedNotifyEnableForPostSync();
-    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-        commandStream,
-        PostSyncMode::immediateData,
-        address,
-        taskCount + 1,
-        rootDeviceEnvironment,
-        args);
+    if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+        NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&peekRootDeviceEnvironment())};
+        MiFlushArgs args{waArgs};
+        args.commandWithPostSync = true;
+        args.notifyEnable = isUsedNotifyEnableForPostSync();
 
+        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, address, NEO::FenceType::release, peekRootDeviceEnvironment());
+        EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, address, taskCount + 1, args);
+    } else {
+        PipeControlArgs args = {};
+        args.notifyEnable = isUsedNotifyEnableForPostSync();
+        MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+            commandStream,
+            PostSyncMode::immediateData,
+            address,
+            taskCount + 1,
+            rootDeviceEnvironment,
+            args);
+    }
     makeResident(*tagAllocation);
     this->ucResourceRequiresTagUpdate = false;
 }
