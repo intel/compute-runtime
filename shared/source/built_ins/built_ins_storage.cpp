@@ -14,11 +14,11 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/path.h"
+#include "shared/source/utilities/io_functions.h"
 
 #include "os_inc.h"
 
 #include <cstdint>
-#include <fstream>
 #include <sstream>
 
 namespace NEO {
@@ -165,13 +165,16 @@ BuiltIn::Resource BuiltIn::Storage::load(const std::string &resourceName) {
 BuiltIn::Resource BuiltIn::FileStorage::loadImpl(const std::string &fullResourceName) {
     BuiltIn::Resource ret;
 
-    std::ifstream f{fullResourceName, std::ios::in | std::ios::binary | std::ios::ate};
-    auto end = f.tellg();
-    f.seekg(0, std::ios::beg);
-    auto beg = f.tellg();
-    auto s = end - beg;
-    ret.resize(static_cast<size_t>(s));
-    f.read(ret.data(), s);
+    FILE *fp = NEO::IoFunctions::fopenPtr(fullResourceName.c_str(), "rb");
+    if (fp == nullptr) {
+        return ret;
+    }
+    NEO::IoFunctions::fseekPtr(fp, 0, SEEK_END);
+    auto size = static_cast<size_t>(NEO::IoFunctions::ftellPtr(fp));
+    NEO::IoFunctions::fseekPtr(fp, 0, SEEK_SET);
+    ret.resize(size);
+    NEO::IoFunctions::freadPtr(ret.data(), sizeof(char), size, fp);
+    NEO::IoFunctions::fclosePtr(fp);
     return ret;
 }
 
