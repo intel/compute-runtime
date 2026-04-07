@@ -168,6 +168,8 @@ enum class ImageBuiltIn : uint32_t {
     copyImage3dToBufferBytesWideStatelessHeapless,
     copyImageRegion,
     copyImageRegionHeapless,
+    fillImage3d,
+    fillImage3dHeapless,
     count
 };
 
@@ -412,6 +414,14 @@ constexpr ImageBuiltIn adjustImageBuiltIn<ImageBuiltIn::copyImageRegion>(const b
         return ImageBuiltIn::copyImageRegionHeapless;
     }
     return ImageBuiltIn::copyImageRegion;
+}
+
+template <>
+constexpr ImageBuiltIn adjustImageBuiltIn<ImageBuiltIn::fillImage3d>(const bool isStateless, const bool isHeapless, const bool isWideness) {
+    if (isHeapless) {
+        return ImageBuiltIn::fillImage3dHeapless;
+    }
+    return ImageBuiltIn::fillImage3d;
 }
 
 } // namespace BuiltInHelper

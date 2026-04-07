@@ -614,6 +614,14 @@ void BuiltInKernelLibImpl::initBuiltinImageKernel(ImageBuiltIn func) {
         kernelName = "CopyImage3dToImage3d";
         builtInGroup = NEO::BuiltIn::Group::copyImageToImage3dHeapless;
         break;
+    case ImageBuiltIn::fillImage3d:
+        kernelName = "FillImage3d";
+        builtInGroup = NEO::BuiltIn::Group::fillImage3d;
+        break;
+    case ImageBuiltIn::fillImage3dHeapless:
+        kernelName = "FillImage3d";
+        builtInGroup = NEO::BuiltIn::Group::fillImage3dHeapless;
+        break;
     default:
         UNRECOVERABLE_IF(true);
     };
