@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,7 @@ struct Image : _ze_image_handle_t {
     virtual bool isMimickedImage() = 0;
     virtual ze_result_t allocateImplicitArgsOnDemand() = 0;
     virtual void encodeImplicitArgsSurfaceState() = 0;
+    virtual bool isSrgb() const = 0;
 
     static ze_result_t getPitchFor2dImage(
         ze_device_handle_t hDevice,

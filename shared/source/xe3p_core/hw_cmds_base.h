@@ -238,11 +238,6 @@ struct Xe3pCoreFamily : public Xe3pCore {
             POSTSYNC_DATA_2,
             POSTSYNC_DATA>>{};
     }
-
-    template <typename PostSyncType>
-    static constexpr bool isPostSyncData1() {
-        return std::is_same_v<PostSyncType, POSTSYNC_DATA>;
-    }
 };
 
 enum class MemoryCompressionState;

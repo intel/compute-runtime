@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -235,6 +235,7 @@ HWTEST_P(AubFillImage, WhenFillingThenExpectationsMet) {
     }
 
     auto pImageData = dstMemory;
+    std::vector<uint8_t> expectedRow(testWidth * elementSize);
 
     for (size_t z = 0; z < testDepth; ++z) {
         for (size_t y = 0; y < testHeight; ++y) {
@@ -242,11 +243,12 @@ HWTEST_P(AubFillImage, WhenFillingThenExpectationsMet) {
                 if (z >= origin[2] && z < (origin[2] + region[2]) &&
                     y >= origin[1] && y < (origin[1] + region[1]) &&
                     x >= origin[0] && x < (origin[0] + region[0])) {
-                    AUBCommandStreamFixture::expectMemory<FamilyType>(&pImageData[x * elementSize], expected, elementSize);
+                    memcpy_s(&expectedRow[x * elementSize], elementSize, expected, elementSize);
                 } else {
-                    AUBCommandStreamFixture::expectMemory<FamilyType>(&pImageData[x * elementSize], srcMemory, elementSize);
+                    memcpy_s(&expectedRow[x * elementSize], elementSize, srcMemory, elementSize);
                 }
             }
+            AUBCommandStreamFixture::expectMemory<FamilyType>(pImageData, expectedRow.data(), testWidth * elementSize);
             pImageData = ptrOffset(pImageData, rowPitch);
         }
         pImageData = ptrOffset(pImageData, slicePitch - (rowPitch * (testHeight > 0 ? testHeight : 1)));

@@ -773,7 +773,6 @@ using CommandStreamReceiverXe3pCoreComputeWalker2Tests = UltCommandStreamReceive
 
 XE3P_CORETEST_F(CommandStreamReceiverXe3pCoreComputeWalker2Tests, givenHeaplessModeEnabledWhenDispatchKernelThenCorrectCmdsAreProgrammed) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
     MockKernelWithInternals kernel(*pClDevice);
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel.mockKernel);
@@ -791,9 +790,6 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pCoreComputeWalker2Tests, givenHeaplessM
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream);
-
-    auto itComputeWalker = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_EQ(hwParser.cmdList.end(), itComputeWalker);
 
     auto itComputeWalker2 = find<DefaultWalkerType *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     EXPECT_NE(hwParser.cmdList.end(), itComputeWalker2);

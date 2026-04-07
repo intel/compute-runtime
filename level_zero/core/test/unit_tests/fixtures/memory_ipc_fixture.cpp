@@ -22,7 +22,7 @@
 namespace L0 {
 namespace ult {
 
-void *DriverHandleGetFdMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
+void *DriverHandleGetFdMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
     this->allocationTypeRequested = allocationType;
     if (mockFd == allocationMap.second) {
         return allocationMap.first;
@@ -132,14 +132,14 @@ void MemoryExportImportTest::SetUp() {
     context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetMemHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetMemHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory) {
     if (mockHandle == allocationHandleMap.second) {
         return {nullptr, allocationHandleMap.first};
     }
     return {nullptr, nullptr};
 }
 void *DriverHandleGetMemHandleMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
-                                                   NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
+                                                   NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
     if (mockFd == allocationFdMap.second) {
         return allocationFdMap.first;
     }
@@ -223,7 +223,7 @@ void MemoryExportImportWSLTest::TearDown() {
     delete currMemoryManager;
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetWinHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetWinHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory) {
     if (mockHandle == allocationMap.second) {
         return {nullptr, allocationMap.first};
     }
@@ -306,7 +306,7 @@ void MemoryExportImportWinHandleTest::SetUp() {
 }
 
 void *DriverHandleGetIpcHandleMock::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags,
-                                                   uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc,
+                                                   uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc,
                                                    NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
     // Check if platform supports pidfd or socket for IPC
     auto &productHelper = neoDevice->getProductHelper();

@@ -67,6 +67,7 @@ const std::string mockSlotPath("/sys/bus/pci/slots/1");
 const std::string mockSlotPathAddress("/sys/bus/pci/slots/1/address");
 const std::string mockRootAddress("devices");
 const std::string mockCardBusPath("/sys/devices");
+const std::string mockVramBadPagesFile("device/vram_bad_pages");
 
 enum MockEnumListProcessCall {
     DEVICE_IN_USE = 0,
@@ -100,6 +101,7 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
     ze_result_t mockReadError = ZE_RESULT_SUCCESS;
     ze_result_t mockBindDeviceError = ZE_RESULT_SUCCESS;
     ze_result_t mockUnbindDeviceError = ZE_RESULT_SUCCESS;
+
     uint32_t mockCount = 0;
     bool isRootSet = true;
     bool mockGetScannedDir4EntriesStatus = false;
@@ -108,6 +110,18 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
     bool mockReadStatus = false;
     bool mockGetValUnsignedLongStatus = false;
     bool mockDeviceUnbound = false;
+    bool mockFileWithEmptyLines = false;
+    bool mockFileWithRepeatedEntries = false;
+    bool mockFileWithNoColonEntry = false;
+    bool mockFileWithOneColonEntry = false;
+    bool mockFileWithNoFieldsEntry = false;
+    bool mockFileWithNoSizeField = false;
+    bool mockFileWithInvalidAddress = false;
+    bool mockFileWithInvalidSize = false;
+    bool mockFileWithNoStatus = false;
+    bool mockFileWithInvalidStatus = false;
+    bool mockFileWithInvalidMaxPageEntry = false;
+    bool mockFileWithMaxPagesNoValue = false;
 
     ze_result_t getRealPath(const std::string &file, std::string &val) override {
         if (file.compare(deviceDir) == 0) {
@@ -358,6 +372,49 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
 
         mockDeviceUnbound = false;
 
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t read(const std::string file, std::vector<std::string> &val) override {
+        val.clear();
+        if (mockReadError != ZE_RESULT_SUCCESS) {
+            return mockReadError;
+        }
+
+        if (file.compare(mockVramBadPagesFile) == 0) {
+            if (mockFileWithEmptyLines == true) {
+                val.push_back("");
+            } else if (mockFileWithRepeatedEntries == true) {
+                val.push_back("max_pages : 10000");
+                val.push_back("0x00001234 : 0x00001000 : R");
+                val.push_back("0x00001234 : 0x00001000 : R");
+            } else if (mockFileWithNoColonEntry == true) {
+                val.push_back("0x00001234 0x00001000 R");
+            } else if (mockFileWithOneColonEntry == true) {
+                val.push_back("0x00001234 : 0x00001000");
+            } else if (mockFileWithNoFieldsEntry == true) {
+                val.push_back(" : : R");
+            } else if (mockFileWithNoSizeField == true) {
+                val.push_back("0x00001234 :: R");
+            } else if (mockFileWithInvalidAddress == true) {
+                val.push_back("INVALID : 0x00001000 : R");
+            } else if (mockFileWithInvalidSize == true) {
+                val.push_back("0x00001234 : INVALID : R");
+            } else if (mockFileWithNoStatus == true) {
+                val.push_back("0x00001234 : 0x00001000 : ");
+            } else if (mockFileWithInvalidStatus == true) {
+                val.push_back("0x00001234 : 0x00001000 : X");
+            } else if (mockFileWithInvalidMaxPageEntry == true) {
+                val.push_back("max_pages 10000");
+            } else if (mockFileWithMaxPagesNoValue == true) {
+                val.push_back("max_pages :");
+            } else {
+                val.push_back("max_pages : 10000");
+                val.push_back("0x00001234 : 0x00001000 : R");
+                val.push_back("0x00005678 : 0x00001000 : P");
+                val.push_back("0x00007890 : 0x00001000 : F");
+            }
+        }
         return ZE_RESULT_SUCCESS;
     }
 
@@ -673,6 +730,7 @@ class PublicLinuxGlobalOperationsImp : public L0::Sysman::LinuxGlobalOperationsI
   public:
     using LinuxGlobalOperationsImp::pLinuxSysmanImp;
     using LinuxGlobalOperationsImp::pProcfsAccess;
+    using LinuxGlobalOperationsImp::pSysfsAccess;
     using LinuxGlobalOperationsImp::resetTimeout;
 };
 

@@ -121,6 +121,12 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
         } else if (pNext->stype == ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES) {
             auto driverNameProperties = reinterpret_cast<zes_intel_driver_name_exp_properties_t *>(pNext);
             pOsGlobalOperations->getDriverName(driverNameProperties->driverName);
+        } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_PROPERTIES_EXP) {
+            auto memPageOfflineProperties = reinterpret_cast<zes_intel_mem_page_offline_properties_exp_t *>(pNext);
+            ze_result_t result = pOsGlobalOperations->getMaxMemoryOfflinePages(&memPageOfflineProperties->maxOfflinePages);
+            if (result != ZE_RESULT_SUCCESS) {
+                memPageOfflineProperties->maxOfflinePages = 0;
+            }
         }
 
         pNext = static_cast<zes_base_properties_t *>(pNext->pNext);
@@ -167,9 +173,9 @@ ze_result_t GlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
     return pOsGlobalOperations->deviceGetState(pState);
 }
 
-ze_result_t GlobalOperationsImp::memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) {
+ze_result_t GlobalOperationsImp::memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
     initGlobalOperations();
-    return pOsGlobalOperations->memoryGetPageOfflineStateExp(pPageOfflineState);
+    return pOsGlobalOperations->memoryGetPageOfflineStateExp(pageStatus, pCount, pPageOfflineInfo);
 }
 
 void GlobalOperationsImp::init() {

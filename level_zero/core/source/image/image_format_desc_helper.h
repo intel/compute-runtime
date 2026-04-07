@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,6 @@ struct Swizzles {
 };
 
 cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription);
-cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription);
+cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription, bool srgb);
 
 } // namespace L0

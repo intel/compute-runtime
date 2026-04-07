@@ -80,7 +80,7 @@ void Context::closeExternalHandle(uint64_t handle) {
     NEO::SysCalls::close(static_cast<int>(handle));
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
     uint64_t importHandle = handle;
     uint64_t effectiveCacheID = cacheID;
@@ -89,7 +89,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
 
     if (settings.useOpaqueHandle && processId != 0) {
         // Check cache first for opaque handles
-        if (tryGetCachedImportHandle(cacheID, importHandle)) {
+        if (this->driverHandle->tryGetCachedImportHandle(cacheID, importHandle)) {
             pidfdSuccess = true; // Mark as successful to skip import logic
         }
 
@@ -119,7 +119,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                     importHandle = static_cast<uint64_t>(newfd);
                     pidfdSuccess = true;
                     // Cache the imported handle for future use
-                    setCachedImportHandle(cacheID, importHandle);
+                    this->driverHandle->setCachedImportHandle(cacheID, importHandle);
                     PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                  "Cached import handle %lu for cache ID %lu\n",
                                  importHandle, cacheID);
@@ -139,7 +139,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                     importHandle = static_cast<uint64_t>(receivedFd);
                     socketFallbackSuccess = true;
                     // Cache the imported handle for future use
-                    setCachedImportHandle(cacheID, importHandle);
+                    this->driverHandle->setCachedImportHandle(cacheID, importHandle);
                     PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                  "IPC socket fallback successful for handle %lu, cached as %lu\n",
                                  handle, importHandle);
@@ -162,7 +162,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
 
     NEO::GraphicsAllocation *alloc = nullptr;
     NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
-    auto result = this->driverHandle->importFdHandle(neoDevice, flags, importHandle, allocationType, nullptr, &alloc, allocDataInternal, compressedMemory);
+    auto result = this->driverHandle->importFdHandle(neoDevice, flags, importHandle, allocationType, isHostIpcAllocation, nullptr, &alloc, allocDataInternal, compressedMemory);
 
     // Store cacheID in IPC handle tracking if opaque handles are used
     if (result && settings.useOpaqueHandle && effectiveCacheID != 0) {

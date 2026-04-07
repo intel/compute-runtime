@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,10 @@
 using namespace NEO;
 
 struct MockCpuInfo : public NEO::CpuInfo {
+    using CpuInfo::cpuFlags;
     using CpuInfo::features;
+    using CpuInfo::featuresDetected;
+    using CpuInfo::virtualAddressSize;
 };
 
 inline MockCpuInfo *getMockCpuInfo(const NEO::CpuInfo &cpuInfo) {

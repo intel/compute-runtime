@@ -156,7 +156,11 @@ ze_result_t WddmGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) 
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmGlobalOperationsImp::memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) {
+ze_result_t WddmGlobalOperationsImp::memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmGlobalOperationsImp::getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

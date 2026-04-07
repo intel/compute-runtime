@@ -93,11 +93,11 @@ ze_result_t ZE_APICALL zesIntelDeviceGetPowerUsageExp(zes_pwr_handle_t hPower, u
     }
 }
 
-ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(zes_device_handle_t hDevice, zes_mem_page_offline_state_exp_t *pPageOfflineState) {
+ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(zes_device_handle_t hDevice, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::SysmanDevice::memoryGetPageOfflineStateExp(hDevice, pPageOfflineState);
+        return L0::Sysman::SysmanDevice::memoryGetPageOfflineStateExp(hDevice, pageStatus, pCount, pPageOfflineInfo);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -139,8 +139,8 @@ ze_result_t ZE_APICALL zesIntelDeviceGetPowerUsageExp(zes_pwr_handle_t hPower, u
     return L0::zesIntelDeviceGetPowerUsageExp(hPower, pInstantPower, pAveragePower);
 }
 
-ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(zes_device_handle_t hDevice, zes_mem_page_offline_state_exp_t *pPageOfflineState) {
-    return L0::zesIntelDeviceMemoryGetPageOfflineStateExp(hDevice, pPageOfflineState);
+ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(zes_device_handle_t hDevice, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
+    return L0::zesIntelDeviceMemoryGetPageOfflineStateExp(hDevice, pageStatus, pCount, pPageOfflineInfo);
 }
 
 } // extern "C"

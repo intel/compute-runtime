@@ -127,3 +127,7 @@ TEST_F(ReleaseHelper1270Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThen
 TEST_F(ReleaseHelper1270Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
 }
+
+TEST_F(ReleaseHelper1270Tests, whenIsRTInvalidationWaRequiredCalledThenFalseReturned) {
+    whenIsRTInvalidationWaRequiredCalledThenFalseReturned();
+}

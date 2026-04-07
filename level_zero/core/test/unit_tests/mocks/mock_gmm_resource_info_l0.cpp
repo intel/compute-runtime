@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,10 @@ void MockGmmResourceInfo::setSurfaceFormat() {
     };
 
     iterateL0Formats(L0::ImageFormats::formats);
+
+    if (!surfaceFormatInfo && mockResourceCreateParams.Format == L0::ImageFormats::srgbFormatRGBA8.gmmSurfaceFormat) {
+        surfaceFormatInfo = &L0::ImageFormats::srgbFormatRGBA8;
+    }
 
     if (mockResourceCreateParams.Format == GMM_FORMAT_GENERIC_8BIT) {
         static const NEO::SurfaceFormatInfo surfaceFormatGMM8BIT = {GMM_FORMAT_GENERIC_8BIT, GFX3DSTATE_SURFACEFORMAT_R8_UNORM, 0, 1, 1, 1};

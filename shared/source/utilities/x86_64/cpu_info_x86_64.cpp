@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ void CpuInfo::detect() const {
     constexpr size_t ecx = 2;
     constexpr size_t edx = 3;
 
+    features = featureNone;
     uint32_t cpuInfo[4] = {};
 
     cpuid(cpuInfo, 0u);
@@ -52,6 +53,7 @@ void CpuInfo::detect() const {
             virtualAddressSize = (cpuInfo[eax] >> 8) & 0xFF;
         }
     }
+    featuresDetected = true;
     PRINT_STRING(debugManager.flags.PrintCpuFlags.get(), stdout,
                  "CPUFlags:\nCLFlush: %d Avx2: %d WaitPkg: %d\nVirtual Address Size %u\n",
                  !!(features & featureClflush), !!(features & featureAvX2), !!(features & featureWaitPkg), virtualAddressSize);

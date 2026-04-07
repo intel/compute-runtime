@@ -16,6 +16,7 @@
 #include "shared/test/common/base_ult_config_listener.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/tests_configuration.h"
+#include "shared/test/unit_test/mocks/mock_cpuid_functions.h"
 
 #include "test_files_setup.h"
 
@@ -46,6 +47,13 @@ using namespace NEO;
 void cleanTestHelpers() {}
 
 void applyWorkarounds() {
+    CpuInfo::cpuidexFunc = [](int *, int, int) -> void {};
+    CpuInfo::cpuidFunc = [](int[4], int) -> void {};
+    auto *mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
+    mockCpuInfo->features = CpuInfo::featureNone;
+    mockCpuInfo->featuresDetected = true;
+    mockCpuInfo->virtualAddressSize = is32bit ? 32u : 48u;
+    mockCpuInfo->cpuFlags.clear();
     const std::array<ConstStringRef, 12> builtinIntermediateNames{"copy_buffer_to_buffer.builtin_kernel.spv",
                                                                   "copy_buffer_rect.builtin_kernel.spv",
                                                                   "fill_buffer.builtin_kernel.spv",

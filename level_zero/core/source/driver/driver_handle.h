@@ -79,9 +79,9 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     MOCKABLE_VIRTUAL NEO::MemoryManager *getMemoryManager();
     MOCKABLE_VIRTUAL void setMemoryManager(NEO::MemoryManager *memoryManager);
-    MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory);
+    MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory);
     MOCKABLE_VIRTUAL void *importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory);
-    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId, bool compressedMemory);
+    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory);
     MOCKABLE_VIRTUAL NEO::SVMAllocsManager *getSvmAllocsManager();
     MOCKABLE_VIRTUAL NEO::StagingBufferManager *getStagingBufferManager();
     ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices);
@@ -137,6 +137,21 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
+
+    MOCKABLE_VIRTUAL bool tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle);
+
+    void setCachedImportHandle(uint64_t cacheID, uint64_t importHandle) {
+        std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
+        opaqueHandleImportCache[cacheID] = importHandle;
+    }
+
+    void clearCachedImportHandle(uint64_t cacheID) {
+        if (cacheID == 0) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
+        opaqueHandleImportCache.erase(cacheID);
+    }
     void initHostUsmAllocPool(bool multiDevice);
     void initHostUsmAllocPoolOnce();
     void initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice);
@@ -187,6 +202,9 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     std::map<uint64_t, IpcHandleTracking *> ipcHandles;
     std::mutex ipcHandleMapMutex;
+
+    std::map<uint64_t, uint64_t> opaqueHandleImportCache;
+    std::mutex opaqueHandleImportCacheMutex;
 
     std::unique_ptr<NEO::IpcSocketServer, NEO::IpcSocketServerDeleter> ipcSocketServer;
     std::mutex ipcSocketServerMutex;

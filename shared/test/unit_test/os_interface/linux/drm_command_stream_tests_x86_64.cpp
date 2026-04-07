@@ -20,7 +20,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
 
     auto mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
     VariableBackup<MockCpuInfo> cpuInfoBackup(mockCpuInfo);
-    mockCpuInfo->features = CpuInfo::featureNone;
+    mockCpuInfo->featuresDetected = false;
 
     CpuIdFuncT savedCpuIdFunc = CpuInfo::cpuidFunc;
     CpuInfo::cpuidFunc = mockCpuidEnableAll;
@@ -49,7 +49,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenWaitpkgParamsSetBy
 
     auto mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
     VariableBackup<MockCpuInfo> cpuInfoBackup(mockCpuInfo);
-    mockCpuInfo->features = CpuInfo::featureNone;
+    mockCpuInfo->featuresDetected = false;
 
     CpuIdFuncT savedCpuIdFunc = CpuInfo::cpuidFunc;
     CpuInfo::cpuidFunc = mockCpuidEnableAll;

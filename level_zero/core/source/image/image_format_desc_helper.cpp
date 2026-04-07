@@ -109,7 +109,7 @@ cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription) {
     return CL_INVALID_VALUE;
 }
 
-cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription) {
+cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription, bool srgb) {
     Swizzles imgSwizzles{imgDescription.x, imgDescription.y, imgDescription.z, imgDescription.w};
 
     if (imgSwizzles == Swizzles{ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_0, ZE_IMAGE_FORMAT_SWIZZLE_0, ZE_IMAGE_FORMAT_SWIZZLE_1}) {
@@ -131,10 +131,10 @@ cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription) {
         return CL_RGB;
     }
     if (imgSwizzles == Swizzles{ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G, ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A}) {
-        return CL_RGBA;
+        return srgb ? CL_sRGBA : CL_RGBA;
     }
     if (imgSwizzles == Swizzles{ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_G, ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_A}) {
-        return CL_BGRA;
+        return srgb ? CL_sBGRA : CL_BGRA;
     }
     if (imgSwizzles == Swizzles{ZE_IMAGE_FORMAT_SWIZZLE_A, ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G, ZE_IMAGE_FORMAT_SWIZZLE_B}) {
         return CL_ARGB;

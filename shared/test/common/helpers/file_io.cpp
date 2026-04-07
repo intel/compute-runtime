@@ -38,9 +38,6 @@ bool fileExists(const std::string &fileName) {
 }
 
 bool fileExistsHasSize(const std::string &fileName) {
-    FILE *pFile = nullptr;
-    size_t nsize = 0;
-
     DEBUG_BREAK_IF(fileName.empty());
     DEBUG_BREAK_IF(fileName == "");
 
@@ -50,14 +47,7 @@ bool fileExistsHasSize(const std::string &fileName) {
         ss.seekg(0, std::ios::end);
         return ss.tellg() > 0;
     }
-
-    fopen_s(&pFile, fileName.c_str(), "rb");
-    if (pFile) {
-        fseek(pFile, 0, SEEK_END);
-        nsize = (size_t)ftell(pFile);
-        fclose(pFile);
-    }
-    return pFile != nullptr && nsize > 0;
+    return false;
 }
 
 size_t writeDataToFile(

@@ -54,7 +54,15 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     imgInfo.imgDesc = lookupTable.imageProperties.imageDescriptor;
 
-    imgInfo.surfaceFormat = &ImageFormats::formats[desc->format.layout][desc->format.type];
+    if (lookupTable.isSrgb) {
+        if (desc->format.layout != ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8 || desc->format.type != ZE_IMAGE_FORMAT_TYPE_UNORM) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+        }
+        imgInfo.surfaceFormat = &ImageFormats::srgbFormatRGBA8;
+        this->srgbImage = true;
+    } else {
+        imgInfo.surfaceFormat = &ImageFormats::formats[desc->format.layout][desc->format.type];
+    }
     imageFormatDesc = *const_cast<ze_image_desc_t *>(desc);
 
     UNRECOVERABLE_IF(device == nullptr);

@@ -39,7 +39,7 @@ struct WaitPkgFixture {
         backupWaitCount = std::make_unique<VariableBackup<uint32_t>>(&WaitUtils::waitCount);
 
         savedCpuIdFunc = CpuInfo::cpuidFunc;
-        mockCpuInfo->features = CpuInfo::featureNone;
+        mockCpuInfo->featuresDetected = false;
     }
 
     void tearDown() {

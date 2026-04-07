@@ -63,8 +63,6 @@ static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetM
       {"rx_pkt_count_msb", 73},
       {"tx_pkt_count_lsb", 76},
       {"tx_pkt_count_msb", 75},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 93},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 92},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 94},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 95},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 134},
@@ -319,8 +317,6 @@ static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetM
       {"rx_pkt_count_msb", 75},
       {"tx_pkt_count_lsb", 76},
       {"tx_pkt_count_msb", 77},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 93},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 92},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 95},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 94},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 135},
@@ -591,8 +587,6 @@ static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetM
       {"rx_pkt_count_msb", 73},
       {"tx_pkt_count_lsb", 76},
       {"tx_pkt_count_msb", 75},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 93},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 92},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 94},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 95},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 134},
@@ -927,8 +921,6 @@ static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetM
       {"rx_pkt_count_msb", 75},
       {"tx_pkt_count_lsb", 76},
       {"tx_pkt_count_msb", 77},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 93},
-      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 92},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 95},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 94},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 135},
@@ -1421,21 +1413,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
     }
 
     pStats->packetCounter = packInto64Bit(txPacketCounterH, txPacketCounterL) + packInto64Bit(rxPacketCounterH, rxPacketCounterL);
-
-    // timestamp calculation
-    uint32_t timeStampL = 0;
-    uint32_t timeStampH = 0;
-
-    status = pPmt->readValue("GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", timeStampH);
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-    status = pPmt->readValue("GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", timeStampL);
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-    // timestamp from PMT is in milli seconds
-    pStats->timestamp = packInto64Bit(timeStampH, timeStampL) * milliSecsToMicroSecs;
+    pStats->timestamp = SysmanDevice::getSysmanTimestamp();
 
     return status;
 }

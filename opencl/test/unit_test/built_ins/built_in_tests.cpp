@@ -21,10 +21,12 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/test_traits.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_builtinslib.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/heapless_matchers.h"
 #include "shared/test/common/test_macros/test.h"
@@ -1607,9 +1609,11 @@ TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromFileStorageThenValid
     };
     MockFileStorage mockEmbeddedStorage("root");
 
-    BuiltIn::Resource br = mockEmbeddedStorage.loadImpl(clFiles + "copybuffer.cl");
+    VariableBackup<long int> ftellReturnBackup(&NEO::IoFunctions::mockFtellReturn, 4L);
+    BuiltIn::Resource br = mockEmbeddedStorage.loadImpl("copybuffer.cl");
     EXPECT_NE(0u, br.size());
 
+    VariableBackup<FILE *> fopenReturnedBackup(&NEO::IoFunctions::mockFopenReturned, nullptr);
     BuiltIn::Resource bnr = mockEmbeddedStorage.loadImpl("unknown.cl");
     EXPECT_EQ(0u, bnr.size());
 }

@@ -291,7 +291,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
         size_t *rowPitch);
 
     MOCKABLE_VIRTUAL bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle);
-    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory);
+    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory);
     MOCKABLE_VIRTUAL void closeExternalHandle(uint64_t handle);
     MOCKABLE_VIRTUAL void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory);
     MOCKABLE_VIRTUAL uint8_t isOpaqueHandleSupported(IpcHandleType *handleType);
@@ -321,21 +321,6 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     ContextSettings settings;
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
-
-    bool tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle);
-
-    void setCachedImportHandle(uint64_t cacheID, uint64_t importHandle) {
-        std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
-        opaqueHandleImportCache[cacheID] = importHandle;
-    }
-
-    void clearCachedImportHandle(uint64_t cacheID) {
-        if (cacheID == 0) {
-            return;
-        }
-        std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
-        opaqueHandleImportCache.erase(cacheID);
-    }
 
     void initDeviceHandles(uint32_t numDevices, ze_device_handle_t *deviceHandles) {
         this->numDevices = numDevices;
@@ -369,9 +354,6 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     size_t getPageAlignedSizeRequired(const void *pStart, size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
     bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, bool blocking);
-
-    std::map<uint64_t, uint64_t> opaqueHandleImportCache;
-    std::mutex opaqueHandleImportCacheMutex;
 
     std::map<uint32_t, ze_device_handle_t> devices;
     std::vector<ze_device_handle_t> deviceHandles;

@@ -37,8 +37,6 @@ constexpr uint64_t mockRxPacketCounterLsbOffset = telem3OffsetValue + 296;
 constexpr uint64_t mockRxPacketCounterMsbOffset = telem3OffsetValue + 292;
 constexpr uint64_t mockTxPacketCounterLsbOffset = telem3OffsetValue + 304;
 constexpr uint64_t mockTxPacketCounterMsbOffset = telem3OffsetValue + 300;
-constexpr uint64_t mockTimestampLsbOffset = telem3OffsetValue + 368;
-constexpr uint64_t mockTimestampMsbOffset = telem3OffsetValue + 372;
 constexpr uint64_t mockRxCounterOffset = telem3OffsetValue + 520;
 constexpr uint64_t mockTxCounterOffset = telem3OffsetValue + 528;
 constexpr uint64_t mockRxPacketCounterOffset = telem3OffsetValue + 536;
@@ -53,8 +51,7 @@ constexpr uint32_t mockRxPacketCounterLsb = 0xA0u;
 constexpr uint32_t mockRxPacketCounterMsb = 0xBCu;
 constexpr uint32_t mockTxPacketCounterLsb = 0xFAu;
 constexpr uint32_t mockTxPacketCounterMsb = 0xFFu;
-constexpr uint32_t mockTimestampLsb = 0xCDu;
-constexpr uint32_t mockTimestampMsb = 0xEFu;
+constexpr uint64_t mockTimestamp = 0xEF000000CDu;
 
 using SysmanProductHelperPciTest = SysmanDeviceFixture;
 
@@ -112,12 +109,6 @@ static ssize_t mockPreadSuccess(int fd, void *buf, size_t count, off_t offset) {
         case mockTxPacketCounterMsbOffset:
             memcpy(buf, &mockTxPacketCounterMsb, count);
             break;
-        case mockTimestampLsbOffset:
-            memcpy(buf, &mockTimestampLsb, count);
-            break;
-        case mockTimestampMsbOffset:
-            memcpy(buf, &mockTimestampMsb, count);
-            break;
         case mockRxCounterOffset: {
             uint64_t rxCounter = packInto64Bit(mockRxCounterMsb, mockRxCounterLsb);
             memcpy(buf, &rxCounter, count);
@@ -139,7 +130,7 @@ static ssize_t mockPreadSuccess(int fd, void *buf, size_t count, off_t offset) {
             break;
         }
         case mockTimestampOffset: {
-            uint64_t timeStamp = packInto64Bit(mockTimestampMsb, mockTimestampLsb);
+            uint64_t timeStamp = mockTimestamp;
             memcpy(buf, &timeStamp, count);
             break;
         }
@@ -274,12 +265,6 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
             case mockTxPacketCounterMsbOffset:
                 count = (readFailCount == 8) ? -1 : sizeof(uint32_t);
                 break;
-            case mockTimestampLsbOffset:
-                count = (readFailCount == 9) ? -1 : sizeof(uint32_t);
-                break;
-            case mockTimestampMsbOffset:
-                count = (readFailCount == 10) ? -1 : sizeof(uint32_t);
-                break;
             }
         }
         return count;
@@ -287,7 +272,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_pci_stats_t stats = {};
-    while (readFailCount <= 10) {
+    while (readFailCount <= 8) {
         EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
         readFailCount++;
     }
@@ -320,6 +305,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenValidSysmanDeviceHandleWhenDeviceGetP
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadSuccess);
 
     zes_pci_stats_t stats = {};
+    uint64_t initialTimestamp = SysmanDevice::getSysmanTimestamp();
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetStats(pSysmanDevice->toHandle(), &stats));
 
     uint64_t mockRxCounter = packInto64Bit(mockRxCounterMsb, mockRxCounterLsb);
@@ -332,8 +318,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenValidSysmanDeviceHandleWhenDeviceGetP
     uint64_t mockTxPacketCounter = packInto64Bit(mockTxPacketCounterMsb, mockTxPacketCounterLsb);
     EXPECT_EQ(mockRxPacketCounter + mockTxPacketCounter, stats.packetCounter);
 
-    uint64_t mockFinalTimestamp = packInto64Bit(mockTimestampMsb, mockTimestampLsb) * milliSecsToMicroSecs;
-    EXPECT_EQ(mockFinalTimestamp, stats.timestamp);
+    EXPECT_GT(stats.timestamp, initialTimestamp);
 }
 
 HWTEST2_F(SysmanProductHelperPciTest, GivenValidDeviceHandleWhenDeviceGetPciPropertiesIsCalledThenCallSucceeds, IsBMG) {
@@ -403,7 +388,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenValidSysmanDeviceHandleWhenDeviceGetP
     uint64_t mockTxPacketCounter = packInto64Bit(mockTxPacketCounterMsb, mockTxPacketCounterLsb);
     EXPECT_EQ(mockRxPacketCounter + mockTxPacketCounter, stats.packetCounter);
 
-    uint64_t mockFinalTimestamp = packInto64Bit(mockTimestampMsb, mockTimestampLsb) * milliSecsToMicroSecs;
+    uint64_t mockFinalTimestamp = mockTimestamp * milliSecsToMicroSecs;
     EXPECT_EQ(mockFinalTimestamp, stats.timestamp);
 }
 

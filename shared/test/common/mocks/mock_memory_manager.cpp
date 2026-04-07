@@ -251,6 +251,7 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(
 
         auto allocation = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandleData, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
         this->capturedSharedHandle = osHandleData.handle;
+        this->capturedIsHostIpcAllocation.push_back(isHostIpcAllocation);
         return allocation;
     } else {
         this->capturedSharedHandle = osHandleData.handle;

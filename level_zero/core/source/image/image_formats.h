@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -256,6 +256,8 @@ inline constexpr FormatTypes layoutBGRP = {{{GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SU
                                             {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
                                             {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
                                             {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3}}};
+
+inline constexpr NEO::SurfaceFormatInfo srgbFormatRGBA8 = {GMM_FORMAT_R8G8B8A8_UNORM_SRGB_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM_SRGB, 0, 4, 1, 4};
 
 inline constexpr std::array<FormatTypes, maxLayoutCount> formats = {layout8, layout16, layout32, layout88, layout8888, layout1616, layout16161616, layout3232, layout32323232, layout1010102,
                                                                     layout111110, layout565, layout5551, layout4444, layoutY8, layoutNV12, layoutYUYV, layoutVYUY, layoutYVYU, layoutUYVY,

@@ -14,6 +14,9 @@
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
+#include <algorithm>
+#include <unordered_set>
+
 namespace L0 {
 namespace Sysman {
 constexpr static auto gfxProduct = IGFX_CRI;
@@ -952,6 +955,163 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
     pProperties->busWidth = pProperties->numChannels * busWidthPerChannelInBytes;
     pProperties->physicalSize = 0;
     return ZE_RESULT_SUCCESS;
+}
+
+// Parse a single page offline information line from vram_bad_pages file
+// Expected line format: "<address> : <size> : <status>"
+// Example: "0x00001234 : 0x00001000 : R"
+// Where:
+//   - address: Hexadecimal page address (e.g., 0x00001234)
+//   - size:    Hexadecimal page size (e.g., 0x00001000)
+//   - status:  Single character - 'R' (Retired/Offline), 'P' (Pending), 'F' (Failed)
+static bool parsePageOfflineInfoLine(const std::string &line, MemPageInfo &pageInfo) {
+
+    // Find colon positions for efficient parsing
+    size_t firstColon = line.find(':');
+    size_t secondColon = line.find(':', firstColon + 1);
+    if (firstColon == std::string::npos || secondColon == std::string::npos) {
+        return false;
+    }
+
+    // Find start of address and size fields
+    size_t addrStart = line.find_first_not_of(" \t");
+    size_t sizeStart = line.find_first_not_of(" \t", firstColon + 1);
+    if (addrStart >= firstColon || sizeStart >= secondColon) {
+        return false;
+    }
+
+    // Parse address and size
+    char *endPtr = nullptr;
+    pageInfo.pageAddress = std::strtoull(line.c_str() + addrStart, &endPtr, 16);
+    if (endPtr == line.c_str() + addrStart) {
+        return false;
+    }
+
+    pageInfo.pageSize = static_cast<uint32_t>(std::strtoul(line.c_str() + sizeStart, &endPtr, 16));
+    if (endPtr == line.c_str() + sizeStart) {
+        return false;
+    }
+
+    // Extract and validate status character (after second colon)
+    size_t statusStart = line.find_first_not_of(" \t", secondColon + 1);
+    if (statusStart == std::string::npos) {
+        return false;
+    }
+    char statusChar = line[statusStart];
+    if (statusChar != 'R' && statusChar != 'P' && statusChar != 'F') {
+        return false;
+    }
+
+    // Map status character to enum value
+    // 'R' -> Retired (offline), 'P'/'F' -> Pending offline
+    pageInfo.pageStatus = (statusChar == 'R') ? ZES_INTEL_MEM_PAGE_STATUS_EXP_OFFLINE
+                                              : ZES_INTEL_MEM_PAGE_STATUS_EXP_PENDING_OFFLINE;
+
+    return true;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::memoryGetPageOfflineStateExp(SysFsAccessInterface *pSysFsAccess, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, std::vector<MemPageInfo> &memPageInfoList, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
+
+    // Read vram_bad_pages file which contains memory page offline information
+    // File format:
+    //   max_pages : <max_count>         - Maximum number of pages that can be marked offline
+    //   <address> : <size> : <status>   - Page information entries where:
+    //     address: Memory page address in hexadecimal (e.g., 0x00001234)
+    //     size:    Page size in hexadecimal (e.g., 0x00001000)
+    //     status:  Single character indicating page state:
+    //              'R' - Retired (offline)
+    //              'P' - Pending offline
+    //              'F' - Failed/other status
+    const std::string pageOfflineInfoFile = "device/vram_bad_pages";
+    std::vector<std::string> memPageInfoData = {};
+
+    ze_result_t result = pSysFsAccess->read(pageOfflineInfoFile, memPageInfoData);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read memory page offline state file: %s, returning error:0x%x \n", __FUNCTION__, pageOfflineInfoFile.c_str(), result);
+        return result;
+    }
+
+    // Initialize addressSet with already cached entries to support caching and prevent duplicates
+    std::unordered_set<uint64_t> addressSet;
+    for (const auto &pageInfo : memPageInfoList) {
+        addressSet.insert(pageInfo.pageAddress);
+    }
+
+    // Parse new entries from file and add only unique addresses
+    for (const auto &line : memPageInfoData) {
+        // Skip empty lines and max_pages header
+        if (line.empty() || line.find("max_pages") != std::string::npos) {
+            continue;
+        }
+
+        MemPageInfo parsedPageInfo = {};
+
+        // If parsing fails then return error
+        if (!parsePageOfflineInfoLine(line, parsedPageInfo)) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to parse memory page offline line: '%s', returning error:0x%x \n", __FUNCTION__, line.c_str(), ZE_RESULT_ERROR_UNKNOWN);
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+
+        // Check if this address already exists to avoid duplicates
+        if (addressSet.find(parsedPageInfo.pageAddress) == addressSet.end()) {
+            addressSet.insert(parsedPageInfo.pageAddress);
+            memPageInfoList.push_back(parsedPageInfo);
+        }
+    }
+
+    uint32_t pageCount = static_cast<uint32_t>(std::count_if(memPageInfoList.begin(), memPageInfoList.end(),
+                                                             [pageStatus](const MemPageInfo &info) { return info.pageStatus == pageStatus; }));
+    if (*pCount == 0) {
+        *pCount = pageCount;
+        return ZE_RESULT_SUCCESS;
+    } else {
+        *pCount = std::min(*pCount, pageCount);
+    }
+
+    uint32_t index = 0;
+    for (auto it = memPageInfoList.begin(); it != memPageInfoList.end() && index < *pCount; ++it) {
+        if (it->pageStatus == pageStatus) {
+            pPageOfflineInfo[index].pageAddress = it->pageAddress;
+            pPageOfflineInfo[index].pageSize = it->pageSize;
+            index++;
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMaxMemoryOfflinePages(SysFsAccessInterface *pSysFsAccess, uint32_t *pMaxOfflinePages) {
+
+    // Read vram_bad_pages file to extract the maximum number of pages that can be offlined
+    // File format:
+    //   max_pages : <max_count>         - Maximum number of pages that can be marked offline
+    //   <address> : <size> : <status>   - Page information entries
+    const std::string pageOfflineInfoFile = "device/vram_bad_pages";
+    std::vector<std::string> memPageInfoData = {};
+
+    ze_result_t result = pSysFsAccess->read(pageOfflineInfoFile, memPageInfoData);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read memory page offline state file: %s, returning error:0x%x \n", __FUNCTION__, pageOfflineInfoFile.c_str(), result);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    for (const auto &line : memPageInfoData) {
+        if (line.find("max_pages") != std::string::npos) {
+            size_t colonPos = line.find(':');
+            if (colonPos != std::string::npos) {
+                size_t valueStart = line.find_first_not_of(" \t", colonPos + 1);
+                if (valueStart != std::string::npos) {
+                    uint32_t maxPages = static_cast<uint32_t>(std::strtoul(line.c_str() + valueStart, nullptr, 10));
+                    *pMaxOfflinePages = maxPages;
+                    return ZE_RESULT_SUCCESS;
+                }
+            }
+        }
+    }
+
+    return ZE_RESULT_ERROR_NOT_AVAILABLE;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

@@ -1485,6 +1485,56 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, whenDeviceCreatesEnginesThenDeviceIsIn
     }
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCreatesEnginesThenDeviceIsNotInitializedWithFirstSubmission) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useFirstSubmissionInitDevice = true;
+
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_L0_SYSMAN_NO_CONTEXT_MODE", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    auto hwInfo = *defaultHwInfo;
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, releaseHelper.get());
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.incRefInternal();
+
+    UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
+
+    auto device = deviceFactory.rootDevices[0];
+    auto csr = device->allEngines[device->defaultEngineIndex].commandStreamReceiver;
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+
+    EXPECT_EQ(0u, ultCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, csr->peekLatestSentTaskCount());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCreatesEnginesWithDeferFlagThenDeviceIsNotInitializedWithFirstSubmission) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useFirstSubmissionInitDevice = true;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(-1);
+
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_L0_SYSMAN_NO_CONTEXT_MODE", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    auto hwInfo = *defaultHwInfo;
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, releaseHelper.get());
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.incRefInternal();
+
+    UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
+
+    auto device = deviceFactory.rootDevices[0];
+
+    for (auto &engine : device->allEngines) {
+        auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+        EXPECT_EQ(0u, ultCsr->initializeDeviceWithFirstSubmissionCalled);
+    }
+}
+
 TEST(FailDeviceTest, GivenFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
     auto hwInfo = defaultHwInfo.get();
     DebugManagerStateRestore dbgRestore;

@@ -31,7 +31,6 @@
 #include "gtest/gtest.h"
 #include "sys_calls.h"
 
-#include <fstream>
 #include <memory>
 
 using namespace NEO;

@@ -104,12 +104,6 @@ TEST_F(SysmanGlobalOperationsFixtureXe,
     EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe, GivenValidDeviceHandleWhenCallingZesIntelDeviceMemoryGetPageOfflineStateExpThenErrorIsReturned) {
-    zes_mem_page_offline_state_exp_t pageState = {ZES_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_STATE_EXP};
-    ze_result_t result = zesIntelDeviceMemoryGetPageOfflineStateExp(device, &pageState);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-}
-
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

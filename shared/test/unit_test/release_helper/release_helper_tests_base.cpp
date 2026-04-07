@@ -255,3 +255,21 @@ void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenTru
         EXPECT_TRUE(releaseHelper->isStateCacheInvalidationWaRequired());
     }
 }
+
+void ReleaseHelperTestsBase::whenIsRTInvalidationWaRequiredCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isRTInvalidationWaRequired());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsRTInvalidationWaRequiredCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isRTInvalidationWaRequired());
+    }
+}

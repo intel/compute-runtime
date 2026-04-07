@@ -26,14 +26,8 @@ void UnitTestHelper<Family>::validateSbaMocs(uint32_t expectedMocs, CommandStrea
 
 template <>
 uint32_t UnitTestHelper<Family>::getInlineDataSize(bool isHeaplessEnabled) {
-    using COMPUTE_WALKER = typename Family::COMPUTE_WALKER;
     using COMPUTE_WALKER_2 = typename Family::COMPUTE_WALKER_2;
-
-    if (isHeaplessEnabled) {
-        return COMPUTE_WALKER_2::getInlineDataSize();
-    } else {
-        return COMPUTE_WALKER::getInlineDataSize();
-    }
+    return COMPUTE_WALKER_2::getInlineDataSize();
 }
 
 template <>
@@ -59,14 +53,8 @@ uint32_t UnitTestHelper<Family>::getProgrammedGrfValue(CommandStreamReceiver &cs
 
 template <>
 uint64_t UnitTestHelper<Family>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(bool isHeaplessEnabled, WalkerPartition::WalkerPartitionArgs &testArgs) {
-    using COMPUTE_WALKER = typename Family::COMPUTE_WALKER;
     using COMPUTE_WALKER_2 = typename Family::COMPUTE_WALKER_2;
-
-    if (isHeaplessEnabled) {
-        return WalkerPartition::estimateSpaceRequiredInCommandBuffer<Family, COMPUTE_WALKER_2>(testArgs);
-    } else {
-        return WalkerPartition::estimateSpaceRequiredInCommandBuffer<Family, COMPUTE_WALKER>(testArgs);
-    }
+    return WalkerPartition::estimateSpaceRequiredInCommandBuffer<Family, COMPUTE_WALKER_2>(testArgs);
 }
 
 template <>
@@ -74,78 +62,47 @@ GenCmdList::iterator UnitTestHelper<Family>::findWalkerTypeCmd(GenCmdList::itera
 
     auto walkerIt = find<typename Family::COMPUTE_WALKER_2 *>(begin, end);
 
-    if (walkerIt == end) {
-        walkerIt = find<typename Family::COMPUTE_WALKER *>(begin, end);
-    }
-
     return walkerIt;
 }
 
 template <>
 std::vector<GenCmdList::iterator> UnitTestHelper<Family>::findAllWalkerTypeCmds(GenCmdList::iterator begin, GenCmdList::iterator end) {
-    auto cmds = findAll<typename Family::COMPUTE_WALKER *>(begin, end);
-    if (cmds.empty()) {
-        cmds = findAll<typename Family::COMPUTE_WALKER_2 *>(begin, end);
-    }
+    auto cmds = findAll<typename Family::COMPUTE_WALKER_2 *>(begin, end);
     return cmds;
 }
 
 template <>
 size_t UnitTestHelper<Family>::getWalkerSize(bool isHeaplessEnabled) {
-    using COMPUTE_WALKER = typename Family::COMPUTE_WALKER;
     using COMPUTE_WALKER_2 = typename Family::COMPUTE_WALKER_2;
 
-    if (isHeaplessEnabled) {
-        return sizeof(COMPUTE_WALKER_2);
-    } else {
-        return sizeof(COMPUTE_WALKER);
-    }
+    return sizeof(COMPUTE_WALKER_2);
 }
 
 template <>
 void UnitTestHelper<Family>::getSpaceAndInitWalkerCmd(LinearStream &stream, bool heapless) {
-    using COMPUTE_WALKER = typename Family::COMPUTE_WALKER;
     using COMPUTE_WALKER_2 = typename Family::COMPUTE_WALKER_2;
 
-    if (heapless) {
-        *stream.getSpaceForCmd<COMPUTE_WALKER_2>() = Family::template getInitGpuWalker<COMPUTE_WALKER_2>();
-
-    } else {
-        *stream.getSpaceForCmd<COMPUTE_WALKER>() = Family::template getInitGpuWalker<COMPUTE_WALKER>();
-    }
+    *stream.getSpaceForCmd<COMPUTE_WALKER_2>() = Family::template getInitGpuWalker<COMPUTE_WALKER_2>();
 }
 
 template <>
 void *UnitTestHelper<Family>::getInitWalkerCmd(bool heapless) {
-    using COMPUTE_WALKER = typename Family::COMPUTE_WALKER;
     using COMPUTE_WALKER_2 = typename Family::COMPUTE_WALKER_2;
-
-    if (heapless) {
-        return new COMPUTE_WALKER_2;
-
-    } else {
-        return new COMPUTE_WALKER;
-    }
+    return new COMPUTE_WALKER_2;
 }
 
 template <>
 template <typename WalkerType>
 uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress(WalkerType *walkerCmd) {
-    using COMPUTE_WALKER = typename Family::COMPUTE_WALKER;
-    using COMPUTE_WALKER_2 = typename Family::COMPUTE_WALKER_2;
-    if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
-        return walkerCmd->getPostSync().getDestinationAddress();
-    }
-    if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER_2>) {
-        using PostSyncData = typename Family::POSTSYNC_DATA_2;
-        const std::array<PostSyncData *, 4> postSyncTable = {{{&walkerCmd->getPostSyncOpn3()},
-                                                              {&walkerCmd->getPostSyncOpn2()},
-                                                              {&walkerCmd->getPostSyncOpn1()},
-                                                              {&walkerCmd->getPostSync()}}};
-        for (auto &postSync : postSyncTable) {
-            if (postSync->getDestinationAddress() != 0) {
-                return postSync->getDestinationAddress();
-            }
+
+    using PostSyncData = typename Family::POSTSYNC_DATA_2;
+    const std::array<PostSyncData *, 4> postSyncTable = {{{&walkerCmd->getPostSyncOpn3()},
+                                                          {&walkerCmd->getPostSyncOpn2()},
+                                                          {&walkerCmd->getPostSyncOpn1()},
+                                                          {&walkerCmd->getPostSync()}}};
+    for (auto &postSync : postSyncTable) {
+        if (postSync->getDestinationAddress() != 0) {
+            return postSync->getDestinationAddress();
         }
     }
     return 0;
@@ -154,6 +111,5 @@ uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress(WalkerType *walk
 template struct UnitTestHelper<Family>;
 template struct UnitTestHelperWithHeap<Family>;
 
-template uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER *walkerCmd);
 template uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress<Family::COMPUTE_WALKER_2>(Family::COMPUTE_WALKER_2 *walkerCmd);
 } // namespace NEO

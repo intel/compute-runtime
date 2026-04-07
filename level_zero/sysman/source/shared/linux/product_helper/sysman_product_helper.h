@@ -9,6 +9,7 @@
 
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
+#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include "neo_igfxfmid.h"
 
@@ -33,6 +34,7 @@ class SysFsAccessInterface;
 
 enum class RasInterfaceType;
 enum class SysfsValueUnit;
+struct MemPageInfo;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
 extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[NEO::maxProductEnumValue];
@@ -78,6 +80,8 @@ class SysmanProductHelper {
 
     // Global Operations
     virtual bool isRepairStatusSupported() = 0;
+    virtual ze_result_t memoryGetPageOfflineStateExp(SysFsAccessInterface *pSysFsAccess, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, std::vector<MemPageInfo> &memPageInfoList, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) = 0;
+    virtual ze_result_t getMaxMemoryOfflinePages(SysFsAccessInterface *pSysFsAccess, uint32_t *pMaxOfflinePages) = 0;
 
     // power
     virtual int32_t getPowerLimitValue(uint64_t value) = 0;

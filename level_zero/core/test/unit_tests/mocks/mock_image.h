@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ struct WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>
     using BaseClass::ImageImp::imgInfo;
     using BaseClass::ImageImp::sampledImage;
     using BaseClass::ImageImp::samplerDesc;
+    using BaseClass::ImageImp::srgbImage;
 };
 
 } // namespace ult

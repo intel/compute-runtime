@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <fstream>
 #include <sstream>
 
 void BinaryEncoder::calculatePatchListSizes(std::vector<std::string> &ptmFile) {

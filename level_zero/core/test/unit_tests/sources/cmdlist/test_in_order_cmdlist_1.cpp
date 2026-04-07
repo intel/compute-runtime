@@ -4764,9 +4764,12 @@ HWTEST_F(InOrderCmdListTests, givenStandaloneCbEventWhenDispatchingThenProgramCo
 
     bool semaphoreFound = false;
 
+    ASSERT_FALSE(semaphores.empty());
+
     for (auto &semaphore : semaphores) {
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
 
+        ASSERT_TRUE(semaphoreCmd != nullptr);
         if (event->getInOrderExecEventHelper().getBaseDeviceAddress() == semaphoreCmd->getSemaphoreGraphicsAddress()) {
             semaphoreFound = true;
         }

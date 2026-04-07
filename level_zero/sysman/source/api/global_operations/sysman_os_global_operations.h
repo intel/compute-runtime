@@ -14,6 +14,7 @@
 
 #include "level_zero/sysman/source/device/os_sysman.h"
 #include <level_zero/zes_api.h>
+#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <array>
 #include <vector>
@@ -40,7 +41,8 @@ class OsGlobalOperations {
     virtual ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) = 0;
     virtual ze_result_t deviceGetState(zes_device_state_t *pState) = 0;
     virtual ze_result_t resetExt(zes_reset_properties_t *pProperties) = 0;
-    virtual ze_result_t memoryGetPageOfflineStateExp(zes_mem_page_offline_state_exp_t *pPageOfflineState) = 0;
+    virtual ze_result_t memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) = 0;
+    virtual ze_result_t getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) = 0;
     static OsGlobalOperations *create(OsSysman *pOsSysman);
     virtual ~OsGlobalOperations() {}
 };

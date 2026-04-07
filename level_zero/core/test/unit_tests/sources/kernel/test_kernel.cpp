@@ -594,7 +594,7 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
     EXPECT_EQ(getClChannelDataType(desc.format), *reinterpret_cast<const cl_channel_type *>(pChannelDataType));
 
     auto pChannelOrder = ptrOffset(crossThreadData, imageArg.metadataPayload.channelOrder);
-    EXPECT_EQ(getClChannelOrder(desc.format), *reinterpret_cast<const cl_channel_order *>(pChannelOrder));
+    EXPECT_EQ(getClChannelOrder(desc.format, false), *reinterpret_cast<const cl_channel_order *>(pChannelOrder));
 }
 
 HWTEST2_F(SetKernelArg, givenImageAndKernelFromNativeWhenSetArgImageCalledThenSuccessAndInvalidChannelType, ImageSupport) {
