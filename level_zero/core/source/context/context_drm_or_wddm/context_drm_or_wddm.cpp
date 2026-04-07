@@ -107,6 +107,7 @@ void Context::closeExternalHandle(uint64_t handle) {
 std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice,
                                                                       uint64_t handle,
                                                                       NEO::AllocationType allocationType,
+                                                                      bool isHostIpcAllocation,
                                                                       unsigned int processId,
                                                                       ze_ipc_memory_flags_t flags,
                                                                       uint64_t cacheID,
@@ -123,6 +124,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
         return this->driverHandle->importNTHandle(hDevice,
                                                   reinterpret_cast<void *>(handle),
                                                   allocationType,
+                                                  isHostIpcAllocation,
                                                   processId,
                                                   compressedMemory);
     } else if (driverType == NEO::DriverModelType::wddm) {
@@ -213,6 +215,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                                                          flags,
                                                          importHandle,
                                                          allocationType,
+                                                         isHostIpcAllocation,
                                                          nullptr,
                                                          &alloc,
                                                          allocDataInternal,

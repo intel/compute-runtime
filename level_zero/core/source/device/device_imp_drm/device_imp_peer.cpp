@@ -108,7 +108,7 @@ bool queryPeerAccessDrm(NEO::Device &device, NEO::Device &peerDevice, void **han
 
     ze_ipc_memory_flags_t flags = {};
     NEO::SvmAllocationData allocDataInternal(peerDevice.getRootDeviceIndex());
-    void *importedPtr = driverHandle->importFdHandle(&peerDevice, flags, *handle, NEO::AllocationType::buffer, nullptr, nullptr, allocDataInternal, false);
+    void *importedPtr = driverHandle->importFdHandle(&peerDevice, flags, *handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false);
 
     bool canAccess = importedPtr != nullptr;
     if (canAccess) {

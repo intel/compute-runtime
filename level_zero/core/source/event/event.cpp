@@ -421,9 +421,11 @@ ze_result_t Event::importCbAllocationsForIpcFor2WaySharing(Device &device, const
     auto cacheId = Context::computeIpcCacheId(importedInOrderExecEventData.deviceAllocIpcHandle, 0, importedInOrderExecEventData.exporterProcessId, static_cast<uint8_t>(context->settings.handleType),
                                               static_cast<uint8_t>(InternalMemoryType::notSpecified));
 
+    const auto hasHostIpcHandle = (importedInOrderExecEventData.hostAllocIpcHandle != 0);
+
     deviceAlloc = NEO::makeUniqueGraphicsAllocation(memoryManager,
                                                     context->getMemHandlePtr(device.toHandle(), importedInOrderExecEventData.deviceAllocIpcHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(),
-                                                                             importedInOrderExecEventData.exporterProcessId, 0, cacheId, nullptr, false)
+                                                                             !hasHostIpcHandle, importedInOrderExecEventData.exporterProcessId, 0, cacheId, nullptr, false)
                                                         .first);
 
     if (!deviceAlloc) {
@@ -434,10 +436,10 @@ ze_result_t Event::importCbAllocationsForIpcFor2WaySharing(Device &device, const
         deviceAlloc->setWriteMemoryOnly(true);
     }
 
-    if (importedInOrderExecEventData.hostAllocIpcHandle != 0) {
+    if (hasHostIpcHandle) {
         cacheId = Context::computeIpcCacheId(importedInOrderExecEventData.hostAllocIpcHandle, 0, importedInOrderExecEventData.exporterProcessId, static_cast<uint8_t>(context->settings.handleType),
                                              static_cast<uint8_t>(InternalMemoryType::notSpecified));
-        outHostAlloc = context->getMemHandlePtr(device.toHandle(), importedInOrderExecEventData.hostAllocIpcHandle, NEO::AllocationType::bufferHostMemory, importedInOrderExecEventData.exporterProcessId, 0, cacheId, nullptr, false).first;
+        outHostAlloc = context->getMemHandlePtr(device.toHandle(), importedInOrderExecEventData.hostAllocIpcHandle, NEO::DeviceAllocNodeType<false>::getAllocationType(), true, importedInOrderExecEventData.exporterProcessId, 0, cacheId, nullptr, false).first;
 
         if (!outHostAlloc) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -547,7 +549,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     if (useOpaqueHandle) {
         auto cacheId = Context::computeIpcCacheId(ipcData.communicationAllocHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
         communicationAlloc = NEO::makeUniqueGraphicsAllocation(memoryManager,
-                                                               context->getMemHandlePtr(device->toHandle(), ipcData.communicationAllocHandle, NEO::AllocationType::bufferHostMemory, ipcData.processId, 0, cacheId, nullptr, false).first);
+                                                               context->getMemHandlePtr(device->toHandle(), ipcData.communicationAllocHandle, NEO::InOrderExecEventDataNodeType::getAllocationType(), true, ipcData.processId, 0, cacheId, nullptr, false).first);
 
         if (!communicationAlloc) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -560,7 +562,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
         }
     } else {
         auto cacheId = Context::computeIpcCacheId(ipcData.oneWayAllocCounterHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
-        deviceAlloc = context->getMemHandlePtr(device->toHandle(), ipcData.oneWayAllocCounterHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(), ipcData.processId, 0, cacheId, nullptr, false).first;
+        deviceAlloc = context->getMemHandlePtr(device->toHandle(), ipcData.oneWayAllocCounterHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(), true, ipcData.processId, 0, cacheId, nullptr, false).first;
 
         if (!deviceAlloc) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;

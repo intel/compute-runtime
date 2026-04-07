@@ -134,6 +134,7 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
             *ptr = getMemHandlePtr(this->devices.begin()->second,
                                    lookupTable.sharedHandleType.fd,
                                    NEO::AllocationType::bufferHostMemory,
+                                   true,
                                    0u,
                                    flags,
                                    0u,
@@ -147,7 +148,7 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
             UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
             *ptr = this->driverHandle->importNTHandle(this->devices.begin()->second,
                                                       lookupTable.sharedHandleType.ntHandle,
-                                                      NEO::AllocationType::bufferHostMemory, 0, false)
+                                                      NEO::AllocationType::bufferHostMemory, true, 0, false)
                        .second;
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -288,6 +289,7 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
             *ptr = getMemHandlePtr(hDevice,
                                    lookupTable.sharedHandleType.fd,
                                    NEO::AllocationType::buffer,
+                                   false,
                                    0u,
                                    flags,
                                    0u,
@@ -302,7 +304,7 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
             *ptr = this->driverHandle->importNTHandle(hDevice,
                                                       lookupTable.sharedHandleType.ntHandle,
                                                       NEO::AllocationType::buffer,
-                                                      0, false)
+                                                      false, 0, false)
                        .second;
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1043,6 +1045,7 @@ ze_result_t Context::openIpcMemHandle(ze_device_handle_t hDevice,
     *ptr = getMemHandlePtr(hDevice,
                            handle,
                            allocationType,
+                           allocationType == NEO::AllocationType::bufferHostMemory,
                            processId,
                            flags,
                            cacheID,
