@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -696,6 +696,109 @@
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::AddToRegistry();                                                                \
     template <PRODUCT_FAMILY productFamily, typename FamilyType>                                                                            \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::matchBody()
+
+// Macros for running tests only on the default platform.
+// Use only for product-agnostic tests that don't need to run on every enabled platform.
+
+#define IS_DEFAULT_PLATFORM() \
+    (::productFamily == DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily)
+
+#define HWTEST_F_DEFAULT(test_fixture, test_name)                    \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     DEFAULT_TEST_PLATFORM::gfxCoreFamily,           \
+                     DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily)
+
+#define HWTEST_P_DEFAULT(test_suite_name, test_name)        \
+    FAMILYTEST_TEST_P(test_suite_name, test_name,           \
+                      DEFAULT_TEST_PLATFORM::gfxCoreFamily, \
+                      DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily)
+
+#define TEST_F_DEFAULT(test_fixture, test_name)                                                                                       \
+    CHECK_TEST_NAME_LENGTH(test_fixture, test_name)                                                                                   \
+    class GTEST_TEST_CLASS_NAME_(test_fixture, test_name) : public test_fixture {                                                     \
+      public:                                                                                                                         \
+        GTEST_TEST_CLASS_NAME_(test_fixture, test_name)                                                                               \
+        () {}                                                                                                                         \
+        GTEST_TEST_CLASS_NAME_(test_fixture, test_name)                                                                               \
+        (const GTEST_TEST_CLASS_NAME_(test_fixture, test_name) &) = delete;                                                           \
+        GTEST_TEST_CLASS_NAME_(test_fixture, test_name)                                                                               \
+        (GTEST_TEST_CLASS_NAME_(test_fixture, test_name) &&) = delete;                                                                \
+        GTEST_TEST_CLASS_NAME_(test_fixture, test_name) &operator=(const GTEST_TEST_CLASS_NAME_(test_fixture, test_name) &) = delete; \
+        GTEST_TEST_CLASS_NAME_(test_fixture, test_name) &operator=(GTEST_TEST_CLASS_NAME_(test_fixture, test_name) &&) = delete;      \
+                                                                                                                                      \
+      private:                                                                                                                        \
+        void TestBody() override;                                                                                                     \
+        void SetUp() override {                                                                                                       \
+            if (!IS_DEFAULT_PLATFORM()) {                                                                                             \
+                GTEST_SKIP();                                                                                                         \
+                return;                                                                                                               \
+            }                                                                                                                         \
+            test_fixture::SetUp();                                                                                                    \
+        }                                                                                                                             \
+        void TearDown() override {                                                                                                    \
+            if (IS_DEFAULT_PLATFORM()) {                                                                                              \
+                test_fixture::TearDown();                                                                                             \
+            }                                                                                                                         \
+        }                                                                                                                             \
+        static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                                                         \
+    };                                                                                                                                \
+                                                                                                                                      \
+    ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_fixture, test_name)::test_info_ =                                          \
+        ::testing::internal::MakeAndRegisterTestInfo(                                                                                 \
+            #test_fixture, #test_name, nullptr, nullptr,                                                                              \
+            ::testing::internal::CodeLocation(__FILE__, __LINE__),                                                                    \
+            ::testing::internal::GetTypeId<test_fixture>(),                                                                           \
+            ::testing::internal::SuiteApiResolver<test_fixture>::GetSetUpCaseOrSuite(__FILE__, __LINE__),                             \
+            ::testing::internal::SuiteApiResolver<test_fixture>::GetTearDownCaseOrSuite(__FILE__, __LINE__),                          \
+            new ::testing::internal::TestFactoryImpl<GTEST_TEST_CLASS_NAME_(test_fixture, test_name)>);                               \
+    void GTEST_TEST_CLASS_NAME_(test_fixture, test_name)::TestBody()
+
+#define TEST_P_DEFAULT(test_suite_name, test_name)                                                                                                        \
+    CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                                    \
+    class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public test_suite_name {                                                                   \
+      public:                                                                                                                                             \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                                \
+        () {}                                                                                                                                             \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                                \
+        (const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete;                                                                            \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                                \
+        (GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &&) = delete;                                                                                 \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &operator=(const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete;               \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &operator=(GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &&) = delete;                    \
+                                                                                                                                                          \
+      private:                                                                                                                                            \
+        void TestBody() override;                                                                                                                         \
+        void SetUp() override {                                                                                                                           \
+            if (!IS_DEFAULT_PLATFORM()) {                                                                                                                 \
+                GTEST_SKIP();                                                                                                                             \
+                return;                                                                                                                                   \
+            }                                                                                                                                             \
+            test_suite_name::SetUp();                                                                                                                     \
+        }                                                                                                                                                 \
+        void TearDown() override {                                                                                                                        \
+            if (IS_DEFAULT_PLATFORM()) {                                                                                                                  \
+                test_suite_name::TearDown();                                                                                                              \
+            }                                                                                                                                             \
+        }                                                                                                                                                 \
+                                                                                                                                                          \
+        static int AddToRegistry() {                                                                                                                      \
+            ::testing::UnitTest::GetInstance()->parameterized_test_registry().GetTestCasePatternHolder<test_suite_name>(                                  \
+                                                                                 #test_suite_name, ::testing::internal::CodeLocation(__FILE__, __LINE__)) \
+                ->AddTestPattern(                                                                                                                         \
+                    #test_suite_name,                                                                                                                     \
+                    #test_name,                                                                                                                           \
+                    new ::testing::internal::TestMetaFactory<                                                                                             \
+                        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)>(),                                                                            \
+                    ::testing::internal::CodeLocation(__FILE__, __LINE__));                                                                               \
+            return 0;                                                                                                                                     \
+        }                                                                                                                                                 \
+        static int gtest_registering_dummy_;                                                                                                              \
+    };                                                                                                                                                    \
+    int GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                                                           \
+                               test_name)::gtest_registering_dummy_ =                                                                                     \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::AddToRegistry();                                                                              \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TestBody()
 
 #include "per_product_test_definitions.h"
 

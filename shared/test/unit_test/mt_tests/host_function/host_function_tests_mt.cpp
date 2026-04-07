@@ -11,7 +11,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_host_function_allocator.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include <atomic>
 #include <tuple>
@@ -256,7 +256,7 @@ class HostFunctionMtTestP : public ::testing::TestWithParam<std::tuple<int32_t, 
     uint32_t nPartitions = 0;
 };
 
-TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenSequentialCsrJobIsSubmittedThenHostFunctionsWorkIsDoneCorrectly) {
+TEST_P_DEFAULT(HostFunctionMtTestP, givenHostFunctionWorkersWhenSequentialCsrJobIsSubmittedThenHostFunctionsWorkIsDoneCorrectly) {
     uint32_t numberOfCSRs = 6;
     uint32_t callbacksPerCsr = 12;
 
@@ -276,7 +276,7 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenSequentialCsrJobIsSubmit
     clearResources();
 }
 
-TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacksPerThreadThenHostFunctionsWorkIsDoneCorrectly) {
+TEST_P_DEFAULT(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacksPerThreadThenHostFunctionsWorkIsDoneCorrectly) {
     uint32_t numberOfCSRs = 6;
     uint32_t callbacksPerCsr = 12;
 
@@ -308,7 +308,7 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacks
     clearResources();
 }
 
-TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcurrentlyThenHostFunctionsWorkIsDoneCorrectly) {
+TEST_P_DEFAULT(HostFunctionMtTestP, givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcurrentlyThenHostFunctionsWorkIsDoneCorrectly) {
     uint32_t numberOfCSRs = 6;
     uint32_t callbacksPerCsr = 12;
 
