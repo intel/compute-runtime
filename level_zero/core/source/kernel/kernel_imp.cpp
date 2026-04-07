@@ -41,6 +41,7 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
+#include "level_zero/core/source/image/image_imp.h"
 #include "level_zero/core/source/kernel/kernel_shared_state.h"
 #include "level_zero/core/source/kernel/sampler_patch_values.h"
 #include "level_zero/core/source/module/module.h"
@@ -1003,7 +1004,7 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
 
     auto imageInfo = image->getImageInfo();
     auto clChannelType = getClChannelDataType(image->getImageDesc().format);
-    auto clChannelOrder = getClChannelOrder(image->getImageDesc().format);
+    auto clChannelOrder = getClChannelOrder(image->getImageDesc().format, image->isSrgb());
 
     // If the Module was built from a SPIRv, then the supported channel data type must be in the CL types otherwise it is unsupported.
     ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);

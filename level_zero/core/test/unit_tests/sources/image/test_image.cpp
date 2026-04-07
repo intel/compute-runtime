@@ -253,7 +253,7 @@ HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArgs
         auto imgInfo = imageHW->getImageInfo();
 
         auto clChannelType = getClChannelDataType(desc.format);
-        auto clChannelOrder = getClChannelOrder(desc.format);
+        auto clChannelOrder = getClChannelOrder(desc.format, false);
 
         ImageImplicitArgs imageImplicitArgs{};
         imageImplicitArgs.structVersion = 0;
@@ -1198,73 +1198,191 @@ TEST(ImageFormatDescHelperTest, givenSupportedSwizzlesThenProperClEnumIsReturned
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_R));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_R));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_A));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_A));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_RG));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_RG));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_G;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_RA));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_RA));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_RGB));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_RGB));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_RGBA));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_RGBA));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_G;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_B;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_ARGB));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_ARGB));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_B;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_G;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_ABGR));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_ABGR));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_B;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_BGRA));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_BGRA));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_D;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_DEPTH));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_DEPTH));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_LUMINANCE));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_LUMINANCE));
 
     format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.y = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.z = ZE_IMAGE_FORMAT_SWIZZLE_R;
     format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
-    EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_INTENSITY));
+    EXPECT_EQ(getClChannelOrder(format, false), static_cast<cl_channel_order>(CL_INTENSITY));
+
+    format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    EXPECT_EQ(getClChannelOrder(format, true), static_cast<cl_channel_order>(CL_sRGBA));
+
+    format.x = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    format.z = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    EXPECT_EQ(getClChannelOrder(format, true), static_cast<cl_channel_order>(CL_sBGRA));
+}
+
+HWTEST2_F(ImageCreate, givenSrgbExtDescWhenInitializingImageThenSrgbFormatIsUsed, ImageSupport) {
+    ze_srgb_ext_desc_t srgbExtDesc = {};
+    srgbExtDesc.stype = ZE_STRUCTURE_TYPE_SRGB_EXT_DESC;
+    srgbExtDesc.pNext = nullptr;
+    srgbExtDesc.sRGB = true;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &srgbExtDesc;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->srgbImage);
+    EXPECT_EQ(imageHW->imgInfo.surfaceFormat->genxSurfaceFormat, NEO::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM_SRGB);
+}
+
+HWTEST2_F(ImageCreate, givenSrgbExtDescWithUnsupportedLayoutWhenInitializingThenErrorReturned, ImageSupport) {
+    ze_srgb_ext_desc_t srgbExtDesc = {};
+    srgbExtDesc.stype = ZE_STRUCTURE_TYPE_SRGB_EXT_DESC;
+    srgbExtDesc.pNext = nullptr;
+    srgbExtDesc.sRGB = true;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &srgbExtDesc;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT, ret);
+}
+
+HWTEST2_F(ImageCreate, givenSrgbExtDescWithUnsupportedTypeWhenInitializingThenErrorReturned, ImageSupport) {
+    ze_srgb_ext_desc_t srgbExtDesc = {};
+    srgbExtDesc.stype = ZE_STRUCTURE_TYPE_SRGB_EXT_DESC;
+    srgbExtDesc.pNext = nullptr;
+    srgbExtDesc.sRGB = true;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &srgbExtDesc;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_SINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT, ret);
+}
+
+HWTEST2_F(ImageCreate, givenSrgbExtDescWithFalseWhenInitializingThenSrgbNotSet, ImageSupport) {
+    ze_srgb_ext_desc_t srgbExtDesc = {};
+    srgbExtDesc.stype = ZE_STRUCTURE_TYPE_SRGB_EXT_DESC;
+    srgbExtDesc.pNext = nullptr;
+    srgbExtDesc.sRGB = false;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &srgbExtDesc;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_FALSE(imageHW->srgbImage);
+    EXPECT_NE(imageHW->imgInfo.surfaceFormat->genxSurfaceFormat, NEO::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM_SRGB);
 }
 
 using ImageGetMemoryProperties = Test<DeviceFixture>;

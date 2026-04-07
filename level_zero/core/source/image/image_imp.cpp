@@ -330,7 +330,7 @@ void ImageImp::populateImageImplicitArgs(NEO::ImageImplicitArgs &imageImplicitAr
     imageImplicitArgs.numMipLevels = imgInfo.imgDesc.numMipLevels;
 
     imageImplicitArgs.channelType = getClChannelDataType(imageFormatDesc.format);
-    imageImplicitArgs.channelOrder = getClChannelOrder(imageFormatDesc.format);
+    imageImplicitArgs.channelOrder = getClChannelOrder(imageFormatDesc.format, this->isSrgb());
 
     auto pixelSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
     imageImplicitArgs.flatBaseOffset = implicitArgsAllocation->getGpuAddress();

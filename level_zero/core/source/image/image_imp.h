@@ -57,6 +57,8 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
         return mimickedImagefor3Ch;
     }
 
+    bool isSrgb() const override { return srgbImage; }
+
     void setMimickedImage(bool value) {
         this->mimickedImagefor3Ch = value;
     }
@@ -83,6 +85,7 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     bool imageFromBuffer = false;
     bool sampledImage = false;
     bool mimickedImagefor3Ch = false;
+    bool srgbImage = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<ImageImp>);

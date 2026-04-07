@@ -87,6 +87,7 @@ struct StructuresLookupTable {
     bool bindlessImage;
     bool sampledImage;
     bool isExternalMemmapSystem;
+    bool isSrgb;
 };
 
 inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupTable, const void *desc) {
@@ -182,6 +183,9 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             lookupTable.externalMemmapSystem.systemMemory = sysMemDesc->pSystemMemory;
             lookupTable.externalMemmapSystem.size = sysMemDesc->size;
             lookupTable.isExternalMemmapSystem = true;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_SRGB_EXT_DESC) {
+            const ze_srgb_ext_desc_t *srgbDesc = reinterpret_cast<const ze_srgb_ext_desc_t *>(extendedDesc);
+            lookupTable.isSrgb = srgbDesc->sRGB;
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }

@@ -1225,7 +1225,7 @@ bool testBindlessImageQuery(ze_context_handle_t context, ze_device_handle_t devi
                               0};
 
     std::vector<uint32_t> reference1D = {static_cast<uint32_t>(desc1D.width),
-                                         L0::getClChannelDataType(desc1D.format), L0::getClChannelOrder(desc1D.format),
+                                         L0::getClChannelDataType(desc1D.format), L0::getClChannelOrder(desc1D.format, false),
                                          desc1D.miplevels};
 
     ze_image_desc_t desc1DArray = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -1242,7 +1242,7 @@ bool testBindlessImageQuery(ze_context_handle_t context, ze_device_handle_t devi
                                    0};
 
     std::vector<uint32_t> reference1DArray = {static_cast<uint32_t>(desc1DArray.width),
-                                              L0::getClChannelDataType(desc1DArray.format), L0::getClChannelOrder(desc1DArray.format),
+                                              L0::getClChannelDataType(desc1DArray.format), L0::getClChannelOrder(desc1DArray.format, false),
                                               desc1DArray.arraylevels, desc1DArray.miplevels};
 
     ze_image_desc_t desc2D = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -1259,7 +1259,7 @@ bool testBindlessImageQuery(ze_context_handle_t context, ze_device_handle_t devi
                               0};
 
     std::vector<uint32_t> reference2D = {static_cast<uint32_t>(desc2D.width), desc2D.height,
-                                         L0::getClChannelDataType(desc2D.format), L0::getClChannelOrder(desc2D.format),
+                                         L0::getClChannelDataType(desc2D.format), L0::getClChannelOrder(desc2D.format, false),
                                          static_cast<uint32_t>(desc2D.width), desc2D.height, desc2D.miplevels};
 
     ze_image_desc_t desc2DArray = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -1276,7 +1276,7 @@ bool testBindlessImageQuery(ze_context_handle_t context, ze_device_handle_t devi
                                    0};
 
     std::vector<uint32_t> reference2DArray = {static_cast<uint32_t>(desc2DArray.width), desc2DArray.height,
-                                              L0::getClChannelDataType(desc2DArray.format), L0::getClChannelOrder(desc2DArray.format),
+                                              L0::getClChannelDataType(desc2DArray.format), L0::getClChannelOrder(desc2DArray.format, false),
                                               static_cast<uint32_t>(desc2DArray.width), desc2DArray.height, desc2DArray.arraylevels, desc2DArray.miplevels};
 
     ze_image_desc_t desc2DDepth = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -1293,7 +1293,7 @@ bool testBindlessImageQuery(ze_context_handle_t context, ze_device_handle_t devi
                                    0};
 
     std::vector<uint32_t> reference2DDepth = {static_cast<uint32_t>(desc2DDepth.width), desc2DDepth.height,
-                                              L0::getClChannelDataType(desc2DDepth.format), L0::getClChannelOrder(desc2DDepth.format),
+                                              L0::getClChannelDataType(desc2DDepth.format), L0::getClChannelOrder(desc2DDepth.format, false),
                                               static_cast<uint32_t>(desc2DDepth.width), desc2DDepth.height, desc2DDepth.miplevels};
 
     ze_image_desc_t desc2DArrayDepth = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -1310,7 +1310,7 @@ bool testBindlessImageQuery(ze_context_handle_t context, ze_device_handle_t devi
                                         0};
 
     std::vector<uint32_t> reference2DArrayDepth = {static_cast<uint32_t>(desc2DArrayDepth.width), desc2DArrayDepth.height,
-                                                   L0::getClChannelDataType(desc2DArrayDepth.format), L0::getClChannelOrder(desc2DArrayDepth.format),
+                                                   L0::getClChannelDataType(desc2DArrayDepth.format), L0::getClChannelOrder(desc2DArrayDepth.format, false),
                                                    static_cast<uint32_t>(desc2DArrayDepth.width), desc2DArrayDepth.height,
                                                    desc2DArrayDepth.arraylevels, desc2DArrayDepth.miplevels};
 
@@ -1328,7 +1328,7 @@ bool testBindlessImageQuery(ze_context_handle_t context, ze_device_handle_t devi
                                   0};
 
     std::vector<uint32_t> reference2DMsaa = {static_cast<uint32_t>(desc2DMsaa.width), desc2DMsaa.height,
-                                             L0::getClChannelDataType(desc2DMsaa.format), L0::getClChannelOrder(desc2DMsaa.format),
+                                             L0::getClChannelDataType(desc2DMsaa.format), L0::getClChannelOrder(desc2DMsaa.format, false),
                                              static_cast<uint32_t>(desc2DMsaa.width), desc2DMsaa.height, desc2DMsaa.miplevels};
 
     ze_image_desc_t desc3D = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -1345,7 +1345,7 @@ bool testBindlessImageQuery(ze_context_handle_t context, ze_device_handle_t devi
                               0};
 
     std::vector<uint32_t> reference3D = {static_cast<uint32_t>(desc3D.width), desc3D.height, desc3D.depth,
-                                         L0::getClChannelDataType(desc3D.format), L0::getClChannelOrder(desc3D.format),
+                                         L0::getClChannelDataType(desc3D.format), L0::getClChannelOrder(desc3D.format, false),
                                          static_cast<uint32_t>(desc3D.width), desc3D.height, desc3D.depth, desc3D.miplevels};
 
     bool res = true;
