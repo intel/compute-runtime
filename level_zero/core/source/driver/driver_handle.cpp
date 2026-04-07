@@ -1160,4 +1160,17 @@ ze_result_t DriverHandle::clearErrorDescription() {
     return static_cast<ze_result_t>(this->devices[0]->getNEODevice()->getExecutionEnvironment()->clearErrorDescription());
 }
 
+bool DriverHandle::tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle) {
+    std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
+    auto cacheIt = opaqueHandleImportCache.find(cacheID);
+    if (cacheIt != opaqueHandleImportCache.end()) {
+        importHandle = cacheIt->second;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Reusing cached import handle %lu for cache ID %lu\n",
+                     importHandle, cacheID);
+        return true;
+    }
+    return false;
+}
+
 } // namespace L0

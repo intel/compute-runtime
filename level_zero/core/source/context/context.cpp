@@ -582,7 +582,7 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
                     this->driverHandle->unregisterIpcHandleWithServer(ipcHandleIterator->second->handle);
                 }
                 // Clear the cached import handle when IPC memory is freed
-                clearCachedImportHandle(ipcHandleIterator->second->cacheID);
+                this->driverHandle->clearCachedImportHandle(ipcHandleIterator->second->cacheID);
                 delete ipcHandleIterator->second;
                 this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator->first);
             }
@@ -846,7 +846,7 @@ ze_result_t Context::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
                 this->driverHandle->unregisterIpcHandleWithServer(handle);
             }
             // Clear the cached import handle when IPC handle is closed
-            clearCachedImportHandle(trackIPC->cacheID);
+            this->driverHandle->clearCachedImportHandle(trackIPC->cacheID);
             delete trackIPC;
             ipcMap.erase(handle);
         }
@@ -1920,20 +1920,6 @@ ze_result_t Context::getPitchFor2dImage(
     size_t *rowPitch) {
 
     return Image::getPitchFor2dImage(hDevice, imageWidth, imageHeight, elementSizeInBytes, rowPitch);
-}
-
-bool Context::tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle) {
-    std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
-    auto cacheIt = opaqueHandleImportCache.find(cacheID);
-    if (cacheIt != opaqueHandleImportCache.end()) {
-        // Found in cache, reuse the imported handle
-        importHandle = cacheIt->second;
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Reusing cached import handle %lu for cache ID %lu\n",
-                     importHandle, cacheID);
-        return true;
-    }
-    return false;
 }
 
 template <typename IpcDataT>

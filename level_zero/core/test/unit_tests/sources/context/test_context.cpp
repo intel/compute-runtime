@@ -495,64 +495,31 @@ TEST_F(ContextTest, whenCreatingAndDestroyingContextThenSuccessIsReturned) {
 }
 
 TEST_F(ContextTest, givenEmptyCacheWhenTryGetCachedImportHandleIsCalledThenReturnsFalse) {
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto contextImp = L0::Context::fromHandle(hContext);
-
     uint64_t exportHandle = 5678;
     unsigned int processId = 1234;
     uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
     uint64_t importHandle = 0;
 
-    // Cache is empty, should return false
-    bool result = contextImp->tryGetCachedImportHandle(cacheID, importHandle);
+    bool result = driverHandle->tryGetCachedImportHandle(cacheID, importHandle);
     EXPECT_FALSE(result);
     EXPECT_EQ(0u, importHandle);
-
-    res = L0::Context::fromHandle(hContext)->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 TEST_F(ContextTest, givenPopulatedCacheWhenTryGetCachedImportHandleIsCalledWithMatchingKeyThenReturnsTrue) {
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto contextImp = L0::Context::fromHandle(hContext);
-
     uint64_t exportHandle = 5678;
     unsigned int processId = 1234;
     uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
     uint64_t expectedImportHandle = 9999;
     uint64_t importHandle = 0;
 
-    // Populate cache
-    contextImp->setCachedImportHandle(cacheID, expectedImportHandle);
+    driverHandle->setCachedImportHandle(cacheID, expectedImportHandle);
 
-    // Should find entry in cache
-    bool result = contextImp->tryGetCachedImportHandle(cacheID, importHandle);
+    bool result = driverHandle->tryGetCachedImportHandle(cacheID, importHandle);
     EXPECT_TRUE(result);
     EXPECT_EQ(expectedImportHandle, importHandle);
-
-    res = L0::Context::fromHandle(hContext)->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 TEST_F(ContextTest, givenPopulatedCacheWhenTryGetCachedImportHandleIsCalledWithNonMatchingKeyThenReturnsFalse) {
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto contextImp = L0::Context::fromHandle(hContext);
-
     uint64_t exportHandle = 6666;
     unsigned int processId1 = 5678;
     unsigned int processId2 = 5555;
@@ -560,27 +527,14 @@ TEST_F(ContextTest, givenPopulatedCacheWhenTryGetCachedImportHandleIsCalledWithN
     uint64_t cacheID2 = (static_cast<uint64_t>(processId2) << 32) | (exportHandle & 0xFFFFFFFF);
     uint64_t importHandle = 0;
 
-    // Populate cache with a different key
-    contextImp->setCachedImportHandle(cacheID1, 9999);
-    // Should not find entry in cache
-    bool result = contextImp->tryGetCachedImportHandle(cacheID2, importHandle);
+    driverHandle->setCachedImportHandle(cacheID1, 9999);
+
+    bool result = driverHandle->tryGetCachedImportHandle(cacheID2, importHandle);
     EXPECT_FALSE(result);
     EXPECT_EQ(0u, importHandle);
-
-    res = L0::Context::fromHandle(hContext)->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 TEST_F(ContextTest, givenMultipleEntriesInCacheWhenTryGetCachedImportHandleIsCalledThenReturnsCorrectHandle) {
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto contextImp = L0::Context::fromHandle(hContext);
-
-    // Populate cache with multiple entries
     unsigned int processId1 = 1000;
     unsigned int processId2 = 2000;
     unsigned int processId3 = 3000;
@@ -591,79 +545,52 @@ TEST_F(ContextTest, givenMultipleEntriesInCacheWhenTryGetCachedImportHandleIsCal
     uint64_t cacheID2 = (static_cast<uint64_t>(processId2) << 32) | (exportHandle2 & 0xFFFFFFFF);
     uint64_t cacheID3 = (static_cast<uint64_t>(processId3) << 32) | (exportHandle3 & 0xFFFFFFFF);
 
-    contextImp->setCachedImportHandle(cacheID1, 1111);
-    contextImp->setCachedImportHandle(cacheID2, 2222);
-    contextImp->setCachedImportHandle(cacheID3, 3333);
-    // Test retrieval of each entry
+    driverHandle->setCachedImportHandle(cacheID1, 1111);
+    driverHandle->setCachedImportHandle(cacheID2, 2222);
+    driverHandle->setCachedImportHandle(cacheID3, 3333);
+
     uint64_t importHandle = 0;
 
-    bool result1 = contextImp->tryGetCachedImportHandle(cacheID1, importHandle);
+    bool result1 = driverHandle->tryGetCachedImportHandle(cacheID1, importHandle);
     EXPECT_TRUE(result1);
     EXPECT_EQ(1111u, importHandle);
 
     importHandle = 0;
-    bool result2 = contextImp->tryGetCachedImportHandle(cacheID2, importHandle);
+    bool result2 = driverHandle->tryGetCachedImportHandle(cacheID2, importHandle);
     EXPECT_TRUE(result2);
     EXPECT_EQ(2222u, importHandle);
 
     importHandle = 0;
-    bool result3 = contextImp->tryGetCachedImportHandle(cacheID3, importHandle);
+    bool result3 = driverHandle->tryGetCachedImportHandle(cacheID3, importHandle);
     EXPECT_TRUE(result3);
     EXPECT_EQ(3333u, importHandle);
-
-    res = L0::Context::fromHandle(hContext)->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 TEST_F(ContextTest, givenCacheKeyWithZeroProcessIdWhenTryGetCachedImportHandleIsCalledThenWorksCorrectly) {
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto contextImp = L0::Context::fromHandle(hContext);
-
-    // Test with processId = 0
     uint64_t exportHandle = 42;
     unsigned int processId = 0;
     uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
     uint64_t expectedImportHandle = 7777;
     uint64_t importHandle = 0;
 
-    contextImp->setCachedImportHandle(cacheID, expectedImportHandle);
+    driverHandle->setCachedImportHandle(cacheID, expectedImportHandle);
 
-    bool result = contextImp->tryGetCachedImportHandle(cacheID, importHandle);
+    bool result = driverHandle->tryGetCachedImportHandle(cacheID, importHandle);
     EXPECT_TRUE(result);
     EXPECT_EQ(expectedImportHandle, importHandle);
-
-    res = L0::Context::fromHandle(hContext)->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 TEST_F(ContextTest, givenCacheKeyWithMaxValuesWhenTryGetCachedImportHandleIsCalledThenWorksCorrectly) {
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto contextImp = L0::Context::fromHandle(hContext);
-
-    // Test with max values
     uint64_t exportHandle = 0xFFFFFFFFULL;
     unsigned int processId = 0xFFFFFFFFU;
     uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
     uint64_t expectedImportHandle = 0xABCDEF0123456789ULL;
     uint64_t importHandle = 0;
 
-    contextImp->setCachedImportHandle(cacheID, expectedImportHandle);
-    bool result = contextImp->tryGetCachedImportHandle(cacheID, importHandle);
+    driverHandle->setCachedImportHandle(cacheID, expectedImportHandle);
+    bool result = driverHandle->tryGetCachedImportHandle(cacheID, importHandle);
     EXPECT_TRUE(result);
     EXPECT_EQ(expectedImportHandle, importHandle);
-
-    res = L0::Context::fromHandle(hContext)->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 using ContextMakeMemoryResidentTests = Test<HostPointerManagerFixure>;
@@ -4976,11 +4903,11 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithCachedImportThenCacheIsCleared
     uint64_t importHandle = 9999;
 
     // Populate cache
-    contextImp->setCachedImportHandle(cacheID, importHandle);
+    driverHandle->setCachedImportHandle(cacheID, importHandle);
 
     // Verify cache has the entry
     uint64_t cachedHandle = 0;
-    EXPECT_TRUE(contextImp->tryGetCachedImportHandle(cacheID, cachedHandle));
+    EXPECT_TRUE(driverHandle->tryGetCachedImportHandle(cacheID, cachedHandle));
     EXPECT_EQ(importHandle, cachedHandle);
 
     // Create IPC handle tracking with the cacheID
@@ -5013,7 +4940,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithCachedImportThenCacheIsCleared
 
     // Verify the cache entry was cleared
     cachedHandle = 0;
-    EXPECT_FALSE(contextImp->tryGetCachedImportHandle(cacheID, cachedHandle));
+    EXPECT_FALSE(driverHandle->tryGetCachedImportHandle(cacheID, cachedHandle));
 
     // Verify the handle was removed from the map
     {
@@ -5040,11 +4967,11 @@ TEST_F(ContextTest, whenCallingFreeMemWithCachedImportThenCacheIsCleared) {
     uint64_t importHandle = 7777;
 
     // Populate cache
-    contextImp->setCachedImportHandle(cacheID, importHandle);
+    driverHandle->setCachedImportHandle(cacheID, importHandle);
 
     // Verify cache has the entry
     uint64_t cachedHandle = 0;
-    EXPECT_TRUE(contextImp->tryGetCachedImportHandle(cacheID, cachedHandle));
+    EXPECT_TRUE(driverHandle->tryGetCachedImportHandle(cacheID, cachedHandle));
     EXPECT_EQ(importHandle, cachedHandle);
 
     size_t size = 4096;
@@ -5079,7 +5006,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithCachedImportThenCacheIsCleared) {
 
     // Verify the cache entry was cleared
     cachedHandle = 0;
-    EXPECT_FALSE(contextImp->tryGetCachedImportHandle(cacheID, cachedHandle));
+    EXPECT_FALSE(driverHandle->tryGetCachedImportHandle(cacheID, cachedHandle));
 
     // Verify the handle was removed from the map
     {

@@ -1428,7 +1428,7 @@ TEST_F(GetMemHandlePtrTest, givenCachedImportHandleWhenCallingGetMemHandlePtrThe
     uint64_t cachedImportHandle = 9999;
 
     // Pre-populate the cache
-    context->setCachedImportHandle(cacheID, cachedImportHandle);
+    driverHandle->setCachedImportHandle(cacheID, cachedImportHandle);
 
     // Track if pidfdopen is called
     VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
@@ -1489,7 +1489,7 @@ TEST_F(GetMemHandlePtrTest, givenPidfdSuccessFromCacheWhenCallingGetMemHandlePtr
     uint64_t cachedImportHandle = 8888;
 
     // Pre-populate the cache
-    context->setCachedImportHandle(cacheID, cachedImportHandle);
+    driverHandle->setCachedImportHandle(cacheID, cachedImportHandle);
 
     // Track syscalls
     VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
@@ -1527,7 +1527,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndValidCa
     ipcMap[exportHandle] = ipcHandleData;
 
     // Pre-populate cache to skip pidfd/socket logic and use exportHandle directly as importHandle
-    context->setCachedImportHandle(cacheID, exportHandle);
+    driverHandle->setCachedImportHandle(cacheID, exportHandle);
 
     // Call getMemHandlePtr - should succeed and store cacheID in IPC map
     void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false).second;
@@ -1562,7 +1562,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndCacheID
     uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
 
     // Pre-populate cache to skip pidfd/socket logic
-    context->setCachedImportHandle(cacheID, exportHandle);
+    driverHandle->setCachedImportHandle(cacheID, exportHandle);
 
     // Do NOT add handle to IPC map - this tests the ipcIter == ipcMap.end() branch
 
@@ -1673,7 +1673,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithImportFailureAndNonZer
     uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
 
     // Pre-populate cache to skip pidfd/socket logic
-    context->setCachedImportHandle(cacheID, exportHandle);
+    driverHandle->setCachedImportHandle(cacheID, exportHandle);
 
     // Pre-populate IPC map with an entry
     auto &ipcMap = driverHandle->getIPCHandleMap();

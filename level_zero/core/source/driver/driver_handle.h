@@ -137,6 +137,21 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
+
+    MOCKABLE_VIRTUAL bool tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle);
+
+    void setCachedImportHandle(uint64_t cacheID, uint64_t importHandle) {
+        std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
+        opaqueHandleImportCache[cacheID] = importHandle;
+    }
+
+    void clearCachedImportHandle(uint64_t cacheID) {
+        if (cacheID == 0) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
+        opaqueHandleImportCache.erase(cacheID);
+    }
     void initHostUsmAllocPool(bool multiDevice);
     void initHostUsmAllocPoolOnce();
     void initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice);
@@ -187,6 +202,9 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     std::map<uint64_t, IpcHandleTracking *> ipcHandles;
     std::mutex ipcHandleMapMutex;
+
+    std::map<uint64_t, uint64_t> opaqueHandleImportCache;
+    std::mutex opaqueHandleImportCacheMutex;
 
     std::unique_ptr<NEO::IpcSocketServer, NEO::IpcSocketServerDeleter> ipcSocketServer;
     std::mutex ipcSocketServerMutex;

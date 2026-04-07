@@ -322,21 +322,6 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
 
-    bool tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle);
-
-    void setCachedImportHandle(uint64_t cacheID, uint64_t importHandle) {
-        std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
-        opaqueHandleImportCache[cacheID] = importHandle;
-    }
-
-    void clearCachedImportHandle(uint64_t cacheID) {
-        if (cacheID == 0) {
-            return;
-        }
-        std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
-        opaqueHandleImportCache.erase(cacheID);
-    }
-
     void initDeviceHandles(uint32_t numDevices, ze_device_handle_t *deviceHandles) {
         this->numDevices = numDevices;
         if (numDevices > 0) {
@@ -369,9 +354,6 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     size_t getPageAlignedSizeRequired(const void *pStart, size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
     bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, bool blocking);
-
-    std::map<uint64_t, uint64_t> opaqueHandleImportCache;
-    std::mutex opaqueHandleImportCacheMutex;
 
     std::map<uint32_t, ze_device_handle_t> devices;
     std::vector<ze_device_handle_t> deviceHandles;
