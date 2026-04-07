@@ -126,12 +126,6 @@ std::string getRunPath(char *argv0) {
 std::thread::id tempThreadID;
 void applyCommonWorkarounds() {
     {
-        std::ofstream f;
-        const std::string fileName("_tmp_");
-        f.open(fileName, std::ofstream::binary);
-        f.close();
-    }
-    {
         std::mutex mtx;
         std::unique_lock<std::mutex> stateLock(mtx);
     }

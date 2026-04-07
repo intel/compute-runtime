@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,12 +48,6 @@ std::string getRunPath() {
 }
 
 void applyWorkarounds() {
-    {
-        std::ofstream f;
-        const std::string fileName("_tmp_");
-        f.open(fileName, std::ofstream::binary);
-        f.close();
-    }
     {
         std::mutex mtx;
         std::unique_lock<std::mutex> stateLock(mtx);
