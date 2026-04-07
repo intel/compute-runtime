@@ -385,20 +385,6 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     bool isSetPatSupported = false;
 };
 
-template <PRODUCT_FAMILY gfxProduct>
-class IoctlHelperImpl : public IoctlHelperUpstream {
-  public:
-    using IoctlHelperUpstream::IoctlHelperUpstream;
-    static std::unique_ptr<IoctlHelper> get(Drm &drm) {
-        return std::make_unique<IoctlHelperImpl<gfxProduct>>(drm);
-    }
-
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) override;
-    std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo) override;
-    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
-    std::string getIoctlString(DrmIoctl ioctlRequest) const override;
-};
-
 class IoctlHelperPrelim20 : public IoctlHelperI915 {
   public:
     using IoctlHelperI915::IoctlHelperI915;
