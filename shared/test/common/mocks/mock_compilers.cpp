@@ -20,7 +20,6 @@
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
 #include <filesystem>
-#include <fstream>
 #include <map>
 namespace NEO {
 

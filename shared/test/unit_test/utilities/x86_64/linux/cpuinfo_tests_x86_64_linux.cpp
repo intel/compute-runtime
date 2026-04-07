@@ -15,7 +15,6 @@
 #include "gtest/gtest.h"
 
 #include <cstdio>
-#include <fstream>
 
 using namespace NEO;
 

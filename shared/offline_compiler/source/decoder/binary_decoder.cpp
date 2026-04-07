@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,6 @@
 #include "shared/source/utilities/directory.h"
 
 #include <cstring>
-#include <fstream>
 #include <sstream>
 
 template <typename T>
