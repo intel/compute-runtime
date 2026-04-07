@@ -26,6 +26,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -618,6 +619,11 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
 }
 
 bool Device::initializeEngines() {
+    EnvironmentVariableReader envReader;
+    bool sysmanNoContextMode = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
+    if (sysmanNoContextMode) {
+        return true;
+    }
     uint32_t deviceCsrIndex = 0;
     bool defaultEngineAlreadySet = false;
     for (auto &engine : allEngines) {
