@@ -1889,7 +1889,7 @@ ze_result_t DebugSessionImp::writePackedRegisters(uint64_t memHandle, uint64_t r
 
     const char *data = reinterpret_cast<const char *>(packed.data());
     const size_t size = sizeof(packed[0]) * packed.size();
-    const uint64_t gpuVa = packer.packedOffset + regStartGpuVa;
+    const uint64_t gpuVa = (packer.packedOffset * sizeof(packed[0])) + regStartGpuVa;
     return writeGpuMemory(memHandle, data, size, gpuVa);
 }
 
@@ -1898,7 +1898,7 @@ ze_result_t DebugSessionImp::readPackedRegisters(uint64_t memHandle, uint64_t re
 
     char *data = reinterpret_cast<char *>(packed.data());
     const size_t packedDataSize = sizeof(packed[0]) * packed.size();
-    const uint64_t gpuVa = packer.packedOffset + regStartGpuVa;
+    const uint64_t gpuVa = (packer.packedOffset * sizeof(packed[0])) + regStartGpuVa;
     ze_result_t status = readGpuMemory(memHandle, data, packedDataSize, gpuVa);
     if (status != ZE_RESULT_SUCCESS) {
         return ZE_RESULT_ERROR_UNKNOWN;

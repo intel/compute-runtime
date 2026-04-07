@@ -6436,10 +6436,10 @@ TEST_F(DebugSessionRegistersAccessV5, WhenWritePackedRegistersIsCalledThenCorrec
         .packedOffset = 0x53,
         .unpackedIndices = {0, 1, 4, 5, 6},
     };
-
-    ze_result_t status = session.writePackedRegisters(testMemoryHandle, 0x1200, packer, unpackedValues.data());
+    uint64_t regStartGpuVa = 0x1200;
+    ze_result_t status = session.writePackedRegisters(testMemoryHandle, regStartGpuVa, packer, unpackedValues.data());
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(session.writeGpuMemoryGpuVa.value(), 0x1253u);
+    EXPECT_EQ(session.writeGpuMemoryGpuVa.value(), regStartGpuVa + (packer.packedOffset * sizeof(packedValues[0])));
     const size_t writtenSize = session.writeGpuMemoryData.size();
     EXPECT_EQ(writtenSize, packedValues.size() * 4);
     const uint32_t *writtenDataPtr = reinterpret_cast<uint32_t *>(session.writeGpuMemoryData.data());
@@ -6462,11 +6462,12 @@ TEST_F(DebugSessionRegistersAccessV5, GivenReadGpuMemorySucceedsWhenReadPackedRe
     const char *readMemoryData = reinterpret_cast<const char *>(packedValues.data());
     session.readGpuMemoryData = std::vector<char>(readMemoryData, readMemoryData + packedValues.size() * 4);
 
+    uint64_t regStartGpuVa = 0x1200;
     std::vector<uint32_t> readData(unpackedValues.size());
-    ze_result_t status = session.readPackedRegisters(testMemoryHandle, 0x1200, packer, readData.data());
+    ze_result_t status = session.readPackedRegisters(testMemoryHandle, regStartGpuVa, packer, readData.data());
 
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(session.readGpuMemoryGpuVa.value(), 0x1253u);
+    EXPECT_EQ(session.readGpuMemoryGpuVa.value(), regStartGpuVa + (packer.packedOffset * sizeof(packedValues[0])));
     EXPECT_EQ(readData, unpackedValues);
 }
 
