@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,6 +167,8 @@ struct AUBWriteImage
         auto rowPitch = dstImage->getHostPtrRowPitch();
         auto slicePitch = dstImage->getHostPtrSlicePitch();
 
+        std::vector<uint8_t> expectedRow(testWidth * elementSize);
+
         for (size_t z = 0; z < testDepth; ++z) {
             for (size_t y = 0; y < testHeight; ++y) {
                 for (size_t x = 0; x < testWidth; ++x) {
@@ -175,12 +177,13 @@ struct AUBWriteImage
                         y >= origin[1] && y < (origin[1] + region[1]) &&
                         x >= origin[0] && x < (origin[0] + region[0])) {
                         // this texel should be updated
-                        AUBCommandStreamFixture::expectMemory<FamilyType>(&pDstMemory[pos], pSrcMemory, elementSize);
+                        memcpy_s(&expectedRow[pos], elementSize, pSrcMemory, elementSize);
                         pSrcMemory = ptrOffset(pSrcMemory, elementSize);
                     } else {
-                        AUBCommandStreamFixture::expectMemory<FamilyType>(&pDstMemory[pos], referenceMemory.data(), elementSize);
+                        memcpy_s(&expectedRow[pos], elementSize, referenceMemory.data(), elementSize);
                     }
                 }
+                AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, expectedRow.data(), testWidth * elementSize);
                 pDstMemory = ptrOffset(pDstMemory, rowPitch);
                 if (y >= origin[1] && y < origin[1] + region[1] &&
                     z >= origin[2] && z < origin[2] + region[2]) {
@@ -327,6 +330,13 @@ INSTANTIATE_TEST_SUITE_P(AUBWriteImage_simple, AUBWriteImageCCS,
 
 using AUBWriteImageBCS = AUBWriteImage<true>;
 
+struct AUBWriteImageBCSParam : AUBWriteImage<true> {
+    void SetUp() override {
+        debugManager.flags.EnableFreeMemory.set(false);
+        ImageAubFixture::setUp(true, std::get<2>(GetParam()).imageType);
+    }
+};
+
 HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 4, 8, 12};
@@ -342,18 +352,12 @@ HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEna
     }
 }
 
-HWTEST2_P(AUBWriteImageBCS, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
-    auto &productHelper = pCmdQ->getDevice().getProductHelper();
-    if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&
-        !(productHelper.isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_P(AUBWriteImageBCSParam, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
     testWriteImageUnaligned<FamilyType>();
     ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
 }
 
-INSTANTIATE_TEST_SUITE_P(AUBWriteImage_simple, AUBWriteImageBCS,
+INSTANTIATE_TEST_SUITE_P(AUBWriteImage_simple, AUBWriteImageBCSParam,
                          ::testing::Combine(::testing::Values( // formats
                                                 CL_UNORM_INT8, CL_SIGNED_INT16,
                                                 CL_UNSIGNED_INT32, CL_HALF_FLOAT,

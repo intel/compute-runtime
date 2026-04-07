@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -207,18 +207,20 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
     uint8_t *expected = new uint8_t[elementSize];
     memset(expected, 0xFF, elementSize);
 
+    std::vector<uint8_t> expectedRow(testWidth * elementSize);
+
     for (size_t z = 0; z < testDepth; ++z) {
         for (size_t y = 0; y < testHeight; ++y) {
             for (size_t x = 0; x < testWidth; ++x) {
                 if (z >= origin[2] && z < (origin[2] + region[2]) &&
                     y >= origin[1] && y < (origin[1] + region[1]) &&
                     x >= origin[0] && x < (origin[0] + region[0])) {
-                    // this texel should be updated
-                    AUBCommandStreamFixture::expectMemory<FamilyType>(&readMemoryStart[x * elementSize], expected, elementSize);
+                    memcpy_s(&expectedRow[x * elementSize], elementSize, expected, elementSize);
                 } else {
-                    AUBCommandStreamFixture::expectMemory<FamilyType>(&readMemoryStart[x * elementSize], &srcMemoryStart[x * elementSize], elementSize);
+                    memcpy_s(&expectedRow[x * elementSize], elementSize, &srcMemoryStart[x * elementSize], elementSize);
                 }
             }
+            AUBCommandStreamFixture::expectMemory<FamilyType>(readMemoryStart, expectedRow.data(), testWidth * elementSize);
             readMemoryStart = ptrOffset(readMemoryStart, inputRowPitch);
             srcMemoryStart = ptrOffset(srcMemoryStart, inputRowPitch);
         }

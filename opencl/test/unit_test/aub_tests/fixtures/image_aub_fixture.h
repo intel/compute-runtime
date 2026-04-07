@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,13 +25,17 @@ struct ImageAubFixture : public AUBCommandStreamFixture {
 
     using AUBCommandStreamFixture::setUp;
 
-    void setUp(bool enableBlitter) {
+    void setUp(bool enableBlitter, uint32_t imageType = 0) {
         if (enableBlitter) {
 
             MockExecutionEnvironment mockExecutionEnvironment{};
             auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
 
             if (!productHelper.isBlitterForImagesSupported() || !productHelper.blitEnqueuePreferred(false)) {
+                GTEST_SKIP();
+            }
+
+            if (imageType == CL_MEM_OBJECT_IMAGE3D && !productHelper.isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo)) {
                 GTEST_SKIP();
             }
 

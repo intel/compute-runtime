@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -323,6 +323,13 @@ INSTANTIATE_TEST_SUITE_P(
 
 using AUBReadImageBCS = AUBReadImage<true>;
 
+struct AUBReadImageBCSParam : AUBReadImage<true> {
+    void SetUp() override {
+        debugManager.flags.EnableFreeMemory.set(false);
+        ImageAubFixture::setUp(true, std::get<2>(GetParam()).imageType);
+    }
+};
+
 HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 4, 8, 12};
@@ -338,20 +345,13 @@ HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnab
     }
 }
 
-HWTEST2_P(AUBReadImageBCS, GivenUnalignedMemoryWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
-
-    auto &productHelper = pCmdQ->getDevice().getProductHelper();
-    if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&
-        !(productHelper.isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_P(AUBReadImageBCSParam, GivenUnalignedMemoryWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
     testReadImageUnaligned<FamilyType>();
     ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    AUBReadImage_simple, AUBReadImageBCS,
+    AUBReadImage_simple, AUBReadImageBCSParam,
     ::testing::Combine(::testing::Values( // formats
                            CL_UNORM_INT8, CL_SIGNED_INT16, CL_UNSIGNED_INT32,
                            CL_HALF_FLOAT, CL_FLOAT),
