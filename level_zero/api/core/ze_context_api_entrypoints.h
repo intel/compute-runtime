@@ -78,7 +78,7 @@ ze_result_t ZE_APICALL zePhysicalMemGetProperties(
     ze_context_handle_t hContext,
     ze_physical_mem_handle_t hPhysicalMem,
     ze_physical_mem_properties_t *pMemProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Context::fromHandle(hContext)->getPhysicalMemProperties(hPhysicalMem, pMemProperties);
 }
 
 ze_result_t ZE_APICALL zeVirtualMemMap(

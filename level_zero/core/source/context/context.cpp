@@ -1602,6 +1602,21 @@ ze_result_t Context::createPhysicalMem(ze_device_handle_t hDevice,
 
     auto device = Device::fromHandle(hDevice);
 
+    bool exportMemory = false;
+    if (desc->pNext) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
+        if (extendedDesc->stype != ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+        }
+        const ze_external_memory_export_desc_t *exportDesc =
+            reinterpret_cast<const ze_external_memory_export_desc_t *>(extendedDesc);
+        if (!(exportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF) &&
+            !(exportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD)) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+        }
+        exportMemory = true;
+    }
+
     bool isPhysicalDeviceMem = true;
     auto allocType = NEO::AllocationType::unknown;
     NEO::Device *neoDevice = nullptr;
@@ -1636,7 +1651,7 @@ ze_result_t Context::createPhysicalMem(ze_device_handle_t hDevice,
     physicalMemoryProperties.flags.forceSystemMemory = !isPhysicalDeviceMem;
     physicalMemoryProperties.flags.isUSMHostAllocation = !isPhysicalDeviceMem;
     physicalMemoryProperties.flags.isHostInaccessibleAllocation = isPhysicalDeviceMem;
-    physicalMemoryProperties.flags.shareable = 1;
+    physicalMemoryProperties.flags.shareable = exportMemory;
 
     NEO::GraphicsAllocation *allocation = this->driverHandle->getMemoryManager()->allocatePhysicalGraphicsMemory(physicalMemoryProperties);
     if (!allocation) {
@@ -1648,6 +1663,37 @@ ze_result_t Context::createPhysicalMem(ze_device_handle_t hDevice,
     auto lock = this->driverHandle->getMemoryManager()->lockPhysicalMemoryAllocationMap();
     this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().insert(std::pair<void *, NEO::PhysicalMemoryAllocation *>(reinterpret_cast<void *>(allocation), physicalMemoryAllocation));
     *phPhysicalMemory = reinterpret_cast<ze_physical_mem_handle_t>(allocation);
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t Context::getPhysicalMemProperties(ze_physical_mem_handle_t hPhysicalMemory,
+                                              ze_physical_mem_properties_t *pMemProperties) {
+    auto lock = this->driverHandle->getMemoryManager()->lockPhysicalMemoryAllocationMap();
+    auto it = this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(hPhysicalMemory));
+    if (it == this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().end()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    auto allocation = it->second->allocation;
+
+    pMemProperties->size = allocation->getUnderlyingBufferSize();
+
+    if (pMemProperties->pNext) {
+        ze_base_properties_t *extendedProperties =
+            reinterpret_cast<ze_base_properties_t *>(pMemProperties->pNext);
+        if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
+            ze_external_memory_export_fd_t *extendedMemoryExportProperties =
+                reinterpret_cast<ze_external_memory_export_fd_t *>(extendedProperties);
+            uint64_t handle = 0;
+            auto ret = allocation->peekInternalHandle(this->driverHandle->getMemoryManager(), handle, nullptr);
+            if (ret < 0) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+            extendedMemoryExportProperties->fd = static_cast<int>(handle);
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+        }
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
