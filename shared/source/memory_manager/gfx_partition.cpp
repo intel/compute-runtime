@@ -303,6 +303,10 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
         }
     }
 
+    if (productHelper && productHelper->is2MBLocalMemAlignmentEnabled()) {
+        gfxBase = alignUp(gfxBase, GfxPartition::heapGranularity2MB);
+    }
+
     for (auto heap : GfxPartition::heap32Names) {
         if (useExternalFrontWindowPool && HeapAssigner::heapTypeExternalWithFrontWindowPool(heap)) {
             heapInitExternalWithFrontWindow(heap, gfxBase, gfxHeap32Size);

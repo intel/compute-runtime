@@ -397,6 +397,38 @@ TEST(GfxPartitionTest, given2MBLocalMemAlignmentEnabledWhenInitializingGfxPartit
     EXPECT_EQ(expectedExternalFrontWindowSize, gfxPartition.getHeapMinimalAddress(HeapIndex::heapExternalDeviceMemory) - gfxPartition.getHeapBase(HeapIndex::heapExternalDeviceMemory));
 }
 
+TEST(GfxPartitionTest, given2MBLocalMemAlignmentEnabledAndMisaligned47BitHeapBaseWhenInitializingGfxPartitionThenFrontWindowBasesAre2MBAligned) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto mockOsMemory = new MockOsMemory;
+    mockOsMemory->returnAddress = reinterpret_cast<void *>(MemoryConstants::pageSize64k);
+    EXPECT_FALSE(isAligned<MemoryConstants::pageSize2M>(mockOsMemory->returnAddress));
+
+    MockGfxPartition gfxPartition;
+    gfxPartition.osMemory.reset(mockOsMemory);
+
+    MockProductHelper productHelper;
+    productHelper.is2MBLocalMemAlignmentEnabledResult = true;
+
+    uint64_t gfxTop = maxNBitValue(47) + 1;
+    ASSERT_TRUE(gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1, true, 0u, gfxTop, &productHelper));
+
+    const auto expectedBase = alignUp(castToUint64(mockOsMemory->returnAddress), MemoryConstants::pageSize2M);
+    EXPECT_EQ(expectedBase, gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceFrontWindow));
+
+    HeapIndex heaps[] = {HeapIndex::heapInternalFrontWindow,
+                         HeapIndex::heapInternalDeviceFrontWindow,
+                         HeapIndex::heapExternalFrontWindow,
+                         HeapIndex::heapExternalDeviceFrontWindow};
+
+    for (auto heap : heaps) {
+        EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(gfxPartition.getHeapBase(heap)));
+        EXPECT_EQ(MemoryConstants::pageSize2M, gfxPartition.getHeapSize(heap));
+    }
+}
+
 TEST(GfxPartitionTest, given2MBLocalMemAlignmentEnabledWhenAllocatingFromExternalFrontWindowThenWholePoolSizeIsUsable) {
     MockGfxPartition gfxPartition;
     MockProductHelper productHelper;
@@ -413,6 +445,40 @@ TEST(GfxPartitionTest, given2MBLocalMemAlignmentEnabledWhenAllocatingFromExterna
 
         EXPECT_EQ(gfxPartition.getHeapBase(heap), address);
         EXPECT_EQ(MemoryConstants::pageSize2M, sizeToAlloc);
+
+        gfxPartition.heapFree(heap, address, sizeToAlloc);
+    }
+}
+
+TEST(GfxPartitionTest, given2MBLocalMemAlignmentEnabledAndMisaligned47BitHeapBaseWhenAllocatingFromFrontWindowThen2MBAllocationIsAligned) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto mockOsMemory = new MockOsMemory;
+    mockOsMemory->returnAddress = reinterpret_cast<void *>(MemoryConstants::pageSize64k);
+
+    MockGfxPartition gfxPartition;
+    gfxPartition.osMemory.reset(mockOsMemory);
+
+    MockProductHelper productHelper;
+    productHelper.is2MBLocalMemAlignmentEnabledResult = true;
+
+    uint64_t gfxTop = maxNBitValue(47) + 1;
+    ASSERT_TRUE(gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1, true, 0u, gfxTop, &productHelper));
+
+    HeapIndex heaps[] = {HeapIndex::heapInternalFrontWindow,
+                         HeapIndex::heapInternalDeviceFrontWindow,
+                         HeapIndex::heapExternalFrontWindow,
+                         HeapIndex::heapExternalDeviceFrontWindow};
+
+    for (auto heap : heaps) {
+        size_t sizeToAlloc = MemoryConstants::pageSize2M;
+        auto address = gfxPartition.heapAllocate(heap, sizeToAlloc);
+
+        EXPECT_EQ(gfxPartition.getHeapBase(heap), address);
+        EXPECT_EQ(MemoryConstants::pageSize2M, sizeToAlloc);
+        EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(address));
 
         gfxPartition.heapFree(heap, address, sizeToAlloc);
     }

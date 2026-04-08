@@ -1500,6 +1500,77 @@ TEST(WddmGfxPartitionTests, given2MBLocalMemAlignmentEnabledWhenAllocatingFromEx
     }
 }
 
+TEST(WddmGfxPartitionTests, given2MBLocalMemAlignmentEnabledAndMisalignedHeap32BasesWhenInitializingGfxPartitionThenFrontWindowBasesAre2MBAligned) {
+    MockExecutionEnvironment executionEnvironment;
+    auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+
+    uint32_t rootDeviceIndex = 0;
+    size_t numRootDevices = 1;
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->productHelper, productHelper);
+    auto &updatedProductHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
+
+    wddm->init();
+    for (auto &heap : wddm->getGfxPartitionPtr()->Heap32) {
+        heap.Base += MemoryConstants::pageSize64k;
+        heap.Limit += MemoryConstants::pageSize64k;
+    }
+    EXPECT_FALSE(isAligned<MemoryConstants::pageSize2M>(wddm->getGfxPartitionPtr()->Heap32[0].Base));
+
+    MockGfxPartition gfxPartition;
+    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, true, &updatedProductHelper);
+
+    HeapIndex heaps[] = {HeapIndex::heapInternalFrontWindow,
+                         HeapIndex::heapInternalDeviceFrontWindow,
+                         HeapIndex::heapExternalFrontWindow,
+                         HeapIndex::heapExternalDeviceFrontWindow};
+
+    for (auto heap : heaps) {
+        EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(gfxPartition.getHeapBase(heap)));
+        EXPECT_EQ(MemoryConstants::pageSize2M, gfxPartition.getHeapSize(heap));
+    }
+}
+
+TEST(WddmGfxPartitionTests, given2MBLocalMemAlignmentEnabledAndMisalignedHeap32BasesWhenAllocatingFromFrontWindowsThen2MBAllocationIsAligned) {
+    MockExecutionEnvironment executionEnvironment;
+    auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+
+    uint32_t rootDeviceIndex = 0;
+    size_t numRootDevices = 1;
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->productHelper, productHelper);
+    auto &updatedProductHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
+
+    wddm->init();
+    for (auto &heap : wddm->getGfxPartitionPtr()->Heap32) {
+        heap.Base += MemoryConstants::pageSize64k;
+        heap.Limit += MemoryConstants::pageSize64k;
+    }
+
+    MockGfxPartition gfxPartition;
+    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, true, &updatedProductHelper);
+
+    HeapIndex heaps[] = {HeapIndex::heapInternalFrontWindow,
+                         HeapIndex::heapInternalDeviceFrontWindow,
+                         HeapIndex::heapExternalFrontWindow,
+                         HeapIndex::heapExternalDeviceFrontWindow};
+
+    for (auto heap : heaps) {
+        size_t sizeToAlloc = MemoryConstants::pageSize2M;
+        auto address = gfxPartition.heapAllocate(heap, sizeToAlloc);
+
+        EXPECT_EQ(gfxPartition.getHeapBase(heap), address);
+        EXPECT_EQ(MemoryConstants::pageSize2M, sizeToAlloc);
+        EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(address));
+
+        gfxPartition.heapFree(heap, address, sizeToAlloc);
+    }
+}
+
 TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndFilterDeviceIdIsTheSameAsTheExistingDeviceThenReturnTheAdapter) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.FilterDeviceId.set("1234"); // Existing device Id
