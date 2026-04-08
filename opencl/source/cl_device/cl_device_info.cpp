@@ -316,7 +316,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         const void *tmpUuid;
         getStr<CL_DRIVER_UUID_KHR>(tmpUuid, srcSize, retSize);
         uuid.fill(0);
-        memcpy_s(uuid.data(), srcSize, tmpUuid, srcSize);
+        memcpy_s(uuid.data(), CL_UUID_SIZE_KHR, tmpUuid, std::min(srcSize, static_cast<size_t>(CL_UUID_SIZE_KHR)));
         src = uuid.data();
         retSize = srcSize = CL_UUID_SIZE_KHR;
         break;

@@ -6,9 +6,9 @@
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/scripts/neo_ww_calculator.cmake)
 
-if(UNIX)
-  find_program(GIT NAMES git)
-  if(NOT "${GIT}" STREQUAL "GIT-NOTFOUND" AND IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
+find_program(GIT NAMES git)
+if(NOT "${GIT}" STREQUAL "GIT-NOTFOUND")
+  if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
     set(GIT_arg --git-dir=${NEO_SOURCE_DIR}/.git show -s --format=%ct)
     execute_process(
                     COMMAND ${GIT} ${GIT_arg}
@@ -38,18 +38,7 @@ if(UNIX)
       message(STATUS "Computed OpenCL version minor is: ${NEO_OCL_VERSION_MINOR}")
     endif()
   endif()
-else()
-  if(NOT DEFINED NEO_OCL_VERSION_MAJOR)
-    set(NEO_OCL_VERSION_MAJOR 1)
-  endif()
 
-  if(NOT DEFINED NEO_OCL_VERSION_MINOR)
-    set(NEO_OCL_VERSION_MINOR 0)
-  endif()
-endif()
-
-find_program(GIT NAMES git)
-if(NOT "${GIT}" STREQUAL "GIT-NOTFOUND")
   if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
     set(GIT_arg --git-dir=${NEO_SOURCE_DIR}/.git rev-parse HEAD)
     execute_process(
@@ -72,22 +61,42 @@ if(NOT DEFINED NEO_VERSION_HOTFIX)
   set(NEO_VERSION_HOTFIX 0)
 endif()
 
-set(NEO_OCL_VERSION_SUFFIX "")
-if(NOT ("${NEO_VERSION_HOTFIX}" STREQUAL "0"))
-  set(NEO_OCL_VERSION_SUFFIX ".${NEO_VERSION_HOTFIX}")
-endif()
-
-if(NEO_VERSION_BUILD MATCHES "^([0-9]+)\\.([0-9]+)$")
-  set(NEO_VERSION_BUILD "${CMAKE_MATCH_1}")
-  if(NOT ("${NEO_OCL_VERSION_SUFFIX}" STREQUAL "") AND NOT ("${NEO_OCL_VERSION_SUFFIX}" STREQUAL ".${CMAKE_MATCH_2}"))
-    message(FATAL_ERROR "Inconsistent hotfix version provided: ${NEO_VERSION_HOTFIX} vs ${CMAKE_MATCH_2}")
+if(UNIX)
+  set(NEO_OCL_VERSION_SUFFIX "")
+  if(NOT ("${NEO_VERSION_HOTFIX}" STREQUAL "0"))
+    set(NEO_OCL_VERSION_SUFFIX ".${NEO_VERSION_HOTFIX}")
   endif()
-  set(NEO_VERSION_HOTFIX "${CMAKE_MATCH_2}")
-  set(NEO_OCL_VERSION_SUFFIX ".${NEO_VERSION_HOTFIX}")
+
+  if(NEO_VERSION_BUILD MATCHES "^([0-9]+)\\.([0-9]+)$")
+    set(NEO_VERSION_BUILD "${CMAKE_MATCH_1}")
+    if(NOT ("${NEO_OCL_VERSION_SUFFIX}" STREQUAL "") AND NOT ("${NEO_OCL_VERSION_SUFFIX}" STREQUAL ".${CMAKE_MATCH_2}"))
+      message(FATAL_ERROR "Inconsistent hotfix version provided: ${NEO_VERSION_HOTFIX} vs ${CMAKE_MATCH_2}")
+    endif()
+    set(NEO_VERSION_HOTFIX "${CMAKE_MATCH_2}")
+    set(NEO_OCL_VERSION_SUFFIX ".${NEO_VERSION_HOTFIX}")
+  endif()
 endif()
 
 # OpenCL package version
-set(NEO_OCL_DRIVER_VERSION "${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}${NEO_OCL_VERSION_SUFFIX}")
+if(WIN32)
+
+  if(NOT DEFINED WDDM_VERSION_NUMBER)
+    set(WDDM_VERSION_NUMBER "1")
+  endif()
+
+  if(NOT DEFINED BUILD_WINDOWS_VERSION_STRING_MINOR)
+    set(BUILD_WINDOWS_VERSION_STRING_MINOR "0")
+  endif()
+
+  if(NOT DEFINED BUILD_WINDOWS_VERSION_STRING_MAJOR)
+    set(BUILD_WINDOWS_VERSION_STRING_MAJOR "0")
+  endif()
+
+  set(NEO_OCL_DRIVER_VERSION "${WDDM_VERSION_NUMBER}.0.${BUILD_WINDOWS_VERSION_STRING_MAJOR}.${BUILD_WINDOWS_VERSION_STRING_MINOR} (${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR})")
+
+else()
+  set(NEO_OCL_DRIVER_VERSION "${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}${NEO_OCL_VERSION_SUFFIX}")
+endif()
 
 # Level-Zero package version
 set(NEO_L0_VERSION_MAJOR 1)
