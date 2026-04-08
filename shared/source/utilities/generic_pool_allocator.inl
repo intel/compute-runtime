@@ -323,7 +323,14 @@ bool GenericViewPoolAllocator<Traits>::isChunkReady(const DeferredChunk &chunk, 
 
 template <PoolTraits Traits>
 void GenericViewPoolAllocator<Traits>::returnChunkToPool(const DeferredChunk &chunk) {
-    this->tryFreeFromPoolBuffer(chunk.parent, chunk.offset, chunk.size);
+    for (auto &pool : this->bufferPools) {
+        if (pool.isPoolBuffer(chunk.parent)) {
+            pool.chunkAllocator->free(chunk.offset + pool.params.startingOffset, chunk.size);
+            return;
+        }
+    }
+
+    DEBUG_BREAK_IF(true);
 }
 
 template <PoolTraits Traits>

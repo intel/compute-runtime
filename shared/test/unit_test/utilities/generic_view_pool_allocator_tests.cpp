@@ -13,7 +13,9 @@
 #include "shared/source/utilities/generic_pool_allocator.inl"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
@@ -470,6 +472,59 @@ TEST_F(GenericViewPoolAllocatorTest, givenDeferredChunkWhenProcessDeferredFreesW
     ASSERT_NE(nullptr, allocation2);
 
     allocator.free(allocation2);
+}
+
+TEST_F(GenericViewPoolAllocatorTest, givenReadyDeferredChunkAndParentReportedInUseWhenAllocatingThenChunkIsReusedFromSamePool) {
+    auto mockMemoryManager = std::make_unique<MockMemoryManager>(*pDevice->getExecutionEnvironment());
+    auto *trackingMemoryManager = mockMemoryManager.get();
+    trackingMemoryManager->deferAllocInUse = true;
+
+    auto *executionEnvironment = pDevice->getExecutionEnvironment();
+    NonCopyableVariableBackup<std::unique_ptr<MemoryManager>> memoryManagerBackup{&executionEnvironment->memoryManager, std::move(mockMemoryManager)};
+
+    {
+        MockGenericViewPoolAllocator<MockViewPoolTraits> allocator(pDevice);
+        constexpr size_t requestSize = MockViewPoolTraits::maxAllocationSize;
+        constexpr size_t maxAllocationsPerPool = MockViewPoolTraits::defaultPoolSize / requestSize;
+        constexpr TaskCountType taskCount = 5u;
+        constexpr uint32_t contextId = 0u;
+
+        std::vector<GraphicsAllocation *> allocations;
+        allocations.reserve(maxAllocationsPerPool);
+        for (size_t i = 0; i < maxAllocationsPerPool; i++) {
+            auto allocation = allocator.allocate(requestSize);
+            ASSERT_NE(nullptr, allocation);
+            allocations.push_back(allocation);
+        }
+        ASSERT_EQ(1u, allocator.bufferPools.size());
+
+        auto *parentAllocation = allocations[0]->getParentAllocation();
+        for (auto *allocation : allocations) {
+            ASSERT_EQ(parentAllocation, allocation->getParentAllocation());
+        }
+
+        allocator.free(allocations[0], taskCount, contextId);
+        ASSERT_EQ(1u, allocator.deferredChunks.size());
+
+        TagAddressType completedTaskCount = taskCount + 1;
+        DeferredFreeContext ctx{};
+        ctx.tagAddress = &completedTaskCount;
+        ctx.contextId = contextId;
+        ctx.partitionCount = 1;
+
+        auto allocation3 = allocator.allocate(requestSize, &ctx);
+        ASSERT_NE(nullptr, allocation3);
+        EXPECT_EQ(parentAllocation, allocation3->getParentAllocation());
+        EXPECT_EQ(1u, allocator.bufferPools.size());
+        EXPECT_EQ(0u, allocator.deferredChunks.size());
+        EXPECT_EQ(0u, trackingMemoryManager->allocInUseCalled);
+
+        for (size_t i = 1; i < allocations.size(); i++) {
+            allocator.free(allocations[i]);
+        }
+        allocator.free(allocation3);
+        allocator.releasePools();
+    }
 }
 
 TEST_F(GenericViewPoolAllocatorTest, givenDeferredChunkWhenProcessDeferredFreesWithExactTaskCountThenChunkReturnedToPool) {
