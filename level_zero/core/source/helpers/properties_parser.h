@@ -183,6 +183,8 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             lookupTable.externalMemmapSystem.systemMemory = sysMemDesc->pSystemMemory;
             lookupTable.externalMemmapSystem.size = sysMemDesc->size;
             lookupTable.isExternalMemmapSystem = true;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC) {
+            lookupTable.exportMemory = true;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_SRGB_EXT_DESC) {
             const ze_srgb_ext_desc_t *srgbDesc = reinterpret_cast<const ze_srgb_ext_desc_t *>(extendedDesc);
             lookupTable.isSrgb = srgbDesc->sRGB;

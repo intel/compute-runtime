@@ -266,6 +266,30 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithSupportedExportHandlesAn
     EXPECT_TRUE(l0LookupTable.areImageProperties);
 }
 
+TEST(L0StructuresLookupTableTests, givenIpcMemHandleTypeExtDescWithFabricAccessibleFlagWhenPrepareLookupTableThenExportMemoryIsSet) {
+    ze_ipc_mem_handle_type_ext_desc_t ipcHandleTypeDesc = {};
+    ipcHandleTypeDesc.stype = ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC;
+    ipcHandleTypeDesc.typeFlags = ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
+
+    StructuresLookupTable l0LookupTable = {};
+    auto result = prepareL0StructuresLookupTable(l0LookupTable, &ipcHandleTypeDesc);
+
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(l0LookupTable.exportMemory);
+}
+
+TEST(L0StructuresLookupTableTests, givenIpcMemHandleTypeExtDescWithDefaultFlagWhenPrepareLookupTableThenExportMemoryIsSet) {
+    ze_ipc_mem_handle_type_ext_desc_t ipcHandleTypeDesc = {};
+    ipcHandleTypeDesc.stype = ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC;
+    ipcHandleTypeDesc.typeFlags = ZE_IPC_MEM_HANDLE_TYPE_FLAG_DEFAULT;
+
+    StructuresLookupTable l0LookupTable = {};
+    auto result = prepareL0StructuresLookupTable(l0LookupTable, &ipcHandleTypeDesc);
+
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(l0LookupTable.exportMemory);
+}
+
 TEST(L0StructuresLookupTableTests, givenL0StructuresWithUnsupportedOptionsWhenPrepareLookupTableThenProperFieldsInLookupTableAreSet) {
     uint64_t handle = 0x02;
     ze_external_memory_import_win32_handle_t importNTHandle = {};
