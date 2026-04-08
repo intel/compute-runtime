@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,12 @@
 
 #include <climits>
 
+#include <cctype>
 #include <cerrno>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <dirent.h>
 #include <unistd.h>
 
@@ -121,54 +123,86 @@ ze_result_t FsAccess::read(const std::string file, uint32_t &val) {
 }
 
 ze_result_t FsAccess::read(const std::string file, std::string &val) {
-    // Read a single line from text file without trailing newline
-    std::ifstream fs;
     val.clear();
 
-    fs.open(file.c_str());
-    if (fs.fail()) {
+    int fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
+    if (fd < 0) {
         return getResult(errno);
-    }
-    fs >> val;
-    if (fs.fail()) {
-        fs.close();
-        return getResult(errno);
-    }
-    fs.close();
-    // Strip trailing newline
-    if (val.back() == '\n') {
-        val.pop_back();
     }
 
+    char buf[readBufSize];
+    ssize_t bytesRead = 0;
+    bool done = false;
+    while (!done && (bytesRead = NEO::SysCalls::read(fd, buf, sizeof(buf))) > 0) {
+        const char *ptr = buf;
+        const char *const end = buf + bytesRead;
+        while (ptr < end && val.empty() && std::isspace(static_cast<unsigned char>(*ptr))) {
+            ++ptr;
+        }
+        const char *spanEnd = ptr;
+        while (spanEnd < end && !std::isspace(static_cast<unsigned char>(*spanEnd))) {
+            ++spanEnd;
+        }
+        val.append(ptr, spanEnd);
+        if (!val.empty() && spanEnd < end) {
+            done = true;
+        }
+    }
+    int savedErrno = errno;
+    NEO::SysCalls::close(fd);
+
+    if (bytesRead < 0) {
+        val.clear();
+        return getResult(savedErrno);
+    }
+    if (val.empty()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t FsAccess::read(const std::string file, std::vector<std::string> &val) {
-    // Read a entire text file, one line per vector entry
-    std::string line;
-    std::ifstream fs;
     val.clear();
 
-    fs.open(file.c_str());
-    if (fs.fail()) {
+    int fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
+    if (fd < 0) {
         return getResult(errno);
     }
-    while (std::getline(fs, line)) {
-        if (fs.fail()) {
-            fs.close();
-            return getResult(errno);
+
+    std::string leftover;
+    char buf[readBufSize];
+    ssize_t bytesRead = 0;
+    while ((bytesRead = NEO::SysCalls::read(fd, buf, sizeof(buf))) > 0) {
+        const char *ptr = buf;
+        const char *end = buf + bytesRead;
+        const char *nl;
+        while ((nl = static_cast<const char *>(memchr(ptr, '\n', static_cast<size_t>(end - ptr)))) != nullptr) {
+            if (leftover.empty()) {
+                val.emplace_back(ptr, nl);
+            } else {
+                leftover.append(ptr, nl);
+                val.push_back(std::move(leftover));
+                leftover.clear();
+            }
+            ptr = nl + 1;
         }
-        if (line.back() == '\n') {
-            line.pop_back();
-        }
-        val.push_back(line);
+        leftover.append(ptr, end);
     }
-    fs.close();
+    int savedErrno = errno;
+    NEO::SysCalls::close(fd);
+
+    if (bytesRead < 0) {
+        val.clear();
+        return getResult(savedErrno);
+    }
+    if (!leftover.empty()) {
+        val.push_back(std::move(leftover));
+    }
 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FsAccess::write(const std::string file, const std::string val) {
+ze_result_t FsAccess::write(const std::string file, std::string_view val) {
 
     int fd = NEO::SysCalls::open(file.c_str(), O_WRONLY);
     if (fd < 0) {
@@ -229,7 +263,7 @@ ze_result_t FsAccess::getFileMode(const std::string file, ::mode_t &mode) {
 ze_result_t FsAccess::readSymLink(const std::string path, std::string &val) {
     // returns the value of symlink at path
     char buf[PATH_MAX];
-    ssize_t len = ::readlink(path.c_str(), buf, PATH_MAX - 1);
+    ssize_t len = static_cast<ssize_t>(NEO::SysCalls::readlink(path.c_str(), buf, PATH_MAX - 1));
     if (len < 0) {
         return getResult(errno);
     }
@@ -469,8 +503,7 @@ ze_result_t SysfsAccess::read(const std::string file, std::vector<std::string> &
     return FsAccess::read(fullPath(file), val);
 }
 
-ze_result_t SysfsAccess::write(const std::string file, const std::string val) {
-    // Prepend sysfs directory path and call the base write
+ze_result_t SysfsAccess::write(const std::string file, std::string_view val) {
     return FsAccess::write(fullPath(file), val);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@
 #include "level_zero/zet_api.h"
 
 #include <fcntl.h>
-#include <fstream>
 #include <iostream>
 #include <list>
 #include <map>
@@ -22,6 +21,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <sys/types.h>
@@ -48,6 +48,8 @@ class FdCache : public NEO::NonCopyableAndNonMovableClass {
 
 class FsAccess {
   public:
+    static constexpr size_t readBufSize = 4096;
+
     static FsAccess *create();
     FsAccess(const FsAccess &fsAccess);
     virtual ~FsAccess() = default;
@@ -66,7 +68,7 @@ class FsAccess {
     virtual ze_result_t read(const std::string file, uint32_t &val);
     virtual ze_result_t read(const std::string file, int32_t &val);
 
-    virtual ze_result_t write(const std::string file, const std::string val);
+    virtual ze_result_t write(const std::string file, std::string_view val);
 
     virtual ze_result_t readSymLink(const std::string path, std::string &buf);
     virtual ze_result_t getRealPath(const std::string path, std::string &buf);
@@ -130,7 +132,7 @@ class SysfsAccess : protected FsAccess {
     ze_result_t read(const std::string file, double &val) override;
     ze_result_t read(const std::string file, std::vector<std::string> &val) override;
 
-    ze_result_t write(const std::string file, const std::string val) override;
+    ze_result_t write(const std::string file, std::string_view val) override;
     MOCKABLE_VIRTUAL ze_result_t write(const std::string file, const int val);
     MOCKABLE_VIRTUAL ze_result_t write(const std::string file, const uint64_t val);
     MOCKABLE_VIRTUAL ze_result_t write(const std::string file, const double val);

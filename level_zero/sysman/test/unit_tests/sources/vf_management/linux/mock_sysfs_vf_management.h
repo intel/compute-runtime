@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,9 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/sysman/source/api/vf_management/linux/sysman_os_vf_imp.h"
-#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/pmu/mock_pmu.h"
 
 namespace L0 {
 namespace Sysman {
@@ -27,7 +27,6 @@ const std::string pathForVfBdf = "device/virtfn0";
 const std::string mockBdfdata = "pci0000:4a/0000:4a:02.0/0000:4b:00.0/0000:4c:01.0/0000:4d:00.1";
 const std::string mockInvalidBdfdata = "pci0000:4a";
 const std::string mockPathWithInvalidTokens = "pci0000:4a/0000:4a";
-const int64_t mockPmuFd = 10;
 const uint64_t mockActiveTime = 987654321;
 const uint64_t mockTimestamp = 87654321;
 const uint64_t mockLmemUsed = 65536;
@@ -35,10 +34,8 @@ const uint64_t mockLmemQuota = 128000;
 const uint32_t mockNumberOfVfs = 1;
 const uint32_t numberMockedEngines = 2;
 
-struct MockVfPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
-    using PmuInterfaceImp::perfEventOpen;
-    using PmuInterfaceImp::pSysmanKmdInterface;
-    MockVfPmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+struct MockVfPmuInterfaceImp : public MockPmuInterfaceImpForSysman {
+    MockVfPmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
     ~MockVfPmuInterfaceImp() override = default;
 
     bool mockPmuReadFail = false;

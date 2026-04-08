@@ -15,6 +15,8 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 
+#include <string_view>
+
 namespace NEO {
 namespace SysCalls {
 extern bool allowFakeDevicePath;
@@ -80,7 +82,7 @@ TEST_F(SysmanDeviceFixture, GivenValidSysmanKmdInterfaceWhenCallingListDirectori
 }
 
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingDirectoryExistsWithValidAndInvalidPathThenSuccessAndFailureAreReturnedRespectively) {
-    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+    auto tempFsAccess = FsAccessInterface::create();
     NEO::SysCalls::allowFakeDevicePath = true;
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
@@ -88,23 +90,20 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingDirectoryExistsWi
     NEO::SysCalls::allowFakeDevicePath = false;
     path = "invalidDiretory";
     EXPECT_FALSE(tempFsAccess->directoryExists(path));
-    delete tempFsAccess;
 }
 
-TEST_F(SysmanDeviceFixture, GivenPublicSysfsAccessClassWhenCallingDirectoryExistsWithInvalidPathThenFalseIsRetured) {
-    PublicFsAccess *tempSysfsAccess = new PublicFsAccess();
+TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingDirectoryExistsWithInvalidPathThenFalseIsReturned) {
+    auto tempFsAccess = FsAccessInterface::create();
     std::string path = "invalidDiretory";
-    EXPECT_FALSE(tempSysfsAccess->directoryExists(path));
-    delete tempSysfsAccess;
+    EXPECT_FALSE(tempFsAccess->directoryExists(path));
 }
 
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithUserHavingWritePermissionsThenSuccessIsReturned) {
-    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+    auto tempFsAccess = FsAccessInterface::create();
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
     EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->canWrite(path));
-    delete tempFsAccess;
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceHandleWhenCallingSysmanFromHandleThenValidSysmanDeviceIsReturned) {
@@ -126,12 +125,11 @@ TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceHandleAndGivenGlobalSysmanDriv
 }
 
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithUserHavingReadPermissionsThenSuccessIsReturned) {
-    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+    auto tempFsAccess = FsAccessInterface::create();
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
     EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->canRead(path));
-    delete tempFsAccess;
 }
 
 TEST_F(SysmanMultiDeviceFixture, GivenInvalidSysmanDeviceHandleWhenCallingSysmanDeviceFunctionsforMultipleDevicesThenUninitializedErrorIsReturned) {
@@ -210,38 +208,34 @@ TEST_F(SysmanDeviceFixture, GivenInvalidSysmanDeviceHandleWhenCallingSysmanDevic
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::memoryGetPageOfflineStateExp(invalidHandle, zes_intel_mem_page_status_exp_t(1), &count, nullptr));
 }
 
-TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithUserNotHavingWritePermissionsThenInsufficientIsReturned) {
-    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassWhenCallingCanWriteWithUserNotHavingWritePermissionsThenInsufficientIsReturned) {
+    auto tempFsAccess = FsAccessInterface::create();
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatNoPermissions);
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, tempFsAccess->canWrite(path));
-    delete tempFsAccess;
 }
 
-TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithUserNotHavingReadPermissionsThenInsufficientIsReturned) {
-    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassWhenCallingCanReadWithUserNotHavingReadPermissionsThenInsufficientIsReturned) {
+    auto tempFsAccess = FsAccessInterface::create();
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatNoPermissions);
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, tempFsAccess->canRead(path));
-    delete tempFsAccess;
 }
 
-TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithInvalidPathThenErrorIsReturned) {
-    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassWhenCallingCanReadWithInvalidPathThenErrorIsReturned) {
+    auto tempFsAccess = FsAccessInterface::create();
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatFailure);
     std::string path = "invalidPath";
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, tempFsAccess->canRead(path));
-    delete tempFsAccess;
 }
 
-TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithInvalidPathThenErrorIsReturned) {
-    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassWhenCallingCanWriteWithInvalidPathThenErrorIsReturned) {
+    auto tempFsAccess = FsAccessInterface::create();
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatFailure);
     std::string path = "invalidPath";
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, tempFsAccess->canRead(path));
-    delete tempFsAccess;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, tempFsAccess->canWrite(path));
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPathnameWhenCallingFsAccessExistsThenSuccessIsReturned) {
@@ -286,7 +280,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPathnameWhenCallingSysFsAccessScanDirEnt
     EXPECT_NE(ZE_RESULT_SUCCESS, pSysFsAccess->scanDirEntries(path, listFiles));
 }
 
-TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndIntegerWhenCallingReadOnMultipleFilesThenSuccessIsReturned) {
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassAndIntegerWhenCallingReadOnMultipleFilesThenSuccessIsReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
         return 1;
@@ -298,14 +292,37 @@ TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndIntegerWhenCallingReadOnMult
         return value.size();
     });
 
-    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+    auto tempFsAccess = FsAccessInterface::create();
     std::string fileName = {};
     int iVal32;
     for (auto i = 0; i < L0::Sysman::FdCacheInterface::maxSize + 2; i++) {
         fileName = "mockfile" + std::to_string(i) + ".txt";
-        EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->read(fileName, iVal32));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->read(fileName, iVal32));
     }
-    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysFsAccessClassWhenCallingReadInt32ThenSuccessIsReturned) {
+    // Stub opendir so SysFsAccessInterface construction skips sysfs discovery.
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpendir(&NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        return nullptr;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr std::string_view value = "42";
+        auto size = std::min(count, value.size());
+        memcpy(buf, value.data(), size);
+        return static_cast<ssize_t>(size);
+    });
+
+    auto tempSysFsAccess = SysFsAccessInterface::create("");
+    int32_t val = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysFsAccess->read("mockFile.txt", val));
+    EXPECT_EQ(42, val);
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidMockMutexFsAccessWhenCallingReadThenMutexLockCounterMatchesNumberOfReadCalls) {
@@ -424,25 +441,163 @@ TEST(FdCacheTest, GivenValidFdCacheWhenClearingCacheThenVerifyProperFdsAreClosed
     delete pFdCache;
 }
 
-TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndOpenSysCallFailsWhenCallingReadThenFailureIsReturned) {
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassAndOpenSysCallFailsWhenCallingReadThenFailureIsReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
         return -1;
     });
 
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        std::string value = "123";
-        memcpy(buf, value.data(), value.size());
-        return value.size();
-    });
-
-    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+    auto tempFsAccess = FsAccessInterface::create();
     const std::string fileName = "mockFile.txt";
     int iVal32;
 
     errno = ENOENT;
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, tempSysfsAccess->read(fileName, iVal32));
-    delete tempSysfsAccess;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, tempFsAccess->read(fileName, iVal32));
+}
+
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassWhenCallingReadStringThenSuccessIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::readFuncCalled)> readCalledBackup{&NEO::SysCalls::readFuncCalled, 0u};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (++NEO::SysCalls::readFuncCalled == 1) {
+            constexpr std::string_view val = "mockValue\n";
+            auto size = std::min(count, val.size());
+            memcpy(buf, val.data(), size);
+            return static_cast<ssize_t>(size);
+        }
+        return 0;
+    });
+
+    auto tempFsAccess = FsAccessInterface::create();
+    std::string sVal;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->read("mockFile.txt", sVal));
+    EXPECT_EQ("mockValue", sVal);
+}
+
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassWhenTokenSpansMultipleReadCallsThenReadStringSucceeds) {
+    // Token spans two read() calls: first fills the entire read buffer, second delivers the tail.
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::readFuncCalled)> readCalledBackup{&NEO::SysCalls::readFuncCalled, 0u};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        const auto call = ++NEO::SysCalls::readFuncCalled;
+        if (call == 1) {
+            memset(buf, 'a', count);
+            return static_cast<ssize_t>(count);
+        }
+        if (call == 2) {
+            constexpr std::string_view tail = "aaaaaaaaaaaaaaaaaaaaaa\n"; // 22 'a' + newline
+            auto size = std::min(count, tail.size());
+            memcpy(buf, tail.data(), size);
+            return static_cast<ssize_t>(size);
+        }
+        return 0;
+    });
+
+    auto tempFsAccess = FsAccessInterface::create();
+    std::string sVal;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->read("mockFile.txt", sVal));
+    EXPECT_EQ(FsAccessInterface::readBufSize + 22u, sVal.size());
+    EXPECT_TRUE(sVal.find_first_not_of('a') == std::string::npos);
+}
+
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassWhenFileHasLeadingWhitespaceThenReadStringReturnsToken) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::readFuncCalled)> readCalledBackup{&NEO::SysCalls::readFuncCalled, 0u};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (++NEO::SysCalls::readFuncCalled == 1) {
+            constexpr std::string_view content = "  \t mockValue\n";
+            auto size = std::min(count, content.size());
+            memcpy(buf, content.data(), size);
+            return static_cast<ssize_t>(size);
+        }
+        return 0;
+    });
+
+    auto tempFsAccess = FsAccessInterface::create();
+    std::string sVal;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->read("mockFile.txt", sVal));
+    EXPECT_EQ("mockValue", sVal);
+}
+
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassWhenFileIsEmptyThenReadStringReturnsError) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        return 0;
+    });
+
+    auto tempFsAccess = FsAccessInterface::create();
+    std::string sVal;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, tempFsAccess->read("mockFile.txt", sVal));
+}
+
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassWhenFirstChunkIsWhitespaceOnlyThenReadStringReturnsToken) {
+    // First read() chunk is all whitespace; second read() chunk delivers the actual token.
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::readFuncCalled)> readCalledBackup{&NEO::SysCalls::readFuncCalled, 0u};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        const auto call = ++NEO::SysCalls::readFuncCalled;
+        if (call == 1) {
+            constexpr std::string_view whitespace = "  \t\n  \n";
+            auto size = std::min(count, whitespace.size());
+            memcpy(buf, whitespace.data(), size);
+            return static_cast<ssize_t>(size);
+        }
+        if (call == 2) {
+            constexpr std::string_view val = "42\n";
+            auto size = std::min(count, val.size());
+            memcpy(buf, val.data(), size);
+            return static_cast<ssize_t>(size);
+        }
+        return 0;
+    });
+
+    auto tempFsAccess = FsAccessInterface::create();
+    std::string sVal;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->read("mockFile.txt", sVal));
+    EXPECT_EQ("42", sVal);
+}
+
+TEST_F(SysmanDeviceFixture, GivenFsAccessClassWhenReadFailsAndCloseClObbersErrnoThenReadStringReturnsReadError) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        errno = ENOENT;
+        return -1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        errno = EBUSY;
+        return 0;
+    });
+
+    auto tempFsAccess = FsAccessInterface::create();
+    std::string sVal;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, tempFsAccess->read("mockFile.txt", sVal));
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPidWhenCallingProcfsAccessIsAliveThenSuccessIsReturned) {
@@ -703,28 +858,28 @@ TEST_F(SysmanDeviceFixture, GivenValidSysFsAccessWhenCallingGetDevicePciBdfWithI
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPathWithSlashWhenCallingGetBaseNameThenFileNameIsReturned) {
-    auto tempFsAccess = std::make_unique<PublicFsAccess>();
+    auto tempFsAccess = FsAccessInterface::create();
     std::string path = "/path/to/some/file.txt";
     std::string baseName = tempFsAccess->getBaseName(path);
     EXPECT_EQ("file.txt", baseName);
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPathWithoutSlashWhenCallingGetBaseNameThenFullPathIsReturned) {
-    auto tempFsAccess = std::make_unique<PublicFsAccess>();
+    auto tempFsAccess = FsAccessInterface::create();
     std::string path = "file.txt";
     std::string baseName = tempFsAccess->getBaseName(path);
     EXPECT_EQ("file.txt", baseName);
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPathWithSlashWhenCallingGetDirNameThenDirectoryPathIsReturned) {
-    auto tempFsAccess = std::make_unique<PublicFsAccess>();
+    auto tempFsAccess = FsAccessInterface::create();
     std::string path = "/path/to/some/file.txt";
     std::string dirName = tempFsAccess->getDirName(path);
     EXPECT_EQ("/path/to/some", dirName);
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPathWithoutSlashWhenCallingGetDirNameThenEmptyStringIsReturned) {
-    auto tempFsAccess = std::make_unique<PublicFsAccess>();
+    auto tempFsAccess = FsAccessInterface::create();
     std::string path = "file.txt";
     std::string dirName = tempFsAccess->getDirName(path);
     EXPECT_EQ("", dirName);
@@ -733,6 +888,30 @@ TEST_F(SysmanDeviceFixture, GivenValidPathWithoutSlashWhenCallingGetDirNameThenE
 TEST_F(SysmanDeviceFixture, GivenValidLinuxSysmanImpWhenCallingGetDevicePciBdfThenBdfStringIsReturned) {
     std::string bdf = pLinuxSysmanImp->getDevicePciBdf();
     EXPECT_FALSE(bdf.empty());
+}
+
+TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenReadVectorStringFailsAfterPartialDataThenValIsCleared) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::readFuncCalled)> readCalledBackup{&NEO::SysCalls::readFuncCalled, 0u};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (++NEO::SysCalls::readFuncCalled == 1) {
+            constexpr std::string_view content = "line1\n";
+            memcpy(buf, content.data(), std::min(count, content.size()));
+            return static_cast<ssize_t>(std::min(count, content.size()));
+        }
+        errno = EIO;
+        return -1;
+    });
+
+    auto tempFsAccess = FsAccessInterface::create();
+    std::vector<std::string> lines = {"preexisting"};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, tempFsAccess->read("mockFile.txt", lines));
+    EXPECT_TRUE(lines.empty());
 }
 
 } // namespace ult

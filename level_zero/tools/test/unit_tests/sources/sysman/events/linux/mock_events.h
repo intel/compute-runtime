@@ -19,6 +19,7 @@
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/linux/pmu/mock_pmu.h"
 
 #include <cstring>
 
@@ -33,13 +34,10 @@ const std::string ueventFabricFile("/var/lib/libze_intel_gpu/fabric-pci-0000_03_
 const std::string deviceDir("device");
 const std::string deviceMemoryHealth("device_memory_health");
 const std::string eventsDir("/sys/devices/i915_0000_03_00.0/events");
-constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t errorCount = 10u;
-constexpr uint64_t mockTimeStamp = 1100u;
 
-struct MockPmuInterfaceImpForEvents : public PmuInterfaceImp {
-    using PmuInterfaceImp::perfEventOpen;
-    MockPmuInterfaceImpForEvents(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+struct MockPmuInterfaceImpForEvents : public MockPmuInterfaceImpForSysman {
+    MockPmuInterfaceImpForEvents(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
 
     bool mockPmuReadFail = false;
 
@@ -196,6 +194,10 @@ struct MockEventsSysfsAccess : public SysfsAccess {
             val = 8u;
             return ZE_RESULT_SUCCESS;
         }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t read(const std::string file, std::string &val) override {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 

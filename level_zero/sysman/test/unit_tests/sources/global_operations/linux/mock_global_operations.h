@@ -611,7 +611,7 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
 
     ze_result_t mockWriteError = ZE_RESULT_SUCCESS;
     ze_result_t writeResult = ZE_RESULT_SUCCESS;
-    ze_result_t write(const std::string &file, const std::string val) override {
+    ze_result_t write(const std::string &file, std::string_view val) override {
         if (mockWriteError != ZE_RESULT_SUCCESS) {
             return mockWriteError;
         }

@@ -9,9 +9,10 @@
 
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
+#include <cctype>
 #include <csignal>
+#include <cstring>
 #include <fcntl.h>
-#include <fstream>
 #include <sstream>
 #include <unistd.h>
 
@@ -109,53 +110,85 @@ ze_result_t FsAccessInterface::read(const std::string file, uint32_t &val) {
 }
 
 ze_result_t FsAccessInterface::read(const std::string file, std::string &val) {
-    // Read a single line from text file without trailing newline
-    std::ifstream fs;
     val.clear();
 
-    fs.open(file.c_str());
-    if (fs.fail()) {
+    int fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
+    if (fd < 0) {
         return LinuxSysmanImp::getResult(errno);
     }
-    fs >> val;
-    if (fs.fail()) {
-        fs.close();
-        return LinuxSysmanImp::getResult(errno);
+
+    char buf[readBufSize];
+    ssize_t bytesRead = 0;
+    bool done = false;
+    while (!done && (bytesRead = NEO::SysCalls::read(fd, buf, sizeof(buf))) > 0) {
+        const char *ptr = buf;
+        const char *const end = buf + bytesRead;
+        while (ptr < end && val.empty() && std::isspace(static_cast<unsigned char>(*ptr))) {
+            ++ptr;
+        }
+        const char *spanEnd = ptr;
+        while (spanEnd < end && !std::isspace(static_cast<unsigned char>(*spanEnd))) {
+            ++spanEnd;
+        }
+        val.append(ptr, spanEnd);
+        if (!val.empty() && spanEnd < end) {
+            done = true;
+        }
     }
-    fs.close();
-    // Strip trailing newline
-    if (val.back() == '\n') {
-        val.pop_back();
+    int savedErrno = errno;
+    NEO::SysCalls::close(fd);
+
+    if (bytesRead < 0) {
+        val.clear();
+        return LinuxSysmanImp::getResult(savedErrno);
+    }
+    if (val.empty()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t FsAccessInterface::read(const std::string file, std::vector<std::string> &val) {
-    // Read a entire text file, one line per vector entry
-    std::string line;
-    std::ifstream fs;
     val.clear();
 
-    fs.open(file.c_str());
-    if (fs.fail()) {
+    int fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
+    if (fd < 0) {
         return LinuxSysmanImp::getResult(errno);
     }
-    while (std::getline(fs, line)) {
-        if (fs.fail()) {
-            fs.close();
-            return LinuxSysmanImp::getResult(errno);
-        }
-        if (line.back() == '\n') {
-            line.pop_back();
-        }
-        val.push_back(line);
-    }
-    fs.close();
 
+    std::string leftover;
+    char buf[readBufSize];
+    ssize_t bytesRead = 0;
+    while ((bytesRead = NEO::SysCalls::read(fd, buf, sizeof(buf))) > 0) {
+        const char *ptr = buf;
+        const char *end = buf + bytesRead;
+        const char *nl;
+        while ((nl = static_cast<const char *>(memchr(ptr, '\n', static_cast<size_t>(end - ptr)))) != nullptr) {
+            if (leftover.empty()) {
+                val.emplace_back(ptr, nl);
+            } else {
+                leftover.append(ptr, nl);
+                val.push_back(std::move(leftover));
+                leftover.clear();
+            }
+            ptr = nl + 1;
+        }
+        leftover.append(ptr, end);
+    }
+    int savedErrno = errno;
+    NEO::SysCalls::close(fd);
+
+    if (bytesRead < 0) {
+        val.clear();
+        return LinuxSysmanImp::getResult(savedErrno);
+    }
+    if (!leftover.empty()) {
+        val.push_back(std::move(leftover));
+    }
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FsAccessInterface::write(const std::string &file, const std::string val) {
+ze_result_t FsAccessInterface::write(const std::string &file, std::string_view val) {
     int fd = NEO::SysCalls::open(file.c_str(), O_WRONLY);
     if (fd < 0) {
         return LinuxSysmanImp::getResult(errno);
@@ -446,7 +479,7 @@ ze_result_t SysFsAccessInterface::getFileMode(const std::string file, ::mode_t &
 
 ze_result_t SysFsAccessInterface::read(const std::string file, std::string &val) {
     // Prepend sysfs directory path and call the base read
-    return FsAccessInterface::read(fullPath(file).c_str(), val);
+    return FsAccessInterface::read(fullPath(file), val);
 }
 
 ze_result_t SysFsAccessInterface::read(const std::string file, int32_t &val) {
@@ -470,9 +503,8 @@ ze_result_t SysFsAccessInterface::read(const std::string file, std::vector<std::
     return FsAccessInterface::read(fullPath(file), val);
 }
 
-ze_result_t SysFsAccessInterface::write(const std::string &file, const std::string val) {
-    // Prepend sysfs directory path and call the base write
-    return FsAccessInterface::write(fullPath(file).c_str(), std::move(val));
+ze_result_t SysFsAccessInterface::write(const std::string &file, std::string_view val) {
+    return FsAccessInterface::write(fullPath(file), val);
 }
 
 ze_result_t SysFsAccessInterface::write(const std::string &file, const int val) {
@@ -507,17 +539,17 @@ ze_result_t SysFsAccessInterface::write(const std::string &file, const uint64_t 
 
 ze_result_t SysFsAccessInterface::scanDirEntries(const std::string path, std::vector<std::string> &list) {
     list.clear();
-    return FsAccessInterface::listDirectory(fullPath(path).c_str(), list);
+    return FsAccessInterface::listDirectory(fullPath(path), list);
 }
 
 ze_result_t SysFsAccessInterface::readSymLink(const std::string path, std::string &val) {
     // Prepend sysfs directory path and call the base readSymLink
-    return FsAccessInterface::readSymLink(fullPath(path).c_str(), val);
+    return FsAccessInterface::readSymLink(fullPath(path), val);
 }
 
 ze_result_t SysFsAccessInterface::getRealPath(const std::string &path, std::string &val) {
     // Prepend sysfs directory path and call the base getRealPath
-    return FsAccessInterface::getRealPath(fullPath(path).c_str(), val);
+    return FsAccessInterface::getRealPath(fullPath(path), val);
 }
 
 ze_result_t SysFsAccessInterface::bindDevice(const std::string &gpuBindEntry, const std::string &device) {
@@ -530,11 +562,11 @@ ze_result_t SysFsAccessInterface::unbindDevice(const std::string &gpuUnbindEntry
 
 bool SysFsAccessInterface::fileExists(const std::string file) {
     // Prepend sysfs directory path and call the base fileExists
-    return FsAccessInterface::fileExists(fullPath(file).c_str());
+    return FsAccessInterface::fileExists(fullPath(file));
 }
 
 bool SysFsAccessInterface::directoryExists(const std::string path) {
-    return FsAccessInterface::directoryExists(fullPath(path).c_str());
+    return FsAccessInterface::directoryExists(fullPath(path));
 }
 
 bool SysFsAccessInterface::isMyDeviceFile(const std::string dev) {

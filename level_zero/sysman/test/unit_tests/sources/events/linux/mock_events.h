@@ -17,10 +17,10 @@
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
 #include "level_zero/sysman/source/api/events/sysman_events_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/pmu/mock_pmu.h"
 
 #include <cstring>
 
@@ -37,14 +37,11 @@ const std::string ueventFabricFile("/var/lib/libze_intel_gpu/fabric-pci-0000_03_
 const std::string deviceDir("device");
 const std::string deviceMemoryHealth("device_memory_health");
 const std::string eventsDir("/sys/devices/i915_0000_03_00.0/events");
-constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t errorCount = 10u;
-constexpr uint64_t mockTimeStamp = 1100u;
 constexpr int mockUdevFd = 1;
 
-struct MockPmuInterfaceImpForEvents : public L0::Sysman::PmuInterfaceImp {
-    using PmuInterfaceImp::perfEventOpen;
-    MockPmuInterfaceImpForEvents(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+struct MockPmuInterfaceImpForEvents : public MockPmuInterfaceImpForSysman {
+    MockPmuInterfaceImpForEvents(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
 
     bool mockPmuReadFail = false;
 

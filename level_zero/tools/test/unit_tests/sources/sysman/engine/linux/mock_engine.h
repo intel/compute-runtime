@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,11 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/linux/pmu/mock_pmu.h"
 
 using namespace NEO;
 namespace L0 {
 namespace ult {
-constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t mockTimestamp = 87654321;
 constexpr uint64_t mockActiveTime = 987654321;
 const uint32_t microSecondsToNanoSeconds = 1000u;
@@ -63,9 +63,8 @@ struct MockEngineNeoDrm : public Drm {
     }
 };
 
-struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
-    using PmuInterfaceImp::perfEventOpen;
-    MockEnginePmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+struct MockEnginePmuInterfaceImp : public MockPmuInterfaceImpForSysman {
+    MockEnginePmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
 
     int64_t mockPerfEventFailureReturnValue = 0;
     int32_t mockErrorNumber = -ENOSPC;

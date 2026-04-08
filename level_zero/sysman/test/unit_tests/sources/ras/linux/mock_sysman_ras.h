@@ -17,10 +17,10 @@
 #include "level_zero/sysman/source/api/ras/sysman_ras.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/pmu/mock_pmu.h"
 
 using namespace NEO;
 
@@ -33,7 +33,6 @@ using isRasNotSupportedProduct = IsNotWithinProducts<IGFX_DG1, IGFX_PVC>;
 
 const std::string deviceDir("device");
 const std::string eventsDir("/sys/devices/i915_0000_03_00.0/events");
-constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t correctableGrfErrorCount = 100u;
 constexpr uint64_t correctableEuErrorCount = 75u;
 constexpr uint64_t fatalEuErrorCount = 50u;
@@ -100,9 +99,8 @@ constexpr uint32_t pmuDriverType = 16u;
 constexpr uint64_t hbmCorrectableErrorCount = 2;
 constexpr uint64_t hbmUncorrectableErrorCount = 3;
 
-struct MockRasPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
-    using PmuInterfaceImp::perfEventOpen;
-    MockRasPmuInterfaceImp(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+struct MockRasPmuInterfaceImp : public MockPmuInterfaceImpForSysman {
+    MockRasPmuInterfaceImp(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
 
     int32_t mockPmuReadCount = 0;
     int32_t mockPmuReadCountAfterClear = 0;

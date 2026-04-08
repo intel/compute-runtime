@@ -451,6 +451,15 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVe
     }
 }
 
+TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenInitializingBarPropertiesWithInsufficientDataThenErrorIsReturned) {
+    pSysfsAccess->mockResourceReadEmpty = true;
+    auto pLinuxPciImpTemp = std::make_unique<PublicLinuxPciImp>(pOsSysman);
+    pLinuxPciImpTemp->preadFunction = preadMock;
+    pLinuxPciImpTemp->pSysfsAccess = pSysfsAccess.get();
+    std::vector<zes_pci_bar_properties_t *> barProps;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPciImpTemp->initializeBarProperties(barProps));
+}
+
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenInitializingPciAndPciConfigOpenFailsThenResizableBarSupportWillBeFalse) {
     L0::Sysman::OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);

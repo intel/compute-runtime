@@ -15,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <string_view>
 #include <vector>
 
 namespace L0 {
@@ -38,6 +39,8 @@ class FdCacheInterface : public NEO::NonCopyableAndNonMovableClass {
 
 class FsAccessInterface {
   public:
+    static constexpr size_t readBufSize = 4096;
+
     static std::unique_ptr<FsAccessInterface> create();
     virtual ~FsAccessInterface();
 
@@ -52,7 +55,7 @@ class FsAccessInterface {
     virtual ze_result_t read(const std::string file, uint32_t &val);
     virtual ze_result_t read(const std::string file, int32_t &val);
 
-    virtual ze_result_t write(const std::string &file, const std::string val);
+    virtual ze_result_t write(const std::string &file, std::string_view val);
 
     virtual ze_result_t readSymLink(const std::string path, std::string &buf);
     virtual ze_result_t getRealPath(const std::string &path, std::string &buf);
@@ -113,7 +116,7 @@ class SysFsAccessInterface : protected FsAccessInterface {
     ze_result_t read(const std::string file, double &val) override;
     ze_result_t read(const std::string file, std::vector<std::string> &val) override;
 
-    ze_result_t write(const std::string &file, const std::string val) override;
+    ze_result_t write(const std::string &file, std::string_view val) override;
     MOCKABLE_VIRTUAL ze_result_t write(const std::string &file, const int val);
     MOCKABLE_VIRTUAL ze_result_t write(const std::string &file, const uint64_t val);
     MOCKABLE_VIRTUAL ze_result_t write(const std::string &file, const double val);

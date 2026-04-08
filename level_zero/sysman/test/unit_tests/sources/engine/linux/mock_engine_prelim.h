@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,10 @@
 
 #include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
 #include "level_zero/sysman/source/api/engine/sysman_engine_imp.h"
-#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/pmu/mock_pmu.h"
 
 using namespace NEO;
 
@@ -23,7 +23,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t mockActiveTime = 987654321;
 const uint32_t microSecondsToNanoSeconds = 1000u;
 constexpr uint16_t invalidEngineClass = UINT16_MAX;
@@ -119,10 +118,8 @@ struct MockEngineNeoDrmPrelim : public Drm {
     }
 };
 
-struct MockEnginePmuInterfaceImpPrelim : public L0::Sysman::PmuInterfaceImp {
-    using PmuInterfaceImp::perfEventOpen;
-    using PmuInterfaceImp::pSysmanKmdInterface;
-    MockEnginePmuInterfaceImpPrelim(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+struct MockEnginePmuInterfaceImpPrelim : public MockPmuInterfaceImpForSysman {
+    MockEnginePmuInterfaceImpPrelim(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
 
     bool mockPmuRead = false;
     bool mockPerfEventOpenReadFail = false;

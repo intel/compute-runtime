@@ -59,12 +59,12 @@ class SysmanDeviceFixture : public ::testing::Test {
             strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
             return buf;
         });
-
         VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
             std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
             std::memcpy(buf, str.c_str(), str.size());
             return static_cast<int>(str.size());
         });
+
         execEnv = new NEO::ExecutionEnvironment();
         execEnv->prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < execEnv->rootDeviceEnvironments.size(); i++) {
@@ -96,65 +96,23 @@ class SysmanDeviceFixture : public ::testing::Test {
     PublicLinuxSysmanImp *pLinuxSysmanImp = nullptr;
     NEO::ExecutionEnvironment *execEnv = nullptr;
     std::unique_ptr<L0::Sysman::SysmanDriverHandleImp> driverHandle;
-    const uint32_t numRootDevices = 1u;
+    uint32_t numRootDevices = 1u;
     DebugManagerStateRestore restore;
 };
 
-class SysmanMultiDeviceFixture : public ::testing::Test {
+class SysmanMultiDeviceFixture : public SysmanDeviceFixture {
   public:
     void SetUp() override {
-        VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
-            constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
-            strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
-            return buf;
-        });
-
-        VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
-            std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
-            std::memcpy(buf, str.c_str(), str.size());
-            return static_cast<int>(str.size());
-        });
-
-        execEnv = new NEO::ExecutionEnvironment();
-        execEnv->prepareRootDeviceEnvironments(numRootDevices);
+        numRootDevices = 4u;
         debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-        for (auto i = 0u; i < execEnv->rootDeviceEnvironments.size(); i++) {
-            execEnv->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
-            execEnv->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
-            execEnv->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::make_unique<SysmanMockDrm>(*execEnv->rootDeviceEnvironments[i]));
-        }
-
-        driverHandle = std::make_unique<L0::Sysman::SysmanDriverHandleImp>();
-        driverHandle->initialize(*execEnv);
-        pSysmanDevice = driverHandle->sysmanDevices[0];
-        L0::Sysman::globalSysmanDriver = driverHandle.get();
-
-        L0::Sysman::sysmanOnlyInit = true;
-
-        pSysmanDeviceImp = static_cast<L0::Sysman::SysmanDeviceImp *>(pSysmanDevice);
-        pOsSysman = pSysmanDeviceImp->pOsSysman;
-        pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
-        pLinuxSysmanImp->pFwUtilInterface = new MockFwUtilInterface();
+        SysmanDeviceFixture::SetUp();
     }
     void TearDown() override {
-        L0::Sysman::globalSysmanDriver = nullptr;
-        L0::Sysman::sysmanOnlyInit = false;
+        SysmanDeviceFixture::TearDown();
     }
 
-    L0::Sysman::SysmanDevice *pSysmanDevice = nullptr;
-    L0::Sysman::SysmanDeviceImp *pSysmanDeviceImp = nullptr;
-    L0::Sysman::OsSysman *pOsSysman = nullptr;
-    PublicLinuxSysmanImp *pLinuxSysmanImp = nullptr;
-    NEO::ExecutionEnvironment *execEnv = nullptr;
-    std::unique_ptr<L0::Sysman::SysmanDriverHandleImp> driverHandle;
-    const uint32_t numRootDevices = 4u;
     const uint32_t numSubDevices = 2u;
-    DebugManagerStateRestore restorer;
 };
-
-class PublicFsAccess : public L0::Sysman::FsAccessInterface {};
-
-class PublicSysfsAccess : public L0::Sysman::SysFsAccessInterface {};
 
 class PublicLinuxSysmanDriverImp : public L0::Sysman::LinuxSysmanDriverImp {
   public:

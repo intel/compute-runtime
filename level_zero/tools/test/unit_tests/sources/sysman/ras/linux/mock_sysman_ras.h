@@ -18,6 +18,7 @@
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp.h"
 #include "level_zero/tools/source/sysman/ras/ras.h"
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/linux/pmu/mock_pmu.h"
 
 #include <cstring>
 
@@ -27,7 +28,6 @@ namespace ult {
 
 const std::string deviceDir("device");
 const std::string eventsDir("/sys/devices/i915_0000_03_00.0/events");
-constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t correctableGrfErrorCount = 100u;
 constexpr uint64_t correctableEuErrorCount = 75u;
 constexpr uint64_t fatalEuErrorCount = 50u;
@@ -98,9 +98,8 @@ struct MockMemoryManagerInRasSysman : public MemoryManagerMock {
     MockMemoryManagerInRasSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
 
-struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
-    using PmuInterfaceImp::perfEventOpen;
-    MockRasPmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+struct MockRasPmuInterfaceImp : public MockPmuInterfaceImpForSysman {
+    MockRasPmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
 
     int32_t mockPmuReadCount = 0;
     int32_t mockPmuReadCountAfterClear = 0;

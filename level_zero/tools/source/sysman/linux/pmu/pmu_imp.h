@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,8 +34,6 @@ class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableAndNonMovableClass 
     MOCKABLE_VIRTUAL int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags);
     decltype(&read) readFunction = read;
     decltype(&syscall) syscallFunction = syscall;
-
-  private:
     uint32_t getEventType();
     FsAccess *pFsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;

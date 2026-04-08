@@ -7,18 +7,16 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/pmu/mock_pmu.h"
 
 namespace L0 {
 namespace Sysman {
 namespace ult {
 
-class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
+class MockPmuInterfaceImp : public MockPmuInterfaceImpForSysman {
   public:
-    using PmuInterfaceImp::getConfigAfterFormat;
-    using PmuInterfaceImp::getConfigFromEventFile;
-    using PmuInterfaceImp::perfEventOpen;
-    using PmuInterfaceImp::pSysmanKmdInterface;
+    using MockPmuInterfaceImpForSysman::getConfigAfterFormat;
+    using MockPmuInterfaceImpForSysman::getConfigFromEventFile;
     int64_t mockPmuFd = -1;
     uint64_t mockTimestamp = 0;
     uint64_t mockActiveTime = 0;
@@ -33,7 +31,7 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
     std::vector<int32_t> mockFormatConfigReturnValue = {};
     std::vector<int32_t> mockVfConfigReturnValue = {};
 
-    MockPmuInterfaceImp(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+    MockPmuInterfaceImp(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
 

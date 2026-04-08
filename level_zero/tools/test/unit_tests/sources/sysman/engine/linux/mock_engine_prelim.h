@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,13 +15,13 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/linux/pmu/mock_pmu.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 namespace L0 {
 namespace ult {
-constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t mockActiveTime = 987654321;
 constexpr uint16_t invalidEngineClass = UINT16_MAX;
 const std::string deviceDir("device");
@@ -110,9 +110,8 @@ struct MockEngineNeoDrmPrelim : public Drm {
     }
 };
 
-struct MockEnginePmuInterfaceImpPrelim : public PmuInterfaceImp {
-    using PmuInterfaceImp::perfEventOpen;
-    MockEnginePmuInterfaceImpPrelim(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+struct MockEnginePmuInterfaceImpPrelim : public MockPmuInterfaceImpForSysman {
+    MockEnginePmuInterfaceImpPrelim(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
 
     bool mockPmuRead = false;
     bool mockPerfEventOpenRead = false;
@@ -163,12 +162,11 @@ struct MockEnginePmuInterfaceImpPrelim : public PmuInterfaceImp {
     }
 
     int64_t pmuInterfaceOpen(uint64_t config, int group, uint32_t format) override {
-
         if (group > -1 && MockEngineNeoDrmPrelim::mockQuerySingleEngineInstance == true) {
             auto testConfig = mockSingleEngineConfigs[engineConfigIndex++];
             EXPECT_EQ(config, testConfig);
         }
-        return PmuInterfaceImp::pmuInterfaceOpen(config, group, format);
+        return MockPmuInterfaceImpForSysman::pmuInterfaceOpen(config, group, format);
     }
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -400,6 +400,10 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesGetRasStateExpAn
 
     VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
     pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    pPmuInterface->mockPerfEvent = true;
+    VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
     auto handles = getRasHandles(mockHandleCount);
     for (const auto &handle : handles) {

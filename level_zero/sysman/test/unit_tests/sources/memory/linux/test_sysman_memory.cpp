@@ -144,6 +144,16 @@ TEST_F(SysmanDeviceMemoryFixtureI915, GivenComponentCountZeroWhenEnumeratingMemo
 TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingMemoryGetStateAndFwUtilInterfaceIsAbsentThenMemoryHealthWillBeUnknown) {
     VariableBackup<L0::Sysman::FirmwareUtil *> backup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
+    VariableBackup<decltype(NEO::SysCalls::readFuncCalled)> readCalledBackup{&NEO::SysCalls::readFuncCalled, 0u};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (++NEO::SysCalls::readFuncCalled == 1) {
+            constexpr std::string_view content = "MemFree: 1000 kB\nMemAvailable: 2000 kB\n";
+            auto size = std::min(count, content.size());
+            memcpy(buf, content.data(), size);
+            return static_cast<ssize_t>(size);
+        }
+        return 0;
+    });
     auto pLinuxMemoryImp = std::make_unique<PublicLinuxMemoryImp>(pOsSysman, true, 0);
     zes_mem_state_t state;
     ze_result_t result = pLinuxMemoryImp->getState(&state);

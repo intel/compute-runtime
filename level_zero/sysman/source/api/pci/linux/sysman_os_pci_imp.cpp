@@ -126,6 +126,10 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_propert
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): read() failed to read %s and returning error:0x%x \n", __FUNCTION__, resourceFile.c_str(), result);
         return result;
     }
+    if (readBytes.size() < (maxPciBars + 1)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): insufficient data in %s and returning error:0x%x \n", __FUNCTION__, resourceFile.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
     for (uint32_t i = 0; i <= maxPciBars; i++) {
         uint64_t baseAddr, barSize, barFlags;
         getBarBaseAndSize(readBytes[i], baseAddr, barSize, barFlags);

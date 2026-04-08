@@ -82,7 +82,7 @@ struct MockDiagFsAccess : public L0::Sysman::FsAccessInterface {
     int checkErrorAfterCount = 0;
     std::string mockRootAddress = mockCorrectRootAddress;
 
-    ze_result_t write(const std::string &file, std::string val) override {
+    ze_result_t write(const std::string &file, std::string_view val) override {
         if (checkErrorAfterCount) {
             checkErrorAfterCount--;
         } else if (mockWriteError != ZE_RESULT_SUCCESS) {

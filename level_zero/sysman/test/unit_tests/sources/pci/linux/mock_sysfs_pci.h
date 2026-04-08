@@ -49,6 +49,7 @@ struct MockPciSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     bool isStringSymLinkEmpty = false;
     bool mockReadFailure = false;
+    bool mockResourceReadEmpty = false;
     bool mockPcieDowngradeCapable = true;
     bool mockpcieDowngradeStatus = true;
 
@@ -88,6 +89,10 @@ struct MockPciSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     ze_result_t read(const std::string file, std::vector<std::string> &val) override {
         if (file.compare(resourceFile) == 0) {
+            if (mockResourceReadEmpty) {
+                val.clear();
+                return ZE_RESULT_SUCCESS;
+            }
             val = mockReadBytes;
             return ZE_RESULT_SUCCESS;
         }
