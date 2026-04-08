@@ -37,7 +37,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const aub_stream::EngineType &getEngineType() const { return engineType; }
     EngineUsage getEngineUsage() const { return engineUsage; }
     void overrideEngineUsage(EngineUsage usage) { engineUsage = usage; }
-    void overridePriority(uint32_t newPriority) {
+    virtual void overridePriority(uint32_t newPriority) {
         if (!priorityLevel.has_value()) {
             priorityLevel = newPriority;
         }
@@ -124,6 +124,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     virtual bool isDirectSubmissionLightActive() const { return false; }
     void setExclusivelyHpContext() { exclusivelyHpContext = true; }
     bool isExclusivelyHpContext() const { return exclusivelyHpContext; }
+    virtual bool isPriorityChangeSupported() const { return false; }
 
   protected:
     virtual bool initializeContext(bool allocateInterrupt) { return true; }

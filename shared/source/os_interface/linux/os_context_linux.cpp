@@ -113,6 +113,25 @@ bool OsContextLinux::isDirectSubmissionLightActive() const {
     return this->isDirectSubmissionActive() && !this->getDrm().isVmBindAvailable();
 }
 
+void OsContextLinux::overridePriority(uint32_t newPriority) {
+    if (!priorityLevel.has_value()) {
+        priorityLevel = newPriority;
+    }
+    // change of priority level of an already initialized context
+    else if (this->isPartOfContextGroup() && priorityLevel.value() != newPriority && this->drmContextIds.size() > 0) {
+        if (debugManager.flags.PrintSecondaryContextEngineInfo.get()) {
+            std::stringstream contextEngineInfo;
+            contextEngineInfo << "Overriding priority osContextId: " << this->getContextId() << " previous priorityLevel: " << std::to_string(this->getPriorityLevel()) << " new priority: " << newPriority << "\n";
+            PRINT_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "%s", contextEngineInfo.str().c_str());
+        }
+
+        for (auto drmContextId : this->drmContextIds) {
+            drm.getIoctlHelper()->setContextGroupPriority(drmContextId, newPriority);
+        }
+        priorityLevel = newPriority;
+    }
+}
+
 void OsContextLinux::waitForPagingFence() {
     for (auto drmIterator = 0u; drmIterator < this->deviceBitfield.size(); drmIterator++) {
         if (this->deviceBitfield.test(drmIterator)) {

@@ -234,9 +234,12 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::perfOpen: {
         ret = 0;
     } break;
-    case DrmIoctl::gemContextSetparam:
+    case DrmIoctl::gemContextSetparam: {
+        auto setProperty = static_cast<drm_xe_exec_queue_set_property *>(arg);
+        latestExecQueueSetProperty = *setProperty;
+        ret = 0;
+    } break;
     case DrmIoctl::gemContextGetparam:
-
     default:
         break;
     }

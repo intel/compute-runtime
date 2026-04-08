@@ -155,6 +155,7 @@ class IoctlHelperXe : public IoctlHelper {
     MOCKABLE_VIRTUAL void setNoVmOvercommitFlagAllowed(bool value) { this->noVmOvercommitFlagAllowed = value; }
     MOCKABLE_VIRTUAL bool getNoVmOvercommitFlagAllowed() { return noVmOvercommitFlagAllowed; }
     bool requireBoChunksForLargeHostPtrs() const override { return false; }
+    bool setContextGroupPriority(uint32_t drmContextId, uint32_t hwPriority) override;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;

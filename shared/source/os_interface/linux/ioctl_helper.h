@@ -267,6 +267,7 @@ class IoctlHelper {
     virtual int bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataVec, uint32_t vmHandleId, VmBindExtUserFenceT *vmBindExtUserFence, bool isAdd) { return 0; };
     virtual std::optional<std::vector<VmBindOpExtDebugData>> addDebugDataAndCreateBindOpVec(BufferObject *bo, uint32_t vmId, bool isAdd) { return std::nullopt; };
     virtual bool requireBoChunksForLargeHostPtrs() const { return false; }
+    virtual bool setContextGroupPriority(uint32_t drmContextId, uint32_t hwPriority) { return false; }
 
   protected:
     Drm &drm;

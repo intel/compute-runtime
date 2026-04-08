@@ -4098,3 +4098,334 @@ TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenCreatingHighPriorityDrmCon
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY), drm->execQueueProperties[3].property);
     EXPECT_EQ(2u, drm->execQueueProperties[3].value);
 }
+
+TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenSettingPriorityThenExecQueueSetPropertyForMultiQueuePriorityIsSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto ioctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+    ioctlHelper->initialize();
+
+    ioctlHelper->setContextGroupPriority(5, 1);
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY), drm->latestExecQueueSetProperty.property);
+    EXPECT_EQ(1u, drm->latestExecQueueSetProperty.value);
+    EXPECT_EQ(5u, drm->latestExecQueueSetProperty.exec_queue_id);
+}
+
+class MockIoctlHelperForOverridePriority : public IoctlHelperXe {
+  public:
+    using IoctlHelperXe::IoctlHelperXe;
+
+    struct SetContextGroupPriorityCall {
+        uint32_t drmContextId;
+        uint32_t hwPriority;
+    };
+
+    bool setContextGroupPriority(uint32_t drmContextId, uint32_t hwPriority) override {
+        SetContextGroupPriorityCall call{drmContextId, hwPriority};
+        setContextGroupPriorityCalls.push_back(call);
+
+        if (failSetContextGroupPriority) {
+            return false;
+        }
+        return true;
+    }
+
+    // Add other required virtual methods with minimal implementation
+    bool initialize() override { return true; }
+    bool isSetPairAvailable() override { return false; }
+    bool isChunkingAvailable() override { return false; }
+    bool isVmBindAvailable() override { return true; }
+    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) override {
+        // Return a unique context ID for each call
+        return ++contextIdCounter;
+    }
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override { return 0; }
+    int getDrmParamValue(DrmParam drmParam) const override { return 0; }
+    std::string getDrmParamString(DrmParam param) const override { return ""; }
+    std::string getIoctlString(DrmIoctl ioctlRequest) const override { return ""; }
+
+    // Test helper methods
+    void reset() {
+        setContextGroupPriorityCalls.clear();
+        failSetContextGroupPriority = false;
+    }
+
+    size_t getSetContextGroupPriorityCallCount() const {
+        return setContextGroupPriorityCalls.size();
+    }
+
+    const SetContextGroupPriorityCall &getSetContextGroupPriorityCall(size_t index) const {
+        return setContextGroupPriorityCalls[index];
+    }
+
+    // Test control flags
+    bool failSetContextGroupPriority = false;
+    std::vector<SetContextGroupPriorityCall> setContextGroupPriorityCalls;
+    static inline int contextIdCounter = 0;
+};
+
+struct OsContextLinuxOverridePriorityTest : ::testing::Test {
+    void SetUp() override {
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+        drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+
+        mockIoctlHelper = new MockIoctlHelperForOverridePriority(*drm);
+        drm->ioctlHelper.reset(mockIoctlHelper);
+    }
+
+    void TearDown() override {
+        delete drm;
+    }
+
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
+    DrmMock *drm = nullptr;
+    MockIoctlHelperForOverridePriority *mockIoctlHelper = nullptr;
+};
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenContextWithNoPriorityWhenOverridingPriorityThenPriorityIsSet) {
+    OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+
+    EXPECT_FALSE(osContext.hasPriorityLevel());
+
+    const uint32_t newPriority = 3;
+    osContext.overridePriority(newPriority);
+
+    EXPECT_TRUE(osContext.hasPriorityLevel());
+    EXPECT_EQ(newPriority, osContext.getPriorityLevel());
+    EXPECT_EQ(0u, mockIoctlHelper->getSetContextGroupPriorityCallCount());
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenContextWithExistingPriorityWhenOverridingWithSamePriorityThenNoIoctlCalled) {
+    OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.setContextGroupCount(8);
+
+    const uint32_t initialPriority = 2;
+    osContext.overridePriority(initialPriority);
+    osContext.ensureContextInitialized(false);
+
+    mockIoctlHelper->reset();
+
+    // Try to override with the same priority
+    osContext.overridePriority(initialPriority);
+
+    EXPECT_EQ(initialPriority, osContext.getPriorityLevel());
+    EXPECT_EQ(0u, mockIoctlHelper->getSetContextGroupPriorityCallCount());
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenContextNotInGroupWhenOverridingInitializedContextThenPriorityDoesNotChange) {
+    OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    // Don't set context group
+
+    const uint32_t initialPriority = 2;
+    osContext.overridePriority(initialPriority);
+    osContext.ensureContextInitialized(false);
+
+    mockIoctlHelper->reset();
+
+    const uint32_t newPriority = 5;
+    osContext.overridePriority(newPriority);
+
+    EXPECT_EQ(initialPriority, osContext.getPriorityLevel());
+    EXPECT_EQ(0u, mockIoctlHelper->getSetContextGroupPriorityCallCount());
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenContextInGroupWithNoDrmContextIdsWhenOverridingThenNoIoctlCalled) {
+    OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.setContextGroupCount(8);
+
+    const uint32_t initialPriority = 2;
+    osContext.overridePriority(initialPriority);
+    ASSERT_EQ(0u, osContext.getDrmContextIds().size());
+
+    const uint32_t newPriority = 5;
+    osContext.overridePriority(newPriority);
+
+    EXPECT_EQ(initialPriority, osContext.getPriorityLevel());
+    EXPECT_EQ(0u, mockIoctlHelper->getSetContextGroupPriorityCallCount());
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenInitializedContextInGroupWhenOverridingWithDifferentPriorityThenSetContextGroupPriorityIsCalled) {
+    OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.setContextGroupCount(8);
+
+    const uint32_t initialPriority = 2;
+    osContext.overridePriority(initialPriority);
+
+    osContext.ensureContextInitialized(false);
+    const auto drmContextIds = osContext.getDrmContextIds();
+    ASSERT_GT(drmContextIds.size(), 0u);
+
+    mockIoctlHelper->reset();
+
+    const uint32_t newPriority = 5;
+    osContext.overridePriority(newPriority);
+
+    EXPECT_EQ(newPriority, osContext.getPriorityLevel());
+    EXPECT_EQ(drmContextIds.size(), mockIoctlHelper->getSetContextGroupPriorityCallCount());
+
+    for (size_t i = 0; i < drmContextIds.size(); i++) {
+        const auto &call = mockIoctlHelper->getSetContextGroupPriorityCall(i);
+        EXPECT_EQ(drmContextIds[i], call.drmContextId);
+        EXPECT_EQ(newPriority, call.hwPriority);
+    }
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenMultipleDrmContextIdsWhenOverridingPriorityThenAllContextsReceiveSetContextGroupPriorityCall) {
+    auto deviceBitfield = DeviceBitfield(0b11); // Multi-device
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular});
+    engineDescriptor.deviceBitfield = deviceBitfield;
+
+    OsContextLinux osContext(*drm, 0, 1u, engineDescriptor);
+    osContext.setContextGroupCount(8);
+
+    const uint32_t initialPriority = 2;
+    osContext.overridePriority(initialPriority);
+
+    osContext.ensureContextInitialized(false);
+    const auto drmContextIds = osContext.getDrmContextIds();
+    const auto numContexts = drmContextIds.size();
+    ASSERT_GT(numContexts, 1u); // Should have multiple contexts
+
+    mockIoctlHelper->reset();
+
+    const uint32_t newPriority = 7;
+    osContext.overridePriority(newPriority);
+
+    EXPECT_EQ(newPriority, osContext.getPriorityLevel());
+    EXPECT_EQ(numContexts, mockIoctlHelper->getSetContextGroupPriorityCallCount());
+
+    for (size_t i = 0; i < numContexts; i++) {
+        const auto &call = mockIoctlHelper->getSetContextGroupPriorityCall(i);
+        EXPECT_EQ(drmContextIds[i], call.drmContextId);
+        EXPECT_EQ(newPriority, call.hwPriority);
+    }
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenDebugFlagEnabledWhenOverridingInitializedContextPriorityThenDebugMessageIsPrinted) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.PrintSecondaryContextEngineInfo.set(1);
+
+    testing::internal::CaptureStdout();
+
+    OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.setContextGroupCount(8);
+
+    const uint32_t initialPriority = 2;
+    osContext.overridePriority(initialPriority);
+
+    osContext.ensureContextInitialized(false);
+    ASSERT_GT(osContext.getDrmContextIds().size(), 0u);
+
+    const uint32_t newPriority = 5;
+    osContext.overridePriority(newPriority);
+
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(std::string::npos, output.find("Overriding priority osContextId:"));
+    EXPECT_NE(std::string::npos, output.find("previous priorityLevel:"));
+    EXPECT_NE(std::string::npos, output.find("new priority:"));
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenDebugFlagDisabledWhenOverridingInitializedContextPriorityThenNoDebugMessageIsPrinted) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.PrintSecondaryContextEngineInfo.set(0);
+
+    testing::internal::CaptureStdout();
+
+    OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.setContextGroupCount(8);
+
+    const uint32_t initialPriority = 2;
+    osContext.overridePriority(initialPriority);
+
+    osContext.ensureContextInitialized(false);
+    ASSERT_GT(osContext.getDrmContextIds().size(), 0u);
+
+    const uint32_t newPriority = 5;
+    osContext.overridePriority(newPriority);
+
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(std::string::npos, output.find("Overriding priority osContextId:"));
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenZeroPriorityWhenOverridingThenPriorityIsSetToZero) {
+    OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+
+    EXPECT_FALSE(osContext.hasPriorityLevel());
+
+    const uint32_t newPriority = 0;
+    osContext.overridePriority(newPriority);
+
+    EXPECT_TRUE(osContext.hasPriorityLevel());
+    EXPECT_EQ(newPriority, osContext.getPriorityLevel());
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenHighPriorityValueWhenOverridingThenPriorityIsSet) {
+    OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+
+    EXPECT_FALSE(osContext.hasPriorityLevel());
+
+    const uint32_t newPriority = 7;
+    osContext.overridePriority(newPriority);
+
+    EXPECT_TRUE(osContext.hasPriorityLevel());
+    EXPECT_EQ(newPriority, osContext.getPriorityLevel());
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenContextInGroupWhenOverridingMultipleTimesThenAllOverridesSucceed) {
+    OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.setContextGroupCount(8);
+
+    const uint32_t initialPriority = 2;
+    osContext.overridePriority(initialPriority);
+
+    osContext.ensureContextInitialized(false);
+    ASSERT_GT(osContext.getDrmContextIds().size(), 0u);
+    ASSERT_EQ(initialPriority, osContext.getPriorityLevel());
+
+    mockIoctlHelper->reset();
+
+    // First override
+    const uint32_t firstNewPriority = 5;
+    osContext.overridePriority(firstNewPriority);
+    EXPECT_EQ(firstNewPriority, osContext.getPriorityLevel());
+    EXPECT_GT(mockIoctlHelper->getSetContextGroupPriorityCallCount(), 0u);
+
+    mockIoctlHelper->reset();
+
+    // Second override
+    const uint32_t secondNewPriority = 3;
+    osContext.overridePriority(secondNewPriority);
+    EXPECT_EQ(secondNewPriority, osContext.getPriorityLevel());
+    EXPECT_GT(mockIoctlHelper->getSetContextGroupPriorityCallCount(), 0u);
+}
+
+// Tests for setContextGroupPriority directly
+TEST_F(OsContextLinuxOverridePriorityTest, givenValidParametersWhenCallingSetContextGroupPriorityThenIoctlIsCalledWithCorrectValues) {
+    const uint32_t drmContextId = 123;
+    const uint32_t hwPriority = 5;
+
+    bool result = mockIoctlHelper->setContextGroupPriority(drmContextId, hwPriority);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1u, mockIoctlHelper->getSetContextGroupPriorityCallCount());
+
+    const auto &call = mockIoctlHelper->getSetContextGroupPriorityCall(0);
+    EXPECT_EQ(drmContextId, call.drmContextId);
+    EXPECT_EQ(hwPriority, call.hwPriority);
+}
+
+TEST_F(OsContextLinuxOverridePriorityTest, givenIoctlFailureWhenCallingSetContextGroupPriorityThenReturnFalse) {
+    mockIoctlHelper->failSetContextGroupPriority = true;
+
+    const uint32_t drmContextId = 123;
+    const uint32_t hwPriority = 5;
+
+    bool result = mockIoctlHelper->setContextGroupPriority(drmContextId, hwPriority);
+
+    EXPECT_FALSE(result);
+    EXPECT_EQ(1u, mockIoctlHelper->getSetContextGroupPriorityCallCount());
+}

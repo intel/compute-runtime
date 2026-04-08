@@ -47,6 +47,10 @@ class OsContextLinux : public OsContext {
     uint64_t *getFenceAddr(uint32_t deviceIndex) { return &pagingFence[deviceIndex]; }
     void waitForBind(uint32_t drmIterator);
     bool isDirectSubmissionLightActive() const override;
+    void overridePriority(uint32_t newPriority) override;
+    bool isPriorityChangeSupported() const override {
+        return true;
+    }
 
   protected:
     bool initializeContext(bool allocateInterrupt) override;

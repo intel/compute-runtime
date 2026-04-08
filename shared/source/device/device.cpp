@@ -1364,7 +1364,9 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
         bool isSamePriorityLevel = (hwPriority.has_value() && engines[secondaryEngineIndex].osContext->hasPriorityLevel())
                                        ? (hwPriority.value() == engines[secondaryEngineIndex].osContext->getPriorityLevel())
                                        : true;
-        if (npIndices.size() == 0 && isSamePriorityLevel) {
+        bool priorityChangeSupported = engines[secondaryEngineIndex].osContext->isPriorityChangeSupported();
+
+        if (npIndices.size() == 0 && (isSamePriorityLevel || priorityChangeSupported)) {
             regularCounter.fetch_add(1);
             npIndices.push_back(secondaryEngineIndex);
         }

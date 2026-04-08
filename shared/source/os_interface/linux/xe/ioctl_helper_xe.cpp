@@ -2138,6 +2138,16 @@ uint32_t IoctlHelperXe::getPriorityValue(const OsContextLinux &osContext) {
     return priorityValue;
 }
 
+bool IoctlHelperXe::setContextGroupPriority(uint32_t drmContextId, uint32_t hwPriority) {
+
+    drm_xe_exec_queue_set_property setProperty{};
+    setProperty.exec_queue_id = drmContextId;
+    setProperty.property = DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY;
+    setProperty.value = hwPriority;
+
+    return IoctlHelper::ioctl(DrmIoctl::gemContextSetparam, &setProperty) == 0;
+}
+
 uint32_t IoctlHelperXe::getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex) {
     auto osContextLinuxPrimary = static_cast<const OsContextLinux *>(osContext.getPrimaryContext());
     UNRECOVERABLE_IF(nullptr == osContextLinuxPrimary);
@@ -2176,6 +2186,8 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
         RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_CREATE);
     case DrmIoctl::gemContextDestroy:
         RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY);
+    case DrmIoctl::gemContextSetparam:
+        RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_SET_PROPERTY);
     case DrmIoctl::gemWaitUserFence:
         RETURN_ME(DRM_IOCTL_XE_WAIT_USER_FENCE);
     case DrmIoctl::primeFdToHandle:
@@ -2239,6 +2251,8 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_CREATE);
     case DrmIoctl::gemContextDestroy:
         STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY);
+    case DrmIoctl::gemContextSetparam:
+        STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_SET_PROPERTY);
     case DrmIoctl::gemWaitUserFence:
         STRINGIFY_ME(DRM_IOCTL_XE_WAIT_USER_FENCE);
     case DrmIoctl::primeFdToHandle:

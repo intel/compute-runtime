@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,7 @@ struct DrmMockXe : public DrmMockCustom {
     StackVec<drm_xe_ext_set_property, 1> execQueueProperties;
     drm_xe_exec_queue_create latestExecQueueCreate = {};
     std::vector<drm_xe_engine_class_instance> latestQueueEngineClassInstances;
+    drm_xe_exec_queue_set_property latestExecQueueSetProperty = {};
 
     int waitUserFenceReturn = 0;
     int execQueueBanPropertyReturn = 0;
