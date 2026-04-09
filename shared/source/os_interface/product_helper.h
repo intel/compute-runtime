@@ -293,6 +293,7 @@ class ProductHelper {
     virtual uint32_t getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
 
     virtual bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const = 0;
+    virtual std::optional<uint8_t> getBcsCompressionFormat() const = 0;
     virtual ~ProductHelper() = default;
 
   protected:

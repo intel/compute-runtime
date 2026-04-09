@@ -52,6 +52,9 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(con
         if (blitProperties.dstAllocation->isCompressionEnabled()) {
             auto resourceFormat = blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
             compressionFormat = static_cast<uint32_t>(rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat));
+            if (auto bcsCompressionFormat = rootDeviceEnvironment.getHelper<ProductHelper>().getBcsCompressionFormat()) {
+                compressionFormat = static_cast<uint32_t>(*bcsCompressionFormat);
+            }
         }
 
         appendBlitMemSetCompressionFormat(&blitCmd, blitProperties.dstAllocation, compressionFormat);
