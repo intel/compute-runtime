@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 #include "opencl/test/unit_test/mocks/mock_sampler.h"
 
 #include "gtest/gtest.h"
-#include "patch_list.h"
 
 #include <tuple>
 
@@ -65,8 +64,7 @@ TEST_P(CreateSampler, GivenModeWhenSamplerIsCreatedThenParamsAreSetCorrectly) {
 
     // check for SnapWA
     bool snapWaNeeded = addressingMode == CL_ADDRESS_CLAMP && filterMode == CL_FILTER_NEAREST;
-    auto snapWaValue = snapWaNeeded ? iOpenCL::CONSTANT_REGISTER_BOOLEAN_TRUE : iOpenCL::CONSTANT_REGISTER_BOOLEAN_FALSE;
-    EXPECT_EQ(static_cast<uint32_t>(snapWaValue), sampler->getSnapWaValue());
+    EXPECT_EQ(snapWaNeeded, sampler->getSnapWaValue() != 0u);
 
     delete sampler;
 }

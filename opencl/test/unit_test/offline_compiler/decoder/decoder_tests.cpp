@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,12 +18,12 @@
 #include "opencl/test/unit_test/offline_compiler/environment.h"
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 #include "opencl/test/unit_test/offline_compiler/stdout_capturer.h"
-#include "opencl/test/unit_test/test_files/patch_list.h"
 
 #include "gtest/gtest.h"
 #include "igad.h"
 #include "mock/mock_decoder.h"
 #include "neo_igfxfmid.h"
+#include "patch_g7.h"
 
 #include <array>
 #include <fstream>
@@ -32,6 +32,8 @@
 #include <utility>
 
 extern Environment *gEnvironment;
+
+using namespace iOpenCL;
 
 static void abortOclocExecutionMock(int code) {
     throw std::runtime_error{"Exit called with code = " + std::to_string(code)};
