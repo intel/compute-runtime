@@ -489,7 +489,10 @@ ze_result_t Event::exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAs
 
     auto deviceOffset = static_cast<size_t>(inOrderExecHelper.getBaseDeviceAddress() - deviceAlloc->getGpuAddress());
     inOrderExecHelper.setDeviceAllocIpcHandle(handle, deviceOffset, NEO::SysCalls::getProcessId());
-    context->registerIpcHandleWithServer(handle);
+    if (context->isSocketHandleSharingSupported()) {
+        context->registerIpcHandleWithServer(handle);
+        exportedIpcServerHandles.push_back(handle);
+    }
 
     // make sure that exporter will not attempt to refresh itself
     inOrderExecHelper.setLatestImported2WayIpcData(handle, deviceOffset, NEO::SysCalls::getProcessId());
@@ -500,7 +503,10 @@ ze_result_t Event::exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAs
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         memoryManager->registerIpcExportedAllocation(hostAlloc);
-        context->registerIpcHandleWithServer(handle);
+        if (context->isSocketHandleSharingSupported()) {
+            context->registerIpcHandleWithServer(handle);
+            exportedIpcServerHandles.push_back(handle);
+        }
 
         auto hostOffset = ptrDiff(inOrderExecHelper.getBaseHostCpuAddress(), hostAlloc->getUnderlyingBuffer());
         inOrderExecHelper.setHostAllocIpcHandle(handle, hostOffset);
@@ -677,7 +683,10 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
     memoryManager->registerIpcExportedAllocation(sharableEventDataHelper.getAllocation());
-    context->registerIpcHandleWithServer(communicationHandle);
+    if (context->isSocketHandleSharingSupported()) {
+        context->registerIpcHandleWithServer(communicationHandle);
+        exportedIpcServerHandles.push_back(communicationHandle);
+    }
 
     ipcData.communicationAllocHandle = communicationHandle;
     ipcData.allocOffset = sharableEventDataHelper.getAllocationOffset();
@@ -843,6 +852,7 @@ ze_result_t Event::destroy() {
     inOrderExecHelper.releaseNotUsedTempTimestampNodes();
 
     if (isCounterBasedExplicitlyEnabled()) {
+        unregisterExportedIpcHandles();
         if (inOrderExecHelper.containsImportedIpcAllocs()) {
             auto memoryManager = device->getNEODevice()->getMemoryManager();
 
@@ -856,6 +866,18 @@ ze_result_t Event::destroy() {
 
     delete this;
     return ZE_RESULT_SUCCESS;
+}
+
+void Event::unregisterExportedIpcHandles() {
+    if (exportedIpcServerHandles.empty()) {
+        return;
+    }
+
+    auto context = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
+    for (auto handle : exportedIpcServerHandles) {
+        context->unregisterIpcHandleWithServer(handle);
+    }
+    exportedIpcServerHandles.clear();
 }
 
 void Event::enableCounterBasedMode(bool apiRequest, uint32_t flags) {
@@ -954,6 +976,7 @@ void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInO
     const bool ipcExportUpdateNeeded = isCbIpcCommunicationUpdateNeeded(newInOrderExecInfo->getBaseDeviceAddress());
 
     if (ipcExportUpdateNeeded) {
+        unregisterExportedIpcHandles();
         inOrderExecHelper.releaseImportedAllocations(*device->getNEODevice()->getMemoryManager());
     }
 

@@ -815,6 +815,14 @@ void Context::registerIpcHandleWithServer(uint64_t handleId) {
     }
 }
 
+void Context::unregisterIpcHandleWithServer(uint64_t handleId) {
+    if (!isSocketHandleSharingSupported()) {
+        return;
+    }
+
+    driverHandle->unregisterIpcHandleWithServer(handleId);
+}
+
 ze_result_t Context::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
     uint64_t handle = 0;
     if (settings.useOpaqueHandle) {

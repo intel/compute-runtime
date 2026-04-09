@@ -1179,5 +1179,90 @@ HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenImporterSignalsThenExpor
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList2.get());
 }
 
+HWTEST_F(InOrderIpcTests, givenSocketHandleSharingNotSupportedWhenGettingCounterBasedIpcHandleThenHandlesAreNotTracked) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    enableEventSharing(*events[0]);
+
+    EXPECT_FALSE(Context::fromHandle(device->getDriverHandle()->getDefaultContext())->isSocketHandleSharingSupported());
+    EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
+}
+
+HWTEST_F(InOrderIpcTests, givenSocketHandleSharingSupportedWhenGettingCounterBasedIpcHandleThenHandlesAreTracked) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    enableEventSharing(*events[0]);
+
+    auto defaultContext = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
+    defaultContext->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    defaultContext->settings.handleType = IpcHandleType::fdHandle;
+    EXPECT_TRUE(defaultContext->isSocketHandleSharingSupported());
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    EXPECT_FALSE(events[0]->exportedIpcServerHandles.empty());
+}
+
+HWTEST_F(InOrderIpcTests, givenEventWithTrackedIpcHandlesWhenDestroyCalledThenHandlesAreUnregistered) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    enableEventSharing(*events[0]);
+
+    auto defaultContext = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
+    defaultContext->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    defaultContext->settings.handleType = IpcHandleType::fdHandle;
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    EXPECT_FALSE(events[0]->exportedIpcServerHandles.empty());
+
+    events[0].release()->destroy();
+}
+
+HWTEST_F(InOrderIpcTests, givenEventWithTrackedIpcHandlesWhenUpdateInOrderExecStateWithDifferentAddressThenOldHandlesAreCleared) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(2, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    enableEventSharing(*events[0]);
+
+    auto defaultContext = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
+    defaultContext->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    defaultContext->settings.handleType = IpcHandleType::fdHandle;
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    auto handleCountAfterFullExport = events[0]->exportedIpcServerHandles.size();
+    EXPECT_GT(handleCountAfterFullExport, 0u);
+
+    auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
+
+    auto newInOrderExecInfo = immCmdList2->inOrderExecInfo;
+    EXPECT_NE(newInOrderExecInfo->getBaseDeviceAddress(), events[0]->getInOrderExecEventHelper().getBaseDeviceAddress());
+
+    events[0]->updateInOrderExecState(newInOrderExecInfo, 1, 0);
+
+    EXPECT_LT(events[0]->exportedIpcServerHandles.size(), handleCountAfterFullExport);
+}
+
 } // namespace ult
 } // namespace L0

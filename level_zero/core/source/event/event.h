@@ -407,6 +407,7 @@ struct Event : _ze_event_handle_t {
     NEO::GraphicsAllocation *getExternalCounterAllocationFromAddress(uint64_t *address) const;
     ze_result_t exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAssignedData);
     bool isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa) const;
+    void unregisterExportedIpcHandles();
     MOCKABLE_VIRTUAL uint64_t getCompletionTimeout() const { return completionTimeoutMs; }
 
     void unsetCmdQueue();
@@ -444,6 +445,7 @@ struct Event : _ze_event_handle_t {
     MetricCollectorEventNotify *metricNotification = nullptr;
     NEO::MultiGraphicsAllocation *eventPoolAllocation = nullptr;
     StackVec<NEO::CommandStreamReceiver *, 1> csrs;
+    StackVec<uint64_t, 3> exportedIpcServerHandles;
     void *hostAddressFromPool = nullptr;
     Device *device = nullptr;
     std::weak_ptr<Kernel> kernelWithPrintf = std::weak_ptr<Kernel>{};

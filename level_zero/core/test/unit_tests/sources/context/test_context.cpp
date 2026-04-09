@@ -3941,6 +3941,45 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNonOpaqueIpcHandleThenUnregist
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(ContextTest, givenSocketHandleSharingSupportedWhenUnregisterIpcHandleWithServerCalledThenDriverHandleMethodIsCalled) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    contextImp->settings.handleType = IpcHandleType::fdHandle;
+
+    EXPECT_TRUE(contextImp->isSocketHandleSharingSupported());
+
+    contextImp->unregisterIpcHandleWithServer(12345);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenSocketHandleSharingNotSupportedWhenUnregisterIpcHandleWithServerCalledThenReturnsImmediately) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+
+    EXPECT_FALSE(contextImp->isSocketHandleSharingSupported());
+
+    contextImp->unregisterIpcHandleWithServer(12345);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 TEST_F(ContextTest, whenCallingPutIpcMemHandleWithMultipleRefCountThenHandleNotRemovedUntilLastRef) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
