@@ -838,3 +838,36 @@ TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingU
         platform->usmPoolInitialized = false;
     }
 }
+
+TEST_F(ContextUsmPoolParamsTest, GivenPoolAllocatorNotSupportedWithoutDebugFlagWhenInitializeDeviceUsmAllocationPoolThenPoolNotInitialized) {
+    cl_device_id devices[] = {device};
+    context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    context->initializeDeviceUsmAllocationPool();
+    EXPECT_TRUE(context->usmPoolInitialized);
+    EXPECT_FALSE(context->getDeviceMemAllocPoolsManager().isInitialized());
+    context->usmPoolInitialized = false;
+}
+
+TEST_F(ContextUsmPoolParamsTest, GivenPoolAlreadyInitializedWhenInitializeDeviceUsmAllocationPoolThenEarlyReturn) {
+    cl_device_id devices[] = {device};
+    context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    context->usmPoolInitialized = true;
+    context->initializeDeviceUsmAllocationPool();
+    EXPECT_FALSE(context->getDeviceMemAllocPoolsManager().isInitialized());
+}
+
+TEST(ContextUsmPoolTest, GivenNonSingleDeviceContextWhenInitializeDeviceUsmAllocationPoolThenEarlyReturn) {
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 2};
+    cl_int retVal = CL_SUCCESS;
+    cl_device_id device = deviceFactory.rootDevices[0];
+    auto context = Context::create<MockContext>(nullptr, ClDeviceVector(&device, 1), nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    context->initializeDeviceUsmAllocationPool();
+    EXPECT_FALSE(context->usmPoolInitialized);
+    context->release();
+}

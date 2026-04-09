@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpu_info.h"
@@ -183,16 +184,18 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
     }
 
     if (false == lookupTable.exportMemory) {
-        this->driverHandle->initHostUsmAllocPoolOnce();
-        if (this->driverHandle->usmHostMemAllocPoolManager) {
-            if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPoolManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
-                *ptr = usmPtrFromPool;
-                return ZE_RESULT_SUCCESS;
-            }
-        } else if (this->driverHandle->usmHostMemAllocPool) {
-            if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPool->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
-                *ptr = usmPtrFromPool;
-                return ZE_RESULT_SUCCESS;
+        if (size <= NEO::PoolInfo::getHostMaxPoolableSize()) {
+            this->driverHandle->initHostUsmAllocPoolOnce();
+            if (this->driverHandle->usmHostMemAllocPoolManager) {
+                if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPoolManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
+                    *ptr = usmPtrFromPool;
+                    return ZE_RESULT_SUCCESS;
+                }
+            } else if (this->driverHandle->usmHostMemAllocPool) {
+                if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPool->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
+                    *ptr = usmPtrFromPool;
+                    return ZE_RESULT_SUCCESS;
+                }
             }
         }
     }
@@ -340,16 +343,18 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
     }
 
     if (false == lookupTable.exportMemory) {
-        this->driverHandle->initDeviceUsmAllocPoolOnce();
-        if (neoDevice->getUsmMemAllocPoolsManager()) {
-            if (auto usmPtrFromPool = neoDevice->getUsmMemAllocPoolsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
-                *ptr = usmPtrFromPool;
-                return ZE_RESULT_SUCCESS;
-            }
-        } else if (neoDevice->getUsmMemAllocPool()) {
-            if (auto usmPtrFromPool = neoDevice->getUsmMemAllocPool()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
-                *ptr = usmPtrFromPool;
-                return ZE_RESULT_SUCCESS;
+        if (size <= NEO::PoolInfo::getMaxPoolableSize(neoDevice->getGfxCoreHelper())) {
+            this->driverHandle->initDeviceUsmAllocPoolOnce();
+            if (neoDevice->getUsmMemAllocPoolsManager()) {
+                if (auto usmPtrFromPool = neoDevice->getUsmMemAllocPoolsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
+                    *ptr = usmPtrFromPool;
+                    return ZE_RESULT_SUCCESS;
+                }
+            } else if (neoDevice->getUsmMemAllocPool()) {
+                if (auto usmPtrFromPool = neoDevice->getUsmMemAllocPool()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
+                    *ptr = usmPtrFromPool;
+                    return ZE_RESULT_SUCCESS;
+                }
             }
         }
     }

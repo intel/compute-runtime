@@ -53,4 +53,8 @@ TEST(ApiSpecificConfigOclTests, WhenCheckingIsUpdateTagFromWaitEnabledForHeaples
     EXPECT_TRUE(ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless());
 }
 
+TEST(ApiSpecificConfigOclTests, WhenCheckingIfDeviceUsmPoolingIsEnabledThenReturnTrue) {
+    EXPECT_TRUE(ApiSpecificConfig::isDeviceUsmPoolingEnabled());
+}
+
 } // namespace NEO

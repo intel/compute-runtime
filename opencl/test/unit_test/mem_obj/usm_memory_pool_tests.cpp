@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
@@ -328,4 +329,84 @@ TEST_F(UsmPoolTestWithMultipleDevice, givenMultipleDevicesWhenCreatingAllocation
 
     EXPECT_FALSE(mockContext->usmPoolInitialized);
     EXPECT_TRUE(static_cast<MockPlatform *>(device->getPlatform())->usmPoolInitialized);
+}
+
+TEST_F(UsmPoolTestWithSingleDevice, givenDeviceAllocationSizeLargerThanMaxThresholdWhenAllocatingThenPoolIsNotInitialized) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+    debugManager.flags.EnableUsmAllocationPoolManager.set(1);
+
+    const size_t oversizedAllocation = PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()) + 1;
+
+    cl_int retVal = CL_SUCCESS;
+    void *deviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, oversizedAllocation, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, deviceAlloc);
+
+    EXPECT_FALSE(mockDeviceMemPoolsFacade->isInitialized());
+    EXPECT_FALSE(mockContext->usmPoolInitialized);
+
+    clMemFreeINTEL(mockContext.get(), deviceAlloc);
+}
+
+TEST_F(UsmPoolTestWithSingleDevice, givenDeviceAllocationFirstLargerThenSmallerThanMaxThresholdWhenAllocatingThenPoolIsInitializedOnSecondCall) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+    debugManager.flags.EnableUsmAllocationPoolManager.set(1);
+
+    const size_t oversizedAllocation = PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()) + 1;
+
+    cl_int retVal = CL_SUCCESS;
+    void *largeAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, oversizedAllocation, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(mockDeviceMemPoolsFacade->isInitialized());
+    EXPECT_FALSE(mockContext->usmPoolInitialized);
+    clMemFreeINTEL(mockContext.get(), largeAlloc);
+
+    void *smallAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, poolAllocationThreshold, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockDeviceMemPoolsFacade->isInitialized());
+    EXPECT_TRUE(mockContext->usmPoolInitialized);
+    clMemFreeINTEL(mockContext.get(), smallAlloc);
+}
+
+TEST_F(UsmPoolTestWithSingleDevice, givenHostAllocationSizeLargerThanMaxThresholdWhenAllocatingThenPoolIsNotInitialized) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableHostUsmAllocationPool.set(3);
+    debugManager.flags.EnableUsmAllocationPoolManager.set(1);
+
+    const size_t oversizedAllocation = PoolInfo::getHostMaxPoolableSize() + 1;
+
+    cl_int retVal = CL_SUCCESS;
+    void *hostAlloc = clHostMemAllocINTEL(mockContext.get(), nullptr, oversizedAllocation, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, hostAlloc);
+
+    auto platform = static_cast<MockPlatform *>(device->getPlatform());
+    EXPECT_FALSE(platform->getHostMemAllocPoolManager().isInitialized());
+    EXPECT_FALSE(platform->usmPoolInitialized);
+
+    clMemFreeINTEL(mockContext.get(), hostAlloc);
+}
+
+TEST_F(UsmPoolTestWithSingleDevice, givenHostAllocationFirstLargerThenSmallerThanMaxThresholdWhenAllocatingThenPoolIsInitializedOnSecondCall) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableHostUsmAllocationPool.set(3);
+    debugManager.flags.EnableUsmAllocationPoolManager.set(1);
+
+    const size_t oversizedAllocation = PoolInfo::getHostMaxPoolableSize() + 1;
+
+    cl_int retVal = CL_SUCCESS;
+    void *largeAlloc = clHostMemAllocINTEL(mockContext.get(), nullptr, oversizedAllocation, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto platform = static_cast<MockPlatform *>(device->getPlatform());
+    EXPECT_FALSE(platform->usmPoolInitialized);
+    clMemFreeINTEL(mockContext.get(), largeAlloc);
+
+    void *smallAlloc = clHostMemAllocINTEL(mockContext.get(), nullptr, poolAllocationThreshold, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(platform->getHostMemAllocPoolManager().isInitialized());
+    EXPECT_TRUE(platform->usmPoolInitialized);
+    clMemFreeINTEL(mockContext.get(), smallAlloc);
 }

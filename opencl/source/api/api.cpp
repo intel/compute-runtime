@@ -14,6 +14,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -4000,12 +4001,13 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
     }
 
     auto platform = neoContext->getDevice(0u)->getPlatform();
-    platform->initializeHostUsmAllocationPool();
-
-    auto allocationFromPool = platform->getHostMemAllocPoolManager().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
-    if (allocationFromPool) {
-        TRACING_EXIT(ClHostMemAllocINTEL, &allocationFromPool);
-        return allocationFromPool;
+    if (size <= PoolInfo::getHostMaxPoolableSize()) {
+        platform->initializeHostUsmAllocationPool();
+        auto allocationFromPool = platform->getHostMemAllocPoolManager().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+        if (allocationFromPool) {
+            TRACING_EXIT(ClHostMemAllocINTEL, &allocationFromPool);
+            return allocationFromPool;
+        }
     }
 
     auto ptr = neoContext->getSVMAllocsManager()->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
@@ -4064,12 +4066,13 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
 
     unifiedMemoryProperties.device = &neoDevice->getDevice();
 
-    neoContext->initializeDeviceUsmAllocationPool();
-
-    auto allocationFromPool = neoContext->getDeviceMemAllocPoolsManager().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
-    if (allocationFromPool) {
-        TRACING_EXIT(ClDeviceMemAllocINTEL, &allocationFromPool);
-        return allocationFromPool;
+    if (size <= PoolInfo::getMaxPoolableSize(neoDevice->getDevice().getGfxCoreHelper())) {
+        neoContext->initializeDeviceUsmAllocationPool();
+        auto allocationFromPool = neoContext->getDeviceMemAllocPoolsManager().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+        if (allocationFromPool) {
+            TRACING_EXIT(ClDeviceMemAllocINTEL, &allocationFromPool);
+            return allocationFromPool;
+        }
     }
 
     auto ptr = neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);

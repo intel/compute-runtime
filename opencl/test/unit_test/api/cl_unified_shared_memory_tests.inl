@@ -12,6 +12,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -1556,16 +1557,8 @@ TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndSharedMemWh
 
 TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndHostMemWhenClGetMemAllocInfoINTELThenReturnedSizeIsWithoutExtension) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableHostUsmAllocationPool.set(2);
-
     const size_t requestedSize = 64u;
     const auto pageSizeNumber = 2;
-    auto device = mockContext->getDevice(0u);
-    auto platform = static_cast<MockPlatform *>(device->getPlatform());
-
-    debugManager.flags.EnableUsmAllocationPoolManager.set(false);
-    platform->getHostMemAllocPoolManager().cleanup();
-    platform->usmPoolInitialized = false;
 
     debugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
 
@@ -1573,9 +1566,6 @@ TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndHostMemWhen
     auto ptr = clHostMemAllocINTEL(mockContext.get(), nullptr, requestedSize, 0u, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, ptr);
-
-    auto pooledSize = platform->getHostMemAllocPoolManager().getPooledAllocationSize(ptr);
-    EXPECT_NE(0u, pooledSize);
 
     size_t queriedSize = 0u;
     size_t queriedSizeRet = 0u;
@@ -1591,15 +1581,9 @@ TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndHostMemWhen
 
 TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndDeviceMemWhenClGetMemAllocInfoINTELThenReturnedSizeIsWithoutExtension) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
-
     const size_t requestedSize = 64u;
     const auto pageSizeNumber = 2;
     auto device = mockContext->getDevice(0u);
-
-    debugManager.flags.EnableUsmAllocationPoolManager.set(false);
-    mockContext->getDeviceMemAllocPoolsManager().cleanup();
-    mockContext->usmPoolInitialized = false;
 
     debugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
 
@@ -1607,9 +1591,6 @@ TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndDeviceMemWh
     auto ptr = clDeviceMemAllocINTEL(mockContext.get(), device, nullptr, requestedSize, 0u, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, ptr);
-
-    auto pooledSize = mockContext->getDeviceMemAllocPoolsManager().getPooledAllocationSize(ptr);
-    EXPECT_NE(0u, pooledSize);
 
     size_t queriedSize = 0u;
     size_t queriedSizeRet = 0u;
@@ -1621,4 +1602,69 @@ TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndDeviceMemWh
 
     retVal = clMemFreeINTEL(mockContext.get(), ptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndHostMemPoolWhenClGetMemAllocInfoINTELThenReturnedSizeIsWithoutExtension) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableHostUsmAllocationPool.set(2);
+    debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+
+    const size_t allocSize = PoolInfo::getHostMaxPoolableSize();
+    cl_int retVal = CL_SUCCESS;
+    auto ptr = clHostMemAllocINTEL(mockContext.get(), nullptr, allocSize, 0u, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, ptr);
+
+    auto platform = static_cast<MockPlatform *>(mockContext->getDevice(0u)->getPlatform());
+    const size_t pooledSize = platform->getHostMemAllocPoolManager().getPooledAllocationSize(ptr);
+    if (pooledSize == 0u) {
+        retVal = clMemFreeINTEL(mockContext.get(), ptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        GTEST_SKIP();
+    }
+
+    debugManager.flags.ForceExtendedUSMBufferSize.set(1);
+    size_t queriedSize = 0u;
+    size_t queriedSizeRet = 0u;
+    retVal = clGetMemAllocInfoINTEL(mockContext.get(), ptr, CL_MEM_ALLOC_SIZE_INTEL, sizeof(size_t), &queriedSize, &queriedSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(size_t), queriedSizeRet);
+    EXPECT_EQ(pooledSize - MemoryConstants::pageSize, queriedSize);
+
+    retVal = clMemFreeINTEL(mockContext.get(), ptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    platform->getHostMemAllocPoolManager().cleanup();
+    platform->usmPoolInitialized = false;
+}
+
+TEST_F(ClUnifiedSharedMemoryTests, givenForceExtendedUsmBufferSizeAndDeviceMemPoolWhenClGetMemAllocInfoINTELThenReturnedSizeIsWithoutExtension) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
+    debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+
+    const size_t allocSize = PoolInfo::getMaxPoolableSize(mockContext->getDevice(0u)->getDevice().getGfxCoreHelper());
+    cl_int retVal = CL_SUCCESS;
+    auto ptr = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, allocSize, 0u, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, ptr);
+
+    const size_t pooledSize = mockContext->getDeviceMemAllocPoolsManager().getPooledAllocationSize(ptr);
+    if (pooledSize == 0u) {
+        retVal = clMemFreeINTEL(mockContext.get(), ptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        GTEST_SKIP();
+    }
+
+    debugManager.flags.ForceExtendedUSMBufferSize.set(1);
+    size_t queriedSize = 0u;
+    size_t queriedSizeRet = 0u;
+    retVal = clGetMemAllocInfoINTEL(mockContext.get(), ptr, CL_MEM_ALLOC_SIZE_INTEL, sizeof(size_t), &queriedSize, &queriedSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(size_t), queriedSizeRet);
+    EXPECT_EQ(pooledSize - MemoryConstants::pageSize, queriedSize);
+
+    retVal = clMemFreeINTEL(mockContext.get(), ptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    mockContext->getDeviceMemAllocPoolsManager().cleanup();
+    mockContext->usmPoolInitialized = false;
 }

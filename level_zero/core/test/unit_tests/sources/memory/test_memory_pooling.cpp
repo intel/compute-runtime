@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -95,7 +96,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     NEO::ExecutionEnvironment *executionEnvironment{};
     std::vector<std::unique_ptr<NEO::Device>> devices;
     L0::Device *l0Devices[numRootDevices];
-    constexpr static auto poolAllocationThreshold = 1 * MemoryConstants::megaByte;
+    constexpr static auto poolAllocationThreshold = MemoryConstants::pageSize;
 };
 
 using AllocUsmHostDefaultMultiDeviceMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0, true>;
@@ -902,5 +903,143 @@ TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndF
         context->freeMem(allocationOverLimit);
     }
 }
+using AllocUsmLazyPoolMemoryTest = AllocUsmPoolMemoryTest<1, 1, 0, false, false>;
+
+TEST_F(AllocUsmLazyPoolMemoryTest, givenHostAllocationSizeLargerThanMaxThresholdWhenCallingAllocHostMemThenPoolIsNotInitialized) {
+    NEO::debugManager.flags.EnableUsmPoolLazyInit.set(1);
+    initDriverImp();
+
+    ASSERT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
+
+    const size_t oversizedAllocation = NEO::PoolInfo::getHostMaxPoolableSize() + 1;
+    void *ptr = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc, oversizedAllocation, 0u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
+
+    context->freeMem(ptr);
+    context->destroy();
+}
+
+TEST_F(AllocUsmLazyPoolMemoryTest, givenHostAllocationFirstLargerThenSmallerThanMaxThresholdWhenCallingAllocHostMemThenPoolIsInitializedOnSecondCall) {
+    NEO::debugManager.flags.EnableUsmPoolLazyInit.set(1);
+    initDriverImp();
+
+    ASSERT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
+
+    const size_t oversizedAllocation = NEO::PoolInfo::getHostMaxPoolableSize() + 1;
+    void *largePtr = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc, oversizedAllocation, 0u, &largePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
+    context->freeMem(largePtr);
+
+    void *smallPtr = nullptr;
+    result = context->allocHostMem(&hostDesc, MemoryConstants::pageSize, 0u, &smallPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, driverHandle->usmHostMemAllocPool.get());
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
+
+    context->freeMem(smallPtr);
+    context->destroy();
+}
+
+TEST_F(AllocUsmLazyPoolMemoryTest, givenDeviceAllocationSizeLargerThanMaxThresholdWhenCallingAllocDeviceMemThenPoolIsNotInitialized) {
+    NEO::debugManager.flags.EnableUsmPoolLazyInit.set(1);
+    initDriverImp();
+
+    auto neoDevice = l0Devices[0]->getNEODevice();
+    ASSERT_EQ(nullptr, neoDevice->getUsmMemAllocPool());
+
+    const size_t oversizedAllocation = NEO::PoolInfo::getMaxPoolableSize(neoDevice->getGfxCoreHelper()) + 1;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, oversizedAllocation, 0u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_EQ(nullptr, neoDevice->getUsmMemAllocPool());
+
+    context->freeMem(ptr);
+    context->destroy();
+}
+
+TEST_F(AllocUsmLazyPoolMemoryTest, givenDeviceAllocationFirstLargerThenSmallerThanMaxThresholdWhenCallingAllocDeviceMemThenPoolIsInitializedOnSecondCall) {
+    NEO::debugManager.flags.EnableUsmPoolLazyInit.set(1);
+    initDriverImp();
+
+    auto neoDevice = l0Devices[0]->getNEODevice();
+    ASSERT_EQ(nullptr, neoDevice->getUsmMemAllocPool());
+
+    const size_t oversizedAllocation = NEO::PoolInfo::getMaxPoolableSize(neoDevice->getGfxCoreHelper()) + 1;
+    void *largePtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, oversizedAllocation, 0u, &largePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(nullptr, neoDevice->getUsmMemAllocPool());
+    context->freeMem(largePtr);
+
+    void *smallPtr = nullptr;
+    result = context->allocDeviceMem(l0Devices[0], &deviceDesc, MemoryConstants::pageSize, 0u, &smallPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, neoDevice->getUsmMemAllocPool());
+    EXPECT_TRUE(neoDevice->getUsmMemAllocPool()->isInitialized());
+
+    context->freeMem(smallPtr);
+    context->destroy();
+}
+
+using AllocUsmHostEagerPoolMemoryTest = AllocUsmPoolMemoryTest<1, -1, 0>;
+
+TEST_F(AllocUsmHostEagerPoolMemoryTest, givenHostAllocationSizeLargerThanMaxThresholdWhenPoolInitializedThenPoolAllocationIsSkipped) {
+    ASSERT_NE(nullptr, driverHandle->usmHostMemAllocPool.get());
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
+
+    const size_t oversizedAllocation = NEO::PoolInfo::getHostMaxPoolableSize() + 1;
+    void *ptr = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc, oversizedAllocation, 0u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_FALSE(driverHandle->usmHostMemAllocPool->isInPool(ptr));
+
+    context->freeMem(ptr);
+}
+
+using AllocUsmDeviceEagerPoolMemoryTest = AllocUsmPoolMemoryTest<0, 1, 0>;
+
+TEST_F(AllocUsmDeviceEagerPoolMemoryTest, givenDeviceAllocationSizeLargerThanMaxThresholdWhenPoolInitializedThenPoolAllocationIsSkipped) {
+    auto neoDevice = l0Devices[0]->getNEODevice();
+    ASSERT_NE(nullptr, neoDevice->getUsmMemAllocPool());
+    EXPECT_TRUE(neoDevice->getUsmMemAllocPool()->isInitialized());
+
+    const size_t oversizedAllocation = NEO::PoolInfo::getMaxPoolableSize(neoDevice->getGfxCoreHelper()) + 1;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, oversizedAllocation, 0u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_FALSE(neoDevice->getUsmMemAllocPool()->isInPool(ptr));
+
+    context->freeMem(ptr);
+}
+
+TEST_F(AllocUsmDeviceEagerPoolMemoryTest, givenAlignmentLargerThanPoolAlignmentWhenAllocDeviceMemThenPoolAllocationIsSkipped) {
+    auto neoDevice = l0Devices[0]->getNEODevice();
+    ASSERT_NE(nullptr, neoDevice->getUsmMemAllocPool());
+    EXPECT_TRUE(neoDevice->getUsmMemAllocPool()->isInitialized());
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, NEO::UsmMemAllocPool::poolAlignment * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_FALSE(neoDevice->getUsmMemAllocPool()->isInPool(ptr));
+
+    context->freeMem(ptr);
+}
+
 } // namespace ult
 } // namespace L0
