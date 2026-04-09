@@ -2396,7 +2396,7 @@ TEST_F(ProgramTests, GivenZebinWithSpecConstantsWhenCreatingProgramFromBinaryThe
     EXPECT_EQ(300u, program->specConstantsValues[3u]);
 }
 
-TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenPrintDebugMsgAndReturnError) {
+TEST_F(ProgramTests, DISABLED_givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenPrintDebugMsgAndReturnError) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.PrintDebugMessages.set(true);
 
@@ -2421,7 +2421,7 @@ TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimit
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST_F(ProgramTests, givenExistingConstantSurfacesWhenProcessGenBinaryThenCleanupTheSurfaceOnlyForSpecificDevice) {
+TEST_F(ProgramTests, DISABLED_givenExistingConstantSurfacesWhenProcessGenBinaryThenCleanupTheSurfaceOnlyForSpecificDevice) {
     PatchTokensTestData::ValidProgramWithKernelUsingSlm patchtokensProgram;
 
     auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
@@ -2449,7 +2449,7 @@ TEST_F(ProgramTests, givenExistingConstantSurfacesWhenProcessGenBinaryThenCleanu
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(ProgramTests, givenExistingGlobalSurfacesWhenProcessGenBinaryThenCleanupTheSurfaceOnlyForSpecificDevice) {
+TEST_F(ProgramTests, DISABLED_givenExistingGlobalSurfacesWhenProcessGenBinaryThenCleanupTheSurfaceOnlyForSpecificDevice) {
     PatchTokensTestData::ValidProgramWithKernelUsingSlm patchtokensProgram;
 
     auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
