@@ -180,7 +180,7 @@ bool ExternalSemaphoreWindows::enqueueWait(uint64_t *fenceValue) {
 
     uint64_t lastSignaledValue = 0;
     if (this->type == ExternalSemaphore::OpaqueWin32) {
-        lastSignaledValue = *this->pLastSignaledValue + 2;
+        lastSignaledValue = *this->pLastSignaledValue;
         wait.FenceValueArray = &lastSignaledValue;
     } else {
         wait.FenceValueArray = fenceValue;
