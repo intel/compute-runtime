@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
     }
 
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDevicePciLinkSpeedUpdateExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceMemoryGetPageOfflineStateExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
 

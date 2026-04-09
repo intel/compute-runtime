@@ -1758,6 +1758,19 @@ void testSysmanFabricPort(ze_device_handle_t &device) {
     }
 }
 
+// Experimental Global Operations APIs function pointers
+typedef ze_result_t(ZE_APICALL *zesIntelDeviceMemoryGetPageOfflineStateExp_pfn)(
+    zes_device_handle_t hDevice,
+    zes_intel_mem_page_status_exp_t pageStatus,
+    uint32_t *pCount,
+    zes_intel_mem_page_info_exp_t *pPageOfflineInfo);
+
+zesIntelDeviceMemoryGetPageOfflineStateExp_pfn zesIntelDeviceMemoryGetPageOfflineStateExpPtr = nullptr;
+
+void getGlobalOperationsExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceMemoryGetPageOfflineStateExp", reinterpret_cast<void **>(&zesIntelDeviceMemoryGetPageOfflineStateExpPtr)));
+}
+
 void testSysmanGlobalOperations(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Global Operations tests ---- " << std::endl;
@@ -1820,6 +1833,42 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
             std::cout << "state reset repair = " << deviceState.reset << std::endl;
             std::cout << "repair state = " << deviceState.repaired << std::endl;
         }
+    }
+
+    if (zesIntelDeviceMemoryGetPageOfflineStateExpPtr) {
+        uint32_t offlinePageCount = 0;
+        VALIDATECALL(zesIntelDeviceMemoryGetPageOfflineStateExpPtr(device, ZES_INTEL_MEM_PAGE_STATUS_EXP_OFFLINE, &offlinePageCount, nullptr));
+        std::vector<zes_intel_mem_page_info_exp_t> offlinePageInfo(offlinePageCount, {ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_INFO_EXP, nullptr});
+        VALIDATECALL(zesIntelDeviceMemoryGetPageOfflineStateExpPtr(device, ZES_INTEL_MEM_PAGE_STATUS_EXP_OFFLINE, &offlinePageCount, offlinePageInfo.data()));
+        if (verbose) {
+            std::cout << "Number of offline pages = " << offlinePageCount << std::endl;
+            for (const auto &page : offlinePageInfo) {
+                std::cout << "Offline Page State:" << std::endl;
+                std::cout << "Page Address = 0x" << std::hex << page.pageAddress << std::dec << std::endl;
+                std::cout << "Page Size = " << page.pageSize << std::endl;
+            }
+        }
+
+        uint32_t pendingOfflinePageCount = 0;
+        VALIDATECALL(zesIntelDeviceMemoryGetPageOfflineStateExpPtr(device, ZES_INTEL_MEM_PAGE_STATUS_EXP_PENDING_OFFLINE, &pendingOfflinePageCount, nullptr));
+        std::vector<zes_intel_mem_page_info_exp_t> pendingOfflinePageInfo(pendingOfflinePageCount, {ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_INFO_EXP, nullptr});
+        VALIDATECALL(zesIntelDeviceMemoryGetPageOfflineStateExpPtr(device, ZES_INTEL_MEM_PAGE_STATUS_EXP_PENDING_OFFLINE, &pendingOfflinePageCount, pendingOfflinePageInfo.data()));
+        if (verbose) {
+            std::cout << "Number of pending offline pages = " << pendingOfflinePageCount << std::endl;
+            for (const auto &page : pendingOfflinePageInfo) {
+                std::cout << "Pending Offline Page State:" << std::endl;
+                std::cout << "Page Address = 0x" << std::hex << page.pageAddress << std::dec << std::endl;
+                std::cout << "Page Size = " << page.pageSize << std::endl;
+            }
+        }
+    }
+
+    zes_intel_mem_page_offline_properties_exp_t pageOfflineProperties = {ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_PROPERTIES_EXP};
+    properties.pNext = &pageOfflineProperties;
+    VALIDATECALL(zesDeviceGetProperties(device, &properties));
+    if (verbose) {
+        std::cout << "Page Offline Properties:" << std::endl;
+        std::cout << "Maximum Number of Pages allowed to be offline = " << pageOfflineProperties.maxOfflinePages << std::endl;
     }
 }
 
@@ -2240,6 +2289,7 @@ int main(int argc, char *argv[]) {
         });
     }
     if (isParamEnabled(argc, argv, "-g", "--global", &optind)) {
+        getGlobalOperationsExpFunctionPointers(driver);
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanGlobalOperations(device);
         });

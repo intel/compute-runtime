@@ -131,6 +131,9 @@ TEST_F(SysmanDriverHandleTest,
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDevicePciLinkSpeedUpdateExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDeviceMemoryGetPageOfflineStateExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult
