@@ -1599,25 +1599,6 @@ TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromEmbeddedStorageRegis
     EXPECT_EQ(0u, bnr.size());
 }
 
-TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromFileStorageThenValidPtrIsReturnedForExisitngKernels) {
-    class MockFileStorage : BuiltIn::FileStorage {
-      public:
-        MockFileStorage(const std::string &rootPath) : BuiltIn::FileStorage(rootPath) {};
-        BuiltIn::Resource loadImpl(const std::string &fullResourceName) override {
-            return BuiltIn::FileStorage::loadImpl(fullResourceName);
-        }
-    };
-    MockFileStorage mockEmbeddedStorage("root");
-
-    VariableBackup<long int> ftellReturnBackup(&NEO::IoFunctions::mockFtellReturn, 4L);
-    BuiltIn::Resource br = mockEmbeddedStorage.loadImpl("copybuffer.cl");
-    EXPECT_NE(0u, br.size());
-
-    VariableBackup<FILE *> fopenReturnedBackup(&NEO::IoFunctions::mockFopenReturned, nullptr);
-    BuiltIn::Resource bnr = mockEmbeddedStorage.loadImpl("unknown.cl");
-    EXPECT_EQ(0u, bnr.size());
-}
-
 TEST_F(BuiltInTests, WhenBuiltInLibraryIsCreatedThenAllStoragesSizeIsTwo) {
     auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
     EXPECT_EQ(2u, mockBuiltInLibrary->allStorages.size());

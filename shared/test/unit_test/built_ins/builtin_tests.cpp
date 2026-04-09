@@ -10,9 +10,11 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_builtinslib.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -264,6 +266,66 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingWideStateless
     EXPECT_EQ(2u, resourceNames.size());
     EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
     EXPECT_EQ(resourceNames[1], expectedResourceNameGeneric);
+}
+
+class FileStorageTests : public ::testing::Test {
+  protected:
+    class MockFileStorage : public BuiltIn::FileStorage {
+      public:
+        MockFileStorage() : BuiltIn::FileStorage("root") {}
+        BuiltIn::Resource loadImpl(const std::string &fullResourceName) override {
+            return BuiltIn::FileStorage::loadImpl(fullResourceName);
+        }
+    } storage;
+};
+
+TEST_F(FileStorageTests, GivenFiledNameWhenLoadingImplKernelFromFileStorageThenValidPtrIsReturnedForExisitngKernels) {
+    VariableBackup<long int> ftellReturnBackup(&NEO::IoFunctions::mockFtellReturn, 4L);
+    VariableBackup<size_t> freadReturnBackup(&NEO::IoFunctions::mockFreadReturn, 4u);
+    BuiltIn::Resource br = storage.loadImpl("copybuffer.cl");
+    EXPECT_NE(0u, br.size());
+
+    VariableBackup<FILE *> fopenReturnedBackup(&NEO::IoFunctions::mockFopenReturned, nullptr);
+    BuiltIn::Resource bnr = storage.loadImpl("unknown.cl");
+    EXPECT_EQ(0u, bnr.size());
+}
+
+TEST_F(FileStorageTests, GivenFseekToEndFailsWhenLoadingImplFromFileStorageThenEmptyResourceIsReturnedAndFileIsClosed) {
+    VariableBackup<uint32_t> fcloseCalledBackup(&NEO::IoFunctions::mockFcloseCalled, 0u);
+    VariableBackup<int> fseekReturnBackup(&NEO::IoFunctions::mockFseekReturn, -1);
+    BuiltIn::Resource res = storage.loadImpl("file.cl");
+    EXPECT_EQ(0u, res.size());
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
+}
+
+TEST_F(FileStorageTests, GivenFtellFailsWhenLoadingImplFromFileStorageThenEmptyResourceIsReturnedAndFileIsClosed) {
+    VariableBackup<uint32_t> fcloseCalledBackup(&NEO::IoFunctions::mockFcloseCalled, 0u);
+    VariableBackup<int> fseekReturnBackup(&NEO::IoFunctions::mockFseekReturn, 0);
+    VariableBackup<long int> ftellReturnBackup(&NEO::IoFunctions::mockFtellReturn, -1L);
+    BuiltIn::Resource res = storage.loadImpl("file.cl");
+    EXPECT_EQ(0u, res.size());
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
+}
+
+TEST_F(FileStorageTests, GivenFseekToStartFailsWhenLoadingImplFromFileStorageThenEmptyResourceIsReturnedAndFileIsClosed) {
+    VariableBackup<uint32_t> fcloseCalledBackup(&NEO::IoFunctions::mockFcloseCalled, 0u);
+    VariableBackup<uint32_t> fseekCalledBackup(&NEO::IoFunctions::mockFseekCalled, 0u);
+    VariableBackup<uint32_t> failAfterNFseekBackup(&NEO::IoFunctions::failAfterNFseekCount, 1u);
+    VariableBackup<int> fseekReturnBackup(&NEO::IoFunctions::mockFseekReturn, 0);
+    VariableBackup<long int> ftellReturnBackup(&NEO::IoFunctions::mockFtellReturn, 4L);
+    BuiltIn::Resource res = storage.loadImpl("file.cl");
+    EXPECT_EQ(0u, res.size());
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
+}
+
+TEST_F(FileStorageTests, GivenFreadReturnsFewerBytesThanExpectedWhenLoadingImplFromFileStorageThenEmptyResourceIsReturned) {
+    VariableBackup<uint32_t> fcloseCalledBackup(&NEO::IoFunctions::mockFcloseCalled, 0u);
+    VariableBackup<int> fseekReturnBackup(&NEO::IoFunctions::mockFseekReturn, 0);
+    VariableBackup<long int> ftellReturnBackup(&NEO::IoFunctions::mockFtellReturn, 4L);
+    VariableBackup<size_t> freadReturnBackup(&NEO::IoFunctions::mockFreadReturn, 2u);
+    BuiltIn::Resource res = storage.loadImpl("file.cl");
+    EXPECT_EQ(0u, res.size());
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
 }
 
 TEST_F(BuiltInSharedTest, GivenRequestedTypeSourceWhenGettingWideStatelessBuiltinsThenReturnForReleaseAndGenericResourceNames) {

@@ -19,6 +19,7 @@
 #include "os_inc.h"
 
 #include <cstdint>
+#include <memory>
 #include <sstream>
 
 namespace NEO {
@@ -165,16 +166,28 @@ BuiltIn::Resource BuiltIn::Storage::load(const std::string &resourceName) {
 BuiltIn::Resource BuiltIn::FileStorage::loadImpl(const std::string &fullResourceName) {
     BuiltIn::Resource ret;
 
-    FILE *fp = NEO::IoFunctions::fopenPtr(fullResourceName.c_str(), "rb");
+    std::unique_ptr<FILE, decltype(NEO::IoFunctions::fclosePtr)> fp(
+        NEO::IoFunctions::fopenPtr(fullResourceName.c_str(), "rb"),
+        NEO::IoFunctions::fclosePtr);
     if (fp == nullptr) {
         return ret;
     }
-    NEO::IoFunctions::fseekPtr(fp, 0, SEEK_END);
-    auto size = static_cast<size_t>(NEO::IoFunctions::ftellPtr(fp));
-    NEO::IoFunctions::fseekPtr(fp, 0, SEEK_SET);
+    if (NEO::IoFunctions::fseekPtr(fp.get(), 0, SEEK_END) != 0) {
+        return ret;
+    }
+    auto fileSize = NEO::IoFunctions::ftellPtr(fp.get());
+    if (fileSize < 0) {
+        return ret;
+    }
+    if (NEO::IoFunctions::fseekPtr(fp.get(), 0, SEEK_SET) != 0) {
+        return ret;
+    }
+    auto size = static_cast<size_t>(fileSize);
     ret.resize(size);
-    NEO::IoFunctions::freadPtr(ret.data(), sizeof(char), size, fp);
-    NEO::IoFunctions::fclosePtr(fp);
+    auto bytesRead = NEO::IoFunctions::freadPtr(ret.data(), sizeof(char), size, fp.get());
+    if (bytesRead != size) {
+        return BuiltIn::Resource{};
+    }
     return ret;
 }
 

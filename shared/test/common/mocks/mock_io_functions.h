@@ -23,6 +23,8 @@ extern uint32_t mockVfptrinfCalled;
 extern uint32_t mockFcloseCalled;
 extern uint32_t mockGetenvCalled;
 extern uint32_t mockFseekCalled;
+extern int mockFseekReturn;
+extern uint32_t failAfterNFseekCount;
 extern uint32_t mockFtellCalled;
 extern long int mockFtellReturn;
 extern uint32_t mockRewindCalled;
@@ -77,7 +79,10 @@ inline char *mockGetenv(const char *name) noexcept {
 
 inline int mockFseek(FILE *stream, long int offset, int origin) {
     mockFseekCalled++;
-    return 0;
+    if (failAfterNFseekCount > 0 && failAfterNFseekCount < mockFseekCalled) {
+        return -1;
+    }
+    return mockFseekReturn;
 }
 
 inline long int mockFtell(FILE *stream) {
