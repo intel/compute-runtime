@@ -251,8 +251,6 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
                                                    ze_physical_mem_desc_t *desc,
                                                    ze_physical_mem_handle_t *phPhysicalMemory);
     MOCKABLE_VIRTUAL ze_result_t destroyPhysicalMem(ze_physical_mem_handle_t hPhysicalMemory);
-    MOCKABLE_VIRTUAL ze_result_t getPhysicalMemProperties(ze_physical_mem_handle_t hPhysicalMemory,
-                                                          ze_physical_mem_properties_t *pMemProperties);
     MOCKABLE_VIRTUAL ze_result_t mapVirtualMem(const void *ptr,
                                                size_t size,
                                                ze_physical_mem_handle_t hPhysicalMemory,

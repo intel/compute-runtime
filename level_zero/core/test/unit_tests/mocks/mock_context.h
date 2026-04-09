@@ -57,7 +57,6 @@ struct ContextStubMock : public ::L0::Context {
     ADDMETHOD_NOBASE(queryVirtualMemPageSizeWithStartAddress, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *pStart, size_t size, size_t *pagesize));
     ADDMETHOD_NOBASE(queryVirtualMemPageSize, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, size_t size, size_t *pagesize));
     ADDMETHOD_NOBASE(createPhysicalMem, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, ze_physical_mem_desc_t *desc, ze_physical_mem_handle_t *phPhysicalMemory));
-    ADDMETHOD_NOBASE(getPhysicalMemProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_physical_mem_handle_t hPhysicalMemory, ze_physical_mem_properties_t *pMemProperties));
     ADDMETHOD_NOBASE(destroyPhysicalMem, ze_result_t, ZE_RESULT_SUCCESS, (ze_physical_mem_handle_t hPhysicalMemory));
     ADDMETHOD_NOBASE(mapVirtualMem, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, size_t size, ze_physical_mem_handle_t hPhysicalMemory, size_t offset, ze_memory_access_attribute_t access));
     ADDMETHOD_NOBASE(unMapVirtualMem, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, size_t size));
@@ -124,7 +123,6 @@ struct Mock<Context> : public Context {
     ADDMETHOD(queryVirtualMemPageSizeWithStartAddress, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *pStart, size_t size, size_t *pagesize), (hDevice, pStart, size, pagesize));
     ADDMETHOD(queryVirtualMemPageSize, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, size_t size, size_t *pagesize), (hDevice, size, pagesize));
     ADDMETHOD(createPhysicalMem, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, ze_physical_mem_desc_t *desc, ze_physical_mem_handle_t *phPhysicalMemory), (hDevice, desc, phPhysicalMemory));
-    ADDMETHOD(getPhysicalMemProperties, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_physical_mem_handle_t hPhysicalMemory, ze_physical_mem_properties_t *pMemProperties), (hPhysicalMemory, pMemProperties));
     ADDMETHOD(destroyPhysicalMem, ze_result_t, false, ZE_RESULT_SUCCESS, (ze_physical_mem_handle_t hPhysicalMemory), (hPhysicalMemory));
     ADDMETHOD(mapVirtualMem, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, size_t size, ze_physical_mem_handle_t hPhysicalMemory, size_t offset, ze_memory_access_attribute_t access), (ptr, size, hPhysicalMemory, offset, access));
     ADDMETHOD(unMapVirtualMem, ze_result_t, false, ZE_RESULT_SUCCESS, (const void *ptr, size_t size), (ptr, size));
