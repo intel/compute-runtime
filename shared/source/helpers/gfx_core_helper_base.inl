@@ -16,6 +16,7 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/local_id_gen.h"
@@ -307,16 +308,35 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
         pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
     }
 
-    if (debugManager.flags.FlushAllCaches.get()) {
-        pipeControl.setDcFlushEnable(true);
-        pipeControl.setRenderTargetCacheFlushEnable(true);
-        pipeControl.setInstructionCacheInvalidateEnable(true);
-        pipeControl.setTextureCacheInvalidationEnable(true);
-        pipeControl.setPipeControlFlushEnable(true);
-        pipeControl.setVfCacheInvalidationEnable(true);
-        pipeControl.setConstantCacheInvalidationEnable(true);
-        pipeControl.setStateCacheInvalidationEnable(true);
-        pipeControl.setTlbInvalidate(true);
+    auto flushCachesMask = debugManager.flags.FlushAllCaches.get();
+    if (flushCachesMask) {
+        if (flushCachesMask & FlushCachesBitmask::dcFlush) {
+            pipeControl.setDcFlushEnable(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::renderTargetCache) {
+            pipeControl.setRenderTargetCacheFlushEnable(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::instructionCache) {
+            pipeControl.setInstructionCacheInvalidateEnable(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::textureCache) {
+            pipeControl.setTextureCacheInvalidationEnable(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::pipeControl) {
+            pipeControl.setPipeControlFlushEnable(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::vfCache) {
+            pipeControl.setVfCacheInvalidationEnable(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::constantCache) {
+            pipeControl.setConstantCacheInvalidationEnable(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::stateCache) {
+            pipeControl.setStateCacheInvalidationEnable(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::tlb) {
+            pipeControl.setTlbInvalidate(true);
+        }
     }
     if (debugManager.flags.DoNotFlushCaches.get()) {
         pipeControl.setDcFlushEnable(false);

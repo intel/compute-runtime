@@ -13,6 +13,7 @@ using Family = NEO::Xe2HpgCoreFamily;
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
+#include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
 #include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_pvc_and_later.inl"
@@ -183,10 +184,17 @@ inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties
     pipeControl.setWorkloadPartitionIdOffsetEnable(args.workloadPartitionOffset);
     pipeControl.setAmfsFlushEnable(args.amfsFlushEnable);
 
-    if (debugManager.flags.FlushAllCaches.get()) {
-        pipeControl.setDataportFlush(true);
-        pipeControl.setUnTypedDataPortCacheFlush(true);
-        pipeControl.setCompressionControlSurfaceCcsFlush(true);
+    auto flushCachesMask = debugManager.flags.FlushAllCaches.get();
+    if (flushCachesMask) {
+        if (flushCachesMask & FlushCachesBitmask::hdcPipeline) {
+            pipeControl.setDataportFlush(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::unTypedDataPortCache) {
+            pipeControl.setUnTypedDataPortCacheFlush(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::compressionControlSurfaceCcs) {
+            pipeControl.setCompressionControlSurfaceCcsFlush(true);
+        }
     }
     if (debugManager.flags.DoNotFlushCaches.get()) {
         pipeControl.setDataportFlush(false);

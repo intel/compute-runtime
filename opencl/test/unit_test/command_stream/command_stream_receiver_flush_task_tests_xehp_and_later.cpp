@@ -218,7 +218,7 @@ using isXeHPOrAbove = IsAtLeastProduct<IGFX_XE_HP_SDV>;
 HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenFlushAllCachesVariableIsSetAndAddPipeControlIsCalledThenFieldsAreProperlySet, isXeHPOrAbove) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.FlushAllCaches.set(true);
+    debugManager.flags.FlushAllCaches.set(-1);
 
     char buff[sizeof(PIPE_CONTROL) * 3];
     LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
@@ -363,7 +363,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, WhenForcePipeControlPriorToWalkerIsSetThenAddExtraPipeControls) {
     DebugManagerStateRestore stateResore;
     debugManager.flags.ForcePipeControlPriorToWalker.set(true);
-    debugManager.flags.FlushAllCaches.set(true);
+    debugManager.flags.FlushAllCaches.set(-1);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (commandStreamReceiver.heaplessPrologProgrammed) {

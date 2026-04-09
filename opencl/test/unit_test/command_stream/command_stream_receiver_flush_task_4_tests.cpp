@@ -852,7 +852,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenTagVa
 HWTEST_F(UltCommandStreamReceiverTest, WhenFlushingAllCachesThenPipeControlIsAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.FlushAllCaches.set(true);
+    debugManager.flags.FlushAllCaches.set(-1);
 
     char buff[sizeof(PIPE_CONTROL) * 3];
     LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);

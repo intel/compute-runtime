@@ -391,7 +391,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenHigherT
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, WhenForcePipeControlPriorToWalkerIsSetThenAddExtraPipeControls) {
     DebugManagerStateRestore stateResore;
     debugManager.flags.ForcePipeControlPriorToWalker.set(true);
-    debugManager.flags.FlushAllCaches.set(true);
+    debugManager.flags.FlushAllCaches.set(-1);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;

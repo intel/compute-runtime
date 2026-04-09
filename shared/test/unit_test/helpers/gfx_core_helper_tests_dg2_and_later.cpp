@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -139,7 +139,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenRequestedCacheFlushesWhenProgr
 HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugVariableSetWhenProgrammingPipeControlThenFlushHdcAndUnTypedDataPortCache, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore restore;
-    debugManager.flags.FlushAllCaches.set(true);
+    debugManager.flags.FlushAllCaches.set(-1);
 
     uint32_t buffer[sizeof(PIPE_CONTROL) * 2] = {};
     LinearStream stream(buffer, sizeof(buffer));

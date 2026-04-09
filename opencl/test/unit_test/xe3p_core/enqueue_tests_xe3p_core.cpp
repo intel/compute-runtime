@@ -343,7 +343,7 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenForceL3FlushInPostSynchenProgra
     {
         NEO::debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.set(false);
         NEO::debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.set(false);
-        NEO::debugManager.flags.FlushAllCaches.set(true);
+        NEO::debugManager.flags.FlushAllCaches.set(-1);
 
         commandsOffset = commandStream.getUsed();
 

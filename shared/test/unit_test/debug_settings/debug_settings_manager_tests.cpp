@@ -5,7 +5,9 @@
  *
  */
 
+#include "shared/source/debug_settings/definitions/translate_debug_settings.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -529,6 +531,27 @@ TEST(DebugSettingsManager, GivenTbxOrTbxWithAubCsrTypeAndAllElseDefaultWhenCalli
 
     NEO::debugManager.flags.SetCommandStreamReceiver.set(4);
     EXPECT_TRUE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+}
+
+TEST(DebugSettingsManager, givenFlushAllCachesWhenTranslateDebugSettingsThenOverrideEnv) {
+    DebugManagerStateRestore restorer;
+    {
+        NEO::debugManager.flags.FlushAllCaches.set(1);
+        translateDebugSettings(NEO::debugManager.flags);
+        EXPECT_EQ(NEO::debugManager.flags.FlushAllCaches.get(), FlushCachesBitmask::allCaches);
+    }
+
+    {
+        NEO::debugManager.flags.FlushAllCaches.set(0);
+        translateDebugSettings(NEO::debugManager.flags);
+        EXPECT_EQ(NEO::debugManager.flags.FlushAllCaches.get(), 0u);
+    }
+
+    {
+        NEO::debugManager.flags.FlushAllCaches.set(FlushCachesBitmask::constantCache);
+        translateDebugSettings(NEO::debugManager.flags);
+        EXPECT_EQ(NEO::debugManager.flags.FlushAllCaches.get(), FlushCachesBitmask::constantCache);
+    }
 }
 
 TEST(DebugSettingsManager, GivenTbxFaultsDisabledWhenCallingIsTbxMngrEnabledThenReturnFalse) {

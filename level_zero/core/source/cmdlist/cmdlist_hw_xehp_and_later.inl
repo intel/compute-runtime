@@ -8,6 +8,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
+#include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/program/kernel_info.h"
@@ -354,9 +355,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             isFlushL3ForHostUsmRequired = false;
         }
 
-        if (NEO::debugManager.flags.FlushAllCaches.get()) {
-            isFlushL3ForExternalAllocationRequired = true;
-            isFlushL3ForHostUsmRequired = true;
+        auto flushCachesMask = NEO::debugManager.flags.FlushAllCaches.get();
+        if (flushCachesMask) {
+            if (flushCachesMask & NEO::FlushCachesBitmask::l2Flush) {
+                isFlushL3ForExternalAllocationRequired = true;
+            }
+            if (flushCachesMask & NEO::FlushCachesBitmask::l2TransientFlush) {
+                isFlushL3ForHostUsmRequired = true;
+            }
         }
 
         if (NEO::debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.get()) {

@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipe_control_args.h"
@@ -324,10 +325,17 @@ inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties
     pipeControl.setDisableGOSyncWithWalkerPostSync(!args.isWalkerWithProfilingEnqueued);
     setPipeControlRequiredFields(pipeControl, args);
 
-    if (debugManager.flags.FlushAllCaches.get()) {
-        pipeControl.setDataportFlush(true);
-        pipeControl.setUnTypedDataPortCacheFlush(true);
-        pipeControl.setCompressionControlSurfaceCcsFlush(true);
+    auto flushCachesMask = debugManager.flags.FlushAllCaches.get();
+    if (flushCachesMask) {
+        if (flushCachesMask & FlushCachesBitmask::hdcPipeline) {
+            pipeControl.setDataportFlush(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::unTypedDataPortCache) {
+            pipeControl.setUnTypedDataPortCacheFlush(true);
+        }
+        if (flushCachesMask & FlushCachesBitmask::compressionControlSurfaceCcs) {
+            pipeControl.setCompressionControlSurfaceCcsFlush(true);
+        }
     }
     if (debugManager.flags.DoNotFlushCaches.get()) {
         pipeControl.setDataportFlush(false);

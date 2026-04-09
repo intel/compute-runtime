@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/flush_caches_bitmask.h"
+
 template <>
 template <typename WalkerType>
 void NEO::GpgpuWalkerHelper<NEO::Family>::setupTimestampPacketFlushL3(WalkerType &walkerCmd, NEO::CommandQueue &commandQueue, const FlushL3Args &args) {
@@ -22,10 +24,16 @@ void NEO::GpgpuWalkerHelper<NEO::Family>::setupTimestampPacketFlushL3(WalkerType
             l2TransientFlush = false;
         }
 
-        if (debugManager.flags.FlushAllCaches.get()) {
-            flushInPostSync = true;
-            l2Flush = true;
-            l2TransientFlush = true;
+        auto flushCachesMask = debugManager.flags.FlushAllCaches.get();
+        if (flushCachesMask) {
+            if (flushCachesMask & NEO::FlushCachesBitmask::l2Flush) {
+                flushInPostSync = true;
+                l2Flush = true;
+            }
+            if (flushCachesMask & NEO::FlushCachesBitmask::l2TransientFlush) {
+                flushInPostSync = true;
+                l2TransientFlush = true;
+            }
         }
 
         if (debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.get()) {
