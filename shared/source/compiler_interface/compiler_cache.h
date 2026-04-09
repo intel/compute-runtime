@@ -50,13 +50,21 @@ class CompilerCache : NEO::NonCopyableAndNonMovableClass {
                                         ArrayRef<const char> options, ArrayRef<const char> internalOptions,
                                         ArrayRef<const char> specIds, ArrayRef<const char> specValues,
                                         ArrayRef<const char> igcRevision, size_t igcLibSize, time_t igcLibMTime);
+    bool showStats(bool verbose, std::string &output);
 
     MOCKABLE_VIRTUAL bool cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize);
     MOCKABLE_VIRTUAL std::unique_ptr<char[]> loadCachedBinary(const std::string &kernelFileHash, size_t &cachedBinarySize);
 
     constexpr static uint64_t cacheVersion = 1;
 
+    enum class ReadStatsResult {
+        success = 0,
+        notFound = 1,
+        error = -1
+    };
+
   protected:
+    MOCKABLE_VIRTUAL ReadStatsResult readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats);
     MOCKABLE_VIRTUAL bool evictCache(uint64_t &bytesEvicted);
     MOCKABLE_VIRTUAL bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash);
     MOCKABLE_VIRTUAL bool createUniqueTempFileAndWriteData(char *tmpFilePathTemplate, const char *pBinary, size_t binarySize);

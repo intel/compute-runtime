@@ -201,4 +201,68 @@ bool CompilerCache::updateAllStats(const std::string &fileName, bool hit) {
 
     return true;
 }
+
+bool CompilerCache::showStats(bool verbose, std::string &output) {
+    std::stringstream ss;
+    ss << "Compiler cache stats:\n\n";
+
+    auto appendStats = [](std::stringstream &ss, const std::string &statsPath, const CacheStats &cacheStats) {
+        auto lastSep = statsPath.rfind(PATH_SEPARATOR);
+        ss << "Cache directory: " << (lastSep != std::string::npos ? statsPath.substr(0, lastSep + 1) : statsPath) << "\n";
+        ss << "Version    Hits    Misses    Hit Rate\n";
+        ss << std::left << std::setw(9) << cacheStats.version << " "
+           << std::setw(7) << cacheStats.hits << " "
+           << std::setw(9) << cacheStats.misses << " "
+           << std::fixed << std::setprecision(2)
+           << (cacheStats.hits + cacheStats.misses > 0
+                   ? static_cast<double>(cacheStats.hits) / (cacheStats.hits + cacheStats.misses) * 100.0
+                   : 0.0)
+           << "%\n\n";
+    };
+
+    if (!verbose) {
+        std::string statsPath = joinPath(config.cacheDir, "stats");
+
+        CacheStats cacheStats{};
+        auto result = readStatsFromFile(statsPath, cacheStats);
+        if (result != ReadStatsResult::success) {
+            if (result == ReadStatsResult::notFound) {
+                ss << "No stats found in cache directory.\n";
+                output = ss.str();
+                return true;
+            }
+            return false;
+        }
+
+        appendStats(ss, statsPath, cacheStats);
+        output = ss.str();
+        return true;
+    }
+
+    std::vector<ElementsStruct> statsFiles;
+    if (!getFiles(config.cacheDir, [](const std::string_view &path) {
+            auto lastSep = path.rfind(PATH_SEPARATOR);
+            auto basename = (lastSep != std::string_view::npos) ? path.substr(lastSep + 1) : path;
+            return basename == "stats"; }, statsFiles)) {
+        return false;
+    }
+
+    if (statsFiles.empty()) {
+        ss << "No stats found in cache directories.\n";
+        output = ss.str();
+        return true;
+    }
+
+    for (const auto &statsFile : statsFiles) {
+        CacheStats cacheStats{};
+        if (readStatsFromFile(statsFile.path, cacheStats) != ReadStatsResult::success) {
+            return false;
+        }
+
+        appendStats(ss, statsFile.path, cacheStats);
+    }
+
+    output = ss.str();
+    return true;
+}
 } // namespace NEO
