@@ -225,6 +225,75 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalDeviceMemoryThenSu
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenCreatePhysicalGraphicsMemoryFromSharedHandleThenSuccessReturned) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(MemoryConstants::pageSize));
+    this->mock->outputHandle = 2u;
+
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::buffer, false, mockDeviceBitfield);
+    properties.flags.isHostInaccessibleAllocation = true;
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+
+    auto allocation = memoryManager->createPhysicalGraphicsMemoryFromSharedHandle(osHandleData, properties);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::systemCpuInaccessible, allocation->getMemoryPool());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenCreatePhysicalGraphicsMemoryFromSharedHandleForHostAllocationThenMmapOffsetIsRetrieved) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(MemoryConstants::pageSize));
+    this->mock->outputHandle = 2u;
+
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::buffer, false, mockDeviceBitfield);
+    properties.flags.isHostInaccessibleAllocation = false;
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+
+    auto allocation = memoryManager->createPhysicalGraphicsMemoryFromSharedHandle(osHandleData, properties);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenCreatePhysicalGraphicsMemoryFromSharedHandleWhenPrimeFdToHandleFailsThenNullptrReturned) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    this->ioctlResExt = {mock->ioctlCnt.total, -1};
+    mock->ioctlResExt = &this->ioctlResExt;
+
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::buffer, false, mockDeviceBitfield);
+    properties.flags.isHostInaccessibleAllocation = true;
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+
+    auto allocation = memoryManager->createPhysicalGraphicsMemoryFromSharedHandle(osHandleData, properties);
+    EXPECT_EQ(nullptr, allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenCreatePhysicalGraphicsMemoryFromSharedHandleForHostAllocationWhenMmapOffsetFailsThenNullptrReturned) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    mock->failOnMmapOffset = true;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(MemoryConstants::pageSize));
+    this->mock->outputHandle = 2u;
+
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::buffer, false, mockDeviceBitfield);
+    properties.flags.isHostInaccessibleAllocation = false;
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+
+    auto allocation = memoryManager->createPhysicalGraphicsMemoryFromSharedHandle(osHandleData, properties);
+    EXPECT_EQ(nullptr, allocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalHostMemoryWithoutMemoryInfoThenNullptrIsReturned) {
     allocationData.size = MemoryConstants::pageSize;
     allocationData.flags.shareable = true;

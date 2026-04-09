@@ -1602,6 +1602,31 @@ ze_result_t Context::createPhysicalMem(ze_device_handle_t hDevice,
 
     auto device = Device::fromHandle(hDevice);
 
+    bool importMemory = false;
+    int importFd = -1;
+    if (desc->pNext) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC) {
+            const ze_external_memory_export_desc_t *exportDesc =
+                reinterpret_cast<const ze_external_memory_export_desc_t *>(extendedDesc);
+            if (!(exportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF) &&
+                !(exportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD)) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD) {
+            const ze_external_memory_import_fd_t *importDesc =
+                reinterpret_cast<const ze_external_memory_import_fd_t *>(extendedDesc);
+            if (!(importDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF) &&
+                !(importDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD)) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+            importMemory = true;
+            importFd = importDesc->fd;
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+        }
+    }
+
     bool isPhysicalDeviceMem = true;
     auto allocType = NEO::AllocationType::unknown;
     NEO::Device *neoDevice = nullptr;
@@ -1626,19 +1651,21 @@ ze_result_t Context::createPhysicalMem(ze_device_handle_t hDevice,
         deviceBitfield = neoDevice->getDeviceBitfield();
     }
 
-    NEO::AllocationProperties physicalMemoryProperties{rootDeviceIndex,
-                                                       true,
-                                                       desc->size,
-                                                       allocType,
-                                                       false,
-                                                       false,
-                                                       deviceBitfield};
-    physicalMemoryProperties.flags.forceSystemMemory = !isPhysicalDeviceMem;
-    physicalMemoryProperties.flags.isUSMHostAllocation = !isPhysicalDeviceMem;
-    physicalMemoryProperties.flags.isHostInaccessibleAllocation = isPhysicalDeviceMem;
-    physicalMemoryProperties.flags.shareable = 1;
+    NEO::AllocationProperties properties{rootDeviceIndex, true, desc->size, allocType, false, false, deviceBitfield};
+    properties.flags.forceSystemMemory = !isPhysicalDeviceMem;
+    properties.flags.isUSMHostAllocation = !isPhysicalDeviceMem;
+    properties.flags.isHostInaccessibleAllocation = isPhysicalDeviceMem;
 
-    NEO::GraphicsAllocation *allocation = this->driverHandle->getMemoryManager()->allocatePhysicalGraphicsMemory(physicalMemoryProperties);
+    NEO::GraphicsAllocation *allocation = nullptr;
+
+    if (importMemory) {
+        NEO::MemoryManager::OsHandleData osHandleData{static_cast<uint64_t>(importFd)};
+        allocation = this->driverHandle->getMemoryManager()->createPhysicalGraphicsMemoryFromSharedHandle(osHandleData, properties);
+    } else {
+        properties.flags.shareable = true;
+        allocation = this->driverHandle->getMemoryManager()->allocatePhysicalGraphicsMemory(properties);
+    }
+
     if (!allocation) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }

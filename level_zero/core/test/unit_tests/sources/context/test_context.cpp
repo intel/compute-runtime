@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/cpu_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
@@ -1876,6 +1877,15 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
         return mockAllocation.get();
     }
 
+    NEO::GraphicsAllocation *createPhysicalGraphicsMemoryFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties) override {
+
+        if (failAllocatePhysicalGraphicsMemory) {
+            return nullptr;
+        }
+        mockAllocation.reset(new NEO::MockGraphicsAllocation(const_cast<void *>(buffer), size));
+        return mockAllocation.get();
+    }
+
     NEO::GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const NEO::AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override { return nullptr; };
     NEO::GraphicsAllocation *allocateMemoryByKMD(const NEO::AllocationData &allocationData) override { return nullptr; };
     void *lockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override { return nullptr; };
@@ -2632,6 +2642,246 @@ TEST_F(ContextTest, whenCallingPhysicalMemoryAllocateWhenOutOfMemoryThenOutofMem
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
     driverHandle->setMemoryManager(memoryManager);
     delete failingReserveMemoryManager;
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenDmaBufImportFdWhenCallingCreatePhysicalMemThenSuccessReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto reserveMemoryManager = std::make_unique<ReserveMemoryManagerMock>(*neoDevice->executionEnvironment);
+    reserveMemoryManager->failAllocatePhysicalGraphicsMemory = false;
+    reserveMemoryManager->buffer = reinterpret_cast<void *>(0x1234);
+    reserveMemoryManager->size = pagesize;
+    VariableBackup<NEO::MemoryManager *> memoryManagerBackup(&driverHandle->memoryManager, reserveMemoryManager.get());
+
+    ze_external_memory_import_fd_t importDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD};
+    importDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    importDesc.fd = 42;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, &importDesc, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenOpaqueFdImportFdWhenCallingCreatePhysicalMemThenSuccessReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto reserveMemoryManager = std::make_unique<ReserveMemoryManagerMock>(*neoDevice->executionEnvironment);
+    reserveMemoryManager->failAllocatePhysicalGraphicsMemory = false;
+    reserveMemoryManager->buffer = reinterpret_cast<void *>(0x1234);
+    reserveMemoryManager->size = pagesize;
+    VariableBackup<NEO::MemoryManager *> memoryManagerBackup(&driverHandle->memoryManager, reserveMemoryManager.get());
+
+    ze_external_memory_import_fd_t importDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD};
+    importDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
+    importDesc.fd = 42;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, &importDesc, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenUnsupportedImportFdFlagsWhenCallingCreatePhysicalMemThenUnsupportedEnumerationReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_external_memory_import_fd_t importDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD};
+    importDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importDesc.fd = 42;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, &importDesc, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenImportFdWhenAllocationFailsThenOutOfDeviceMemoryReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto reserveMemoryManager = std::make_unique<ReserveMemoryManagerMock>(*neoDevice->executionEnvironment);
+    reserveMemoryManager->failAllocatePhysicalGraphicsMemory = true;
+    VariableBackup<NEO::MemoryManager *> memoryManagerBackup(&driverHandle->memoryManager, reserveMemoryManager.get());
+
+    ze_external_memory_import_fd_t importDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD};
+    importDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    importDesc.fd = 42;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, &importDesc, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenUnsupportedStypeWhenCallingCreatePhysicalMemThenUnsupportedEnumerationReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_base_desc_t unsupportedDesc = {};
+    unsupportedDesc.stype = ZE_STRUCTURE_TYPE_FORCE_UINT32;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, &unsupportedDesc, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenUnsupportedExportFlagsWhenCallingCreatePhysicalMemThenUnsupportedEnumerationReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_external_memory_export_desc_t exportDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC};
+    exportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, &exportDesc, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenDmaBufExportFlagWhenCallingCreatePhysicalMemThenSuccessReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_external_memory_export_desc_t exportDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC};
+    exportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, &exportDesc, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenOpaqueFdExportFlagWhenCallingCreatePhysicalMemThenSuccessReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_external_memory_export_desc_t exportDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC};
+    exportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, &exportDesc, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

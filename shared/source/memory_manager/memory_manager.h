@@ -152,6 +152,7 @@ class MemoryManager {
 
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr);
     MOCKABLE_VIRTUAL GraphicsAllocation *allocatePhysicalGraphicsMemory(const AllocationProperties &properties);
+    virtual GraphicsAllocation *createPhysicalGraphicsMemoryFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties) { return nullptr; }
 
     virtual bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool) { return true; }
     virtual bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) { return false; }

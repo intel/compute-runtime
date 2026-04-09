@@ -527,6 +527,18 @@ TEST(BaseMemoryManagerTest, givenCalltoAllocatePhysicalGraphicsMemoryWithFailedL
     EXPECT_EQ(nullptr, allocationBuffer);
 }
 
+TEST(BaseMemoryManagerTest, givenBaseMemoryManagerWhenCallingCreatePhysicalGraphicsMemoryFromSharedHandleThenNullptrReturned) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.initGmm();
+    MemoryManagerCreate<FailingMemoryManager> memoryManager(false, true, executionEnvironment);
+
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
+    MemoryManager::OsHandleData osHandleData{static_cast<uint64_t>(42)};
+
+    auto allocation = memoryManager.createPhysicalGraphicsMemoryFromSharedHandle(osHandleData, properties);
+    EXPECT_EQ(nullptr, allocation);
+}
+
 TEST(BaseMemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocateSystemMemoryFailsThenReturnNull) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
 

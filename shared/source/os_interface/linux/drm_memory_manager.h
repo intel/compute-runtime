@@ -115,6 +115,7 @@ class DrmMemoryManager : public MemoryManager {
 
     DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, void *mappedPtr, bool reuseSharedAllocation, bool consumeFd);
     DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, void *mappedPtr, bool reuseSharedAllocation);
+    GraphicsAllocation *createPhysicalGraphicsMemoryFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties) override;
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
     void releaseDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) override;

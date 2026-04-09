@@ -967,6 +967,56 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const Allocat
     return allocation;
 }
 
+GraphicsAllocation *DrmMemoryManager::createPhysicalGraphicsMemoryFromSharedHandle(const OsHandleData &osHandleData,
+                                                                                   const AllocationProperties &properties) {
+    PrimeHandle openFd{};
+    openFd.fileDescriptor = osHandleData.handle;
+
+    auto &drm = this->getDrm(properties.rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
+
+    auto ret = ioctlHelper->ioctl(DrmIoctl::primeFdToHandle, &openFd);
+    if (ret != 0) {
+        [[maybe_unused]] int err = errno;
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        return nullptr;
+    }
+
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHelper<ProductHelper>();
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper();
+    GmmRequirements gmmRequirements{};
+
+    const bool isDeviceAllocation = properties.flags.isHostInaccessibleAllocation;
+    const auto memoryPool = isDeviceAllocation ? MemoryPool::systemCpuInaccessible : MemoryPool::system4KBPages;
+
+    size_t size = SysCalls::lseek(osHandleData.handle, 0, SEEK_END);
+    UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
+
+    auto gmm = std::make_unique<Gmm>(gmmHelper, nullptr,
+                                     size, 0u, CacheSettingsHelper::getGmmUsageType(properties.allocationType, properties.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo()), createStorageInfoFromProperties(properties), gmmRequirements);
+
+    auto patIndex = drm.getPatIndex(gmm.get(), properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
+
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(properties.rootDeviceIndex, &drm, patIndex, static_cast<int>(openFd.handle), size, maxOsContextCount));
+
+    if (!isDeviceAllocation) {
+        uint64_t offset = 0;
+        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
+        if (!ioctlHelper->retrieveMmapOffsetForBufferObject(*bo, mmapOffsetWb, offset)) {
+            return nullptr;
+        }
+        bo->setMmapOffset(offset);
+    }
+
+    auto allocation = new DrmAllocation(properties.rootDeviceIndex, 1u, properties.allocationType, bo.get(),
+                                        nullptr, size, osHandleData.handle, memoryPool, 0u);
+
+    allocation->setDefaultGmm(gmm.release());
+    bo.release();
+
+    return allocation;
+}
+
 GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
     const auto memoryPool = MemoryPool::systemCpuInaccessible;
 
