@@ -165,11 +165,9 @@ HANDLE(*sysCallsOpenProcess)
 DWORD(*sysCallsWaitForSingleObject)
 (HANDLE hHandle, DWORD dwMilliseconds) = nullptr;
 
-DWORD(*sysCallsRegisterWaitForSingleObject)
-(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK callback, PVOID context, ULONG dwMilliseconds, ULONG dwFlags) = nullptr;
+BOOL (*sysCallsRegisterWaitForSingleObject)(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK callback, PVOID context, ULONG dwMilliseconds, ULONG dwFlags) = nullptr;
 
-DWORD(*sysCallsUnregisterWait)
-(HANDLE waitHandle) = nullptr;
+BOOL (*sysCallsUnregisterWait)(HANDLE waitHandle) = nullptr;
 
 bool isShutdownInProgress() {
     return isShutdownInProgressRetVal;

@@ -34,9 +34,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleAllocationsResidencyForFlushTaskH
         makeResident(*getGlobalFenceAllocation());
     }
 
-    if (getPreemptionAllocation()) {
-        makeResident(*getPreemptionAllocation());
-    }
+    makeResidentPreemptionAllocation();
 
     if (hasDsh) {
         auto dshAllocation = dsh->getGraphicsAllocation();
@@ -296,9 +294,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushStatelessAllocation
         makeResident(*device.getRTMemoryBackedBuffer());
     }
 
-    if (getPreemptionAllocation()) {
-        makeResident(*getPreemptionAllocation());
-    }
+    makeResidentPreemptionAllocation();
 
     if (csrEstimatedSize) {
         makeResident(*csrStream.getGraphicsAllocation());
@@ -473,9 +469,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleAllocationsResidencyForHeaplessPr
         makeResident(*getGlobalFenceAllocation());
     }
 
-    if (this->getPreemptionAllocation()) {
-        makeResident(*this->getPreemptionAllocation());
-    }
+    makeResidentPreemptionAllocation();
 
     if (device.isStateSipRequired()) {
         GraphicsAllocation *sipAllocation = SipKernel::getSipKernel(device, this->osContext).getSipAllocation();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ class MockDriverModel : public NEO::DriverModel {
     MockDriverModel(DriverModelType driverModelType) : DriverModel(driverModelType) {}
     ADDMETHOD_NOBASE_VOIDRETURN(cleanup, ());
     ADDMETHOD_NOBASE_VOIDRETURN(setGmmInputArgs, (void *));
+    ADDMETHOD_NOBASE(isLatePreemptionStartSupported, bool, false, (const HardwareInfo &hwInfo));
 
     uint32_t getDeviceHandle() const override { return {}; }
 

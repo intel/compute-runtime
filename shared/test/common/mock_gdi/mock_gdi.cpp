@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -633,10 +633,12 @@ NTSTATUS __stdcall mockD3DKMTSubmitCommandToHwQueue(IN CONST D3DKMT_SUBMITCOMMAN
     return STATUS_SUCCESS;
 }
 
-static D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySynchronizationObjectData{};
+D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySynchronizationObjectData{};
+uint32_t destroySynchronizationObjectCallCount = 0;
 
 NTSTATUS __stdcall mockD3DKMTDestroySynchronizationObject(IN CONST D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *destroySynchronizationObject) {
     destroySynchronizationObjectData = *destroySynchronizationObject;
+    destroySynchronizationObjectCallCount++;
     return STATUS_SUCCESS;
 }
 

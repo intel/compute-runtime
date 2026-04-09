@@ -10,13 +10,13 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/debug_env_reader.h"
-#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "elements_struct.h"
@@ -179,8 +179,6 @@ extern size_t getLastErrorCalled;
 extern const size_t getLastErrorResultCount;
 extern DWORD getLastErrorResults[];
 extern BOOL getLastErrorConstantResult;
-
-extern size_t closeHandleCalled;
 
 extern size_t getTempFileNameACalled;
 extern UINT getTempFileNameAResult;

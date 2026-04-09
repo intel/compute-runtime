@@ -61,6 +61,8 @@ namespace NEO {
 
 namespace SysCalls {
 
+extern size_t closeHandleCalled;
+
 extern HANDLE (*sysCallsCreateFile)(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 extern BOOL (*sysCallsDeviceIoControl)(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 extern CONFIGRET (*sysCallsCmGetDeviceInterfaceListSize)(PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags);
@@ -86,5 +88,7 @@ extern DWORD (*sysCallsGetFileVersionInfoSizeW)(LPCWSTR lptstrFilename, LPDWORD 
 extern BOOL (*sysCallsGetFileVersionInfoW)(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
 extern BOOL (*sysCallsVerQueryValueW)(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);
 extern DWORD (*sysCallsGetLastError)();
+extern BOOL (*sysCallsRegisterWaitForSingleObject)(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK callback, PVOID context, ULONG dwMilliseconds, ULONG dwFlags);
+extern BOOL (*sysCallsUnregisterWait)(HANDLE waitHandle);
 } // namespace SysCalls
 } // namespace NEO

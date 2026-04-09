@@ -19,7 +19,9 @@
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
@@ -807,6 +809,20 @@ TEST_F(WddmLinuxTest, whenGettingReadOnlyFlagThenAlwaysReturnFalse) {
 TEST_F(WddmLinuxTest, whenGettingReadOnlyFlagFallbackSupportThenFalseIsReturned) {
     EXPECT_FALSE(wddm->isReadOnlyFlagFallbackSupported());
 }
+
+TEST_F(WddmLinuxTest, GivenWddmDriverModelWhenLatePreemptionStartSupportIsCheckedThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.OverrideLatePreemptionStart.set(-1);
+    EXPECT_FALSE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+
+    debugManager.flags.OverrideLatePreemptionStart.set(0);
+    EXPECT_FALSE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+
+    debugManager.flags.OverrideLatePreemptionStart.set(1);
+    EXPECT_TRUE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+}
+
 class MockOsTimeLinux : public NEO::OSTimeLinux {
   public:
     MockOsTimeLinux(NEO::OSInterface &osInterface, std::unique_ptr<NEO::DeviceTime> deviceTime) : NEO::OSTimeLinux(osInterface, std::move(deviceTime)) {}

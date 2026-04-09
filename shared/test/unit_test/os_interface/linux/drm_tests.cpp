@@ -1522,6 +1522,28 @@ TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrec
     EXPECT_FALSE(drmDisabled.completionFenceSupport());
 }
 
+TEST(DrmTest, GivenDrmDriverModelWhenLatePreemptionStartSupportIsCheckedThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    DrmMock drmDefault{*executionEnvironment->rootDeviceEnvironments[0]};
+    VariableBackup<FeatureTableBase::Flags> ftrFlags{&defaultHwInfo->featureTable.flags};
+
+    debugManager.flags.OverrideLatePreemptionStart.set(-1);
+    defaultHwInfo->featureTable.flags.ftrSelectiveWmtp = false;
+    EXPECT_FALSE(drmDefault.isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+
+    defaultHwInfo->featureTable.flags.ftrSelectiveWmtp = true;
+    EXPECT_TRUE(drmDefault.isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+
+    debugManager.flags.OverrideLatePreemptionStart.set(0);
+    EXPECT_FALSE(drmDefault.isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+
+    debugManager.flags.OverrideLatePreemptionStart.set(1);
+    defaultHwInfo->featureTable.flags.ftrSelectiveWmtp = false;
+    EXPECT_TRUE(drmDefault.isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+}
+
 TEST(DrmTest, GivenMinusEbusyIoctlErrorWhenCallingExecbufferThenCallIoctlAgain) {
     MockExecutionEnvironment executionEnvironment{};
 

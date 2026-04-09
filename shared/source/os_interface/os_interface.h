@@ -95,6 +95,8 @@ class DriverModel : public NonCopyableClass {
         return skipResourceCleanupVar;
     }
 
+    virtual bool isLatePreemptionStartSupported(const HardwareInfo &hwInfo) = 0;
+
     virtual void cleanup() {}
 
     virtual bool isGpuHangDetected(OsContext &osContext) = 0;

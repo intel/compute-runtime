@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -588,4 +588,15 @@ HWTEST_F(MidThreadPreemptionTests, givenKernelWithRayTracingWhenGettingPreemptio
     kernelDescriptor.kernelAttributes.flags.hasRTCalls = true;
     auto flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
     EXPECT_FALSE(flags.flags.disabledMidThreadPreemptionKernel);
+}
+
+HWTEST2_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenProgrammingLatePreemptionStartThenExpectZeroCommandsDispatched, IsAtMostXeCore) {
+    StackVec<char, 4096> buff;
+    LinearStream commandStream(buff.begin(), buff.size());
+
+    size_t cmdSize = PreemptionHelper::getRequiredCmdStreamSizeForLateStart<FamilyType>();
+    EXPECT_EQ(0u, cmdSize);
+
+    PreemptionHelper::programCmdStreamForLateStart<FamilyType>(commandStream);
+    EXPECT_EQ(cmdSize, commandStream.getUsed());
 }

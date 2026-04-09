@@ -140,6 +140,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual SubmissionStatus processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId);
     virtual void processEviction();
     void makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation);
+    void makeResidentPreemptionAllocation();
 
     MOCKABLE_VIRTUAL void ensureCommandBufferAllocation(LinearStream &commandStream, size_t minimumRequiredSize, size_t additionalAllocationSize);
 
@@ -243,6 +244,12 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         }
 
         return globalStatelessHeapAllocation;
+    }
+    bool getSkipPreemptionAllocation() const {
+        if (primaryCsr) {
+            return primaryCsr->getSkipPreemptionAllocation();
+        }
+        return skipPreemptionAllocation;
     }
 
     virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) = 0;
@@ -619,6 +626,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     [[nodiscard]] std::unique_lock<MutexType> obtainHostAllocationLock();
     void makeResidentHostFunctionAllocation();
 
+    virtual void submitLateMidThreadPreemptionStart() {}
+
   protected:
     MOCKABLE_VIRTUAL void startHostFunctionWorker(HostFunctionAllocator *allocator);
 
@@ -739,6 +748,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     std::atomic<bool> hostFunctionWorkerStarted = false;
     bool isPreambleSent = false;
     bool isStateSipSent = false;
+    bool skipPreemptionAllocation = false;
     bool isEnginePrologueSent = false;
     bool areExceptionsSent = false;
     bool isPerDssBackedBufferSent = false;

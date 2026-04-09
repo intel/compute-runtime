@@ -151,6 +151,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
     this->hostFunctionWorkerMode = static_cast<HostFunctionWorkerMode>(debugManager.flags.HostFunctionWorkMode.get());
+    this->skipPreemptionAllocation = getOSInterface() && getOSInterface()->getDriverModel() && getOSInterface()->getDriverModel()->isLatePreemptionStartSupported(hwInfo);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
@@ -257,6 +258,16 @@ SubmissionStatus CommandStreamReceiver::processResidency(ResidencyContainer &all
 
 void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation) {
     makeResident(*gfxAllocation);
+}
+
+void CommandStreamReceiver::makeResidentPreemptionAllocation() {
+    PRINT_STRING(debugManager.flags.PrintLateMidThreadPreemptionStartInfo.get(), stdout, "Late Mid Thread Preemption Start: Try making preemption allocation resident\n");
+
+    auto preemptionAllocation = getPreemptionAllocation();
+    if (preemptionAllocation && !getSkipPreemptionAllocation()) {
+        PRINT_STRING(debugManager.flags.PrintLateMidThreadPreemptionStartInfo.get(), stdout, "Late Mid Thread Preemption Start: Preemption allocation is resident\n");
+        makeResident(*preemptionAllocation);
+    }
 }
 
 WaitStatus CommandStreamReceiver::waitForTaskCount(TaskCountType requiredTaskCount) {

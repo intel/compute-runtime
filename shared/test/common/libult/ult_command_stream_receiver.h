@@ -110,9 +110,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::programVFEState;
     using BaseClass::requiresInstructionCacheFlush;
     using BaseClass::rootDeviceIndex;
+    using BaseClass::skipPreemptionAllocation;
     using BaseClass::sshState;
     using BaseClass::staticWorkPartitioningEnabled;
     using BaseClass::streamProperties;
+    using BaseClass::submitLateMidThreadPreemptionStart;
     using BaseClass::ucResourceRequiresTagUpdate;
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::activePartitions;

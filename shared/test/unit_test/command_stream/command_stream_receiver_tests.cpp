@@ -938,6 +938,35 @@ TEST_F(CommandStreamReceiverTest, WhenMakingResidentThenAllocationIsPushedToMemo
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+HWTEST2_F(CommandStreamReceiverTest, WhenMakingResidentPreemptionAllocationThenAllocationIsPushedToMemoryManagerResidencyListWhenRequired, IsAtLeastXe2HpgCore) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    VariableBackup<bool> skipPreemptionAllocationBackup(&csr.skipPreemptionAllocation);
+    VariableBackup<GraphicsAllocation *> preemptionAllocationBackup(&csr.preemptionAllocation);
+    auto &residencyAllocations = csr.getResidencyAllocations();
+    auto mockPreemptionAllocation = csr.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr.getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    skipPreemptionAllocationBackup = true;
+    preemptionAllocationBackup = nullptr;
+    csr.makeResidentPreemptionAllocation();
+    EXPECT_EQ(0u, residencyAllocations.size());
+
+    preemptionAllocationBackup = mockPreemptionAllocation;
+    csr.makeResidentPreemptionAllocation();
+    EXPECT_EQ(0u, residencyAllocations.size());
+
+    skipPreemptionAllocationBackup = false;
+    preemptionAllocationBackup = nullptr;
+    csr.makeResidentPreemptionAllocation();
+    EXPECT_EQ(0u, residencyAllocations.size());
+
+    preemptionAllocationBackup = mockPreemptionAllocation;
+    csr.makeResidentPreemptionAllocation();
+    ASSERT_EQ(1u, residencyAllocations.size());
+    EXPECT_EQ(mockPreemptionAllocation, residencyAllocations.back());
+
+    memoryManager->freeGraphicsMemory(mockPreemptionAllocation);
+}
+
 TEST_F(CommandStreamReceiverTest, GivenNoParamatersWhenMakingResidentThenResidencyDoesNotOccur) {
     commandStreamReceiver->processResidency(commandStreamReceiver->getResidencyAllocations(), 0u);
     auto &residencyAllocations = commandStreamReceiver->getResidencyAllocations();
@@ -3469,6 +3498,53 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenInitiali
     commandStreamReceiver.latestFlushedTaskCount = 0;
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
     EXPECT_EQ(SubmissionStatus::outOfHostMemory, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenNoOsContextWhenCsrIsCreatedThenPreemptionAllocationIsNotSkipped) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::make_unique<MockDriverModel>());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::move(osInterface);
+    auto &mockDriverModel = *static_cast<MockDriverModel *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
+
+    {
+        mockDriverModel.isLatePreemptionStartSupportedResult = true;
+        MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+        EXPECT_TRUE(csr.getSkipPreemptionAllocation());
+    }
+    {
+        mockDriverModel.isLatePreemptionStartSupportedResult = false;
+        MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+        EXPECT_FALSE(csr.getSkipPreemptionAllocation());
+    }
+    {
+        executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(nullptr);
+        MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+        EXPECT_FALSE(csr.getSkipPreemptionAllocation());
+    }
+    {
+        executionEnvironment.rootDeviceEnvironments[0]->osInterface = nullptr;
+        MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+        EXPECT_FALSE(csr.getSkipPreemptionAllocation());
+    }
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenSubmittingLatePreemptionStartThenExceptionIsThrown) {
+    auto *engineControl = pDevice->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular);
+    if (!engineControl) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*engineControl->commandStreamReceiver);
+    commandStreamReceiver.skipPreemptionAllocation = true;
+    commandStreamReceiver.submitLateMidThreadPreemptionStart();
+    EXPECT_FALSE(commandStreamReceiver.skipPreemptionAllocation);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_ANY_THROW(commandStreamReceiver.submitLateMidThreadPreemptionStart());
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag) {
@@ -6339,6 +6415,7 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrWhenGettingInte
 
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ContextGroupSize.set(5);
+    debugManager.flags.OverrideLatePreemptionStart.set(1);
 
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
@@ -6381,6 +6458,8 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrWhenGettingInte
         EXPECT_EQ(primaryCsr->getGlobalStatelessHeap(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalStatelessHeap());
         EXPECT_EQ(primaryCsr->getPrimaryScratchSpaceController(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPrimaryScratchSpaceController());
         EXPECT_EQ(primaryCsr->getPreemptionMode(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPreemptionMode());
+        EXPECT_EQ(primaryCsr->getWorkPartitionAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_EQ(primaryCsr->getSkipPreemptionAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getSkipPreemptionAllocation());
     }
 }
 
@@ -6392,6 +6471,7 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryRootCsrWhenGetting
 
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ContextGroupSize.set(5);
+    debugManager.flags.OverrideLatePreemptionStart.set(1);
 
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
@@ -6434,7 +6514,9 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryRootCsrWhenGetting
         EXPECT_EQ(primaryCsr->getGlobalStatelessHeapAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalStatelessHeapAllocation());
         EXPECT_EQ(primaryCsr->getGlobalStatelessHeap(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalStatelessHeap());
         EXPECT_EQ(primaryCsr->getPrimaryScratchSpaceController(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPrimaryScratchSpaceController());
+        EXPECT_EQ(primaryCsr->getPreemptionMode(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPreemptionMode());
         EXPECT_EQ(primaryCsr->getWorkPartitionAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_EQ(primaryCsr->getSkipPreemptionAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getSkipPreemptionAllocation());
     }
 }
 

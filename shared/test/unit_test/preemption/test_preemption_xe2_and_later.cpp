@@ -99,6 +99,22 @@ HWTEST2_F(Xe2MidThreadPreemptionTests, givenMidThreadPreemptionWhenProgrammingPr
     EXPECT_EQ(0u, commandStream.getUsed());
 }
 
+HWTEST2_F(Xe2MidThreadPreemptionTests, givenMidThreadPreemptionWhenProgrammingLatePreemptionStartThenExpectLriCommandDispatched, IsAtLeastXe2HpgCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    MemoryAllocation *csrSurface = static_cast<MemoryAllocation *>(csr.getPreemptionAllocation());
+    ASSERT_NE(nullptr, csrSurface);
+
+    size_t cmdSize = PreemptionHelper::getRequiredCmdStreamSizeForLateStart<FamilyType>();
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), cmdSize);
+
+    auto &lri = *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(commandStream.getSpace(0));
+    PreemptionHelper::programCmdStreamForLateStart<FamilyType>(commandStream);
+    EXPECT_EQ(cmdSize, commandStream.getUsed());
+    EXPECT_EQ(lri.getRegisterOffset(), PreemptionConfig<FamilyType>::mmioAddress);
+    EXPECT_EQ(lri.getDataDword(), PreemptionConfig<FamilyType>::mask | PreemptionConfig<FamilyType>::midThreadVal);
+}
+
 HWTEST2_F(Xe2MidThreadPreemptionTests, givenMidThreadPreemptionWhenProgrammingPreemptionPreambleThenExpectCsrCommandDispatched, IsXe2HpgCore) {
     using STATE_CONTEXT_DATA_BASE_ADDRESS = typename FamilyType::STATE_CONTEXT_DATA_BASE_ADDRESS;
 

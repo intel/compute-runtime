@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,11 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
     privateData.IsProtectedProcess = FALSE;
     privateData.IsDwm = FALSE;
     privateData.GpuVAContext = TRUE;
-    privateData.IsMediaUsage = false;
+    privateData.IsMediaUsage = FALSE;
     privateData.UmdContextType = UMD_OCL;
+    if (osContext.checkLatePreemptionStartSupport()) {
+        osContext.prepareLatePreemptionStart(privateData);
+    }
 
     return privateData;
 }

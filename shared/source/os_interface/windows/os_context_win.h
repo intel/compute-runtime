@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 
 namespace NEO {
@@ -44,6 +45,13 @@ class OsContextWin : public OsContext {
     void getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize);
     uint32_t getDeviceNodeMask();
     uint64_t getOfflineDumpContextId(uint32_t deviceIndex) const override;
+    void prepareLatePreemptionStart(CREATECONTEXT_PVTDATA &privateData);
+    void stopLatePreemptionStartWait();
+    bool checkLatePreemptionStartSupport();
+
+    HANDLE latePreemptionStartEventHandle = 0;
+    HANDLE latePreemptionStartWaitObjectHandle = 0;
+    D3DKMT_HANDLE latePreemptionStartSyncObjectHandle = 0;
 
   protected:
     bool initializeContext(bool allocateInterrupt) override;

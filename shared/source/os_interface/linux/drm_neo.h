@@ -264,6 +264,7 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL uint32_t notifyFirstCommandQueueCreated(const void *data, size_t size);
     MOCKABLE_VIRTUAL void notifyLastCommandQueueDestroyed(uint32_t handle);
+    bool isLatePreemptionStartSupported(const HardwareInfo &hwInfo) override;
 
     uint64_t getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled, bool isSystemMemory) const;
     bool isVmBindPatIndexProgrammingSupported() const { return vmBindPatIndexProgrammingSupported; }

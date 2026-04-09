@@ -1248,6 +1248,13 @@ bool Drm::completionFenceSupport() {
     return completionFenceSupported;
 }
 
+bool Drm::isLatePreemptionStartSupported(const HardwareInfo &hwInfo) {
+    if (debugManager.flags.OverrideLatePreemptionStart.get() != -1) {
+        return debugManager.flags.OverrideLatePreemptionStart.get();
+    }
+    return hwInfo.featureTable.flags.ftrSelectiveWmtp;
+}
+
 void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
     if (!this->ioctlHelper) {
         auto drmVersion = Drm::getDrmVersion(getFileDescriptor());

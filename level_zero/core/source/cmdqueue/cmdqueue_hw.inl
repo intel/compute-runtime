@@ -1320,7 +1320,7 @@ void CommandQueueHw<gfxCoreFamily>::updateOneCmdListPreemptionModeAndCtxStatePre
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::makePreemptionAllocationResidentForModeMidThread(bool isDevicePreemptionModeMidThread) {
     if (isDevicePreemptionModeMidThread) {
-        this->csr->makeResident(*this->csr->getPreemptionAllocation());
+        this->csr->makeResidentPreemptionAllocation();
     }
 }
 

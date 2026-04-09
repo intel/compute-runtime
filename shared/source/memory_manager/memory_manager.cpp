@@ -503,6 +503,7 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
     auto defaultEngineType = getChosenEngineType(*hwInfo);
 
     osContext->setDefaultContextIfApplicable(defaultEngineType);
+    osContext->setCommandStreamReceiver(*commandStreamReceiver);
 
     allRegisteredEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
 

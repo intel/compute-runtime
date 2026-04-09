@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,3 +117,5 @@ void getCapturedCreateAllocationFlags(D3DKMT_CREATEALLOCATIONFLAGS &capturedCrea
 void setSupportCreateAllocationWithReadWriteExisitingSysMemory(bool supportValue, bool &previousValue);
 extern bool failCreateDevice;
 extern bool failCreatePagingQueue;
+extern D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySynchronizationObjectData;
+extern uint32_t destroySynchronizationObjectCallCount;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,3 +50,6 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
     }
     return size;
 }
+
+template void PreemptionHelper::programCmdStreamForLateStart<GfxFamily>(LinearStream &cmdStream);
+template size_t PreemptionHelper::getRequiredCmdStreamSizeForLateStart<GfxFamily>();

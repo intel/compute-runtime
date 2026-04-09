@@ -301,6 +301,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return BaseClass::obtainUniqueOwnership();
     }
 
+    void submitLateMidThreadPreemptionStart() override {
+        submitLateMidThreadPreemptionStartCounter++;
+    }
+
     static constexpr size_t tagSize = 256;
     static volatile TagAddressType mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;
@@ -316,6 +320,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t startHostFunctionWorkerCalledTimes = 0;
     uint32_t createHostFunctionWorkerCounter = 0;
     uint32_t signalHostFunctionWorkerCounter = 0;
+    uint32_t submitLateMidThreadPreemptionStartCounter = 0;
     std::atomic<uint32_t> obtainUniqueOwnershipCalledTimes = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;
     bool multiOsContextCapable = false;

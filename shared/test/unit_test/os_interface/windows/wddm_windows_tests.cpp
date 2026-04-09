@@ -19,15 +19,16 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
-#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/mocks/windows/mock_gmm_memory.h"
+#include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -665,4 +666,23 @@ TEST_F(WddmTest, GivenWddmWhenMapGpuVaCalledWithMemoryFlagsWithReadOnlyThenMemor
     EXPECT_EQ(reinterpret_cast<MockGmmClientContextBase *>(allocation->getDefaultGmm()->getGmmHelper()->getClientContext())->passedWrite, 0u);
     EXPECT_EQ(reinterpret_cast<MockGmmClientContextBase *>(allocation->getDefaultGmm()->getGmmHelper()->getClientContext())->passedNoAccess, 0u);
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmTest, GivenWddmDriverModelWhenLatePreemptionStartSupportIsCheckedThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    VariableBackup<FeatureTableBase::Flags> ftrFlags{&defaultHwInfo->featureTable.flags};
+
+    debugManager.flags.OverrideLatePreemptionStart.set(-1);
+    defaultHwInfo->featureTable.flags.ftrSelectiveWmtp = false;
+    EXPECT_FALSE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+
+    defaultHwInfo->featureTable.flags.ftrSelectiveWmtp = true;
+    EXPECT_TRUE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+
+    debugManager.flags.OverrideLatePreemptionStart.set(0);
+    EXPECT_FALSE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+
+    debugManager.flags.OverrideLatePreemptionStart.set(1);
+    defaultHwInfo->featureTable.flags.ftrSelectiveWmtp = false;
+    EXPECT_TRUE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
 }

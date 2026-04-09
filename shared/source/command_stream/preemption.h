@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,6 +66,12 @@ class PreemptionHelper {
     template <typename GfxFamily>
     static void programCmdStream(LinearStream &cmdStream, PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
                                  GraphicsAllocation *preemptionCsr);
+
+    template <typename GfxFamily>
+    static size_t getRequiredCmdStreamSizeForLateStart();
+
+    template <typename GfxFamily>
+    static void programCmdStreamForLateStart(LinearStream &cmdStream);
 
     static PreemptionMode getDefaultPreemptionMode(const HardwareInfo &hwInfo);
 

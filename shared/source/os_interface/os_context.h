@@ -14,6 +14,7 @@
 #include <optional>
 
 namespace NEO {
+class CommandStreamReceiver;
 class OSInterface;
 class ProductHelper;
 
@@ -120,6 +121,12 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isPartOfContextGroup() const {
         return contextGroupCount > 0;
     }
+    void setCommandStreamReceiver(CommandStreamReceiver &commandStreamReceiver) {
+        this->commandStreamReceiver = &commandStreamReceiver;
+    }
+    CommandStreamReceiver *getCommandStreamReceiver() {
+        return this->commandStreamReceiver;
+    }
     void adjustSettings(const ProductHelper &productHelper);
     virtual bool isDirectSubmissionLightActive() const { return false; }
     void setExclusivelyHpContext() { exclusivelyHpContext = true; }
@@ -153,6 +160,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
 
     uint32_t contextGroupCount = 0;
     const OsContext *primaryContext = nullptr;
+    CommandStreamReceiver *commandStreamReceiver = nullptr;
     bool isPrimaryEngine = false;
     bool isDefaultEngine = false;
     bool exclusivelyHpContext = false;

@@ -347,6 +347,7 @@ DECLARE_DEBUG_VARIABLE(bool, MakeAllBuffersResident, false, "Make all buffers re
 DECLARE_DEBUG_VARIABLE(int32_t, sipFifoValidNodeMaxTimeoutMs, -1, "-1: default 100ms. >=0: override time in ms to wait for sip fifo entry to become valid")
 DECLARE_DEBUG_VARIABLE(int32_t, KernelsBundleSize, -1, "-1: default disabled. >=0: override number of kernels to submit before wait")
 DECLARE_DEBUG_VARIABLE(int32_t, KernelsBundleWaitTimeSeconds, -1, "-1: default disabled. >=0: override time in s to wait before submitting next kernels")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideLatePreemptionStart, 0, "-1: default. >=0: override late preemption start mode")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
@@ -404,6 +405,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintL0SetKernelArg, false, "Print L0 Set Kernel Ar
 DECLARE_DEBUG_VARIABLE(bool, LogIndirectDetectionKernelDetails, false, "Log information for indirect detection for each kernel")
 DECLARE_DEBUG_VARIABLE(bool, PrintMclData, false, "Print all parameters used for MCL");
 DECLARE_DEBUG_VARIABLE(bool, PrintSecondaryContextEngineInfo, false, "Print info about used secondary contexts engine");
+DECLARE_DEBUG_VARIABLE(bool, PrintLateMidThreadPreemptionStartInfo, false, "Print info related to late mid thread preemption start feature")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintExternalSemaphoreTimeline, -1, "-1: default, 0: disabled, 1: enabled. If set, print external semaphore timeline values for wait/signal ioctls")
 
 /*PERFORMANCE FLAGS*/

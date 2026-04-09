@@ -206,6 +206,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override;
 
+    void submitLateMidThreadPreemptionStart() override;
+
   protected:
     CompletionStamp flushTaskHeapful(LinearStream &commandStream, size_t commandStreamStart,
                                      const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,

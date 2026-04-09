@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/windows/os_context_win.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/debug_env_reader.h"
@@ -51,6 +52,7 @@ void OsContextWin::reInitializeContext() {
     bool disableContextCreationFlag = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
     if (!disableContextCreationFlag && !isPartOfContextGroup()) {
         if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
+            stopLatePreemptionStartWait();
             wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
             wddm.destroyContext(wddmContextHandle);
         }
@@ -108,8 +110,14 @@ bool OsContextWin::isDirectSubmissionSupported() const {
     return !isWSL && productHelper.isDirectSubmissionSupported();
 }
 
+bool OsContextWin::checkLatePreemptionStartSupport() {
+    auto &hwInfo = *wddm.getRootDeviceEnvironment().getHardwareInfo();
+    return wddm.isLatePreemptionStartSupported(hwInfo) && engineType == aub_stream::EngineType::ENGINE_CCS && engineUsage == EngineUsage::regular;
+}
+
 OsContextWin::~OsContextWin() {
     if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
+        stopLatePreemptionStartWait();
         wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
         if (getMonitoredFence().fenceHandle != hardwareQueue.progressFenceHandle) {
             wddm.getWddmInterface()->destroyMonitorFence(getMonitoredFence().fenceHandle);

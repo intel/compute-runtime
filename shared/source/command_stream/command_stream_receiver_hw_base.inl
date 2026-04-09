@@ -584,9 +584,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
         makeResident(*getGlobalFenceAllocation());
     }
 
-    if (getPreemptionAllocation()) {
-        makeResident(*getPreemptionAllocation());
-    }
+    makeResidentPreemptionAllocation();
 
     bool debuggingEnabled = device.getDebugger() != nullptr;
 
@@ -2245,9 +2243,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidenc
         makeResident(*csrStream.getGraphicsAllocation());
     }
 
-    if (getPreemptionAllocation()) {
-        makeResident(*getPreemptionAllocation());
-    }
+    makeResidentPreemptionAllocation();
 
     if (device.isStateSipRequired()) {
         GraphicsAllocation *sipAllocation = SipKernel::getSipKernel(device, this->osContext).getSipAllocation();
@@ -2530,6 +2526,26 @@ inline void CommandStreamReceiverHw<GfxFamily>::unblockPagingFenceSemaphore(uint
             this->directSubmission->unblockPagingFenceSemaphore(pagingFenceValue);
         }
     }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::submitLateMidThreadPreemptionStart() {
+    UNRECOVERABLE_IF(this->osContext->getEngineType() != aub_stream::EngineType::ENGINE_CCS || this->osContext->getEngineUsage() != EngineUsage::regular);
+    PRINT_STRING(debugManager.flags.PrintLateMidThreadPreemptionStartInfo.get(), stdout, "Late Mid Thread Preemption Start: Program LRI to enable mid thread preemption\n");
+
+    auto lock = obtainUniqueOwnership();
+
+    auto dispatchSize = PreemptionHelper::getRequiredCmdStreamSizeForLateStart<GfxFamily>();
+    auto &commandStream = getCS(dispatchSize);
+    auto commandStreamStart = commandStream.getUsed();
+    PreemptionHelper::programCmdStreamForLateStart<GfxFamily>(commandStream);
+    makeResident(*commandStream.getGraphicsAllocation());
+
+    auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
+    UNRECOVERABLE_IF(submissionStatus != NEO::SubmissionStatus::success);
+
+    this->latestFlushedTaskCount = taskCount.load();
+    this->skipPreemptionAllocation = false;
 }
 
 template <typename GfxFamily>

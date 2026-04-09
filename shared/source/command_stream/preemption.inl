@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,6 +98,14 @@ size_t PreemptionHelper::getRequiredCmdStreamSize(PreemptionMode newPreemptionMo
         return 0;
     }
     return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+}
+
+template <typename GfxFamily>
+void PreemptionHelper::programCmdStreamForLateStart(LinearStream &cmdStream) {}
+
+template <typename GfxFamily>
+size_t PreemptionHelper::getRequiredCmdStreamSizeForLateStart() {
+    return 0;
 }
 
 template <typename GfxFamily>

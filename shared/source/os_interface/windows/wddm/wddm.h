@@ -179,6 +179,7 @@ class Wddm : public DriverModel {
     }
 
     void waitOnPagingFenceFromCpu(uint64_t pagingFenceValueToWait, bool isKmdWaitNeeded);
+    bool isLatePreemptionStartSupported(const HardwareInfo &hwInfo) override;
 
     MOCKABLE_VIRTUAL void waitOnPagingFenceFromCpu(bool isKmdWaitNeeded) {
         waitOnPagingFenceFromCpu(getCurrentPagingFenceValue(), isKmdWaitNeeded);
