@@ -173,17 +173,189 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentWhe
     executionEnvironment->memoryManager.reset(memoryManager);
 
     static_cast<DrmQueryMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>())->outputFd = 7;
-    auto closeCountBefore = closeCalledCount.load();
+    VariableBackup<uint32_t> closeFuncCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeFuncArgBackup(&SysCalls::closeFuncArgPassed, 0);
 
     size_t size = 4096u;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, {});
     auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
     ASSERT_NE(ptr, nullptr);
-    EXPECT_GT(closeCalledCount.load(), closeCountBefore);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(7, SysCalls::closeFuncArgPassed);
 
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
         memoryManager->freeGraphicsMemory(multiGraphics.getGraphicsAllocation(i));
     }
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentWhenCreateMultiGraphicsAllocationSucceedsThenInternalHandleCacheIsCleared) {
+    uint32_t rootDevicesNumber = 2u;
+    MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
+
+    executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
+    for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
+
+        std::vector<MemoryRegion> regionInfo(2);
+        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+        regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+        mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+        mock->engineInfoQueried = false;
+        mock->queryEngineInfo();
+        mock->ioctlCallsCount = 0;
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        rootDeviceIndices.pushUnique(i);
+    }
+
+    memoryManager = new TestedDrmMemoryManager(true, false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+
+    auto drmMock0 = static_cast<DrmQueryMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+    drmMock0->outputFd = 7;
+
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, {});
+    auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
+    ASSERT_NE(ptr, nullptr);
+
+    auto primaryAlloc = multiGraphics.getDefaultGraphicsAllocation();
+    ASSERT_NE(primaryAlloc, nullptr);
+
+    drmMock0->outputFd = 42;
+
+    uint64_t handleAfterSuccess = 0;
+    auto ret = primaryAlloc->peekInternalHandle(memoryManager, handleAfterSuccess, nullptr);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(42u, handleAfterSuccess);
+
+    for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+        memoryManager->freeGraphicsMemory(multiGraphics.getGraphicsAllocation(i));
+    }
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentWhenCreateMultiGraphicsAllocationThenSecondaryAllocationIsRegisteredAndHasNoSharedHandle) {
+    uint32_t rootDevicesNumber = 2u;
+    MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
+
+    executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
+    for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
+
+        std::vector<MemoryRegion> regionInfo(2);
+        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+        regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+        mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+        mock->engineInfoQueried = false;
+        mock->queryEngineInfo();
+        mock->ioctlCallsCount = 0;
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        rootDeviceIndices.pushUnique(i);
+    }
+
+    memoryManager = new TestedDrmMemoryManager(true, false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+
+    static_cast<DrmQueryMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>())->outputFd = 7;
+
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, {});
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+
+    auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
+    ASSERT_NE(ptr, nullptr);
+
+    auto secondaryAlloc = multiGraphics.getGraphicsAllocation(1);
+    ASSERT_NE(secondaryAlloc, nullptr);
+    EXPECT_EQ(Sharing::nonSharedResource, secondaryAlloc->peekSharedHandle());
+    EXPECT_GE(memoryManager->getUsedSystemMemorySize(), sysMemBefore + 2 * size);
+
+    for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+        memoryManager->freeGraphicsMemory(multiGraphics.getGraphicsAllocation(i));
+    }
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentWhenCreateMultiGraphicsAllocationFailsOnSecondaryDeviceThenInternalHandleCacheIsClearedAndFreshFdObtained) {
+    uint32_t rootDevicesNumber = 2u;
+    MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
+
+    executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
+    for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
+
+        std::vector<MemoryRegion> regionInfo(2);
+        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+        regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+        mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+        mock->engineInfoQueried = false;
+        mock->queryEngineInfo();
+        mock->ioctlCallsCount = 0;
+        if (i == 1) {
+            mock->fdToHandleRetVal = -1;
+        }
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        rootDeviceIndices.pushUnique(i);
+    }
+
+    memoryManager = new TestedDrmMemoryManager(true, false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+
+    auto drmMock0 = static_cast<DrmQueryMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+    drmMock0->outputFd = 7;
+
+    size_t size = 4096u;
+    AllocationProperties properties(0u, true, size, AllocationType::bufferHostMemory, false, {});
+    properties.flags.forceSystemMemory = true;
+
+    auto primaryAlloc = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    ASSERT_NE(primaryAlloc, nullptr);
+    ASSERT_NE(static_cast<DrmAllocation *>(primaryAlloc)->getMmapPtr(), nullptr);
+
+    multiGraphics.addAllocation(primaryAlloc);
+
+    AllocationProperties secondaryProps(1u, true, size, AllocationType::bufferHostMemory, false, {});
+    secondaryProps.flags.forceSystemMemory = true;
+    secondaryProps.flags.isUSMHostAllocation = true;
+    secondaryProps.flags.allocateMemory = false;
+
+    auto result = memoryManager->createGraphicsAllocationFromExistingStorage(
+        secondaryProps, reinterpret_cast<void *>(primaryAlloc->getUnderlyingBuffer()), multiGraphics);
+    EXPECT_EQ(result, nullptr);
+
+    drmMock0->outputFd = 42;
+
+    uint64_t handleAfterFailure = 0;
+    auto ret = primaryAlloc->peekInternalHandle(memoryManager, handleAfterFailure, nullptr);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(42u, handleAfterFailure);
+
+    memoryManager->freeGraphicsMemory(primaryAlloc);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
 }
 
@@ -3852,6 +4024,8 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndMappedPtr
 
     mock->outputHandle = 100;
 
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+
     auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
         testFd, properties, testMappedPtr, false, true);
 
@@ -3859,6 +4033,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndMappedPtr
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
     EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
     EXPECT_EQ(Sharing::nonSharedResource, allocation->peekSharedHandle());
+    EXPECT_GT(memoryManager->getUsedSystemMemorySize(), sysMemBefore);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -3874,12 +4049,17 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdFalseAndMappedPt
 
     mock->outputHandle = 100;
 
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto registerBefore = memoryManager->registerSysMemAllocCalled;
+
     auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
         testFd, properties, testMappedPtr, false, false);
 
     ASSERT_NE(allocation, nullptr);
     EXPECT_EQ(0u, SysCalls::closeFuncCalled);
     EXPECT_EQ(static_cast<unsigned int>(testFd), allocation->peekSharedHandle());
+    EXPECT_EQ(memoryManager->getUsedSystemMemorySize(), sysMemBefore);
+    EXPECT_EQ(registerBefore, memoryManager->registerSysMemAllocCalled);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -3896,6 +4076,8 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndNoBooMmap
 
     mock->outputHandle = 100;
 
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+
     auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
         testFd, properties, nullptr, false, true);
 
@@ -3903,6 +4085,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndNoBooMmap
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
     EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
     EXPECT_EQ(Sharing::nonSharedResource, allocation->peekSharedHandle());
+    EXPECT_GT(memoryManager->getUsedSystemMemorySize(), sysMemBefore);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -3918,12 +4101,17 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdFalseAndNoBooMma
 
     mock->outputHandle = 100;
 
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto registerBefore = memoryManager->registerSysMemAllocCalled;
+
     auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
         testFd, properties, nullptr, false, false);
 
     ASSERT_NE(allocation, nullptr);
     EXPECT_EQ(0u, SysCalls::closeFuncCalled);
     EXPECT_EQ(static_cast<unsigned int>(testFd), allocation->peekSharedHandle());
+    EXPECT_EQ(memoryManager->getUsedSystemMemorySize(), sysMemBefore);
+    EXPECT_EQ(registerBefore, memoryManager->registerSysMemAllocCalled);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -3946,12 +4134,16 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndNewBoCrea
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
 
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+
     auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
         testFd, properties, nullptr, false, true);
 
     ASSERT_NE(allocation, nullptr);
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
     EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(Sharing::nonSharedResource, allocation->peekSharedHandle());
+    EXPECT_GT(memoryManager->getUsedSystemMemorySize(), sysMemBefore);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -4003,6 +4195,8 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndReuseShar
         testFd1, properties, nullptr, false, false);
     ASSERT_NE(allocation1, nullptr);
 
+    auto sysMemAfterFirst = memoryManager->getUsedSystemMemorySize();
+
     VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
     VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
 
@@ -4013,6 +4207,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndReuseShar
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
     EXPECT_EQ(testFd2, SysCalls::closeFuncArgPassed);
     EXPECT_EQ(Sharing::nonSharedResource, allocation2->peekSharedHandle());
+    EXPECT_GT(memoryManager->getUsedSystemMemorySize(), sysMemAfterFirst);
 
     auto bo1 = static_cast<DrmAllocation *>(allocation1)->getBO();
     auto bo2 = static_cast<DrmAllocation *>(allocation2)->getBO();
@@ -4043,7 +4238,11 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdFalseAndReuseSha
         testFd1, properties, nullptr, false, false);
     ASSERT_NE(allocation1, nullptr);
 
+    auto sysMemAfterFirst = memoryManager->getUsedSystemMemorySize();
+
     VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+
+    auto registerBefore = memoryManager->registerSysMemAllocCalled;
 
     auto allocation2 = memoryManager->createUSMHostAllocationFromSharedHandle(
         testFd2, properties, nullptr, true, false);
@@ -4051,6 +4250,8 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdFalseAndReuseSha
     ASSERT_NE(allocation2, nullptr);
     EXPECT_EQ(0u, SysCalls::closeFuncCalled);
     EXPECT_EQ(static_cast<unsigned int>(testFd2), allocation2->peekSharedHandle());
+    EXPECT_EQ(memoryManager->getUsedSystemMemorySize(), sysMemAfterFirst);
+    EXPECT_EQ(registerBefore, memoryManager->registerSysMemAllocCalled);
 
     memoryManager->freeGraphicsMemory(allocation1);
     memoryManager->freeGraphicsMemory(allocation2);
@@ -4077,8 +4278,9 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenDefaultConsumeFdWhenCreat
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndIoctlFailureWhenCreateUSMHostAllocationFromSharedHandleThenFdIsNotClosedAndNullptrReturned) {
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndIoctlFailureWhenCreateUSMHostAllocationFromSharedHandleThenFdIsClosedAndNullptrReturned) {
     VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
 
     int testFd = 123;
 
@@ -4091,7 +4293,154 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndIoctlFail
         testFd, properties, nullptr, false, true);
 
     EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdFalseAndIoctlFailureWhenCreateUSMHostAllocationFromSharedHandleThenFdIsNotClosedAndNullptrReturned) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+
+    int testFd = 123;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.gpuAddress = 0x1000;
+
+    mock->fdToHandleRetVal = -1;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, false);
+
+    EXPECT_EQ(allocation, nullptr);
     EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndMappedPtrWhenRegisterSysMemAllocFailsThenNullptrReturnedAndBoUnreferenced) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    int testFd = 123;
+    void *testMappedPtr = reinterpret_cast<void *>(0x12345000);
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unreferenceBefore = memoryManager->unreferenceCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, testMappedPtr, false, true);
+
+    EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_GT(memoryManager->unreferenceCalled, unreferenceBefore);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndNoBooMmapWhenRegisterSysMemAllocFailsThenNullptrReturnedAndAccountingConsistent) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    int testFd = 123;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = false;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, true);
+
+    EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(0u, memoryManager->callsToCloseSharedHandle);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenNewBoCreationWhenRegisterSysMemAllocFailsThenNullptrReturnedAndAccountingConsistent) {
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+
+    int testFd = 123;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = true;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, true);
+
+    EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(0u, memoryManager->callsToCloseSharedHandle);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndReuseSharedAllocationWhenRegisterSysMemAllocFailsThenNullptrReturnedAndAccountingConsistent) {
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+
+    int testFd1 = 123;
+    int testFd2 = 456;
+
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = true;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+
+    auto allocation1 = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd1, properties, nullptr, false, false);
+    ASSERT_NE(allocation1, nullptr);
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation2 = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd2, properties, nullptr, true, true);
+
+    EXPECT_EQ(allocation2, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd2, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(0u, memoryManager->callsToCloseSharedHandle);
+
+    memoryManager->freeGraphicsMemory(allocation1);
 }
 
 TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenIsHostIpcAllocationWhenCreateGraphicsAllocationFromSharedHandleCalledThenConsumeFdIsTrue) {
