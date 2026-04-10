@@ -717,7 +717,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     if (isCopyOnly(true)) {
         auto xBlits = static_cast<size_t>(std::ceil(srcRegion->width / static_cast<double>(BlitterConstants::maxBlitWidth)));
         auto yBlits = static_cast<size_t>(std::ceil(srcRegion->height / static_cast<double>(BlitterConstants::maxBlitHeight)));
-        auto zBlits = static_cast<size_t>(srcRegion->depth);
+        auto zBlits = static_cast<size_t>(std::max(srcRegion->depth, 1u));
         auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize();
         estimatedSize += xBlits * yBlits * zBlits * sizePerBlit;
     }

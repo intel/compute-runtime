@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -194,6 +194,84 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndHostPointersWhenMemo
     itor = find<PIPE_CONTROL *>(++itor, genCmdList.end());
 
     EXPECT_EQ(genCmdList.end(), itor);
+}
+
+HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlitCalledWithZeroDepthThenCopyRegionPathSelected, MatchAny) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x2345), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    AlignedAllocationData srcAllocationData = {mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
+    AlignedAllocationData dstAllocationData = {mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
+
+    ze_copy_region_t srcRegion = {0, 0, 0, 16, 16, 0};
+    ze_copy_region_t dstRegion = {0, 0, 0, 16, 16, 0};
+    Vec3<size_t> copySize = {16, 16, 0};
+    Vec3<size_t> srcSize = {16, 16, 0};
+    Vec3<size_t> dstSize = {16, 16, 0};
+
+    auto result = commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion,
+                                                          copySize, 0, 0, 0, 0, srcSize, dstSize, nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &commandContainer = commandList->getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto blitCommands = findAll<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_FALSE(blitCommands.empty());
+
+    // With width=16, height=16, depth=0 (normalized to 1), the region path emits 1 blit.
+    // The per-row path would emit 16 blits (one per row). Verify region path was selected.
+    EXPECT_EQ(1u, blitCommands.size());
+}
+
+HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlitCalledWithNonZeroPitchThenCopyRegionPathSelected, MatchAny) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x2345), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    AlignedAllocationData srcAllocationData = {mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
+    AlignedAllocationData dstAllocationData = {mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
+
+    ze_copy_region_t srcRegion = {0, 0, 0, 16, 16, 0};
+    ze_copy_region_t dstRegion = {0, 0, 0, 16, 16, 0};
+    Vec3<size_t> copySize = {16, 16, 0};
+    Vec3<size_t> srcSize = {16, 16, 0};
+    Vec3<size_t> dstSize = {16, 16, 0};
+
+    auto result = commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion,
+                                                          copySize, 16, 0, 16, 0, srcSize, dstSize, nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &commandContainer = commandList->getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto blitCommands = findAll<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_FALSE(blitCommands.empty());
+
+    EXPECT_EQ(1u, blitCommands.size());
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListThenDcFlushIsNotAddedAfterBlitCopy, MatchAny) {
