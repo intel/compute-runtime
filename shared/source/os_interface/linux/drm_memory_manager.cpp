@@ -1245,7 +1245,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
                                                                                bool reuseSharedAllocation,
                                                                                void *mapPointer) {
     if (isHostIpcAllocation) {
-        return createUSMHostAllocationFromSharedHandle(osHandleData.handle, properties, nullptr, reuseSharedAllocation);
+        return createUSMHostAllocationFromSharedHandle(osHandleData.handle, properties, nullptr, reuseSharedAllocation, true);
     }
 
     std::unique_lock<std::mutex> lock(mtx);
@@ -1493,8 +1493,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
         if (ret < 0) {
             return nullptr;
         }
-        auto result = createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, ptr, true);
-        closeInternalHandle(internalHandle, 0u, defaultAlloc);
+        auto result = createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, ptr, true, true);
+        static_cast<DrmAllocation *>(defaultAlloc)->clearInternalHandle(0u);
         return result;
     } else {
         return allocateGraphicsMemoryWithProperties(properties, ptr);
@@ -1796,6 +1796,17 @@ AllocationStatus DrmMemoryManager::registerSysMemAlloc(GraphicsAllocation *alloc
     std::lock_guard<std::mutex> lock(this->allocMutex);
     this->sysMemAllocs.push_back(allocation);
     return AllocationStatus::Success;
+}
+
+bool DrmMemoryManager::registerSysMemAllocIfConsumed(GraphicsAllocation *allocation, bool consumeFd) {
+    if (consumeFd) {
+        if (this->registerSysMemAlloc(allocation) != AllocationStatus::Success) {
+            allocation->setSharedHandle(std::numeric_limits<osHandle>::max());
+            this->freeGraphicsMemory(allocation, true);
+            return false;
+        }
+    }
+    return true;
 }
 
 AllocationStatus DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) {
@@ -2905,7 +2916,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle,
                                                                          const AllocationProperties &properties,
                                                                          void *mappedPtr,
-                                                                         bool reuseSharedAllocation) {
+                                                                         bool reuseSharedAllocation,
+                                                                         bool consumeFd) {
     PrimeHandle openFd{};
     openFd.fileDescriptor = handle;
 
@@ -2924,18 +2936,32 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
 
+        if (consumeFd) {
+            SysCalls::close(handle);
+        }
+
         return nullptr;
     }
 
     if (mappedPtr) {
+        if (consumeFd) {
+            SysCalls::close(handle);
+        }
         auto bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, openFd.handle, properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
         auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
         auto allocation = new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                                            handle, memoryPool, canonizedGpuAddress);
+                                            consumeFd ? Sharing::nonSharedResource : handle, memoryPool, canonizedGpuAddress);
         allocation->setImportedMmapPtr(mappedPtr);
+        if (consumeFd) {
+            if (this->registerSysMemAlloc(allocation) != AllocationStatus::Success) {
+                unreference(bo, true);
+                delete allocation;
+                return nullptr;
+            }
+        }
         return allocation;
     }
 
@@ -2944,6 +2970,9 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
     const bool useBooMmap = drm.getMemoryInfo() && properties.useMmapObject;
     if (!useBooMmap) {
+        if (consumeFd) {
+            SysCalls::close(handle);
+        }
         auto bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
@@ -2955,11 +2984,15 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
                                                              bo,
                                                              reinterpret_cast<void *>(bo->peekAddress()),
                                                              bo->peekSize(),
-                                                             handle,
+                                                             consumeFd ? Sharing::nonSharedResource : handle,
                                                              memoryPool,
                                                              canonizedGpuAddress);
         if (!reuseSharedAllocation) {
             registerSharedBoHandleAllocation(drmAllocation.get());
+        }
+        if (!registerSysMemAllocIfConsumed(drmAllocation.get(), consumeFd)) {
+            drmAllocation.release();
+            return nullptr;
         }
         return drmAllocation.release();
     }
@@ -2972,6 +3005,9 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     if (bo == nullptr) {
         void *cpuPointer = nullptr;
         size_t size = SysCalls::lseek(handle, 0, SEEK_END);
+        if (consumeFd) {
+            SysCalls::close(handle);
+        }
         UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
 
         memoryPool = MemoryPool::system4KBPages;
@@ -3038,14 +3074,35 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         if (!reuseSharedAllocation) {
             registerSharedBoHandleAllocation(drmAllocation.get());
         }
+
+        if (!registerSysMemAllocIfConsumed(drmAllocation.get(), true)) {
+            drmAllocation.release();
+            return nullptr;
+        }
+
         return drmAllocation.release();
     }
 
+    if (consumeFd) {
+        SysCalls::close(handle);
+    }
     auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
-    return new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                             handle, memoryPool, canonizedGpuAddress);
+    auto allocation = new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
+                                        consumeFd ? Sharing::nonSharedResource : handle, memoryPool, canonizedGpuAddress);
+    if (!registerSysMemAllocIfConsumed(allocation, consumeFd)) {
+        return nullptr;
+    }
+    return allocation;
 }
+
+DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle,
+                                                                         const AllocationProperties &properties,
+                                                                         void *mappedPtr,
+                                                                         bool reuseSharedAllocation) {
+    return createUSMHostAllocationFromSharedHandle(handle, properties, mappedPtr, reuseSharedAllocation, false);
+}
+
 bool DrmMemoryManager::allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) {
     return this->getDrm(rootDeviceIndex).isVmBindAvailable();
 }

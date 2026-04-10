@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,11 +95,13 @@ class DrmMemoryManager : public MemoryManager {
     std::vector<GraphicsAllocation *> &getSysMemAllocs();
     std::vector<GraphicsAllocation *> &getLocalMemAllocs(uint32_t rootDeviceIndex);
     AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation) override;
+    bool registerSysMemAllocIfConsumed(GraphicsAllocation *allocation, bool consumeFd);
     AllocationStatus registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) override;
     MOCKABLE_VIRTUAL void unregisterAllocation(GraphicsAllocation *allocation);
 
     static std::unique_ptr<MemoryManager> create(ExecutionEnvironment &executionEnvironment);
 
+    DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, void *mappedPtr, bool reuseSharedAllocation, bool consumeFd);
     DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, void *mappedPtr, bool reuseSharedAllocation);
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;

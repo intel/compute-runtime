@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,6 +181,9 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
 
     AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation) override {
         ++registerSysMemAllocCalled;
+        if (failRegisterSysMemAlloc) {
+            return AllocationStatus::Error;
+        }
         return DrmMemoryManager::registerSysMemAlloc(allocation);
     }
 
@@ -199,6 +202,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     size_t acquireGpuRangeWithCustomAlignmenPassedAlignment = 0u;
     size_t computeStorageInfoMemoryBanksCalled = 0u;
     size_t registerSysMemAllocCalled = 0u;
+    bool failRegisterSysMemAlloc = false;
     size_t registerLocalMemAllocCalled = 0u;
     size_t unregisterAllocationCalled = 0u;
     ExecutionEnvironment *executionEnvironment = nullptr;
