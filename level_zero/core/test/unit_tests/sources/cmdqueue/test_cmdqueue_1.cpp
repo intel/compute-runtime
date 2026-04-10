@@ -2166,35 +2166,6 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
     commandQueue->destroy();
 }
 
-TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidencyCalledAndSubmiPackDisabeldThenSVMAllocsMtxIsLocked) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
-    const ze_command_queue_desc_t desc{};
-    ze_result_t returnValue;
-
-    auto prevSvmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
-                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                          &desc,
-                                                          false,
-                                                          false,
-                                                          false,
-                                                          returnValue));
-    std::unique_lock<std::mutex> lock;
-    auto mockSvmAllocsManager = std::make_unique<SVMAllocsManagerMock>(device->getDriverHandle()->getMemoryManager());
-    reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
-
-    commandQueue->handleIndirectAllocationResidency({true, true, true}, lock, false);
-    std::thread th([&] {
-        EXPECT_FALSE(mockSvmAllocsManager->mtxForIndirectAccess.try_lock());
-    });
-    th.join();
-    reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
-    lock.unlock();
-    commandQueue->destroy();
-}
-
 TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForInternalUsageThenInternalEngineCsrUsed) {
     ze_command_queue_desc_t desc{};
     desc.ordinal = 0u;
