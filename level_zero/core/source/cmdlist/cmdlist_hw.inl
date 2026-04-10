@@ -1680,6 +1680,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
 
     Vec3<size_t> copySizeModified = {copySize.x / bytesPerPixel, copySize.y, copySize.z};
+    srcRowPitch = srcRowPitch ? srcRowPitch : copySizeModified.x;
+    dstRowPitch = dstRowPitch ? dstRowPitch : copySizeModified.x;
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(
         dstAllocationData->alloc, dstPtr,
         srcAllocationData->alloc, srcPtr,
@@ -1704,7 +1706,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     }
 
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
-    bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(copySizeModified, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+    bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
     size_t nBlits = copyRegionPreferred ? NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed) : NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
     bool useAdditionalTimestamp = nBlits > 1;
     if (useAdditionalBlitProperties) {
