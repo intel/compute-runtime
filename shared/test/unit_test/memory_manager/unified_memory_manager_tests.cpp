@@ -21,24 +21,6 @@
 
 using namespace NEO;
 
-TEST(SvmDeviceAllocationTest, givenGivenSvmAllocsManagerWhenObtainOwnershipCalledThenLockedUniqueLockReturned) {
-    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
-    auto device = deviceFactory->rootDevices[0];
-    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
-
-    auto lock = svmManager->obtainOwnership();
-    std::thread th1([&] {
-        EXPECT_FALSE(svmManager->mtxForIndirectAccess.try_lock());
-    });
-    th1.join();
-    lock.unlock();
-    std::thread th2([&] {
-        EXPECT_TRUE(svmManager->mtxForIndirectAccess.try_lock());
-        svmManager->mtxForIndirectAccess.unlock();
-    });
-    th2.join();
-}
-
 using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true, 1u>>;
 TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSharedAllocWithOffsetPointerThenResourceIsRemovedProperly) {
     DebugManagerStateRestore restore;

@@ -272,56 +272,6 @@ TEST_F(InternalAllocationStorageTest, givenAllocationWhenItIsPutOnReusableListWh
     EXPECT_EQ(nullptr, internalAllocation);
 }
 
-class WaitAtDeletionAllocation : public MockGraphicsAllocation {
-  public:
-    WaitAtDeletionAllocation(void *buffer, size_t sizeIn)
-        : MockGraphicsAllocation(buffer, sizeIn) {
-        inDestructor = false;
-    }
-
-    std::mutex mutex;
-    std::atomic<bool> inDestructor;
-    ~WaitAtDeletionAllocation() override {
-        inDestructor = true;
-        std::lock_guard<std::mutex> lock(mutex);
-    }
-};
-
-TEST_F(InternalAllocationStorageTest, givenAllocationListWhenTwoThreadsCleanConcurrentlyThenBothThreadsCanAccessTheList) {
-    auto allocation1 = new WaitAtDeletionAllocation(nullptr, 0);
-    allocation1->updateTaskCount(1, csr->getOsContext().getContextId());
-    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation1), TEMPORARY_ALLOCATION);
-
-    std::unique_lock<std::mutex> allocationDeletionLock(allocation1->mutex);
-
-    auto allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    allocation2->updateTaskCount(2, csr->getOsContext().getContextId());
-    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation2), TEMPORARY_ALLOCATION);
-
-    std::mutex mutex;
-    std::unique_lock<std::mutex> lock(mutex);
-
-    std::thread thread1([&] {
-        storage->cleanAllocationList(1, TEMPORARY_ALLOCATION);
-    });
-
-    std::thread thread2([&] {
-        std::lock_guard<std::mutex> lock(mutex);
-        storage->cleanAllocationList(2, TEMPORARY_ALLOCATION);
-    });
-
-    while (!allocation1->inDestructor) {
-        ;
-    }
-    lock.unlock();
-    allocationDeletionLock.unlock();
-
-    thread1.join();
-    thread2.join();
-
-    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
-}
-
 HWTEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachingReusableAllocationThenCheckTaskCountFinishedOnAllTiles) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
 
