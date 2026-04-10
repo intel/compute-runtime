@@ -672,7 +672,13 @@ const std::vector<const char *> &getResourcesSearchLocations() {
     static std::vector<const char *> locations{
         "test_files/spv_modules/",
 #if defined(OS_DATADIR)
+#define QTR(a) #a
+#define TOSTR(b) QTR(b)
+
         TOSTR(OS_DATADIR),
+
+#undef QTR
+#undef TOSTR
 #endif
     };
     return locations;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,7 +103,7 @@ int OfflineLinker::parseCommand(size_t argsCount, const std::vector<std::string>
         } else if ((currentArg == "-internal_options") && hasMoreArgs) {
             internalOptions = args[argIndex + 1];
             ++argIndex;
-        } else if (currentArg == "--help") {
+        } else if (currentArg == "--help" || currentArg == "-h") {
             operationMode = OperationMode::showHelp;
             return OCLOC_SUCCESS;
         } else {

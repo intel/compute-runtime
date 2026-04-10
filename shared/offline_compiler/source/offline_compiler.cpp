@@ -311,7 +311,7 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
                     ++argIt;
                 }
             }
-        } else if ("--help" == *argIt) {
+        } else if ("--help" == *argIt || "-h" == *argIt) {
             printQueryHelp(helper);
             return 0;
         } else {
@@ -1255,7 +1255,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             onlyIr = true;
         } else if ("-output_no_suffix" == currArg) {
             outputNoSuffix = true;
-        } else if ("--help" == currArg) {
+        } else if ("--help" == currArg || "-h" == currArg) {
             showHelp = true;
             return OCLOC_SUCCESS;
         } else if (("-revision_id" == currArg) && hasMoreArgs) {

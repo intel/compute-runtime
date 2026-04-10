@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ ErrorCode validateInput(const std::vector<std::string> &args, IgaWrapper *iga, O
         } else if ("-dump" == currArg && hasMoreArgs) {
             outArguments.pathToDump = args[++argIndex];
             addSlash(outArguments.pathToDump);
-        } else if ("--help" == currArg) {
+        } else if ("--help" == currArg || "-h" == currArg) {
             outArguments.showHelp = true;
             return OCLOC_SUCCESS;
         } else if ("-q" == currArg) {

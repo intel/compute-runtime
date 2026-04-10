@@ -319,7 +319,7 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
             setProductFamilyForIga(args[++argIndex], iga.get(), argHelper);
         } else if ("-out" == currArg && hasMoreArgs) {
             elfName = args[++argIndex];
-        } else if ("--help" == currArg) {
+        } else if ("--help" == currArg || "-h" == currArg) {
             showHelp = true;
             return 0;
         } else if ("-ignore_isa_padding" == currArg) {

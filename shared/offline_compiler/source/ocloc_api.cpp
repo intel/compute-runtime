@@ -9,8 +9,8 @@
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_interface.h"
-
-#include <iostream>
+#include "shared/offline_compiler/source/queries.h"
+#include "shared/offline_compiler/source/utilities/get_git_version_info.h"
 
 using namespace Ocloc;
 
@@ -23,6 +23,11 @@ int oclocInvokeWithHelper(
     try {
         if (numArgs <= 1 || NEO::ConstStringRef("-h") == args[1] || NEO::ConstStringRef("--help") == args[1]) {
             printHelp(*argHelper);
+            return OCLOC_SUCCESS;
+        }
+        if (NEO::ConstStringRef("--version") == args[1]) {
+            auto driverVersion = NEO::getOclDriverVersion();
+            argHelper->printf("%s\n", driverVersion.c_str());
             return OCLOC_SUCCESS;
         }
         auto &command = args[1];

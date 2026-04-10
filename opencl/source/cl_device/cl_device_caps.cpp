@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,9 +34,7 @@ static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "";
 const char *latestConformanceVersionPassed = "v2025-04-14-00";
-#define QTR(a) #a
-#define TOSTR(b) QTR(b)
-static std::string driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
+static std::string driverVersion = NEO_OCL_DRIVER_VERSION;
 
 static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_config>(CL_FP_ROUND_TO_NEAREST |
                                                                                        CL_FP_ROUND_TO_ZERO |
@@ -93,7 +91,7 @@ void ClDevice::initializeCaps() {
     deviceExtensions.clear();
     deviceExtensions.append(compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper));
 
-    driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
+    driverVersion = NEO_OCL_DRIVER_VERSION;
 
     if (debugManager.flags.OverrideDeviceName.get() != "unk") {
         name.assign(debugManager.flags.OverrideDeviceName.get().c_str());

@@ -59,7 +59,7 @@ ocloc does not require Intel GPU device to be present in the system nor does it
 depend on Intel Compute GPU runtime driver to be installed. It does however rely
 on the same set of compilers (IGC, common_clang) as the runtime driver.
 
-Usage: ocloc [--help] <command> [<command_args>]
+Usage: ocloc [--help|-h] [--version|-v] <command> [<command_args>]
 Available commands are listed below.
 Use 'ocloc <command> --help' to get help about specific command.
 
@@ -101,7 +101,9 @@ Examples:
 
   Concatenate fat binaries
     ocloc concat <fat binary> <fat binary> ... [-out <concatenated fat binary name>]
-}
+
+  Print version
+    ocloc --version
 )===";
     wrapper.printf("%s", help);
 }

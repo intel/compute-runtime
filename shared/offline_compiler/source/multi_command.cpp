@@ -97,7 +97,7 @@ void MultiCommand::addAdditionalOptionsToSingleCommandLine(std::vector<std::stri
 }
 
 int MultiCommand::initialize(const std::vector<std::string> &args) {
-    if (args[args.size() - 1] == "--help") {
+    if (args[args.size() - 1] == "--help" || args[args.size() - 1] == "-h") {
         printHelp();
         return -1;
     }

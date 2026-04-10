@@ -1093,11 +1093,7 @@ TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionTh
 
     std::string tempName = device->getClDeviceName();
 
-#define QTR(a) #a
-#define TOSTR(b) QTR(b)
-    const std::string expectedVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
-#undef QTR
-#undef TOSTR
+    const std::string expectedVersion = NEO_OCL_DRIVER_VERSION;
 
     EXPECT_STREQ(tempName.c_str(), caps.name);
     EXPECT_STREQ(expectedVersion.c_str(), caps.driverVersion);

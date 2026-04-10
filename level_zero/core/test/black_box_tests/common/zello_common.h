@@ -33,9 +33,6 @@ inline void validate(ResulT result, const char *message);
 namespace LevelZeroBlackBoxTests {
 extern decltype(&zexCounterBasedEventCreate2) zexCounterBasedEventCreate2Func;
 
-#define QTR(a) #a
-#define TOSTR(b) QTR(b)
-
 extern bool verbose;
 
 template <bool terminateOnFailure, typename ResulT>

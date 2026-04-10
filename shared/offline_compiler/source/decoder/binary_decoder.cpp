@@ -547,7 +547,7 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
         } else if ("-dump" == currArg && hasMoreArgs) {
             pathToDump = args[++argIndex];
             addSlash(pathToDump);
-        } else if ("--help" == currArg) {
+        } else if ("--help" == currArg || "-h" == currArg) {
             showHelp = true;
             return 0;
         } else if ("-ignore_isa_padding" == currArg) {
