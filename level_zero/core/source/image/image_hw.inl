@@ -137,7 +137,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         } else {
 
             if (!this->imageFromBuffer) {
-                NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::image, device->getNEODevice()->getDeviceBitfield());
+                NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, lookupTable.overrideAllocationType ? lookupTable.imageProperties.imageAllocationType : NEO::AllocationType::image, device->getNEODevice()->getDeviceBitfield());
 
                 properties.flags.preferCompressed = isSuitableForCompression(lookupTable, imgInfo);
 

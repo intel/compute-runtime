@@ -10,6 +10,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/surface_format_info.h"
 
+#include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/driver_experimental/zex_common.h"
 #include "level_zero/include/level_zero/ze_intel_gpu.h"
 #include "level_zero/include/level_zero/ze_stypes.h"
@@ -57,6 +58,7 @@ inline NEO::ImageDescriptor convertDescriptor(const ze_image_desc_t &imageDesc) 
 struct StructuresLookupTable {
     struct ImageProperties {
         NEO::ImageDescriptor imageDescriptor;
+        NEO::AllocationType imageAllocationType;
         uint32_t planeIndex;
         bool isPlanarExtension;
         void *pitchedPtr;
@@ -88,6 +90,7 @@ struct StructuresLookupTable {
     bool sampledImage;
     bool isExternalMemmapSystem;
     bool isSrgb;
+    bool overrideAllocationType;
 };
 
 inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupTable, const void *desc) {
@@ -188,6 +191,10 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_SRGB_EXT_DESC) {
             const ze_srgb_ext_desc_t *srgbDesc = reinterpret_cast<const ze_srgb_ext_desc_t *>(extendedDesc);
             lookupTable.isSrgb = srgbDesc->sRGB;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_IMAGE_ALLOCATION_TYPE_EXT_DESC) {
+            const ze_image_allocation_type_ext_desc_t *allocationTypeDesc = reinterpret_cast<const ze_image_allocation_type_ext_desc_t *>(extendedDesc);
+            lookupTable.imageProperties.imageAllocationType = allocationTypeDesc->allocationType;
+            lookupTable.overrideAllocationType = true;
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }

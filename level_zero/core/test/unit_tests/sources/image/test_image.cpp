@@ -25,6 +25,7 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
+#include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_image.h"
@@ -92,7 +93,7 @@ HWTEST_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreate
     EXPECT_EQ(imageInfo.useLocalMemory, false);
 }
 
-HWTEST_F(ImageCreate, givenBuffetTypeWhenImageCreateThenNullPtrImageIsReturned) {
+HWTEST_F(ImageCreate, givenBufferTypeWhenImageCreateThenNullPtrImageIsReturned) {
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     zeDesc.arraylevels = 1u;
@@ -940,6 +941,35 @@ HWTEST_F(ImageCreate, givenMediaBlockOptionWhenCopySurfaceStateThenSurfaceStateI
     imageHW->copySurfaceStateToSSH(&rss, 0u, NEO::BindlessImageSlot::image, true);
 
     EXPECT_EQ(surfaceState->getWidth(), (static_cast<uint32_t>(imageHW->getImageInfo().surfaceFormat->imageElementSizeInBytes) * static_cast<uint32_t>(imageHW->getImageInfo().imgDesc.imageWidth)) / sizeof(uint32_t));
+}
+
+HWTEST_F(ImageCreate, givenImageAllocationTypeExtensionWhenCreateImageThenUseProperAllocationType) {
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 10u;
+    desc.width = 10u;
+    desc.miplevels = 1u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.flags = ZE_IMAGE_FLAG_KERNEL_WRITE;
+
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+
+    ze_image_allocation_type_ext_desc_t allocationTypeDesc = {};
+    allocationTypeDesc.allocationType = NEO::AllocationType::sharedResourceCopy;
+    desc.pNext = &allocationTypeDesc;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(imageHW->getAllocation()->getAllocationType(), NEO::AllocationType::sharedResourceCopy);
 }
 
 HWTEST_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThenValidImageIsCreated) {

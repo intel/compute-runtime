@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,4 +15,5 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/image_hw.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/image_imp.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/image_imp.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/internal_core_image_ext.h
 )
