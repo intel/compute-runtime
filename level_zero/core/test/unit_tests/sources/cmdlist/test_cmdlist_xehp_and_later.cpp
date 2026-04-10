@@ -15,10 +15,12 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_encoder.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
@@ -1586,6 +1588,43 @@ void findStateCacheFlushPipeControlAfterWalker(LinearStream &cmdStream, size_t o
 }
 
 template <typename FamilyType>
+void findStallingBarrierBeforeStateCacheInvalidatePipeControlAfterWalker(LinearStream &cmdStream, size_t offset, size_t size) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using StallingBarrierType = typename FamilyType::StallingBarrierType;
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream.getCpuBase(), offset),
+        size));
+
+    auto walkerIt = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
+    ASSERT_NE(cmdList.end(), walkerIt);
+
+    auto resourceBarrierIt = find<StallingBarrierType *>(walkerIt, cmdList.end());
+
+    ASSERT_NE(cmdList.end(), resourceBarrierIt);
+
+    HardwareParse hwParse;
+    EXPECT_TRUE(hwParse.isStallingBarrier<FamilyType>(resourceBarrierIt));
+
+    auto pcItorList = findAll<PIPE_CONTROL *>(resourceBarrierIt, cmdList.end());
+
+    bool stateCacheInvalidateFound = false;
+    for (auto &cmdIt : pcItorList) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*cmdIt);
+
+        if (pipeControl->getStateCacheInvalidationEnable()) {
+            stateCacheInvalidateFound = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(stateCacheInvalidateFound);
+}
+
+template <typename FamilyType>
 void find3dBtdCommand(LinearStream &cmdStream, size_t offset, size_t size, uint64_t gpuVa, bool expectToFind) {
     using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
 
@@ -1618,6 +1657,30 @@ void find3dBtdCommand(LinearStream &cmdStream, size_t offset, size_t size, uint6
     }
 
     EXPECT_EQ(expectToFind, btdCommandFound);
+}
+
+HWTEST2_F(RayTracingCmdListTest,
+          givenKernelUsingRayTracingWhenAppendLaunchKernelIsCalledAndRTInvalidationWaRequiredThenStallingBarrierInsertedBeforeStateCacheInvalidatePipeControl,
+          RayTracingMatcher) {
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isRTInvalidationWaRequiredResult = true;
+    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->storeMakeResidentAllocations = true;
+
+    auto &cmdContainer = commandList->getCmdContainer();
+    auto &cmdStream = *cmdContainer.getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    size_t sizeBefore = cmdStream.getUsed();
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    size_t sizeAfter = cmdStream.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    findStallingBarrierBeforeStateCacheInvalidatePipeControlAfterWalker<FamilyType>(cmdStream, sizeBefore, sizeAfter - sizeBefore);
 }
 
 HWTEST2_F(RayTracingCmdListTest,
