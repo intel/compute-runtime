@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "ail_configuration_nvls.inl"
 
 #include "shared/source/ail/ail_configuration_base.inl"
 
