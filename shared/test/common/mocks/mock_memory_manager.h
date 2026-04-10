@@ -14,6 +14,9 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include <atomic>
+#include <mutex>
+
 namespace NEO {
 
 template <class T>
@@ -77,7 +80,12 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     MockMemoryManager();
     MockMemoryManager(bool enable64pages, bool enableLocalMemory);
 
-    ADDMETHOD_NOBASE(registerSysMemAlloc, AllocationStatus, AllocationStatus::Success, (GraphicsAllocation * allocation));
+    AllocationStatus registerSysMemAllocResult = AllocationStatus::Success;
+    std::atomic<uint32_t> registerSysMemAllocCalled{0u};
+    AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation) override {
+        registerSysMemAllocCalled++;
+        return registerSysMemAllocResult;
+    }
     ADDMETHOD_NOBASE(registerLocalMemAlloc, AllocationStatus, AllocationStatus::Success, (GraphicsAllocation * allocation, uint32_t rootDeviceIndex));
 
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
@@ -373,7 +381,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t memsetAllocationCalled = 0u;
     uint32_t populateOsHandlesCalled = 0u;
     uint32_t allocateGraphicsMemoryForNonSvmHostPtrCalled = 0u;
-    uint32_t freeGraphicsMemoryCalled = 0u;
+    std::atomic<uint32_t> freeGraphicsMemoryCalled{0u};
     uint32_t reserveGpuAddressOnHeapCalled = 0u;
     uint32_t freeGpuAddressCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
@@ -384,23 +392,23 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     int32_t overrideAllocateAsPackReturn = -1;
     std::vector<GraphicsAllocation *> allocationsFromExistingStorage{};
     AllocationData alignAllocationData;
-    uint32_t successAllocatedGraphicsMemoryIndex = 0u;
-    uint32_t maxSuccessAllocatedGraphicsMemoryIndex = std::numeric_limits<uint32_t>::max();
+    std::atomic<uint32_t> successAllocatedGraphicsMemoryIndex{0u};
+    std::atomic<uint32_t> maxSuccessAllocatedGraphicsMemoryIndex{std::numeric_limits<uint32_t>::max()};
     std::vector<void *> lockResourcePointers;
     std::map<uint64_t, GraphicsAllocation *> storedIpcAllocations;
-    uint32_t handleFenceCompletionCalled = 0u;
+    std::atomic<uint32_t> handleFenceCompletionCalled{0u};
     uint32_t waitForEnginesCompletionCalled = 0u;
-    uint32_t allocateGraphicsMemoryWithPropertiesCount = 0;
+    std::atomic<uint32_t> allocateGraphicsMemoryWithPropertiesCount{0};
     uint32_t setMemPrefetchCalledCount = 0;
     uint32_t setSharedSystemMemAdviseCalledCount = 0;
     uint32_t setSharedSystemAtomicAccessCalledCount = 0;
     uint32_t getSharedSystemAtomicAccessCalledCount = 0;
-    uint32_t allocateGraphicsMemoryWithPropertiesCalledCount = 0;
+    std::atomic<uint32_t> allocateGraphicsMemoryWithPropertiesCalledCount{0};
     osHandle capturedSharedHandle = 0u;
     std::vector<bool> capturedIsHostIpcAllocation;
-    bool allocationCreated = false;
+    std::atomic<bool> allocationCreated{false};
     bool allocation64kbPageCreated = false;
-    bool allocationInDevicePoolCreated = false;
+    std::atomic<bool> allocationInDevicePoolCreated{false};
     bool failInDevicePool = false;
     bool failInDevicePoolWithError = false;
     bool failInAllocateWithSizeAndAlignment = false;
@@ -443,6 +451,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool returnMockGAFromHostPool = false;
     bool storeIpcAllocations = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
+    std::mutex mockStateMutex;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;
     SubDeviceIdsVec memPrefetchSubDeviceIds;

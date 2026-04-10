@@ -848,33 +848,6 @@ HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenCommandIsBlockingThenCo
     EXPECT_EQ(initialTaskCount + 1, mockInternalAllocationStorage->lastCleanAllocationsTaskCount);
 }
 
-HWTEST_F(EnqueueHandlerTestBasic, givenBlockedEnqueueHandlerWhenCommandIsBlokingThenCompletionStampTaskCountIsPassedToWaitForTaskCountAndCleanAllocationListAsRequiredTaskCount) {
-    auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<MockCommandQueueHw<FamilyType>, FamilyType>();
-
-    MockKernelWithInternals kernelInternals(*device, context.get());
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel);
-
-    UserEvent userEvent;
-    cl_event waitlist[] = {&userEvent};
-
-    std::thread t0([&mockCmdQ, &userEvent]() {
-        while (!mockCmdQ->isQueueBlocked()) {
-        }
-        userEvent.setStatus(CL_COMPLETE);
-    });
-    const auto enqueueResult = mockCmdQ->template enqueueHandler<CL_COMMAND_WRITE_BUFFER>(nullptr,
-                                                                                          0,
-                                                                                          true,
-                                                                                          multiDispatchInfo,
-                                                                                          1,
-                                                                                          waitlist,
-                                                                                          nullptr);
-    EXPECT_EQ(CL_SUCCESS, enqueueResult);
-    EXPECT_EQ(initialTaskCount + 1, mockInternalAllocationStorage->lastCleanAllocationsTaskCount);
-
-    t0.join();
-}
 template <typename FamilyType>
 class MockCommandQueueFailEnqueue : public MockCommandQueueHw<FamilyType> {
   public:

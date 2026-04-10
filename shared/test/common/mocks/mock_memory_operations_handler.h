@@ -12,6 +12,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <algorithm>
+#include <atomic>
 
 namespace NEO {
 
@@ -123,12 +124,12 @@ class MockMemoryOperations : public MemoryOperationsHandler {
     }
 
     std::vector<GraphicsAllocation *> gfxAllocationsForMakeResident{};
-    int makeResidentCalledCount = 0;
+    std::atomic<int> makeResidentCalledCount{0};
     bool makeResidentForcePagingFenceValue = false;
-    int evictCalledCount = 0;
-    int freeCalledCount = 0;
-    uint32_t isResidentCalledCount = 0;
-    uint32_t lockCalledCount = 0;
+    std::atomic<int> evictCalledCount{0};
+    std::atomic<int> freeCalledCount{0};
+    std::atomic<uint32_t> isResidentCalledCount{0};
+    std::atomic<uint32_t> lockCalledCount{0};
     uint32_t makeResidentContextId = std::numeric_limits<uint32_t>::max();
     bool captureGfxAllocationsForMakeResident = false;
 };

@@ -960,7 +960,7 @@ HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGra
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     auto memoryManager = static_cast<MockMemoryManager *>(context.getMemoryManager());
-    auto allocCount = memoryManager->allocateGraphicsMemoryWithPropertiesCalledCount;
+    auto allocCount = memoryManager->allocateGraphicsMemoryWithPropertiesCalledCount.load();
 
     commandQ.reset(new MockCommandQueue(&context, device.get(), 0, false));
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);

@@ -85,7 +85,10 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(cons
         return NEO::MemoryManager::allocateGraphicsMemoryWithProperties(properties);
     }
 
-    recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
+    {
+        std::lock_guard<std::mutex> lock(mockStateMutex);
+        recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
+    }
     AllocationProperties adjustedProperties(properties);
     adjustedProperties.size = redundancyRatio * properties.size;
     adjustedProperties.rootDeviceIndex = properties.rootDeviceIndex;
@@ -116,7 +119,10 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(cons
         return NEO::MemoryManager::allocateGraphicsMemoryWithProperties(properties, ptr);
     }
 
-    recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
+    {
+        std::lock_guard<std::mutex> lock(mockStateMutex);
+        recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
+    }
     return OsAgnosticMemoryManager::allocateGraphicsMemoryWithProperties(properties, ptr);
 }
 
@@ -193,8 +199,11 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithAlignment(const
     if (failInAllocateWithSizeAndAlignment) {
         return nullptr;
     }
-    allocationCreated = true;
-    alignAllocationData = allocationData;
+    {
+        std::lock_guard<std::mutex> lock(mockStateMutex);
+        allocationCreated = true;
+        alignAllocationData = allocationData;
+    }
     return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
 }
 

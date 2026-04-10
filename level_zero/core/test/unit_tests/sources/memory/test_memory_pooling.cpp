@@ -744,8 +744,8 @@ TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhen
 
     auto mockMemoryOperationsHandler = static_cast<MockMemoryOperations *>(l0Devices[0]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
     auto mockMemoryOperationsHandler2 = static_cast<MockMemoryOperations *>(l0Devices[1]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
-    auto expectedMakeResidentCount = mockMemoryOperationsHandler->makeResidentCalledCount;
-    auto expectedMakeResidentCount2 = mockMemoryOperationsHandler2->makeResidentCalledCount;
+    auto expectedMakeResidentCount = mockMemoryOperationsHandler->makeResidentCalledCount.load();
+    auto expectedMakeResidentCount2 = mockMemoryOperationsHandler2->makeResidentCalledCount.load();
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[0], allocation, 1u));
     EXPECT_EQ(++expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[0], secondAlloc, 1u));
@@ -770,8 +770,8 @@ TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhen
     EXPECT_EQ(++expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[1], nonPooledPtr, 1u));
     EXPECT_EQ(++expectedMakeResidentCount2, mockMemoryOperationsHandler2->makeResidentCalledCount);
-    auto expectedEvictMemoryCallCount = mockMemoryOperationsHandler->evictCalledCount;
-    auto expectedEvictMemoryCallCount2 = mockMemoryOperationsHandler2->evictCalledCount;
+    auto expectedEvictMemoryCallCount = mockMemoryOperationsHandler->evictCalledCount.load();
+    auto expectedEvictMemoryCallCount2 = mockMemoryOperationsHandler2->evictCalledCount.load();
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[0], nonPooledPtr, 1u));
     EXPECT_EQ(++expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
 

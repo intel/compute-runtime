@@ -117,8 +117,8 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     // ptr in pool but not allocated -> error
     const auto notAllocatedPtrInPool = pooledPtrs[2];
     EXPECT_TRUE(usmMemAllocPool.isInPool(notAllocatedPtrInPool));
-    auto expectedMakeResidentCount = mockMemoryOperationsHandler->makeResidentCalledCount;
-    auto expectedEvictCount = mockMemoryOperationsHandler->evictCalledCount;
+    auto expectedMakeResidentCount = mockMemoryOperationsHandler->makeResidentCalledCount.load();
+    auto expectedEvictCount = mockMemoryOperationsHandler->evictCalledCount.load();
     EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.residencyOperation<Op::makeResident>(notAllocatedPtrInPool));
     EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.residencyOperation<Op::evict>(notAllocatedPtrInPool));
     EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.residencyOperation<Op::makeResident>(notAllocatedPtrInPool, &mockPeerDevice));
@@ -132,8 +132,8 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[0]));
     EXPECT_EQ(++expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
     auto mockMemoryOperationsHandlerPeer = static_cast<MockMemoryOperations *>(mockPeerDevice.getRootDeviceEnvironment().memoryOperationsInterface.get());
-    auto expectedMakeResidentCountPeer = mockMemoryOperationsHandlerPeer->makeResidentCalledCount;
-    auto expectedEvictCountPeer = mockMemoryOperationsHandlerPeer->evictCalledCount;
+    auto expectedMakeResidentCountPeer = mockMemoryOperationsHandlerPeer->makeResidentCalledCount.load();
+    auto expectedEvictCountPeer = mockMemoryOperationsHandlerPeer->evictCalledCount.load();
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[0], &mockPeerDevice));
     EXPECT_EQ(++expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
     EXPECT_EQ(expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
@@ -630,7 +630,7 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenUsmMemAllocPoolsManagerWhenCallingC
 }
 
 TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializationFailsForPoolWhenCallingTryAddPullThenNullptrIsReturned) {
-    memoryManager->maxSuccessAllocatedGraphicsMemoryIndex = memoryManager->successAllocatedGraphicsMemoryIndex;
+    memoryManager->maxSuccessAllocatedGraphicsMemoryIndex = memoryManager->successAllocatedGraphicsMemoryIndex.load();
     ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
     ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
     for (const auto &poolInfo : usmMemAllocPoolsManager->getPoolInfos()) {

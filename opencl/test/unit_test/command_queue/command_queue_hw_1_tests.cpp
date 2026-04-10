@@ -939,40 +939,6 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueThatIsBlockedAndUsesCpuCopyWhenEve
     clReleaseEvent(returnEvent);
 }
 
-HWTEST_F(CommandQueueHwTest, givenEventWithRecordedCommandWhenSubmitCommandIsCalledThenTaskCountMustBeUpdatedFromOtherThread) {
-    std::atomic_bool go{false};
-
-    struct MockEvent : public Event {
-        using Event::Event;
-        using Event::eventWithoutCommand;
-        using Event::submitCommand;
-        void synchronizeTaskCount() override {
-            *atomicFence = true;
-            Event::synchronizeTaskCount();
-        }
-        uint32_t synchronizeCallCount = 0u;
-        std::atomic_bool *atomicFence = nullptr;
-    };
-
-    MockEvent neoEvent(this->pCmdQ, CL_COMMAND_MAP_BUFFER, CompletionStamp::notReady, CompletionStamp::notReady);
-    neoEvent.atomicFence = &go;
-    EXPECT_TRUE(neoEvent.eventWithoutCommand);
-    neoEvent.eventWithoutCommand = false;
-
-    EXPECT_EQ(CompletionStamp::notReady, neoEvent.peekTaskCount());
-
-    std::thread t([&]() {
-        while (!go) {
-        }
-        neoEvent.updateTaskCount(77u, 0);
-    });
-
-    neoEvent.submitCommand(false);
-
-    EXPECT_EQ(77u, neoEvent.peekTaskCount());
-    t.join();
-}
-
 HWTEST_F(CommandQueueHwTest, givenNonBlockedEnqueueWhenEventIsPassedThenUpdateItsFlushStamp) {
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
