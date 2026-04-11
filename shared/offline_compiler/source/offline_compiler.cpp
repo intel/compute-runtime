@@ -483,8 +483,8 @@ int OfflineCompiler::querySupportedDevices(Ocloc::SupportedDevicesMode mode, Ocl
 }
 
 int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper) {
+    int retVal = OCLOC_SUCCESS;
     bool verbose = false;
-    bool showStats = false;
     std::string cacheDir;
 
     if (numArgs < 3) {
@@ -496,7 +496,8 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
         if (allArgs[i] == "-dir") {
             if (i + 1 >= numArgs) {
                 helper->printf("Error: Invalid command line : -dir must be followed by path to directory\n");
-                return OCLOC_INVALID_COMMAND_LINE;
+                retVal = OCLOC_INVALID_COMMAND_LINE;
+                break;
             }
             cacheDir = std::move(allArgs[++i]);
 
@@ -506,23 +507,23 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
         } else if (allArgs[i] == "-version") {
             helper->printf("Ocloc cache version: %i\n", NEO::CompilerCache::cacheVersion);
 
-        } else if (allArgs[i] == "-show-stats") {
-            showStats = true;
-
         } else if (allArgs[i] == "-help") {
             helper->printf("Usage: ocloc cache [options]\n\n"
                            "Options:\n"
-                           "  -version            Show the current compiler cache version.\n"
                            "  -dir <path>         Set the compiler cache directory.\n"
                            "  -verbose            Show verbose messages.\n"
-                           "  -show-stats         Show cache statistics. With -verbose, shows stats from all subdirectories.\n"
                            "  -help               Print this help message.\n");
             return OCLOC_SUCCESS;
 
         } else {
+            retVal = OCLOC_INVALID_COMMAND_LINE;
             helper->printf("Error: Invalid command line. Unknown argument %s\n", allArgs[i].c_str());
-            return OCLOC_INVALID_COMMAND_LINE;
+            break;
         }
+    }
+
+    if (retVal != OCLOC_SUCCESS) {
+        return retVal;
     }
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
@@ -533,21 +534,7 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
         }
     }
 
-    auto compilerCache = std::make_unique<CompilerCache>(cacheConfig);
-
-    if (showStats) {
-        if (verbose) {
-            helper->printf("Reading cache statistics from path: %s\n", cacheConfig.cacheDir.c_str());
-        }
-
-        std::string statsOutput;
-        if (!compilerCache->showStats(verbose, statsOutput)) {
-            return OCLOC_INVALID_COMMAND_LINE;
-        }
-        helper->printf("%s", statsOutput.c_str());
-    }
-
-    return OCLOC_SUCCESS;
+    return retVal;
 }
 
 struct OfflineCompiler::BuildInfo {

@@ -35,10 +35,8 @@ class CompilerCacheMockWindows : public CompilerCache {
     using CompilerCache::evictCache;
     using CompilerCache::getCachedFilePath;
     using CompilerCache::getCachedFiles;
-    using CompilerCache::getFiles;
     using CompilerCache::lockConfigFileAndReadSize;
     using CompilerCache::maxCacheDepth;
-    using CompilerCache::readStatsFromFile;
     using CompilerCache::renameTempFileBinaryToProperName;
     using CompilerCache::updateAllStats;
     using CompilerCache::updateStats;
@@ -986,20 +984,6 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenFindFirstFileAErrorFileNo
     EXPECT_EQ(0u, SysCalls::findNextFileACalled);
     EXPECT_EQ(0u, SysCalls::findCloseCalled);
     EXPECT_EQ(0u, cacheFiles.size());
-}
-
-TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenFindFirstFileAErrorPathNotFoundThenGetFilesReturnsTrue) {
-    SysCalls::findFirstFileAResults[0] = INVALID_HANDLE_VALUE;
-    SysCalls::getLastErrorResults[0] = ERROR_PATH_NOT_FOUND;
-
-    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
-    std::vector<ElementsStruct> foundFiles;
-    auto filter = [](const std::string_view &path) { return path.find("stats") != path.npos; };
-
-    EXPECT_TRUE(cache.getFiles("somePath\\cl_cache", filter, foundFiles));
-    EXPECT_EQ(0u, SysCalls::findNextFileACalled);
-    EXPECT_EQ(0u, SysCalls::findCloseCalled);
-    EXPECT_EQ(0u, foundFiles.size());
 }
 
 TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenFindNextFileAErrorNoMoreFilesThenGetCachedFilesReturnsTrue) {
@@ -2171,108 +2155,6 @@ TEST_F(CompilerCacheWindowsTest, givenCompilerCacheWhenUpdateStatsFailsThenUpdat
     EXPECT_FALSE(cache.updateAllStats("file.cl_cache", true));
 
     EXPECT_EQ(1u, cache.updateStatsCalled);
-}
-
-TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileSucceedsThenReturnsSuccessAndPopulatesCacheStats) {
-    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
-    SysCalls::lockFileExResult = TRUE;
-    SysCalls::callBaseReadFile = false;
-
-    CacheStats readStats{};
-    readStats.version = CompilerCache::cacheVersion;
-    readStats.hits = 10;
-    readStats.misses = 5;
-    SysCalls::readFileResult = TRUE;
-    SysCalls::readFileNumberOfBytesRead = sizeof(CacheStats);
-    memcpy(SysCalls::readFileBufferData, &readStats, sizeof(CacheStats));
-
-    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::success, result);
-    EXPECT_EQ(CompilerCache::cacheVersion, cacheStats.version);
-    EXPECT_EQ(10u, cacheStats.hits);
-    EXPECT_EQ(5u, cacheStats.misses);
-}
-
-TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndFileNotFoundThenReturnsNotFound) {
-    SysCalls::createFileAResults[0] = INVALID_HANDLE_VALUE;
-    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND;
-
-    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::notFound, result);
-}
-
-TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndPathNotFoundThenReturnsNotFound) {
-    SysCalls::createFileAResults[0] = INVALID_HANDLE_VALUE;
-    SysCalls::getLastErrorResults[0] = ERROR_PATH_NOT_FOUND;
-
-    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::notFound, result);
-}
-
-TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndOpenFailsWithOtherErrorThenReturnsError) {
-    SysCalls::createFileAResults[0] = INVALID_HANDLE_VALUE;
-    SysCalls::getLastErrorResults[0] = ERROR_ACCESS_DENIED;
-
-    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
-}
-
-TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndLockFailsThenReturnsError) {
-    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
-    SysCalls::lockFileExResult = FALSE;
-
-    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
-}
-
-TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndReadFailsThenReturnsError) {
-    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
-    SysCalls::lockFileExResult = TRUE;
-    SysCalls::callBaseReadFile = false;
-    SysCalls::readFileResult = FALSE;
-    SysCalls::readFileNumberOfBytesRead = 0;
-
-    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
-}
-
-TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndBytesReadWrongThenReturnsError) {
-    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
-    SysCalls::lockFileExResult = TRUE;
-    SysCalls::callBaseReadFile = false;
-    SysCalls::readFileResult = TRUE;
-    SysCalls::readFileNumberOfBytesRead = 1;
-
-    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
 }
 
 } // namespace NEO

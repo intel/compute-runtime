@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/windows/elements_struct.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/utilities/directory.h"
+#include "shared/source/utilities/io_functions.h"
 
 #include "os_inc.h"
 
@@ -69,7 +70,7 @@ bool CompilerCache::getFiles(const std::string &startPath, const std::function<b
 
         if (hFind == INVALID_HANDLE_VALUE) {
             DWORD error = NEO::SysCalls::getLastError();
-            if (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND) {
+            if (error == ERROR_FILE_NOT_FOUND) {
                 continue;
             }
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: File search failed! error code: %lu\n", NEO::SysCalls::getProcessId(), error);
@@ -531,42 +532,5 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     writeDirSizeToConfigFile(std::get<void *>(hConfigFile), directorySize);
 
     return true;
-}
-
-CompilerCache::ReadStatsResult CompilerCache::readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats) {
-    auto handle = NEO::SysCalls::createFileA(statsPath.c_str(),
-                                             GENERIC_READ,
-                                             FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                             NULL,
-                                             OPEN_EXISTING,
-                                             FILE_ATTRIBUTE_NORMAL,
-                                             NULL);
-    if (handle == INVALID_HANDLE_VALUE) {
-        auto lastError = SysCalls::getLastError();
-        if (lastError == ERROR_FILE_NOT_FOUND || lastError == ERROR_PATH_NOT_FOUND) {
-            return ReadStatsResult::notFound;
-        }
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening existing stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), lastError);
-        return ReadStatsResult::error;
-    }
-
-    OVERLAPPED overlapped = {0};
-    auto lockResult = NEO::SysCalls::lockFileEx(handle, 0, 0, MAXDWORD, MAXDWORD, &overlapped);
-    if (!lockResult) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Locking stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
-        NEO::SysCalls::closeHandle(handle);
-        return ReadStatsResult::error;
-    }
-
-    DWORD bytesRead = 0;
-    auto readResult = NEO::SysCalls::readFile(handle, &cacheStats, sizeof(cacheStats), &bytesRead, NULL);
-    if (!readResult || bytesRead != sizeof(cacheStats)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Reading stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
-        unlockFileAndClose(handle);
-        return ReadStatsResult::error;
-    }
-
-    unlockFileAndClose(handle);
-    return ReadStatsResult::success;
 }
 } // namespace NEO

@@ -29,7 +29,6 @@ class CompilerCacheMockLinux : public CompilerCache {
     using CompilerCache::getCachedFiles;
     using CompilerCache::getFiles;
     using CompilerCache::lockConfigFileAndReadSize;
-    using CompilerCache::readStatsFromFile;
     using CompilerCache::renameTempFileBinaryToProperName;
     using CompilerCache::updateAllStats;
     using CompilerCache::updateStats;
@@ -2416,94 +2415,3 @@ class CompilerCacheMockLinuxGetCachedFile : public CompilerCacheMockLinux {
     int getCachedFilePathCalled = 0;
     std::string getCachedFilePathResult = "/home/cl_cache/f/i/file.cl_cache";
 };
-
-namespace ReadStatsFromFilePass {
-CacheStats globalStats{};
-
-decltype(NEO::SysCalls::sysCallsOpen) mockOpen = [](const char *pathname, int flags) -> int {
-    return 1;
-};
-
-decltype(NEO::SysCalls::sysCallsPread) mockPread = [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-    if (count == sizeof(CacheStats)) {
-        memcpy(buf, &globalStats, sizeof(CacheStats));
-        return sizeof(CacheStats);
-    }
-    return -1;
-};
-} // namespace ReadStatsFromFilePass
-
-TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileSucceedsThenReturnsSuccessAndPopulatesCacheStats) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, ReadStatsFromFilePass::mockOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> preadBackup(&NEO::SysCalls::sysCallsPread, ReadStatsFromFilePass::mockPread);
-
-    ReadStatsFromFilePass::globalStats = {};
-    ReadStatsFromFilePass::globalStats.version = CompilerCache::cacheVersion;
-    ReadStatsFromFilePass::globalStats.hits = 10;
-    ReadStatsFromFilePass::globalStats.misses = 5;
-
-    CompilerCacheMockLinux cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("/home/cl_cache/stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::success, result);
-    EXPECT_EQ(CompilerCache::cacheVersion, cacheStats.version);
-    EXPECT_EQ(10u, cacheStats.hits);
-    EXPECT_EQ(5u, cacheStats.misses);
-}
-
-TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndOpenFailsWithEnoentThenReturnsNotFound) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        errno = ENOENT;
-        return -1;
-    });
-
-    CompilerCacheMockLinux cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("/home/cl_cache/stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::notFound, result);
-}
-
-TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndOpenFailsWithOtherErrorThenReturnsError) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        errno = EACCES;
-        return -1;
-    });
-
-    CompilerCacheMockLinux cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("/home/cl_cache/stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
-}
-
-TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndFlockFailsThenReturnsError) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, ReadStatsFromFilePass::mockOpen);
-    VariableBackup<int> flockRetValBackup(&NEO::SysCalls::flockRetVal, -1);
-
-    CompilerCacheMockLinux cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("/home/cl_cache/stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
-}
-
-TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndPreadFailsThenReturnsError) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, ReadStatsFromFilePass::mockOpen);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> preadBackup(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        errno = EPERM;
-        return -1;
-    });
-
-    CompilerCacheMockLinux cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-
-    CacheStats cacheStats{};
-    auto result = cache.readStatsFromFile("/home/cl_cache/stats", cacheStats);
-
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
-}
