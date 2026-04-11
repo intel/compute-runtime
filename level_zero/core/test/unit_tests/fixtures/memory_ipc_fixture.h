@@ -45,7 +45,6 @@ struct DriverHandleGetFdMock : public L0::DriverHandle {
 struct ContextFdMock : public L0::Context {
     ContextFdMock(DriverHandleGetFdMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
-        settings.enableIpcHandleSharing = true;
     }
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
                                const ze_device_mem_alloc_desc_t *deviceDesc,
@@ -75,7 +74,6 @@ struct MemoryExportImportTest : public ::testing::Test {
 
     void TearDown() override {
     }
-    DebugManagerStateRestore restorer;
     std::unique_ptr<DriverHandleGetFdMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
@@ -142,7 +140,6 @@ struct DriverHandleGetWinHandleMock : public L0::DriverHandle {
 struct ContextHandleMock : public L0::Context {
     ContextHandleMock(DriverHandleGetWinHandleMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
-        settings.enableIpcHandleSharing = true;
     }
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
                                const ze_device_mem_alloc_desc_t *deviceDesc,
@@ -171,7 +168,6 @@ struct MemoryExportImportWinHandleTest : public ::testing::Test {
     void TearDown() override {
         driverHandle.reset(nullptr);
     }
-    DebugManagerStateRestore restorer;
     std::unique_ptr<DriverHandleGetWinHandleMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
@@ -190,7 +186,6 @@ struct DriverHandleGetIpcHandleMock : public DriverHandle {
 struct ContextGetIpcHandleMock : public L0::Context {
     ContextGetIpcHandleMock(DriverHandleGetIpcHandleMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
-        settings.enableIpcHandleSharing = true;
     }
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
                                const ze_device_mem_alloc_desc_t *deviceDesc,
@@ -332,7 +327,6 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
 struct ContextIpcMock : public L0::Context {
     ContextIpcMock(DriverHandle *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
-        settings.enableIpcHandleSharing = true;
     }
 
     ze_result_t getIpcMemHandle(const void *ptr, void *pNext, ze_ipc_mem_handle_t *pIpcHandle) override;

@@ -69,8 +69,6 @@ ze_result_t DriverHandle::createContext(const ze_context_desc_t *desc,
         }
     }
 
-    this->enableIpcHandleSharing = context->settings.enableIpcHandleSharing;
-
     *phContext = context->toHandle();
     context->initDeviceHandles(numDevices, phDevices);
     if (numDevices == 0) {
@@ -143,9 +141,7 @@ ze_result_t DriverHandle::getProperties(ze_driver_properties_t *properties) {
 }
 
 ze_result_t DriverHandle::getIPCProperties(ze_driver_ipc_properties_t *pIPCProperties) {
-    if (this->enableIpcHandleSharing) {
-        pIPCProperties->flags = ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL;
-    }
+    pIPCProperties->flags = ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL;
 
     return ZE_RESULT_SUCCESS;
 }

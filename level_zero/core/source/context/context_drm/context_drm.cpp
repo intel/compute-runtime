@@ -68,10 +68,6 @@ uint8_t Context::isOpaqueHandleSupported(IpcHandleType *handleType) {
     }
 }
 
-bool Context::isIPCHandleSharingSupported() {
-    return true;
-}
-
 bool Context::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) {
     if (exportableMemory) {
         return true;

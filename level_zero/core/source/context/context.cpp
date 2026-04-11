@@ -85,7 +85,6 @@ Context::Context(DriverHandle *driverHandle) {
     // Using Class::method syntax to make it explicit which class method is called and
     // avoid clang-tidy warning.
     settings.useOpaqueHandle = Context::isOpaqueHandleSupported(&settings.handleType);
-    settings.enableIpcHandleSharing = Context::isIPCHandleSharingSupported();
 }
 
 Context::~Context() {
@@ -915,10 +914,6 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
                                           void *pNext,
                                           uint32_t *numIpcHandles,
                                           ze_ipc_mem_handle_t *pIpcHandles) {
-
-    if (!settings.enableIpcHandleSharing) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (!allocData) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1044,11 +1039,6 @@ ze_result_t Context::openIpcMemHandle(ze_device_handle_t hDevice,
     uint64_t cacheID;
     bool compressedMemory = false;
     void *reservedHandleData = nullptr;
-
-    if (!settings.enableIpcHandleSharing) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory);
 
     NEO::AllocationType allocationType = NEO::AllocationType::unknown;

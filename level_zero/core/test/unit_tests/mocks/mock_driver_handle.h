@@ -25,7 +25,6 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::DriverHandle> : public ::L0::DriverHandle {
     using ::L0::DriverHandle::devices;
-    using ::L0::DriverHandle::enableIpcHandleSharing;
     using ::L0::DriverHandle::enableProgramDebugging;
     using ::L0::DriverHandle::ipcSocketServer;
     using ::L0::DriverHandle::stagingBufferManager;
