@@ -1264,5 +1264,153 @@ HWTEST_F(InOrderIpcTests, givenEventWithTrackedIpcHandlesWhenUpdateInOrderExecSt
     EXPECT_LT(events[0]->exportedIpcServerHandles.size(), handleCountAfterFullExport);
 }
 
+HWTEST_F(InOrderIpcTests, givenOpaqueHandleWhenOpenIpcHandleThenCacheIdsAreStored) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
+    auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(exporterHelper.sharableEventDataHelper);
+
+    events[0]->isSharableCounterBased = true;
+    assignInternalHandle(immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
+    assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation());
+    assignInternalHandle(sharableEventDataHelper.allocation);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    ze_event_handle_t importedEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zeIpcData, &importedEventHandle));
+
+    auto importedEvent = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(importedEventHandle));
+    auto &importedHelper = static_cast<WhiteboxInOrderExecEventHelper &>(importedEvent->getInOrderExecEventHelper());
+
+    EXPECT_NE(0u, importedHelper.getCommunicationAllocCacheId());
+    EXPECT_NE(0u, importedHelper.getImported2WayDeviceCacheId());
+
+    zeEventCounterBasedCloseIpcHandle(importedEventHandle);
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
+}
+
+HWTEST_F(InOrderIpcTests, givenCacheIdsWhenUpdateInOrderExecStateWithDifferentAddressThenDeviceHostCacheIdsAreCleared) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(2, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    enableEventSharing(*events[0]);
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    auto &helper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
+
+    const uint64_t testDeviceCacheId = 0x1234;
+    const uint64_t testHostCacheId = 0x5678;
+    helper.setImported2WayCacheIds(testDeviceCacheId, testHostCacheId);
+
+    EXPECT_EQ(testDeviceCacheId, helper.getImported2WayDeviceCacheId());
+    EXPECT_EQ(testHostCacheId, helper.getImported2WayHostCacheId());
+
+    auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
+
+    auto newInOrderExecInfo = immCmdList2->inOrderExecInfo;
+    EXPECT_NE(newInOrderExecInfo->getBaseDeviceAddress(), events[0]->getInOrderExecEventHelper().getBaseDeviceAddress());
+
+    events[0]->updateInOrderExecState(newInOrderExecInfo, 1, 0);
+
+    EXPECT_EQ(0u, helper.getImported2WayDeviceCacheId());
+    EXPECT_EQ(0u, helper.getImported2WayHostCacheId());
+}
+
+HWTEST_F(InOrderIpcTests, givenValidEventDataWhenImportCbAllocationsCalledThenReturnsAllocsAndCacheIds) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
+    auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(exporterHelper.sharableEventDataHelper);
+
+    events[0]->isSharableCounterBased = true;
+    assignInternalHandle(immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
+    assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation());
+    assignInternalHandle(sharableEventDataHelper.allocation);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    auto exporterEventDataPtr = exporterHelper.getInOrderExecEventDataPtr();
+    ASSERT_NE(nullptr, exporterEventDataPtr);
+    EXPECT_NE(0u, exporterEventDataPtr->deviceAllocIpcHandle);
+
+    auto result = Event::importCbAllocationsForIpcFor2WaySharing(*device, *exporterEventDataPtr, true);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result.result);
+    EXPECT_NE(0u, result.deviceCacheId);
+    EXPECT_NE(nullptr, result.deviceAlloc);
+    EXPECT_NE(nullptr, result.hostAlloc);
+
+    auto memoryManager = device->getNEODevice()->getMemoryManager();
+    memoryManager->freeGraphicsMemory(result.deviceAlloc);
+    if (result.deviceAlloc != result.hostAlloc) {
+        memoryManager->freeGraphicsMemory(result.hostAlloc);
+    }
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
+}
+
+HWTEST_F(InOrderIpcTests, givenSocketSharingWhenGetIpcHandleCalledThenHandlesAreTracked) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    enableEventSharing(*events[0]);
+
+    auto defaultContext = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
+    defaultContext->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    defaultContext->settings.handleType = IpcHandleType::fdHandle;
+    EXPECT_TRUE(defaultContext->isSocketHandleSharingSupported());
+
+    EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    EXPECT_FALSE(events[0]->exportedIpcServerHandles.empty());
+}
+
+HWTEST_F(InOrderIpcTests, givenCachedImportHandleWhenMultipleGetAndClearThenRefCountIsCorrect) {
+    auto *driverHandle = device->getDriverHandle();
+    auto &cache = driverHandle->opaqueHandleImportCache;
+
+    const uint64_t testCacheId = 0xABCD;
+    const uint64_t testFd = 42;
+
+    EXPECT_EQ(0u, cache.count(testCacheId));
+
+    driverHandle->setCachedImportHandle(testCacheId, testFd);
+    EXPECT_EQ(1u, cache.count(testCacheId));
+    EXPECT_EQ(1u, cache[testCacheId].refCount);
+
+    uint64_t outHandle = 0;
+    EXPECT_TRUE(driverHandle->tryGetCachedImportHandle(testCacheId, outHandle));
+    EXPECT_EQ(2u, cache[testCacheId].refCount);
+
+    driverHandle->clearCachedImportHandle(testCacheId);
+    EXPECT_EQ(1u, cache.count(testCacheId));
+    EXPECT_EQ(1u, cache[testCacheId].refCount);
+
+    driverHandle->clearCachedImportHandle(testCacheId);
+    EXPECT_EQ(0u, cache.count(testCacheId));
+}
+
 } // namespace ult
 } // namespace L0

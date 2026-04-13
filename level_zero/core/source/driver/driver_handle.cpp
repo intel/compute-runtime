@@ -1164,13 +1164,44 @@ bool DriverHandle::tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHa
     std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
     auto cacheIt = opaqueHandleImportCache.find(cacheID);
     if (cacheIt != opaqueHandleImportCache.end()) {
-        importHandle = cacheIt->second;
+        int dupFd = duplicateFd(cacheIt->second.fd);
+        if (dupFd < 0) {
+            return false;
+        }
+        cacheIt->second.refCount++;
+        importHandle = static_cast<uint64_t>(dupFd);
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Reusing cached import handle %lu for cache ID %lu\n",
-                     importHandle, cacheID);
+                     "Reusing cached import handle %lu (dup'd fd %d, refCount %u) for cache ID %lu\n",
+                     importHandle, dupFd, cacheIt->second.refCount, cacheID);
         return true;
     }
     return false;
+}
+
+void DriverHandle::setCachedImportHandle(uint64_t cacheID, uint64_t importHandle) {
+    std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
+    int dupFd = duplicateFd(static_cast<int>(importHandle));
+    if (dupFd >= 0) {
+        opaqueHandleImportCache[cacheID] = CachedImportEntry{dupFd, 1};
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Cached import handle (dup'd fd %d) for cache ID %lu\n",
+                     dupFd, cacheID);
+    }
+}
+
+void DriverHandle::clearCachedImportHandle(uint64_t cacheID) {
+    if (cacheID == 0) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
+    auto it = opaqueHandleImportCache.find(cacheID);
+    if (it != opaqueHandleImportCache.end()) {
+        it->second.refCount--;
+        if (it->second.refCount == 0) {
+            closeFd(it->second.fd);
+            opaqueHandleImportCache.erase(it);
+        }
+    }
 }
 
 } // namespace L0

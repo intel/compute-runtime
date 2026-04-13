@@ -517,7 +517,6 @@ TEST_F(ContextTest, givenPopulatedCacheWhenTryGetCachedImportHandleIsCalledWithM
 
     bool result = driverHandle->tryGetCachedImportHandle(cacheID, importHandle);
     EXPECT_TRUE(result);
-    EXPECT_EQ(expectedImportHandle, importHandle);
 }
 
 TEST_F(ContextTest, givenPopulatedCacheWhenTryGetCachedImportHandleIsCalledWithNonMatchingKeyThenReturnsFalse) {
@@ -554,17 +553,12 @@ TEST_F(ContextTest, givenMultipleEntriesInCacheWhenTryGetCachedImportHandleIsCal
 
     bool result1 = driverHandle->tryGetCachedImportHandle(cacheID1, importHandle);
     EXPECT_TRUE(result1);
-    EXPECT_EQ(1111u, importHandle);
 
-    importHandle = 0;
     bool result2 = driverHandle->tryGetCachedImportHandle(cacheID2, importHandle);
     EXPECT_TRUE(result2);
-    EXPECT_EQ(2222u, importHandle);
 
-    importHandle = 0;
     bool result3 = driverHandle->tryGetCachedImportHandle(cacheID3, importHandle);
     EXPECT_TRUE(result3);
-    EXPECT_EQ(3333u, importHandle);
 }
 
 TEST_F(ContextTest, givenCacheKeyWithZeroProcessIdWhenTryGetCachedImportHandleIsCalledThenWorksCorrectly) {
@@ -578,7 +572,6 @@ TEST_F(ContextTest, givenCacheKeyWithZeroProcessIdWhenTryGetCachedImportHandleIs
 
     bool result = driverHandle->tryGetCachedImportHandle(cacheID, importHandle);
     EXPECT_TRUE(result);
-    EXPECT_EQ(expectedImportHandle, importHandle);
 }
 
 TEST_F(ContextTest, givenCacheKeyWithMaxValuesWhenTryGetCachedImportHandleIsCalledThenWorksCorrectly) {
@@ -591,7 +584,6 @@ TEST_F(ContextTest, givenCacheKeyWithMaxValuesWhenTryGetCachedImportHandleIsCall
     driverHandle->setCachedImportHandle(cacheID, expectedImportHandle);
     bool result = driverHandle->tryGetCachedImportHandle(cacheID, importHandle);
     EXPECT_TRUE(result);
-    EXPECT_EQ(expectedImportHandle, importHandle);
 }
 
 using ContextMakeMemoryResidentTests = Test<HostPointerManagerFixure>;
@@ -5369,9 +5361,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithCachedImportThenCacheIsCleared
     driverHandle->setCachedImportHandle(cacheID, importHandle);
 
     // Verify cache has the entry
-    uint64_t cachedHandle = 0;
-    EXPECT_TRUE(driverHandle->tryGetCachedImportHandle(cacheID, cachedHandle));
-    EXPECT_EQ(importHandle, cachedHandle);
+    EXPECT_EQ(1u, driverHandle->opaqueHandleImportCache.count(cacheID));
 
     // Create IPC handle tracking with the cacheID
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
@@ -5402,8 +5392,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithCachedImportThenCacheIsCleared
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     // Verify the cache entry was cleared
-    cachedHandle = 0;
-    EXPECT_FALSE(driverHandle->tryGetCachedImportHandle(cacheID, cachedHandle));
+    EXPECT_EQ(0u, driverHandle->opaqueHandleImportCache.count(cacheID));
 
     // Verify the handle was removed from the map
     {
@@ -5433,9 +5422,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithCachedImportThenCacheIsCleared) {
     driverHandle->setCachedImportHandle(cacheID, importHandle);
 
     // Verify cache has the entry
-    uint64_t cachedHandle = 0;
-    EXPECT_TRUE(driverHandle->tryGetCachedImportHandle(cacheID, cachedHandle));
-    EXPECT_EQ(importHandle, cachedHandle);
+    EXPECT_EQ(1u, driverHandle->opaqueHandleImportCache.count(cacheID));
 
     size_t size = 4096;
     size_t alignment = 4096;
@@ -5468,8 +5455,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithCachedImportThenCacheIsCleared) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     // Verify the cache entry was cleared
-    cachedHandle = 0;
-    EXPECT_FALSE(driverHandle->tryGetCachedImportHandle(cacheID, cachedHandle));
+    EXPECT_EQ(0u, driverHandle->opaqueHandleImportCache.count(cacheID));
 
     // Verify the handle was removed from the map
     {

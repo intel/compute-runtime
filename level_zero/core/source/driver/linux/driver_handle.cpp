@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/ipc_socket_server.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 namespace NEO {
 
@@ -75,6 +76,14 @@ std::string DriverHandle::getIpcSocketServerPath() {
         return ipcSocketServer->getSocketPath();
     }
     return "";
+}
+
+int DriverHandle::duplicateFd(int fd) {
+    return NEO::SysCalls::dup(fd);
+}
+
+void DriverHandle::closeFd(int fd) {
+    NEO::SysCalls::close(fd);
 }
 
 } // namespace L0

@@ -687,7 +687,7 @@ int dup(int oldfd) {
     if (sysCallsDup != nullptr) {
         return sysCallsDup(oldfd);
     }
-    return 0;
+    return oldfd;
 }
 
 pid_t getpid() {

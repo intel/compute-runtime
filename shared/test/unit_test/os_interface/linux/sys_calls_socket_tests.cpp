@@ -233,7 +233,7 @@ TEST_F(SysCallsSocketTest, givenSetsockoptWhenMockSetThenReturnsMockValue) {
 TEST_F(SysCallsSocketTest, givenDupWhenCalledThenCallCounterIncreases) {
     int result = NEO::SysCalls::dup(5);
     EXPECT_EQ(1, SysCalls::dupCalled);
-    EXPECT_EQ(0, result);
+    EXPECT_EQ(5, result);
 }
 
 TEST_F(SysCallsSocketTest, givenDupWhenMockSetThenReturnsMockValue) {

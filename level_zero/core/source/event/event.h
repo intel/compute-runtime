@@ -113,6 +113,14 @@ inline constexpr uint32_t maxKernelSplit = 3;
 inline constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketConstants::preferredPacketCount;
 } // namespace EventPacketsCount
 
+struct ImportedCbAllocationsForIpc {
+    NEO::GraphicsAllocation *deviceAlloc = nullptr;
+    NEO::GraphicsAllocation *hostAlloc = nullptr;
+    uint64_t deviceCacheId = 0;
+    uint64_t hostCacheId = 0;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+};
+
 struct EventDescriptor {
     NEO::MultiGraphicsAllocation *eventPoolAllocation = nullptr;
     const void *extensions = nullptr;
@@ -183,7 +191,7 @@ struct Event : _ze_event_handle_t {
 
     ze_result_t getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData);
 
-    static ze_result_t importCbAllocationsForIpcFor2WaySharing(Device &device, const NEO::InOrderExecEventData &importedInOrderExecEventData, NEO::GraphicsAllocation *&outDeviceAlloc, NEO::GraphicsAllocation *&outHostAlloc, bool allowEventWithoutAssignedData);
+    static ImportedCbAllocationsForIpc importCbAllocationsForIpcFor2WaySharing(Device &device, const NEO::InOrderExecEventData &importedInOrderExecEventData, bool allowEventWithoutAssignedData);
 
     inline ze_event_handle_t toHandle() { return this; }
 
@@ -408,6 +416,8 @@ struct Event : _ze_event_handle_t {
     ze_result_t exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAssignedData);
     bool isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa) const;
     void unregisterExportedIpcHandles();
+    void clearDeviceHostIpcCacheEntries();
+    void clearCommunicationAllocIpcCacheEntry();
     MOCKABLE_VIRTUAL uint64_t getCompletionTimeout() const { return completionTimeoutMs; }
 
     void unsetCmdQueue();

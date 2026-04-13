@@ -275,6 +275,16 @@ class InOrderExecEventHelper : public NonCopyableClass {
     void set2WayIpcSharingEnabled(bool enabled) { twoWayIpcSharing = enabled; }
     bool is2WayIpcSharingEnabled() const { return twoWayIpcSharing; }
 
+    void setImported2WayCacheIds(uint64_t deviceCacheId, uint64_t hostCacheId) {
+        imported2WayDeviceCacheId = deviceCacheId;
+        imported2WayHostCacheId = hostCacheId;
+    }
+    uint64_t getImported2WayDeviceCacheId() const { return imported2WayDeviceCacheId; }
+    uint64_t getImported2WayHostCacheId() const { return imported2WayHostCacheId; }
+
+    void setCommunicationAllocCacheId(uint64_t cacheId) { communicationAllocCacheId = cacheId; }
+    uint64_t getCommunicationAllocCacheId() const { return communicationAllocCacheId; }
+
     void setLatestImported2WayIpcData(uint64_t deviceCounterHandle, size_t deviceCounterOffset, unsigned int exporterPid) {
         imported2WayDeviceCounterHandle = deviceCounterHandle;
         imported2WayCounterOffset = deviceCounterOffset;
@@ -307,6 +317,9 @@ class InOrderExecEventHelper : public NonCopyableClass {
     uint64_t incrementValue = 0;
     uint64_t aggregatedEventUsageCounter = 0;
     uint64_t imported2WayDeviceCounterHandle = 0;
+    uint64_t imported2WayDeviceCacheId = 0;
+    uint64_t imported2WayHostCacheId = 0;
+    uint64_t communicationAllocCacheId = 0;
     size_t imported2WayCounterOffset = 0;
     unsigned int imported2WayExportedPid = 0;
     bool twoWayIpcSharing = false;

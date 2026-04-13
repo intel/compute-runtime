@@ -7,6 +7,8 @@
 
 #include "level_zero/core/source/driver/driver_handle.h"
 
+#include "shared/source/helpers/debug_helpers.h"
+
 namespace NEO {
 
 void IpcSocketServerDeleter::operator()(IpcSocketServer *ptr) const {
@@ -34,6 +36,15 @@ bool DriverHandle::unregisterIpcHandleWithServer(uint64_t handleId) {
 
 std::string DriverHandle::getIpcSocketServerPath() {
     return "";
+}
+
+int DriverHandle::duplicateFd(int fd) {
+    DEBUG_BREAK_IF(true);
+    return fd;
+}
+
+void DriverHandle::closeFd(int fd) {
+    DEBUG_BREAK_IF(true);
 }
 
 } // namespace L0

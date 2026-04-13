@@ -1520,13 +1520,15 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndValidCa
     uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
 
     // Pre-populate IPC map with an entry for the handle that will be imported
-    // Since pidfd/socket is disabled via caching below, the importHandle will be the exportHandle
+    // tryGetCachedImportHandle returns a dup'd fd, so the IPC map
+    // entry must be keyed by the dup'd value that importFdHandle will receive
     auto &ipcMap = driverHandle->getIPCHandleMap();
     IpcHandleTracking *ipcHandleData = new IpcHandleTracking();
-    ipcHandleData->cacheID = 0; // Will be updated by getMemHandlePtr
-    ipcMap[exportHandle] = ipcHandleData;
+    ipcHandleData->cacheID = 0;         // Will be updated by getMemHandlePtr
+    uint64_t dupFdValue = exportHandle; // ULT mock SysCalls::dup returns oldfd
+    ipcMap[dupFdValue] = ipcHandleData;
 
-    // Pre-populate cache to skip pidfd/socket logic and use exportHandle directly as importHandle
+    // Pre-populate cache to skip pidfd/socket logic
     driverHandle->setCachedImportHandle(cacheID, exportHandle);
 
     // Call getMemHandlePtr - should succeed and store cacheID in IPC map
@@ -1535,13 +1537,13 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndValidCa
     EXPECT_NE(nullptr, result);
 
     // Verify cacheID was stored in the IPC map entry
-    auto ipcIter = ipcMap.find(exportHandle);
+    auto ipcIter = ipcMap.find(dupFdValue);
     ASSERT_NE(ipcIter, ipcMap.end());
     EXPECT_EQ(cacheID, ipcIter->second->cacheID);
 
     // Cleanup
     delete ipcHandleData;
-    ipcMap.erase(exportHandle);
+    ipcMap.erase(dupFdValue);
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndCacheIDButHandleNotInMapThenCacheIDIsNotStored) {
