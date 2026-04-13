@@ -45,6 +45,18 @@ HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, B
     return CreateEventA(lpEventAttributes, bManualReset, bInitialState, lpName);
 }
 
+BOOL resetEvent(HANDLE hEvent) {
+    return ResetEvent(hEvent);
+}
+
+BOOL setEvent(HANDLE hEvent) {
+    return SetEvent(hEvent);
+}
+
+DWORD waitForMultipleObjects(DWORD nCount, CONST HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds) {
+    return WaitForMultipleObjects(nCount, lpHandles, bWaitAll, dwMilliseconds);
+}
+
 DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
     return ::WaitForSingleObject(hHandle, dwMilliseconds);
 }

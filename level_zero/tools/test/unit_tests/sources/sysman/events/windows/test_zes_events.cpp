@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 
 #include "level_zero/tools/source/sysman/events/events_imp.h"
 #include "level_zero/tools/source/sysman/events/windows/os_events_imp.h"
@@ -75,8 +78,13 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+
+    VariableBackup<DWORD> waitReturnBackup(&NEO::SysCalls::waitForMultipleObjectsReturnValue, WAIT_TIMEOUT);
+    VariableBackup<size_t> waitCalledBackup(&NEO::SysCalls::waitForMultipleObjectsCalled, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 100u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(1u, NEO::SysCalls::waitForMultipleObjectsCalled);
+    EXPECT_EQ(100u, NEO::SysCalls::waitForMultipleObjectsLastTimeout);
     delete[] phDevices;
     delete[] pDeviceEvents;
 }
@@ -89,10 +97,11 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
 
-    pKmdSysManager->signalEvent(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH);
-
+    VariableBackup<size_t> waitCalledBackup(&NEO::SysCalls::waitForMultipleObjectsCalled, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), INFINITE, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(1u, NEO::SysCalls::waitForMultipleObjectsCalled);
+    EXPECT_EQ(static_cast<DWORD>(INFINITE), NEO::SysCalls::waitForMultipleObjectsLastTimeout);
     delete[] phDevices;
     delete[] pDeviceEvents;
 }
@@ -105,15 +114,16 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
 
-    pKmdSysManager->signalEvent(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH);
+    VariableBackup<size_t> waitCalledBackup(&NEO::SysCalls::waitForMultipleObjectsCalled, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), INFINITE, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(1u, NEO::SysCalls::waitForMultipleObjectsCalled);
+    EXPECT_EQ(static_cast<DWORD>(INFINITE), NEO::SysCalls::waitForMultipleObjectsLastTimeout);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), INFINITE, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(1u, numDeviceEvents);
-
-    pKmdSysManager->signalEvent(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), INFINITE, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(2u, NEO::SysCalls::waitForMultipleObjectsCalled);
+    EXPECT_EQ(static_cast<DWORD>(INFINITE), NEO::SysCalls::waitForMultipleObjectsLastTimeout);
 
     delete[] phDevices;
     delete[] pDeviceEvents;

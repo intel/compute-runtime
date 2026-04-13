@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,7 @@ class WddmEventsImp : public OsEvents, NEO::NonCopyableAndNonMovableClass {
     bool eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
     ze_result_t eventRegister(zes_event_type_flags_t events) override;
     WddmEventsImp(OsSysman *pOsSysman);
-    ~WddmEventsImp() {
-        CloseHandle(exitHandle);
-    }
+    ~WddmEventsImp() override;
 
   private:
     void registerEvents(zes_event_type_flags_t eventId, uint32_t requestId);

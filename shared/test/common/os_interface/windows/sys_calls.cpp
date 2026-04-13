@@ -193,6 +193,24 @@ HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, B
     return reinterpret_cast<HANDLE>(dummyHandle);
 }
 
+BOOL resetEvent(HANDLE hEvent) {
+    return TRUE;
+}
+
+BOOL setEvent(HANDLE hEvent) {
+    return TRUE;
+}
+
+DWORD waitForMultipleObjectsLastTimeout = 0u;
+DWORD waitForMultipleObjectsReturnValue = 0u;
+size_t waitForMultipleObjectsCalled = 0u;
+
+DWORD waitForMultipleObjects(DWORD nCount, CONST HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds) {
+    waitForMultipleObjectsCalled++;
+    waitForMultipleObjectsLastTimeout = dwMilliseconds;
+    return waitForMultipleObjectsReturnValue;
+}
+
 DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
     if (sysCallsWaitForSingleObject) {
         return sysCallsWaitForSingleObject(hHandle, dwMilliseconds);

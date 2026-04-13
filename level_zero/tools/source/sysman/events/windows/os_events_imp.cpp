@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/events/windows/os_events_imp.h"
+
+#include "shared/source/os_interface/windows/sys_calls.h"
 
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
@@ -26,13 +28,13 @@ void WddmEventsImp::registerEvents(zes_event_type_flags_t eventId, uint32_t requ
     event.requestId = requestId;
     event.id = eventId;
 
-    event.windowsHandle = CreateEvent(NULL, FALSE, FALSE, NULL);
+    event.windowsHandle = NEO::SysCalls::createEvent(NULL, FALSE, FALSE, NULL);
     memcpy_s(request.dataBuffer, sizeof(HANDLE), &event.windowsHandle, sizeof(HANDLE));
 
     status = pKmdSysManager->requestSingle(request, response);
 
     if (status != ZE_RESULT_SUCCESS) {
-        CloseHandle(event.windowsHandle);
+        NEO::SysCalls::closeHandle(event.windowsHandle);
         return;
     }
 
@@ -45,7 +47,7 @@ void WddmEventsImp::unregisterEvents() {
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
-    SetEvent(exitHandle);
+    NEO::SysCalls::setEvent(exitHandle);
 
     request.commandId = KmdSysman::Command::UnregisterEvent;
     request.componentId = KmdSysman::Component::InterfaceProperties;
@@ -60,7 +62,7 @@ void WddmEventsImp::unregisterEvents() {
         status = pKmdSysManager->requestSingle(request, response);
 
         if (status == ZE_RESULT_SUCCESS) {
-            CloseHandle(event.windowsHandle);
+            NEO::SysCalls::closeHandle(event.windowsHandle);
         }
     }
 
@@ -91,7 +93,7 @@ ze_result_t WddmEventsImp::eventRegister(zes_event_type_flags_t events) {
         registerEvents(ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH, KmdSysman::Events::ExitTDR);
     }
 
-    ResetEvent(exitHandle);
+    NEO::SysCalls::resetEvent(exitHandle);
 
     return (eventList.size() == 0) ? ZE_RESULT_ERROR_UNSUPPORTED_FEATURE : ZE_RESULT_SUCCESS;
 }
@@ -117,9 +119,9 @@ bool WddmEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout
     events[eventList.size()] = exitHandle;
 
     // Setting the last handle for the exit handle, then the exit handle is signaled, it breaks from the wait.
-    uint32_t signaledEvent = WaitForMultipleObjects(static_cast<uint32_t>(eventList.size() + 1), events, FALSE, static_cast<uint32_t>(timeout));
+    uint32_t signaledEvent = NEO::SysCalls::waitForMultipleObjects(static_cast<uint32_t>(eventList.size() + 1), events, FALSE, static_cast<uint32_t>(timeout));
 
-    ResetEvent(exitHandle);
+    NEO::SysCalls::resetEvent(exitHandle);
     // Was a timeout, exit event loop.
     if (signaledEvent == WAIT_TIMEOUT) {
         return true;
@@ -136,11 +138,15 @@ bool WddmEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout
     return true;
 }
 
+WddmEventsImp::~WddmEventsImp() {
+    NEO::SysCalls::closeHandle(exitHandle);
+}
+
 WddmEventsImp::WddmEventsImp(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
-    exitHandle = CreateEvent(NULL, FALSE, FALSE, NULL);
-    ResetEvent(exitHandle);
+    exitHandle = NEO::SysCalls::createEvent(NULL, FALSE, FALSE, NULL);
+    NEO::SysCalls::resetEvent(exitHandle);
 }
 
 OsEvents *OsEvents::create(OsSysman *pOsSysman) {

@@ -90,5 +90,8 @@ extern BOOL (*sysCallsVerQueryValueW)(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID
 extern DWORD (*sysCallsGetLastError)();
 extern BOOL (*sysCallsRegisterWaitForSingleObject)(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK callback, PVOID context, ULONG dwMilliseconds, ULONG dwFlags);
 extern BOOL (*sysCallsUnregisterWait)(HANDLE waitHandle);
+extern DWORD waitForMultipleObjectsLastTimeout;
+extern DWORD waitForMultipleObjectsReturnValue;
+extern size_t waitForMultipleObjectsCalled;
 } // namespace SysCalls
 } // namespace NEO

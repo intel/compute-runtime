@@ -25,6 +25,9 @@ enum class ThreadPriority {
 
 DWORD getLastError();
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName);
+BOOL resetEvent(HANDLE hEvent);
+BOOL setEvent(HANDLE hEvent);
+DWORD waitForMultipleObjects(DWORD nCount, CONST HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds);
 DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
 BOOL registerWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK callback, PVOID context, ULONG dwMilliseconds, ULONG dwFlags);
 BOOL unregisterWait(HANDLE waitHandle);
