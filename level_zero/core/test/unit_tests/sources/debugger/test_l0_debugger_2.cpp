@@ -391,9 +391,10 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledComman
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
     ASSERT_NE(nullptr, commandList);
 
-    for (uint32_t count = 0; count < 2048; count++) {
+    for (uint32_t count = 0; count < 8; count++) {
         auto result = commandList->appendMemoryCopy(&dst, &src, sizeof(size_t), nullptr, 0, nullptr, copyParams);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+        commandList->getCmdContainer().getCommandStream()->overrideMaxSize(commandList->getCmdContainer().getCommandStream()->getUsed());
     }
     commandList->destroy();
 }

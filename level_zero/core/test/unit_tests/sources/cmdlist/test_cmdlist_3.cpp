@@ -638,11 +638,12 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenMemoryCopyRegionWith
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
 
-    for (auto i = 0; i < 2000; i++) {
+    for (auto i = 0; i < 8; i++) {
         ret = commandList0->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
                                                    srcBuffer, &sr, width, 0, events[0], 1, &events[1], copyParams);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+        commandList0->getCmdContainer().getCommandStream()->overrideMaxSize(commandList0->getCmdContainer().getCommandStream()->getUsed());
     }
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
 HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned) {
