@@ -4271,7 +4271,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
 
     if (signalEvent) {
         const bool dcFLushEvent = getDcFlushRequired(signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
-        return !(dcFLushEvent || signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased() || this->isPostSyncSkippedOnLatestInOrderOperation);
+        return !(dcFLushEvent || signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased() || this->isPostSyncSkippedOnLatestInOrderOperation || Event::isAggregatedEvent(signalEvent));
     }
 
     return true;

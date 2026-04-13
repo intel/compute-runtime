@@ -3067,6 +3067,56 @@ HWTEST_F(InOrderCmdListTests, givenCbEventWhenAppendSignalEventCalledThenFallbac
     EXPECT_EQ(initialTaskCount + 1, immCmdList->cmdQImmediate->getTaskCount());
 }
 
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenAppendSignalThenDoNotSkipInOrderBarrier) {
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+
+    uint32_t incValue = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_GT(incValue, 0u);
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto event = createExternalSyncStorageEvent(incValue * 2, incValue, devAddress);
+    auto &inOrderExecHelper = event->getInOrderExecEventHelper();
+    auto *eventData = inOrderExecHelper.getEventData();
+
+    EXPECT_TRUE(Event::isAggregatedEvent(event.get()));
+    EXPECT_EQ(inOrderExecHelper.getIncrementValue(), incValue);
+    EXPECT_EQ(eventData->counterValue, incValue * 2);
+    EXPECT_FALSE(cmdList->isSkippingInOrderBarrierAllowed(event->toHandle(), 0, nullptr));
+
+    cmdList->appendSignalEvent(event->toHandle(), false);
+
+    EXPECT_EQ(inOrderExecHelper.getIncrementValue(), incValue);
+    EXPECT_EQ(eventData->counterValue, incValue * 2);
+
+    context->freeMem(devAddress);
+}
+
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenAppendSignalOnImmediateCmdListThenDoNotSkipInOrderBarrier) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    uint32_t incValue = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_GT(incValue, 0u);
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto event = createExternalSyncStorageEvent(incValue * 2, incValue, devAddress);
+    auto &inOrderExecHelper = event->getInOrderExecEventHelper();
+    auto *eventData = inOrderExecHelper.getEventData();
+
+    EXPECT_TRUE(Event::isAggregatedEvent(event.get()));
+    EXPECT_EQ(inOrderExecHelper.getIncrementValue(), incValue);
+    EXPECT_EQ(eventData->counterValue, incValue * 2);
+    EXPECT_FALSE(immCmdList->isSkippingInOrderBarrierAllowed(event->toHandle(), 0, nullptr));
+
+    immCmdList->appendSignalEvent(event->toHandle(), false);
+
+    EXPECT_EQ(inOrderExecHelper.getIncrementValue(), incValue);
+    EXPECT_EQ(eventData->counterValue, incValue * 2);
+
+    context->freeMem(devAddress);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventCbThenClearOnHstAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsXeHpcCore) {
     class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
       public:

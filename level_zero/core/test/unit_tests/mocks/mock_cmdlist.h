@@ -109,6 +109,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isInOrderNonWalkerSignalingRequired;
     using BaseClass::isQwordInOrderCounter;
     using BaseClass::isRelaxedOrderingDispatchAllowed;
+    using BaseClass::isSkippingInOrderBarrierAllowed;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::isTimestampEventForMultiTile;
@@ -249,6 +250,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isCopyOffloadAllowed;
     using BaseClass::isInOrderNonWalkerSignalingRequired;
     using BaseClass::isQwordInOrderCounter;
+    using BaseClass::isSkippingInOrderBarrierAllowed;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::isWalkerPostSyncSkipEnabled;
