@@ -52,8 +52,8 @@ DEVICE(0xE215, BmgHwConfig)
 DEVICE(0xE216, BmgHwConfig)
 DEVICE(0xE220, BmgHwConfig)
 DEVICE(0xE221, BmgHwConfig)
-DEVICE(0xE222, BmgHwConfig)
-DEVICE(0xE223, BmgHwConfig)
+NAMEDDEVICE(0xE222, BmgHwConfig, "Intel(R) Arc(TM) Pro B65 Graphics")
+NAMEDDEVICE(0xE223, BmgHwConfig, "Intel(R) Arc(TM) Pro B70 Graphics")
 #endif
 #ifdef SUPPORT_LNL
 NAMEDDEVICE(0x6420, LnlHwConfig, "Intel(R) Graphics")
