@@ -49,7 +49,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isSingleDispatchRequiredForMultiCCS, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isStateCacheInvalidationWaRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isAvailableSemaphore64, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isRTInvalidationWaRequired, bool, false, ());
 
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const override {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};
