@@ -266,9 +266,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         }
     }
     TaskCountType getResidencyTaskCount(uint32_t contextId) const {
-        if (contextId >= usageInfos.size()) {
-            return objectNotResident;
-        }
         return usageInfos[contextId].residencyTaskCount;
     }
     void releaseResidencyInOsContext(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }

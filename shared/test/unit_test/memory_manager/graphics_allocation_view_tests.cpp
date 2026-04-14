@@ -275,8 +275,3 @@ TEST_F(GraphicsAllocationViewTest, whenCheckingIsUsedByManyOsContextsOnViewThenD
     EXPECT_TRUE(parentAllocation->isUsedByManyOsContexts());
     EXPECT_TRUE(view->isUsedByManyOsContexts());
 }
-
-TEST_F(GraphicsAllocationViewTest, givenInvalidContextIdWhenGetResidencyTaskCountThenReturnObjectNotResident) {
-    auto invalidContextId = static_cast<uint32_t>(MemoryManager::maxOsContextCount + 1);
-    EXPECT_EQ(GraphicsAllocation::objectNotResident, parentAllocation->getResidencyTaskCount(invalidContextId));
-}
