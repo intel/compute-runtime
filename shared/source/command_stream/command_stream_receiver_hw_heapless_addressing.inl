@@ -359,9 +359,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForHeaplessPrologue(Device 
     if (debuggingEnabled || isMidThreadPreemption) {
         size += sizeof(STATE_CONTEXT_DATA_BASE_ADDRESS);
     }
-    if (debuggingEnabled) {
-        size += getCmdSizeForExceptions();
-    }
+    size += getCmdSizeForExceptions();
 
     size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, false);
     size += getCmdSizeForActivePartitionConfig();
@@ -404,10 +402,10 @@ void CommandStreamReceiverHw<GfxFamily>::programHeaplessStateProlog(Device &devi
     bool isDebuggerActive = device.getDebugger() != nullptr;
     if (isDebuggerActive) {
         PreemptionHelper::programCsrBaseAddress<GfxFamily>(commandStream, device, device.getDebugSurface());
-        this->programExceptions(commandStream, device);
     } else {
         PreemptionHelper::programCsrBaseAddress<GfxFamily>(commandStream, device, getPreemptionAllocation());
     }
+    this->programExceptions(commandStream, device);
 
     setPreemptionMode(device.getPreemptionMode());
     if (!perQueueStateOnly) {

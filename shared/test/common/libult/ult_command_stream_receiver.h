@@ -110,6 +110,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::programVFEState;
     using BaseClass::requiresInstructionCacheFlush;
     using BaseClass::rootDeviceIndex;
+    using BaseClass::shouldProgramExceptions;
     using BaseClass::skipPreemptionAllocation;
     using BaseClass::sshState;
     using BaseClass::staticWorkPartitioningEnabled;
@@ -130,6 +131,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::debugConfirmationFunction;
     using BaseClass::CommandStreamReceiver::debugPauseStateAddress;
     using BaseClass::CommandStreamReceiver::debugSurface;
+    using BaseClass::CommandStreamReceiver::device;
     using BaseClass::CommandStreamReceiver::deviceBitfield;
     using BaseClass::CommandStreamReceiver::dispatchMode;
     using BaseClass::CommandStreamReceiver::doubleSbaWa;

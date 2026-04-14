@@ -211,3 +211,13 @@ TEST(BcsConstantsTests, givenBlitConstantsThenTheyHaveDesiredValues) {
     EXPECT_EQ(BlitterConstants::maxBlitSetWidth, 0x1FF80u);
     EXPECT_EQ(BlitterConstants::maxBlitSetHeight, 0x1FFC0u);
 }
+
+HWTEST2_F(UltCommandStreamReceiverTest, WhenExceptionsRelatedFunctionsAreCalledThenNothingHappens, IsAtMostXe3pCore) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_FALSE(commandStreamReceiver.shouldProgramExceptions());
+    EXPECT_EQ(0u, commandStreamReceiver.getCmdSizeForExceptions());
+
+    auto initialUsed = commandStreamReceiver.getCS(0).getUsed();
+    commandStreamReceiver.programExceptions(commandStreamReceiver.getCS(0), *pDevice);
+    EXPECT_EQ(initialUsed, commandStreamReceiver.getCS(0).getUsed());
+}

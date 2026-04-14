@@ -1417,6 +1417,11 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogue(const Di
 }
 
 template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::shouldProgramExceptions() const {
+    return false;
+}
+
+template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programExceptions(LinearStream &csr, Device &device) {
 }
 
@@ -2175,12 +2180,12 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitS
             flushData.contextOneTimeInit = true;
             flushData.estimatedSize += PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
         }
-        flushData.estimatedSize += this->getCmdSizeForExceptions();
     } else if (this->getPreemptionMode() == PreemptionMode::Initial) {
         flushData.contextOneTimeInit = true;
         flushData.estimatedSize += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(device.getPreemptionMode(), this->getPreemptionMode());
         flushData.estimatedSize += PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
     }
+    flushData.estimatedSize += this->getCmdSizeForExceptions();
 
     if (!this->isStateSipSent) {
         size_t size = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
@@ -2208,7 +2213,6 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
                                                                device,
                                                                device.getDebugSurface());
             this->setCsrSurfaceProgrammed(true);
-            this->programExceptions(csrStream, device);
         } else if (this->getPreemptionMode() == PreemptionMode::Initial) {
             PreemptionHelper::programCmdStream<GfxFamily>(csrStream, device.getPreemptionMode(), this->getPreemptionMode(), this->getPreemptionAllocation());
             PreemptionHelper::programCsrBaseAddress<GfxFamily>(csrStream,
@@ -2216,6 +2220,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
                                                                getPreemptionAllocation());
             this->setPreemptionMode(device.getPreemptionMode());
         }
+        this->programExceptions(csrStream, device);
 
         programStateSip(csrStream, device);
     }
