@@ -69,7 +69,7 @@ bool CompilerCache::getFiles(const std::string &startPath, const std::function<b
                 return true;
             }
 
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [findFiles failure]: Opening directory %s failed! errno: %d\n", NEO::SysCalls::getProcessId(), currentDir.path.c_str(), error);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening directory %s failed! errno: %d\n", NEO::SysCalls::getProcessId(), currentDir.path.c_str(), error);
             return false;
         }
 
@@ -84,7 +84,7 @@ bool CompilerCache::getFiles(const std::string &startPath, const std::function<b
             struct stat statBuf = {};
             if (NEO::SysCalls::stat(fullPath.c_str(), &statBuf) != 0) {
                 int error = errno;
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [findFiles failure]: Reading file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Reading file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
                 NEO::SysCalls::closedir(dir);
                 return false;
             }
@@ -105,7 +105,7 @@ bool CompilerCache::getFiles(const std::string &startPath, const std::function<b
         }
         int error = errno;
         if (error != 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [findFiles failure]: Reading directory entries failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Reading directory entries failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
             NEO::SysCalls::closedir(dir);
             return false;
         }
@@ -287,6 +287,37 @@ bool CompilerCache::updateStats(const std::string &statsPath, bool hit) {
 
     unlockFileAndClose(fd);
     return true;
+}
+
+CompilerCache::ReadStatsResult CompilerCache::readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats) {
+    auto fd = NEO::SysCalls::open(statsPath.c_str(), O_RDONLY);
+    if (fd < 0) {
+        int error = errno;
+        if (error == ENOENT) {
+            return ReadStatsResult::notFound;
+        }
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening existing stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        return ReadStatsResult::error;
+    }
+
+    const int lockErr = NEO::SysCalls::flock(fd, LOCK_SH);
+    if (lockErr < 0) {
+        int error = errno;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Locking stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        NEO::SysCalls::close(fd);
+        return ReadStatsResult::error;
+    }
+
+    ssize_t readBytes = NEO::SysCalls::pread(fd, &cacheStats, sizeof(cacheStats), 0);
+    if (readBytes != sizeof(cacheStats)) {
+        int error = errno;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Reading stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        unlockFileAndClose(fd);
+        return ReadStatsResult::error;
+    }
+
+    unlockFileAndClose(fd);
+    return ReadStatsResult::success;
 }
 
 void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) {
