@@ -1291,6 +1291,26 @@ TEST_F(SingleBufferTest, givenUseHostPtrFlagWhenForceZeroCopyFlagIsSetThenAddFor
     }
 }
 
+TEST_F(SingleBufferTest, givenFillMemObjWithZerosWhenCreateBufferThenFillSubmitted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.FillMemObjWithZeros.set(1);
+
+    auto context = std::make_unique<MockContext>(pClDevice);
+    cl_int retVal = CL_SUCCESS;
+
+    EXPECT_EQ(context->getSpecialQueue(0)->taskCount, 0u);
+    auto prevTaskCount = context->getSpecialQueue(0)->getGpgpuCommandStreamReceiver().peekTaskCount();
+
+    cl_mem_flags flags = CL_MEM_FORCE_HOST_MEMORY_INTEL;
+    auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), nullptr, flags, 0, testBufferSizeInBytes, nullptr, retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(nullptr, buffer);
+
+    EXPECT_EQ(context->getSpecialQueue(0)->taskCount, prevTaskCount + 1u);
+
+    clReleaseMemObject(buffer);
+}
+
 // Parameterized test that tests buffer creation with all flags that should be
 // valid with a valid host ptr
 cl_mem_flags validHostPtrFlags[] = {

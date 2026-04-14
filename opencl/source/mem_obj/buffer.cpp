@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,6 +178,14 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
 
     if (retVal == CL_SUCCESS) {
         pBuffer->storeProperties(properties);
+
+        if (!expectHostPtr) {
+            if (debugManager.flags.FillMemObjWithZeros.get() == 1 || debugManager.flags.FillMemObjWithZeros.get() == 3) {
+                uint8_t pattern = 0;
+                pContext->getSpecialQueue(pContext->getDevices()[0]->getRootDeviceIndex())->enqueueFillBuffer(pBuffer, &pattern, sizeof(pattern), 0, size, 0, nullptr, nullptr);
+                clFinish(pContext->getSpecialQueue(pContext->getDevices()[0]->getRootDeviceIndex()));
+            }
+        }
     }
 
     return pBuffer;

@@ -126,6 +126,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceAuxTranslationMode, -1, "Override AUX Trans
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGpuAddressSpace, -1, "Set GPU address space range in bits; ignore when -1")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideRegionCount, -1, "-1: default, >=1 override region count to given value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkgroupSize, -1, "Set max workgroup size; ignore when -1")
+DECLARE_DEBUG_VARIABLE(int32_t, FillMemObjWithZeros, -1, "Fill images and buffers with zeros after creation, 1: buffers only, 2: images only, 3: both")
 DECLARE_DEBUG_VARIABLE(int32_t, DoCpuCopyOnReadBuffer, -1, "Override CPU copy behavior for buffer reads; values = -1: default, 0: do not use CPU copy, 1: triggers CPU copy path for Read Buffer calls, only supported for some basic use cases (no blocked user events in dependencies tree)")
 DECLARE_DEBUG_VARIABLE(int32_t, DoCpuCopyOnWriteBuffer, -1, "Override CPU copy behavior for buffer writes; values = -1: default, 0: do not use CPU copy, 1: triggers CPU copy path for Write Buffer calls, only supported for some basic use cases (no blocked user events in dependencies tree)")
 DECLARE_DEBUG_VARIABLE(int32_t, PauseOnEnqueue, -1, "-1: default, -2: always, x: pause on enqueue number x and ask for user confirmation before and after execution, counted from 0")

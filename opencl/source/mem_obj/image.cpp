@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1352,6 +1352,17 @@ cl_mem Image::validateAndCreateImage(cl_context context,
 
     if (errcodeRet == CL_SUCCESS) {
         image->storeProperties(properties);
+
+        if (!areHostPtrFlagsUsed) {
+            if (debugManager.flags.FillMemObjWithZeros.get() > 1) {
+                int32_t fillColor[4] = {0};
+                size_t origin[3] = {0, 0, 0};
+                size_t region[3] = {imageDesc->image_width, imageDesc->image_height, imageDesc->image_depth};
+
+                pContext->getSpecialQueue(pContext->getDevices()[0]->getRootDeviceIndex())->enqueueFillImage(image, fillColor, origin, region, 0, 0, nullptr);
+                clFinish(pContext->getSpecialQueue(pContext->getDevices()[0]->getRootDeviceIndex()));
+            }
+        }
     }
 
     return image;
