@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ using namespace NEO;
 
 using XeHPAndLaterSamplerTest = Test<ClDeviceFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterSamplerTest, GivenDefaultThenLowQualityFilterIsDisabled) {
+HWTEST2_F(XeHPAndLaterSamplerTest, GivenDefaultThenLowQualityFilterIsDisabled, IsAtMostXe3pCore) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     auto state = FamilyType::cmdInitSamplerState;
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());

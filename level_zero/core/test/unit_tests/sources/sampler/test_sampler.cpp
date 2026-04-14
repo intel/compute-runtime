@@ -243,7 +243,7 @@ HWTEST2_F(SamplerInitTest, givenValidHandleReturnUnitialized, IsXeHpcCore) {
 struct SupportsLowQualityFilterSampler {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-        return NEO::ToGfxCoreFamily<productFamily>::get() >= IGFX_GEN12LP_CORE && NEO::ToGfxCoreFamily<productFamily>::get() != IGFX_XE_HPC_CORE;
+        return NEO::ToGfxCoreFamily<productFamily>::get() != IGFX_XE_HPC_CORE && NEO::ToGfxCoreFamily<productFamily>::get() <= IGFX_XE3P_CORE;
     }
 };
 
