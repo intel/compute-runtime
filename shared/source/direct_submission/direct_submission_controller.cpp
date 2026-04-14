@@ -93,6 +93,7 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
 }
 
 void DirectSubmissionController::notifyNewSubmission(const CommandStreamReceiver *csr) {
+    std::lock_guard<std::mutex> lock(condVarMutex);
     ++activeSubmissionsCount;
     directSubmissions[const_cast<CommandStreamReceiver *>(csr)].isActive = true;
     condVar.notify_one();
