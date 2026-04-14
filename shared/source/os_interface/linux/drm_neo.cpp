@@ -1535,7 +1535,7 @@ bool Drm::isVmBindAvailable() {
     return bindAvailable;
 }
 
-uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled, bool isSystemMemory) const {
+uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled, bool isSystemMemory, bool forceCoherent) const {
     if ((debugManager.flags.OverridePatIndexForSystemMemory.get() != -1) && isSystemMemory) {
         return static_cast<uint64_t>(debugManager.flags.OverridePatIndexForSystemMemory.get());
     }
@@ -1573,6 +1573,8 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         usageType = gmm->getResourceUsageType();
         compressed = gmm->isCompressionEnabled();
         cacheable = gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable;
+    } else if (forceCoherent) {
+        cacheable = true;
     }
 
     uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, compressed, cacheable);

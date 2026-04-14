@@ -5638,6 +5638,55 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetMemAdviseWithCachePolicyIsCa
     }
 }
 
+TEST_F(DrmAllocationTests, givenForceCoherentTrueWhenUncachedThenCacheableIsForcedTrue) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceAllResourcesUncached.set(1);
+
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    drm.vmBindPatIndexProgrammingSupported = true;
+
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+
+    drm.getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true, true);
+    EXPECT_TRUE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
+}
+
+TEST_F(DrmAllocationTests, givenForceCoherentFalseWhenUncachedThenCacheableIsNotForced) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceAllResourcesUncached.set(1);
+
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    drm.vmBindPatIndexProgrammingSupported = true;
+
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+
+    drm.getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true, false);
+    EXPECT_FALSE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
+}
+
+TEST_F(DrmAllocationTests, givenForceCoherentTrueWithGmmWhenUncachedThenGmmCacheableTakesPrecedence) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceAllResourcesUncached.set(1);
+
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    drm.vmBindPatIndexProgrammingSupported = true;
+
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto gmm = std::make_unique<Gmm>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper(),
+                                     nullptr, 4096, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 0;
+
+    drm.getPatIndex(gmm.get(), AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true, true);
+    EXPECT_FALSE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
+}
+
 TEST_F(DrmAllocationTests, givenBoWhenMarkingForCaptureThenBosAreMarked) {
     const uint32_t rootDeviceIndex = 0u;
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
@@ -5663,7 +5712,7 @@ TEST_F(DrmAllocationTests, givenUncachedTypeWhenForceOverridePatIndexForUncached
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
 
-    EXPECT_EQ(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false));
+    EXPECT_EQ(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false));
 }
 
 TEST_F(DrmAllocationTests, givenCachedTypeWhenForceOverridePatIndexForUncachedTypesThenPatIndexIsNotOverrideByFlag) {
@@ -5677,7 +5726,7 @@ TEST_F(DrmAllocationTests, givenCachedTypeWhenForceOverridePatIndexForUncachedTy
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
 
-    EXPECT_NE(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false));
+    EXPECT_NE(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false));
 }
 
 TEST_F(DrmAllocationTests, givenUncachedTypeWhenForceOverridePatIndexForCachedTypesThenPatIndexIsNotOverrideByFlag) {
@@ -5691,7 +5740,7 @@ TEST_F(DrmAllocationTests, givenUncachedTypeWhenForceOverridePatIndexForCachedTy
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
 
-    EXPECT_NE(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false));
+    EXPECT_NE(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false));
 }
 
 TEST_F(DrmAllocationTests, givenCachedTypeWhenForceOverridePatIndexForCachedTypesThenForcedByFlagPatIndexIsReturned) {
@@ -5705,7 +5754,7 @@ TEST_F(DrmAllocationTests, givenCachedTypeWhenForceOverridePatIndexForCachedType
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
 
-    EXPECT_EQ(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false));
+    EXPECT_EQ(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false));
 }
 
 TEST_F(DrmAllocationTests, givenUpstreamDebuggerWhenSetIsaDebugDataHandleCalledThenHandleIsSetAndReturnedCorrectly) {
@@ -8541,7 +8590,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenPatIndex
     EXPECT_EQ(isVmBindPatIndexProgrammingSupported, mock->isVmBindPatIndexProgrammingSupported());
 
     if (isVmBindPatIndexProgrammingSupported) {
-        auto expectedIndex = mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);
+        auto expectedIndex = mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false);
 
         EXPECT_NE(CommonConstants::unsupportedPatIndex, drmAllocation->getBO()->peekPatIndex());
         EXPECT_EQ(expectedIndex, drmAllocation->getBO()->peekPatIndex());
@@ -8577,7 +8626,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
             gmm->setCompressionEnabled(true);
             gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 1;
 
-            mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);
+            mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false);
 
             EXPECT_TRUE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
             EXPECT_TRUE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
@@ -8587,7 +8636,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
             gmm->setCompressionEnabled(false);
             gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 0;
 
-            mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);
+            mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false);
 
             EXPECT_FALSE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
             EXPECT_FALSE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);

@@ -122,6 +122,7 @@ class IoctlHelper {
     virtual bool isChunkingAvailable() = 0;
     virtual bool isVmBindAvailable() = 0;
     virtual bool isVmBindDecompressAvailable(uint32_t vmId) { return false; }
+    virtual bool isUserptrCoherencyRequired() const { return false; }
     virtual int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) = 0;
     virtual uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) = 0;
     virtual CacheRegion closAlloc(CacheLevel cacheLevel) = 0;

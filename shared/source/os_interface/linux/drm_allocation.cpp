@@ -232,7 +232,7 @@ bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regi
         return false;
     }
 
-    auto patIndex = drm->getPatIndex(getDefaultGmm(), allocationType, regionIndex, CachePolicy::writeBack, true, isSystemMemoryPool);
+    auto patIndex = drm->getPatIndex(getDefaultGmm(), allocationType, regionIndex, CachePolicy::writeBack, true, isSystemMemoryPool, false);
 
     if (fragmentsStorage.fragmentCount > 0) {
         for (uint32_t i = 0; i < fragmentsStorage.fragmentCount; i++) {

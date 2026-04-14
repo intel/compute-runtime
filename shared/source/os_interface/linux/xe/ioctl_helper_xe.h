@@ -88,6 +88,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::optional<uint32_t> getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
+    bool isUserptrCoherencyRequired() const override { return true; }
     int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
     bool isEuStallSupported() override;
     uint32_t getEuStallFdParameter() override;
