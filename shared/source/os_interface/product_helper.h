@@ -6,12 +6,11 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/release_helper/release_helper.h"
 
 #include "aubstream/engine_node.h"
 #include "neo_igfxfmid.h"
+#include "supported_num_grfs.h"
 
 #include <memory>
 #include <optional>

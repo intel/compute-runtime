@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 

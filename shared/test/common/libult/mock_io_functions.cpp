@@ -7,6 +7,11 @@
 
 #include "shared/test/common/mocks/mock_io_functions.h"
 
+#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/string.h"
+
+#include <cstring>
+
 namespace NEO {
 namespace IoFunctions {
 fopenFuncPtr fopenPtr = &mockFopen;
@@ -46,6 +51,17 @@ uint32_t mockVsnprintfCalled = 0U;
 const char *openCLDriverName = "igdrcl.dll";
 
 std::unordered_map<std::string, std::string> *mockableEnvValues = nullptr;
+
+char *getEnvironmentVariable(const char *name) {
+
+    char *environmentVariable = getenvPtr(name);
+
+    if (strnlen_s(environmentVariable, CommonConstants::maxAllowedEnvVariableSize) < CommonConstants::maxAllowedEnvVariableSize) {
+        return environmentVariable;
+    }
+
+    return nullptr;
+}
 
 } // namespace IoFunctions
 } // namespace NEO

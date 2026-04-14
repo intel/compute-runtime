@@ -76,6 +76,7 @@ namespace NEO {
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 } // namespace NEO
 using namespace NEO;
+#include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/test/common/test_macros/heapless_matchers.h"
 using namespace std::chrono_literals;
 

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/test/common/helpers/default_hw_info.h"

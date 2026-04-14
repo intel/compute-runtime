@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/enum_cast.h"
 #include "shared/source/sku_info/sku_info_base.h"
 
 #include <cstdint>
@@ -21,21 +22,6 @@ struct EngineControl;
 using EngineControlContainer = std::vector<EngineControl>;
 class Device;
 using DeviceVector = std::vector<std::unique_ptr<Device>>;
-
-// std::to_underlying is C++23 feature
-template <typename EnumT>
-constexpr auto toUnderlying(EnumT scopedEnumValue) {
-    static_assert(std::is_enum_v<EnumT>);
-    static_assert(!std::is_convertible_v<EnumT, std::underlying_type_t<EnumT>>);
-
-    return static_cast<std::underlying_type_t<EnumT>>(scopedEnumValue);
-}
-
-template <typename EnumT>
-    requires(std::is_enum_v<EnumT> && !std::is_convertible_v<EnumT, std::underlying_type_t<EnumT>>)
-constexpr auto toEnum(std::underlying_type_t<EnumT> region) {
-    return static_cast<EnumT>(region);
-}
 
 template <typename T, typename... Ts>
 constexpr bool isAnyOfType = (std::is_same_v<T, Ts> || ...);

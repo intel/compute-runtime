@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/string.h"
 
 #include <cstdarg>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -70,16 +70,7 @@ inline bool getEnvToBool(const char *name) {
     return (0 == strcmp("1", env));
 }
 
-inline char *getEnvironmentVariable(const char *name) {
-
-    char *environmentVariable = getenvPtr(name);
-
-    if (strnlen_s(environmentVariable, CommonConstants::maxAllowedEnvVariableSize) < CommonConstants::maxAllowedEnvVariableSize) {
-        return environmentVariable;
-    }
-
-    return nullptr;
-}
+char *getEnvironmentVariable(const char *name);
 
 #ifdef _WIN32
 inline int makedir(const char *dirName) {

@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/engine_control.h"
 
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/os_context.h"
 
 namespace NEO {

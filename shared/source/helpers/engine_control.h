@@ -6,13 +6,14 @@
  */
 
 #pragma once
-#include "shared/source/helpers/engine_node_helper.h"
+#include <cstdint>
 
 namespace aub_stream {
 enum EngineType : uint32_t;
 }
 
 namespace NEO {
+enum class EngineUsage : uint32_t;
 class OsContext;
 class CommandStreamReceiver;
 

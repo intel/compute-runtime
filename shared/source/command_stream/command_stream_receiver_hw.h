@@ -13,6 +13,7 @@
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/dirty_state_helpers.h"
+#include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 

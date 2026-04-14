@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 
 namespace NEO {

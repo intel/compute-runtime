@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/hw_walk_order.h"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 template <typename Family>

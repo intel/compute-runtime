@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {

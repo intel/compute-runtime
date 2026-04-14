@@ -8,6 +8,7 @@
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
