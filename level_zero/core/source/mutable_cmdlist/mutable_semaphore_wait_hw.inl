@@ -18,19 +18,6 @@ template <typename GfxFamily>
 GpuAddress MutableSemaphoreWaitHw<GfxFamily>::commandAddressRange = maxNBitValue(64);
 
 template <typename GfxFamily>
-void MutableSemaphoreWaitHw<GfxFamily>::setSemaphoreAddress(GpuAddress semaphoreAddress) {
-    using SemaphoreAddress = typename SemaphoreWait::SEMAPHOREADDRESS;
-    constexpr uint32_t semaphoreAddressIndex = 2;
-
-    semaphoreAddress &= MutableSemaphoreWaitHw<GfxFamily>::commandAddressRange;
-    semaphoreAddress += this->offset;
-    semaphoreAddress = (semaphoreAddress >> SemaphoreAddress::SEMAPHOREADDRESS_BIT_SHIFT << SemaphoreAddress::SEMAPHOREADDRESS_BIT_SHIFT);
-
-    auto semWaitCmd = reinterpret_cast<SemaphoreWait *>(semWait);
-    memcpy_s(&semWaitCmd->getRawData(semaphoreAddressIndex), sizeof(GpuAddress), &semaphoreAddress, sizeof(GpuAddress));
-}
-
-template <typename GfxFamily>
 void MutableSemaphoreWaitHw<GfxFamily>::noop() {
     memset(semWait, 0, sizeof(SemaphoreWait));
 }
@@ -56,12 +43,6 @@ void MutableSemaphoreWaitHw<GfxFamily>::restoreWithSemaphoreAddress(GpuAddress s
                                                                 CompareOperation::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
                                                                 false, true, this->qwordData, qwordIndirect, false, this->useSemaphore64bCmd);
     }
-}
-
-template <typename GfxFamily>
-void MutableSemaphoreWaitHw<GfxFamily>::setSemaphoreValue(uint64_t value) {
-    auto semWaitCmd = reinterpret_cast<SemaphoreWait *>(semWait);
-    semWaitCmd->setSemaphoreDataDword(static_cast<uint32_t>(value));
 }
 
 } // namespace L0::MCL

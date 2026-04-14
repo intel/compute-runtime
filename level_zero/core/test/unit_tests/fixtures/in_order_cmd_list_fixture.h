@@ -439,6 +439,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         auto hwInfo = *NEO::defaultHwInfo;
         hwInfo.featureTable.ftrBcsInfo = 0b111111111;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
+        UnitTestSetter::setupSemaphore64bCmdSupport(restore, hwInfo.platform.eRenderCoreFamily);
         auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
 
         NEO::DeviceVector devices;

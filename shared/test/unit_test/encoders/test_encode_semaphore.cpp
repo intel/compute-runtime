@@ -17,6 +17,11 @@ using CommandEncodeSemaphore = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    if (HasSemaphore64bCmd<FamilyType>) {
+        GTEST_SKIP();
+    }
+
     bool useSemaphore64 = false;
 
     MI_SEMAPHORE_WAIT miSemaphore1;

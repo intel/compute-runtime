@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "level_zero/core/source/mutable_cmdlist/mutable_load_register_imm_hw.inl"
 #include "level_zero/core/source/mutable_cmdlist/mutable_pipe_control_hw.inl"
 #include "level_zero/core/source/mutable_cmdlist/mutable_semaphore_wait_hw.inl"
-#include "level_zero/core/source/mutable_cmdlist/mutable_semaphore_wait_hw_xe3p.inl"
+#include "level_zero/core/source/mutable_cmdlist/mutable_semaphore_wait_hw_xe3p_and_later.inl"
 #include "level_zero/core/source/mutable_cmdlist/mutable_store_data_imm_hw.inl"
 #include "level_zero/core/source/mutable_cmdlist/mutable_store_register_mem_hw.inl"
 

@@ -60,7 +60,7 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
         }
     }
 
-    if (defaultHwInfo->platform.eRenderCoreFamily == IGFX_XE3P_CORE) {
+    if (defaultHwInfo->platform.eRenderCoreFamily >= IGFX_XE3P_CORE) {
         neoDevice->deviceInfo.semaphore64bCmdSupport = true;
     }
 }

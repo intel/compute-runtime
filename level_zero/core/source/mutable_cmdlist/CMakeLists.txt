@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -55,6 +55,7 @@ if(SUPPORT_XE3_AND_BEFORE)
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_hw_from_xe_hpg_to_xe3.inl
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker_hw_from_xe_hpg_to_xe3.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_semaphore_wait_hw_from_xe_hpg_to_xe3.inl
   )
 endif()
 
@@ -63,7 +64,7 @@ if(SUPPORT_XE3P_AND_LATER)
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_hw_xe3p_and_later.inl
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker_hw_xe3p_and_later.inl
-                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_semaphore_wait_hw_xe3p.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_semaphore_wait_hw_xe3p_and_later.inl
   )
 endif()
 

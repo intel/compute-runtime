@@ -29,7 +29,7 @@ void DeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     pTagMemory = commandStreamReceiver.getTagAddress();
     ASSERT_NE(nullptr, const_cast<TagAddressType *>(pTagMemory));
 
-    if (hardwareInfo && hardwareInfo->platform.eRenderCoreFamily == IGFX_XE3P_CORE) {
+    if (hardwareInfo && hardwareInfo->platform.eRenderCoreFamily >= IGFX_XE3P_CORE) {
         pDevice->deviceInfo.semaphore64bCmdSupport = true;
     }
 }
