@@ -1593,10 +1593,16 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     return patIndex;
 }
 
-void programUserFence(Drm *drm, OsContext *osContext, BufferObject *bo, VmBindExtUserFenceT &vmBindExtUserFence, uint32_t vmHandleId, uint64_t nextExtension) {
+void programUserFence(Drm *drm, OsContext *osContext, BufferObject *bo, VmBindExtUserFenceT &vmBindExtUserFence, uint32_t vmHandleId, uint64_t nextExtension, bool isAsyncFence) {
     auto ioctlHelper = drm->getIoctlHelper();
     uint64_t address = 0;
     uint64_t value = 0;
+    if (isAsyncFence) {
+        address = castToUint64(bo->getAsyncFenceAddr(osContext, vmHandleId));
+        value = bo->getAsyncFenceVal(osContext, vmHandleId);
+        ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, address, value, nextExtension);
+        return;
+    }
 
     if (drm->isPerContextVMRequired()) {
         auto osContextLinux = static_cast<OsContextLinux *>(osContext);
@@ -1698,12 +1704,12 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         std::unique_lock<std::mutex> lock;
         VmBindExtUserFenceT vmBindExtUserFence{};
         bool incrementFenceValue = false;
-
+        bool isAsyncFence = bind && bo->isAsyncPagingFenceRequired();
         if ((ioctlHelper->requiresUserFenceSetup(bind) && drm->useVMBindImmediate()) || guaranteePagingFence) {
             lock = drm->lockBindFenceMutex();
             auto nextExtension = vmBind.extensions;
             incrementFenceValue = true;
-            programUserFence(drm, osContext, bo, vmBindExtUserFence, vmHandleId, nextExtension);
+            programUserFence(drm, osContext, bo, vmBindExtUserFence, vmHandleId, nextExtension, isAsyncFence);
             ioctlHelper->setVmBindUserFence(vmBind, vmBindExtUserFence);
         }
 
@@ -1723,18 +1729,22 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         }
 
         if (incrementFenceValue) {
-            auto osContextLinux = static_cast<OsContextLinux *>(osContext);
-            std::pair<uint64_t, uint64_t> fenceAddressAndValToWait = osContextLinux->getFenceAddressAndValToWait(vmHandleId, true);
-            if (drm->isPerContextVMRequired()) {
-                osContextLinux->incFenceVal(vmHandleId);
+            auto fenceAddressToWait = 0ull;
+            auto fenceValToWait = 0ull;
+            if (isAsyncFence) {
+                bo->incAsyncFenceVal(osContext, vmHandleId);
             } else {
-                drm->incFenceVal(vmHandleId);
+                auto osContextLinux = static_cast<OsContextLinux *>(osContext);
+                std::pair<uint64_t, uint64_t> fenceAddressAndValToWait = osContextLinux->getFenceAddressAndValToWait(vmHandleId, true);
+                if (drm->isPerContextVMRequired()) {
+                    osContextLinux->incFenceVal(vmHandleId);
+                } else {
+                    drm->incFenceVal(vmHandleId);
+                }
+                fenceAddressToWait = fenceAddressAndValToWait.first;
+                fenceValToWait = fenceAddressAndValToWait.second;
             }
-
             lock.unlock();
-
-            const auto fenceAddressToWait = fenceAddressAndValToWait.first;
-            const auto fenceValToWait = fenceAddressAndValToWait.second;
 
             if (fenceAddressToWait != 0u) {
                 bool waitOnUserFenceAfterBindAndUnbind = false;
@@ -1772,7 +1782,7 @@ int Drm::bindAddDebugData(OsContext *osContext, BufferObject *bo, uint32_t vmHan
 
     VmBindExtUserFenceT vmBindExtUserFence{};
     if (isAdd) {
-        programUserFence(this, osContext, bo, vmBindExtUserFence, vmHandleId, 0u);
+        programUserFence(this, osContext, bo, vmBindExtUserFence, vmHandleId, 0u, false);
     }
 
     auto ret = ioctlHelper->bindAddDebugData(debugDataVec.value(), vmId, &vmBindExtUserFence, isAdd);
@@ -1792,7 +1802,8 @@ int Drm::bindAddDebugData(OsContext *osContext, BufferObject *bo, uint32_t vmHan
 int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, const bool forcePagingFence) {
     auto ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true, forcePagingFence);
     if (ret != 0) {
-        static_cast<DrmMemoryOperationsHandlerBind *>(this->rootDeviceEnvironment.memoryOperationsInterface.get())->evictUnusedAllocations(false, false);
+        auto isAsyncFence = bo->isAsyncPagingFenceRequired();
+        static_cast<DrmMemoryOperationsHandlerBind *>(this->rootDeviceEnvironment.memoryOperationsInterface.get())->evictUnusedAllocations(false, isAsyncFence);
         ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true, forcePagingFence);
     }
     auto debuggingEnabled = getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();

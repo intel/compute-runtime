@@ -279,6 +279,29 @@ class BufferObject {
         return isaDebugDataHandle;
     }
 
+    bool isAsyncPagingFenceRequired() const {
+        return this->asynchronousPagingFence;
+    }
+
+    void setAsyncPagingFenceRequired() {
+        this->asynchronousPagingFence = true;
+    }
+
+    uint32_t waitOnAsyncPagingFence(OsContext *osContext, uint32_t vmHandleId);
+
+    uint64_t *getAsyncFenceAddr(OsContext *osContext, uint32_t vmHandleId) {
+        auto osContextId = getOsContextId(osContext);
+        return &this->asyncPagingFence[osContextId][vmHandleId];
+    }
+    uint64_t getAsyncFenceVal(OsContext *osContext, uint32_t vmHandleId) {
+        auto osContextId = getOsContextId(osContext);
+        return this->asyncFenceVal[osContextId][vmHandleId];
+    }
+    void incAsyncFenceVal(OsContext *osContext, uint32_t vmHandleId) {
+        auto osContextId = getOsContextId(osContext);
+        this->asyncFenceVal[osContextId][vmHandleId]++;
+    }
+
   protected:
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
     MOCKABLE_VIRTUAL void fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
@@ -296,6 +319,8 @@ class BufferObject {
     size_t colourChunk = 0;
     uint64_t gpuAddress = 0llu;
 
+    std::vector<std::array<uint64_t, EngineLimits::maxHandleCount>> asyncPagingFence{};
+    std::vector<std::array<uint64_t, EngineLimits::maxHandleCount>> asyncFenceVal{};
     std::vector<uint64_t> bindAddresses;
     std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
     StackVec<uint32_t, 2> bindExtHandles;
@@ -320,5 +345,6 @@ class BufferObject {
     bool chunked = false;
     bool isReused = false;
     bool readOnlyGpuResource = false;
+    bool asynchronousPagingFence = false;
 };
 } // namespace NEO

@@ -91,16 +91,10 @@ BufferObject::BufferObject(uint32_t rootDeviceIndex, Drm *drm, uint64_t patIndex
 
     perContextVmsUsed = drm->isPerContextVMRequired();
     requiresExplicitResidency = drm->hasPageFaultSupport();
-
-    if (perContextVmsUsed) {
-        bindInfo.resize(maxOsContextCount);
-        for (auto &iter : bindInfo) {
-            iter.fill(false);
-        }
-    } else {
-        bindInfo.resize(1);
-        bindInfo[0].fill(false);
-    }
+    auto maxOsContextUsedCount = perContextVmsUsed ? maxOsContextCount : 1;
+    bindInfo.resize(maxOsContextUsedCount, {});
+    asyncPagingFence.resize(maxOsContextUsedCount, {});
+    asyncFenceVal.resize(maxOsContextUsedCount, {});
 }
 
 uint32_t BufferObject::getRefCount() const {
@@ -367,6 +361,12 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
 
 void BufferObject::addBindExtHandle(uint32_t handle) {
     bindExtHandles.push_back(handle);
+}
+
+uint32_t BufferObject::waitOnAsyncPagingFence(OsContext *osContext, uint32_t vmHandleId) {
+    auto fenceAddress = castToUint64(getAsyncFenceAddr(osContext, vmHandleId));
+    auto fenceToWait = getAsyncFenceVal(osContext, vmHandleId);
+    return drm->waitUserFence(0u, fenceAddress, fenceToWait, Drm::ValueWidth::u64, -1, drm->getIoctlHelper()->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
 }
 
 } // namespace NEO

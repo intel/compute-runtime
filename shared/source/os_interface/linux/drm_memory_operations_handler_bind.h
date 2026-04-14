@@ -29,6 +29,9 @@ class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
 
     MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override;
 
+    MemoryOperationsStatus makeResidentAsync(OsContext *osContext, GraphicsAllocation *gfxAllocation) override;
+    MemoryOperationsStatus waitForAsyncResidency(OsContext *osContext, GraphicsAllocation *gfxAllocation) override;
+
   protected:
     int evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield) override;
 };

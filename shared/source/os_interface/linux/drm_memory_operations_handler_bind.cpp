@@ -227,4 +227,61 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bo
     return MemoryOperationsStatus::success;
 }
 
+/**
+ * @note CSR won't implicitly wait for residency of this allocation.
+ * Caller must ensure that waitForAsyncResidency is called before submitting any command that uses this allocation.
+ * This method does not obtain lock on the handler mutex, caller must ensure that no other thread can access this allocation.
+ */
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentAsync(OsContext *osContext, GraphicsAllocation *gfxAllocation) {
+    auto deviceBitfield = osContext->getDeviceBitfield();
+    auto devicesDone = 0u;
+    for (auto drmIterator = 0u; devicesDone < deviceBitfield.count(); drmIterator++) {
+        if (!deviceBitfield.test(drmIterator)) {
+            continue;
+        }
+        devicesDone++;
+
+        auto &drmAllocation = *static_cast<DrmAllocation *>(gfxAllocation);
+        auto bo = drmAllocation.storageInfo.getNumBanks() > 1 ? drmAllocation.getBOs()[drmIterator] : drmAllocation.getBO();
+
+        if (drmAllocation.storageInfo.isChunked) {
+            bo = drmAllocation.getBO();
+        }
+        bo->requireExplicitLockedMemory(drmAllocation.isLockedMemory());
+        bo->requireImmediateBinding(true);
+        bo->setAsyncPagingFenceRequired();
+
+        int result = drmAllocation.makeBOsResident(osContext, drmIterator, nullptr, true, false);
+        if (result) {
+            return MemoryOperationsStatus::outOfMemory;
+        }
+        drmAllocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
+    }
+    return MemoryOperationsStatus::success;
+}
+
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::waitForAsyncResidency(OsContext *osContext, GraphicsAllocation *gfxAllocation) {
+    auto deviceBitfield = osContext->getDeviceBitfield();
+    auto devicesDone = 0u;
+    for (auto drmIterator = 0u; devicesDone < deviceBitfield.count(); drmIterator++) {
+        if (!deviceBitfield.test(drmIterator)) {
+            continue;
+        }
+        devicesDone++;
+
+        auto &drmAllocation = *static_cast<DrmAllocation *>(gfxAllocation);
+        auto bo = drmAllocation.storageInfo.getNumBanks() > 1 ? drmAllocation.getBOs()[drmIterator] : drmAllocation.getBO();
+
+        if (drmAllocation.storageInfo.isChunked) {
+            bo = drmAllocation.getBO();
+        }
+        UNRECOVERABLE_IF(!bo->isAsyncPagingFenceRequired());
+        auto ret = bo->waitOnAsyncPagingFence(osContext, drmIterator);
+        if (ret != 0) {
+            return MemoryOperationsStatus::gpuHangDetectedDuringOperation;
+        }
+    }
+    return MemoryOperationsStatus::success;
+}
+
 } // namespace NEO

@@ -30,5 +30,12 @@ class MemoryOperationsHandler {
     virtual MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) = 0;
     virtual MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) = 0;
     virtual void processFlushResidency(CommandStreamReceiver *csr) {}
+
+    virtual MemoryOperationsStatus makeResidentAsync(OsContext *osContext, GraphicsAllocation *gfxAllocation) {
+        return makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(&gfxAllocation, 1u), false, false, true);
+    }
+    virtual MemoryOperationsStatus waitForAsyncResidency(OsContext *osContext, GraphicsAllocation *gfxAllocation) {
+        return MemoryOperationsStatus::success;
+    }
 };
 } // namespace NEO

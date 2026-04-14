@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -148,6 +148,14 @@ TEST_F(WddmMemoryOperationsHandlerTest, givenVariousAllocationsWhenFreeResidentA
     EXPECT_EQ(0u, wddm->evictResult.called);
 
     EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::memoryNotFound);
+}
+
+TEST_F(WddmMemoryOperationsHandlerTest, givenRegularAllocationWhenMakingAsyncResidentAllocationThenMakeResidentIsCalledAndAllocationIsMarkedAsExplicitlyResident) {
+    wddmAllocation->setExplicitlyMadeResident(false);
+    EXPECT_EQ(wddmMemoryOperationsHandler->makeResidentAsync(nullptr, allocationPtr), MemoryOperationsStatus::success);
+    EXPECT_TRUE(wddmAllocation->isExplicitlyMadeResident());
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->waitForAsyncResidency(nullptr, allocationPtr), MemoryOperationsStatus::success);
 }
 
 struct WddmMemoryOperationsHandlerProxy : public WddmMemoryOperationsHandler {

@@ -1890,3 +1890,227 @@ TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableWithDebugKeySetTo
     EXPECT_FALSE(drm.chunkingAvailable);
     EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
 }
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationWhenMakeResidentAsyncThenAllocationIsBoundAndMarkedAsAlwaysResident) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    auto osContext = device->getDefaultEngine().osContext;
+    EXPECT_EQ(mock->context.vmBindCalled, 0u);
+
+    auto result = operationHandler->makeResidentAsync(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    EXPECT_TRUE(mock->context.vmBindCalled > 0u);
+    EXPECT_TRUE(allocation->isAlwaysResident(osContext->getContextId()));
+
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_TRUE(bo->isAsyncPagingFenceRequired());
+    EXPECT_TRUE(bo->isImmediateBindingRequired());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenChunkedAllocationWhenMakeResidentAsyncThenCorrectBoIsUsed) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation->storageInfo.isChunked = true;
+
+    auto osContext = device->getDefaultEngine().osContext;
+    auto result = operationHandler->makeResidentAsync(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_TRUE(bo->isAsyncPagingFenceRequired());
+
+    result = operationHandler->waitForAsyncResidency(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindFailureWhenMakeResidentAsyncThenEvictUnusedAndRetry) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    operationHandler->useBaseEvictUnused = false;
+
+    mock->context.vmBindReturn = -1;
+    mock->baseErrno = false;
+    mock->errnoRetVal = ENOSPC;
+
+    auto osContext = device->getDefaultEngine().osContext;
+    EXPECT_EQ(operationHandler->evictUnusedCalled, 0u);
+
+    auto result = operationHandler->makeResidentAsync(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::outOfMemory, result);
+    EXPECT_GT(operationHandler->evictUnusedCalled, 0u);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindFailureThenSuccessOnRetryWhenMakeResidentAsyncThenSucceeds) {
+    struct MockDrmMemoryOperationsHandlerBindRetry : public DrmMemoryOperationsHandlerBind {
+        using DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind;
+
+        uint32_t evictUnusedCalled = 0;
+        DrmMockPrelimContext *mockContext = nullptr;
+
+        MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override {
+            evictUnusedCalled++;
+            if (mockContext) {
+                mockContext->vmBindReturn = 0;
+            }
+            return MemoryOperationsStatus::success;
+        }
+    };
+
+    auto retryHandler = new MockDrmMemoryOperationsHandlerBindRetry(*executionEnvironment->rootDeviceEnvironments[0].get(), 0);
+    retryHandler->mockContext = &mock->context;
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(retryHandler);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    mock->context.vmBindReturn = -1;
+    mock->baseErrno = false;
+    mock->errnoRetVal = ENOSPC;
+
+    auto osContext = device->getDefaultEngine().osContext;
+    auto result = retryHandler->makeResidentAsync(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+    EXPECT_GT(retryHandler->evictUnusedCalled, 0u);
+
+    mock->context.vmBindReturn = 0;
+    mock->baseErrno = true;
+
+    memoryManager->freeGraphicsMemory(allocation);
+
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(new MockDrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[0].get(), 0));
+    operationHandler = static_cast<MockDrmMemoryOperationsHandlerBind *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenLockedAllocationWhenMakeResidentAsyncThenExplicitLockedMemoryIsSet) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation->setLockedMemory(true);
+
+    auto osContext = device->getDefaultEngine().osContext;
+    auto result = operationHandler->makeResidentAsync(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_TRUE(bo->isExplicitLockedMemoryRequired());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationWhenWaitForAsyncResidencyThenWaitOnPagingFenceIsCalled) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    auto osContext = device->getDefaultEngine().osContext;
+
+    auto result = operationHandler->makeResidentAsync(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    auto initialWaitUserFenceCalls = mock->context.waitUserFenceCalled;
+
+    result = operationHandler->waitForAsyncResidency(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    EXPECT_GT(mock->context.waitUserFenceCalled, initialWaitUserFenceCalls);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenWaitOnPagingFenceFailsWhenWaitForAsyncResidencyThenGpuHangIsReturned) {
+    struct MockDrmWaitFenceFail : public DrmQueryMock {
+        using DrmQueryMock::DrmQueryMock;
+
+        int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
+            return -1;
+        }
+    };
+
+    auto osContext = device->getDefaultEngine().osContext;
+    BufferObjects bos;
+    auto mockDrm = std::make_unique<MockDrmWaitFenceFail>(*executionEnvironment->rootDeviceEnvironments[0]);
+    mockDrm->setBindAvailable();
+    BufferObject mockBo(device->getRootDeviceIndex(), mockDrm.get(), 3, 1, 0, 1);
+    mockBo.setAsyncPagingFenceRequired();
+    mockBo.incAsyncFenceVal(osContext, 0u);
+    bos.push_back(&mockBo);
+
+    MockDrmAllocation drmAlloc(AllocationType::unknown, MemoryPool::localMemory, bos);
+    auto result = operationHandler->waitForAsyncResidency(osContext, &drmAlloc);
+    EXPECT_EQ(MemoryOperationsStatus::gpuHangDetectedDuringOperation, result);
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenPerContextVMsWhenWaitForAsyncResidencyThenFenceAddressFromOsContextIsUsed) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto osContext = device->getDefaultEngine().osContext;
+
+    auto result = operationHandler->makeResidentAsync(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    mock->waitUserFenceParams.clear();
+
+    result = operationHandler->waitForAsyncResidency(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    ASSERT_FALSE(mock->waitUserFenceParams.empty());
+    auto bo = static_cast<DrmAllocation *>(allocation)->getBO();
+    auto osContextLinux = static_cast<OsContextLinux *>(osContext);
+    auto expectedAsyncFenceAddr = castToUint64(bo->getAsyncFenceAddr(osContext, 0u));
+    auto regularFenceAddr = castToUint64(osContextLinux->getFenceAddr(0u));
+
+    EXPECT_EQ(expectedAsyncFenceAddr, mock->waitUserFenceParams[0].address);
+    EXPECT_NE(regularFenceAddr, mock->waitUserFenceParams[0].address);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenMultiBankAllocationWhenMakeResidentAsyncAndWaitForAsyncResidencyThenPerBankBoIsUsed) {
+    BufferObjects bos;
+    MockBufferObject mockBo0(0, mock, 3, 0, 0, 1);
+    MockBufferObject mockBo1(0, mock, 3, 0, 0, 1);
+    mockBo0.setSize(1024);
+    mockBo1.setSize(1024);
+    bos.push_back(&mockBo0);
+    bos.push_back(&mockBo1);
+
+    auto drmAlloc = new MockDrmAllocation(AllocationType::unknown, MemoryPool::localMemory, bos);
+    drmAlloc->storageInfo.memoryBanks = 3;
+    EXPECT_EQ(2u, drmAlloc->storageInfo.getNumBanks());
+
+    auto osContext = device->getDefaultEngine().osContext;
+
+    auto result = operationHandler->makeResidentAsync(osContext, drmAlloc);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    EXPECT_TRUE(mockBo0.isAsyncPagingFenceRequired());
+    EXPECT_TRUE(mockBo1.isAsyncPagingFenceRequired());
+
+    mock->waitUserFenceParams.clear();
+
+    result = operationHandler->waitForAsyncResidency(osContext, drmAlloc);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    EXPECT_GE(mock->waitUserFenceParams.size(), 2u);
+
+    delete drmAlloc;
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenSecondTileOsContextWhenMakeResidentAsyncThenFirstDrmIteratorIsSkipped) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto osContext = device->getSubDevice(1u)->getDefaultEngine().osContext;
+    EXPECT_FALSE(osContext->getDeviceBitfield().test(0));
+    EXPECT_TRUE(osContext->getDeviceBitfield().test(1));
+
+    auto result = operationHandler->makeResidentAsync(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+
+    auto initialWaitUserFenceCalls = mock->context.waitUserFenceCalled;
+    result = operationHandler->waitForAsyncResidency(osContext, allocation);
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+    EXPECT_GT(mock->context.waitUserFenceCalled, initialWaitUserFenceCalls);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}

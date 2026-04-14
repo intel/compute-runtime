@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -211,4 +211,114 @@ TEST(DrmVmBindTest, givenDrmWithPageFaultSupportWhenCallingBindBoOnUnifiedShared
         EXPECT_TRUE(bo.isExplicitResidencyRequired());
         EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag() | DrmPrelimHelper::getMakeResidentVmBindFlag(), drm->context.receivedVmBind->flags);
     }
+}
+
+TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenBindingThenAsyncPagingFenceAddressIsUsedForUserFence) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.pageFaultSupported = true;
+
+    MockBufferObject bo(0, &drm, 3, 0, 0, 1);
+    bo.requireExplicitResidency(true);
+    bo.requireImmediateBinding(true);
+    bo.setAsyncPagingFenceRequired();
+
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized(false);
+    uint32_t vmHandleId = 0;
+    bo.bind(&osContext, vmHandleId, false);
+    ASSERT_TRUE(drm.context.receivedVmBindUserFence);
+
+    EXPECT_EQ(castToUint64(bo.getAsyncFenceAddr(&osContext, vmHandleId)), drm.context.receivedVmBindUserFence->addr);
+    EXPECT_NE(castToUint64(drm.getFenceAddr(vmHandleId)), drm.context.receivedVmBindUserFence->addr);
+}
+
+TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenBindingThenAsyncFenceValueIsIncremented) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.pageFaultSupported = true;
+
+    MockBufferObject bo(0, &drm, 3, 0, 0, 1);
+    bo.requireExplicitResidency(true);
+    bo.requireImmediateBinding(true);
+    bo.setAsyncPagingFenceRequired();
+
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized(false);
+    uint32_t vmHandleId = 0;
+
+    auto asyncFenceValBefore = bo.getAsyncFenceVal(&osContext, vmHandleId);
+    auto regularFenceValBefore = drm.getNextFenceVal(vmHandleId) - 1;
+
+    bo.bind(&osContext, vmHandleId, false);
+
+    auto asyncFenceValAfter = bo.getAsyncFenceVal(&osContext, vmHandleId);
+    auto regularFenceValAfter = drm.getNextFenceVal(vmHandleId) - 1;
+    EXPECT_GT(asyncFenceValAfter, asyncFenceValBefore);
+    EXPECT_EQ(regularFenceValAfter, regularFenceValBefore);
+}
+
+TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredAndPerContextVmsWhenBindingThenAsyncPagingFenceFromContextIsUsed) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.pageFaultSupported = true;
+    drm.requirePerContextVM = true;
+
+    MockBufferObject bo(0, &drm, 3, 0, 0, 1);
+    bo.requireExplicitResidency(true);
+    bo.requireImmediateBinding(true);
+    bo.setAsyncPagingFenceRequired();
+
+    MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized(false);
+    uint32_t vmHandleId = 0;
+
+    auto asyncFenceValBefore = bo.getAsyncFenceVal(&osContext, vmHandleId);
+    auto regularFenceValBefore = osContext.getNextFenceVal(vmHandleId) - 1;
+
+    bo.bind(&osContext, vmHandleId, false);
+
+    auto asyncFenceValAfter = bo.getAsyncFenceVal(&osContext, vmHandleId);
+    auto regularFenceValAfter = osContext.getNextFenceVal(vmHandleId) - 1;
+
+    EXPECT_GT(asyncFenceValAfter, asyncFenceValBefore);
+    EXPECT_EQ(regularFenceValAfter, regularFenceValBefore);
+    ASSERT_TRUE(drm.context.receivedVmBindUserFence);
+    EXPECT_EQ(castToUint64(bo.getAsyncFenceAddr(&osContext, vmHandleId)), drm.context.receivedVmBindUserFence->addr);
+    EXPECT_NE(castToUint64(osContext.getFenceAddr(vmHandleId)), drm.context.receivedVmBindUserFence->addr);
+}
+
+TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenUnbindingThenRegularPagingFenceIsUsed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableUserFenceUponUnbind.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.pageFaultSupported = true;
+
+    MockBufferObject bo(0, &drm, 3, 0, 0, 1);
+    bo.requireExplicitResidency(true);
+    bo.requireImmediateBinding(true);
+    bo.setAsyncPagingFenceRequired();
+
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized(false);
+    uint32_t vmHandleId = 0;
+
+    bo.bind(&osContext, vmHandleId, false);
+
+    drm.context.receivedVmBindUserFence.reset();
+
+    bo.unbind(&osContext, vmHandleId);
+
+    ASSERT_TRUE(drm.context.receivedVmBindUserFence);
+    EXPECT_EQ(castToUint64(drm.getFenceAddr(vmHandleId)), drm.context.receivedVmBindUserFence->addr);
 }

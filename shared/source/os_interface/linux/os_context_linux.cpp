@@ -162,7 +162,6 @@ void OsContextLinux::waitForBind(uint32_t drmIterator) {
         }
 
         if (!(pagingFence[vmHandleId] >= fenceVal[vmHandleId])) {
-
             auto fenceAddress = castToUint64(&this->pagingFence[vmHandleId]);
             auto fenceValue = this->fenceVal[vmHandleId];
             fenceAddressAndValToWait = std::make_pair(fenceAddress, fenceValue);
@@ -173,7 +172,6 @@ void OsContextLinux::waitForBind(uint32_t drmIterator) {
         }
 
         return fenceAddressAndValToWait;
-
     } else {
         return drm.getFenceAddressAndValToWait(vmHandleId, isLocked);
     }
