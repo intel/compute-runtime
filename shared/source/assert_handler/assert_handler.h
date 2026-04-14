@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ class AssertHandler : NonCopyableAndNonMovableClass {
     void printMessage() const;
 
     std::mutex mtx;
-    const Device *device = nullptr;
+    Device *device = nullptr;
     GraphicsAllocation *assertBuffer = nullptr;
 };
 } // namespace NEO

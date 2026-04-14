@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,4 +88,35 @@ TEST(AssertHandlerTests, GivenFlagSetWhenPrintAssertAndAbortCalledThenMessageIsP
 
     std::string output = capture.getCapturedStderr();
     EXPECT_STREQ("AssertHandler::printMessage\nassert!", output.c_str());
+}
+
+TEST(AssertHandlerTests, GivenFlagSetWhenPrintAssertAndAbortCalledThenDirectSubmissionIsStoppedBeforeAbort) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    MockAssertHandler assertHandler(device.get());
+    ASSERT_NE(nullptr, assertHandler.getAssertBuffer());
+
+    reinterpret_cast<AssertBufferHeader *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer())->flags = 1;
+
+    EXPECT_FALSE(device->stopDirectSubmissionCalled);
+
+    StreamCapture capture;
+    capture.captureStderr();
+    EXPECT_THROW(assertHandler.printAssertAndAbort(), std::exception);
+    capture.getCapturedStderr();
+
+    EXPECT_TRUE(device->stopDirectSubmissionCalled);
+}
+
+TEST(AssertHandlerTests, GivenNoFlagSetWhenPrintAssertAndAbortCalledThenDirectSubmissionIsNotStopped) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    MockAssertHandler assertHandler(device.get());
+    ASSERT_NE(nullptr, assertHandler.getAssertBuffer());
+
+    reinterpret_cast<AssertBufferHeader *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer())->flags = 0;
+
+    assertHandler.printAssertAndAbort();
+
+    EXPECT_FALSE(device->stopDirectSubmissionCalled);
 }

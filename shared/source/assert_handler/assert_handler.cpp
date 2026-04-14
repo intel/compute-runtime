@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,7 @@ void AssertHandler::printAssertAndAbort() {
     std::lock_guard<std::mutex> lock(this->mtx);
     if (checkAssert()) {
         printMessage();
+        device->stopDirectSubmissionAndWaitForCompletion();
         abortExecution();
     }
 }
