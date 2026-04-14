@@ -1042,6 +1042,10 @@ void Event::unsetCmdQueue() {
         csr->unregisterClient(latestUsedCmdQueue);
     }
 
+    if (latestUsedCmdQueue) {
+        latestUsedCmdQueue->setCsrClientRegistered(false);
+    }
+
     latestUsedCmdQueue = nullptr;
 }
 

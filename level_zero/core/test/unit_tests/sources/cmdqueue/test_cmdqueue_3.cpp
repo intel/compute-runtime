@@ -1481,5 +1481,40 @@ TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesWithInterrup
     }
 }
 
+HWTEST_F(CommandQueueTest, givenCommandQueueWhenRegisterCsrClientCalledMultipleTimesThenRegistersOnlyOnce) {
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          &csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue);
+    auto numClientsBefore = csr.getNumClients();
+
+    commandQueue->registerCsrClient();
+    EXPECT_EQ(numClientsBefore + 1, csr.getNumClients());
+
+    commandQueue->registerCsrClient();
+    EXPECT_EQ(numClientsBefore + 1, csr.getNumClients());
+
+    commandQueue->registerCsrClient();
+    EXPECT_EQ(numClientsBefore + 1, csr.getNumClients());
+
+    commandQueue->unregisterCsrClient();
+    EXPECT_EQ(numClientsBefore, csr.getNumClients());
+
+    commandQueue->registerCsrClient();
+    EXPECT_EQ(numClientsBefore + 1, csr.getNumClients());
+
+    commandQueue->unregisterCsrClient();
+    commandQueue->destroy();
+}
+
 } // namespace ult
 } // namespace L0

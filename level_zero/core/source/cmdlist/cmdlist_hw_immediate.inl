@@ -600,15 +600,20 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
         CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(event, true, false);
     }
 
-    if (this->kernelsBundleCounter > 0) {
-        this->kernelsBundleCounter--;
-        if (0 == this->kernelsBundleCounter) {
-            this->kernelsBundleCounter = this->kernelsBundleSize;
-            NEO::sleep(std::chrono::seconds(this->kernelsBundleWaitTimeSeconds));
-        }
+    if (this->kernelsBundleCounter > 0) [[unlikely]] {
+        handleKernelsBundleCounter();
     }
 
     return flushImmediate(ret, true, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, hSignalEvent, false, nullptr, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+FORCE_NOINLINE void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleKernelsBundleCounter() {
+    this->kernelsBundleCounter--;
+    if (0 == this->kernelsBundleCounter) {
+        this->kernelsBundleCounter = this->kernelsBundleSize;
+        NEO::sleep(std::chrono::seconds(this->kernelsBundleWaitTimeSeconds));
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

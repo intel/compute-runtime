@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
@@ -265,6 +266,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     size_t estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists);
     void tryResetKernelWithAssertFlag();
     void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload);
+    FORCE_NOINLINE void handleKernelsBundleCounter();
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;

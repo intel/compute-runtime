@@ -276,10 +276,15 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
 
 void CommandQueue::unregisterCsrClient() {
     this->csr->unregisterClient(this);
+    this->csrClientRegistered = false;
 }
 
 void CommandQueue::registerCsrClient() {
+    if (this->csrClientRegistered) {
+        return;
+    }
     this->csr->registerClient(this);
+    this->csrClientRegistered = true;
 }
 
 ze_result_t CommandBufferManager::initialize(Device *device, size_t sizeRequested) {
