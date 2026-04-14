@@ -51,8 +51,11 @@ ze_result_t queryFabricStatsDrm(Device *pSourceDevice, Device *pPeerDevice, uint
     if (fd < 0) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    NEO::SysCalls::pread(fd, fabricIdStr.data(), fabricIdStr.size() - 1, 0);
+    ssize_t bytesRead = NEO::SysCalls::pread(fd, fabricIdStr.data(), fabricIdStr.size() - 1, 0);
     NEO::SysCalls::close(fd);
+    if (bytesRead <= 0) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 
     size_t end = 0;
     uint32_t fabricId = static_cast<uint32_t>(std::stoul(fabricIdStr, &end, 16));

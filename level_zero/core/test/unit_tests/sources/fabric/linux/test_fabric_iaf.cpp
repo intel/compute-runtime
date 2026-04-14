@@ -9,16 +9,22 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp_drm/device_imp_peer.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/fabric/linux/fabric_device_iaf.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_fabric.h"
 
 #include "gtest/gtest.h"
+
+namespace NEO {
+extern std::map<std::string, std::vector<std::string>> directoryFilesMap;
+} // namespace NEO
 
 namespace L0 {
 namespace ult {
@@ -567,6 +573,90 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenLatencyRequest
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
+}
+
+class DrmMockWithFabricSysPath : public DrmMockResources {
+  public:
+    using DrmMockResources::DrmMockResources;
+    std::string getSysFsPciPath() override { return mockSysFsPciPath; }
+    std::string mockSysFsPciPath = "/sys/mock/card1";
+};
+
+class TestFabricStatsDrm : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(1);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+        auto osInterface = new OSInterface();
+        drmMock = new DrmMockWithFabricSysPath(*executionEnvironment->rootDeviceEnvironments[0]);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
+        neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
+
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
+        driverHandle->initialize(std::move(devices));
+        l0Device = driverHandle->devices[0];
+
+        NEO::directoryFilesMap[mockDevicePath] = {mockDevicePath + "/i915.iaf.0"};
+    }
+
+    void TearDown() override {
+        NEO::directoryFilesMap.clear();
+    }
+
+    const std::string mockDevicePath = "/sys/mock/card1/device";
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
+    NEO::MockDevice *neoDevice = nullptr;
+    DrmMockWithFabricSysPath *drmMock = nullptr;
+    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
+    L0::Device *l0Device = nullptr;
+};
+
+TEST_F(TestFabricStatsDrm, givenFabricIdFileWhenPreadFailsThenQueryFabricStatsDrmReturnsUnsupportedFeature) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen,
+                                                                   [](const char *, int) -> int { return 4; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread,
+                                                                     [](int, void *, size_t, off_t) -> ssize_t { return -1; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose,
+                                                                     [](int) -> int { return 0; });
+
+    uint32_t latency = 0, bandwidth = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::queryFabricStatsDrm(l0Device, l0Device, latency, bandwidth));
+}
+
+TEST_F(TestFabricStatsDrm, givenFabricIdFileWhenPreadReturnsZeroBytesThenQueryFabricStatsDrmReturnsUnsupportedFeature) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen,
+                                                                   [](const char *, int) -> int { return 4; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread,
+                                                                     [](int, void *, size_t, off_t) -> ssize_t { return 0; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose,
+                                                                     [](int) -> int { return 0; });
+
+    uint32_t latency = 0, bandwidth = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::queryFabricStatsDrm(l0Device, l0Device, latency, bandwidth));
+}
+
+TEST_F(TestFabricStatsDrm, givenFabricIdFileWhenPreadSucceedsThenQueryFabricStatsDrmCallsFabricLatency) {
+    drmMock->ioctlHelper = std::make_unique<MockIoctlHelperIafTest>(*drmMock);
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen,
+                                                                   [](const char *, int) -> int { return 4; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread,
+                                                                     [](int, void *buf, size_t, off_t) -> ssize_t {
+                                                                         static const char fabricId[] = "0x00000001";
+                                                                         memcpy(buf, fabricId, sizeof(fabricId) - 1);
+                                                                         return sizeof(fabricId) - 1;
+                                                                     });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose,
+                                                                     [](int) -> int { return 0; });
+
+    uint32_t latency = 0, bandwidth = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::queryFabricStatsDrm(l0Device, l0Device, latency, bandwidth));
+    EXPECT_EQ(1u, latency);
+    EXPECT_EQ(10u, bandwidth);
 }
 
 } // namespace ult

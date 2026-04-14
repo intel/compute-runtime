@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -360,7 +360,9 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
                 if (pfd[i].fd == pipeFd[0]) {
                     eventsMutex.lock();
                     uint8_t dummy;
-                    NEO::SysCalls::read(pipeFd[0], &dummy, 1);
+                    ssize_t pipeReadRet = NEO::SysCalls::read(pipeFd[0], &dummy, 1);
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (pipeReadRet < 0),
+                                 stderr, "read() on event pipe fd=%d failed errno=%d\n", pipeFd[0], errno);
                     mapOfDevIndexToDevPath.clear();
                     getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath);
                     eventsMutex.unlock();
