@@ -700,9 +700,6 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t activeScratchPatchElements = 0;
     uint32_t hostFunctionPatchListCount = 0;
     uint32_t syncDispatchQueueId = std::numeric_limits<uint32_t>::max();
-    int32_t kernelsBundleCounter = -1;
-    int32_t kernelsBundleSize = -1;
-    int32_t kernelsBundleWaitTimeSeconds = -1;
 
     bool isSyncModeQueue = false;
     bool isTbxMode = false;

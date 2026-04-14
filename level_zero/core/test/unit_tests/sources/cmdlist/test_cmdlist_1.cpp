@@ -1847,68 +1847,6 @@ HWTEST_F(CommandListCreateTests, givenDebugFlagSetWhenCallingSynchronizeThenDont
     zeEventDestroy(event);
 }
 
-HWTEST_F(CommandListCreateTests, givenCommandBundleDebugFlagsWhenCallingAppendLaunchKernelThenSetCorrectValues) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.KernelsBundleSize.set(15);
-    debugManager.flags.KernelsBundleWaitTimeSeconds.set(1);
-
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
-    ASSERT_NE(nullptr, commandList);
-    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
-
-    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
-    Mock<::L0::KernelImp> kernel;
-    kernel.module = mockModule.get();
-    ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-
-    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-
-    EXPECT_EQ(15, whiteBoxCmdList->kernelsBundleCounter);
-    EXPECT_EQ(15, whiteBoxCmdList->kernelsBundleSize);
-    EXPECT_EQ(1, whiteBoxCmdList->kernelsBundleWaitTimeSeconds);
-    EXPECT_EQ(ultCsr->getNumClients(), 0u);
-    commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(ultCsr->getNumClients(), 1u);
-    EXPECT_EQ(14, whiteBoxCmdList->kernelsBundleCounter);
-    EXPECT_EQ(15, whiteBoxCmdList->kernelsBundleSize);
-    EXPECT_EQ(1, whiteBoxCmdList->kernelsBundleWaitTimeSeconds);
-}
-
-HWTEST_F(CommandListCreateTests, givenCommandBundleDebugFlagsWhenCallingAppendLaunchKernelWithLowBundleSizeThenSetCorrectValues) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.KernelsBundleSize.set(15);
-    debugManager.flags.KernelsBundleWaitTimeSeconds.set(1);
-
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
-    ASSERT_NE(nullptr, commandList);
-    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
-
-    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
-    Mock<::L0::KernelImp> kernel;
-    kernel.module = mockModule.get();
-    ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-
-    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-
-    whiteBoxCmdList->kernelsBundleCounter = 1;
-    EXPECT_EQ(15, whiteBoxCmdList->kernelsBundleSize);
-    EXPECT_EQ(1, whiteBoxCmdList->kernelsBundleWaitTimeSeconds);
-    EXPECT_EQ(ultCsr->getNumClients(), 0u);
-    commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(ultCsr->getNumClients(), 1u);
-    EXPECT_EQ(15, whiteBoxCmdList->kernelsBundleCounter);
-    EXPECT_EQ(15, whiteBoxCmdList->kernelsBundleSize);
-    EXPECT_EQ(1, whiteBoxCmdList->kernelsBundleWaitTimeSeconds);
-}
-
 HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassRelaxedOrderingDependenciesInfo, IsXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 

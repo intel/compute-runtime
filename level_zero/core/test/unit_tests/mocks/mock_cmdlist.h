@@ -337,9 +337,6 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
     using BaseClass::interruptEvents;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
-    using BaseClass::kernelsBundleCounter;
-    using BaseClass::kernelsBundleSize;
-    using BaseClass::kernelsBundleWaitTimeSeconds;
     using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::partitionCount;
