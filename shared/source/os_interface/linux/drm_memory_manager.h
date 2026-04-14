@@ -108,7 +108,7 @@ class DrmMemoryManager : public MemoryManager {
     std::vector<GraphicsAllocation *> &getSysMemAllocs();
     std::vector<GraphicsAllocation *> &getLocalMemAllocs(uint32_t rootDeviceIndex);
     AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation) override;
-    bool registerSysMemAllocIfConsumed(GraphicsAllocation *allocation, bool consumeFd);
+    bool registerSysMemAllocIfConsumed(std::unique_ptr<DrmAllocation> &allocation, bool consumeFd);
     AllocationStatus registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) override;
     MOCKABLE_VIRTUAL void unregisterAllocation(GraphicsAllocation *allocation);
 
