@@ -1066,6 +1066,32 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCor
     }
 }
 
+HWTEST_F(ProductHelperTest, givenLimitNumGrfsSupportedAndReleaseHelperWhenGettingSupportedNumGrfsThenReturnLimitedValue) {
+    if (!releaseHelper) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+
+    {
+        debugManager.flags.LimitNumGrfsSupported.set(0u);
+        auto grfs = productHelper->getSupportedNumGrfs(releaseHelper);
+        EXPECT_TRUE(grfs.empty());
+    }
+    {
+        debugManager.flags.LimitNumGrfsSupported.set(128u);
+        auto grfs = productHelper->getSupportedNumGrfs(releaseHelper);
+        EXPECT_FALSE(grfs.empty());
+        EXPECT_LE(*(grfs.end() - 1), 128u);
+    }
+    {
+        debugManager.flags.LimitNumGrfsSupported.set(256u);
+        auto grfs = productHelper->getSupportedNumGrfs(releaseHelper);
+        EXPECT_FALSE(grfs.empty());
+        EXPECT_LE(*(grfs.end() - 1), 256u);
+    }
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingDefaultCopyEngineThenEngineBCSIsReturned) {
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, productHelper->getDefaultCopyEngine());
 }

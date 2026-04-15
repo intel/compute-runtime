@@ -302,6 +302,7 @@ class ProductHelper {
     virtual void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const = 0;
     void setupDefaultEngineType(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const;
     int setupProductSpecificConfig(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const;
+    void applyLimitGrfSupported(SupportedNumGrfs &grfs) const;
     static void setupPreemptionSurfaceSize(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setupKmdNotifyProperties(KmdNotifyProperties &kmdNotifyProperties);
     static void setupPreemptionMode(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment, bool kmdPreemptionSupport);

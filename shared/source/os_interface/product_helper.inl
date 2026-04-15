@@ -876,7 +876,9 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint
 template <PRODUCT_FAMILY gfxProduct>
 const SupportedNumGrfs ProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
     if (releaseHelper) {
-        return releaseHelper->getSupportedNumGrfs();
+        auto grfs = releaseHelper->getSupportedNumGrfs();
+        applyLimitGrfSupported(grfs);
+        return grfs;
     }
     return {128u};
 }

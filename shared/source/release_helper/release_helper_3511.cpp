@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -23,10 +22,7 @@ bool ReleaseHelperHw<release>::isBFloat16ConversionSupported() const {
 
 template <>
 const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
-    if (debugManager.flags.Enable512NumGrfs.get()) {
-        return {32u, 64u, 96u, 128u, 160u, 192u, 256u, 512u};
-    }
-    return {32u, 64u, 96u, 128u, 160u, 192u, 256u};
+    return {32u, 64u, 96u, 128u, 160u, 192u, 256u, 512u};
 }
 
 template <>
