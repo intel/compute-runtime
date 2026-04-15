@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,16 +22,6 @@
 TEST(GdiInterface, WhenGdiIsCreatedThenItIsInitialized) {
     NEO::Gdi gdi;
     ASSERT_TRUE(gdi.isInitialized());
-}
-
-TEST(GdiInterface, DISABLED_GivenInvalidGdiDllNameWhenCreatingGdiThenGdiIsNotInitialized) {
-    const char *oldName = Os::gdiDllName;
-    Os::gdiDllName = "surely_not_exists_.dll";
-
-    NEO::Gdi gdi;
-    EXPECT_FALSE(gdi.isInitialized());
-
-    Os::gdiDllName = oldName;
 }
 
 TEST(GdiInterface, givenGdiOverridePathWhenGdiInterfaceIsCalledThenOverridePathIsUsed) {
