@@ -268,6 +268,14 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEuStallSamplingIsPredefinedMetri
     }
 }
 
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenNullCommandListWhenAppendingMarkerThenUnsupportedFeatureIsReturned, HasIPSamplingSupport) {
+
+    for (auto device : rootOneSubDev) {
+        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
+        EXPECT_EQ(zetCommandListAppendMarkerExp(nullptr, hMetricGroup, 1), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    }
+}
+
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFrequencyAndValidBitsThenConfirmAreTheSameAsDevice, HasIPSamplingSupport) {
 
     for (auto device : rootOneSubDev) {

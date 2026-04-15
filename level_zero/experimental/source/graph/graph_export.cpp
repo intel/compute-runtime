@@ -858,6 +858,67 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
 }
 
 template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zetCommandListAppendMetricStreamerMarker>(
+    const Closure<CaptureApi::zetCommandListAppendMetricStreamerMarker> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("hMetricStreamer", formatPointer(closure.apiArgs.hMetricStreamer));
+    params.emplace_back("value", std::to_string(closure.apiArgs.value));
+
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zetCommandListAppendMetricQueryBegin>(
+    const Closure<CaptureApi::zetCommandListAppendMetricQueryBegin> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("hMetricQuery", formatPointer(closure.apiArgs.hMetricQuery));
+
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zetCommandListAppendMetricQueryEnd>(
+    const Closure<CaptureApi::zetCommandListAppendMetricQueryEnd> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("hMetricQuery", formatPointer(closure.apiArgs.hMetricQuery));
+
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zetCommandListAppendMetricMemoryBarrier>(
+    const Closure<CaptureApi::zetCommandListAppendMetricMemoryBarrier> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zetCommandListAppendMarkerExp>(
+    const Closure<CaptureApi::zetCommandListAppendMarkerExp> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("hMetricGroup", formatPointer(closure.apiArgs.hMetricGroup));
+    params.emplace_back("value", std::to_string(closure.apiArgs.value));
+
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
+}
+
+template <>
 std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(
     const Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters> &closure, const ClosureExternalStorage &storage) {
 

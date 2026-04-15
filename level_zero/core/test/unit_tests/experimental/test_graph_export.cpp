@@ -826,6 +826,11 @@ DEFINE_APIARGS_FIELDS(zeCommandListAppendImageCopyFromMemoryExt, "hCommandList",
 DEFINE_APIARGS_FIELDS(zexCommandListAppendMemoryCopyWithParameters, "hCommandList", "dstptr", "srcptr", "size", "pNext", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]", "hSignalEvent");
 DEFINE_APIARGS_FIELDS(zexCommandListAppendMemoryFillWithParameters, "hCommandList", "ptr", "pattern", "patternSize", "size", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendHostFunction, "hCommandList", "pHostFunction", "pUserData", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zetCommandListAppendMetricStreamerMarker, "hCommandList", "hMetricStreamer", "value");
+DEFINE_APIARGS_FIELDS(zetCommandListAppendMetricQueryBegin, "hCommandList", "hMetricQuery");
+DEFINE_APIARGS_FIELDS(zetCommandListAppendMetricQueryEnd, "hCommandList", "hMetricQuery", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zetCommandListAppendMetricMemoryBarrier, "hCommandList");
+DEFINE_APIARGS_FIELDS(zetCommandListAppendMarkerExp, "hCommandList", "hMetricGroup", "value");
 
 TEST_F(ExtractParametersTest, zeCommandListAppendWriteGlobalTimestamp) {
     Closure<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>::ApiArgs args{};
@@ -1078,6 +1083,40 @@ TEST_F(ExtractParametersTest, zeCommandListAppendHostFunction) {
     args.phWaitEvents = dummyEvents;
     args.hSignalEvent = dummyEvents[0];
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendHostFunction>(args);
+}
+
+TEST_F(ExtractParametersTest, zetCommandListAppendMetricStreamerMarker) {
+    Closure<CaptureApi::zetCommandListAppendMetricStreamerMarker>::ApiArgs args{};
+    args.hMetricStreamer = reinterpret_cast<zet_metric_streamer_handle_t>(0x1234);
+    args.value = 3U;
+    expectAllApiArgsPresent<CaptureApi::zetCommandListAppendMetricStreamerMarker>(args);
+}
+
+TEST_F(ExtractParametersTest, zetCommandListAppendMetricQueryBegin) {
+    Closure<CaptureApi::zetCommandListAppendMetricQueryBegin>::ApiArgs args{};
+    args.hMetricQuery = reinterpret_cast<zet_metric_query_handle_t>(0x1234);
+    expectAllApiArgsPresent<CaptureApi::zetCommandListAppendMetricQueryBegin>(args);
+}
+
+TEST_F(ExtractParametersTest, zetCommandListAppendMetricQueryEnd) {
+    Closure<CaptureApi::zetCommandListAppendMetricQueryEnd>::ApiArgs args{};
+    args.hMetricQuery = reinterpret_cast<zet_metric_query_handle_t>(0x1234);
+    args.hSignalEvent = dummyEvents[0];
+    args.numWaitEvents = 1;
+    args.phWaitEvents = dummyEvents;
+    expectAllApiArgsPresent<CaptureApi::zetCommandListAppendMetricQueryEnd>(args);
+}
+
+TEST_F(ExtractParametersTest, zetCommandListAppendMetricMemoryBarrier) {
+    Closure<CaptureApi::zetCommandListAppendMetricMemoryBarrier>::ApiArgs args{};
+    expectAllApiArgsPresent<CaptureApi::zetCommandListAppendMetricMemoryBarrier>(args);
+}
+
+TEST_F(ExtractParametersTest, zetCommandListAppendMarkerExp) {
+    Closure<CaptureApi::zetCommandListAppendMarkerExp>::ApiArgs args{};
+    args.hMetricGroup = reinterpret_cast<zet_metric_group_handle_t>(0x1234);
+    args.value = 7U;
+    expectAllApiArgsPresent<CaptureApi::zetCommandListAppendMarkerExp>(args);
 }
 
 TEST_F(ExtractParametersTest, GivenMultipleWaitEventsWhenExtractParametersIsCalledThenParametersAreExtractedCorrectly) {

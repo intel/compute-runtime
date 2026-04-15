@@ -15,6 +15,7 @@
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/ze_api.h"
+#include "level_zero/zet_api.h"
 
 #include <memory>
 #include <span>
@@ -62,6 +63,11 @@ struct Event;
     RR_CAPTURED_API(zexCommandListAppendMemoryCopyWithParameters)     \
     RR_CAPTURED_API(zexCommandListAppendMemoryFillWithParameters)     \
     RR_CAPTURED_API(zeCommandListAppendHostFunction)                  \
+    RR_CAPTURED_API(zetCommandListAppendMetricStreamerMarker)         \
+    RR_CAPTURED_API(zetCommandListAppendMetricQueryBegin)             \
+    RR_CAPTURED_API(zetCommandListAppendMetricQueryEnd)               \
+    RR_CAPTURED_API(zetCommandListAppendMetricMemoryBarrier)          \
+    RR_CAPTURED_API(zetCommandListAppendMarkerExp)                    \
     RR_CAPTURED_APIS_EXT()
 
 enum class CaptureApi {
@@ -936,6 +942,95 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
         void *pNext;
         std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zetCommandListAppendMetricStreamerMarker> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        zet_command_list_handle_t hCommandList;
+        zet_metric_streamer_handle_t hMetricStreamer;
+        uint32_t value;
+    } apiArgs;
+
+    using IndirectArgs = EmptyIndirectArgs;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zetCommandListAppendMetricQueryBegin> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        zet_command_list_handle_t hCommandList;
+        zet_metric_query_handle_t hMetricQuery;
+    } apiArgs;
+
+    using IndirectArgs = EmptyIndirectArgs;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zetCommandListAppendMetricQueryEnd> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        zet_command_list_handle_t hCommandList;
+        zet_metric_query_handle_t hMetricQuery;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    using IndirectArgs = IndirectArgsWithWaitEvents;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zetCommandListAppendMetricMemoryBarrier> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        zet_command_list_handle_t hCommandList;
+    } apiArgs;
+
+    using IndirectArgs = EmptyIndirectArgs;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zetCommandListAppendMarkerExp> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        zet_command_list_handle_t hCommandList;
+        zet_metric_group_handle_t hMetricGroup;
+        uint32_t value;
+    } apiArgs;
+
+    using IndirectArgs = EmptyIndirectArgs;
+    IndirectArgs indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 

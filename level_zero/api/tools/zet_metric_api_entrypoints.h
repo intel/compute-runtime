@@ -10,6 +10,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include <level_zero/zet_api.h>
 
@@ -73,7 +74,15 @@ ze_result_t ZE_APICALL zetCommandListAppendMetricStreamerMarker(
     ze_command_list_handle_t hCommandList,
     zet_metric_streamer_handle_t hMetricStreamer,
     uint32_t value) {
-    return L0::CommandList::fromHandle(hCommandList)->appendMetricStreamerMarker(hMetricStreamer, value);
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if (cmdList) {
+        auto ret = cmdList->capture<CaptureApi::zetCommandListAppendMetricStreamerMarker>(hCommandList, hMetricStreamer, value);
+        if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            return ret;
+        }
+    }
+
+    return cmdList->appendMetricStreamerMarker(hMetricStreamer, value);
 }
 
 ze_result_t ZE_APICALL zetMetricStreamerClose(
@@ -123,7 +132,15 @@ ze_result_t ZE_APICALL zetMetricQueryReset(
 ze_result_t ZE_APICALL zetCommandListAppendMetricQueryBegin(
     zet_command_list_handle_t hCommandList,
     zet_metric_query_handle_t hMetricQuery) {
-    return L0::CommandList::fromHandle(hCommandList)->appendMetricQueryBegin(hMetricQuery);
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if (cmdList) {
+        auto ret = cmdList->capture<CaptureApi::zetCommandListAppendMetricQueryBegin>(hCommandList, hMetricQuery);
+        if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            return ret;
+        }
+    }
+
+    return cmdList->appendMetricQueryBegin(hMetricQuery);
 }
 
 ze_result_t ZE_APICALL zetCommandListAppendMetricQueryEnd(
@@ -132,12 +149,28 @@ ze_result_t ZE_APICALL zetCommandListAppendMetricQueryEnd(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendMetricQueryEnd(hMetricQuery, hSignalEvent, numWaitEvents, phWaitEvents);
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if (cmdList) {
+        auto ret = cmdList->capture<CaptureApi::zetCommandListAppendMetricQueryEnd>(hCommandList, hMetricQuery, hSignalEvent, numWaitEvents, phWaitEvents);
+        if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            return ret;
+        }
+    }
+
+    return cmdList->appendMetricQueryEnd(hMetricQuery, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ze_result_t ZE_APICALL zetCommandListAppendMetricMemoryBarrier(
     zet_command_list_handle_t hCommandList) {
-    return L0::CommandList::fromHandle(hCommandList)->appendMetricMemoryBarrier();
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if (cmdList) {
+        auto ret = cmdList->capture<CaptureApi::zetCommandListAppendMetricMemoryBarrier>(hCommandList);
+        if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            return ret;
+        }
+    }
+
+    return cmdList->appendMetricMemoryBarrier();
 }
 
 ze_result_t ZE_APICALL zetMetricQueryGetData(
@@ -411,6 +444,14 @@ zetCommandListAppendMarkerExp(
     zet_command_list_handle_t hCommandList,
     zet_metric_group_handle_t hMetricGroup,
     uint32_t value) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if (cmdList) {
+        auto ret = cmdList->capture<CaptureApi::zetCommandListAppendMarkerExp>(hCommandList, hMetricGroup, value);
+        if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            return ret;
+        }
+    }
+
     return L0::metricAppendMarker(hCommandList, hMetricGroup, value);
 }
 

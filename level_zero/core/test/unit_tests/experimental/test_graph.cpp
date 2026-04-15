@@ -768,6 +768,53 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly)
     }
 }
 
+TEST_F(GraphInstantiation, GivenSourceGraphWithMetricCommandsThenExecutableReplaysMetricCalls) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<CommandList> cmdlist;
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+
+    Mock<Event> signalEvent;
+    Mock<Event> waitEvent;
+    ze_event_handle_t waitEvents[] = {waitEvent.toHandle()};
+
+    auto metricStreamerHandle = reinterpret_cast<zet_metric_streamer_handle_t>(0x1001);
+    auto metricQueryHandle = reinterpret_cast<zet_metric_query_handle_t>(0x1002);
+
+    GraphInstatiateSettings instantiateAsMonolithic(nullptr, true);
+
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+    auto *graphCmdList = ctx.cmdListsToReturn[0];
+    MockGraph srcGraph(&ctx, true);
+    srcGraph.captureTargetDesc.hDevice = device->toHandle();
+    cmdlist.setCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+
+    cmdlist.capture<CaptureApi::zetCommandListAppendMetricStreamerMarker>(cmdListHandle, metricStreamerHandle, 7U);
+    cmdlist.capture<CaptureApi::zetCommandListAppendMetricQueryBegin>(cmdListHandle, metricQueryHandle);
+    cmdlist.capture<CaptureApi::zetCommandListAppendMetricQueryEnd>(cmdListHandle, metricQueryHandle, signalEvent.toHandle(), 1U, waitEvents);
+    cmdlist.capture<CaptureApi::zetCommandListAppendMetricMemoryBarrier>(cmdListHandle);
+
+    srcGraph.stopCapturing();
+
+    ASSERT_EQ(4U, srcGraph.getCapturedCommands().size());
+    EXPECT_EQ(CaptureApi::zetCommandListAppendMetricStreamerMarker, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[0].index()));
+    EXPECT_EQ(CaptureApi::zetCommandListAppendMetricQueryBegin, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[1].index()));
+    EXPECT_EQ(CaptureApi::zetCommandListAppendMetricQueryEnd, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[2].index()));
+    EXPECT_EQ(CaptureApi::zetCommandListAppendMetricMemoryBarrier, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[3].index()));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(srcGraph, instantiateAsMonolithic);
+
+    EXPECT_EQ(1U, graphCmdList->appendMetricStreamerMarkerCalled);
+    EXPECT_EQ(1U, graphCmdList->appendMetricQueryBeginCalled);
+    EXPECT_EQ(1U, graphCmdList->appendMetricQueryEndCalled);
+    EXPECT_EQ(1U, graphCmdList->appendMetricMemoryBarrierCalled);
+}
+
 TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPreservedOrderOfForkAndJoinCommands) {
     GraphsCleanupGuard graphCleanup;
 
