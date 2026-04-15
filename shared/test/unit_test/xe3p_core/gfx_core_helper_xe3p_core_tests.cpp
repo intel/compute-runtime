@@ -873,7 +873,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenGfxCoreHelperWhenFlagSetAndCall
     DebugManagerStateRestore restorer;
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 0u);
+    EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 2u);
 
     debugManager.flags.SetAmountOfReusableAllocations.set(0);
     EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 0u);

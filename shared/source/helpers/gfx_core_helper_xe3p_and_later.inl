@@ -422,14 +422,6 @@ bool GfxCoreHelperHw<Family>::is48ResourceNeededForCmdBuffer() const {
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
-    if (debugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
-        return debugManager.flags.SetAmountOfReusableAllocations.get();
-    }
-    return 0u;
-}
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::getMaxScratchSize(const NEO::ProductHelper &productHelper) const {
     if (!productHelper.isAvailableExtendedScratch()) {
         return 256 * MemoryConstants::kiloByte;

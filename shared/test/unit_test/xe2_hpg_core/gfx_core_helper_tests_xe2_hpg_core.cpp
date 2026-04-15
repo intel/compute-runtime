@@ -823,7 +823,7 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenGfxCoreHelperWhenFlagSetAn
     DebugManagerStateRestore restorer;
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 1u);
+    EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 2u);
 
     debugManager.flags.SetAmountOfReusableAllocations.set(0);
     EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 0u);

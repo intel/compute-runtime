@@ -126,4 +126,12 @@ bool GfxCoreHelperHw<Family>::isWalkerPostSyncSkipEnabled(bool isBarrierUsedForI
     return false;
 }
 
+template <>
+uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
+    if (debugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
+        return debugManager.flags.SetAmountOfReusableAllocations.get();
+    }
+    return 2u;
+}
+
 } // namespace NEO
