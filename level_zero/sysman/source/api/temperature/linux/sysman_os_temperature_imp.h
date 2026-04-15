@@ -35,8 +35,8 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     ze_result_t getGlobalMaxTemperature(double *pTemperature);
     ze_result_t getGpuMaxTemperature(double *pTemperature);
     ze_result_t getMemoryMaxTemperature(double *pTemperature);
-    ze_result_t getVoltageRegulatorTemperature(double *pTemperature);
-    ze_result_t getGpuBoardTemperature(double *pTemperature);
+    ze_result_t getVoltageRegulatorMaxTemperature(double *pTemperature);
+    ze_result_t getGpuBoardMaxTemperature(double *pTemperature);
     uint32_t subdeviceId = 0;
     ze_bool_t isSubdevice = 0;
     SysmanProductHelper *pSysmanProductHelper = nullptr;

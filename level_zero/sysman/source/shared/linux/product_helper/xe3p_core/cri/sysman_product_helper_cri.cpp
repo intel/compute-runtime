@@ -28,6 +28,8 @@ constexpr static uint32_t memoryMsuCount = 20;
 constexpr static uint32_t busWidthPerChannelInBytes = 2; // 16 bits = 2 bytes
 constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
+constexpr static uint32_t maxVrTemperatureSensorCount = 4;
+constexpr static uint32_t maxGpuBoardTemperatureSensorCount = 2;
 
 // XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number.
 // This vector defines the predefined value for each integer represented by the index of the vector.
@@ -663,12 +665,12 @@ void SysmanProductHelperHw<gfxProduct>::getSupportedSensors(std::map<zes_temp_se
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GLOBAL] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_MEMORY] = 1;
-    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = 4;
-    supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU_BOARD] = 2;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = 1;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU_BOARD] = 1;
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
@@ -679,35 +681,34 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(Li
         return result;
     }
 
-    // Build the key name based on sensor index
-    std::string key = "VR_TEMPERATURE_" + std::to_string(sensorIndex);
+    double maxVrTemperature = 0.0;
 
-    uint32_t vrTemperature = 0;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vrTemperature)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    // Read all VR temperature sensors (0-3) and return the maximum
+    for (uint32_t i = 0; i < maxVrTemperatureSensorCount; i++) {
+        std::string key = "VR_TEMPERATURE_" + std::to_string(i);
+
+        uint32_t vrTemperature = 0;
+        if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vrTemperature)) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+
+        double convertedTemperature = 0.0;
+        if (i == 0) {
+            convertedTemperature = static_cast<double>(vrTemperature / 10); // VR_TEMPERATURE_0 is reported in deci-degree celsius
+        } else {
+            convertedTemperature = static_cast<double>(vrTemperature & 0xFF); // VR_TEMPERATURE_1/2/3 is reported in U8.0 format
+        }
+
+        maxVrTemperature = std::max(maxVrTemperature, convertedTemperature);
     }
 
-    switch (sensorIndex) {
-    case 0:
-        vrTemperature /= 10; // VR_TEMPERATURE_0 is reported in deci-degree celsius
-        break;
-    case 1:
-    case 2:
-    case 3:
-        vrTemperature = vrTemperature & 0xFF; // VR_TEMPERATURE_1/2/3 is reported in U8.0 format
-        break;
-    default:
-        DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    *pTemperature = static_cast<double>(vrTemperature);
+    *pTemperature = maxVrTemperature;
     return ZE_RESULT_SUCCESS;
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
@@ -727,21 +728,23 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardTemperature(LinuxSysma
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    switch (sensorIndex) {
-    case 0:
-        // Index 0: lower 16 bits, temperature in U8.0 format (bits 0-7)
-        gpuBoardTemperature = gpuBoardTemperature & 0xFF;
-        break;
-    case 1:
-        // Index 1: upper 16 bits, temperature in U8.0 format (bits 16-23)
-        gpuBoardTemperature = (gpuBoardTemperature >> 16) & 0xFF;
-        break;
-    default:
-        DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+    double maxGpuBoardTemperature = 0.0;
+
+    // Read all GPU board temperature sensors and return the maximum
+    for (uint32_t i = 0; i < maxGpuBoardTemperatureSensorCount; i++) {
+        double convertedTemperature = 0.0;
+        if (i == 0) {
+            // Index 0: lower 16 bits, temperature in U8.0 format (bits 0-7)
+            convertedTemperature = static_cast<double>(gpuBoardTemperature & 0xFF);
+        } else {
+            // Index 1: upper 16 bits, temperature in U8.0 format (bits 16-23)
+            convertedTemperature = static_cast<double>((gpuBoardTemperature >> 16) & 0xFF);
+        }
+
+        maxGpuBoardTemperature = std::max(maxGpuBoardTemperature, convertedTemperature);
     }
 
-    *pTemperature = static_cast<double>(gpuBoardTemperature);
+    *pTemperature = maxGpuBoardTemperature;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -901,28 +904,17 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     }
 
     double vrMaxTemperature = 0;
-    std::map<zes_temp_sensors_t, uint32_t> supportedSensorTypeMap;
-    getSupportedSensors(supportedSensorTypeMap);
-    uint32_t vrSensorCount = supportedSensorTypeMap.at(ZES_TEMP_SENSORS_VOLTAGE_REGULATOR);
-    for (uint32_t i = 0; i < vrSensorCount; i++) {
-        double currentVrTemperature = 0;
-        result = this->getVoltageRegulatorTemperature(pLinuxSysmanImp, &currentVrTemperature, subdeviceId, i);
-        if (result != ZE_RESULT_SUCCESS) {
-            return result;
-        }
-        vrMaxTemperature = std::max(vrMaxTemperature, currentVrTemperature);
+    result = this->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &vrMaxTemperature, subdeviceId);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     double gpuBoardMaxTemperature = 0;
-    uint32_t gpuBoardSensorCount = supportedSensorTypeMap.at(ZES_TEMP_SENSORS_GPU_BOARD);
-    for (uint32_t i = 0; i < gpuBoardSensorCount; i++) {
-        double currentGpuBoardTemperature = 0;
-        result = this->getGpuBoardTemperature(pLinuxSysmanImp, &currentGpuBoardTemperature, subdeviceId, i);
-        if (result != ZE_RESULT_SUCCESS) {
-            return result;
-        }
-        gpuBoardMaxTemperature = std::max(gpuBoardMaxTemperature, currentGpuBoardTemperature);
+    result = this->getGpuBoardMaxTemperature(pLinuxSysmanImp, &gpuBoardMaxTemperature, subdeviceId);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
+
     *pTemperature = std::max({gpuMaxTemperature, memoryMaxTemperature, vrMaxTemperature, gpuBoardMaxTemperature});
     return result;
 }

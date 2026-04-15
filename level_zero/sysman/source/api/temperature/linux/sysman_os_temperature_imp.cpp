@@ -37,12 +37,12 @@ ze_result_t LinuxTemperatureImp::getMemoryMaxTemperature(double *pTemperature) {
     return pSysmanProductHelper->getMemoryMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
 }
 
-ze_result_t LinuxTemperatureImp::getVoltageRegulatorTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getVoltageRegulatorTemperature(pLinuxSysmanImp, pTemperature, subdeviceId, sensorIndex);
+ze_result_t LinuxTemperatureImp::getVoltageRegulatorMaxTemperature(double *pTemperature) {
+    return pSysmanProductHelper->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
 }
 
-ze_result_t LinuxTemperatureImp::getGpuBoardTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getGpuBoardTemperature(pLinuxSysmanImp, pTemperature, subdeviceId, sensorIndex);
+ze_result_t LinuxTemperatureImp::getGpuBoardMaxTemperature(double *pTemperature) {
+    return pSysmanProductHelper->getGpuBoardMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
 }
 
 ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
@@ -58,10 +58,10 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
         result = getMemoryMaxTemperature(pTemperature);
         break;
     case ZES_TEMP_SENSORS_VOLTAGE_REGULATOR:
-        result = getVoltageRegulatorTemperature(pTemperature);
+        result = getVoltageRegulatorMaxTemperature(pTemperature);
         break;
     case ZES_TEMP_SENSORS_GPU_BOARD:
-        result = getGpuBoardTemperature(pTemperature);
+        result = getGpuBoardMaxTemperature(pTemperature);
         break;
     default:
         *pTemperature = 0;
