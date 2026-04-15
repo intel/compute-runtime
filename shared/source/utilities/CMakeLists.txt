@@ -35,8 +35,6 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.h
     ${CMAKE_CURRENT_SOURCE_DIR}/numeric.h
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_counter.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocator_traits.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocator_traits.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocators.cpp
