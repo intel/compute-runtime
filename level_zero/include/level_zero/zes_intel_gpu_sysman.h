@@ -141,6 +141,20 @@ typedef struct _zes_intel_driver_name_exp_properties_t {
 } zes_intel_driver_name_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_FREQ_THROTTLE_REASON_EXP_NAME
+/// @brief Frequency throttle reason extension name
+#define ZES_INTEL_FREQ_THROTTLE_REASON_EXP_NAME "ZES_intel_experimental_frequency_throttle_reason"
+#endif // ZES_INTEL_FREQ_THROTTLE_REASON_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Frequency throttle reason extension Version(s)
+typedef enum _zes_intel_freq_throttle_reason_exp_version_t {
+    ZES_INTEL_FREQ_THROTTLE_REASON_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_FREQ_THROTTLE_REASON_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_FREQ_THROTTLE_REASON_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_freq_throttle_reason_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Frequency Detailed Throttle Reasons Extension Version(s)
 typedef enum _zes_intel_freq_throttle_detailed_reason_exp_version_t {
     ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
