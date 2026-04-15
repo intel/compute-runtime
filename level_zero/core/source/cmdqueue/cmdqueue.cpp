@@ -410,6 +410,21 @@ ze_result_t CommandQueue::getIndex(uint32_t *pIndex) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t CommandQueue::getFlags(ze_command_queue_flags_t *pFlags) {
+    *pFlags = desc.flags;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t CommandQueue::getMode(ze_command_queue_mode_t *pMode) {
+    *pMode = desc.mode;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t CommandQueue::getPriority(ze_command_queue_priority_t *pPriority) {
+    *pPriority = desc.priority;
+    return ZE_RESULT_SUCCESS;
+}
+
 QueueProperties CommandQueue::extractQueueProperties(const ze_command_queue_desc_t &desc) {
     QueueProperties queueProperties = {};
 

@@ -77,6 +77,7 @@ set(TEST_TARGETS
     zello_multidev
     zello_printf
     zello_p2p_copy
+    zello_query_apis
     zello_sandbox
     zello_scratch
     zello_stress_commandlist

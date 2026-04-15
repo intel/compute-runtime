@@ -39,6 +39,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
+            givenMutableCommandListWhenCallingIsMutableExpThenTrueIsReturned) {
+    ze_bool_t isMutable = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getBase()->isMutableExp(&isMutable));
+    EXPECT_TRUE(static_cast<bool>(isMutable));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
             givenMutableCommandListWhenGettingCommandIdThenGetCorrectFlags) {
     EXPECT_EQ(0u, mutableCommandList->nextCommandId);
     EXPECT_FALSE(mutableCommandList->nextAppendKernelMutable);

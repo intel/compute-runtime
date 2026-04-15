@@ -437,6 +437,11 @@ uint32_t CommandList::getOrdinal() const {
     return ordinal.value();
 }
 
+ze_result_t CommandList::getFlags(ze_command_list_flags_t *pFlags) {
+    *pFlags = flags;
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t CommandList::getImmediateIndex(uint32_t *pIndex) {
     if (isImmediateType()) {
         return cmdQImmediate->getIndex(pIndex);
@@ -444,8 +449,34 @@ ze_result_t CommandList::getImmediateIndex(uint32_t *pIndex) {
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
+ze_result_t CommandList::getImmediateFlags(ze_command_queue_flags_t *pFlags) {
+    if (isImmediateType()) {
+        return cmdQImmediate->getFlags(pFlags);
+    }
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+}
+
+ze_result_t CommandList::getImmediateMode(ze_command_queue_mode_t *pMode) {
+    if (isImmediateType()) {
+        return cmdQImmediate->getMode(pMode);
+    }
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+}
+
+ze_result_t CommandList::getImmediatePriority(ze_command_queue_priority_t *pPriority) {
+    if (isImmediateType()) {
+        return cmdQImmediate->getPriority(pPriority);
+    }
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+}
+
 ze_result_t CommandList::isImmediate(ze_bool_t *pIsImmediate) {
     *pIsImmediate = isImmediateType();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t CommandList::isMutableExp(ze_bool_t *pIsMutable) {
+    *pIsMutable = (asMutable() != nullptr);
     return ZE_RESULT_SUCCESS;
 }
 

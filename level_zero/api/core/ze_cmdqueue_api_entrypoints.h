@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,24 @@ ze_result_t ZE_APICALL zeCommandQueueGetIndex(
     ze_command_queue_handle_t hCommandQueue,
     uint32_t *pIndex) {
     return L0::CommandQueue::fromHandle(hCommandQueue)->getIndex(pIndex);
+}
+
+ze_result_t ZE_APICALL zeCommandQueueGetFlags(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_flags_t *pFlags) {
+    return L0::CommandQueue::fromHandle(hCommandQueue)->getFlags(pFlags);
+}
+
+ze_result_t ZE_APICALL zeCommandQueueGetMode(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_mode_t *pMode) {
+    return L0::CommandQueue::fromHandle(hCommandQueue)->getMode(pMode);
+}
+
+ze_result_t ZE_APICALL zeCommandQueueGetPriority(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_priority_t *pPriority) {
+    return L0::CommandQueue::fromHandle(hCommandQueue)->getPriority(pPriority);
 }
 
 } // namespace L0
@@ -106,5 +124,29 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetIndex(
     return L0::zeCommandQueueGetIndex(
         hCommandQueue,
         pIndex);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetFlags(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_flags_t *pFlags) {
+    return L0::zeCommandQueueGetFlags(
+        hCommandQueue,
+        pFlags);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetMode(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_mode_t *pMode) {
+    return L0::zeCommandQueueGetMode(
+        hCommandQueue,
+        pMode);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetPriority(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_priority_t *pPriority) {
+    return L0::zeCommandQueueGetPriority(
+        hCommandQueue,
+        pPriority);
 }
 }

@@ -2248,6 +2248,60 @@ TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForValidOr
     }
 }
 
+TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueThenGetFlagsReturnsCreationFlags) {
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_EXPLICIT_ONLY;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
+
+    ze_command_queue_flags_t flags = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->getFlags(&flags));
+    EXPECT_EQ(desc.flags, flags);
+
+    commandQueue->destroy();
+}
+
+TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueThenGetModeReturnsCreationMode) {
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
+
+    ze_command_queue_mode_t mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->getMode(&mode));
+    EXPECT_EQ(desc.mode, mode);
+
+    commandQueue->destroy();
+}
+
+TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueThenGetPriorityReturnsCreationPriority) {
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &commandQueueHandle));
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
+
+    ze_command_queue_priority_t priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->getPriority(&priority));
+    EXPECT_EQ(desc.priority, priority);
+
+    commandQueue->destroy();
+}
+
 TEST_F(DeviceCreateCommandQueueTest, givenMakeEachEnqueueBlockingSetToOneWhenIsSynchronousModeIsCalledThenReturnsTrue) {
     DebugManagerStateRestore restore;
     debugManager.flags.MakeEachEnqueueBlocking.set(1);

@@ -20,6 +20,7 @@
 #include <cstring>
 
 namespace L0 {
+
 void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::string &functionName) {
 #define RETURN_FUNC_PTR_IF_EXIST(name)    \
     {                                     \
@@ -58,6 +59,22 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelMemMapDeviceMemToHost);
 
     // command list
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandQueueGetOrdinal);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandQueueGetIndex);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandQueueGetFlags);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandQueueGetMode);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandQueueGetPriority);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetDeviceHandle);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetContextHandle);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetOrdinal);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetFlags);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListImmediateGetIndex);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListImmediateGetFlags);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListImmediateGetMode);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListImmediateGetPriority);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListIsImmediate);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListIsMutableExp);
+
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory64);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWriteToMemory);

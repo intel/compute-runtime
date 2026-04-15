@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,13 @@ ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
     return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandKernelsExp(numKernels, pCommandId, phKernels);
 }
 
+ze_result_t ZE_APICALL zeCommandListIsMutableExp(
+    ze_command_list_handle_t hCommandList,
+    ze_bool_t *pIsMutable) {
+    hCommandList = toInternalType(hCommandList);
+    return L0::CommandList::fromHandle(hCommandList)->isMutableExp(pIsMutable);
+}
+
 } // namespace L0
 
 #if defined(__cplusplus)
@@ -125,6 +132,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
     uint64_t *pCommandId,
     ze_kernel_handle_t *phKernels) {
     return L0::zeCommandListUpdateMutableCommandKernelsExp(hCommandList, numKernels, pCommandId, phKernels);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsMutableExp(
+    ze_command_list_handle_t hCommandList,
+    ze_bool_t *pIsMutable) {
+    return L0::zeCommandListIsMutableExp(hCommandList, pIsMutable);
 }
 
 #if defined(__cplusplus)

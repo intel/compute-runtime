@@ -1692,6 +1692,51 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelMemMapDeviceMemToHost", &funPtr));
     EXPECT_EQ(expectedIntelMemMapDeviceMemToHost, reinterpret_cast<pfnIntelMemMapDeviceMemToHost>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetOrdinal", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetIndex", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetFlags", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetMode", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetPriority", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetDeviceHandle", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetContextHandle", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetOrdinal", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetFlags", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetIndex", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetFlags", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetMode", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetPriority", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListIsImmediate", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListIsMutableExp", &funPtr));
+    EXPECT_NE(nullptr, funPtr);
 }
 
 TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenExpectProperBehavior) {

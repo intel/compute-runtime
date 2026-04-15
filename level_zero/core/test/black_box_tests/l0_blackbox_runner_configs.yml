@@ -184,6 +184,10 @@ zello_p2p_copy:
   dg2:
   pvc.b0:
 
+zello_query_apis:
+  dg2:
+  pvc.b0:
+
 zello_sandbox:
   dg2:
   pvc.b0:

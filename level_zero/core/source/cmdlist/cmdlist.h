@@ -236,8 +236,13 @@ struct CommandList : _ze_command_list_handle_t {
     MOCKABLE_VIRTUAL ze_result_t getDeviceHandle(ze_device_handle_t *phDevice);
     MOCKABLE_VIRTUAL ze_result_t getContextHandle(ze_context_handle_t *phContext);
     virtual uint32_t getOrdinal() const;
+    ze_result_t getFlags(ze_command_list_flags_t *pFlags);
     virtual ze_result_t getImmediateIndex(uint32_t *pIndex);
+    ze_result_t getImmediateFlags(ze_command_queue_flags_t *pFlags);
+    ze_result_t getImmediateMode(ze_command_queue_mode_t *pMode);
+    ze_result_t getImmediatePriority(ze_command_queue_priority_t *pPriority);
     virtual ze_result_t isImmediate(ze_bool_t *pIsImmediate);
+    ze_result_t isMutableExp(ze_bool_t *pIsMutable);
 
     virtual ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;

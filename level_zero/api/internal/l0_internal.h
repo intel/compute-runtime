@@ -8,6 +8,7 @@
 #pragma once
 
 #include "level_zero/api/internal/l0_cmdlist.h"
+#include "level_zero/api/internal/l0_cmdqueue.h"
 #include "level_zero/api/internal/l0_context.h"
 #include "level_zero/api/internal/l0_driver.h"
 #include "level_zero/api/internal/l0_event.h"

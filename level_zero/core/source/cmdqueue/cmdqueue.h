@@ -69,6 +69,9 @@ struct CommandQueue : _ze_command_queue_handle_t {
     virtual ze_result_t synchronize(uint64_t timeout);
     ze_result_t getOrdinal(uint32_t *pOrdinal);
     ze_result_t getIndex(uint32_t *pIndex);
+    ze_result_t getFlags(ze_command_queue_flags_t *pFlags);
+    ze_result_t getMode(ze_command_queue_mode_t *pMode);
+    ze_result_t getPriority(ze_command_queue_priority_t *pPriority);
 
     static CommandQueue *create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
                                 const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, bool immediateCmdListQueue, ze_result_t &resultValue);
