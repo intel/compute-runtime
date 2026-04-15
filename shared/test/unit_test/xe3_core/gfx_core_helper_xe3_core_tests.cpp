@@ -653,7 +653,7 @@ XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCallUseGemCreateE
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue) {
     const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 1u);
+    EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 2u);
 
     DebugManagerStateRestore restorer;
     debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(3);

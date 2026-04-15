@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,14 @@ uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const H
         return std::min(getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice), 64u);
     }
     return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
+}
+
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
+    if (debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
+        return debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
+    }
+    return 1u;
 }
 
 } // namespace NEO
