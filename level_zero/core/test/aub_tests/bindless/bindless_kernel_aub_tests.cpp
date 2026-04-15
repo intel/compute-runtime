@@ -29,15 +29,13 @@ struct L0BindlessAub : Test<AUBFixtureL0> {
         AUBFixtureL0::setUp();
     }
     void TearDown() override {
-        module->destroy();
         AUBFixtureL0::tearDown();
     }
 
     DebugManagerStateRestore restorer;
-    ModuleImp *module = nullptr;
 };
 
-HWTEST_F(L0BindlessAub, DISABLED_GivenBindlessKernelWhenExecutedThenOutputIsCorrect) {
+HWTEST_F(L0BindlessAub, GivenBindlessKernelWhenExecutedThenOutputIsCorrect) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     const uint32_t groupSize[] = {32, 1, 1};
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};
@@ -66,13 +64,13 @@ HWTEST_F(L0BindlessAub, DISABLED_GivenBindlessKernelWhenExecutedThenOutputIsCorr
     dispatchTraits.groupCountY = groupCount[1];
     dispatchTraits.groupCountZ = groupCount[2];
 
-    createModuleFromFile("bindless_stateful_copy_buffer", context, device, "");
+    auto moduleHandle = createModuleFromFile("bindless_stateful_copy_buffer", context, device, "");
 
     ze_kernel_handle_t kernel;
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "StatefulCopyBuffer";
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(module->toHandle(), &kernelDesc, &kernel));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleHandle, &kernelDesc, &kernel));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &bufferSrc));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 1, sizeof(void *), &bufferDst));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernel, groupSize[0], groupSize[1], groupSize[2]));
@@ -90,6 +88,7 @@ HWTEST_F(L0BindlessAub, DISABLED_GivenBindlessKernelWhenExecutedThenOutputIsCorr
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
     driverHandle->svmAllocsManager->freeSVMAlloc(bufferSrc);
     driverHandle->svmAllocsManager->freeSVMAlloc(bufferDst);
+    zeModuleDestroy(moduleHandle);
 }
 
 } // namespace ult
