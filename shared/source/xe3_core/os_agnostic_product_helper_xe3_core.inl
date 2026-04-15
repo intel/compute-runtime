@@ -111,4 +111,9 @@ bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
     return true;
 }
 
+template <>
+std::optional<uint8_t> ProductHelperHw<gfxProduct>::getBcsCompressionFormat() const {
+    return uint8_t{0x2};
+}
+
 } // namespace NEO

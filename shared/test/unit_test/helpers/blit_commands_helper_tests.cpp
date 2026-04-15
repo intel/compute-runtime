@@ -892,6 +892,82 @@ HWTEST2_F(BlitTests, givenXe3CoreWhenSrcGraphicAlloctionAndStatelessFlagSetAndSy
     EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
 }
 
+HWTEST2_F(BlitTests, givenXe2HpgCoreWhenSrcAllocationCompressedWhenAppendBlitCommandsBlockCopyThenSrcCompressionFormatIs0x2, IsXe2HpgCore) {
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
+    bltCmd.setDestinationX2CoordinateRight(1);
+    bltCmd.setDestinationY2CoordinateBottom(1);
+    BlitProperties properties = {};
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.srcAllocation = &mockAllocation;
+    properties.dstAllocation = nullptr;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsBlockCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(0x2u, bltCmd.getSourceCompressionFormat());
+    EXPECT_EQ(0u, bltCmd.getDestinationCompressionFormat());
+}
+
+HWTEST2_F(BlitTests, givenXe2HpgCoreWhenDstAllocationCompressedWhenAppendBlitCommandsBlockCopyThenDstCompressionFormatIs0x2, IsXe2HpgCore) {
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
+    bltCmd.setDestinationX2CoordinateRight(1);
+    bltCmd.setDestinationY2CoordinateBottom(1);
+    BlitProperties properties = {};
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.srcAllocation = nullptr;
+    properties.dstAllocation = &mockAllocation;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsBlockCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(0u, bltCmd.getSourceCompressionFormat());
+    EXPECT_EQ(0x2u, bltCmd.getDestinationCompressionFormat());
+}
+
+HWTEST2_F(BlitTests, givenXe3CoreWhenSrcAllocationCompressedWhenAppendBlitCommandsBlockCopyThenSrcCompressionFormatIs0x2, IsXe3Core) {
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
+    bltCmd.setDestinationX2CoordinateRight(1);
+    bltCmd.setDestinationY2CoordinateBottom(1);
+    BlitProperties properties = {};
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.srcAllocation = &mockAllocation;
+    properties.dstAllocation = nullptr;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsBlockCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(0x2u, bltCmd.getSourceCompressionFormat());
+    EXPECT_EQ(0u, bltCmd.getDestinationCompressionFormat());
+}
+
+HWTEST2_F(BlitTests, givenXe3CoreWhenDstAllocationCompressedWhenAppendBlitCommandsBlockCopyThenDstCompressionFormatIs0x2, IsXe3Core) {
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
+    bltCmd.setDestinationX2CoordinateRight(1);
+    bltCmd.setDestinationY2CoordinateBottom(1);
+    BlitProperties properties = {};
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.srcAllocation = nullptr;
+    properties.dstAllocation = &mockAllocation;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsBlockCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(0u, bltCmd.getSourceCompressionFormat());
+    EXPECT_EQ(0x2u, bltCmd.getDestinationCompressionFormat());
+}
+
 HWTEST_F(BlitTests, givenXyBlockCopyBltCommandAndSliceIndex0WhenAppendBaseAddressOffsetIsCalledThenNothingChanged) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;

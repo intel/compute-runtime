@@ -50,12 +50,18 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
 
     if (srcAllocation && srcAllocation->isCompressionEnabled()) {
         auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        srcCompressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+        srcCompressionFormat = static_cast<uint8_t>(rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat));
+        if (auto bcsCompressionFormat = rootDeviceEnvironment.getHelper<ProductHelper>().getBcsCompressionFormat()) {
+            srcCompressionFormat = *bcsCompressionFormat;
+        }
     }
 
     if (dstAllocation && dstAllocation->isCompressionEnabled()) {
         auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        dstCompressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+        dstCompressionFormat = static_cast<uint8_t>(rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat));
+        if (auto bcsCompressionFormat = rootDeviceEnvironment.getHelper<ProductHelper>().getBcsCompressionFormat()) {
+            dstCompressionFormat = *bcsCompressionFormat;
+        }
     }
 
     if (debugManager.flags.ForceBufferCompressionFormat.get() != -1) {
@@ -151,15 +157,23 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
 
     if (dstAllocation) {
         if (dstAllocation->isCompressionEnabled()) {
-            compressionFormat = 2;
+            auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
+            compressionFormat = static_cast<uint8_t>(rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat));
         }
     }
 
     if (compressionFormat == 0) {
         if (srcAllocation) {
             if (srcAllocation->isCompressionEnabled()) {
-                compressionFormat = 2;
+                auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
+                compressionFormat = static_cast<uint8_t>(rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat));
             }
+        }
+    }
+
+    if (compressionFormat != 0) {
+        if (auto bcsCompressionFormat = rootDeviceEnvironment.getHelper<ProductHelper>().getBcsCompressionFormat()) {
+            compressionFormat = *bcsCompressionFormat;
         }
     }
 
