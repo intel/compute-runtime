@@ -36,13 +36,6 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
         dstImage = Image2dHelperUlt<>::create(context);
 
         pDevice->setPreemptionMode(PreemptionMode::Disabled);
-
-        auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-        copyBufferToImageBuiltin = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(compilerProductHelper.isForceToStatelessRequired(),
-                                                                                                    compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
-        copyImageToBufferBuiltin = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(compilerProductHelper.isForceToStatelessRequired(),
-                                                                                                    compilerProductHelper.isHeaplessModeEnabled(pDevice->getHardwareInfo()));
         initialized = true;
     }
 
@@ -58,9 +51,6 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
 
     Image *srcImage = nullptr;
     Image *dstImage = nullptr;
-
-    BuiltIn::Group copyBufferToImageBuiltin;
-    BuiltIn::Group copyImageToBufferBuiltin;
 
     bool initialized = false;
 };
@@ -93,7 +83,7 @@ HWTEST_F(GetSizeRequiredImageMockedZebinTest, WhenCopyingImageThenHeapsAndComman
     auto retVal = EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImageToImage3d,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindfulImageBindfulBuffer,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -198,7 +188,8 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndComman
         CL_FALSE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyImageToBufferBuiltin,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer,
+                                                                              defaultBuiltInMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -255,7 +246,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBu
         CL_TRUE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyImageToBufferBuiltin,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, defaultBuiltInMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -312,7 +303,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageNonBlockingThenHeapsAndComman
         CL_FALSE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyBufferToImageBuiltin,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToImage3d, defaultBuiltInMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -368,7 +359,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageBlockingThenHeapsAndCommandBu
         CL_TRUE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyBufferToImageBuiltin,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToImage3d, defaultBuiltInMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 

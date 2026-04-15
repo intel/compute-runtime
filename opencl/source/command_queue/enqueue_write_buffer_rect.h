@@ -57,9 +57,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     bool isCpuCopyAllowed = false;
     getContext().tryGetExistingHostPtrAllocation(ptr, hostPtrSize, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);
 
-    const bool isStateless = forceStateless(buffer->getSize());
-    const bool useHeapless = this->getHeaplessModeEnabled();
-    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferRect>(isStateless, useHeapless);
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(buffer->getSize());
 
     void *srcPtr = const_cast<void *>(ptr);
 
@@ -106,7 +105,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     dc.direction = csrSelectionArgs.direction;
 
     MultiDispatchInfo dispatchInfo(dc);
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, {BuiltIn::BaseKernel::copyBufferRect, builtInMode}, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;
     }

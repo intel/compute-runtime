@@ -9,8 +9,8 @@
 
 namespace NEO {
 template <typename... KernelsDescArgsT>
-void BuiltIn::DispatchInfoBuilder::populate(BuiltIn::Group op, ConstStringRef options, KernelsDescArgsT &&...desc) {
-    auto src = kernelsLib.getBuiltinsLib().getBuiltinCode(op, BuiltIn::CodeType::any, clDevice.getDevice());
+void BuiltIn::DispatchInfoBuilder::populate(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, ConstStringRef options, KernelsDescArgsT &&...desc) {
+    auto src = kernelsLib.getBuiltinsLib().getBuiltinCode(kernel, mode, BuiltIn::CodeType::any, clDevice.getDevice());
     ClDeviceVector deviceVector;
     deviceVector.push_back(&clDevice);
     prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());

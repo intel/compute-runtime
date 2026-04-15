@@ -161,17 +161,10 @@ HWTEST_F(EnqueueWriteBufferTypeTest, WhenWritingBufferThenIndirectDataIsAdded) {
     srcBuffer->forceDisallowCPUCopy = true;
     EnqueueWriteBufferHelper<>::enqueueWriteBuffer(pCmdQ, srcBuffer.get(), EnqueueWriteBufferTraits::blocking);
 
-    auto builtInGroup = BuiltIn::Group::copyBufferToBuffer;
-
-    if (static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->isForceStateless) {
-        builtInGroup = BuiltIn::Group::copyBufferToBufferStateless;
-    }
-
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-
-    builtInGroup = adjustBuiltinGroup(heaplessEnabled, builtInGroup);
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+    bool isStateless = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->isForceStateless;
+    auto mode = getBuiltinMode(isStateless);
+    bool heaplessEnabled = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->heaplessModeEnabled;
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, mode,
                                                                               pCmdQ->getClDevice());
 
     ASSERT_NE(nullptr, &builder);
@@ -814,20 +807,21 @@ HWTEST_F(EnqueueWriteBufferTypeTest, given4gbBufferAndIsForceStatelessIsFalseWhe
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ);
     mockCmdQ->isForceStateless = false;
 
-    BuiltIn::Group copyBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled(), true);
+    auto copyMode = pCmdQ->getDefaultBuiltInMode();
+    copyMode.adjustToWideStatelessIfRequired(4ull * MemoryConstants::gigaByte);
 
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
     // substitute original builder with mock builder
     auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
-        copyBuiltIn,
+        BuiltIn::BaseKernel::copyBufferToBuffer, copyMode,
         std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
     FourGbMockBuffer buffer;
 
     auto mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        copyBuiltIn,
+        BuiltIn::BaseKernel::copyBufferToBuffer, copyMode,
         *pClDevice));
 
     EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
@@ -838,7 +832,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, given4gbBufferAndIsForceStatelessIsFalseWhe
 
     // restore original builder and retrieve mock builder
     auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
-        copyBuiltIn,
+        BuiltIn::BaseKernel::copyBufferToBuffer, copyMode,
         std::move(oldBuilder));
     EXPECT_EQ(mockBuilder, newBuilder.get());
 }

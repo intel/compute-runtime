@@ -29,11 +29,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    const bool isStateless = forceStateless(srcBuffer->getSize());
-    const bool isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(srcBuffer->getSize());
-    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, this->heaplessModeEnabled, isWideness);
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(srcBuffer->getSize());
+    BuiltIn::BuiltInId builtIn{BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode};
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtIn,
                                                                               this->getClDevice());
     BuiltIn::OwnershipWrapper builtInLock(builder, this->context);
 

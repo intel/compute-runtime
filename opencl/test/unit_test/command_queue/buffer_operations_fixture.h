@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/built_in_ops_base.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/ptr_math.h"
 
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
@@ -36,19 +38,9 @@ struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
         CommandEnqueueFixture::tearDown();
     }
 
-    BuiltIn::Group adjustBuiltinGroup(bool isHeaplessEnabled, BuiltIn::Group builtInGroup) {
-
-        if (isHeaplessEnabled) {
-            switch (builtInGroup) {
-            case BuiltIn::Group::copyBufferToBuffer:
-            case BuiltIn::Group::copyBufferToBufferStateless:
-                return BuiltIn::Group::copyBufferToBufferStatelessHeapless;
-            default:
-                break;
-            }
-        }
-
-        return builtInGroup;
+    BuiltIn::AddressingMode getBuiltinMode(bool isStateless) {
+        bool bindless = ApiSpecificConfig::getBindlessMode(pCmdQ->getDevice());
+        return BuiltIn::AddressingMode::getDefaultMode(bindless, isStateless);
     }
 
   protected:

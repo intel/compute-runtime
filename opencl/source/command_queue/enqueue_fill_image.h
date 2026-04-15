@@ -26,14 +26,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    auto builtInGroupImage3d = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::fillImage3d>(this->heaplessModeEnabled);
-    auto builtInGroupImage1dBuffer = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::fillImage1dBuffer>(this->heaplessModeEnabled);
+    auto baseKernel = (image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+                          ? BuiltIn::BaseKernel::fillImage1dBuffer
+                          : BuiltIn::BaseKernel::fillImage3d;
+    BuiltIn::BuiltInId builtIn{baseKernel, this->defaultBuiltInMode};
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER
-            ? builtInGroupImage1dBuffer
-            : builtInGroupImage3d,
-        this->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtIn,
+                                                                              this->getClDevice());
 
     BuiltIn::OwnershipWrapper builtInLock(builder, this->context);
 

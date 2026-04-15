@@ -11,10 +11,8 @@
 
 #include <chrono>
 #include <cstring>
-#include <fstream>
 #include <iostream>
 #include <limits>
-#include <memory>
 
 void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, uint32_t copyQueueGroup, bool &validRet, bool useEventBasedSync) {
     const size_t allocSize = 4096 + 7; // +7 to brake alignment and make it harder
@@ -126,11 +124,6 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
     memset(srcBuffer, val, allocSize);
     memset(dstBuffer, 0, allocSize);
 
-    ze_module_handle_t module = nullptr;
-    ze_kernel_handle_t kernel = nullptr;
-
-    std::ifstream file("copy_buffer_to_buffer.spv", std::ios::binary);
-
     ze_event_pool_handle_t eventPoolHost;
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> hostEvents(numEvents);
@@ -140,67 +133,9 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      0);
 
-    if (file.is_open()) {
-        file.seekg(0, file.end);
-        auto length = file.tellg();
-        file.seekg(0, file.beg);
-
-        std::unique_ptr<char[]> spirvInput(new char[length]);
-        file.read(spirvInput.get(), length);
-
-        ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-        ze_module_build_log_handle_t buildlog;
-        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvInput.get());
-        moduleDesc.inputSize = length;
-        moduleDesc.pBuildFlags = "";
-
-        if (zeModuleCreate(context, device, &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
-            size_t szLog = 0;
-            zeModuleBuildLogGetString(buildlog, &szLog, nullptr);
-
-            char *strLog = (char *)malloc(szLog);
-            zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-            LevelZeroBlackBoxTests::printBuildLog(strLog);
-
-            free(strLog);
-            SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-            std::cerr << "\nZello Immediate Results validation FAILED. Module creation error."
-                      << std::endl;
-            SUCCESS_OR_TERMINATE_BOOL(false);
-        }
-        SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-
-        ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-        kernelDesc.pKernelName = "CopyBufferToBufferBytes";
-        SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
-
-        uint32_t groupSizeX = 32u;
-        uint32_t groupSizeY = 1u;
-        uint32_t groupSizeZ = 1u;
-        SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, allocSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
-        SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
-
-        uint32_t offset = 0;
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
-
-        ze_group_count_t dispatchTraits;
-        dispatchTraits.groupCountX = allocSize / groupSizeX;
-        dispatchTraits.groupCountY = 1u;
-        dispatchTraits.groupCountZ = 1u;
-
-        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
-                                                             isEventsUsed ? hostEvents[0] : nullptr, 0, nullptr));
-        file.close();
-    } else {
-        // Perform a GPU copy
-        SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize,
-                                                           isEventsUsed ? hostEvents[0] : nullptr, 0, nullptr));
-    }
+    // Perform a GPU copy
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize,
+                                                       isEventsUsed ? hostEvents[0] : nullptr, 0, nullptr));
 
     if (!syncMode) {
         std::chrono::high_resolution_clock::time_point start, end;

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
@@ -729,6 +730,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool isSmallBarConfigPresent = false;
     bool useOnlyGlobalTimestamps = false;
     bool heaplessModeEnabled = false;
+    NEO::BuiltIn::AddressingMode defaultBuiltInMode;
     bool scratchAddressPatchingEnabled = false;
     bool taskCountUpdateFenceRequired = false;
     bool statelessBuiltinsEnabled = false;

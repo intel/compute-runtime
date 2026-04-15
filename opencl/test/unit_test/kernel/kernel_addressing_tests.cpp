@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/program/kernel_info.h"
@@ -31,9 +32,21 @@ struct KernelAddressingTest : public ClDeviceFixture, public ::testing::Test, pu
         ClDeviceFixture::setUp();
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        isHeapless = compilerProductHelper.isHeaplessModeEnabled(pDevice->getHardwareInfo());
+        isBindless = ApiSpecificConfig::getBindlessMode(pClDevice->getDevice());
         isStateless = compilerProductHelper.isForceToStatelessRequired();
         isWideness = GetParam();
+
+        defaultBuiltInMode = BuiltIn::AddressingMode::getDefaultMode(isBindless, isStateless);
+        if (isWideness) {
+            defaultBuiltInMode.adjustToWideStatelessIfRequired(4ull * MemoryConstants::gigaByte);
+        }
+        isWideStateless = defaultBuiltInMode.bufferMode == BuiltIn::AddressingMode::BufferMode::stateless && defaultBuiltInMode.wideMode;
+
+        if (isWideStateless) {
+            buildOptions = "-cl-intel-greater-than-4GB-buffer-required -Didx_t=ulong -Dcoord2_t=ulong2 -Dcoord4_t=ulong4 -Doffset_t=ulong";
+        } else {
+            buildOptions = "-Didx_t=uint -Dcoord2_t=uint2 -Dcoord4_t=uint4 -Doffset_t=uint";
+        }
     }
 
     void TearDown() override {
@@ -41,20 +54,23 @@ struct KernelAddressingTest : public ClDeviceFixture, public ::testing::Test, pu
         ClDeviceFixture::tearDown();
     }
 
-    bool isHeapless = false;
+    BuiltIn::AddressingMode defaultBuiltInMode;
+
+    bool isBindless = false;
     bool isStateless = false;
     bool isWideness = false;
+    bool isWideStateless = false;
+    const char *buildOptions = "";
     std::unique_ptr<Program> prog;
 };
 
 TEST_P(KernelAddressingTest, givenBuiltinCopyBufferToBufferKernelsWhenWidenessIsEnabledThenCorrectArgumentSizesAreUsed) {
-    const auto builtinType = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isStateless, isHeapless, isWideness);
 
-    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltIn::CodeType::any, *pDevice);
+    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, defaultBuiltInMode, BuiltIn::CodeType::any, *pDevice);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
     prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
-    prog->build(deviceVector, "");
+    prog->build(deviceVector, buildOptions);
 
     const std::vector<const char *> bufferToBufferKernelNames = {
         "CopyBufferToBufferBytes",
@@ -68,80 +84,80 @@ TEST_P(KernelAddressingTest, givenBuiltinCopyBufferToBufferKernelsWhenWidenessIs
         auto pKernelInfo = prog->getKernelInfo(kernelName, 0);
         ASSERT_NE(pKernelInfo, nullptr);
         EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size,
-                  isStateless && isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+                  isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
         EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size,
-                  isStateless && isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+                  isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
     }
 }
 
 TEST_P(KernelAddressingTest, givenBuiltinCopyBufferRectKernelsWhenFetchedFromProgramThenCorrectArgumentSizesAreUsed) {
-    const auto builtinType = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferRect>(isStateless, isHeapless, isWideness);
 
-    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltIn::CodeType::any, *pDevice);
+    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(BuiltIn::BaseKernel::copyBufferRect, defaultBuiltInMode, BuiltIn::CodeType::any, *pDevice);
+    ASSERT_GT(src.resource.size(), 0u);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
     prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
-    prog->build(deviceVector, "");
+    ASSERT_NE(nullptr, prog.get());
+    auto ret = prog->build(deviceVector, buildOptions);
+    ASSERT_EQ(CL_SUCCESS, ret);
     auto pKernelInfo = prog->getKernelInfo("CopyBufferRectBytes2d", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+    ASSERT_NE(nullptr, pKernelInfo);
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isWideStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isWideStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
     pKernelInfo = prog->getKernelInfo("CopyBufferRectBytesMiddle2d", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isWideStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isWideStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
     pKernelInfo = prog->getKernelInfo("CopyBufferRectBytes3d", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 4 * sizeof(uint64_t) : 4 * sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 4 * sizeof(uint64_t) : 4 * sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isWideStateless ? 4 * sizeof(uint64_t) : 4 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isWideStateless ? 4 * sizeof(uint64_t) : 4 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isWideStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, isWideStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
     pKernelInfo = prog->getKernelInfo("CopyBufferRectBytesMiddle3d", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 4 * sizeof(uint64_t) : 4 * sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 4 * sizeof(uint64_t) : 4 * sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, isWideStateless ? 4 * sizeof(uint64_t) : 4 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isWideStateless ? 4 * sizeof(uint64_t) : 4 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, isWideStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, isWideStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
 }
 
 TEST_P(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgramThenCorrectArgumentSizesAreUsed) {
-    const auto builtinType = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(isStateless, isHeapless, isWideness);
 
-    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltIn::CodeType::any, *pDevice);
+    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(BuiltIn::BaseKernel::fillBuffer, defaultBuiltInMode, BuiltIn::CodeType::any, *pDevice);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
     prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
-    prog->build(deviceVector, "");
+    prog->build(deviceVector, buildOptions);
     auto pKernelInfo = prog->getKernelInfo("FillBufferBytes", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
     pKernelInfo = prog->getKernelInfo("FillBufferLeftLeftover", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
     pKernelInfo = prog->getKernelInfo("FillBufferMiddle", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
     pKernelInfo = prog->getKernelInfo("FillBufferRightLeftover", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
     pKernelInfo = prog->getKernelInfo("FillBufferImmediate", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
     pKernelInfo = prog->getKernelInfo("FillBufferImmediateLeftOver", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
     pKernelInfo = prog->getKernelInfo("FillBufferSSHOffset", 0);
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
-    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
 }
 
 TEST_P(KernelAddressingTest, givenBuiltinCopyBufferToImage3dKernelsWhenFetchedFromProgramThenCorrectArgumentSizesAreUsed) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-    const auto builtinType = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, isHeapless, isWideness);
-
-    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltIn::CodeType::any, *pDevice);
+    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(BuiltIn::BaseKernel::copyBufferToImage3d, defaultBuiltInMode, BuiltIn::CodeType::any, *pDevice);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
     prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
-    prog->build(deviceVector, "");
+    prog->build(deviceVector, buildOptions);
 
     const char *bufferToImageKernelNames[] = {
         "CopyBufferToImage3dBytes",
@@ -157,22 +173,20 @@ TEST_P(KernelAddressingTest, givenBuiltinCopyBufferToImage3dKernelsWhenFetchedFr
         auto pKernelInfo = prog->getKernelInfo(kernelName, 0);
         ASSERT_NE(pKernelInfo, nullptr);
         EXPECT_EQ(pKernelInfo->getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size,
-                  isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+                  isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
         EXPECT_EQ(pKernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size,
-                  isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+                  isWideStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
     }
 }
 
 TEST_P(KernelAddressingTest, givenBuiltinCopyImage3dToBufferKernelsWhenFetchedFromProgramThenCorrectArgumentSizesAreUsed) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-    const auto builtinType = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, isHeapless, isWideness);
-
-    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(builtinType, BuiltIn::CodeType::any, *pDevice);
+    auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(BuiltIn::BaseKernel::copyImage3dToBuffer, defaultBuiltInMode, BuiltIn::CodeType::any, *pDevice);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
     prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
-    auto ret = prog->build(deviceVector, "");
+    auto ret = prog->build(deviceVector, buildOptions);
     ASSERT_EQ(ret, CL_SUCCESS);
 
     const char *kernelNames[] = {
@@ -189,9 +203,9 @@ TEST_P(KernelAddressingTest, givenBuiltinCopyImage3dToBufferKernelsWhenFetchedFr
         auto pKernelInfo = prog->getKernelInfo(kernelName, 0);
         ASSERT_NE(pKernelInfo, nullptr);
         EXPECT_EQ(pKernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size,
-                  isStateless && isWideness ? sizeof(uint64_t) : sizeof(uint32_t));
+                  isWideStateless ? sizeof(uint64_t) : sizeof(uint32_t));
         EXPECT_EQ(pKernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size,
-                  isStateless && isWideness ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
+                  isWideStateless ? 2 * sizeof(uint64_t) : 2 * sizeof(uint32_t));
     }
 }
 

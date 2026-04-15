@@ -46,7 +46,7 @@ HWTEST_F(ImageHelperFixture, whenImagesCheckedForPackageFormatThenFalseIsReturne
 }
 
 HWTEST_F(ImageHelperFixture, givenPackedSurfaceStateWhenCopyingImageThenSurfaceStateIsNotModified) {
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 

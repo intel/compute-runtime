@@ -45,24 +45,8 @@ struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    BuiltIn::Group adjustBuiltinGroup(BuiltIn::Group builtInGroup) {
-
-        if (this->isHeaplessEnabled) {
-            switch (builtInGroup) {
-            case BuiltIn::Group::fillBuffer:
-            case BuiltIn::Group::fillBufferStateless:
-                return BuiltIn::Group::fillBufferStatelessHeapless;
-            default:
-                break;
-            }
-        }
-
-        return builtInGroup;
-    }
-
-    bool isHeaplessEnabled = false;
-
     MockContext context;
     Buffer *buffer = nullptr;
+    bool isHeaplessEnabled = false;
 };
 } // namespace NEO

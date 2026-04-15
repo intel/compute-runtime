@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
@@ -54,12 +56,28 @@ struct CommandEnqueueFixture : public CommandEnqueueBaseFixture,
     void setUp(cl_command_queue_properties cmdQueueProperties = 0) {
         CommandEnqueueBaseFixture::setUp(cmdQueueProperties);
         CommandStreamFixture::setUp(pCmdQ);
+
+        auto &compilerProductHelper = pCmdQ->getDevice().getCompilerProductHelper();
+        bool isStateless = false;
+        if (compilerProductHelper.isForceToStatelessRequired()) {
+            isStateless = true;
+        }
+        bool bindless = ApiSpecificConfig::getBindlessMode(pCmdQ->getDevice());
+        defaultBuiltInMode = BuiltIn::AddressingMode::getDefaultMode(bindless, isStateless);
+        defaultStatelessMode = defaultBuiltInMode;
+        if (defaultStatelessMode.bufferMode != BuiltIn::AddressingMode::BufferMode::stateless) {
+            defaultStatelessMode.bufferMode = BuiltIn::AddressingMode::BufferMode::stateless;
+            defaultStatelessMode.wideMode = true;
+        }
     }
 
     void tearDown() {
         CommandEnqueueBaseFixture::tearDown();
         CommandStreamFixture::tearDown();
     }
+
+    BuiltIn::AddressingMode defaultStatelessMode{};
+    BuiltIn::AddressingMode defaultBuiltInMode{};
 };
 
 struct SurfaceStateAccessor : virtual public ClHardwareParse {

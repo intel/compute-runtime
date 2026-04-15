@@ -82,10 +82,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferImpl(
                                                   numEventsInWaitList, eventWaitList, event);
     }
 
-    const auto isStateless = forceStateless(buffer->getSize());
-    const auto isHeapless = this->getHeaplessModeEnabled();
-    const auto isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(buffer->getSize());
-    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isStateless, isHeapless, isWideness);
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(buffer->getSize());
 
     void *srcPtr = const_cast<void *>(ptr);
 
@@ -126,7 +124,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferImpl(
     dc.direction = csrSelectionArgs.direction;
 
     MultiDispatchInfo dispatchInfo(dc);
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, {BuiltIn::BaseKernel::copyBufferToBuffer, builtInMode}, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;
     }

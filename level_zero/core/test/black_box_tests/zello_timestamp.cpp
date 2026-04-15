@@ -1,31 +1,38 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "zello_common.h"
+#include "zello_compile.h"
 
 #include <algorithm>
 #include <cstring>
 #include <functional>
 #include <map>
 
-inline std::vector<uint8_t> loadBinaryFile(const std::string &filePath) {
-    std::ifstream stream(filePath, std::ios::binary);
-    if (!stream.good()) {
-        std::cerr << "Failed to load binary file: " << filePath << " " << strerror(errno) << "\n";
-        return {};
+bool createModuleAndKernel(ze_context_handle_t &context, ze_device_handle_t &device,
+                           ze_module_handle_t &module, ze_kernel_handle_t &kernel) {
+    std::string buildLog;
+    auto spirvModule = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::openCLKernelsSource, "", buildLog);
+    if (spirvModule.size() == 0) {
+        std::cerr << "JIT compilation failed. Log:\n"
+                  << buildLog << std::endl;
+        return false;
     }
 
-    stream.seekg(0, stream.end);
-    const size_t length = static_cast<size_t>(stream.tellg());
-    stream.seekg(0, stream.beg);
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
+    moduleDesc.inputSize = spirvModule.size();
+    SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
 
-    std::vector<uint8_t> binaryFile(length);
-    stream.read(reinterpret_cast<char *>(binaryFile.data()), length);
-    return binaryFile;
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = "memcpy_bytes";
+    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
+    return true;
 }
 
 void createCmdQueueAndCmdList(ze_context_handle_t &context,
@@ -162,22 +169,11 @@ bool testKernelTimestampHostQuery(int argc, char *argv[],
     memset(dstBuffer, 0, allocSize);
 
     // Create kernel
-    auto spirvModule = loadBinaryFile("copy_buffer_to_buffer.spv");
-    if (spirvModule.size() == 0) {
-        return false;
-    }
-
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
-    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
-
-    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "CopyBufferToBufferBytes";
-    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
+    if (!createModuleAndKernel(context, device, module, kernel)) {
+        return false;
+    }
 
     uint32_t groupSizeX = 32u;
     uint32_t groupSizeY = 1u;
@@ -185,12 +181,8 @@ bool testKernelTimestampHostQuery(int argc, char *argv[],
     SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, allocSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 
-    uint32_t offset = 0;
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
 
     ze_group_count_t dispatchTraits;
     dispatchTraits.groupCountX = allocSize / groupSizeX;
@@ -270,22 +262,11 @@ bool testKernelTimestampAppendQuery(ze_context_handle_t &context,
     memset(timestampBuffer, 0, sizeof(ze_kernel_timestamp_result_t));
 
     // Create kernel
-    auto spirvModule = loadBinaryFile("copy_buffer_to_buffer.spv");
-    if (spirvModule.size() == 0) {
-        return false;
-    }
-
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
-    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-    moduleDesc.inputSize = spirvModule.size();
-    SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
-
-    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "CopyBufferToBufferBytes";
-    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
+    if (!createModuleAndKernel(context, device, module, kernel)) {
+        return false;
+    }
 
     uint32_t groupSizeX = 32u;
     uint32_t groupSizeY = 1u;
@@ -293,12 +274,8 @@ bool testKernelTimestampAppendQuery(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, allocSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 
-    uint32_t offset = 0;
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
 
     ze_group_count_t dispatchTraits;
     dispatchTraits.groupCountX = allocSize / groupSizeX;
@@ -423,20 +400,9 @@ bool testKernelTimestampMapToHostTimescale(int argc, char *argv[],
         memset(timestampBuffer, 0, sizeof(ze_kernel_timestamp_result_t));
 
         // Create kernel
-        auto spirvModule = loadBinaryFile("copy_buffer_to_buffer.spv");
-        if (spirvModule.size() == 0) {
+        if (!createModuleAndKernel(context, device, module, kernel)) {
             return false;
         }
-
-        ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-        moduleDesc.inputSize = spirvModule.size();
-        SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
-
-        ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-        kernelDesc.pKernelName = "CopyBufferToBufferBytes";
-        SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 
         uint32_t groupSizeX = 32u;
         uint32_t groupSizeY = 1u;
@@ -444,12 +410,8 @@ bool testKernelTimestampMapToHostTimescale(int argc, char *argv[],
         SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, allocSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
         SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 
-        uint32_t offset = 0;
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
 
         ze_group_count_t dispatchTraits;
         dispatchTraits.groupCountX = allocSize / groupSizeX;
@@ -622,20 +584,9 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
         memset(timestampBuffer, 0, sizeof(ze_kernel_timestamp_result_t));
 
         // Create kernel
-        auto spirvModule = loadBinaryFile("copy_buffer_to_buffer.spv");
-        if (spirvModule.size() == 0) {
+        if (!createModuleAndKernel(context, device, module, kernel)) {
             return false;
         }
-
-        ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
-        moduleDesc.inputSize = spirvModule.size();
-        SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
-
-        ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-        kernelDesc.pKernelName = "CopyBufferToBufferBytes";
-        SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 
         uint32_t groupSizeX = 32u;
         uint32_t groupSizeY = 1u;
@@ -643,12 +594,8 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
         SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, static_cast<uint32_t>(allocSize), 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
         SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 
-        uint32_t offset = 0;
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
 
         dispatchTraits.groupCountX = static_cast<uint32_t>(allocSize) / groupSizeX;
         dispatchTraits.groupCountY = 1u;

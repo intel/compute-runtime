@@ -211,7 +211,8 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2
     enqueueCopyBufferRect2D<FamilyType>();
 
     // Extract the kernel used
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRect,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferRect,
+                                                                              BuiltIn::bindfulImageBindfulBuffer,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -242,7 +243,8 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2
 
 HWTEST2_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRectStatelessThenStatelessKernelIsUsed, IsHeapfulRequired) {
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStateless,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferRect,
+                                                                              defaultStatelessMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -273,7 +275,8 @@ HWTEST2_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRectStatelessHeaplessThenC
         GTEST_SKIP();
     }
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRectStatelessHeapless,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferRect,
+                                                                              BuiltIn::bindlessImageStatelessBuffer,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 

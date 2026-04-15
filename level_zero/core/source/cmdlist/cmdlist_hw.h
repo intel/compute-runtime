@@ -279,8 +279,8 @@ struct CommandListCoreFamily : public CommandList {
                                                               NEO::GraphicsAllocation *srcPtrAlloc,
                                                               uint64_t srcOffset, uint64_t size,
                                                               uint64_t elementSize, BufferBuiltIn builtin,
+                                                              const NEO::BuiltIn::AddressingMode &builtInMode,
                                                               Event *signalEvent,
-                                                              bool isStateless,
                                                               CmdListKernelLaunchParams &launchParams);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
@@ -303,21 +303,22 @@ struct CommandListCoreFamily : public CommandList {
                                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams, bool dualStreamCopyOffload);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                                          BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
+                                                          BufferBuiltIn builtin, const NEO::BuiltIn::AddressingMode &builtInMode,
+                                                          const ze_copy_region_t *dstRegion,
                                                           uint32_t dstPitch, size_t dstOffset,
                                                           const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                                           size_t srcOffset, Event *signalEvent,
                                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                                          bool relaxedOrderingDispatch, bool isStateless, bool isHeapless);
+                                                          bool relaxedOrderingDispatch);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                                          BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
+                                                          BufferBuiltIn builtin, const NEO::BuiltIn::AddressingMode &builtInMode,
+                                                          const ze_copy_region_t *dstRegion,
                                                           uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
                                                           const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                                           uint32_t srcSlicePitch, size_t srcOffset,
                                                           Event *signalEvent, uint32_t numWaitEvents,
-                                                          ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch,
-                                                          bool isStateless, bool isHeapless);
+                                                          ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch);
 
     MOCKABLE_VIRTUAL ze_result_t appendBlitFill(void *ptr, const void *pattern,
                                                 size_t patternSize, size_t size,

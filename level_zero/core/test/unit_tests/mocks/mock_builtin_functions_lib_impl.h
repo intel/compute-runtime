@@ -32,17 +32,17 @@ struct MockBuiltInKernelLibImpl : BuiltInKernelLibImpl {
         dummyKernel->module = dummyModule.get();
         mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     }
-    void initBuiltinKernel(L0::BufferBuiltIn func) override {
-        auto builtId = static_cast<uint32_t>(func);
+    void initBuiltinKernel(L0::BufferBuiltIn func, const NEO::BuiltIn::AddressingMode &mode) override {
+        auto builtId = toBufferCacheIndex(func, mode);
         if (builtins[builtId].get() == nullptr) {
-            builtins[builtId] = loadBuiltIn(NEO::BuiltIn::Group::copyBufferToBuffer, "copyBufferToBufferBytesSingle");
+            builtins[builtId] = loadBuiltIn(NEO::BuiltIn::BaseKernel::copyBufferToBuffer, mode, "copyBufferToBufferBytesSingle");
         }
     }
 
-    void initBuiltinImageKernel(L0::ImageBuiltIn func) override {
-        auto builtId = static_cast<uint32_t>(func);
+    void initBuiltinImageKernel(L0::ImageBuiltIn func, const NEO::BuiltIn::AddressingMode &mode) override {
+        auto builtId = toImageCacheIndex(func, mode);
         if (imageBuiltins[builtId].get() == nullptr) {
-            imageBuiltins[builtId] = loadBuiltIn(NEO::BuiltIn::Group::copyImage3dToBuffer, "CopyImage3dToBuffer16Bytes");
+            imageBuiltins[builtId] = loadBuiltIn(NEO::BuiltIn::BaseKernel::copyImage3dToBuffer, mode, "CopyImage3dToBuffer16Bytes");
         }
     }
 
@@ -50,15 +50,15 @@ struct MockBuiltInKernelLibImpl : BuiltInKernelLibImpl {
     std::unique_ptr<Module> dummyModule;
     std::unique_ptr<Module> mockModule;
 
-    Kernel *getFunction(BufferBuiltIn func) override {
+    Kernel *getFunction(BufferBuiltIn func, const NEO::BuiltIn::AddressingMode &mode) override {
         return dummyKernel.get();
     }
 
-    Kernel *getImageFunction(ImageBuiltIn func) override {
+    Kernel *getImageFunction(ImageBuiltIn func, const NEO::BuiltIn::AddressingMode &mode) override {
         return dummyKernel.get();
     }
 
-    std::unique_ptr<BuiltInKernelData> loadBuiltIn(NEO::BuiltIn::Group builtInGroup, const char *kernelName) override {
+    std::unique_ptr<BuiltInKernelData> loadBuiltIn(NEO::BuiltIn::BaseKernel baseKernel, const NEO::BuiltIn::AddressingMode &mode, const char *kernelName) override {
         std::unique_ptr<Kernel> mockKernel(new Mock<::L0::KernelImp>());
 
         return std::unique_ptr<BuiltInKernelData>(new BuiltInKernelData{mockModule.get(), std::move(mockKernel)});
@@ -72,15 +72,15 @@ struct MockCheckPassedArgumentsBuiltInKernelLibImpl : BuiltInKernelLibImpl {
     MockCheckPassedArgumentsBuiltInKernelLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltInKernelLibImpl(device, builtInsLib) {
     }
 
-    std::unique_ptr<BuiltInKernelData> loadBuiltIn(NEO::BuiltIn::Group builtInGroup, const char *kernelName) override {
+    std::unique_ptr<BuiltInKernelData> loadBuiltIn(NEO::BuiltIn::BaseKernel baseKernel, const NEO::BuiltIn::AddressingMode &mode, const char *kernelName) override {
         kernelNamePassed = kernelName;
-        builtInGroupPassed = builtInGroup;
+        baseKernelPassed = baseKernel;
 
         return nullptr;
     }
 
     std::string kernelNamePassed;
-    NEO::BuiltIn::Group builtInGroupPassed;
+    NEO::BuiltIn::BaseKernel baseKernelPassed;
 };
 
 } // namespace ult

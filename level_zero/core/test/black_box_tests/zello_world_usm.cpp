@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,10 @@
 #include <level_zero/ze_api.h>
 
 #include "zello_common.h"
+#include "zello_compile.h"
 
 #include <cstring>
-#include <fstream>
 #include <iostream>
-#include <memory>
 
 bool useSyncQueue = false;
 
@@ -35,9 +34,11 @@ int main(int argc, char *argv[]) {
     void *srcBuffer = nullptr;
     void *dstBuffer = nullptr;
 
-    std::ifstream file("copy_buffer_to_buffer.spv", std::ios::binary);
-    if (!file.is_open()) {
-        std::cerr << "Unable to open copy_buffer_to_buffer.spv file" << std::endl;
+    std::string buildLog;
+    auto spirvModule = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::openCLKernelsSource, "", buildLog);
+    if (spirvModule.size() == 0) {
+        std::cerr << "Build failed. Log:\n"
+                  << buildLog << std::endl;
         std::cerr << "\nZello World USM Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
         return -1;
     }
@@ -51,17 +52,11 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
-    file.seekg(0, file.end);
-    auto length = file.tellg();
-    file.seekg(0, file.beg);
-    std::unique_ptr<char[]> spirvInput(new char[length]);
-    file.read(spirvInput.get(), length);
-
     ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     ze_module_build_log_handle_t buildlog;
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvInput.get());
-    moduleDesc.inputSize = length;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
+    moduleDesc.inputSize = spirvModule.size();
     moduleDesc.pBuildFlags = "";
     if (zeModuleCreate(context, device, &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
         size_t szLog = 0;
@@ -80,7 +75,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "CopyBufferToBufferBytes";
+    kernelDesc.pKernelName = "memcpy_bytes";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 
     uint32_t groupSizeX = 32u;
@@ -137,8 +132,8 @@ int main(int argc, char *argv[]) {
     memset(srcBuffer, srcInitValue, allocSize);
 
     // Encode run user kernel
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
 
     ze_group_count_t dispatchTraits;
     dispatchTraits.groupCountX = numThreads / groupSizeX;

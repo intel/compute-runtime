@@ -8,14 +8,13 @@
 #include <level_zero/ze_api.h>
 
 #include "zello_common.h"
+#include "zello_compile.h"
 
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <iostream>
 #include <limits>
-#include <memory>
 
 uint32_t numCmdListsToCreate = 100;
 
@@ -55,10 +54,11 @@ void stressCommandList(ze_context_handle_t &context, ze_device_handle_t &device,
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
 
-    std::ifstream file("copy_buffer_to_buffer.spv", std::ios::binary);
-
-    if (!file.is_open()) {
-        std::cerr << "ERROR: Could not open copy_buffer_to_buffer.spv - kernel file required for this test" << std::endl;
+    std::string buildLog;
+    auto spirvModule = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::openCLKernelsSource, "", buildLog);
+    if (spirvModule.size() == 0) {
+        std::cerr << "ERROR: JIT compilation failed. Log:\n"
+                  << buildLog << std::endl;
         outputValidationSuccessful = false;
         SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
         SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
@@ -68,18 +68,11 @@ void stressCommandList(ze_context_handle_t &context, ze_device_handle_t &device,
         return;
     }
 
-    file.seekg(0, file.end);
-    auto length = file.tellg();
-    file.seekg(0, file.beg);
-
-    std::unique_ptr<char[]> spirvInput(new char[length]);
-    file.read(spirvInput.get(), length);
-
     ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     ze_module_build_log_handle_t buildlog;
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvInput.get());
-    moduleDesc.inputSize = length;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
+    moduleDesc.inputSize = spirvModule.size();
     moduleDesc.pBuildFlags = "";
 
     if (zeModuleCreate(context, device, &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
@@ -99,13 +92,12 @@ void stressCommandList(ze_context_handle_t &context, ze_device_handle_t &device,
         if (cmdQueue) {
             SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
         }
-        file.close();
         return;
     }
     SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "CopyBufferToBufferBytes";
+    kernelDesc.pKernelName = "memcpy_bytes";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 
     uint32_t groupSizeX = 32u;
@@ -114,12 +106,8 @@ void stressCommandList(ze_context_handle_t &context, ze_device_handle_t &device,
     SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, allocSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 
-    uint32_t offset = 0;
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
 
     ze_group_count_t dispatchTraits;
     dispatchTraits.groupCountX = allocSize / groupSizeX;
@@ -223,7 +211,6 @@ void stressCommandList(ze_context_handle_t &context, ze_device_handle_t &device,
     if (cmdQueue) {
         SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
     }
-    file.close();
 }
 
 int main(int argc, char *argv[]) {

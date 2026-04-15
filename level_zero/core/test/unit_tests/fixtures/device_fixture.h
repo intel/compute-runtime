@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_time.h"
@@ -57,6 +58,8 @@ struct DeviceFixture {
     const uint32_t rootDeviceIndex = 0u;
     template <typename HelperType>
     HelperType &getHelper() const;
+
+    NEO::BuiltIn::AddressingMode getDefaultBuiltInMode() const;
 };
 
 template <typename T>

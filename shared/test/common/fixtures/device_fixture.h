@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -32,6 +33,8 @@ struct DeviceFixture {
     HelperType &getHelper() const;
 
     const ReleaseHelper *getReleaseHelper();
+
+    NEO::BuiltIn::AddressingMode defaultBuiltInMode;
 };
 
 struct DeviceWithoutSipFixture : DeviceFixture {

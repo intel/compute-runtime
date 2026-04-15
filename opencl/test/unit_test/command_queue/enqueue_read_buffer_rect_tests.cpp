@@ -206,7 +206,8 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, WhenReadingBufferThenI
     enqueueReadBufferRect2D<FamilyType>();
 
     // Extract the kernel used
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferRect,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferRect,
+                                                                              BuiltIn::bindfulImageBindfulBuffer,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 

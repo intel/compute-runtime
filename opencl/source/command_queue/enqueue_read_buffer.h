@@ -86,9 +86,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferImpl(
                                                   numEventsInWaitList, eventWaitList, event);
     }
 
-    const bool isStateless = forceStateless(buffer->getSize());
-    const bool isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(buffer->getSize());
-    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(buffer->getSize());
 
     void *dstPtr = ptr;
 
@@ -136,7 +135,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferImpl(
         }
     }
 
-    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
+    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, {BuiltIn::BaseKernel::copyBufferToBuffer, builtInMode}, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
 }
 
 } // namespace NEO

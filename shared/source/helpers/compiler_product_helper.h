@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/product_config_helper_former.h"
@@ -86,6 +87,7 @@ class CompilerProductHelper {
     virtual void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const = 0;
     virtual bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isForceBindlessRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual BuiltIn::AddressingMode getDefaultBuiltInAddressingMode(bool bindlessImages) const = 0;
     virtual const char *getCustomIgcLibraryName() const = 0;
     virtual const char *getFinalizerLibraryName() const = 0;
     virtual bool useIgcAsFcl() const = 0;
@@ -139,6 +141,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const override;
     bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const override;
     bool isForceBindlessRequired(const HardwareInfo &hwInfo) const override;
+    BuiltIn::AddressingMode getDefaultBuiltInAddressingMode(bool bindlessImages) const override;
     const char *getCustomIgcLibraryName() const override;
     const char *getFinalizerLibraryName() const override;
     bool useIgcAsFcl() const override;

@@ -24,9 +24,7 @@ struct KernelAddressingTest : public DeviceFixture, public ::testing::Test {
         builtinLib = std::make_unique<L0::BuiltInKernelLibImpl>(device, neoDevice->getBuiltIns());
         ASSERT_NE(nullptr, builtinLib.get());
 
-        auto &compilerProductHelper = device->getCompilerProductHelper();
-        isHeapless = compilerProductHelper.isHeaplessModeEnabled(neoDevice->getHardwareInfo());
-        isStateless = compilerProductHelper.isForceToStatelessRequired();
+        builtInMode = getDefaultBuiltInMode();
     }
 
     void TearDown() override {
@@ -34,8 +32,7 @@ struct KernelAddressingTest : public DeviceFixture, public ::testing::Test {
         DeviceFixture::tearDown();
     }
 
-    bool isHeapless = false;
-    bool isStateless = false;
+    NEO::BuiltIn::AddressingMode builtInMode{};
     std::unique_ptr<L0::BuiltInKernelLibImpl> builtinLib;
 };
 
@@ -45,9 +42,7 @@ TEST_F(KernelAddressingTest,
         // BufferBuiltIn copyBufferBytes uses copyBufferToBufferBytesSingle without extra arguments
     }
     {
-        const auto builtinType = BuiltInHelper::adjustBufferBuiltIn<L0::BufferBuiltIn::copyBufferToBufferMiddle>(isStateless, isHeapless);
-
-        auto kernel = builtinLib->getFunction(builtinType);
+        auto kernel = builtinLib->getFunction(L0::BufferBuiltIn::copyBufferToBufferMiddle, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -57,9 +52,7 @@ TEST_F(KernelAddressingTest,
         EXPECT_EQ(kernelInfo->getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
-        const auto builtinType = BuiltInHelper::adjustBufferBuiltIn<L0::BufferBuiltIn::copyBufferToBufferSide>(isStateless, isHeapless);
-
-        auto kernel = builtinLib->getFunction(builtinType);
+        auto kernel = builtinLib->getFunction(L0::BufferBuiltIn::copyBufferToBufferSide, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -73,9 +66,7 @@ TEST_F(KernelAddressingTest,
 TEST_F(KernelAddressingTest,
        givenBuiltinCopyBufferRectKernelsWhenFetchedFromBuiltinLibThenCorrectArgumentSizesAreUsed) {
     {
-        const auto builtinType = BuiltInHelper::adjustBufferBuiltIn<L0::BufferBuiltIn::copyBufferRectBytes2d>(isStateless, isHeapless);
-
-        auto kernel = builtinLib->getFunction(builtinType);
+        auto kernel = builtinLib->getFunction(L0::BufferBuiltIn::copyBufferRectBytes2d, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -86,9 +77,7 @@ TEST_F(KernelAddressingTest,
         EXPECT_EQ(kernelInfo->getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
-        const auto builtinType = BuiltInHelper::adjustBufferBuiltIn<L0::BufferBuiltIn::copyBufferRectBytes3d>(isStateless, isHeapless);
-
-        auto kernel = builtinLib->getFunction(builtinType);
+        auto kernel = builtinLib->getFunction(L0::BufferBuiltIn::copyBufferRectBytes3d, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -102,9 +91,7 @@ TEST_F(KernelAddressingTest,
 
 TEST_F(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgramThenCorrectArgumentSizesAreUsed) {
     {
-        const auto builtinType = BuiltInHelper::adjustBufferBuiltIn<L0::BufferBuiltIn::fillBufferImmediate>(isStateless, isHeapless);
-
-        auto kernel = builtinLib->getFunction(builtinType);
+        auto kernel = builtinLib->getFunction(L0::BufferBuiltIn::fillBufferImmediate, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -112,9 +99,7 @@ TEST_F(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgram
         EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
-        const auto builtinType = BuiltInHelper::adjustBufferBuiltIn<L0::BufferBuiltIn::fillBufferImmediateLeftOver>(isStateless, isHeapless);
-
-        auto kernel = builtinLib->getFunction(builtinType);
+        auto kernel = builtinLib->getFunction(L0::BufferBuiltIn::fillBufferImmediateLeftOver, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -122,9 +107,7 @@ TEST_F(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgram
         EXPECT_EQ(kernelInfo->getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
-        const auto builtinType = BuiltInHelper::adjustBufferBuiltIn<L0::BufferBuiltIn::fillBufferSSHOffset>(isStateless, isHeapless);
-
-        auto kernel = builtinLib->getFunction(builtinType);
+        auto kernel = builtinLib->getFunction(L0::BufferBuiltIn::fillBufferSSHOffset, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -133,9 +116,7 @@ TEST_F(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgram
         EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
-        const auto builtinType = BuiltInHelper::adjustBufferBuiltIn<L0::BufferBuiltIn::fillBufferMiddle>(isStateless, isHeapless);
-
-        auto kernel = builtinLib->getFunction(builtinType);
+        auto kernel = builtinLib->getFunction(L0::BufferBuiltIn::fillBufferMiddle, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -144,9 +125,7 @@ TEST_F(KernelAddressingTest, givenBuiltinFillBufferKernelsWhenFetchedFromProgram
         EXPECT_EQ(kernelInfo->getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, sizeof(uint32_t));
     }
     {
-        const auto builtinType = BuiltInHelper::adjustBufferBuiltIn<L0::BufferBuiltIn::fillBufferRightLeftover>(isStateless, isHeapless);
-
-        auto kernel = builtinLib->getFunction(builtinType);
+        auto kernel = builtinLib->getFunction(L0::BufferBuiltIn::fillBufferRightLeftover, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -161,7 +140,7 @@ TEST_F(KernelAddressingTest,
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     auto testBuiltinType = [&](auto builtinType) {
-        auto kernel = builtinLib->getImageFunction(builtinType);
+        auto kernel = builtinLib->getImageFunction(builtinType, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -172,14 +151,14 @@ TEST_F(KernelAddressingTest,
                   2 * sizeof(uint32_t));
     };
 
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyBufferToImage3d16Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyBufferToImage3d2Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyBufferToImage3d4Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyBufferToImage3d3To4Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyBufferToImage3d8Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyBufferToImage3d6To8Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyBufferToImage3dBytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyBufferToImage3d16BytesAligned>(isStateless, isHeapless));
+    testBuiltinType(L0::ImageBuiltIn::copyBufferToImage3d16Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyBufferToImage3d2Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyBufferToImage3d4Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyBufferToImage3d3To4Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyBufferToImage3d8Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyBufferToImage3d6To8Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyBufferToImage3dBytes);
+    testBuiltinType(L0::ImageBuiltIn::copyBufferToImage3d16BytesAligned);
 }
 
 TEST_F(KernelAddressingTest,
@@ -187,7 +166,7 @@ TEST_F(KernelAddressingTest,
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     auto testBuiltinType = [&](auto builtinType) {
-        auto kernel = builtinLib->getImageFunction(builtinType);
+        auto kernel = builtinLib->getImageFunction(builtinType, builtInMode);
         ASSERT_NE(nullptr, kernel);
         auto kernelInfo = kernel->getImmutableData()->getKernelInfo();
         ASSERT_NE(nullptr, kernelInfo);
@@ -198,51 +177,45 @@ TEST_F(KernelAddressingTest,
                   2 * sizeof(uint32_t));
     };
 
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyImage3dToBuffer16Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyImage3dToBuffer2Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyImage3dToBuffer3Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyImage3dToBuffer4Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyImage3dToBuffer4To3Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyImage3dToBuffer6Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyImage3dToBuffer8Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyImage3dToBuffer8To6Bytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyImage3dToBufferBytes>(isStateless, isHeapless));
-    testBuiltinType(BuiltInHelper::adjustImageBuiltIn<L0::ImageBuiltIn::copyImage3dToBuffer16BytesAligned>(isStateless, isHeapless));
+    testBuiltinType(L0::ImageBuiltIn::copyImage3dToBuffer16Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyImage3dToBuffer2Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyImage3dToBuffer3Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyImage3dToBuffer4Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyImage3dToBuffer4To3Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyImage3dToBuffer6Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyImage3dToBuffer8Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyImage3dToBuffer8To6Bytes);
+    testBuiltinType(L0::ImageBuiltIn::copyImage3dToBufferBytes);
+    testBuiltinType(L0::ImageBuiltIn::copyImage3dToBuffer16BytesAligned);
 }
 
-TEST(BuiltInHelperTest,
-     whenStatelessAndWideAdjustBuiltinTypeIsCalledThenReturnsExpectedBuiltinForHeaplessVariants) {
-    const bool isStateless = true;
-    const bool isWide = true;
+TEST(AddressingModeTest,
+     whenStatelessAndWideadjustToWideStatelessIfRequiredIsCalledThenReturnsExpectedMode) {
+    auto mode = NEO::BuiltIn::AddressingMode::getDefaultMode(false, true);
+    auto adjusted = mode;
+    adjusted.adjustToWideStatelessIfRequired(4ull * MemoryConstants::gigaByte);
 
-    for (bool isHeapless : {false, true}) {
-        EXPECT_EQ(isHeapless ? BufferBuiltIn::copyBufferBytesWideStatelessHeapless
-                             : BufferBuiltIn::copyBufferBytesWideStateless,
-                  BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferBytes>(isStateless, isHeapless, isWide));
+    EXPECT_EQ(NEO::BuiltIn::AddressingMode::BufferMode::stateless, adjusted.bufferMode);
+    EXPECT_TRUE(adjusted.wideMode);
+}
 
-        EXPECT_EQ(isHeapless ? BufferBuiltIn::copyBufferToBufferMiddleWideStatelessHeapless
-                             : BufferBuiltIn::copyBufferToBufferMiddleWideStateless,
-                  BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferMiddle>(isStateless, isHeapless, isWide));
+TEST(AddressingModeTest,
+     whenHeaplessAndWideadjustToWideStatelessIfRequiredIsCalledThenReturnsExpectedMode) {
+    auto mode = NEO::BuiltIn::AddressingMode::getDefaultMode(true, true);
+    auto adjusted = mode;
+    adjusted.adjustToWideStatelessIfRequired(4ull * MemoryConstants::gigaByte);
 
-        EXPECT_EQ(isHeapless ? BufferBuiltIn::copyBufferToBufferSideWideStatelessHeapless
-                             : BufferBuiltIn::copyBufferToBufferSideWideStateless,
-                  BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferSide>(isStateless, isHeapless, isWide));
+    EXPECT_EQ(NEO::BuiltIn::AddressingMode::BufferMode::stateless, adjusted.bufferMode);
+    EXPECT_TRUE(adjusted.wideMode);
+}
 
-        EXPECT_EQ(isHeapless ? BufferBuiltIn::fillBufferImmediateWideStatelessHeapless
-                             : BufferBuiltIn::fillBufferImmediateWideStateless,
-                  BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediate>(isStateless, isHeapless, isWide));
+TEST(AddressingModeTest,
+     whenSmallBufferadjustToWideStatelessIfRequiredIsCalledThenModeIsUnchanged) {
+    auto mode = NEO::BuiltIn::AddressingMode::getDefaultMode(false, false);
+    auto adjusted = mode;
+    adjusted.adjustToWideStatelessIfRequired(1024);
 
-        EXPECT_EQ(isHeapless ? BufferBuiltIn::fillBufferImmediateLeftOverWideStatelessHeapless
-                             : BufferBuiltIn::fillBufferImmediateLeftOverWideStateless,
-                  BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediateLeftOver>(isStateless, isHeapless, isWide));
-
-        EXPECT_EQ(isHeapless ? BufferBuiltIn::fillBufferMiddleWideStatelessHeapless
-                             : BufferBuiltIn::fillBufferMiddleWideStateless,
-                  BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferMiddle>(isStateless, isHeapless, isWide));
-
-        EXPECT_EQ(isHeapless ? BufferBuiltIn::fillBufferRightLeftoverWideStatelessHeapless
-                             : BufferBuiltIn::fillBufferRightLeftoverWideStateless,
-                  BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferRightLeftover>(isStateless, isHeapless, isWide));
-    }
+    EXPECT_EQ(mode, adjusted);
+    EXPECT_FALSE(adjusted.wideMode);
 }
 } // namespace L0::ult

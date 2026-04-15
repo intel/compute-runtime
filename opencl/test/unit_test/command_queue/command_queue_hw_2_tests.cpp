@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/timestamp_packet.h"
@@ -121,16 +122,16 @@ HWTEST_F(MultiIoqCmdQSynchronizationTest, givenTwoIoqCmdQsWhenEnqueuesSynchroniz
 
 struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
-    void setUpImpl(BuiltIn::Group operation) {
+    void setUpImpl(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode) {
         auto builtIns = new MockBuiltins();
         MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
         auto swapBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
-            operation,
+            kernel, mode,
             std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
         mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-            operation,
+            kernel, mode,
             *pClDevice));
     }
 
@@ -139,16 +140,12 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    auto builtInGroup = BuiltIn::Group::copyBufferToBuffer;
-
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
-        builtInGroup = BuiltIn::Group::copyBufferToBufferStatelessHeapless;
-    } else if (compilerProductHelper.isForceToStatelessRequired()) {
-        builtInGroup = BuiltIn::Group::copyBufferToBufferStateless;
-    }
+    bool bindless = ApiSpecificConfig::getBindlessMode(pCmdQ->getDevice());
+    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+    auto mode = BuiltIn::AddressingMode::getDefaultMode(bindless, isStateless);
 
-    setUpImpl(builtInGroup);
+    setUpImpl(BuiltIn::BaseKernel::copyBufferToBuffer, mode);
     BufferDefaults::context = context;
     auto buffer = clUniquePtr(BufferHelper<>::create());
 
@@ -186,60 +183,51 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueWriteImageCallWhenBuiltin
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
 
-    constexpr bool heaplessAllowed = FamilyType::isHeaplessRequired();
-    const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
+    setUpImpl(BuiltIn::BaseKernel::copyBufferToImage3d, pCmdQ->getDefaultBuiltInMode());
 
-    for (auto useHeapless : {false, heaplessAllowed}) {
-        if (useHeapless && !heaplessAllowed) {
-            continue;
-        }
+    std::unique_ptr<Image> dstImage(ImageHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(context));
 
-        reinterpret_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->heaplessModeEnabled = useHeapless;
-        setUpImpl(BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(useStateless, useHeapless));
+    auto imageDesc = dstImage->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
 
-        std::unique_ptr<Image> dstImage(ImageHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(context));
+    size_t rowPitch = dstImage->getHostPtrRowPitch();
+    size_t slicePitch = dstImage->getHostPtrSlicePitch();
 
-        auto imageDesc = dstImage->getImageDesc();
-        size_t origin[] = {0, 0, 0};
-        size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
+    char array[3 * MemoryConstants::cacheLineSize];
+    char *ptr = &array[MemoryConstants::cacheLineSize];
+    ptr = alignUp(ptr, MemoryConstants::cacheLineSize);
+    ptr -= 1;
 
-        size_t rowPitch = dstImage->getHostPtrRowPitch();
-        size_t slicePitch = dstImage->getHostPtrSlicePitch();
+    void *alignedPtr = alignDown(ptr, 4);
+    size_t ptrOffset = ptrDiff(ptr, alignedPtr);
+    Vec3<size_t> offset = {0, 0, 0};
 
-        char array[3 * MemoryConstants::cacheLineSize];
-        char *ptr = &array[MemoryConstants::cacheLineSize];
-        ptr = alignUp(ptr, MemoryConstants::cacheLineSize);
-        ptr -= 1;
+    cl_int status = pCmdQ->enqueueWriteImage(dstImage.get(),
+                                             CL_FALSE,
+                                             origin,
+                                             region,
+                                             rowPitch,
+                                             slicePitch,
+                                             ptr,
+                                             nullptr,
+                                             0,
+                                             0,
+                                             nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
 
-        void *alignedPtr = alignDown(ptr, 4);
-        size_t ptrOffset = ptrDiff(ptr, alignedPtr);
-        Vec3<size_t> offset = {0, 0, 0};
-
-        cl_int status = pCmdQ->enqueueWriteImage(dstImage.get(),
-                                                 CL_FALSE,
-                                                 origin,
-                                                 region,
-                                                 rowPitch,
-                                                 slicePitch,
-                                                 ptr,
-                                                 nullptr,
-                                                 0,
-                                                 0,
-                                                 nullptr);
-        EXPECT_EQ(CL_SUCCESS, status);
-
-        auto builtinParams = mockBuilder->paramsReceived.multiDispatchInfo.peekBuiltinOpParams();
-        EXPECT_EQ(alignedPtr, builtinParams.srcPtr);
-        EXPECT_EQ(ptrOffset, builtinParams.srcOffset.x);
-        EXPECT_EQ(offset, builtinParams.dstOffset);
-    }
+    auto builtinParams = mockBuilder->paramsReceived.multiDispatchInfo.peekBuiltinOpParams();
+    EXPECT_EQ(alignedPtr, builtinParams.srcPtr);
+    EXPECT_EQ(ptrOffset, builtinParams.srcOffset.x);
+    EXPECT_EQ(offset, builtinParams.dstOffset);
 }
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
-    setUpImpl(BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(useStateless, pCmdQ->getHeaplessModeEnabled()));
+    bool bindless = ApiSpecificConfig::getBindlessMode(pCmdQ->getDevice());
+    setUpImpl(BuiltIn::BaseKernel::copyImage3dToBuffer, BuiltIn::AddressingMode::getDefaultMode(bindless, useStateless));
 
     std::unique_ptr<Image> dstImage(ImageHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(context));
 
@@ -280,16 +268,11 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinP
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferRectCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    bool bindless = ApiSpecificConfig::getBindlessMode(pCmdQ->getDevice());
+    bool isStateless = pCmdQ->getDevice().getCompilerProductHelper().isForceToStatelessRequired();
+    auto rectMode = BuiltIn::AddressingMode::getDefaultMode(bindless, isStateless);
 
-    auto builtIn = BuiltIn::Group::copyBufferRect;
-    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
-        builtIn = BuiltIn::Group::copyBufferRectStatelessHeapless;
-    } else if (pCmdQ->getDevice().getCompilerProductHelper().isForceToStatelessRequired()) {
-        builtIn = BuiltIn::Group::copyBufferRectStateless;
-    }
-
-    setUpImpl(builtIn);
+    setUpImpl(BuiltIn::BaseKernel::copyBufferRect, rectMode);
 
     BufferDefaults::context = context;
     auto buffer = clUniquePtr(BufferHelper<>::create());

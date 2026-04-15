@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-BuiltIn::DispatchInfoBuilder &BuiltIn::DispatchBuilderOp::getUnknownDispatchInfoBuilder(BuiltIn::Group operation, ClDevice &device) {
+BuiltIn::DispatchInfoBuilder &BuiltIn::DispatchBuilderOp::getUnknownDispatchInfoBuilder(BuiltIn::BaseKernel operation, const BuiltIn::AddressingMode &mode, ClDevice &device) {
     throw std::runtime_error("getBuiltinDispatchInfoBuilder failed");
 }
 } // namespace NEO

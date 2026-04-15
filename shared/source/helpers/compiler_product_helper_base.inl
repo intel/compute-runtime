@@ -295,6 +295,11 @@ bool CompilerProductHelperHw<gfxProduct>::isForceBindlessRequired(const Hardware
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+BuiltIn::AddressingMode CompilerProductHelperHw<gfxProduct>::getDefaultBuiltInAddressingMode(bool bindlessImages) const {
+    return BuiltIn::AddressingMode::getDefaultMode(bindlessImages, this->isForceToStatelessRequired());
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 const char *CompilerProductHelperHw<gfxProduct>::getCustomIgcLibraryName() const {
     if (debugManager.flags.IgcLibraryName.get() != "unk") {
         return debugManager.flags.IgcLibraryName.getRef().c_str();

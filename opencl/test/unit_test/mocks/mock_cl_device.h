@@ -75,7 +75,7 @@ class MockClDevice : public ClDevice {
     SubDevice *createSubDevice(uint32_t subDeviceIndex);
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     BuiltIns *getBuiltIns() const;
-    std::unique_ptr<BuiltIn::DispatchInfoBuilder> setBuiltinDispatchInfoBuilder(BuiltIn::Group builtInGroup, std::unique_ptr<BuiltIn::DispatchInfoBuilder> newBuilder);
+    std::unique_ptr<BuiltIn::DispatchInfoBuilder> setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, std::unique_ptr<BuiltIn::DispatchInfoBuilder> newBuilder);
 
     MockDevice &device;
     DeviceInfo &sharedDeviceInfo;

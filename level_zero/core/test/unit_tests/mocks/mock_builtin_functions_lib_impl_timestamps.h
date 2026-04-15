@@ -25,19 +25,19 @@ struct MockBuiltInKernelLibImplTimestamps : BuiltInKernelLibImpl {
 
     using BuiltInKernelLibImpl::BuiltInKernelLibImpl;
 
-    void initBuiltinImageKernel(ImageBuiltIn func) override {
+    void initBuiltinImageKernel(ImageBuiltIn func, const NEO::BuiltIn::AddressingMode &mode) override {
     }
 
-    Kernel *getFunction(BufferBuiltIn func) override {
-        auto builtId = static_cast<uint32_t>(func);
+    Kernel *getFunction(BufferBuiltIn func, const NEO::BuiltIn::AddressingMode &mode) override {
+        auto builtId = toBufferCacheIndex(func, mode);
         return builtins[builtId]->func.get();
     }
 
-    std::unique_ptr<BuiltInKernelLibImpl::BuiltInKernelData> loadBuiltIn(NEO::BuiltIn::Group builtInGroup, const char *kernelName) override {
+    std::unique_ptr<BuiltInKernelLibImpl::BuiltInKernelData> loadBuiltIn(NEO::BuiltIn::BaseKernel baseKernel, const NEO::BuiltIn::AddressingMode &mode, const char *kernelName) override {
         using BuiltInCodeType = NEO::BuiltIn::CodeType;
 
         auto builtInCodeType = NEO::debugManager.flags.RebuildPrecompiledKernels.get() ? BuiltInCodeType::intermediate : BuiltInCodeType::binary;
-        auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtInGroup, builtInCodeType, *device->getNEODevice());
+        auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(baseKernel, mode, builtInCodeType, *device->getNEODevice());
 
         [[maybe_unused]] ze_result_t res;
 

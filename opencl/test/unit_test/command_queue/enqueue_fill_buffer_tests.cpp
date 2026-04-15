@@ -103,14 +103,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    auto builtInGroup = BuiltIn::Group::fillBuffer;
-
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    if (compilerProductHelper.isForceToStatelessRequired()) {
-        builtInGroup = BuiltIn::Group::fillBufferStateless;
-    }
-
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltinGroup(builtInGroup),
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, defaultBuiltInMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -154,8 +147,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenRightLeftoverWhenFillingBufferThenFillB
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    const BuiltIn::Group builtInGroup = adjustBuiltinGroup(BuiltIn::Group::fillBuffer);
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, defaultBuiltInMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -182,8 +174,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenMiddleWhenFillingBufferThenFillBufferMi
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    const BuiltIn::Group builtInGroup = adjustBuiltinGroup(BuiltIn::Group::fillBuffer);
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, defaultBuiltInMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -210,8 +201,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenLeftLeftoverWhenFillingBufferThenFillBu
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    const BuiltIn::Group builtInGroup = adjustBuiltinGroup(BuiltIn::Group::fillBuffer);
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, defaultBuiltInMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -310,7 +300,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
 
     // Extract the kernel used
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltinGroup(BuiltIn::Group::fillBuffer),
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, defaultBuiltInMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -345,7 +335,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
     enqueueFillBuffer<FamilyType>();
 
     // Extract the kernel used
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltinGroup(BuiltIn::Group::fillBuffer),
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, defaultBuiltInMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -382,7 +372,7 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorre
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     // Extract the kernel used
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::fillBufferStatelessHeapless,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, BuiltIn::bindlessImageStatelessBuffer,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -424,7 +414,8 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessThenStatelessKerne
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     // Extract the kernel used
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltinGroup(BuiltIn::Group::fillBufferStateless),
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer,
+                                                                              defaultStatelessMode,
                                                                               pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -622,7 +613,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, whenFillingBufferThenUseGpuAddressForPatchin
     patternAllocation->setAllocationOffset(10u);
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(adjustBuiltinGroup(BuiltIn::Group::fillBuffer), pCmdQ->getClDevice());
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, defaultBuiltInMode, pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
@@ -717,21 +708,20 @@ HWTEST_F(EnqueueFillBufferCmdTests, given4gbBufferAndIsForceStatelessIsFalseWhen
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ);
     mockCmdQ->isForceStateless = false;
 
-    BuiltIn::Group copyBuiltIn = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(true, pCmdQ->getHeaplessModeEnabled(), true);
+    auto fillMode = pCmdQ->getDefaultBuiltInMode();
+    fillMode.adjustToWideStatelessIfRequired(4ull * MemoryConstants::gigaByte);
 
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
-        copyBuiltIn,
-        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, fillMode,
+                                                               std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
     FourGbMockBuffer buffer;
 
-    auto mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        copyBuiltIn,
-        *pClDevice));
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, fillMode,
+                                                                                                             *pClDevice));
 
     EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
 
@@ -740,8 +730,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, given4gbBufferAndIsForceStatelessIsFalseWhen
     EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
-        copyBuiltIn,
-        std::move(oldBuilder));
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, fillMode,
+                                                               std::move(oldBuilder));
     EXPECT_EQ(mockBuilder, newBuilder.get());
 }

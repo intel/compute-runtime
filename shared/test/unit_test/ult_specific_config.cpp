@@ -54,22 +54,32 @@ void applyWorkarounds() {
     mockCpuInfo->featuresDetected = true;
     mockCpuInfo->virtualAddressSize = is32bit ? 32u : 48u;
     mockCpuInfo->cpuFlags.clear();
-    const std::array<ConstStringRef, 12> builtinIntermediateNames{"copy_buffer_to_buffer.builtin_kernel.spv",
-                                                                  "copy_buffer_rect.builtin_kernel.spv",
-                                                                  "fill_buffer.builtin_kernel.spv",
-                                                                  "copy_buffer_to_image3d.builtin_kernel.spv",
-                                                                  "copy_image3d_to_buffer.builtin_kernel.spv",
-                                                                  "copy_image_to_image1d.builtin_kernel.spv",
-                                                                  "copy_image_to_image2d.builtin_kernel.spv",
-                                                                  "copy_image_to_image3d.builtin_kernel.spv",
-                                                                  "fill_image1d.builtin_kernel.spv",
-                                                                  "fill_image2d.builtin_kernel.spv",
-                                                                  "fill_image3d.builtin_kernel.spv",
-                                                                  "fill_image1d_buffer.builtin_kernel.spv"};
+    const std::array<ConstStringRef, 12> builtinBaseNames{"copy_buffer_to_buffer",
+                                                          "copy_buffer_rect",
+                                                          "fill_buffer",
+                                                          "copy_buffer_to_image3d",
+                                                          "copy_image3d_to_buffer",
+                                                          "copy_image_to_image1d",
+                                                          "copy_image_to_image2d",
+                                                          "copy_image_to_image3d",
+                                                          "fill_image1d",
+                                                          "fill_image2d",
+                                                          "fill_image3d",
+                                                          "fill_image1d_buffer"};
+    const BuiltIn::AddressingMode modes[] = {
+        BuiltIn::bindfulImageBindfulBuffer,
+        BuiltIn::bindfulImageStatelessBuffer,
+        BuiltIn::bindfulImageStatelessBufferWide,
+        BuiltIn::bindlessImageBindlessBuffer,
+        BuiltIn::bindlessImageStatelessBuffer,
+        BuiltIn::bindlessImageStatelessBufferWide};
     auto &storageRegistry = BuiltIn::EmbeddedStorageRegistry::getInstance();
-    for (auto builtinIntermediateName : builtinIntermediateNames) {
-        std::string resource = "__mock_spirv_resource";
-        storageRegistry.store(builtinIntermediateName.str(), BuiltIn::createResource(resource.data(), resource.size() + 1));
+    std::string resource = "__mock_spirv_resource";
+    for (const auto &baseName : builtinBaseNames) {
+        for (const auto &mode : modes) {
+            std::string fullName = mode.toString() + baseName.str() + ".builtin_kernel.spv";
+            storageRegistry.store(fullName, BuiltIn::createResource(resource.data(), resource.size() + 1));
+        }
     }
 }
 

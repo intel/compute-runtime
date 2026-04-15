@@ -11,13 +11,13 @@
 #include "opencl/source/mem_obj/buffer.h"
 namespace NEO {
 
-BuiltIn::Op<BuiltIn::Group::auxTranslation>::Op(BuiltIns &kernelsLib, ClDevice &device) : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
-    BuiltIn::DispatchInfoBuilder::populate(BuiltIn::Group::auxTranslation, "", "fullCopy", multiDeviceBaseKernel);
+AuxTranslationBuiltin::AuxTranslationBuiltin(BuiltIns &kernelsLib, ClDevice &device, BuiltIn::AddressingMode mode) : BuiltIn::DispatchInfoBuilder(kernelsLib, device) {
+    BuiltIn::DispatchInfoBuilder::populate(BuiltIn::BaseKernel::auxTranslation, mode, "", "fullCopy", multiDeviceBaseKernel);
     baseKernel = multiDeviceBaseKernel->getKernel(clDevice.getRootDeviceIndex());
     resizeKernelInstances(5);
 }
 
-void BuiltIn::Op<BuiltIn::Group::auxTranslation>::resizeKernelInstances(size_t size) const {
+void AuxTranslationBuiltin::resizeKernelInstances(size_t size) const {
     convertToNonAuxKernel.reserve(size);
     convertToAuxKernel.reserve(size);
 

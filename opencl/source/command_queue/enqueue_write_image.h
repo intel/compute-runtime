@@ -132,13 +132,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImageImpl(
     dc.bcsSplit = bcsSplit;
     dc.direction = csrSelectionArgs.direction;
 
-    const auto isStateless = forceStateless(hostPtrSize);
-    const auto isHeapless = this->getHeaplessModeEnabled();
-    const auto isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(hostPtrSize);
-    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferToImage3d>(isStateless, isHeapless, isWideness);
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(hostPtrSize);
     MultiDispatchInfo dispatchInfo(dc);
 
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, {BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode}, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, csr);
 
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;

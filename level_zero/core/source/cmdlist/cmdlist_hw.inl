@@ -17,6 +17,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/common_types.h"
@@ -299,6 +300,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         this->defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
     this->statelessBuiltinsEnabled = compilerProductHelper.isForceToStatelessRequired();
+    this->defaultBuiltInMode = compilerProductHelper.getDefaultBuiltInAddressingMode(
+        NEO::ApiSpecificConfig::getBindlessMode(*neoDevice));
     this->swTagsEnabled = NEO::debugManager.flags.EnableSWTags.get();
     this->setupPatchPreambleEnabled();
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
@@ -890,39 +893,38 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         return status;
     }
 
-    const auto isStateless = this->forceStateless(bufferSize);
-    const auto isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(bufferSize);
-    const auto isHeaplessEnabled = this->heaplessModeEnabled;
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(bufferSize);
     ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyBufferToImage3dBytes;
 
     switch (bytesPerPixel) {
     case 1u:
-        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3dBytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = ImageBuiltIn::copyBufferToImage3dBytes;
         break;
     case 2u:
-        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d2Bytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = ImageBuiltIn::copyBufferToImage3d2Bytes;
         break;
     case 4u:
         if (image->isMimickedImage()) {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d3To4Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyBufferToImage3d3To4Bytes;
         } else {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d4Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyBufferToImage3d4Bytes;
         }
         break;
     case 8u:
         if (image->isMimickedImage()) {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d6To8Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyBufferToImage3d6To8Bytes;
         } else {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d8Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyBufferToImage3d8Bytes;
         }
         break;
     case 16u: {
         bool isSrc16BytesAligned = isAligned<16>(allocationStruct.alignedAllocationPtr, allocationStruct.offset,
                                                  srcRowPitch, srcSlicePitchCalculated);
         if (isSrc16BytesAligned) {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d16BytesAligned>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyBufferToImage3d16BytesAligned;
         } else {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyBufferToImage3d16Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyBufferToImage3d16Bytes;
         }
         break;
     }
@@ -932,7 +934,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     }
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn);
+    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn, builtInMode);
 
     builtinSetArg(builtinKernel, 0, allocationStruct.alignedAllocationPtr, allocationStruct.alloc);
     builtinKernel->setArgRedescribedImage(1u, image->toHandle(), false);
@@ -944,7 +946,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
                          0};
     builtinKernel->setArgumentValue(3u, sizeof(origin), &origin);
 
-    if (!isWideness) {
+    if (!builtInMode.wideMode) {
         uint32_t pitch[] = {srcRowPitch, static_cast<uint32_t>(srcSlicePitchCalculated)};
         builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
     } else {
@@ -1109,45 +1111,44 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         return status;
     }
 
-    const auto isStateless = this->forceStateless(bufferSize);
-    const auto isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(bufferSize);
-    const auto isHeaplessEnabled = this->heaplessModeEnabled;
-    ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyBufferToImage3dBytes;
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(bufferSize);
+    ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyImage3dToBufferBytes;
 
     switch (bytesPerPixel) {
     case 1u:
-        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBufferBytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = ImageBuiltIn::copyImage3dToBufferBytes;
         break;
     case 2u:
-        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer2Bytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = ImageBuiltIn::copyImage3dToBuffer2Bytes;
         break;
     case 3u:
-        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer3Bytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = ImageBuiltIn::copyImage3dToBuffer3Bytes;
         break;
     case 4u:
         if (image->isMimickedImage()) {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer4To3Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyImage3dToBuffer4To3Bytes;
         } else {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer4Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyImage3dToBuffer4Bytes;
         }
         break;
     case 6u:
-        imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer6Bytes>(isStateless, isHeaplessEnabled, isWideness);
+        imageBuiltIn = ImageBuiltIn::copyImage3dToBuffer6Bytes;
         break;
     case 8u:
         if (image->isMimickedImage()) {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer8To6Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyImage3dToBuffer8To6Bytes;
         } else {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer8Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyImage3dToBuffer8Bytes;
         }
         break;
     case 16u: {
         bool isDst16BytesAligned = isAligned<16>(allocationStruct.alignedAllocationPtr, allocationStruct.offset,
                                                  destRowPitch, destSlicePitchCalculated);
         if (isDst16BytesAligned) {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer16BytesAligned>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyImage3dToBuffer16BytesAligned;
         } else {
-            imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImage3dToBuffer16Bytes>(isStateless, isHeaplessEnabled, isWideness);
+            imageBuiltIn = ImageBuiltIn::copyImage3dToBuffer16Bytes;
         }
 
         break;
@@ -1162,7 +1163,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     }
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn);
+    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn, builtInMode);
 
     builtinKernel->setArgRedescribedImage(0u, image->toHandle(), false);
     builtinSetArg(builtinKernel, 1, allocationStruct.alignedAllocationPtr, allocationStruct.alloc);
@@ -1173,7 +1174,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     builtinKernel->setArgumentValue(2u, sizeof(origin), &origin);
     builtinKernel->setArgumentValue(3u, sizeof(size_t), &allocationStruct.offset);
 
-    if (!isWideness) {
+    if (!builtInMode.wideMode) {
         uint32_t pitch[] = {destRowPitch, static_cast<uint32_t>(destSlicePitchCalculated)};
         builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
     } else {
@@ -1344,10 +1345,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         return status;
     }
 
-    ImageBuiltIn imageBuiltIn = BuiltInHelper::adjustImageBuiltIn<ImageBuiltIn::copyImageRegion>(false, this->heaplessModeEnabled);
+    ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyImageRegion;
+    auto builtInMode = this->defaultBuiltInMode;
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn, builtInMode);
 
     ze_result_t ret = kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
                                                &groupSizeY, &groupSizeZ);
@@ -1555,8 +1557,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(u
                                                                                uint64_t size,
                                                                                uint64_t elementSize,
                                                                                BufferBuiltIn builtin,
+                                                                               const NEO::BuiltIn::AddressingMode &builtInMode,
                                                                                Event *signalEvent,
-                                                                               bool isStateless,
                                                                                CmdListKernelLaunchParams &launchParams) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
@@ -1567,7 +1569,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(u
 
     Kernel *builtinKernel = nullptr;
 
-    builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
+    builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin, builtInMode);
 
     uint32_t groupSizeX = builtinKernel->getImmutableData()
                               ->getDescriptor()
@@ -1797,7 +1799,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
 
     size_t middleElSize = sizeof(uint32_t) * 4;
     uintptr_t rightSize = size % middleElSize;
-    const auto isStateless = this->forceStateless(size);
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(size);
 
     uintptr_t dstAddress = static_cast<uintptr_t>(dstAllocation->getGpuAddress());
     uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
@@ -1818,8 +1821,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                            size - rightSize,
                                            middleElSize,
                                            BufferBuiltIn::copyBufferToBufferMiddle,
+                                           builtInMode,
                                            nullptr,
-                                           isStateless,
                                            launchParams);
         launchParams.numKernelsExecutedInSplitLaunch++;
         if (ret == ZE_RESULT_SUCCESS && rightSize) {
@@ -1829,8 +1832,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                                srcAllocation, size - rightSize,
                                                rightSize, 1UL,
                                                BufferBuiltIn::copyBufferToBufferSide,
+                                               builtInMode,
                                                nullptr,
-                                               isStateless,
                                                launchParams);
             launchParams.numKernelsExecutedInSplitLaunch++;
         }
@@ -2080,15 +2083,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     uintptr_t rightSize = 0;
     uintptr_t middleSizeBytes = 0;
     size_t middleElSize = 0;
-    bool isStateless = false;
-    bool isWideness = false;
-    bool isHeapless = false;
+    NEO::BuiltIn::AddressingMode builtInMode = this->defaultBuiltInMode;
 
     if (!isCopyOnlyEnabled) {
         middleElSize = sizeof(uint32_t) * 4;
-        isStateless = this->forceStateless(size);
-        isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(size);
-        isHeapless = this->isHeaplessModeEnabled();
+        builtInMode = this->defaultBuiltInMode;
+        builtInMode.adjustToWideStatelessIfRequired(size);
 
         uintptr_t start = reinterpret_cast<uintptr_t>(dstptr);
 
@@ -2179,7 +2179,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
         if (ret == ZE_RESULT_SUCCESS && leftSize) {
 
-            BufferBuiltIn copyKernel = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferSide>(isStateless, isHeapless, isWideness);
+            BufferBuiltIn copyKernel = BufferBuiltIn::copyBufferToBufferSide;
 
             ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, dstAllocationStruct.offset,
@@ -2187,15 +2187,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                srcAllocationStruct.alloc, srcAllocationStruct.offset,
                                                leftSize, 1UL,
                                                copyKernel,
+                                               builtInMode,
                                                signalEvent,
-                                               isStateless,
                                                launchParams);
             launchParams.numKernelsExecutedInSplitLaunch++;
         }
 
         if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
 
-            BufferBuiltIn copyKernel = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferMiddle>(isStateless, isHeapless, isWideness);
+            BufferBuiltIn copyKernel = BufferBuiltIn::copyBufferToBufferMiddle;
 
             ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
@@ -2204,15 +2204,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                middleSizeBytes,
                                                middleElSize,
                                                copyKernel,
+                                               builtInMode,
                                                signalEvent,
-                                               isStateless,
                                                launchParams);
             launchParams.numKernelsExecutedInSplitLaunch++;
         }
 
         if (ret == ZE_RESULT_SUCCESS && rightSize) {
 
-            BufferBuiltIn copyKernel = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferToBufferSide>(isStateless, isHeapless, isWideness);
+            BufferBuiltIn copyKernel = BufferBuiltIn::copyBufferToBufferSide;
 
             ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
@@ -2220,8 +2220,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset,
                                                rightSize, 1UL,
                                                copyKernel,
+                                               builtInMode,
                                                signalEvent,
-                                               isStateless,
                                                launchParams);
             launchParams.numKernelsExecutedInSplitLaunch++;
         }
@@ -2333,8 +2333,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
-    const auto isStateless = this->forceStateless(std::max(srcSize, dstSize));
-    const bool isHeapless = this->isHeaplessModeEnabled();
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(std::max(srcSize, dstSize));
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (isCopyOnlyEnabled) {
         result = appendMemoryCopyBlitRegion(&srcAllocationStruct, &dstAllocationStruct, *srcRegion, *dstRegion,
@@ -2342,19 +2342,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                             srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3,
                                             signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams, isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed));
     } else if ((srcRegion->depth > 1) || (srcRegion->originZ != 0) || (dstRegion->originZ != 0)) {
-        BufferBuiltIn bufferBuiltIn = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferRectBytes3d>(isStateless, isHeapless);
-        result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, bufferBuiltIn,
+        BufferBuiltIn bufferBuiltIn = BufferBuiltIn::copyBufferRectBytes3d;
+        result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, bufferBuiltIn, builtInMode,
                                                 dstRegion, dstPitch, dstSlicePitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcSlicePitch, srcAllocationStruct.offset,
                                                 signalEvent, numWaitEvents, phWaitEvents,
-                                                memoryCopyParams.relaxedOrderingDispatch, isStateless, isHeapless);
+                                                memoryCopyParams.relaxedOrderingDispatch);
     } else {
-        BufferBuiltIn bufferBuiltIn = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::copyBufferRectBytes2d>(isStateless, isHeapless);
-        result = this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct, bufferBuiltIn,
+        BufferBuiltIn bufferBuiltIn = BufferBuiltIn::copyBufferRectBytes2d;
+        result = this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct, bufferBuiltIn, builtInMode,
                                                 dstRegion, dstPitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcAllocationStruct.offset,
                                                 signalEvent, numWaitEvents, phWaitEvents,
-                                                memoryCopyParams.relaxedOrderingDispatch, isStateless, isHeapless);
+                                                memoryCopyParams.relaxedOrderingDispatch);
     }
 
     if (result) {
@@ -2385,6 +2385,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation,
                                                                            AlignedAllocationData *srcAlignedAllocation,
                                                                            BufferBuiltIn builtin,
+                                                                           const NEO::BuiltIn::AddressingMode &builtInMode,
                                                                            const ze_copy_region_t *dstRegion,
                                                                            uint32_t dstPitch,
                                                                            uint32_t dstSlicePitch,
@@ -2396,13 +2397,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
                                                                            Event *signalEvent,
                                                                            uint32_t numWaitEvents,
                                                                            ze_event_handle_t *phWaitEvents,
-                                                                           bool relaxedOrderingDispatch,
-                                                                           bool isStateless, bool isHeapless) {
+                                                                           bool relaxedOrderingDispatch) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     const auto driverHandle = device->getDriverHandle();
 
-    auto builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
+    auto builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin, builtInMode);
 
     uint32_t groupSizeX = srcRegion->width;
     uint32_t groupSizeY = srcRegion->height;
@@ -2468,6 +2468,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation,
                                                                            AlignedAllocationData *srcAlignedAllocation,
                                                                            BufferBuiltIn builtin,
+                                                                           const NEO::BuiltIn::AddressingMode &builtInMode,
                                                                            const ze_copy_region_t *dstRegion,
                                                                            uint32_t dstPitch,
                                                                            size_t dstOffset,
@@ -2477,13 +2478,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
                                                                            Event *signalEvent,
                                                                            uint32_t numWaitEvents,
                                                                            ze_event_handle_t *phWaitEvents,
-                                                                           bool relaxedOrderingDispatch,
-                                                                           bool isStateless, bool isHeapless) {
+                                                                           bool relaxedOrderingDispatch) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     const auto driverHandle = device->getDriverHandle();
 
-    auto builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
+    auto builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin, builtInMode);
 
     uint32_t groupSizeX = srcRegion->width;
     uint32_t groupSizeY = srcRegion->height;
@@ -2579,10 +2579,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const voi
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool isStateless, uint32_t unalignedSize, const AlignedAllocationData &dstAllocation, const void *pattern, Event *signalEvent, CmdListKernelLaunchParams &launchParams) {
 
-    const bool isHeapless = this->isHeaplessModeEnabled();
-    auto builtin = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediateLeftOver>(isStateless, isHeapless);
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(0);
+    auto builtin = BufferBuiltIn::fillBufferImmediateLeftOver;
 
-    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
+    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin, builtInMode);
     uint32_t groupSizeY = 1, groupSizeZ = 1;
     uint32_t groupSizeX = static_cast<uint32_t>(unalignedSize);
     builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
@@ -2628,8 +2629,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     const auto isStateless = this->forceStateless(size);
-    const auto isWideness = NEO::AddressingModeHelper::isAnyValueWiderThan32bit(size);
-    const bool isHeapless = this->isHeaplessModeEnabled();
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(size);
     const bool shouldUseCopyOffload = (isCopyOffloadForFillOrStagingPreferred() && isCopyOffloadForFillPreferred(size)) || doParamsRequireCopyOnly(memoryCopyParams);
 
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && (patternSize <= this->maxFillPatternSizeForCopyEngine) && (0 == size % patternSize) && shouldUseCopyOffload;
@@ -2684,10 +2685,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     bool useImmediateFill = canUseImmediateFill(size, patternSize, dstAllocation.offset, this->device->getDeviceInfo().maxWorkGroupSize);
     auto builtin = useImmediateFill
-                       ? BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferImmediate>(isStateless, isHeapless, isWideness)
-                       : BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferMiddle>(isStateless, isHeapless, isWideness);
+                       ? BufferBuiltIn::fillBufferImmediate
+                       : BufferBuiltIn::fillBufferMiddle;
 
-    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
+    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin, builtInMode);
 
     launchParams.isBuiltInKernel = true;
     launchParams.isDestinationAllocationInSystemMemory = dstAllocation.needsFlush;
@@ -2832,8 +2833,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         } else {
             uint32_t dstOffsetRemainder = static_cast<uint32_t>(dstAllocation.offset);
 
-            auto builtin = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferRightLeftover>(isStateless, isHeapless, isWideness);
-            Kernel *builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(builtin);
+            auto builtin = BufferBuiltIn::fillBufferRightLeftover;
+            Kernel *builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(builtin, builtInMode);
 
             builtinKernelRemainder->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
             ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
@@ -2858,8 +2859,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             uint32_t dstOffsetRemainder = static_cast<uint32_t>(fillArguments.rightOffset);
             uint64_t patternOffsetRemainder = fillArguments.patternOffsetRemainder;
 
-            auto builtin = BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::fillBufferRightLeftover>(isStateless, isHeapless, isWideness);
-            Kernel *builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(builtin);
+            auto builtin = BufferBuiltIn::fillBufferRightLeftover;
+            Kernel *builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(builtin, builtInMode);
 
             builtinKernelRemainder->setGroupSize(fillArguments.rightRemainingBytes, 1u, 1u);
             ze_group_count_t dispatchKernelArgs{1u, 1u, 1u};
@@ -3811,10 +3812,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     auto useOnlyGlobalTimestampsValue = this->useOnlyGlobalTimestamps ? 1u : 0u;
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
-    const auto isStateless = this->forceStateless(alignedSize);
-    const bool isHeapless = this->isHeaplessModeEnabled();
+    auto builtInMode = this->defaultBuiltInMode;
     if (pOffsets == nullptr) {
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::queryKernelTimestamps>(isStateless, isHeapless));
+        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::queryKernelTimestamps, builtInMode);
         builtinKernel->setArgumentValue(2u, sizeof(uint32_t), &useOnlyGlobalTimestampsValue);
     } else {
         auto pOffsetAllocationStruct = getAlignedAllocationData(this->device, false, pOffsets, sizeof(size_t) * numEvents, false, false, nullptr);
@@ -3824,7 +3824,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
 
         auto offsetValPtr = static_cast<uintptr_t>(pOffsetAllocationStruct.alloc->getGpuAddress());
         commandContainer.addToResidencyContainer(pOffsetAllocationStruct.alloc);
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(BuiltInHelper::adjustBufferBuiltIn<BufferBuiltIn::queryKernelTimestampsWithOffsets>(isStateless, isHeapless));
+        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::queryKernelTimestampsWithOffsets, builtInMode);
         builtinKernel->setArgBufferWithAlloc(2, offsetValPtr, pOffsetAllocationStruct.alloc, nullptr);
         builtinKernel->setArgumentValue(3u, sizeof(uint32_t), &useOnlyGlobalTimestampsValue);
         offsetValPtr += sizeof(size_t);

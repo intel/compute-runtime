@@ -20,10 +20,9 @@
 #include <memory>
 
 namespace NEO {
-template <>
-class BuiltIn::Op<BuiltIn::Group::auxTranslation> : public BuiltIn::DispatchInfoBuilder {
+class AuxTranslationBuiltin : public BuiltIn::DispatchInfoBuilder {
   public:
-    Op(BuiltIns &kernelsLib, ClDevice &device);
+    AuxTranslationBuiltin(BuiltIns &kernelsLib, ClDevice &device, BuiltIn::AddressingMode mode);
     template <typename GfxFamily>
     bool buildDispatchInfosForAuxTranslation(MultiDispatchInfo &multiDispatchInfo, const BuiltIn::OpParams &operationParams) const {
         size_t kernelInstanceNumber = 0;

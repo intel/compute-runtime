@@ -11,6 +11,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "gtest/gtest.h"
@@ -32,6 +34,13 @@ void DeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     if (hardwareInfo && hardwareInfo->platform.eRenderCoreFamily >= IGFX_XE3P_CORE) {
         pDevice->deviceInfo.semaphore64bCmdSupport = true;
     }
+
+    auto bindlessEnabled = NEO::ApiSpecificConfig::getBindlessMode(*pDevice);
+    if (pDevice->getCompilerProductHelper().isForceBindlessRequired(pDevice->getHardwareInfo())) {
+        bindlessEnabled = true;
+    }
+
+    this->defaultBuiltInMode = pDevice->getCompilerProductHelper().getDefaultBuiltInAddressingMode(bindlessEnabled);
 }
 
 void DeviceFixture::tearDown() {

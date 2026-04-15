@@ -6,196 +6,165 @@
  */
 
 #pragma once
-#include <array>
+#include "shared/source/helpers/constants.h"
+
 #include <cstdint>
+#include <limits>
+#include <string>
 
 namespace NEO {
 namespace BuiltIn {
 
-// Each value maps to precompiled binary (.bin or .spv) or source (.cl) resource,
-// which contains one or more kernel functions.
-// Variants of the same builtIn group (e.g. stateless, wideStateless, heapless, wideHeapless) select
-// alternative compilations of the same kernel group with different addressing modes or compilation options
-enum class Group : uint32_t {
-    auxTranslation = 0,
-    copyBufferToBuffer,
-    copyBufferToBufferStateless,
-    copyBufferToBufferWideStateless,
-    copyBufferToBufferStatelessHeapless,
-    copyBufferToBufferWideStatelessHeapless,
-    copyBufferRect,
-    copyBufferRectStateless,
-    copyBufferRectWideStateless,
-    copyBufferRectStatelessHeapless,
-    copyBufferRectWideStatelessHeapless,
-    fillBuffer,
-    fillBufferStateless,
-    fillBufferWideStateless,
-    fillBufferStatelessHeapless,
-    fillBufferWideStatelessHeapless,
-    copyBufferToImage3d,
-    copyBufferToImage3dStateless,
-    copyBufferToImage3dWideStateless,
-    copyBufferToImage3dStatelessHeapless,
-    copyBufferToImage3dWideStatelessHeapless,
-    copyImage3dToBuffer,
-    copyImage3dToBufferStateless,
-    copyImage3dToBufferWideStateless,
-    copyImage3dToBufferStatelessHeapless,
-    copyImage3dToBufferWideStatelessHeapless,
-    copyImageToImage1d,
-    copyImageToImage1dHeapless,
-    copyImageToImage2d,
-    copyImageToImage2dHeapless,
-    copyImageToImage3d,
-    copyImageToImage3dHeapless,
-    fillImage1d,
-    fillImage1dHeapless,
-    fillImage2d,
-    fillImage2dHeapless,
-    fillImage3d,
-    fillImage3dHeapless,
-    queryKernelTimestamps,
-    fillImage1dBuffer,
-    fillImage1dBufferHeapless,
-    queryKernelTimestampsStateless,
-    queryKernelTimestampsStatelessHeapless,
+struct AddressingMode {
+    enum class ImageMode : uint8_t { bindful,
+                                     bindless };
 
+    enum class BufferMode : uint8_t { bindful,
+                                      bindless,
+                                      stateless };
+
+    ImageMode imageMode = ImageMode::bindless;
+    BufferMode bufferMode = BufferMode::stateless;
+    bool wideMode = false;
+
+    constexpr AddressingMode() = default;
+    constexpr AddressingMode(ImageMode img, BufferMode buf, bool wide)
+        : imageMode(img), bufferMode(buf), wideMode(wide) {}
+
+    static constexpr AddressingMode getDefaultMode(bool useBindless, bool useStateless) {
+        AddressingMode mode;
+        mode.imageMode = useBindless ? ImageMode::bindless : ImageMode::bindful;
+        mode.bufferMode = useStateless ? BufferMode::stateless : (useBindless ? BufferMode::bindless : BufferMode::bindful);
+        return mode;
+    }
+
+    void adjustToWideStatelessIfRequired(uint64_t maxBufferSize) {
+        if (maxBufferSize >= 4ull * MemoryConstants::gigaByte) {
+            this->bufferMode = BufferMode::stateless;
+            this->wideMode = true;
+        }
+    }
+
+    std::string toString() const {
+        std::string mode;
+
+        if (imageMode == ImageMode::bindless) {
+            mode += "bindless_image_";
+        } else {
+            mode += "bindful_image_";
+        }
+
+        if (bufferMode == BufferMode::stateless) {
+            mode += "stateless_buffer";
+        } else if (bufferMode == BufferMode::bindless) {
+            mode += "bindless_buffer";
+        } else {
+            mode += "bindful_buffer";
+        }
+
+        if (wideMode) {
+            mode += "_wide";
+        }
+
+        mode += "_";
+
+        return mode;
+    }
+
+    constexpr uint32_t toIndex() const;
+
+    bool operator==(const AddressingMode &other) const = default;
+};
+
+inline constexpr AddressingMode bindfulImageBindfulBuffer{AddressingMode::ImageMode::bindful, AddressingMode::BufferMode::bindful, false};
+inline constexpr AddressingMode bindfulImageStatelessBuffer{AddressingMode::ImageMode::bindful, AddressingMode::BufferMode::stateless, false};
+inline constexpr AddressingMode bindfulImageStatelessBufferWide{AddressingMode::ImageMode::bindful, AddressingMode::BufferMode::stateless, true};
+inline constexpr AddressingMode bindlessImageBindlessBuffer{AddressingMode::ImageMode::bindless, AddressingMode::BufferMode::bindless, false};
+inline constexpr AddressingMode bindlessImageStatelessBuffer{AddressingMode::ImageMode::bindless, AddressingMode::BufferMode::stateless, false};
+inline constexpr AddressingMode bindlessImageStatelessBufferWide{AddressingMode::ImageMode::bindless, AddressingMode::BufferMode::stateless, true};
+
+inline constexpr AddressingMode allAddressingModes[] = {
+    bindfulImageBindfulBuffer,
+    bindfulImageStatelessBuffer,
+    bindfulImageStatelessBufferWide,
+    bindlessImageBindlessBuffer,
+    bindlessImageStatelessBuffer,
+    bindlessImageStatelessBufferWide};
+
+inline constexpr uint32_t addressingModeCount = 6u;
+
+constexpr uint32_t AddressingMode::toIndex() const {
+    for (uint32_t i = 0u; i < addressingModeCount; ++i) {
+        if (allAddressingModes[i] == *this) {
+            return i;
+        }
+    }
+    return std::numeric_limits<uint32_t>::max();
+}
+
+enum class BaseKernel : uint32_t {
+    copyBufferToBuffer = 0,
+    copyBufferRect,
+    fillBuffer,
+    copyBufferToImage3d,
+    copyImage3dToBuffer,
+    copyImageToImage1d,
+    copyImageToImage2d,
+    copyImageToImage3d,
+    fillImage1d,
+    fillImage2d,
+    fillImage3d,
+    fillImage1dBuffer,
+    copyKernelTimestamps,
+    auxTranslation,
     count
 };
 
-constexpr uint32_t toIndex(Group id) { return static_cast<uint32_t>(id); }
+struct BuiltInId {
+    BaseKernel kernel;
+    AddressingMode mode;
+};
 
-constexpr bool isStateless(Group group) {
-    constexpr std::array<Group, 12> statelessBuiltins{{Group::copyBufferToBufferStateless, Group::copyBufferRectStateless, Group::fillBufferStateless, Group::copyBufferToImage3dStateless,
-                                                       Group::copyImage3dToBufferStateless, Group::copyBufferToBufferStatelessHeapless, Group::copyBufferRectStatelessHeapless, Group::fillBufferStatelessHeapless,
-                                                       Group::copyBufferToImage3dStatelessHeapless, Group::copyImage3dToBufferStatelessHeapless, Group::queryKernelTimestampsStateless, Group::queryKernelTimestampsStatelessHeapless}};
-    for (auto builtinGroup : statelessBuiltins) {
-        if (group == builtinGroup) {
-            return true;
-        }
+constexpr uint32_t toIndex(BaseKernel kernel) { return static_cast<uint32_t>(kernel); }
+constexpr uint32_t builderIndex(BaseKernel kernel, const AddressingMode &mode) {
+    return toIndex(kernel) * addressingModeCount + mode.toIndex();
+}
+constexpr uint32_t maxBuilderIndex() { return static_cast<uint32_t>(BaseKernel::count) * addressingModeCount; }
+
+constexpr const char *getAsString(BaseKernel kernel) {
+    switch (kernel) {
+    case BaseKernel::copyBufferToBuffer:
+        return "copy_buffer_to_buffer.builtin_kernel";
+    case BaseKernel::copyBufferRect:
+        return "copy_buffer_rect.builtin_kernel";
+    case BaseKernel::fillBuffer:
+        return "fill_buffer.builtin_kernel";
+    case BaseKernel::copyBufferToImage3d:
+        return "copy_buffer_to_image3d.builtin_kernel";
+    case BaseKernel::copyImage3dToBuffer:
+        return "copy_image3d_to_buffer.builtin_kernel";
+    case BaseKernel::copyImageToImage1d:
+        return "copy_image_to_image1d.builtin_kernel";
+    case BaseKernel::copyImageToImage2d:
+        return "copy_image_to_image2d.builtin_kernel";
+    case BaseKernel::copyImageToImage3d:
+        return "copy_image_to_image3d.builtin_kernel";
+    case BaseKernel::fillImage1d:
+        return "fill_image1d.builtin_kernel";
+    case BaseKernel::fillImage2d:
+        return "fill_image2d.builtin_kernel";
+    case BaseKernel::fillImage3d:
+        return "fill_image3d.builtin_kernel";
+    case BaseKernel::fillImage1dBuffer:
+        return "fill_image1d_buffer.builtin_kernel";
+    case BaseKernel::copyKernelTimestamps:
+        return "copy_kernel_timestamps.builtin_kernel";
+    case BaseKernel::auxTranslation:
+        return "aux_translation.builtin_kernel";
+    default:
+        return "unknown";
     }
-    return false;
 }
-
-constexpr bool isWideStateless(Group group) {
-    constexpr std::array<Group, 10> wideStatelessBuiltins{{Group::copyBufferToBufferWideStateless, Group::copyBufferRectWideStateless, Group::fillBufferWideStateless, Group::copyBufferToImage3dWideStateless,
-                                                           Group::copyImage3dToBufferWideStateless, Group::copyBufferToBufferWideStatelessHeapless, Group::copyBufferRectWideStatelessHeapless, Group::fillBufferWideStatelessHeapless,
-                                                           Group::copyBufferToImage3dWideStatelessHeapless, Group::copyImage3dToBufferWideStatelessHeapless}};
-    for (auto builtinGroup : wideStatelessBuiltins) {
-        if (group == builtinGroup) {
-            return true;
-        }
-    }
-    return false;
-}
-
-constexpr bool isHeapless(Group group) {
-    constexpr Group heaplessBuiltins[] = {Group::copyBufferToBufferStatelessHeapless, Group::copyBufferToBufferWideStatelessHeapless, Group::copyBufferRectStatelessHeapless, Group::copyBufferRectWideStatelessHeapless, Group::fillBufferStatelessHeapless, Group::fillBufferWideStatelessHeapless,
-                                          Group::copyBufferToImage3dStatelessHeapless, Group::copyBufferToImage3dWideStatelessHeapless, Group::copyImage3dToBufferStatelessHeapless, Group::copyImage3dToBufferWideStatelessHeapless, Group::copyImageToImage1dHeapless, Group::copyImageToImage2dHeapless, Group::copyImageToImage3dHeapless,
-                                          Group::fillImage1dHeapless, Group::fillImage2dHeapless, Group::fillImage3dHeapless, Group::fillImage1dBufferHeapless, Group::queryKernelTimestampsStatelessHeapless};
-
-    for (auto builtinGroup : heaplessBuiltins) {
-        if (group == builtinGroup) {
-            return true;
-        }
-    }
-    return false;
-}
-
-template <Group id>
-constexpr Group adjustBuiltinGroup(const bool useStateless, const bool useHeapless, const bool useWideness = false) {
-    return id;
-}
-
-template <>
-constexpr Group adjustBuiltinGroup<Group::copyBufferToBuffer>(const bool useStateless,
-                                                              const bool useHeapless,
-                                                              const bool useWideness) {
-    if (useHeapless) {
-        return useWideness ? Group::copyBufferToBufferWideStatelessHeapless
-                           : Group::copyBufferToBufferStatelessHeapless;
-    } else if (useStateless) {
-        return useWideness ? Group::copyBufferToBufferWideStateless
-                           : Group::copyBufferToBufferStateless;
-    }
-    return Group::copyBufferToBuffer;
-}
-
-template <>
-constexpr Group adjustBuiltinGroup<Group::copyBufferRect>(const bool useStateless,
-                                                          const bool useHeapless,
-                                                          const bool useWideness) {
-    if (useHeapless) {
-        return useWideness ? Group::copyBufferRectWideStatelessHeapless
-                           : Group::copyBufferRectStatelessHeapless;
-    } else if (useStateless) {
-        return useWideness ? Group::copyBufferRectWideStateless
-                           : Group::copyBufferRectStateless;
-    }
-    return Group::copyBufferRect;
-}
-
-template <>
-constexpr Group adjustBuiltinGroup<Group::fillBuffer>(const bool useStateless,
-                                                      const bool useHeapless,
-                                                      const bool useWideness) {
-    if (useHeapless) {
-        return useWideness ? Group::fillBufferWideStatelessHeapless
-                           : Group::fillBufferStatelessHeapless;
-    } else if (useStateless) {
-        return useWideness ? Group::fillBufferWideStateless
-                           : Group::fillBufferStateless;
-    }
-    return Group::fillBuffer;
-}
-
-template <>
-constexpr Group adjustBuiltinGroup<Group::copyBufferToImage3d>(const bool useStateless,
-                                                               const bool useHeapless,
-                                                               const bool useWideness) {
-    if (useHeapless) {
-        return useWideness ? Group::copyBufferToImage3dWideStatelessHeapless
-                           : Group::copyBufferToImage3dStatelessHeapless;
-    } else if (useStateless) {
-        return useWideness ? Group::copyBufferToImage3dWideStateless
-                           : Group::copyBufferToImage3dStateless;
-    }
-    return Group::copyBufferToImage3d;
-}
-
-template <>
-constexpr Group adjustBuiltinGroup<Group::copyImage3dToBuffer>(const bool useStateless,
-                                                               const bool useHeapless,
-                                                               const bool useWideness) {
-    if (useHeapless) {
-        return useWideness ? Group::copyImage3dToBufferWideStatelessHeapless
-                           : Group::copyImage3dToBufferStatelessHeapless;
-    } else if (useStateless) {
-        return useWideness ? Group::copyImage3dToBufferWideStateless
-                           : Group::copyImage3dToBufferStateless;
-    }
-    return Group::copyImage3dToBuffer;
-}
-
-template <Group id>
-constexpr Group adjustImageBuiltinGroup(const bool useHeapless) {
-    return id;
-}
-
-#define DEFINE_ADJUST_BUILTIN_GROUP_IMAGE(type)                                    \
-    template <>                                                                    \
-    constexpr Group adjustImageBuiltinGroup<Group::type>(const bool useHeapless) { \
-        return useHeapless ? Group::type##Heapless : Group::type;                  \
-    }
-
-DEFINE_ADJUST_BUILTIN_GROUP_IMAGE(copyImageToImage1d);
-DEFINE_ADJUST_BUILTIN_GROUP_IMAGE(copyImageToImage2d);
-DEFINE_ADJUST_BUILTIN_GROUP_IMAGE(copyImageToImage3d);
-DEFINE_ADJUST_BUILTIN_GROUP_IMAGE(fillImage1d);
-DEFINE_ADJUST_BUILTIN_GROUP_IMAGE(fillImage2d);
-DEFINE_ADJUST_BUILTIN_GROUP_IMAGE(fillImage3d);
-DEFINE_ADJUST_BUILTIN_GROUP_IMAGE(fillImage1dBuffer);
 
 } // namespace BuiltIn
 } // namespace NEO

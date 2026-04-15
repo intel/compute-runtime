@@ -7,7 +7,9 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_work_size.h"
 #include "shared/source/helpers/vec.h"
@@ -1109,8 +1111,8 @@ TEST(DispatchWalker, WhenCalculatingDispatchDimensionsThenCorrectValuesAreReturn
 using IsAuxTranslationSupported = IsAtMostXeCore;
 
 HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded, IsAuxTranslationSupported) {
-    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, *pClDevice);
-    auto &builder = static_cast<BuiltIn::Op<BuiltIn::Group::auxTranslation> &>(baseBuilder);
+    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, pCmdQ->getDefaultBuiltInMode(), *pClDevice);
+    auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
@@ -1157,8 +1159,8 @@ HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTra
 }
 
 HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded, IsAuxTranslationSupported) {
-    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, *pClDevice);
-    auto &builder = static_cast<BuiltIn::Op<BuiltIn::Group::auxTranslation> &>(baseBuilder);
+    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, pCmdQ->getDefaultBuiltInMode(), *pClDevice);
+    auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;

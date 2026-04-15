@@ -57,9 +57,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     bool isCpuCopyAllowed = false;
     getContext().tryGetExistingHostPtrAllocation(ptr, hostPtrSize, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);
 
-    const bool isStateless = forceStateless(buffer->getSize());
-    const bool isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(buffer->getSize());
-    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyBufferRect>(isStateless, this->heaplessModeEnabled, isWideness);
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(buffer->getSize());
 
     void *dstPtr = ptr;
 
@@ -105,7 +104,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     dc.direction = csrSelectionArgs.direction;
 
     MultiDispatchInfo dispatchInfo(dc);
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, {BuiltIn::BaseKernel::copyBufferRect, builtInMode}, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;
     }

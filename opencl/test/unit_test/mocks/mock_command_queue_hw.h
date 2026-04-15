@@ -30,6 +30,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::blitEnqueueAllowed;
     using BaseClass::commandQueueProperties;
     using BaseClass::commandStream;
+    using BaseClass::defaultBuiltInMode;
     using BaseClass::deferredTimestampPackets;
     using BaseClass::getDevice;
     using BaseClass::gpgpuEngine;

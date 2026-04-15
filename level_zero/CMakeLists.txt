@@ -302,12 +302,7 @@ if(BUILD_WITH_L0)
     message(STATUS "Prebuilt kernels are linked to Level Zero.")
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
-                   $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
-                   $<TARGET_OBJECTS:${BUILTINS_BINARIES_WIDE_STATELESS_LIB_NAME}>
-                   $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_HEAPLESS_LIB_NAME}>
-                   $<TARGET_OBJECTS:${BUILTINS_BINARIES_WIDE_STATELESS_HEAPLESS_LIB_NAME}>
-                   $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
-                   $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
+                   $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
     )
   endif()
 

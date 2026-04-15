@@ -54,11 +54,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         memcpy_s(patternAllocation->getUnderlyingBuffer(), patternSize, pattern, patternSize);
     }
 
-    const bool isStateless = forceStateless(buffer->getSize());
-    const bool isWideness = AddressingModeHelper::isAnyValueWiderThan32bit(buffer->getSize());
-    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::fillBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(buffer->getSize());
+    BuiltIn::BuiltInId builtIn{BuiltIn::BaseKernel::fillBuffer, builtInMode};
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInGroup,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtIn,
                                                                               this->getClDevice());
 
     BuiltIn::OwnershipWrapper builtInLock(builder, this->context);

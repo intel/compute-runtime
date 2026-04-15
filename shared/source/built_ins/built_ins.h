@@ -64,9 +64,8 @@ namespace BuiltIn {
 
 Resource createResource(const char *ptr, size_t size);
 Resource createResource(const Resource &r);
-std::string createResourceName(Group builtInGroup, const std::string &extension);
-StackVec<std::string, 3> getResourceNames(Group builtInGroup, CodeType type, const Device &device);
-const char *getAsString(Group builtInGroup);
+std::string createResourceName(BaseKernel kernel, const std::string &extension);
+StackVec<std::string, 3> getResourceNames(BaseKernel kernel, const AddressingMode &mode, CodeType type, const Device &device);
 
 class Storage {
   public:
@@ -134,10 +133,10 @@ class EmbeddedStorage : public Storage {
 class ResourceLoader {
   public:
     ResourceLoader();
-    Code getBuiltinCode(Group builtInGroup, CodeType requestedCodeType, Device &device);
+    Code getBuiltinCode(BaseKernel kernel, const AddressingMode &mode, CodeType requestedCodeType, Device &device);
 
   protected:
-    Resource getBuiltinResource(Group builtInGroup, CodeType requestedCodeType, Device &device);
+    Resource getBuiltinResource(BaseKernel kernel, const AddressingMode &mode, CodeType requestedCodeType, Device &device);
 
     using StoragesContainerT = std::vector<std::unique_ptr<Storage>>;
     StoragesContainerT allStorages; // sorted by priority allStorages[0] will be checked before allStorages[1], etc.
@@ -170,10 +169,5 @@ class BuiltIns {
     using ContextId = uint32_t;
     std::unordered_map<ContextId, std::pair<std::unique_ptr<SipKernel>, std::once_flag>> perContextSipKernels;
 };
-
-namespace BuiltIn {
-template <Group opCode>
-class Op;
-} // namespace BuiltIn
 
 } // namespace NEO

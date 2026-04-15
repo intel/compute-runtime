@@ -11,6 +11,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/address_patch.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -72,7 +73,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenProgramInterfaceDescrip
     std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImageToImage3d,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindfulImageBindfulBuffer,
                                                                               cmdQ.getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -148,10 +149,10 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
     std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
-    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
-    auto builtin = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::copyImageToImage3d>(heaplessAllowed);
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
+    bool bindlessEnabled = ApiSpecificConfig::getBindlessMode(pClDevice->getDevice());
+    auto useStateless = getHelper<CompilerProductHelper>().isForceToStatelessRequired();
+    auto builtInMode = BuiltIn::AddressingMode::getDefaultMode(bindlessEnabled, useStateless);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImageToImage3d, builtInMode, *pClDevice);
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
@@ -313,7 +314,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenAllocatingIndirectState
     std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImageToImage3d,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindfulImageBindfulBuffer,
                                                                               cmdQ.getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -501,7 +502,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, whenSendingIndirectStateThe
 
     std::unique_ptr<Image> img(Image2dHelperUlt<>::create(pContext));
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyImageToImage3d,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindfulImageBindfulBuffer,
                                                                               cmdQ.getClDevice());
 
     BuiltIn::OpParams dc;
@@ -596,7 +597,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenSendingIndirectStateThe
     std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::copyBufferToImage3d,
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToImage3d, BuiltIn::bindfulImageBindfulBuffer,
                                                                               cmdQ.getClDevice());
     ASSERT_NE(nullptr, &builder);
 

@@ -24,76 +24,6 @@
 
 namespace NEO {
 
-const char *BuiltIn::getAsString(BuiltIn::Group builtInGroup) {
-    switch (builtInGroup) {
-    default:
-        return "unknown";
-    case BuiltIn::Group::auxTranslation:
-        return "aux_translation.builtin_kernel";
-    case BuiltIn::Group::copyBufferToBuffer:
-        return "copy_buffer_to_buffer.builtin_kernel";
-    case BuiltIn::Group::copyBufferToBufferStateless:
-    case BuiltIn::Group::copyBufferToBufferWideStateless:
-    case BuiltIn::Group::copyBufferToBufferStatelessHeapless:
-    case BuiltIn::Group::copyBufferToBufferWideStatelessHeapless:
-        return "copy_buffer_to_buffer_stateless.builtin_kernel";
-    case BuiltIn::Group::copyBufferRect:
-        return "copy_buffer_rect.builtin_kernel";
-    case BuiltIn::Group::copyBufferRectStateless:
-    case BuiltIn::Group::copyBufferRectWideStateless:
-    case BuiltIn::Group::copyBufferRectStatelessHeapless:
-    case BuiltIn::Group::copyBufferRectWideStatelessHeapless:
-        return "copy_buffer_rect_stateless.builtin_kernel";
-    case BuiltIn::Group::fillBuffer:
-        return "fill_buffer.builtin_kernel";
-    case BuiltIn::Group::fillBufferStateless:
-    case BuiltIn::Group::fillBufferWideStateless:
-    case BuiltIn::Group::fillBufferStatelessHeapless:
-    case BuiltIn::Group::fillBufferWideStatelessHeapless:
-        return "fill_buffer_stateless.builtin_kernel";
-    case BuiltIn::Group::copyBufferToImage3d:
-        return "copy_buffer_to_image3d.builtin_kernel";
-    case BuiltIn::Group::copyBufferToImage3dStateless:
-    case BuiltIn::Group::copyBufferToImage3dWideStateless:
-    case BuiltIn::Group::copyBufferToImage3dStatelessHeapless:
-    case BuiltIn::Group::copyBufferToImage3dWideStatelessHeapless:
-        return "copy_buffer_to_image3d_stateless.builtin_kernel";
-    case BuiltIn::Group::copyImage3dToBuffer:
-        return "copy_image3d_to_buffer.builtin_kernel";
-    case BuiltIn::Group::copyImage3dToBufferStateless:
-    case BuiltIn::Group::copyImage3dToBufferWideStateless:
-    case BuiltIn::Group::copyImage3dToBufferStatelessHeapless:
-    case BuiltIn::Group::copyImage3dToBufferWideStatelessHeapless:
-        return "copy_image3d_to_buffer_stateless.builtin_kernel";
-    case BuiltIn::Group::copyImageToImage1d:
-    case BuiltIn::Group::copyImageToImage1dHeapless:
-        return "copy_image_to_image1d.builtin_kernel";
-    case BuiltIn::Group::copyImageToImage2d:
-    case BuiltIn::Group::copyImageToImage2dHeapless:
-        return "copy_image_to_image2d.builtin_kernel";
-    case BuiltIn::Group::copyImageToImage3d:
-    case BuiltIn::Group::copyImageToImage3dHeapless:
-        return "copy_image_to_image3d.builtin_kernel";
-    case BuiltIn::Group::fillImage1d:
-    case BuiltIn::Group::fillImage1dHeapless:
-        return "fill_image1d.builtin_kernel";
-    case BuiltIn::Group::fillImage2d:
-    case BuiltIn::Group::fillImage2dHeapless:
-        return "fill_image2d.builtin_kernel";
-    case BuiltIn::Group::fillImage3d:
-    case BuiltIn::Group::fillImage3dHeapless:
-        return "fill_image3d.builtin_kernel";
-    case BuiltIn::Group::queryKernelTimestamps:
-        return "copy_kernel_timestamps.builtin_kernel";
-    case BuiltIn::Group::queryKernelTimestampsStateless:
-    case BuiltIn::Group::queryKernelTimestampsStatelessHeapless:
-        return "copy_kernel_timestamps_stateless.builtin_kernel";
-    case BuiltIn::Group::fillImage1dBuffer:
-    case BuiltIn::Group::fillImage1dBufferHeapless:
-        return "fill_image1d_buffer.builtin_kernel";
-    };
-}
-
 BuiltIn::Resource BuiltIn::createResource(const char *ptr, size_t size) {
     return BuiltIn::Resource(ptr, ptr + size);
 }
@@ -102,56 +32,40 @@ BuiltIn::Resource BuiltIn::createResource(const BuiltIn::Resource &r) {
     return BuiltIn::Resource(r);
 }
 
-std::string BuiltIn::createResourceName(BuiltIn::Group builtInGroup, const std::string &extension) {
-    return BuiltIn::getAsString(builtInGroup) + extension;
+std::string BuiltIn::createResourceName(BuiltIn::BaseKernel kernel, const std::string &extension) {
+    return std::string(BuiltIn::getAsString(kernel)) + extension;
 }
 
-StackVec<std::string, 3> BuiltIn::getResourceNames(BuiltIn::Group builtInGroup, BuiltIn::CodeType type, const Device &device) {
+StackVec<std::string, 3> BuiltIn::getResourceNames(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, BuiltIn::CodeType type, const Device &device) {
     auto &hwInfo = device.getHardwareInfo();
-    auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
-    auto createDeviceIdFilenameComponent = [](const NEO::HardwareIpVersion &hwIpVersion) {
-        std::ostringstream deviceId;
-        deviceId << hwIpVersion.architecture << "_" << hwIpVersion.release << "_" << hwIpVersion.revision;
-        return deviceId.str();
-    };
-    const auto deviceIp = createDeviceIdFilenameComponent(hwInfo.ipVersion);
-    const auto builtinFilename = BuiltIn::getAsString(builtInGroup);
+    const auto deviceIp = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
     const auto extension = BuiltIn::Code::getExtension(type);
 
-    std::string_view addressingModePrefix;
-    const bool builtInUsesWideStatelessAddressing = BuiltIn::isWideStateless(builtInGroup);
-    if (type == BuiltIn::CodeType::binary) {
-        const bool heaplessEnabled = BuiltIn::isHeapless(builtInGroup);
-        const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
-        const bool builtInUsesStatelessAddressing = BuiltIn::isStateless(builtInGroup) || builtInUsesWideStatelessAddressing;
-        if (heaplessEnabled) {
-            addressingModePrefix = builtInUsesWideStatelessAddressing ? "wide_stateless_heapless_" : "stateless_heapless_";
-        } else if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
-            addressingModePrefix = builtInUsesWideStatelessAddressing ? "wide_stateless_" : "stateless_";
-        } else if (ApiSpecificConfig::getBindlessMode(device)) {
-            addressingModePrefix = "bindless_";
-        } else {
-            addressingModePrefix = "bindful_";
-        }
-    } else if (type == BuiltIn::CodeType::intermediate && builtInUsesWideStatelessAddressing) {
-        addressingModePrefix = "wide_stateless_";
+    // Source files use the base name without the suffix.
+
+    std::string builtinFilename = BuiltIn::getAsString(kernel);
+    std::string modePrefix;
+    if (type != BuiltIn::CodeType::source) {
+        modePrefix = mode.toString();
     }
 
-    auto createResourceName = [](ConstStringRef deviceIpPath, std::string_view addressingModePrefix, std::string_view builtinFilename, std::string_view extension) {
+    auto createResourceNameStr = [](ConstStringRef deviceIpPath, std::string_view addressingModePrefix, std::string_view builtinFilenameStr, std::string_view extensionStr) {
         std::ostringstream outResourceName;
         if (false == deviceIpPath.empty()) {
             outResourceName << deviceIpPath.str() << "_";
         }
-        outResourceName << addressingModePrefix << builtinFilename << extension;
+        outResourceName << addressingModePrefix << builtinFilenameStr << extensionStr;
         return outResourceName.str();
     };
+
     StackVec<std::string, 3> resourcesToLookup = {};
-    resourcesToLookup.push_back(createResourceName(deviceIp, addressingModePrefix, builtinFilename, extension));
+    resourcesToLookup.push_back(createResourceNameStr(deviceIp, modePrefix, builtinFilename, extension));
 
     if (BuiltIn::CodeType::binary != type) {
-        resourcesToLookup.push_back(createResourceName("", addressingModePrefix, builtinFilename, extension));
+        resourcesToLookup.push_back(createResourceNameStr("", modePrefix, builtinFilename, extension));
     }
+
     return resourcesToLookup;
 }
 
@@ -215,7 +129,7 @@ BuiltIn::ResourceLoader::ResourceLoader() {
     allStorages.push_back(std::unique_ptr<BuiltIn::Storage>(new BuiltIn::FileStorage(getDriverInstallationPath())));
 }
 
-BuiltIn::Code BuiltIn::ResourceLoader::getBuiltinCode(BuiltIn::Group builtInGroup, BuiltIn::CodeType requestedCodeType, Device &device) {
+BuiltIn::Code BuiltIn::ResourceLoader::getBuiltinCode(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, BuiltIn::CodeType requestedCodeType, Device &device) {
     std::lock_guard<std::mutex> lockRaii{mutex};
 
     BuiltIn::Resource bc;
@@ -229,14 +143,14 @@ BuiltIn::Code BuiltIn::ResourceLoader::getBuiltinCode(BuiltIn::Group builtInGrou
         }
         for (uint32_t e = static_cast<uint32_t>(BuiltIn::CodeType::count);
              codeType != e; ++codeType) {
-            bc = getBuiltinResource(builtInGroup, static_cast<BuiltIn::CodeType>(codeType), device);
+            bc = getBuiltinResource(kernel, mode, static_cast<BuiltIn::CodeType>(codeType), device);
             if (bc.size() > 0) {
                 usedCodetType = static_cast<BuiltIn::CodeType>(codeType);
                 break;
             }
         }
     } else {
-        bc = getBuiltinResource(builtInGroup, requestedCodeType, device);
+        bc = getBuiltinResource(kernel, mode, requestedCodeType, device);
         usedCodetType = requestedCodeType;
     }
 
@@ -248,9 +162,9 @@ BuiltIn::Code BuiltIn::ResourceLoader::getBuiltinCode(BuiltIn::Group builtInGrou
     return ret;
 }
 
-BuiltIn::Resource BuiltIn::ResourceLoader::getBuiltinResource(BuiltIn::Group builtInGroup, BuiltIn::CodeType requestedCodeType, Device &device) {
+BuiltIn::Resource BuiltIn::ResourceLoader::getBuiltinResource(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, BuiltIn::CodeType requestedCodeType, Device &device) {
     BuiltIn::Resource builtinResource;
-    auto resourcesToLookup = BuiltIn::getResourceNames(builtInGroup, requestedCodeType, device);
+    auto resourcesToLookup = BuiltIn::getResourceNames(kernel, mode, requestedCodeType, device);
     for (auto &resourceName : resourcesToLookup) {
         for (auto &storage : allStorages) {
             builtinResource = storage->load(resourceName);

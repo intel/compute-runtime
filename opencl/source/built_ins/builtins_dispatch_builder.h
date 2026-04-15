@@ -68,7 +68,7 @@ class DispatchInfoBuilder {
     virtual ~DispatchInfoBuilder() = default;
 
     template <typename... KernelsDescArgsT>
-    void populate(Group operation, ConstStringRef options, KernelsDescArgsT &&...desc);
+    void populate(BaseKernel kernel, const AddressingMode &mode, ConstStringRef options, KernelsDescArgsT &&...desc);
 
     virtual bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const {
         return false;
@@ -118,7 +118,10 @@ class DispatchInfoBuilder {
 
 class DispatchBuilderOp {
   public:
-    static DispatchInfoBuilder &getBuiltinDispatchInfoBuilder(Group builtInGroup, ClDevice &device);
+    static DispatchInfoBuilder &getBuiltinDispatchInfoBuilder(BaseKernel kernel, const AddressingMode &mode, ClDevice &device);
+    static DispatchInfoBuilder &getBuiltinDispatchInfoBuilder(const BuiltInId &builtIn, ClDevice &device) {
+        return getBuiltinDispatchInfoBuilder(builtIn.kernel, builtIn.mode, device);
+    }
 };
 
 class OwnershipWrapper : public NonCopyableAndNonMovableClass {

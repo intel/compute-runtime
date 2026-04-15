@@ -56,9 +56,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
 
     MultiDispatchInfo dispatchInfo(dc);
 
-    auto builtIn = BuiltIn::adjustImageBuiltinGroup<BuiltIn::Group::copyImageToImage3d>(this->heaplessModeEnabled);
-
-    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_IMAGE>(dispatchInfo, surfaces, builtIn, numEventsInWaitList, eventWaitList, event, false, csr);
+    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_IMAGE>(dispatchInfo, surfaces, {BuiltIn::BaseKernel::copyImageToImage3d, this->defaultBuiltInMode}, numEventsInWaitList, eventWaitList, event, false, csr);
 }
 
 } // namespace NEO

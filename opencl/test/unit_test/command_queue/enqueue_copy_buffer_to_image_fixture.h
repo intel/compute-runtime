@@ -7,6 +7,10 @@
 
 #pragma once
 
+#include "shared/source/built_ins/built_in_ops_base.h"
+#include "shared/source/helpers/api_specific_config.h"
+#include "shared/test/common/mocks/mock_device.h"
+
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
@@ -83,19 +87,9 @@ struct EnqueueCopyBufferToImageMipMapTest : public CommandEnqueueFixture,
         CommandEnqueueFixture::tearDown();
     }
 
-    BuiltIn::Group adjustBuiltinGroup(bool isHeaplessEnabled, BuiltIn::Group builtInGroup) {
-
-        if (isHeaplessEnabled) {
-            switch (builtInGroup) {
-            case BuiltIn::Group::copyBufferToImage3d:
-            case BuiltIn::Group::copyBufferToImage3dStateless:
-                return BuiltIn::Group::copyBufferToImage3dStatelessHeapless;
-            default:
-                break;
-            }
-        }
-
-        return builtInGroup;
+    BuiltIn::AddressingMode getBuiltinMode(bool isStateless) {
+        bool bindless = ApiSpecificConfig::getBindlessMode(pClDevice->getDevice());
+        return BuiltIn::AddressingMode::getDefaultMode(bindless, isStateless);
     }
 
     MockContext *context = nullptr;

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -406,6 +407,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void handlePostCompletionOperations(bool checkQueueCompletion);
 
     bool getHeaplessModeEnabled() const { return this->heaplessModeEnabled; }
+    BuiltIn::AddressingMode getDefaultBuiltInMode() const { return this->defaultBuiltInMode; }
 
     bool isBcsSplitInitialized() const { return this->bcsSplitInitialized; }
     bool isBcs() const { return isCopyOnly; };
@@ -553,6 +555,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool gpgpuCsrClientRegistered = false;
     bool heaplessModeEnabled = false;
     bool isForceStateless = false;
+    BuiltIn::AddressingMode defaultBuiltInMode;
     bool l3FlushAfterPostSyncEnabled = false;
     bool isWalkerWithProfilingEnqueued = false;
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;

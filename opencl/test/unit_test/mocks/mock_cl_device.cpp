@@ -60,8 +60,8 @@ std::unique_ptr<CommandStreamReceiver> MockClDevice::createCommandStreamReceiver
 
 BuiltIns *MockClDevice::getBuiltIns() const { return getDevice().getBuiltIns(); }
 
-std::unique_ptr<BuiltIn::DispatchInfoBuilder> MockClDevice::setBuiltinDispatchInfoBuilder(BuiltIn::Group builtInGroup, std::unique_ptr<BuiltIn::DispatchInfoBuilder> newBuilder) {
-    auto &[builder, onceFlag] = peekBuilders()[BuiltIn::toIndex(builtInGroup)];
+std::unique_ptr<BuiltIn::DispatchInfoBuilder> MockClDevice::setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, std::unique_ptr<BuiltIn::DispatchInfoBuilder> newBuilder) {
+    auto &[builder, onceFlag] = peekBuilders()[BuiltIn::builderIndex(kernel, mode)];
     std::call_once(onceFlag, [] {});
     builder.swap(newBuilder);
     return newBuilder;

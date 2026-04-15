@@ -7,6 +7,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
@@ -81,6 +82,11 @@ HelperType &DeviceFixture::getHelper() const {
 template L0GfxCoreHelper &DeviceFixture::getHelper() const;
 template NEO::ProductHelper &DeviceFixture::getHelper() const;
 template NEO::CompilerProductHelper &DeviceFixture::getHelper() const;
+
+NEO::BuiltIn::AddressingMode DeviceFixture::getDefaultBuiltInMode() const {
+    return device->getCompilerProductHelper().getDefaultBuiltInAddressingMode(
+        NEO::ApiSpecificConfig::getBindlessMode(*neoDevice));
+}
 
 void PageFaultDeviceFixture::setUp() {
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());

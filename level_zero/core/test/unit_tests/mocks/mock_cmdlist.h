@@ -78,6 +78,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::currentIndirectObjectBaseAddress;
     using BaseClass::currentSurfaceStateBaseAddress;
     using BaseClass::dcFlushSupport;
+    using BaseClass::defaultBuiltInMode;
     using BaseClass::device;
     using BaseClass::dispatchCmdListBatchBufferAsPrimary;
     using BaseClass::dispatchHostFunction;
@@ -706,10 +707,10 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                NEO::GraphicsAllocation *srcPtrAlloc,
                uint64_t srcOffset, uint64_t size,
                uint64_t elementSize, BufferBuiltIn builtin,
+               const NEO::BuiltIn::AddressingMode &builtInMode,
                L0::Event *signalEvent,
-               bool isStateless,
                CmdListKernelLaunchParams &launchParams),
-              (dstPtr, dstPtrAlloc, dstOffset, srcPtr, srcPtrAlloc, srcOffset, size, elementSize, builtin, signalEvent, isStateless, launchParams));
+              (dstPtr, dstPtrAlloc, dstOffset, srcPtr, srcPtrAlloc, srcOffset, size, elementSize, builtin, builtInMode, signalEvent, launchParams));
 
     ADDMETHOD_NOBASE(appendMemoryCopyBlit, ze_result_t, ZE_RESULT_SUCCESS,
                      (uintptr_t dstPtr,
@@ -746,28 +747,29 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     }
 
     ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
+                                         BufferBuiltIn builtin, const NEO::BuiltIn::AddressingMode &builtInMode,
+                                         const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          size_t srcOffset, L0::Event *signalEvent,
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                         bool relaxedOrderingDispatch, bool isStateless, bool isHeapless) override {
+                                         bool relaxedOrderingDispatch) override {
         srcAlignedPtr = srcAlignedAllocation->alignedAllocationPtr;
         dstAlignedPtr = dstAlignedAllocation->alignedAllocationPtr;
-        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(dstAlignedAllocation, srcAlignedAllocation, builtin, dstRegion, dstPitch, dstOffset, srcRegion, srcPitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch, isStateless, isHeapless);
+        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(dstAlignedAllocation, srcAlignedAllocation, builtin, builtInMode, dstRegion, dstPitch, dstOffset, srcRegion, srcPitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
     }
 
     ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
+                                         BufferBuiltIn builtin, const NEO::BuiltIn::AddressingMode &builtInMode,
+                                         const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
                                          L0::Event *signalEvent, uint32_t numWaitEvents,
-                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch,
-                                         bool isStateless, bool isHeapless) override {
+                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
         srcAlignedPtr = srcAlignedAllocation->alignedAllocationPtr;
         dstAlignedPtr = dstAlignedAllocation->alignedAllocationPtr;
-        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(dstAlignedAllocation, srcAlignedAllocation, builtin, dstRegion, dstPitch, dstSlicePitch, dstOffset, srcRegion, srcPitch, srcSlicePitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch, isStateless, isHeapless);
+        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(dstAlignedAllocation, srcAlignedAllocation, builtin, builtInMode, dstRegion, dstPitch, dstSlicePitch, dstOffset, srcRegion, srcPitch, srcSlicePitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
     }
 
     ze_result_t appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
@@ -843,13 +845,13 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
                                              uint64_t size,
                                              uint64_t elementSize,
                                              BufferBuiltIn builtin,
+                                             const NEO::BuiltIn::AddressingMode &builtInMode,
                                              L0::Event *signalEvent,
-                                             bool isStateless,
                                              CmdListKernelLaunchParams &launchParams) override {
         ++appendMemoryCopyKernelWithGACalledCount;
         if (callAppendMemoryCopyKernelWithGABase) {
             return BaseClass::appendMemoryCopyKernelWithGA(dstPtr, dstPtrAlloc, dstOffset, srcPtr, srcPtrAlloc, srcOffset,
-                                                           size, elementSize, builtin, signalEvent, isStateless, launchParams);
+                                                           size, elementSize, builtin, builtInMode, signalEvent, launchParams);
         }
         return appendMemoryCopyKernelWithGACalledCountReturnValue;
     }

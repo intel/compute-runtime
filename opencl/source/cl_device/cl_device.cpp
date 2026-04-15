@@ -64,7 +64,7 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
     }
 
     if (!device.isSubDevice()) {
-        builtinOpsBuilders = std::make_unique<BuilderT[]>(static_cast<uint32_t>(BuiltIn::Group::count));
+        builtinOpsBuilders = std::make_unique<BuilderT[]>(BuiltIn::maxBuilderIndex());
     }
 }
 

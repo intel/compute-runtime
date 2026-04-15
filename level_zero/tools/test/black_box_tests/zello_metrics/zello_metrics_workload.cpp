@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,6 @@
 #include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics_util.h"
 
 #include <cstring>
-#include <fstream>
-#include <memory>
 
 namespace zmu = ZelloMetricsUtility;
 
@@ -97,74 +95,13 @@ void CopyBufferToBuffer::initialize(void *src, void *dst, uint32_t size) {
         isDestinationBufferAllocated = true;
         memset(destinationBuffer, 0, allocationSize);
     }
-
-    std::ifstream file("copy_buffer_to_buffer.spv", std::ios::binary);
-
-    if (file.is_open()) {
-        file.seekg(0, file.end);
-        auto length = file.tellg();
-        file.seekg(0, file.beg);
-
-        LOG(zmu::LogLevel::DEBUG) << "Using copy_buffer_to_buffer.spv" << std::endl;
-
-        std::unique_ptr<char[]> spirvInput(new char[length]);
-        file.read(spirvInput.get(), length);
-
-        ze_module_desc_t moduleDesc = {};
-        ze_module_build_log_handle_t buildlog;
-        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvInput.get());
-        moduleDesc.inputSize = length;
-        moduleDesc.pBuildFlags = "";
-
-        if (zeModuleCreate(executionCtxt->getContextHandle(0), executionCtxt->getDeviceHandle(0), &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
-            size_t szLog = 0;
-            zeModuleBuildLogGetString(buildlog, &szLog, nullptr);
-
-            char *strLog = (char *)malloc(szLog);
-            zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-            LOG(zmu::LogLevel::DEBUG) << "Build log:" << strLog << std::endl;
-            free(strLog);
-        }
-        VALIDATECALL(zeModuleBuildLogDestroy(buildlog));
-
-        ze_kernel_desc_t kernelDesc = {};
-        kernelDesc.pKernelName = "CopyBufferToBufferBytes";
-        VALIDATECALL(zeKernelCreate(module, &kernelDesc, &kernel));
-        file.close();
-        executeFromSpirv = true;
-    }
 }
 
 bool CopyBufferToBuffer::appendCommands() {
 
-    if (executeFromSpirv) {
-        LOG(zmu::LogLevel::DEBUG) << "Using copy_buffer_to_buffer.spv" << std::endl;
-        uint32_t groupSizeX = std::min<uint32_t>(32u, allocationSize);
-        uint32_t groupSizeY = 1u;
-        uint32_t groupSizeZ = 1u;
-        VALIDATECALL(zeKernelSuggestGroupSize(kernel, allocationSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
-        VALIDATECALL(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
-
-        uint32_t offset = 0;
-        VALIDATECALL(zeKernelSetArgumentValue(kernel, 1, sizeof(destinationBuffer), &destinationBuffer));
-        VALIDATECALL(zeKernelSetArgumentValue(kernel, 0, sizeof(sourceBuffer), &sourceBuffer));
-        VALIDATECALL(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
-        VALIDATECALL(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
-        VALIDATECALL(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
-
-        ze_group_count_t dispatchTraits;
-        dispatchTraits.groupCountX = allocationSize / groupSizeX;
-        dispatchTraits.groupCountY = 1u;
-        dispatchTraits.groupCountZ = 1u;
-
-        VALIDATECALL(zeCommandListAppendLaunchKernel(executionCtxt->getCommandList(0), kernel, &dispatchTraits,
-                                                     nullptr, 0, nullptr));
-    } else {
-        LOG(zmu::LogLevel::DEBUG) << "Using zeCommandListAppendMemoryCopy" << std::endl;
-        VALIDATECALL(zeCommandListAppendMemoryCopy(executionCtxt->getCommandList(0), destinationBuffer,
-                                                   sourceBuffer, allocationSize, nullptr, 0, nullptr));
-    }
+    LOG(zmu::LogLevel::DEBUG) << "Using zeCommandListAppendMemoryCopy" << std::endl;
+    VALIDATECALL(zeCommandListAppendMemoryCopy(executionCtxt->getCommandList(0), destinationBuffer,
+                                               sourceBuffer, allocationSize, nullptr, 0, nullptr));
 
     return true;
 }
@@ -206,15 +143,5 @@ void CopyBufferToBuffer::finalize() {
 
     if (isDestinationBufferAllocated) {
         VALIDATECALL(zeMemFree(executionCtxt->getContextHandle(0), destinationBuffer));
-    }
-
-    if (kernel) {
-        zeKernelDestroy(kernel);
-        kernel = nullptr;
-    }
-
-    if (module) {
-        zeModuleDestroy(module);
-        module = nullptr;
     }
 }

@@ -104,11 +104,11 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
                                              uint64_t size,
                                              uint64_t elementSize,
                                              BufferBuiltIn builtin,
+                                             const NEO::BuiltIn::AddressingMode &builtInMode,
                                              Event *signalEvent,
-                                             bool isStateless,
                                              CmdListKernelLaunchParams &launchParams) override {
         appendMemoryCopyKernelWithGACalledTimes++;
-        if (isStateless) {
+        if (builtInMode.bufferMode == NEO::BuiltIn::AddressingMode::BufferMode::stateless) {
             appendMemoryCopyKernelWithGAStatelessCalledTimes++;
         }
         if (signalEvent) {
@@ -156,24 +156,25 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
     }
 
     ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
+                                         BufferBuiltIn builtin, const NEO::BuiltIn::AddressingMode &builtInMode,
+                                         const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          size_t srcOffset, Event *signalEvent,
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                         bool relaxedOrderingDispatch, bool isStateless, bool isHeapless) override {
+                                         bool relaxedOrderingDispatch) override {
         appendMemoryCopyKernel2dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
 
     ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
-                                         BufferBuiltIn builtin, const ze_copy_region_t *dstRegion,
+                                         BufferBuiltIn builtin, const NEO::BuiltIn::AddressingMode &builtInMode,
+                                         const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
                                          Event *signalEvent, uint32_t numWaitEvents,
-                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch,
-                                         bool isStateless, bool isHeapless) override {
+                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
         appendMemoryCopyKernel3dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }

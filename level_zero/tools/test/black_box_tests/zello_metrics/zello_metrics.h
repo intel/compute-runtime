@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -197,9 +197,6 @@ class CopyBufferToBuffer : public Workload {
     uint32_t allocationSize = 4096;
     void *sourceBuffer = nullptr;
     void *destinationBuffer = nullptr;
-    ze_module_handle_t module = nullptr;
-    ze_kernel_handle_t kernel = nullptr;
-    bool executeFromSpirv = false;
     bool isSourceBufferAllocated = false;
     bool isDestinationBufferAllocated = false;
     bool isValidationEnabled = true;

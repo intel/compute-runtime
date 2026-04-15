@@ -148,13 +148,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImageImpl(
     dc.bcsSplit = bcsSplit;
     dc.direction = csrSelectionArgs.direction;
 
-    const bool isStateless = forceStateless(srcImage->getSize());
-    const bool isWideness =
-        AddressingModeHelper::isAnyValueWiderThan32bit(hostPtrSize);
-    auto builtInGroup = BuiltIn::adjustBuiltinGroup<BuiltIn::Group::copyImage3dToBuffer>(isStateless, this->heaplessModeEnabled, isWideness);
+    auto builtInMode = this->defaultBuiltInMode;
+    builtInMode.adjustToWideStatelessIfRequired(std::max(srcImage->getSize(), hostPtrSize));
     MultiDispatchInfo dispatchInfo(dc);
 
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, builtInGroup, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, {BuiltIn::BaseKernel::copyImage3dToBuffer, builtInMode}, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;
     }

@@ -432,9 +432,6 @@ int main(int argc, char **argv) {
             builtInsFileName = KernelBinaryHelper::BUILT_INS;
         }
         std::string options;
-        if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
-            options = "-heapless_" + std::string(CompilerOptions::greaterThan4gbBuffersRequired);
-        }
         retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv", options);
         retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin", options);
 
@@ -510,13 +507,17 @@ int main(int argc, char **argv) {
             }
             std::string kernelOptions = CompilerOptions::kernelOptions;
             std::replace(kernelOptions.begin(), kernelOptions.end(), ' ', '_');
+            std::string kernelStatelessOptions = CompilerOptions::kernelStatelessOptions;
+            std::replace(kernelStatelessOptions.begin(), kernelStatelessOptions.end(), ' ', '_');
+            std::string kernelWideStatelessOptions = CompilerOptions::kernelWideStatelessOptions;
+            std::replace(kernelWideStatelessOptions.begin(), kernelWideStatelessOptions.end(), ' ', '_');
             std::string kernelTypeOptions;
             if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
                 kernelTypeOptions = std::string("-heapless_") + CompilerOptions::kernelStatelessOptions;
                 std::replace(kernelTypeOptions.begin(), kernelTypeOptions.end(), ' ', '_');
             }
             auto loadBuiltInsKernels = [&](const std::string &name) -> bool {
-                for (const std::string &opts : {options, kernelOptions, kernelTypeOptions}) {
+                for (const std::string &opts : {options, kernelOptions, kernelStatelessOptions, kernelWideStatelessOptions, kernelTypeOptions}) {
                     for (const std::string &extension : {std::string(".spv"), std::string(".bin")}) {
                         std::string filename;
                         retrieveBinaryKernelFilename(filename, name + "_", extension, opts);

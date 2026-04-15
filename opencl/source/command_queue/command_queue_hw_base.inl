@@ -118,8 +118,8 @@ cl_int CommandQueueHw<Family>::enqueueMarkerForReadWriteOperation(MemObj *memObj
 template <typename Family>
 void CommandQueueHw<Family>::dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo,
                                                            AuxTranslationDirection auxTranslationDirection) {
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::Group::auxTranslation, getClDevice());
-    auto &auxTranslationBuilder = static_cast<BuiltIn::Op<BuiltIn::Group::auxTranslation> &>(builder);
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, this->defaultBuiltInMode, getClDevice());
+    auto &auxTranslationBuilder = static_cast<AuxTranslationBuiltin &>(builder);
     BuiltIn::OpParams dispatchParams;
 
     dispatchParams.auxTranslationDirection = auxTranslationDirection;

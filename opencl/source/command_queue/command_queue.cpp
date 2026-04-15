@@ -15,6 +15,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_control.h"
@@ -139,6 +140,8 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
 
         this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
         this->isForceStateless = compilerProductHelper.isForceToStatelessRequired();
+        this->defaultBuiltInMode = compilerProductHelper.getDefaultBuiltInAddressingMode(
+            ApiSpecificConfig::getBindlessMode(device->getDevice()));
         this->l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported();
         this->shouldRegisterEnqueuedWalkerWithProfiling = productHelper.shouldRegisterEnqueuedWalkerWithProfiling();
         this->isBarrierForImplicitDependenciesAllowed = productHelper.isResolveDependenciesByPipeControlsSupported();
