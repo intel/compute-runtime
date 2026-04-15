@@ -3426,6 +3426,49 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForResumeThenProperIoctlsIsC
     EXPECT_EQ(nullptr, bitmaskOut.get());
 }
 
+HWTEST_F(DebugApiLinuxTestXe, GivenStateSaveHeaderV5AndSomeStoppedThreadsWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenCorrectStopEventsGenerated) {
+    MockL0GfxCoreHelperDoesNotSupportThreadControlStopped<FamilyType> mockL0GfxCoreHelper;
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper));
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    struct MockDebugSessionWithSipCounter : public MockDebugSessionLinuxXe {
+        using MockDebugSessionLinuxXe::MockDebugSessionLinuxXe;
+
+      public:
+        bool getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter) override {
+            if (thread->getThreadId().thread < 2) {
+                *sipThreadCounter = 1;
+            } else {
+                *sipThreadCounter = 0;
+            }
+            return true;
+        }
+    };
+
+    auto sessionMock = std::make_unique<MockDebugSessionWithSipCounter>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
+
+    EuThread::ThreadId thread = {0, 0, 0, 0, 0};
+    EuThread::ThreadId thread1 = {0, 0, 0, 0, 1};
+    EuThread::ThreadId thread2 = {0, 0, 0, 0, 2};
+    const auto memoryHandle = 1u;
+
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back(thread);
+    threads.push_back(thread1);
+    threads.push_back(thread2);
+
+    sessionMock->checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, 0);
+
+    EXPECT_EQ(2u, sessionMock->apiEvents.size());
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+    l0GfxCoreHelperBackup.release();
+}
+
 HWTEST_F(DebugApiLinuxTestXe, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotCheckedAndEventsNotGenerated) {
     MockL0GfxCoreHelperSupportsThreadControlStopped<FamilyType> mockL0GfxCoreHelper;
     std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper));

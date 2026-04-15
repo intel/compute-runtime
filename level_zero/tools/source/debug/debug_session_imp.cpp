@@ -610,6 +610,7 @@ bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID, c
         if (!getThreadSipCounter(stateSaveArea, thread, stateSaveAreaHeader, &sipCounter)) {
             return resumed;
         }
+        PRINT_DEBUGGER_THREAD_LOG("checkThreadIsResumed - Read counter for thread %s, counter == %d\n", EuThread::toString(threadID).c_str(), (int)sipCounter);
         // Counter greater than last one means thread was resumed
         if (sipCounter == thread->getLastCounter()) {
             resumed = false;

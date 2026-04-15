@@ -62,5 +62,10 @@ struct MockL0GfxCoreHelperSupportsThreadControlStopped : L0::L0GfxCoreHelperHw<G
     bool isThreadControlStoppedSupported() const override { return true; }
 };
 
+template <typename GfxFamily>
+struct MockL0GfxCoreHelperDoesNotSupportThreadControlStopped : L0::L0GfxCoreHelperHw<GfxFamily> {
+    bool isThreadControlStoppedSupported() const override { return false; }
+};
+
 } // namespace ult
 } // namespace L0

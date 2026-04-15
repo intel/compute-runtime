@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -234,13 +234,16 @@ void DebugSessionLinux::closeAsyncThread() {
 }
 
 bool DebugSessionLinux::checkForceExceptionBit(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *cr0, const SIP::regset_desc *regDesc) {
-
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
     auto gpuVa = getContextStateSaveAreaGpuVa(memoryHandle);
-    auto threadSlotOffset = calculateThreadSlotOffset(threadId);
-    auto startRegOffset = threadSlotOffset + calculateRegisterOffsetInThreadSlot(regDesc, 0);
-
-    [[maybe_unused]] int ret = readGpuMemory(memoryHandle, reinterpret_cast<char *>(cr0), 1 * regDesc->bytes, gpuVa + startRegOffset);
-    DEBUG_BREAK_IF(ret != ZE_RESULT_SUCCESS);
+    if (stateSaveAreaHeader->versionHeader.version.major >= 5) {
+        readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, cr0);
+    } else {
+        auto threadSlotOffset = calculateThreadSlotOffset(threadId);
+        auto startRegOffset = threadSlotOffset + calculateRegisterOffsetInThreadSlot(regDesc, 0);
+        [[maybe_unused]] int ret = readGpuMemory(memoryHandle, reinterpret_cast<char *>(cr0), 1 * regDesc->bytes, gpuVa + startRegOffset);
+        DEBUG_BREAK_IF(ret != ZE_RESULT_SUCCESS);
+    }
 
     const uint32_t cr0ForcedExcpetionBitmask = 0x04000000;
     if (cr0[1] & cr0ForcedExcpetionBitmask) {
@@ -282,30 +285,40 @@ void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<E
 
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
     auto cr0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
-    auto regDesc = typeToRegsetDesc(getStateSaveAreaHeader(), ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, connectedDevice);
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
 
     for (auto &threadId : threadsToCheck) {
         SIP::sr_ident srMagic = {{0}};
         srMagic.count = 0;
+        uint8_t counter = 0;
 
-        if (readSystemRoutineIdent(allThreads[threadId].get(), memoryHandle, srMagic)) {
-            bool wasStopped = allThreads[threadId]->isStopped();
-            bool checkIfStopped = true;
-
-            if (srMagic.count % 2 == 1) {
-                memset(cr0.get(), 0, regSize);
-                checkIfStopped = !checkForceExceptionBit(memoryHandle, threadId, cr0.get(), regDesc);
-            }
-
-            if (checkIfStopped && allThreads[threadId]->verifyStopped(srMagic.count)) {
-                allThreads[threadId]->stopThread(memoryHandle);
-                if (!wasStopped) {
-                    stoppedThreadsToReport.push_back(threadId);
-                }
-            }
+        bool checkIfStopped = true;
+        if (stateSaveAreaHeader->versionHeader.version.major >= 5) {
+            uint64_t sipCounter = 0;
+            getThreadSipCounter(nullptr, allThreads[threadId].get(), stateSaveAreaHeader, &sipCounter);
+            counter = static_cast<uint8_t>(sipCounter & 0xFF);
 
         } else {
-            break;
+            if (!readSystemRoutineIdent(allThreads[threadId].get(), memoryHandle, srMagic)) {
+                break;
+            } else {
+                auto regDesc = typeToRegsetDesc(stateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, connectedDevice);
+                counter = srMagic.count;
+                if (counter % 2 == 1) {
+                    memset(cr0.get(), 0, regSize);
+                    // Check if thread is stopped due to forced exception bit in cr0 which could indicate PF occurred on platforms with PF w/a
+                    checkIfStopped = !checkForceExceptionBit(memoryHandle, threadId, cr0.get(), regDesc);
+                }
+            }
+        }
+
+        bool wasStopped = allThreads[threadId]->isStopped();
+
+        if (checkIfStopped && allThreads[threadId]->verifyStopped(counter)) {
+            allThreads[threadId]->stopThread(memoryHandle);
+            if (!wasStopped) {
+                stoppedThreadsToReport.push_back(threadId);
+            }
         }
     }
 
