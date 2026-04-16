@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
@@ -55,6 +56,12 @@ struct DrmCommandStreamMultiTileMemExecFixture {
                                              debugManager.flags.EnableForcePin.get(),
                                              true,
                                              *executionEnvironment);
+        memoryManager->mmapFunction = [](void *addr, size_t len, int prot, int flags, int, off_t) noexcept {
+            return NEO::SysCalls::mmap(addr, len, prot, flags | MAP_ANONYMOUS, -1, 0);
+        };
+        memoryManager->munmapFunction = [](void *addr, size_t len) noexcept {
+            return NEO::SysCalls::munmap(addr, len);
+        };
         executionEnvironment->memoryManager.reset(memoryManager);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());

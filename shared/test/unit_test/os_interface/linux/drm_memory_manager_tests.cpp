@@ -23,6 +23,7 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
@@ -69,6 +70,14 @@ AllocationProperties createAllocationProperties(uint32_t rootDeviceIndex, size_t
     properties.alignment = MemoryConstants::preferredAlignment;
     properties.flags.forcePin = forcePin;
     return properties;
+}
+void setAnonymousMmapFunctions(TestedDrmMemoryManager &memoryManager) {
+    memoryManager.mmapFunction = [](void *addr, size_t len, int prot, int flags, int, off_t) noexcept {
+        return NEO::SysCalls::mmap(addr, len, prot, flags | MAP_ANONYMOUS, -1, 0);
+    };
+    memoryManager.munmapFunction = [](void *addr, size_t len) noexcept {
+        return NEO::SysCalls::munmap(addr, len);
+    };
 }
 } // namespace
 
@@ -6368,6 +6377,171 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, Given2MBLocalMemAlignmen
     EXPECT_GT(allocation->getReservedAddressSize(), bo->peekSize());
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenIsaAllocationTypesWhenAllocating32BitWithoutHostPtrThenKmdMappedBoIsUsedInsteadOfUserptr) {
+    DebugManagerStateRestore dbgStateRestore;
+    debugManager.flags.UseGemCreateExtInAllocateMemoryByKMD.set(0);
+
+    setAnonymousMmapFunctions(*memoryManager);
+    mock->reset();
+    mock->ioctlExpected.gemCreate = 2;
+    mock->ioctlExpected.gemMmapOffset = 2;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
+
+    constexpr size_t size = MemoryConstants::pageSize;
+    const auto hwInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    const auto expectedAllocationSize = alignUp(size + device->getGfxCoreHelper().getPaddingForISAAllocation(), MemoryConstants::pageSize);
+
+    for (auto allocationType : {AllocationType::kernelIsa, AllocationType::kernelIsaInternal}) {
+        const auto heapIndex = memoryManager->heapAssigners[rootDeviceIndex]->get32BitHeapIndex(allocationType, false, *hwInfo, false);
+        const auto expectedGpuBaseAddress = device->getGmmHelper()->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(heapIndex));
+        const auto gemCreateCount = mock->ioctlCnt.gemCreate.load();
+        const auto gemCreateExtCount = mock->ioctlCnt.gemCreateExt.load();
+        const auto gemUserptrCount = mock->ioctlCnt.gemUserptr.load();
+        const auto gemMmapOffsetCount = mock->ioctlCnt.gemMmapOffset.load();
+
+        auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, allocationType);
+
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_EQ(gemCreateCount + 1, mock->ioctlCnt.gemCreate.load());
+        EXPECT_EQ(gemCreateExtCount, mock->ioctlCnt.gemCreateExt.load());
+        EXPECT_EQ(gemUserptrCount, mock->ioctlCnt.gemUserptr.load());
+        EXPECT_EQ(gemMmapOffsetCount + 1, mock->ioctlCnt.gemMmapOffset.load());
+
+        EXPECT_TRUE(allocation->is32BitAllocation());
+        EXPECT_EQ(MemoryPool::system4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
+        EXPECT_EQ(expectedGpuBaseAddress, allocation->getGpuBaseAddress());
+        ASSERT_NE(nullptr, allocation->getDefaultGmm());
+        EXPECT_TRUE(allocation->isAllocationLockable());
+        EXPECT_NE(nullptr, allocation->getMmapPtr());
+        EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+        EXPECT_EQ(allocation->getUnderlyingBuffer(), allocation->getMmapPtr());
+        EXPECT_EQ(nullptr, allocation->getDriverAllocatedCpuPtr());
+        EXPECT_EQ(expectedAllocationSize, allocation->getUnderlyingBufferSize());
+        EXPECT_EQ(expectedAllocationSize, allocation->getMmapSize());
+        EXPECT_EQ(expectedAllocationSize, allocation->getBO()->peekSize());
+        EXPECT_GE(allocation->getReservedAddressSize(), expectedAllocationSize);
+        EXPECT_EQ(0u, allocation->getBO()->getUserptr());
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenKernelIsaInternalWhenAllocatingFromForcedLargerReservedRangeThenBackingSizeRemainsRequestedSize) {
+    DebugManagerStateRestore dbgStateRestore;
+    debugManager.flags.UseGemCreateExtInAllocateMemoryByKMD.set(0);
+
+    struct ReservedSizeGfxPartition : public MockGfxPartition {
+        uint64_t heapAllocate(HeapIndex heapIndex, size_t &size) override {
+            lastHeapIndex = heapIndex;
+            requestedAllocationSize = size;
+            size = forcedReservedSize;
+            return forcedGpuVa;
+        }
+
+        void freeGpuAddressRange(uint64_t gpuAddress, size_t size) override {
+            freeGpuAddressRangeCalled++;
+            freedGpuAddress = gpuAddress;
+            freedSize = size;
+        }
+
+        size_t forcedReservedSize = 0;
+        size_t requestedAllocationSize = 0;
+        uint64_t forcedGpuVa = 0x200000;
+        uint64_t freedGpuAddress = 0;
+        size_t freedSize = 0;
+        uint32_t freeGpuAddressRangeCalled = 0u;
+        HeapIndex lastHeapIndex = HeapIndex::totalHeaps;
+    };
+
+    setAnonymousMmapFunctions(*memoryManager);
+    mock->reset();
+    mock->ioctlExpected.gemCreate = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    constexpr size_t isaSize = MemoryConstants::pageSize;
+    const auto hwInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    const auto backingSize = alignUp(isaSize + device->getGfxCoreHelper().getPaddingForISAAllocation(), MemoryConstants::pageSize);
+    const auto reservedSize = backingSize + MemoryConstants::pageSize;
+    const auto heapIndex = memoryManager->heapAssigners[rootDeviceIndex]->get32BitHeapIndex(AllocationType::kernelIsaInternal, false, *hwInfo, false);
+
+    auto gfxPartition = std::make_unique<ReservedSizeGfxPartition>();
+    gfxPartition->forcedReservedSize = reservedSize;
+    gfxPartition->initHeap(heapIndex, gfxPartition->forcedGpuVa, 0x100000, MemoryConstants::pageSize);
+    auto gfxPartitionPtr = gfxPartition.get();
+    NonCopyableVariableBackup<std::unique_ptr<GfxPartition>> gfxPartitionBackup(&memoryManager->gfxPartitions[rootDeviceIndex], std::move(gfxPartition));
+
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, isaSize, nullptr, AllocationType::kernelIsaInternal);
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(heapIndex, gfxPartitionPtr->lastHeapIndex);
+    EXPECT_EQ(backingSize, gfxPartitionPtr->requestedAllocationSize);
+    EXPECT_EQ(1, mock->ioctlCnt.gemCreate.load());
+    EXPECT_EQ(0, mock->ioctlCnt.gemCreateExt.load());
+    EXPECT_EQ(0, mock->ioctlCnt.gemUserptr.load());
+    EXPECT_EQ(1, mock->ioctlCnt.gemMmapOffset.load());
+    EXPECT_EQ(nullptr, allocation->getDriverAllocatedCpuPtr());
+    EXPECT_EQ(backingSize, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(backingSize, allocation->getMmapSize());
+    EXPECT_EQ(backingSize, allocation->getBO()->peekSize());
+    EXPECT_EQ(0u, allocation->getBO()->getUserptr());
+    EXPECT_EQ(backingSize, mock->createParamsSize);
+    EXPECT_EQ(reservedSize, allocation->getReservedAddressSize());
+    EXPECT_GT(allocation->getReservedAddressSize(), allocation->getUnderlyingBufferSize());
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(1u, gfxPartitionPtr->freeGpuAddressRangeCalled);
+    EXPECT_EQ(gfxPartitionPtr->forcedGpuVa, gfxPartitionPtr->freedGpuAddress);
+    EXPECT_EQ(reservedSize, gfxPartitionPtr->freedSize);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenKernelIsaInternalWhenMmapOffsetFailsThenReservedGpuRangeIsFreed) {
+    DebugManagerStateRestore dbgStateRestore;
+    debugManager.flags.UseGemCreateExtInAllocateMemoryByKMD.set(0);
+
+    struct ReservedSizeGfxPartition : public MockGfxPartition {
+        uint64_t heapAllocate(HeapIndex, size_t &size) override {
+            size = reservedSize;
+            return gpuAddress;
+        }
+
+        void heapFree(HeapIndex, uint64_t ptr, size_t size) override {
+            heapFreeCalled++;
+            freedAddress = ptr;
+            freeSize = size;
+        }
+
+        size_t reservedSize = 0;
+        uint64_t gpuAddress = 0x200000;
+        uint64_t freedAddress = 0;
+        size_t freeSize = 0;
+        uint32_t heapFreeCalled = 0u;
+    };
+
+    mock->reset();
+    mock->ioctlExpected.gemCreate = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<bool> failOnMmapOffsetBackup(&mock->failOnMmapOffset, true);
+
+    constexpr size_t requestedSize = MemoryConstants::pageSize;
+    const auto allocationSize = alignUp(requestedSize + device->getGfxCoreHelper().getPaddingForISAAllocation(), MemoryConstants::pageSize);
+    const auto reservedSize = allocationSize + MemoryConstants::pageSize;
+
+    auto gfxPartition = std::make_unique<ReservedSizeGfxPartition>();
+    gfxPartition->reservedSize = reservedSize;
+    auto gfxPartitionPtr = gfxPartition.get();
+    NonCopyableVariableBackup<std::unique_ptr<GfxPartition>> gfxPartitionBackup(&memoryManager->gfxPartitions[rootDeviceIndex], std::move(gfxPartition));
+
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, requestedSize, nullptr, AllocationType::kernelIsaInternal);
+
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(1u, gfxPartitionPtr->heapFreeCalled);
+    EXPECT_EQ(gfxPartitionPtr->gpuAddress, gfxPartitionPtr->freedAddress);
+    EXPECT_EQ(reservedSize, gfxPartitionPtr->freeSize);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationThenAllocationIsFilledWithCorrectData) {

@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -143,6 +144,12 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
                                   true,
                                   *executionEnvironment);
         ASSERT_NE(nullptr, mm);
+        mm->mmapFunction = [](void *addr, size_t len, int prot, int flags, int, off_t) noexcept {
+            return NEO::SysCalls::mmap(addr, len, prot, flags | MAP_ANONYMOUS, -1, 0);
+        };
+        mm->munmapFunction = [](void *addr, size_t len) noexcept {
+            return NEO::SysCalls::munmap(addr, len);
+        };
         executionEnvironment->memoryManager.reset(mm);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
@@ -224,6 +231,12 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
                                   true,
                                   *executionEnvironment);
         ASSERT_NE(nullptr, mm);
+        mm->mmapFunction = [](void *addr, size_t len, int prot, int flags, int, off_t) noexcept {
+            return NEO::SysCalls::mmap(addr, len, prot, flags | MAP_ANONYMOUS, -1, 0);
+        };
+        mm->munmapFunction = [](void *addr, size_t len) noexcept {
+            return NEO::SysCalls::munmap(addr, len);
+        };
         executionEnvironment->memoryManager.reset(mm);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());

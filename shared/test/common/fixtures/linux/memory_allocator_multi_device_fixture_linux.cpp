@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 
@@ -13,6 +14,12 @@ using namespace NEO;
 
 void MemoryAllocatorMultiDeviceSystemSpecificFixture::setUp(ExecutionEnvironment &executionEnvironment) {
     auto memoryManager = static_cast<TestedDrmMemoryManager *>(executionEnvironment.memoryManager.get());
+    memoryManager->mmapFunction = [](void *addr, size_t len, int prot, int flags, int, off_t) noexcept {
+        return NEO::SysCalls::mmap(addr, len, prot, flags | MAP_ANONYMOUS, -1, 0);
+    };
+    memoryManager->munmapFunction = [](void *addr, size_t len) noexcept {
+        return NEO::SysCalls::munmap(addr, len);
+    };
     auto bufferObject = new (std::nothrow) BufferObject(0u, &memoryManager->getDrm(0u), 3, 0, 10, MemoryManager::maxOsContextCount);
     memoryManager->pushSharedBufferObject(bufferObject);
 }

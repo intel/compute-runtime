@@ -204,6 +204,7 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL void *lockBufferObject(BufferObject *bo);
     MOCKABLE_VIRTUAL void unlockBufferObject(BufferObject *bo);
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
+    DrmAllocation *allocateKmdMappedIsaIn32BitHeap(const AllocationData &allocationData, HeapIndex heapIndex);
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     bool createDrmChunkedAllocation(Drm *drm, DrmAllocation *allocation, uint64_t boAddress, size_t boSize, size_t maxOsContextCount);
