@@ -9,6 +9,19 @@
 #ifdef SUPPORT_CRI
 DEVICE(0x674C, CriHwConfig)
 #endif
+#ifdef SUPPORT_NVLP
+DEVICE(0xD750, NvlHwConfig)
+DEVICE(0xD751, NvlHwConfig)
+DEVICE(0xD752, NvlHwConfig)
+DEVICE(0xD753, NvlHwConfig)
+DEVICE(0xD754, NvlHwConfig)
+DEVICE(0xD755, NvlHwConfig)
+DEVICE(0xD756, NvlHwConfig)
+DEVICE(0xD757, NvlHwConfig)
+DEVICE(0xD75F, NvlHwConfig)
+DEVICE(0xD74A, NvlHwConfig)
+DEVICE(0xD74B, NvlHwConfig)
+#endif
 #endif
 
 #if SUPPORT_XE3_CORE

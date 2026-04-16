@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -183,6 +183,17 @@
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
                       IGFX_XE3_CORE,              \
                       IGFX_NVL_XE3G)
+#endif
+
+#ifdef TESTS_NVLP
+#define NVLPTEST_F(test_fixture, test_name)                          \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_XE3P_CORE, IGFX_NVL)
+#define NVLPTEST_P(test_suite_name, test_name)    \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_XE3P_CORE,             \
+                      IGFX_NVL)
 #endif
 
 #ifdef TESTS_CRI

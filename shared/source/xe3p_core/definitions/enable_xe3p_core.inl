@@ -18,3 +18,17 @@ uint32_t L1CachePolicyHelper<IGFX_CRI>::getDefaultL1CachePolicy(bool isDebuggerA
 template struct L1CachePolicyHelper<IGFX_CRI>;
 static EnableGfxProductHw<IGFX_CRI> enableGfxProductHwCRI;
 #endif
+
+#ifdef SUPPORT_NVLP
+template <>
+uint32_t L1CachePolicyHelper<IGFX_NVL>::getDefaultL1CachePolicy(bool isDebuggerActive) {
+    using GfxFamily = HwMapper<IGFX_NVL>::GfxFamily;
+    if (isDebuggerActive) {
+        return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
+    }
+    return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB;
+}
+
+template struct L1CachePolicyHelper<IGFX_NVL>;
+static EnableGfxProductHw<IGFX_NVL> enableGfxProductHwNVL;
+#endif

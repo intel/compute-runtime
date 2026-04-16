@@ -1,0 +1,25 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+namespace NEO {
+template <>
+const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferredSlmValue() const {
+    using PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2 = typename Xe3pCoreFamily::INTERFACE_DESCRIPTOR_DATA_2::PREFERRED_SLM_ALLOCATION_SIZE;
+
+    static const SizeToPreferredSlmValueArray sizeToPreferredSlmValueIdd2 = {{
+        {0, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
+        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
+        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
+        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K},
+        {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K},
+        {128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K},
+        {160 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_160K},
+        {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_2::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_192K},
+    }};
+    return sizeToPreferredSlmValueIdd2;
+}
+} // namespace NEO

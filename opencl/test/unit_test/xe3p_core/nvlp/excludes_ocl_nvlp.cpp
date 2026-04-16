@@ -1,0 +1,18 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/test/common/test_macros/hw_test_base.h"
+using namespace NEO;
+
+HWTEST_EXCLUDE_PRODUCT(Xe3pBcsTests, givenCompressibleSrcBuffersWhenAppendBlitCommandsForBufferCalledThenSetCompressionFormat, IGFX_NVL);
+HWTEST_EXCLUDE_PRODUCT(Xe3pBcsTests, givenCompressibleDstBuffersWhenAppendBlitCommandsForBufferCalledThenSetCompressionFormat, IGFX_NVL);
+HWTEST_EXCLUDE_PRODUCT(Xe3pBcsTests, givenCompressibleSrcBuffersWhenAppendBlitCommandsBlockCopyIsCalledThenSetCompressionFormat, IGFX_NVL);
+HWTEST_EXCLUDE_PRODUCT(Xe3pBcsTests, givenCompressibleDstBuffersWhenAppendBlitCommandsBlockCopyIsCalledThenSetCompressionFormat, IGFX_NVL);
+HWTEST_EXCLUDE_PRODUCT(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferStatelessIsUsedThenParamsAreCorrect, IGFX_NVL);
+HWTEST_EXCLUDE_PRODUCT(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferStatelessIsUsedThenParamsAreCorrect, IGFX_NVL);
+HWTEST_EXCLUDE_PRODUCT(CommandQueuePvcAndLaterTests, givenSplitBcsMaskWhenConstructBcsEnginesForSplitThenContainsGivenBcsEngines_IsAtLeastXeHpcCore, IGFX_NVL);
+HWTEST_EXCLUDE_PRODUCT(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet_IsAtLeastXeCore, IGFX_NVL);

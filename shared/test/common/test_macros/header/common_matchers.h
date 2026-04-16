@@ -252,6 +252,13 @@ struct IsXeLpg {
     }
 };
 
+struct IsXe3pLpg {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsXe3pCore::isMatched<productFamily>() && IsNotCRI::isMatched<productFamily>();
+    }
+};
+
 struct IsStatefulBufferPreferredForProduct {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {

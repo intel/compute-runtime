@@ -44,6 +44,8 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned();
     void whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
     void whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned();
+    void whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities();
+    void whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities();
     virtual std::vector<uint32_t> getRevisions() = 0;
 
     std::unique_ptr<ReleaseHelper> releaseHelper;

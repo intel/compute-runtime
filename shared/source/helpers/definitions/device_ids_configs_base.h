@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,9 @@
 #if SUPPORT_XE3P_CORE
 #ifdef SUPPORT_CRI
 #include "shared/source/xe3p_core/cri/device_ids_configs_cri.h"
+#endif
+#ifdef SUPPORT_NVLP
+#include "device_ids_configs_nvlp.h"
 #endif
 #endif
 
