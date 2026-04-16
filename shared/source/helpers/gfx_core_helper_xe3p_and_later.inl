@@ -90,21 +90,6 @@ uint32_t GfxCoreHelperHw<Family>::getInternalCopyEngineIndex(const HardwareInfo 
 }
 
 template <>
-uint8_t GfxCoreHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers) const {
-    static constexpr uint8_t possibleBarriersCounts[] = {
-        0u,  // 0
-        1u,  // 1
-        2u,  // 2
-        4u,  // 3
-        8u,  // 4
-        16u, // 5
-        24u, // 6
-        32u, // 7
-    };
-    return possibleBarriersCounts[hasBarriers];
-}
-
-template <>
 const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto defaultEngine = getChosenEngineType(hwInfo);

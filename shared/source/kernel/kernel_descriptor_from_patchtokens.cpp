@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -482,10 +482,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     dst.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     dst.kernelAttributes.gpuPointerSize = gpuPointerSizeInBytes;
     dst.kernelAttributes.flags.requiresImplicitArgs = src.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset != nullptr;
-
-    if (debugManager.flags.UpdateCrossThreadDataSize.get()) {
-        dst.updateCrossThreadDataSize();
-    }
 
     if (KernelDescriptor::isBindlessAddressingKernel(dst)) {
         dst.initBindlessOffsetToSurfaceState();

@@ -40,19 +40,6 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenXe2HpgCoreWhenAskedForMini
     EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
 }
 
-XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    EXPECT_EQ(0u, gfxCoreHelper.getBarriersCountFromHasBarriers(0u));
-    EXPECT_EQ(1u, gfxCoreHelper.getBarriersCountFromHasBarriers(1u));
-    EXPECT_EQ(2u, gfxCoreHelper.getBarriersCountFromHasBarriers(2u));
-    EXPECT_EQ(4u, gfxCoreHelper.getBarriersCountFromHasBarriers(3u));
-    EXPECT_EQ(8u, gfxCoreHelper.getBarriersCountFromHasBarriers(4u));
-    EXPECT_EQ(16u, gfxCoreHelper.getBarriersCountFromHasBarriers(5u));
-    EXPECT_EQ(24u, gfxCoreHelper.getBarriersCountFromHasBarriers(6u));
-    EXPECT_EQ(32u, gfxCoreHelper.getBarriersCountFromHasBarriers(7u));
-}
-
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEnginesAndTwoRegularCopyEngines) {
     const size_t numEngines = 18;
 

@@ -55,7 +55,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
 
     KernelDescriptorExt *kernelDescriptorExt = nullptr;
 
-    void updateCrossThreadDataSize();
     void initBindlessOffsetToSurfaceState();
     const BindlessToSurfaceStateMap &getBindlessOffsetToSurfaceState() const {
         return bindlessArgsMap;

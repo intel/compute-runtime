@@ -71,7 +71,6 @@ DECLARE_DEBUG_VARIABLE(bool, EnableResourceTags, false, "Enable resource tagging
 DECLARE_DEBUG_VARIABLE(bool, DoNotFreeResources, false, "Do not free resources")
 DECLARE_DEBUG_VARIABLE(bool, AllowPatchingVfeStateInCommandLists, false, "Allow programming MEDIA_VFE_STATE in a command list")
 DECLARE_DEBUG_VARIABLE(bool, PrintMemoryRegionSizes, false, "Print memory bank: type, instance, size")
-DECLARE_DEBUG_VARIABLE(bool, UpdateCrossThreadDataSize, false, "Turn on cross thread data size calculation for PATCH TOKEN binary")
 DECLARE_DEBUG_VARIABLE(bool, UseNewQueryTopoIoctl, true, "Use DRM_I915_QUERY_COMPUTE_SLICES")
 DECLARE_DEBUG_VARIABLE(bool, DisableGpuHangDetection, false, "Disable GPU hang detection")
 DECLARE_DEBUG_VARIABLE(bool, DisableForceToStateless, false, "Do not force stateless for buffers")

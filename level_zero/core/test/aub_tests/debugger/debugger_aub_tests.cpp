@@ -76,8 +76,6 @@ HWTEST_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExec
     gmmHelper = neoDevice->getGmmHelper();
     rootDeviceIndex = neoDevice->getRootDeviceIndex();
 
-    NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
-
     NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
                                                          1,
                                                          context->rootDeviceIndices,
@@ -197,8 +195,6 @@ HWTEST2_F(DebuggerGlobalAllocatorAub, GivenKernelWithScratchWhenCmdListExecutedT
     memoryManager = neoDevice->getMemoryManager();
     gmmHelper = neoDevice->getGmmHelper();
     rootDeviceIndex = neoDevice->getRootDeviceIndex();
-
-    NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
 
     ASSERT_NE(nullptr, neoDevice->getBindlessHeapsHelper());
 

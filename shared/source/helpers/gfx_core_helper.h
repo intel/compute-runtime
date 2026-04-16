@@ -92,7 +92,6 @@ class GfxCoreHelper {
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
     virtual uint32_t getMetricsLibraryGenId() const = 0;
     virtual uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
-    virtual uint8_t getBarriersCountFromHasBarriers(uint8_t hasBarriers) const = 0;
     virtual uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t alignSlmSize(uint32_t slmSize) const = 0;
@@ -332,8 +331,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getMetricsLibraryGenId() const override;
 
     uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const override;
-
-    uint8_t getBarriersCountFromHasBarriers(uint8_t hasBarriers) const override;
 
     uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 

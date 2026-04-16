@@ -29,21 +29,6 @@ template <>
 const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::none;
 
 template <>
-uint8_t GfxCoreHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers) const {
-    static constexpr uint8_t possibleBarriersCounts[] = {
-        0u,  // 0
-        1u,  // 1
-        2u,  // 2
-        4u,  // 3
-        8u,  // 4
-        16u, // 5
-        24u, // 6
-        32u, // 7
-    };
-    return possibleBarriersCounts[hasBarriers];
-}
-
-template <>
 EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     if (engineType == aub_stream::ENGINE_CCCS) {
         return EngineGroupType::renderCompute;

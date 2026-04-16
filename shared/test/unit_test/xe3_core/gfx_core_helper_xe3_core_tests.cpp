@@ -69,19 +69,6 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenXe3CoreWhenAskedForMinimialSimdTh
     EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
 }
 
-XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    EXPECT_EQ(0u, gfxCoreHelper.getBarriersCountFromHasBarriers(0u));
-    EXPECT_EQ(1u, gfxCoreHelper.getBarriersCountFromHasBarriers(1u));
-    EXPECT_EQ(2u, gfxCoreHelper.getBarriersCountFromHasBarriers(2u));
-    EXPECT_EQ(4u, gfxCoreHelper.getBarriersCountFromHasBarriers(3u));
-    EXPECT_EQ(8u, gfxCoreHelper.getBarriersCountFromHasBarriers(4u));
-    EXPECT_EQ(16u, gfxCoreHelper.getBarriersCountFromHasBarriers(5u));
-    EXPECT_EQ(24u, gfxCoreHelper.getBarriersCountFromHasBarriers(6u));
-    EXPECT_EQ(32u, gfxCoreHelper.getBarriersCountFromHasBarriers(7u));
-}
-
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEnginesAndTwoRegularCopyEngines) {
     const size_t numEngines = 18;
 

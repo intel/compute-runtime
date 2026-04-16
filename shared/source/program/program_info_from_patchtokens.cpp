@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,13 +74,6 @@ void populateProgramInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPa
         UNRECOVERABLE_IF((src.header->GPUPointerSizeInBytes != 4) && (src.header->GPUPointerSizeInBytes != 8));
         dst.prepareLinkerInputStorage();
         dst.linkerInput->setPointerSize((src.header->GPUPointerSizeInBytes == 4) ? LinkerInput::Traits::PointerSize::Ptr32bit : LinkerInput::Traits::PointerSize::Ptr64bit);
-
-        if (false == src.programScopeTokens.allocateConstantMemorySurface.empty()) {
-            dst.linkerInput->addSymbol(globalConstantsSymbolName.data(), {0U, 8U, SegmentType::globalConstants});
-        }
-        if (false == src.programScopeTokens.allocateGlobalMemorySurface.empty()) {
-            dst.linkerInput->addSymbol(globalVariablesSymbolName.data(), {0U, 8U, SegmentType::globalVariables});
-        }
     }
 
     for (const auto &globalConstantPointerToken : src.programScopeTokens.constantPointer) {

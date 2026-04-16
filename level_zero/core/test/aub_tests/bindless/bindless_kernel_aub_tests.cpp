@@ -40,8 +40,6 @@ HWTEST2_F(L0BindlessAub, GivenBindlessKernelWhenExecutedThenOutputIsCorrect, IsA
     const uint32_t groupSize[] = {32, 1, 1};
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};
 
-    NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
-
     NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
                                                          1,
                                                          context->rootDeviceIndices,

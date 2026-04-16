@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,13 +60,6 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(Progr
     }
 
     NEO::populateProgramInfo(dst, decodedProgram);
-
-    // set barrierCount to number of barriers decoded from hasBarriers token
-
-    for (auto &ki : dst.kernelInfos) {
-        auto &kd = ki->kernelDescriptor;
-        kd.kernelAttributes.barrierCount = gfxCoreHelper.getBarriersCountFromHasBarriers(kd.kernelAttributes.barrierCount);
-    }
 
     return DecodeError::success;
 }

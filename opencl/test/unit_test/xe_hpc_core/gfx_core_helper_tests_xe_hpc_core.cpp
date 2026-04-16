@@ -93,19 +93,6 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenXeHpcWhenAskedForMinimialSim
     EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
 }
 
-XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    EXPECT_EQ(0u, gfxCoreHelper.getBarriersCountFromHasBarriers(0u));
-    EXPECT_EQ(1u, gfxCoreHelper.getBarriersCountFromHasBarriers(1u));
-    EXPECT_EQ(2u, gfxCoreHelper.getBarriersCountFromHasBarriers(2u));
-    EXPECT_EQ(4u, gfxCoreHelper.getBarriersCountFromHasBarriers(3u));
-    EXPECT_EQ(8u, gfxCoreHelper.getBarriersCountFromHasBarriers(4u));
-    EXPECT_EQ(16u, gfxCoreHelper.getBarriersCountFromHasBarriers(5u));
-    EXPECT_EQ(24u, gfxCoreHelper.getBarriersCountFromHasBarriers(6u));
-    EXPECT_EQ(32u, gfxCoreHelper.getBarriersCountFromHasBarriers(7u));
-}
-
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenSetCccsProperly) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();

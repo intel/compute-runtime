@@ -839,12 +839,6 @@ HWTEST_F(GfxCoreHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalseIsReturne
     EXPECT_FALSE(gfxCoreHelper.isBankOverrideRequired(hardwareInfo, productHelper));
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(0u, gfxCoreHelper.getBarriersCountFromHasBarriers(0u));
-    EXPECT_EQ(1u, gfxCoreHelper.getBarriersCountFromHasBarriers(1u));
-}
-
 HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();

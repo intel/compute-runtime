@@ -633,42 +633,12 @@ TEST_F(ProgramDataTest, DISABLED_givenProgramWhenAllocatingGlobalMemorySurfaceTh
     std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
 }
 
-TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuffer) {
-    MockExecutionEnvironment execEnv;
-    execEnv.incRefInternal();
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(NEO::defaultHwInfo.get(), &execEnv, 0));
-    execEnv.memoryManager = std::make_unique<MockMemoryManager>();
-    PatchTokensTestData::ValidProgramWithMixedGlobalVarAndConstSurfacesAndPointers decodedProgram;
-    decodedProgram.globalPointerMutable->GlobalPointerOffset = 0U;
-    decodedProgram.constantPointerMutable->ConstantPointerOffset = 0U;
-    memset(decodedProgram.globalSurfMutable + 1, 0U, sizeof(uintptr_t));
-    memset(decodedProgram.constSurfMutable + 1, 0U, sizeof(uintptr_t));
-    ProgramInfo programInfo;
-    MockProgram program(toClDeviceVector(*device));
-    NEO::populateProgramInfo(programInfo, decodedProgram);
-    program.processProgramInfo(programInfo, *device);
-    auto &buildInfo = program.buildInfos[device->getRootDeviceIndex()];
-
-    auto globalSurface = buildInfo.globalSurface.get();
-    auto constantSurface = buildInfo.constantSurface.get();
-
-    ASSERT_NE(nullptr, globalSurface);
-    ASSERT_NE(nullptr, globalSurface->getGraphicsAllocation());
-    ASSERT_NE(nullptr, constantSurface);
-    ASSERT_NE(nullptr, constantSurface->getGraphicsAllocation());
-    ASSERT_NE(nullptr, globalSurface->getGraphicsAllocation()->getUnderlyingBuffer());
-    ASSERT_NE(nullptr, constantSurface->getGraphicsAllocation()->getUnderlyingBuffer());
-    EXPECT_EQ(static_cast<uintptr_t>(globalSurface->getGraphicsAllocation()->getGpuAddressToPatch()), *reinterpret_cast<uintptr_t *>(constantSurface->getGraphicsAllocation()->getUnderlyingBuffer()));
-    EXPECT_EQ(static_cast<uintptr_t>(constantSurface->getGraphicsAllocation()->getGpuAddressToPatch()), *reinterpret_cast<uintptr_t *>(globalSurface->getGraphicsAllocation()->getUnderlyingBuffer()));
-}
-
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantBufferPatchTokensAreReadThenConstantPointerOffsetIsPatchedWith32bitPointer) {
     MockProgram *prog = pProgram;
 
     // simulate case when constant surface was not allocated
     EXPECT_EQ(nullptr, prog->getConstantSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex()));
     ProgramInfo programInfo;
-    programInfo.prepareLinkerInputStorage();
 
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.relocationSegment = NEO::SegmentType::globalConstants;
@@ -681,9 +651,11 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
     symbol.size = 8U;
     symbol.segment = NEO::SegmentType::globalConstants;
 
-    programInfo.linkerInput->addSymbol("GlobalConstantPointer", symbol);
-    programInfo.linkerInput->addDataRelocationInfo(relocInfo);
-    programInfo.linkerInput->setPointerSize(LinkerInput::Traits::PointerSize::Ptr32bit);
+    auto linkerInput = std::make_unique<WhiteBox<NEO::LinkerInput>>();
+    linkerInput->symbols.emplace("GlobalConstantPointer", symbol);
+    linkerInput->addDataRelocationInfo(relocInfo);
+    linkerInput->setPointerSize(LinkerInput::Traits::PointerSize::Ptr32bit);
+    programInfo.linkerInput = std::move(linkerInput);
 
     MockBuffer constantSurface;
     ASSERT_LT(8U, constantSurface.getSize());
@@ -713,7 +685,6 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPoi
     EXPECT_EQ(nullptr, prog->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
 
     ProgramInfo programInfo;
-    programInfo.prepareLinkerInputStorage();
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.offset = 0U;
     relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
@@ -725,9 +696,11 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPoi
     symbol.size = 8U;
     symbol.segment = NEO::SegmentType::globalVariables;
 
-    programInfo.linkerInput->addSymbol("GlobalVariablePointer", symbol);
-    programInfo.linkerInput->addDataRelocationInfo(relocInfo);
-    programInfo.linkerInput->setPointerSize(LinkerInput::Traits::PointerSize::Ptr32bit);
+    auto linkerInput = std::make_unique<WhiteBox<NEO::LinkerInput>>();
+    linkerInput->symbols.emplace("GlobalVariablePointer", symbol);
+    linkerInput->addDataRelocationInfo(relocInfo);
+    linkerInput->setPointerSize(LinkerInput::Traits::PointerSize::Ptr32bit);
+    programInfo.linkerInput = std::move(linkerInput);
 
     MockBuffer globalSurface;
     ASSERT_LT(8U, globalSurface.getSize());

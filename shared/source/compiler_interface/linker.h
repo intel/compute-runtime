@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -148,10 +148,6 @@ struct LinkerInput : NEO::NonCopyableAndNonMovableClass {
 
     const SymbolMap &getSymbols() const {
         return symbols;
-    }
-
-    void addSymbol(const std::string &symbolName, const SymbolInfo &symbolInfo) {
-        symbols.emplace(std::make_pair(symbolName, symbolInfo));
     }
 
     const RelocationsPerInstSegment &getRelocationsInInstructionSegments() const {
