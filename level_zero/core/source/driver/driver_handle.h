@@ -79,18 +79,16 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     MOCKABLE_VIRTUAL NEO::MemoryManager *getMemoryManager();
     MOCKABLE_VIRTUAL void setMemoryManager(NEO::MemoryManager *memoryManager);
-    MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory);
-    MOCKABLE_VIRTUAL void *importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory);
-    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory);
-    MOCKABLE_VIRTUAL NEO::SVMAllocsManager *getSvmAllocsManager();
-    MOCKABLE_VIRTUAL NEO::StagingBufferManager *getStagingBufferManager();
-    ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices);
     MOCKABLE_VIRTUAL bool findAllocationDataForRange(const void *buffer,
                                                      size_t size,
                                                      NEO::SvmAllocationData *&allocData);
     MOCKABLE_VIRTUAL std::vector<NEO::SvmAllocationData *> findAllocationsWithinRange(const void *buffer,
                                                                                       size_t size,
                                                                                       bool *allocationRangeCovered);
+
+    MOCKABLE_VIRTUAL NEO::SVMAllocsManager *getSvmAllocsManager();
+    MOCKABLE_VIRTUAL NEO::StagingBufferManager *getStagingBufferManager();
+    ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices);
 
     MOCKABLE_VIRTUAL ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                                     uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents);
@@ -135,10 +133,21 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     MOCKABLE_VIRTUAL ze_result_t formatRTASCompatibilityCheck(ze_rtas_format_exp_t rtasFormatA, ze_rtas_format_exp_t rtasFormatB);
     MOCKABLE_VIRTUAL ze_result_t formatRTASCompatibilityCheckExt(ze_rtas_format_ext_t rtasFormatA, ze_rtas_format_ext_t rtasFormatB);
 
+    MOCKABLE_VIRTUAL int setErrorDescription(const std::string &str);
+    MOCKABLE_VIRTUAL ze_result_t getErrorDescription(const char **ppString);
+    MOCKABLE_VIRTUAL ze_result_t clearErrorDescription();
+
+    MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory);
+    MOCKABLE_VIRTUAL void *importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory);
+    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory);
+    MOCKABLE_VIRTUAL bool initializeIpcSocketServer();
+    MOCKABLE_VIRTUAL bool registerIpcHandleWithServer(uint64_t handleId, int fd);
+
+    MOCKABLE_VIRTUAL bool tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle);
+
     std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
 
-    MOCKABLE_VIRTUAL bool tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHandle);
     void setCachedImportHandle(uint64_t cacheID, uint64_t importHandle);
     void clearCachedImportHandle(uint64_t cacheID);
     int duplicateFd(int fd);
@@ -151,9 +160,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     NEO::UsmMemAllocPool::CustomCleanupFn getPoolCleanupFn();
     NEO::UsmMemAllocPool *getHostUsmPoolOwningPtr(const void *ptr);
 
-    MOCKABLE_VIRTUAL bool initializeIpcSocketServer();
     void shutdownIpcSocketServer();
-    MOCKABLE_VIRTUAL bool registerIpcHandleWithServer(uint64_t handleId, int fd);
     bool unregisterIpcHandleWithServer(uint64_t handleId);
     std::string getIpcSocketServerPath();
 
@@ -223,9 +230,6 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     // not based on the lifetime of the object of a class.
     std::unordered_map<std::thread::id, std::string> errorDescs;
     std::mutex errorDescsMutex;
-    int setErrorDescription(const std::string &str);
-    ze_result_t getErrorDescription(const char **ppString);
-    ze_result_t clearErrorDescription();
 
     ze_context_handle_t getDefaultContext() const {
         return defaultContext;
