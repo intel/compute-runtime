@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -1179,6 +1180,39 @@ TEST(MemoryManagerTest, givenSingleAddressSpaceSbaTrackingWhenAllocationIsComman
                                                                           nullptr);
     EXPECT_EQ(allocation, &mockGa);
     EXPECT_EQ(mockGa.setAsReadOnlyCalled, 0u);
+}
+
+TEST(MemoryManagerTest, givenPlatformNotHeaplessWhenAllocationIsCommandBufferAndMultiContextCapableIsFalseThenAllocationIsNotSetAsReadOnly) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.setDebuggingMode(NEO::DebuggingMode::offline);
+    auto debugger = new MockDebugger;
+    debugger->singleAddressSpaceSbaTracking = false;
+    executionEnvironment.rootDeviceEnvironments[0]->debugger.reset(debugger);
+
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+    MockGraphicsAllocation mockGa;
+    mockGa.setAllocationType(AllocationType::commandBuffer);
+
+    mockGa.hasAllocationReadOnlyTypeResult = true;
+
+    memoryManager.mockGa = &mockGa;
+    memoryManager.returnMockGAFromDevicePool = true;
+
+    AllocationProperties properties(mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::commandBuffer, mockDeviceBitfield);
+    properties.flags.cantBeReadOnly = false;
+    properties.flags.multiOsContextCapable = false;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(properties,
+                                                                          nullptr);
+    EXPECT_EQ(allocation, &mockGa);
+    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    auto expectSetAsReadOnlyCalled = !compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo) ? 0u : 1u;
+    EXPECT_EQ(mockGa.setAsReadOnlyCalled, expectSetAsReadOnlyCalled);
 }
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndPlatrormSupportReadOnlyAllocationBliterAndAllocationTypeOtherThanCmdBufferTransferNotRequiredThenAllocationIsSetAsReadOnly) {
