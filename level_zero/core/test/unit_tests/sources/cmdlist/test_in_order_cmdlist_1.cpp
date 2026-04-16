@@ -6731,6 +6731,30 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeAndNoopWaitEve
     EXPECT_EQ(0, memCmpRet);
 }
 
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventBoundToCmdListWhenCheckingCanSkipWaitThenReturnFalse) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    uint64_t counterValue = 4;
+    uint64_t incValue = 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto aggregatedEvent = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+
+    EXPECT_TRUE(Event::isAggregatedEvent(aggregatedEvent.get()));
+    EXPECT_TRUE(aggregatedEvent->isCounterBased());
+
+    auto aggregatedEventHandle = aggregatedEvent->toHandle();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, aggregatedEventHandle, 0, nullptr, launchParams);
+    EXPECT_FALSE(immCmdList->canSkipInOrderEventWait(*aggregatedEvent, false));
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto regularEventHandle = events[0]->toHandle();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, regularEventHandle, 0, nullptr, launchParams);
+    EXPECT_TRUE(immCmdList->canSkipInOrderEventWait(*events[0], false));
+
+    context->freeMem(devAddress);
+}
+
 HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAppendingLaunchKernelMultipleTimesThenAllocateUserFenceOnceCorrectly) {
     zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;

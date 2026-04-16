@@ -212,6 +212,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::appendMemoryCopyBlit;
     using BaseClass::appendMemoryCopyBlitRegion;
     using BaseClass::bcsSplitMode;
+    using BaseClass::canSkipInOrderEventWait;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::closedCmdList;
     using BaseClass::cmdListHeapAddressModel;

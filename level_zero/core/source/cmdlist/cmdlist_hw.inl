@@ -3388,7 +3388,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(Event &event, bool ignorCbEventBoundToCmdList) const {
-    if (isInOrderExecutionEnabled()) {
+    if (isInOrderExecutionEnabled() && !Event::isAggregatedEvent(&event)) {
         return ((isImmediateType() && event.getLatestUsedCmdQueue() == this->cmdQImmediate) || // 1. Immediate CmdList can skip "regular Events" from the same CmdList
                 (isCbEventBoundToCmdList(&event) && !ignorCbEventBoundToCmdList));             // 2. Both Immediate and Regular CmdLists can skip "CounterBased Events" from the same CmdList
     }
