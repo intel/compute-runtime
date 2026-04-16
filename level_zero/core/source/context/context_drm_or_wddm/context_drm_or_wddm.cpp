@@ -167,6 +167,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                     NEO::SysCalls::close(pidfd);
                     if (newfd < 0) {
                         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_getfd Syscall failed: %s\n", strerror(errno));
+                        return {nullptr, nullptr};
                     } else {
                         importHandle = static_cast<uint64_t>(newfd);
                         pidfdSuccess = true;
@@ -243,6 +244,13 @@ void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_
     if (settings.useOpaqueHandle) {
         const IpcOpaqueMemoryData *ipcData = reinterpret_cast<const IpcOpaqueMemoryData *>(ipcHandle.data);
         handle = static_cast<uint64_t>(ipcData->handle.fd);
+        uint64_t opaqueHandle = static_cast<uint64_t>(ipcData->opaqueHandle.fd);
+        if (handle != opaqueHandle) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Warning: Opaque IPC Handle Support is enabled and the handle has been altered, please treat the ipc handle as opaque. Primary: %lu, Opaque: %lu. Using opaque handle\n",
+                         handle, opaqueHandle);
+            handle = opaqueHandle;
+        }
         type = ipcData->memoryType;
         processId = ipcData->processId;
         poolOffset = ipcData->poolOffset;

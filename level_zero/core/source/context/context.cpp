@@ -2019,9 +2019,11 @@ void Context::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint
         ipcData.type = handleType;
         if (handleType == IpcHandleType::ntHandle) {
             ipcData.handle.reserved = handle;
+            ipcData.opaqueHandle.reserved = handle;
         } else if (handleType == IpcHandleType::fdHandle) {
             // For fdHandle, we store the handle as an int
             ipcData.handle.fd = static_cast<int>(handle);
+            ipcData.opaqueHandle.fd = static_cast<int>(handle);
         }
         ipcData.compressedMemory = graphicsAllocation->isCompressionEnabled();
         memset(ipcData.reservedHandleData, 0, sizeof(IpcOpaqueMemoryData::reservedHandleData));

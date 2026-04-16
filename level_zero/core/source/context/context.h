@@ -72,6 +72,7 @@ struct IpcOpaqueMemoryData {
     unsigned int processId = 0;
     IpcHandleType type = IpcHandleType::maxHandle;
     uint8_t memoryType = 0;
+    IpcHandle opaqueHandle = {};
     uint8_t reservedHandleData[32] = {0};
     // Computes and returns the cache ID hash
     uint64_t computeCacheID() const noexcept;
