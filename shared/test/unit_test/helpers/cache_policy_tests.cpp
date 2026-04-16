@@ -26,6 +26,25 @@ HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetUncached1CachePolicyThe
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getUncachedL1CachePolicy(), policy);
 }
 
+HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndWriteBackPolicyWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+
+    const char *expectedStr = "-cl-store-cache-default=7 -cl-load-cache-default=4";
+    EXPECT_EQ(0, memcmp(L1CachePolicyHelper<productFamily>::getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
+    EXPECT_EQ(0, memcmp(L1CachePolicyHelper<productFamily>::getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
+}
+
+HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndForceAllResourcesUncachedWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceAllResourcesUncached.set(true);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
+
+    const char *expectedStr = "-cl-store-cache-default=2 -cl-load-cache-default=2";
+    EXPECT_EQ(0, memcmp(L1CachePolicyHelper<productFamily>::getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
+    EXPECT_EQ(0, memcmp(L1CachePolicyHelper<productFamily>::getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
+}
+
 HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenDebugFlagSetAndGetL1CachePolicyThenReturnCorrectValue, MatchAny) {
     DebugManagerStateRestore restorer;
 
