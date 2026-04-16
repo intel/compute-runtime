@@ -1825,22 +1825,16 @@ class ProgramPatchTokenFromBinaryTest : public ProgramSimpleFixture {
 };
 typedef Test<ProgramPatchTokenFromBinaryTest> ProgramPatchTokenTests;
 
-TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
+TEST(ProgramFromBinaryTests, givenBinaryWithUnknownFormatThenErrorIsReturned) {
     cl_int retVal = CL_INVALID_BINARY;
 
-    SProgramBinaryHeader binHeader;
-    memset(&binHeader, 0, sizeof(binHeader));
-    binHeader.Magic = iOpenCL::MAGIC_CL;
-    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 3;
-    binHeader.Device = defaultHwInfo->platform.eRenderCoreFamily;
-    binHeader.GPUPointerSizeInBytes = 8;
-    binHeader.NumberOfKernels = 0;
-    binHeader.SteppingId = 0;
-    binHeader.PatchListSize = 0;
-    size_t binSize = sizeof(SProgramBinaryHeader);
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+    auto invalidBinary = elfEncoder.encode();
+    size_t binSize = invalidBinary.size();
 
     {
-        const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(&binHeader)};
+        const unsigned char *binaries[1] = {invalidBinary.data()};
         MockContext context;
 
         std::unique_ptr<Program> pProgram(Program::create<Program>(&context, context.getDevices(), &binSize, binaries, nullptr, retVal));
@@ -1851,7 +1845,7 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
     {
         // whatever method we choose CL_INVALID_BINARY is always returned
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, mockRootDeviceIndex));
-        std::unique_ptr<Program> pProgram(Program::createBuiltInFromGenBinary(nullptr, toClDeviceVector(*device), &binHeader, binSize, &retVal));
+        std::unique_ptr<Program> pProgram(Program::createBuiltInFromGenBinary(nullptr, toClDeviceVector(*device), invalidBinary.data(), binSize, &retVal));
         ASSERT_NE(nullptr, pProgram.get());
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1860,24 +1854,18 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
     }
 }
 
-TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEAndDisableKernelRecompilationThenErrorIsReturned) {
+TEST(ProgramFromBinaryTests, givenBinaryWithUnknownFormatAndDisableKernelRecompilationThenErrorIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.DisableKernelRecompilation.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
-    SProgramBinaryHeader binHeader;
-    memset(&binHeader, 0, sizeof(binHeader));
-    binHeader.Magic = iOpenCL::MAGIC_CL;
-    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 3;
-    binHeader.Device = defaultHwInfo->platform.eRenderCoreFamily;
-    binHeader.GPUPointerSizeInBytes = 8;
-    binHeader.NumberOfKernels = 0;
-    binHeader.SteppingId = 0;
-    binHeader.PatchListSize = 0;
-    size_t binSize = sizeof(SProgramBinaryHeader);
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+    auto invalidBinary = elfEncoder.encode();
+    size_t binSize = invalidBinary.size();
 
     {
-        const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(&binHeader)};
+        const unsigned char *binaries[1] = {invalidBinary.data()};
         MockContext context;
 
         std::unique_ptr<Program> pProgram(Program::create<Program>(&context, context.getDevices(), &binSize, binaries, nullptr, retVal));
@@ -1889,19 +1877,13 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEAndDisableKernelRecompila
 TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     cl_int retVal = CL_INVALID_BINARY;
 
-    SProgramBinaryHeader binHeader;
-    memset(&binHeader, 0, sizeof(binHeader));
-    binHeader.Magic = iOpenCL::MAGIC_CL;
-    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION;
-    binHeader.Device = defaultHwInfo->platform.eRenderCoreFamily;
-    binHeader.GPUPointerSizeInBytes = 8;
-    binHeader.NumberOfKernels = 0;
-    binHeader.SteppingId = 0;
-    binHeader.PatchListSize = 0;
-    size_t binSize = sizeof(SProgramBinaryHeader);
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+    auto dummyBinary = elfEncoder.encode();
+    size_t binSize = dummyBinary.size();
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, mockRootDeviceIndex));
-    std::unique_ptr<MockProgram> pProgram(MockProgram::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*device), &binHeader, binSize, &retVal));
+    std::unique_ptr<MockProgram> pProgram(MockProgram::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*device), dummyBinary.data(), binSize, &retVal));
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 

@@ -8,9 +8,9 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -200,12 +200,12 @@ HWTEST_F(DebuggerZebinProgramTest, GivenDebuggingEnabledAndNonZebinWhenProgramNo
 
     auto program = createProgram();
 
-    PatchTokensTestData::ValidEmptyProgram programTokens;
+    const uint8_t nonZebinBinary[] = {0x01, 0x02, 0x03, 0x04};
 
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = programTokens.storage.size();
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinary.reset(new char[programTokens.storage.size()]);
+    program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = sizeof(nonZebinBinary);
+    program->buildInfos[rootDeviceIndex].unpackedDeviceBinary.reset(new char[sizeof(nonZebinBinary)]);
     memcpy_s(program->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get(), program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize,
-             programTokens.storage.data(), programTokens.storage.size());
+             nonZebinBinary, sizeof(nonZebinBinary));
 
     program->notifyModuleCreate();
 
