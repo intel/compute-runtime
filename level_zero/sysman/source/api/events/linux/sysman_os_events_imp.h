@@ -57,11 +57,11 @@ class LinuxEventsUtil {
     bool isResetRequired(void *dev, zes_event_type_flags_t &pEvent);
     bool checkDeviceDetachEvent(zes_event_type_flags_t &pEvent);
     bool checkDeviceAttachEvent(zes_event_type_flags_t &pEvent);
-    bool checkDeviceWedgedEvent(FsAccessInterface *pFsAccess, const std::string &devPath, void *dev, zes_event_type_flags_t &pEvent);
     bool checkIfMemHealthChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool checkIfFabricPortStatusChanged(void *dev, zes_event_type_flags_t &pEvent);
+    bool checkDeviceWedgedEvent(void *dev, zes_event_type_flags_t &pEvent);
     bool listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout);
-    bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev);
+    bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev, zes_device_handle_t *phDevices);
     void getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *&pFsAccess);
     static bool isSurvivabilityModeAsExpected(FsAccessInterface *pFsAccess, const std::string &devPath, const std::string &mode);
     std::string action;

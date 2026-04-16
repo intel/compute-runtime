@@ -561,6 +561,33 @@ ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(
                                                     ///< if count is less than the number of memory pages in the given status, then
                                                     ///< driver shall only retrieve that number of memory pages in the given status.
 );
+#ifndef ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_NAME
+/// @brief Device state extension name
+#define ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_NAME "ZES_intel_device_state_pending_action_exp"
+#endif // ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device state extension Version(s)
+typedef enum _zes_intel_device_state_pending_action_exp_version_t {
+    ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_state_pending_action_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Extension to provide wedged device recovery action
+///
+/// @details
+///     - This structure can be passed in the 'pNext' of zes_device_state_t
+///     - Provides information about pending actions required for device recovery
+typedef struct _zes_intel_device_state_pending_action_exp_t {
+    zes_structure_type_ext_t stype;     ///< [in] type of this structure
+    const void *pNext;                  ///< [in][optional] must be null or a pointer to an extension-specific
+                                        ///< structure (i.e. contains stype and pNext).
+    zes_pending_action_t pendingAction; ///< [out] Indicates the pending action required for device recovery.
+                                        ///< When device is wedged, will be set to ZES_PENDING_ACTION_PENDING_COLD_RESET
+                                        ///< For example, When device is wedged this will be set to ZES_PENDING_ACTION_PENDING_COLD_RESET
+} zes_intel_device_state_pending_action_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME

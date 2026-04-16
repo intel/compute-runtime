@@ -18,6 +18,7 @@
 #include "level_zero/sysman/source/shared/linux/sysman_hw_device_id_linux.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
+#include <atomic>
 #include <map>
 #include <mutex>
 
@@ -76,6 +77,10 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     std::string &getDriverName();
     void setDriverName(const std::string &driverName) { this->driverName = driverName; }
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
+
+    // Wedged state management
+    std::atomic<bool> isDeviceInWedgedState{false};
+
     uint32_t rootDeviceIndex;
     bool diagnosticsReset = false;
     bool isMemoryDiagnostics = false;

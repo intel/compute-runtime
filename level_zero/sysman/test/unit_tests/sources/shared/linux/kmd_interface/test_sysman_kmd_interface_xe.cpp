@@ -8,6 +8,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
+#include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
 #include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
@@ -537,6 +538,100 @@ TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityF
     pMockSysFsAccess->mockFdoValue = "enabled";
 
     EXPECT_TRUE(pSysmanKmdInterface->isDeviceInFdoMode());
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenDeviceIsNotWedgedThenGetWedgedStatusDoesNotSetWedgedFlag) {
+    auto pSysmanKmdInterface = static_cast<SysmanKmdInterfaceXe *>(pLinuxSysmanImp->pSysmanKmdInterface.get());
+
+    // Set wedged state to false
+    pLinuxSysmanImp->isDeviceInWedgedState = false;
+
+    zes_device_state_t deviceState = {};
+    deviceState.reset = 0;
+
+    pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, &deviceState);
+    EXPECT_EQ(0u, deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED);
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenDeviceIsWedgedWithNoPNextThenGetWedgedStatusSetsWedgedFlag) {
+    auto pSysmanKmdInterface = static_cast<SysmanKmdInterfaceXe *>(pLinuxSysmanImp->pSysmanKmdInterface.get());
+
+    // Set wedged state to true
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    zes_device_state_t deviceState = {};
+    deviceState.reset = 0;
+    deviceState.pNext = nullptr;
+
+    pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, &deviceState);
+    EXPECT_NE(0u, deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED);
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenDeviceIsWedgedWithMatchingPNextThenGetWedgedStatusSetsPendingAction) {
+    auto pSysmanKmdInterface = static_cast<SysmanKmdInterfaceXe *>(pLinuxSysmanImp->pSysmanKmdInterface.get());
+
+    // Set wedged state to true
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    zes_intel_device_state_pending_action_exp_t extState = {};
+    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_PENDING_ACTION_EXP;
+    extState.pNext = nullptr;
+    extState.pendingAction = ZES_PENDING_ACTION_PENDING_NONE;
+
+    zes_device_state_t deviceState = {};
+    deviceState.reset = 0;
+    deviceState.pNext = &extState;
+
+    pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, &deviceState);
+
+    EXPECT_NE(0u, deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED);
+    EXPECT_EQ(ZES_PENDING_ACTION_PENDING_COLD_RESET, extState.pendingAction);
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenDeviceIsWedgedWithNonMatchingPNextThenGetWedgedStatusWalksChainSafely) {
+    auto pSysmanKmdInterface = static_cast<SysmanKmdInterfaceXe *>(pLinuxSysmanImp->pSysmanKmdInterface.get());
+
+    // Set wedged state to true
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    // Create a non-matching extension structure
+    zes_base_properties_t nonMatchingExt = {};
+    nonMatchingExt.stype = ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    nonMatchingExt.pNext = nullptr;
+
+    zes_device_state_t deviceState = {};
+    deviceState.reset = 0;
+    deviceState.pNext = &nonMatchingExt;
+
+    pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, &deviceState);
+    EXPECT_NE(0u, deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED);
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenDeviceIsWedgedWithMultipleExtensionsInChainThenGetWedgedStatusFindsMatchingExtension) {
+    auto pSysmanKmdInterface = static_cast<SysmanKmdInterfaceXe *>(pLinuxSysmanImp->pSysmanKmdInterface.get());
+
+    // Set wedged state to true
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    // Create matching extension at end of chain
+    zes_intel_device_state_pending_action_exp_t extState = {};
+    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_PENDING_ACTION_EXP;
+    extState.pNext = nullptr;
+    extState.pendingAction = ZES_PENDING_ACTION_PENDING_NONE;
+
+    // Create non-matching extension at start of chain
+    zes_base_properties_t nonMatchingExt = {};
+    nonMatchingExt.stype = ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    nonMatchingExt.pNext = &extState;
+
+    zes_device_state_t deviceState = {};
+    deviceState.reset = 0;
+    deviceState.pNext = &nonMatchingExt;
+
+    pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, &deviceState);
+
+    EXPECT_NE(0u, deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED);
+    EXPECT_EQ(ZES_PENDING_ACTION_PENDING_COLD_RESET, extState.pendingAction);
 }
 
 } // namespace ult

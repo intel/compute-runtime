@@ -234,27 +234,6 @@ bool LinuxEventsUtil::isSurvivabilityModeAsExpected(FsAccessInterface *pFsAccess
     return survivabilityModeVal == mode;
 }
 
-bool LinuxEventsUtil::checkDeviceWedgedEvent(FsAccessInterface *pFsAccess, const std::string &devPath, void *dev, zes_event_type_flags_t &pEvent) {
-    if (action.compare(change) != 0) {
-        return false;
-    }
-    std::string property = "WEDGED";
-
-    const char *propVal = nullptr;
-    propVal = pUdevLib->getEventPropertyValue(dev, property.c_str());
-    std::string expectedStr = "vendor-specific";
-
-    if ((propVal != nullptr) && (expectedStr == propVal)) {
-        const std::string survivabilityModeType = "Runtime";
-        if (isSurvivabilityModeAsExpected(pFsAccess, devPath, survivabilityModeType)) {
-            pEvent |= ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
-            return true;
-        }
-    }
-
-    return false;
-}
-
 bool LinuxEventsUtil::checkDeviceDetachEvent(zes_event_type_flags_t &pEvent) {
     if (action.compare(remove) == 0) {
         pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
@@ -306,6 +285,26 @@ bool LinuxEventsUtil::checkIfFabricPortStatusChanged(void *dev, zes_event_type_f
     return false;
 }
 
+bool LinuxEventsUtil::checkDeviceWedgedEvent(void *dev, zes_event_type_flags_t &pEvent) {
+    // Only proceed when udev event for the device is "change"
+    if (action.compare(change) != 0) {
+        return false;
+    }
+
+    const char *propVal = pUdevLib->getEventPropertyValue(dev, "WEDGED");
+    if ((propVal != nullptr) && std::string(propVal) == "cold-reset") {
+        pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED;
+        return true;
+    }
+
+    if ((propVal != nullptr) && std::string(propVal) == "vendor-specific") {
+        pEvent |= ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
+        return true;
+    }
+
+    return false;
+}
+
 void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *&pFsAccess) {
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]));
@@ -346,7 +345,7 @@ void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t
     }
 }
 
-bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev) {
+bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev, zes_device_handle_t *phDevices) {
     const char *devicePath = pUdevLib->getEventPropertyValue(dev, "DEVPATH");
     bool retVal = false;
     if (devicePath != nullptr) {
@@ -364,13 +363,24 @@ bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &reg
                     }
                 }
                 if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED) {
-                    if (checkDeviceWedgedEvent(pFsAccess, it->second, dev, pEvents[it->first])) {
+                    if (isSurvivabilityModeAsExpected(pFsAccess, it->second, "Runtime") &&
+                        checkDeviceWedgedEvent(dev, pEvents[it->first])) {
                         retVal = true;
                     }
                 }
                 if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
                     if (isResetRequired(dev, pEvents[it->first])) {
                         retVal = true;
+                    }
+                    // Check for wedged event with cold-reset requirement
+                    if (checkDeviceWedgedEvent(dev, pEvents[it->first])) {
+                        retVal = true;
+                        // Cache the wedged state directly
+                        auto pSysmanDevice = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[it->first]));
+                        auto *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pSysmanDevice->deviceGetOsInterface());
+                        pLinuxSysmanImp->isDeviceInWedgedState = true;
+                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                     "Device %d got wedged cold-reset event\n", it->first);
                     }
                 }
                 if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
@@ -480,7 +490,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             break;
         }
 
-        retval = checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess, pEvents, dev);
+        retval = checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess, pEvents, dev, phDevices);
         pUdevLib->dropDeviceReference(dev);
         if (retval) {
             break;

@@ -126,7 +126,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
         VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
         pLinuxSysmanImp->pDrm = pDrm.get();
-        zes_device_state_t deviceState;
+        zes_device_state_t deviceState = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     }
 };
@@ -788,7 +788,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsWedgedWhenCallingGetDeviceSta
     pDrm->ioctlErrno = EIO;
     VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
     pLinuxSysmanImp->pDrm = pDrm.get();
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(ZES_RESET_REASON_FLAG_WEDGED, deviceState.reset);
 }
@@ -798,7 +798,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsNotWedgedWhenCallingGetDevice
     auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
     pLinuxSysmanImp->pDrm = pDrm.get();
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
 }
@@ -810,7 +810,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenGemCreateIoctlFailsWithEINVALWhenCall
     pDrm->ioctlErrno = EINVAL;
     VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
     pLinuxSysmanImp->pDrm = pDrm.get();
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
 }
@@ -1116,7 +1116,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingDeviceGetStateThenS
     auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
     pLinuxSysmanImp->pDrm = pDrm.get();
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     ze_result_t result = zesDeviceGetState(device, &deviceState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }

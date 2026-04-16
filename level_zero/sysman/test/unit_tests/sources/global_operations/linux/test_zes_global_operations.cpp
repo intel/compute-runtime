@@ -132,7 +132,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
     }
     void initGlobalOps() {
-        zes_device_state_t deviceState;
+        zes_device_state_t deviceState = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     }
 };
@@ -837,7 +837,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsWedgedWhenCallingGetDeviceSta
     auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
     osInterface->setDriverModel(std::unique_ptr<DrmGlobalOpsMock>(pDrm));
 
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(ZES_RESET_REASON_FLAG_WEDGED, deviceState.reset);
 }
@@ -848,7 +848,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsNotWedgedWhenCallingGetDevice
     auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
     osInterface->setDriverModel(std::unique_ptr<DrmGlobalOpsMock>(pDrm));
 
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
 }
@@ -861,7 +861,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenGemCreateIoctlFailsWithEINVALWhenCall
     auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
     osInterface->setDriverModel(std::unique_ptr<DrmGlobalOpsMock>(pDrm));
 
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
 }
@@ -930,6 +930,97 @@ TEST_F(SysmanGlobalOperationsFixture, GivenGettingSysfsPathFailsWhenCallingReset
     zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_FORCE_UINT32};
     ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInWedgedStateWhenColdResetSucceedsThenWedgedStateIsCleared) {
+    init(true);
+
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    // Set the device in wedged state
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+    EXPECT_TRUE(pLinuxSysmanImp->isDeviceInWedgedState);
+
+    // Perform cold reset
+    zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_COLD};
+    ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pFsAccess->mockColdResetValue, "1");
+
+    // Verify that wedged state is cleared after cold reset
+    EXPECT_FALSE(pLinuxSysmanImp->isDeviceInWedgedState);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInWedgedStateWhenWarmResetSucceedsThenWedgedStateIsNotCleared) {
+    init(true);
+
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    // Set the device in wedged state
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+    EXPECT_TRUE(pLinuxSysmanImp->isDeviceInWedgedState);
+
+    // Perform warm reset
+    zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_WARM};
+    ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pFsAccess->mockWarmResetValue, "1");
+
+    // Verify that wedged state is NOT cleared after warm reset
+    EXPECT_TRUE(pLinuxSysmanImp->isDeviceInWedgedState);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInWedgedStateWhenFlrResetSucceedsThenWedgedStateIsNotCleared) {
+    init(true);
+
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    // Set the device in wedged state
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+    EXPECT_TRUE(pLinuxSysmanImp->isDeviceInWedgedState);
+
+    // Perform FLR reset
+    zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_FLR};
+    ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pFsAccess->mockFlrValue, "1");
+
+    // Verify that wedged state is NOT cleared after FLR reset
+    EXPECT_TRUE(pLinuxSysmanImp->isDeviceInWedgedState);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInWedgedStateWhenColdResetFailsOnReInitThenWedgedStateIsPreserved) {
+    initGlobalOps();
+
+    MockGlobalOperationsProcfsAccess *pProcFsAccess = new MockGlobalOperationsProcfsAccess();
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
+    pSysmanKmdInterface->pProcfsAccess.reset(pProcFsAccess);
+
+    std::unique_ptr<MockGlobalOpsLinuxSysmanImp> pMockGlobalOpsLinuxSysmanImp = std::make_unique<MockGlobalOpsLinuxSysmanImp>(pLinuxSysmanImp->getSysmanDeviceImp());
+    pMockGlobalOpsLinuxSysmanImp->pProcfsAccess = pProcFsAccess;
+    pMockGlobalOpsLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp = pMockGlobalOpsLinuxSysmanImp.get();
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pProcfsAccess = pProcFsAccess;
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pSysfsAccess = pSysfsAccess.get();
+
+    // Set device in wedged state
+    pMockGlobalOpsLinuxSysmanImp->isDeviceInWedgedState = true;
+    EXPECT_TRUE(pMockGlobalOpsLinuxSysmanImp->isDeviceInWedgedState);
+
+    // Make reInit fail
+    pMockGlobalOpsLinuxSysmanImp->setMockInitDeviceError(ZE_RESULT_ERROR_DEVICE_LOST);
+
+    // Attempt COLD reset - should fail
+    zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_COLD};
+    ze_result_t result = zesDeviceResetExt(device, &pProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+
+    // Verify wedged state was NOT cleared because reset failed
+    EXPECT_TRUE(pMockGlobalOpsLinuxSysmanImp->isDeviceInWedgedState);
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessIsReturned) {
@@ -1080,7 +1171,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInSurvivabilityModeWhenResetSuc
 
     pSysmanDeviceImp->isDeviceInSurvivabilityMode = true;
 
-    ze_result_t result = zesDeviceReset(device, true);
+    zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_COLD};
+    ze_result_t result = zesDeviceResetExt(device, &pProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(pSysmanDeviceImp->isDeviceInSurvivabilityMode);
 }
@@ -1483,7 +1575,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingDeviceGetStateThenS
     auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
     osInterface->setDriverModel(std::unique_ptr<DrmGlobalOpsMock>(pDrm));
 
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     ze_result_t result = zesDeviceGetState(pSysmanDevice, &deviceState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
@@ -1511,7 +1603,7 @@ class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {
     }
 
     void initGlobalOps() {
-        zes_device_state_t deviceState;
+        zes_device_state_t deviceState = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     }
 };

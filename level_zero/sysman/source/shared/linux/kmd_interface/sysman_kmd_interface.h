@@ -406,7 +406,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::vector<zes_power_domain_t> getPowerDomains() const override;
 
     // Wedged state is not supported in XE.
-    void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override {};
+    void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override;
     bool isSettingTimeoutModeSupported() const override { return false; }
     bool isSettingExclusiveModeSupported() const override { return false; }
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;

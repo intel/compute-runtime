@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ class SysmanGlobalOperationsHelperFixture : public SysmanDeviceFixture {
 
 HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateThenZesResetReasonFlagRepairedIsReturned, IsPVC) {
     pMockFwInterface->mockIfrStatus = true;
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(ZES_RESET_REASON_FLAG_REPAIR, deviceState.reset);
@@ -80,7 +80,7 @@ HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingG
 HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateThenZesResetReasonFlagRepairedIsReturned, IsNotPVC) {
     pMockFwInterface->mockIfrStatus = true;
 
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(ZES_REPAIR_STATUS_UNSUPPORTED, deviceState.repaired);
 }
@@ -88,7 +88,7 @@ HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingG
 HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateAndFirmwareRepairStatusIsFalseThenZesResetReasonFlagRepairedIsNotReturned, IsPVC) {
     pMockFwInterface->mockIfrStatus = false;
 
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
     EXPECT_EQ(ZES_REPAIR_STATUS_NOT_PERFORMED, deviceState.repaired);
@@ -97,7 +97,7 @@ HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingG
 HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateAndFirmwareRepairStatusIsFalseThenZesResetReasonFlagRepairedIsNotReturned, IsNotPVC) {
     pMockFwInterface->mockIfrStatus = false;
 
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
     EXPECT_EQ(ZES_REPAIR_STATUS_UNSUPPORTED, deviceState.repaired);
@@ -106,7 +106,7 @@ HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingG
 TEST_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateAndFirmwareRepairStatusFailsThenZesResetReasonFlagRepairedIsNotReturned) {
     pMockFwInterface->mockIfrError = ZE_RESULT_ERROR_UNKNOWN;
 
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
     EXPECT_EQ(ZES_REPAIR_STATUS_UNSUPPORTED, deviceState.repaired);

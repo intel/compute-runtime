@@ -392,6 +392,24 @@ void SysmanKmdInterfaceXe::getDriverVersion(char (&driverVersion)[ZES_STRING_PRO
     return;
 }
 
+void SysmanKmdInterfaceXe::getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) {
+    if (pLinuxSysmanImp->isDeviceInWedgedState) {
+        pState->reset |= ZES_RESET_REASON_FLAG_WEDGED;
+
+        // Fill extension if provided
+        void *pNext = const_cast<void *>(pState->pNext);
+        while (pNext) {
+            auto *pBase = static_cast<zes_base_state_t *>(pNext);
+            if (pBase->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_PENDING_ACTION_EXP) {
+                auto *pExt = reinterpret_cast<zes_intel_device_state_pending_action_exp_t *>(pBase);
+                pExt->pendingAction = ZES_PENDING_ACTION_PENDING_COLD_RESET;
+                break;
+            }
+            pNext = const_cast<void *>(pBase->pNext);
+        }
+    }
+}
+
 ze_result_t SysmanKmdInterfaceXe::getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
                                                                    uint64_t fnNumber,
                                                                    uint64_t engineInstance,

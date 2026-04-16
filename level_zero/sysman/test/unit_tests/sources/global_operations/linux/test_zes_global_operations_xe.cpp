@@ -54,14 +54,14 @@ class SysmanGlobalOperationsFixtureXe : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
     }
     void initGlobalOps() {
-        zes_device_state_t deviceState;
+        zes_device_state_t deviceState = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     }
 };
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenValidDeviceHandleWhenCallingDeviceGetStateThenVerifyDeviceIsNotWedged) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    zes_device_state_t deviceState;
+    zes_device_state_t deviceState = {};
     ze_result_t result = zesDeviceGetState(pSysmanDevice, &deviceState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(0u, deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED);

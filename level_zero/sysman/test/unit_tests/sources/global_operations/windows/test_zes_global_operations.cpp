@@ -247,7 +247,7 @@ class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {
     }
 
     void initGlobalOps() {
-        zes_device_state_t deviceState;
+        zes_device_state_t deviceState = {};
         zesDeviceGetState(device, &deviceState);
     }
 };

@@ -414,11 +414,12 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
         }
     }
 
-    ze_result_t reinitResult = pLinuxSysmanImp->reInitSysmanDeviceResources();
-    if (reinitResult == ZE_RESULT_SUCCESS) {
+    result = pLinuxSysmanImp->reInitSysmanDeviceResources();
+    if (ZE_RESULT_SUCCESS == result && resetType == ZES_RESET_TYPE_COLD) {
+        pLinuxSysmanImp->isDeviceInWedgedState = false;
         pLinuxSysmanImp->getParentSysmanDeviceImp()->isDeviceInSurvivabilityMode = false;
     }
-    return reinitResult;
+    return result;
 }
 
 ze_result_t LinuxGlobalOperationsImp::getMemoryStatsUsedByProcess(std::vector<std::string> &fdFileContents, uint64_t &memSize, uint64_t &sharedSize) {
@@ -769,7 +770,6 @@ void LinuxGlobalOperationsImp::getTimerResolution(double *pTimerResolution) {
 }
 
 ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
-    memset(pState, 0, sizeof(zes_device_state_t));
     pState->repaired = ZES_REPAIR_STATUS_UNSUPPORTED;
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, pState);

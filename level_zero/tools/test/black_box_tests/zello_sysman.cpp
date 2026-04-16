@@ -5,8 +5,8 @@
  *
  */
 
-#include "level_zero/zes_intel_gpu_sysman.h"
 #include <level_zero/zes_api.h>
+#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <algorithm>
 #include <chrono>
@@ -1580,44 +1580,6 @@ void testSysmanReset(ze_device_handle_t &device, bool force) {
     VALIDATECALL(zesDeviceReset(device, force));
 }
 
-void testSysmanListenEvents(ze_driver_handle_t driver, std::vector<ze_device_handle_t> &devices, zes_event_type_flags_t events) {
-    uint32_t numDeviceEvents = 0;
-    zes_event_type_flags_t *pEvents = new zes_event_type_flags_t[devices.size()];
-    uint32_t timeout = 100000u;
-    uint32_t numDevices = static_cast<uint32_t>(devices.size());
-    VALIDATECALL(zesDriverEventListen(driver, timeout, numDevices, devices.data(), &numDeviceEvents, pEvents));
-    if (verbose) {
-        if (numDeviceEvents) {
-            for (auto index = 0u; index < devices.size(); index++) {
-                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
-                    std::cout << "Device " << index << " got reset required event" << std::endl;
-                }
-                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
-                    std::cout << "Device " << index << " got DEVICE_DETACH event" << std::endl;
-                }
-                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
-                    std::cout << "Device " << index << " got DEVICE_ATTACH event" << std::endl;
-                }
-                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS) {
-                    std::cout << "Device " << index << " got RAS UNCORRECTABLE event" << std::endl;
-                }
-                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS) {
-                    std::cout << "Device " << index << " got RAS CORRECTABLE event" << std::endl;
-                }
-                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH) {
-                    std::cout << "Device " << index << " got Fabric Health event" << std::endl;
-                }
-                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
-                    std::cout << "Device " << index << " got memory Health event" << std::endl;
-                }
-                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED) {
-                    std::cout << "Device " << index << " got SURVIVABILITY_MODE_DETECTED event" << std::endl;
-                }
-            }
-        }
-    }
-}
-
 void testSysmanListenEventsEx(ze_driver_handle_t driver, std::vector<ze_device_handle_t> &devices, zes_event_type_flags_t events) {
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pEvents = new zes_event_type_flags_t[devices.size()];
@@ -1629,6 +1591,35 @@ void testSysmanListenEventsEx(ze_driver_handle_t driver, std::vector<ze_device_h
             for (auto index = 0u; index < devices.size(); index++) {
                 if (pEvents[index] & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
                     std::cout << "Device " << index << " got reset required event" << std::endl;
+
+                    zes_intel_device_state_pending_action_exp_t extState = {};
+                    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_PENDING_ACTION_EXP;
+                    zes_device_state_t deviceState = {};
+                    deviceState.pNext = &extState;
+
+                    VALIDATECALL(zesDeviceGetState(devices[index], &deviceState));
+                    if (verbose) {
+                        std::cout << "reset status: " << deviceState.reset << std::endl;
+                        std::cout << "repair: " << deviceState.repaired << std::endl;
+                        if (deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED) {
+                            std::cout << "Device is wedged!" << std::endl;
+                            std::cout << "reset flags: 0x" << std::hex << deviceState.reset << std::dec << std::endl;
+                            if (extState.pendingAction == ZES_PENDING_ACTION_PENDING_COLD_RESET) {
+                                std::cout << "Pending action: Cold reset required" << std::endl;
+                            } else if (extState.pendingAction == ZES_PENDING_ACTION_PENDING_WARM_RESET) {
+                                std::cout << "Pending action: Warm reset required" << std::endl;
+                            } else if (extState.pendingAction == ZES_PENDING_ACTION_PENDING_NONE) {
+                                std::cout << "Pending action: None" << std::endl;
+                            } else {
+                                std::cout << "Pending action: " << extState.pendingAction << std::endl;
+                            }
+                        }
+                        if (deviceState.reset & ZES_RESET_REASON_FLAG_REPAIR) {
+                            std::cout << "Device requires repair" << std::endl;
+                            std::cout << "reset flags: 0x" << std::hex << deviceState.reset << std::dec << std::endl;
+                            std::cout << "repair state: " << deviceState.repaired << std::endl;
+                        }
+                    }
                 }
                 if (pEvents[index] & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
                     std::cout << "Device " << index << " got DEVICE_DETACH event" << std::endl;
@@ -1834,7 +1825,7 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
     VALIDATECALL(zesDeviceGetState(device, &deviceState));
     if (verbose) {
         std::cout << "reset status: " << deviceState.reset << std::endl;
-        std::cout << "repair" << deviceState.repaired << std::endl;
+        std::cout << "repair: " << deviceState.repaired << std::endl;
         if (deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED) {
             std::cout << "state reset wedged = " << deviceState.reset << std::endl;
         }
@@ -2361,16 +2352,6 @@ int main(int argc, char *argv[]) {
         }
     }
     if (isParamEnabled(argc, argv, "-E", "--event", &optind)) {
-        std::for_each(devices.begin(), devices.end(), [&](auto device) {
-            VALIDATECALL(zesDeviceEventRegister(device,
-                                                ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
-                                                    ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
-        });
-        testSysmanListenEvents(driver, devices,
-                               ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
-                                   ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                   ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             VALIDATECALL(zesDeviceEventRegister(device,
                                                 ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
