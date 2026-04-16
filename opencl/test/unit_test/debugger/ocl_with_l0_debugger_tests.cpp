@@ -111,8 +111,7 @@ HWTEST_F(DebuggerCmdQTest, GivenDebuggingEnabledWhenInternalCommandQueueIsCreate
     EXPECT_EQ(0u, debuggerL0Hw->commandQueueDestroyedCount);
 }
 
-using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
-HWTEST2_TEMPLATED_F(DebuggerCmdQTestWithMockCsr, GivenDebuggingEnabledWhenEnqueueingKernelThenDebugSurfaceIsResident, Gen12Plus) {
+HWTEST_TEMPLATED_F(DebuggerCmdQTestWithMockCsr, GivenDebuggingEnabledWhenEnqueueingKernelThenDebugSurfaceIsResident) {
     auto mockCSR = static_cast<MockCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
 
     MockKernelWithInternals mockKernelWithInternals(*clDevice);

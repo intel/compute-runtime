@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,8 +33,7 @@ struct ImageTestsTgllAndLater : ClDeviceFixture, testing::Test {
     std::unique_ptr<Image> srcImage{};
 };
 
-using TgllpAndLaterMatcher = IsAtLeastProduct<IGFX_TIGERLAKE_LP>;
-HWTEST2_F(ImageTestsTgllAndLater, givenDepthResourceWhenSettingImageArgThenSetDepthStencilResourceField, TgllpAndLaterMatcher) {
+HWTEST_F(ImageTestsTgllAndLater, givenDepthResourceWhenSettingImageArgThenSetDepthStencilResourceField) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState{};
     auto &gpuFlags = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Gpu;

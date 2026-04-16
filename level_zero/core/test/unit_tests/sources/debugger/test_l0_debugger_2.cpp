@@ -103,10 +103,9 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggerLogsDisabledWhenCommandListIsSy
     commandList->destroy();
 }
 
-using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
 using singleAddressSpaceModeTest = Test<L0DebuggerSingleAddressSpaceFixture>;
 
-HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed, Gen12Plus) {
+HWTEST_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
@@ -304,7 +303,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
     commandList->destroy();
 }
 
-HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendLaunchKernelIndirectThenSuccessIsReturned, Gen12Plus) {
+HWTEST_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendLaunchKernelIndirectThenSuccessIsReturned) {
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
     kernel.module = &module;
@@ -321,7 +320,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImm
     commandList->destroy();
 }
 
-HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryCopyThenSuccessIsReturned, Gen12Plus) {
+HWTEST_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryCopyThenSuccessIsReturned) {
     size_t src = 0;
     size_t dst = 0;
     ze_command_queue_desc_t queueDesc = {};
@@ -334,7 +333,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImm
     commandList->destroy();
 }
 
-HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryCopyRegionThenSuccessIsReturned, Gen12Plus) {
+HWTEST_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryCopyRegionThenSuccessIsReturned) {
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
@@ -352,7 +351,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImm
     commandList->destroy();
 }
 
-HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForRegularCommandListForAppendMemoryCopyRegionThenSuccessIsReturned, Gen12Plus) {
+HWTEST_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForRegularCommandListForAppendMemoryCopyRegionThenSuccessIsReturned) {
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
@@ -383,7 +382,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForReg
     commandQueue->destroy();
 }
 
-HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendMemoryCopyCalledInLoopThenMultipleCommandBufferAreUsedAndSuccessIsReturned, Gen12Plus) {
+HWTEST_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendMemoryCopyCalledInLoopThenMultipleCommandBufferAreUsedAndSuccessIsReturned) {
     size_t src = 0;
     size_t dst = 0;
     ze_command_queue_desc_t queueDesc = {};

@@ -235,9 +235,7 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenTwoComma
     commandQueue2->destroy();
 }
 
-using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
-
-HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero, Gen12Plus) {
+HWTEST_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     DebugManagerStateRestore dbgRestorer;
@@ -276,12 +274,12 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
     EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());
-    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
+    if constexpr (FamilyType::gfxCoreFamily <= IGFX_XE_HPC_CORE) {
         EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, debugSurfaceState->getCoherencyType());
     }
 }
 
-HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenDebugSurfaceIsProgrammedWithL3DisabledMOCS, Gen12Plus) {
+HWTEST_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenDebugSurfaceIsProgrammedWithL3DisabledMOCS) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     DebugManagerStateRestore dbgRestorer;

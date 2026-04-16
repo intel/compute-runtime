@@ -581,8 +581,6 @@ struct L0DebuggerSimpleParameterizedTest : public ::testing::TestWithParam<int>,
     DebugManagerStateRestore restorer;
 };
 
-using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
-
 HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenZeroGpuVasWhenProgrammingSbaTrackingThenStreamIsNotUsed, PlatformsSupportingSbaTracking) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     debugger->initialize();

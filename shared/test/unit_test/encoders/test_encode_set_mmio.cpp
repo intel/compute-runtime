@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,8 +78,7 @@ HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterRegIsUsed) {
     }
 }
 
-using IsTgllpOrAbove = IsAtLeastProduct<IGFX_TIGERLAKE_LP>;
-HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMMIOThenRemapIsEnabled, IsTgllpOrAbove) {
+HWTEST_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMMIOThenRemapIsEnabled) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
     uint32_t remapApplicableOffsets[] = {0x2000, 0x27ff,
@@ -124,7 +123,7 @@ HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMM
     }
 }
 
-HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMMIOFromRegThenRemapIsEnabled, IsTgllpOrAbove) {
+HWTEST_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMMIOFromRegThenRemapIsEnabled) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
 
     uint32_t remapApplicableOffsets[] = {0x2000, 0x27ff,
