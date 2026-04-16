@@ -195,7 +195,15 @@ ze_result_t ZE_APICALL zeCommandListGetGraphExp(ze_command_list_handle_t hComman
     if ((nullptr == cmdList) || (nullptr == phGraph) || (nullptr == cmdList->getCaptureTarget())) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    *phGraph = cmdList->getCaptureTarget();
+    auto rootGraph = cmdList->getCaptureTarget();
+
+    if (rootGraph) {
+        while (rootGraph->getParentGraph() != nullptr) {
+            rootGraph = rootGraph->getParentGraph();
+        }
+    }
+
+    *phGraph = rootGraph;
     return ZE_RESULT_SUCCESS;
 }
 

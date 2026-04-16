@@ -273,6 +273,10 @@ struct Graph : _ze_graph_handle_t {
         return ZE_RESULT_SUCCESS;
     }
 
+    Graph *getParentGraph() const {
+        return parentGraph;
+    }
+
   protected:
     void unregisterSignallingEvents();
 
@@ -290,6 +294,7 @@ struct Graph : _ze_graph_handle_t {
     L0::CommandList *captureSrc = nullptr;
     L0::CommandList *executionTarget = nullptr;
     L0::Context *ctx = nullptr;
+    Graph *parentGraph = nullptr;
 
     bool preallocated = false;
     bool wasCapturingStopped = false;

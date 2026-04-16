@@ -113,6 +113,7 @@ void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinE
 void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent) {
     UNRECOVERABLE_IF(child || childCmdList.getCaptureTarget()); // should not be capturing already
     child = new Graph(this->ctx, false, this->orderedCommands.share());
+    child->parentGraph = this;
     child->startCapturingFrom(childCmdList, true);
     childCmdList.setCaptureTarget(child);
     this->subGraphs.push_back(child);

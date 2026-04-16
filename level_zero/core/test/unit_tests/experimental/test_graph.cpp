@@ -2064,6 +2064,88 @@ TEST(GraphTestZeCommandListGetGraphExp, GivenValidParametersThenReturnsUnderlyin
     cmdlist.setCaptureTarget(nullptr);
 }
 
+struct TestableGraphForCmdListQuery : public L0::Graph {
+    using L0::Graph::Graph;
+
+    void setParentGraph(Graph *graph) {
+        parentGraph = graph;
+    }
+
+    void setExecutionTarget(L0::CommandList *cmdList) {
+        executionTarget = cmdList;
+    }
+};
+
+TEST(GraphTestZeCommandListGetGraphExp, GivenForkedCommandListThenReturnsParentGraph) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph parentGraph{&ctx, true};
+    TestableGraphForCmdListQuery subgraph{&ctx, true};
+    MockCommandList parentCmdlist;
+    MockCommandList childCmdlist;
+    ze_graph_handle_t queryResult = {};
+
+    // Simulate a parent command list capturing to parent graph
+    parentCmdlist.setCaptureTarget(&parentGraph);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListGetGraphExp(&parentCmdlist, &queryResult));
+    EXPECT_EQ(&parentGraph, queryResult) << "Parent cmdlist should return parent graph";
+
+    // Simulate forking: create a subgraph and set it as capture target for child
+    subgraph.setParentGraph(&parentGraph);
+    subgraph.setExecutionTarget(&childCmdlist);
+    childCmdlist.setCaptureTarget(&subgraph);
+
+    // When querying the child command list, should return parent graph, not subgraph
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListGetGraphExp(&childCmdlist, &queryResult));
+    EXPECT_EQ(&parentGraph, queryResult) << "Forked cmdlist should return parent graph, not subgraph";
+    EXPECT_NE(&subgraph, queryResult) << "Should not return subgraph handle";
+
+    // Cleanup
+    childCmdlist.setCaptureTarget(nullptr);
+    parentCmdlist.setCaptureTarget(nullptr);
+}
+
+TEST(GraphTestZeCommandListGetGraphExp, GivenNestedSubgraphsThenReturnsRootParentGraph) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph rootGraph{&ctx, true};
+    TestableGraphForCmdListQuery subgraph1{&ctx, true};
+    TestableGraphForCmdListQuery subgraph2{&ctx, true};
+    MockCommandList rootCmdlist;
+    MockCommandList level1Cmdlist;
+    MockCommandList level2Cmdlist;
+    ze_graph_handle_t queryResult = {};
+
+    // Setup root graph
+    rootCmdlist.setCaptureTarget(&rootGraph);
+
+    // Create first level subgraph (child of root)
+    subgraph1.setParentGraph(&rootGraph);
+    subgraph1.setExecutionTarget(&level1Cmdlist);
+    level1Cmdlist.setCaptureTarget(&subgraph1);
+
+    // Create second level subgraph (child of subgraph1)
+    subgraph2.setParentGraph(&subgraph1);
+    subgraph2.setExecutionTarget(&level2Cmdlist);
+    level2Cmdlist.setCaptureTarget(&subgraph2);
+
+    // Query from level 1 subgraph - should return root graph
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListGetGraphExp(&level1Cmdlist, &queryResult));
+    EXPECT_EQ(&rootGraph, queryResult) << "Level 1 subgraph should return root graph";
+    EXPECT_NE(&subgraph1, queryResult) << "Should not return level 1 subgraph handle";
+
+    // Query from level 2 subgraph - should also return root graph (not level 1)
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListGetGraphExp(&level2Cmdlist, &queryResult));
+    EXPECT_EQ(&rootGraph, queryResult) << "Level 2 subgraph should return root graph, not level 1";
+    EXPECT_NE(&subgraph2, queryResult) << "Should not return level 2 subgraph handle";
+    EXPECT_NE(&subgraph1, queryResult) << "Should not return intermediate subgraph handle";
+
+    // Cleanup
+    level2Cmdlist.setCaptureTarget(nullptr);
+    level1Cmdlist.setCaptureTarget(nullptr);
+    rootCmdlist.setCaptureTarget(nullptr);
+}
+
 TEST(GraphTestZeGraphSetDestructionCallbackExp, GivenInvalidParametersThenReturnsAppropriateErrorCode) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
