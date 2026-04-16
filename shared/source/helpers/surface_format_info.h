@@ -1,14 +1,17 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "third_party/opencl_headers/CL/cl_ext.h"
 
 #include <cstdint>
+#include <cstdio>
 
 namespace NEO {
 enum SurfaceFormat : unsigned short {
@@ -261,6 +264,39 @@ struct ImageInfo {
     bool useLocalMemory;
     bool isDisplayable;
     ImageTilingMode forceTiling = ImageTilingMode::notTiled;
+
+    void print() const {
+        if (!NEO::debugManager.flags.PrintImgInfo.get()) {
+            return;
+        }
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "ImageInfo:\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  imgDesc.imageType: %d\n", static_cast<int>(imgDesc.imageType));
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  imgDesc.imageWidth: %zu\n", imgDesc.imageWidth);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  imgDesc.imageHeight: %zu\n", imgDesc.imageHeight);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  imgDesc.imageDepth: %zu\n", imgDesc.imageDepth);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  imgDesc.imageArraySize: %zu\n", imgDesc.imageArraySize);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  imgDesc.imageRowPitch: %zu\n", imgDesc.imageRowPitch);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  imgDesc.imageSlicePitch: %zu\n", imgDesc.imageSlicePitch);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  imgDesc.numMipLevels: %u\n", imgDesc.numMipLevels);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  imgDesc.numSamples: %u\n", imgDesc.numSamples);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  imgDesc.fromParent: %d\n", imgDesc.fromParent);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  surfaceFormat: %p\n", static_cast<const void *>(surfaceFormat));
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  size: %zu\n", size);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  rowPitch: %zu\n", rowPitch);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  slicePitch: %zu\n", slicePitch);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  qPitch: %u\n", qPitch);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  offset: %zu\n", offset);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  xOffset: %u\n", xOffset);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  yOffset: %u\n", yOffset);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  yOffsetForUVPlane: %u\n", yOffsetForUVPlane);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  plane: %d\n", static_cast<int>(plane));
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  baseMipLevel: %u\n", baseMipLevel);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  mipCount: %u\n", mipCount);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  linearStorage: %d\n", linearStorage);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  useLocalMemory: %d\n", useLocalMemory);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  isDisplayable: %d\n", isDisplayable);
+        PRINT_STRING(NEO::debugManager.flags.PrintImgInfo.get(), stdout, "  forceTiling: %d\n", static_cast<int>(forceTiling));
+    }
 };
 
 struct ImageImplicitArgs {

@@ -203,6 +203,9 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
         gmm->updateImgInfoAndDesc(imgInfo, 0u, yuvPlaneType);
     }
+
+    imgInfo.print();
+
     NEO::SurfaceOffsets surfaceOffsets = {imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane};
 
     {

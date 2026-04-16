@@ -10,6 +10,8 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
@@ -301,4 +303,65 @@ HWTEST_F(ImageWidthTest, givenMediaBlockWhenProgrammingWidthInSurfaceStateThenCo
         }};
         verifyProgramming<FamilyType>(renderSurfaceState, params);
     }
+}
+
+TEST_F(ImageSurfaceStateTests, givenPrintImgInfoDebugFlagWhenPrintCalledThenImageInfoIsPrinted) {
+    DebugManagerStateRestore debugSettingsRestore;
+    debugManager.flags.PrintImgInfo.set(true);
+
+    imageInfo.imgDesc.imageType = ImageType::image2D;
+    imageInfo.imgDesc.imageWidth = 64;
+    imageInfo.imgDesc.imageHeight = 32;
+    imageInfo.imgDesc.imageDepth = 1;
+    imageInfo.imgDesc.imageArraySize = 1;
+    imageInfo.imgDesc.imageRowPitch = 256;
+    imageInfo.imgDesc.imageSlicePitch = 8192;
+    imageInfo.imgDesc.numMipLevels = 1;
+    imageInfo.imgDesc.numSamples = 1;
+    imageInfo.imgDesc.fromParent = false;
+    imageInfo.surfaceFormat = nullptr;
+    imageInfo.size = 4096;
+    imageInfo.rowPitch = 256;
+    imageInfo.slicePitch = 8192;
+    imageInfo.qPitch = 32;
+    imageInfo.offset = 0;
+    imageInfo.xOffset = 0;
+    imageInfo.yOffset = 0;
+    imageInfo.yOffsetForUVPlane = 0;
+    imageInfo.plane = ImagePlane::noPlane;
+    imageInfo.baseMipLevel = 0;
+    imageInfo.mipCount = 1;
+    imageInfo.linearStorage = false;
+    imageInfo.useLocalMemory = false;
+    imageInfo.isDisplayable = false;
+
+    StreamCapture capture;
+    capture.captureStdout();
+
+    imageInfo.print();
+
+    std::string output = capture.getCapturedStdout();
+    ASSERT_NE(0u, output.size());
+
+    EXPECT_TRUE(hasSubstr(output, std::string("ImageInfo:")));
+    EXPECT_TRUE(hasSubstr(output, std::string("imgDesc.imageWidth: 64")));
+    EXPECT_TRUE(hasSubstr(output, std::string("imgDesc.imageHeight: 32")));
+    EXPECT_TRUE(hasSubstr(output, std::string("size: 4096")));
+    EXPECT_TRUE(hasSubstr(output, std::string("rowPitch: 256")));
+    EXPECT_TRUE(hasSubstr(output, std::string("qPitch: 32")));
+    EXPECT_TRUE(hasSubstr(output, std::string("mipCount: 1")));
+    EXPECT_TRUE(hasSubstr(output, std::string("linearStorage: 0")));
+}
+
+TEST_F(ImageSurfaceStateTests, givenPrintImgInfoDebugFlagDisabledWhenPrintCalledThenNothingIsPrinted) {
+    DebugManagerStateRestore debugSettingsRestore;
+    debugManager.flags.PrintImgInfo.set(false);
+
+    StreamCapture capture;
+    capture.captureStdout();
+
+    imageInfo.print();
+
+    std::string output = capture.getCapturedStdout();
+    EXPECT_EQ(0u, output.size());
 }

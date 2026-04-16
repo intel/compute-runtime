@@ -367,6 +367,8 @@ Image *Image::create(Context *context,
         cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfos, isParentObject);
     }
 
+    imgInfo.print();
+
     return image;
 }
 
@@ -409,6 +411,9 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
     sharedImage->setPlane(imgInfo.plane);
     sharedImage->setIsDisplayable(imgInfo.isDisplayable);
     sharedImage->setIsUnifiedMcsSurface(hasUnifiedMcsSurface);
+
+    imgInfo.print();
+
     return sharedImage;
 }
 
