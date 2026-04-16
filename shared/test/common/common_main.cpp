@@ -487,7 +487,7 @@ int main(int argc, char **argv) {
             VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFcloseSetter(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return fclose(stream); });
             for (const std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
                                                            "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16",
-                                                           "stateless_copy_buffer", "indirect_access_kernel", "system_memfence",
+                                                           "system_memfence",
                                                            "simple_spill_fill_kernel", "spill_fill_kernel_large_grf", "simple_kernel_large_grf"}) {
                 std::string testFilename;
                 retrieveBinaryKernelFilename(testFilename, binaryFileCommonName + "_", ".bin", "");

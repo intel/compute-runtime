@@ -7,9 +7,6 @@
 
 #pragma once
 #include "shared/source/compiler_interface/compiler_options.h"
-#include "shared/source/device/device.h"
-#include "shared/source/helpers/array_count.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/kernel/kernel.h"
@@ -212,86 +209,6 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
     }
 
     std::unique_ptr<Kernel> kernel = nullptr;
-    cl_int retVal = CL_SUCCESS;
-};
-
-class StatelessCopyKernelFixture : public ProgramFixture {
-  public:
-    DebugManagerStateRestore restorer;
-    using ProgramFixture::setUp;
-
-  protected:
-    void setUp(ClDevice *device, Context *context) {
-        ProgramFixture::setUp();
-        debugManager.flags.DisableStatelessToStatefulOptimization.set(true);
-        debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
-
-        createProgramFromBinary(
-            context,
-            toClDeviceVector(*device),
-            "stateless_copy_buffer");
-        ASSERT_NE(nullptr, pProgram);
-
-        retVal = pProgram->build(
-            pProgram->getDevices(),
-            CompilerOptions::greaterThan4gbBuffersRequired.data());
-        ASSERT_EQ(CL_SUCCESS, retVal);
-
-        multiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(
-            pProgram,
-            pProgram->getKernelInfosForKernel("StatelessCopyBuffer"),
-            retVal));
-        kernel = static_cast<MockKernel *>(multiDeviceKernel->getKernel(device->getRootDeviceIndex()));
-        ASSERT_NE(nullptr, kernel);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-    }
-
-    void tearDown() {
-        ProgramFixture::tearDown();
-    }
-
-    std::unique_ptr<MultiDeviceKernel> multiDeviceKernel = nullptr;
-    MockKernel *kernel = nullptr;
-    cl_int retVal = CL_SUCCESS;
-};
-
-class StatelessKernelWithIndirectAccessFixture : public ProgramFixture {
-  public:
-    DebugManagerStateRestore restorer;
-    using ProgramFixture::setUp;
-
-  protected:
-    void setUp(ClDevice *device, Context *context) {
-        ProgramFixture::setUp();
-        debugManager.flags.DisableStatelessToStatefulOptimization.set(true);
-        debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
-
-        createProgramFromBinary(
-            context,
-            toClDeviceVector(*device),
-            "indirect_access_kernel");
-        ASSERT_NE(nullptr, pProgram);
-
-        retVal = pProgram->build(
-            pProgram->getDevices(),
-            CompilerOptions::greaterThan4gbBuffersRequired.data());
-        ASSERT_EQ(CL_SUCCESS, retVal);
-
-        multiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(
-            pProgram,
-            pProgram->getKernelInfosForKernel("testIndirect"),
-            retVal));
-        ASSERT_NE(nullptr, multiDeviceKernel);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-
-        EXPECT_TRUE(multiDeviceKernel->getKernel(device->getRootDeviceIndex())->getKernelInfo().kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
-    }
-
-    void tearDown() {
-        ProgramFixture::tearDown();
-    }
-
-    std::unique_ptr<MultiDeviceKernel> multiDeviceKernel = nullptr;
     cl_int retVal = CL_SUCCESS;
 };
 
