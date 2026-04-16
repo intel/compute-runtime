@@ -23,6 +23,7 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/blit_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string_helpers.h"
@@ -697,8 +698,10 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.cantBeReadOnly = properties.flags.cantBeReadOnly;
     allocationData.usmInitialPlacement = properties.usmInitialPlacement;
 
-    if (properties.allocationType == AllocationType::commandBuffer && rootDeviceEnvironment.debugger.get() && rootDeviceEnvironment.debugger->getSingleAddressSpaceSbaTracking()) {
-        allocationData.flags.cantBeReadOnly = true;
+    if (properties.allocationType == AllocationType::commandBuffer && rootDeviceEnvironment.debugger.get()) {
+        auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+        allocationData.flags.cantBeReadOnly = rootDeviceEnvironment.debugger->getSingleAddressSpaceSbaTracking();
+        allocationData.flags.cantBeReadOnly |= !compilerProductHelper.isHeaplessModeEnabled(hwInfo);
     }
 
     if (GraphicsAllocation::isDebugSurfaceAllocationType(properties.allocationType) ||
