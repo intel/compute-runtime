@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,7 +9,6 @@ set(IGDRCL_SRCS_tests_program
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_data.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_data_OCL2_0.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_from_patchtokens_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/process_debug_data_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}process_elf_binary_tests.cpp

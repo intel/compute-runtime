@@ -11,9 +11,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}implicit_args_v2_layout_test_helper.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_descriptor_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_metadata_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor_from_patchtokens_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/kernel_raytracing_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/local_ids_cache_tests.cpp
 )
 

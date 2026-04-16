@@ -26,7 +26,6 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
-#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/implicit_args_test_helper.h"
 #include "shared/test/common/helpers/mock_file_io.h"
@@ -4487,21 +4486,6 @@ HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebin
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_TRUE(virtualFileExists(fileName));
-    removeVirtualFile(fileName);
-
-    PatchTokensTestData::ValidEmptyProgram programTokens;
-    mockCompilerInterface->output.intermediateRepresentation.size = programTokens.storage.size();
-    mockCompilerInterface->output.intermediateRepresentation.mem.reset(new char[programTokens.storage.size()]);
-
-    memcpy_s(mockCompilerInterface->output.intermediateRepresentation.mem.get(), mockCompilerInterface->output.intermediateRepresentation.size,
-             programTokens.storage.data(), programTokens.storage.size());
-
-    MockModuleTranslationUnit moduleTu2(this->device);
-    moduleTu2.processUnpackedBinaryCallBase = true;
-
-    result = moduleTu2.buildFromSpirV(binary, sizeof(binary), nullptr, "", nullptr);
-
-    EXPECT_FALSE(virtualFileExists(fileName));
     removeVirtualFile(fileName);
 }
 

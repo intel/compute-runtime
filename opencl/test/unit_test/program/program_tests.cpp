@@ -30,7 +30,6 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
-#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_file_io.h"
@@ -2350,87 +2349,6 @@ TEST_F(ProgramTests, GivenZebinWithSpecConstantsWhenCreatingProgramFromBinaryThe
     EXPECT_EQ(100u, program->specConstantsValues[1u]);
     EXPECT_EQ(200u, program->specConstantsValues[2u]);
     EXPECT_EQ(300u, program->specConstantsValues[3u]);
-}
-
-TEST_F(ProgramTests, DISABLED_givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenPrintDebugMsgAndReturnError) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.PrintDebugMessages.set(true);
-
-    PatchTokensTestData::ValidProgramWithKernelUsingSlm patchtokensProgram;
-    patchtokensProgram.slmMutable->TotalInlineLocalMemorySize = static_cast<uint32_t>(pDevice->getDeviceInfo().localMemSize * 2);
-    patchtokensProgram.recalcTokPtr();
-    auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
-
-    StreamCapture capture;
-    capture.captureStderr();
-
-    auto retVal = program->processGenBinary(*pClDevice);
-
-    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
-
-    std::string output = capture.getCapturedStderr();
-    const auto &slmInlineSize = patchtokensProgram.slmMutable->TotalInlineLocalMemorySize;
-    const auto &localMemSize = pDevice->getDeviceInfo().localMemSize;
-    std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
-    EXPECT_EQ(expectedOutput, output);
-}
-
-TEST_F(ProgramTests, DISABLED_givenExistingConstantSurfacesWhenProcessGenBinaryThenCleanupTheSurfaceOnlyForSpecificDevice) {
-    PatchTokensTestData::ValidProgramWithKernelUsingSlm patchtokensProgram;
-
-    auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
-
-    program->buildInfos.resize(2);
-    program->buildInfos[0].constantSurface = std::make_unique<SharedPoolAllocation>(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                                                                       AllocationType::constantSurface, pDevice->getDeviceBitfield()}));
-    program->buildInfos[1].constantSurface = std::make_unique<SharedPoolAllocation>(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                                                                       AllocationType::constantSurface, pDevice->getDeviceBitfield()}));
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
-
-    auto constantSurface0 = program->buildInfos[0].constantSurface.get();
-    EXPECT_NE(nullptr, constantSurface0);
-    EXPECT_NE(nullptr, constantSurface0->getGraphicsAllocation());
-    auto constantSurface1 = program->buildInfos[1].constantSurface.get();
-    EXPECT_NE(nullptr, constantSurface1);
-    EXPECT_NE(nullptr, constantSurface1->getGraphicsAllocation());
-
-    auto retVal = program->processGenBinary(*pClDevice);
-
-    EXPECT_EQ(nullptr, program->buildInfos[0].constantSurface);
-    EXPECT_EQ(constantSurface1->getGraphicsAllocation(), program->buildInfos[1].constantSurface->getGraphicsAllocation());
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
-
-TEST_F(ProgramTests, DISABLED_givenExistingGlobalSurfacesWhenProcessGenBinaryThenCleanupTheSurfaceOnlyForSpecificDevice) {
-    PatchTokensTestData::ValidProgramWithKernelUsingSlm patchtokensProgram;
-
-    auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
-
-    program->buildInfos.resize(2);
-    program->buildInfos[0].globalSurface = std::make_unique<SharedPoolAllocation>(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                                                                     AllocationType::globalSurface, pDevice->getDeviceBitfield()}));
-    program->buildInfos[1].globalSurface = std::make_unique<SharedPoolAllocation>(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                                                                     AllocationType::globalSurface, pDevice->getDeviceBitfield()}));
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
-
-    auto globalSurface0 = program->buildInfos[0].globalSurface.get();
-    EXPECT_NE(nullptr, globalSurface0);
-    EXPECT_NE(nullptr, globalSurface0->getGraphicsAllocation());
-    auto globalSurface1 = program->buildInfos[1].globalSurface.get();
-    EXPECT_NE(nullptr, globalSurface1);
-    EXPECT_NE(nullptr, globalSurface1->getGraphicsAllocation());
-
-    auto retVal = program->processGenBinary(*pClDevice);
-
-    EXPECT_EQ(nullptr, program->buildInfos[0].globalSurface);
-    EXPECT_EQ(globalSurface1->getGraphicsAllocation(), program->buildInfos[1].globalSurface->getGraphicsAllocation());
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST_F(ProgramTests, GivenNoCompilerInterfaceRootDeviceEnvironmentWhenRebuildingBinaryThenOutOfHostMemoryErrorIsReturned) {

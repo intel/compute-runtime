@@ -14,9 +14,7 @@
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/kernel_descriptor.h"
-#include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -1127,92 +1125,6 @@ HWTEST2_F(EncodeDispatchKernelTest, givenPrintKernelDispatchParametersWhenEncodi
     EXPECT_NE(std::string::npos, outputString.find("numberOfThreadsInGpgpuThreadGroup"));
     EXPECT_NE(std::string::npos, outputString.find("threadGroupDimensions"));
     EXPECT_NE(std::string::npos, outputString.find("threadGroupDispatchSize enum"));
-}
-
-HWTEST2_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatchingKernelThenSurfaceStateOffsetInCrossThreadDataIsNotPatched, IsHeapfulRequired) {
-    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    uint32_t numBindingTable = 1;
-    BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
-
-    auto ssh = cmdContainer->getIndirectHeap(HeapType::surfaceState);
-    auto ioh = cmdContainer->getIndirectHeap(HeapType::indirectObject);
-
-    size_t sizeUsed = 0x20;
-    ssh->getSpace(sizeUsed);
-    sizeUsed = ssh->getUsed();
-
-    uint32_t dims[] = {1, 1, 1};
-    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-
-    std::vector<uint8_t> storage;
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
-    kernelTokens.tokens.kernelArgs.resize(1);
-    kernelTokens.tokens.kernelArgs[0].objectType = NEO::PatchTokenBinary::ArgObjectType::buffer;
-
-    const uint32_t iohOffset = dispatchInterface->getCrossThreadDataSize() + 4;
-    const uint32_t surfaceStateOffset = 128;
-    iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument globalMemArg = {};
-    globalMemArg.Token = iOpenCL::PATCH_TOKEN_STATELESS_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
-    globalMemArg.ArgumentNumber = 0;
-    globalMemArg.DataParamOffset = iohOffset;
-    globalMemArg.DataParamSize = 4;
-    globalMemArg.SurfaceStateHeapOffset = surfaceStateOffset;
-
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(ioh->getCpuBase(), iohOffset));
-    const uint32_t pattern = 0xdeadu;
-    *patchLocation = pattern;
-
-    kernelTokens.tokens.kernelArgs[0].objectArg = &globalMemArg;
-
-    NEO::populateKernelDescriptor(dispatchInterface->kernelDescriptor, kernelTokens, sizeof(void *));
-
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
-    dispatchInterface->kernelDescriptor.kernelAttributes.numGrfRequired = 128U;
-
-    auto &arg = dispatchInterface->kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
-    arg.bindless = NEO::undefined<CrossThreadDataOffset>;
-    arg.bindful = surfaceStateOffset;
-
-    const uint8_t *sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
-    dispatchInterface->getSurfaceStateHeapDataResult = const_cast<uint8_t *>(sshData);
-    dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE));
-
-    bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-
-    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
-
-    EXPECT_EQ(pattern, *patchLocation);
-
-    iOpenCL::SPatchSamplerKernelArgument samplerArg = {};
-    samplerArg.Token = iOpenCL::PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT;
-    samplerArg.ArgumentNumber = 1;
-    samplerArg.Offset = surfaceStateOffset;
-    samplerArg.Type = iOpenCL::SAMPLER_OBJECT_TEXTURE;
-    kernelTokens.tokens.kernelArgs[0].objectArg = &samplerArg;
-    kernelTokens.tokens.kernelArgs[0].objectType = NEO::PatchTokenBinary::ArgObjectType::sampler;
-
-    dispatchInterface.reset(new MockDispatchKernelEncoder());
-
-    NEO::populateKernelDescriptor(dispatchInterface->kernelDescriptor, kernelTokens, sizeof(void *));
-
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
-    dispatchInterface->kernelDescriptor.kernelAttributes.numGrfRequired = 128U;
-
-    sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
-    dispatchInterface->getSurfaceStateHeapDataResult = const_cast<uint8_t *>(sshData);
-    dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE));
-
-    ioh->replaceBuffer(ioh->getCpuBase(), ioh->getMaxAvailableSpace());
-    memset(ioh->getCpuBase(), 0, ioh->getMaxAvailableSpace());
-
-    dispatchArgs.dispatchInterface = dispatchInterface.get();
-    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
-
-    EXPECT_TRUE(memoryZeroed(ptrOffset(ioh->getCpuBase(), iohOffset), ioh->getMaxAvailableSpace() - iohOffset));
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, WalkerThreadTest, givenStartWorkGroupWhenIndirectIsFalseThenExpectStartGroupAndThreadDimensionsProgramming) {

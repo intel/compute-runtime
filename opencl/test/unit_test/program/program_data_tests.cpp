@@ -13,10 +13,8 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/program/program_info_from_patchtokens.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
-#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
@@ -40,10 +38,6 @@
 
 using namespace NEO;
 
-using namespace iOpenCL;
-static const char constValue[] = "11223344";
-static const char globalValue[] = "55667788";
-
 class ProgramDataTestBase : public testing::Test,
                             public ContextFixture,
                             public PlatformFixture,
@@ -53,15 +47,6 @@ class ProgramDataTestBase : public testing::Test,
     using PlatformFixture::setUp;
 
   public:
-    ProgramDataTestBase() {
-        memset(&programBinaryHeader, 0x00, sizeof(SProgramBinaryHeader));
-        pCurPtr = nullptr;
-        pProgramPatchList = nullptr;
-        programPatchListSize = 0;
-    }
-
-    void buildAndDecodeProgramPatchList();
-
     void SetUp() override {
         PlatformFixture::setUp();
         pClDevice = pPlatform->getClDevice(0);
@@ -81,147 +66,11 @@ class ProgramDataTestBase : public testing::Test,
         PlatformFixture::tearDown();
     }
 
-    size_t setupConstantAllocation() {
-        size_t constSize = strlen(constValue) + 1;
-
-        EXPECT_EQ(nullptr, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-
-        SPatchAllocateConstantMemorySurfaceProgramBinaryInfo allocateConstMemorySurface;
-        allocateConstMemorySurface.Token = PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO;
-        allocateConstMemorySurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateConstantMemorySurfaceProgramBinaryInfo));
-
-        allocateConstMemorySurface.ConstantBufferIndex = 0;
-        allocateConstMemorySurface.InlineDataSize = static_cast<uint32_t>(constSize);
-
-        pAllocateConstMemorySurface.reset(new cl_char[allocateConstMemorySurface.Size + constSize]);
-
-        memcpy_s(pAllocateConstMemorySurface.get(),
-                 sizeof(SPatchAllocateConstantMemorySurfaceProgramBinaryInfo),
-                 &allocateConstMemorySurface,
-                 sizeof(SPatchAllocateConstantMemorySurfaceProgramBinaryInfo));
-
-        memcpy_s((cl_char *)pAllocateConstMemorySurface.get() + sizeof(allocateConstMemorySurface), constSize, constValue, constSize);
-
-        pProgramPatchList = (void *)pAllocateConstMemorySurface.get();
-        programPatchListSize = static_cast<uint32_t>(allocateConstMemorySurface.Size + constSize);
-        return constSize;
-    }
-
-    size_t setupGlobalAllocation() {
-        size_t globalSize = strlen(globalValue) + 1;
-
-        EXPECT_EQ(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-
-        SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo allocateGlobalMemorySurface;
-        allocateGlobalMemorySurface.Token = PATCH_TOKEN_ALLOCATE_GLOBAL_MEMORY_SURFACE_PROGRAM_BINARY_INFO;
-        allocateGlobalMemorySurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo));
-
-        allocateGlobalMemorySurface.GlobalBufferIndex = 0;
-        allocateGlobalMemorySurface.InlineDataSize = static_cast<uint32_t>(globalSize);
-
-        pAllocateGlobalMemorySurface.reset(new cl_char[allocateGlobalMemorySurface.Size + globalSize]);
-
-        memcpy_s(pAllocateGlobalMemorySurface.get(),
-                 sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo),
-                 &allocateGlobalMemorySurface,
-                 sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo));
-
-        memcpy_s((cl_char *)pAllocateGlobalMemorySurface.get() + sizeof(allocateGlobalMemorySurface), globalSize, globalValue, globalSize);
-
-        pProgramPatchList = pAllocateGlobalMemorySurface.get();
-        programPatchListSize = static_cast<uint32_t>(allocateGlobalMemorySurface.Size + globalSize);
-        return globalSize;
-    }
-
-    void disableGlobalConstSurfacePooling() {
-        mockProductHelper = new MockProductHelper;
-        pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
-        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
-    }
-
-    MockProductHelper *mockProductHelper{nullptr};
-    std::unique_ptr<cl_char[]> pAllocateConstMemorySurface;
-    std::unique_ptr<cl_char[]> pAllocateGlobalMemorySurface;
-    char *pCurPtr;
-    SProgramBinaryHeader programBinaryHeader;
-    void *pProgramPatchList;
-    uint32_t programPatchListSize;
-    cl_int patchlistDecodeErrorCode = 0;
-    bool allowDecodeFailure = false;
     ClDevice *pClDevice = nullptr;
     uint32_t rootDeviceIndex;
 };
 
-void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
-    size_t headerSize = sizeof(SProgramBinaryHeader);
-
-    cl_int error = CL_SUCCESS;
-    programBinaryHeader.Magic = 0x494E5443;
-    programBinaryHeader.Version = CURRENT_ICBE_VERSION;
-    programBinaryHeader.Device = defaultHwInfo->platform.eRenderCoreFamily;
-    programBinaryHeader.GPUPointerSizeInBytes = 8;
-    programBinaryHeader.NumberOfKernels = 0;
-    programBinaryHeader.PatchListSize = programPatchListSize;
-
-    char *pProgramData = new char[headerSize + programBinaryHeader.PatchListSize];
-    ASSERT_NE(nullptr, pProgramData); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-
-    pCurPtr = pProgramData;
-
-    // program header
-    memset(pCurPtr, 0, sizeof(SProgramBinaryHeader));
-    *(SProgramBinaryHeader *)pCurPtr = programBinaryHeader;
-
-    pCurPtr += sizeof(SProgramBinaryHeader);
-
-    // patch list
-    memcpy_s(pCurPtr, programPatchListSize, pProgramPatchList, programPatchListSize);
-    pCurPtr += programPatchListSize;
-
-    auto rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
-    // as we use mock compiler in unit test, replace the genBinary here.
-    pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(pProgramData, headerSize + programBinaryHeader.PatchListSize);
-    pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = headerSize + programBinaryHeader.PatchListSize;
-
-    error = pProgram->processGenBinary(*pClDevice);
-    patchlistDecodeErrorCode = error;
-    if (allowDecodeFailure == false) {
-        EXPECT_EQ(CL_SUCCESS, error);
-    }
-    delete[] pProgramData;
-}
-
 using ProgramDataTest = ProgramDataTestBase;
-
-TEST_F(ProgramDataTest, DISABLED_GivenEmptyProgramBinaryHeaderWhenBuildingAndDecodingThenSuccessIsReturned) {
-    buildAndDecodeProgramPatchList();
-}
-
-TEST_F(ProgramDataTest, DISABLED_WhenAllocatingConstantMemorySurfaceThenUnderlyingBufferIsSetCorrectly) {
-
-    auto constSize = setupConstantAllocation();
-
-    buildAndDecodeProgramPatchList();
-
-    auto surface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
-    ASSERT_NE(nullptr, surface);
-    EXPECT_NE(nullptr, surface->getGraphicsAllocation());
-    EXPECT_EQ(0, memcmp(constValue, surface->getUnderlyingBuffer(), constSize));
-}
-
-TEST_F(ProgramDataTest, DISABLED_givenProgramWhenAllocatingConstantMemorySurfaceThenProperDeviceBitfieldIsPassed) {
-    auto executionEnvironment = pClDevice->getExecutionEnvironment();
-    auto memoryManager = new MockMemoryManager(*executionEnvironment);
-
-    std::unique_ptr<MemoryManager> memoryManagerBackup(memoryManager);
-    std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
-    EXPECT_NE(pClDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
-    setupConstantAllocation();
-    buildAndDecodeProgramPatchList();
-    EXPECT_NE(nullptr, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(pClDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
-    std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
-}
 
 TEST_F(ProgramDataTest, whenGlobalConstantsAreExportedThenAllocateSurfacesAsSvm) {
     if (this->pContext->getSVMAllocsManager() == nullptr) {
@@ -566,71 +415,6 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalVariablesMemorySurfa
 
     auto &ssInHeap = globalVariablesAlloc->getBindlessInfo();
     EXPECT_EQ(nullptr, ssInHeap.heapAllocation);
-}
-
-TEST_F(ProgramDataTest, DISABLED_givenConstantAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
-    disableGlobalConstSurfacePooling();
-    setupConstantAllocation();
-
-    buildAndDecodeProgramPatchList();
-
-    auto &csr = *pPlatform->getClDevice(0)->getDefaultEngine().commandStreamReceiver;
-    auto tagAddress = csr.getTagAddress();
-    auto constantSurface = pProgram->getConstantSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex());
-    constantSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
-
-    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_TRUE(csr.getDeferredAllocations().peekIsEmpty());
-    delete pProgram;
-    pProgram = nullptr;
-    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(csr.getDeferredAllocations().peekIsEmpty());
-    EXPECT_EQ(constantSurface, csr.getDeferredAllocations().peekHead());
-}
-
-TEST_F(ProgramDataTest, DISABLED_givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
-    disableGlobalConstSurfacePooling();
-    setupGlobalAllocation();
-
-    buildAndDecodeProgramPatchList();
-
-    auto &csr = *pPlatform->getClDevice(0)->getDefaultEngine().commandStreamReceiver;
-    auto tagAddress = csr.getTagAddress();
-    auto globalSurface = pProgram->getGlobalSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex());
-    globalSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
-
-    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_TRUE(csr.getDeferredAllocations().peekIsEmpty());
-    delete pProgram;
-    pProgram = nullptr;
-    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(csr.getDeferredAllocations().peekIsEmpty());
-    EXPECT_EQ(globalSurface, csr.getDeferredAllocations().peekHead());
-}
-
-TEST_F(ProgramDataTest, DISABLED_WhenAllocatingGlobalMemorySurfaceThenUnderlyingBufferIsSetCorrectly) {
-    auto globalSize = setupGlobalAllocation();
-    buildAndDecodeProgramPatchList();
-    auto surface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
-    EXPECT_NE(nullptr, surface);
-    EXPECT_NE(nullptr, surface->getGraphicsAllocation());
-    EXPECT_EQ(0, memcmp(globalValue, surface->getUnderlyingBuffer(), globalSize));
-}
-
-TEST_F(ProgramDataTest, DISABLED_givenProgramWhenAllocatingGlobalMemorySurfaceThenProperDeviceBitfieldIsPassed) {
-    auto executionEnvironment = pClDevice->getExecutionEnvironment();
-    auto memoryManager = new MockMemoryManager(*executionEnvironment);
-
-    std::unique_ptr<MemoryManager> memoryManagerBackup(memoryManager);
-    std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
-    EXPECT_NE(pClDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
-
-    setupGlobalAllocation();
-    buildAndDecodeProgramPatchList();
-    EXPECT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_NE(nullptr, pProgram->getGlobalSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(pClDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
-    std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
 }
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantBufferPatchTokensAreReadThenConstantPointerOffsetIsPatchedWith32bitPointer) {
