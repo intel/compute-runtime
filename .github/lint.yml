@@ -170,6 +170,7 @@ lint:
         - wa
         - internal
         - ocloc
+        - leo
     mandatory_tracker:
       types:
         - feature
