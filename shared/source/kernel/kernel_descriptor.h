@@ -25,7 +25,6 @@
 
 namespace NEO {
 
-using StringMap = std::unordered_map<uint32_t, std::string>;
 using BindlessToSurfaceStateMap = std::unordered_map<CrossThreadDataOffset, uint32_t>;
 using InstructionsSegmentOffset = uint16_t;
 
@@ -116,15 +115,14 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             struct {
                 // 0
                 bool usesSystolicPipelineSelectMode : 1;
-                bool usesStringMapForPrintf : 1;
                 bool usesPrintf : 1;
                 bool usesFencesForReadWriteImages : 1;
                 bool usesFlattenedLocalIds : 1;
                 bool usesPrivateMemory : 1;
                 bool usesImages : 1;
                 bool usesSamplers : 1;
-                // 1
                 bool usesSyncBuffer : 1;
+                // 1
                 bool hasIndirectCalls : 1;
                 bool usesStatelessWrites : 1;
                 bool passInlineData : 1;
@@ -132,8 +130,8 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool perThreadDataUnusedGrfIsPresent : 1;
                 bool requiresDisabledEUFusion : 1;
                 bool requiresDisabledMidThreadPreemption : 1;
-                // 2
                 bool requiresSubgroupIndependentForwardProgress : 1;
+                // 2
                 bool requiresWorkgroupWalkOrder : 1;
                 bool requiresImplicitArgs : 1;
                 bool useStackCalls : 1;
@@ -141,20 +139,14 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool isInvalid : 1;
                 bool hasSample : 1;
                 bool usesAssert : 1;
-                // 3
                 bool hasBindlessImageRead : 1;
-                bool reserved : 7;
+                // 3
+                bool reserved : 8;
             };
             std::array<bool, 4> packed;
         } flags = {};
         static_assert(sizeof(KernelAttributes::flags) == sizeof(KernelAttributes::flags.packed), "");
 
-        bool usesStringMap() const {
-            if (binaryFormat == DeviceBinaryFormat::patchtokens) {
-                return flags.usesStringMapForPrintf || flags.requiresImplicitArgs;
-            }
-            return false;
-        }
     } kernelAttributes;
 
     struct {
@@ -258,7 +250,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
     struct {
         std::string kernelName;
         std::string kernelLanguageAttributes;
-        StringMap printfStringsMap;
 
         uint16_t compiledSubGroupsNumber = 0U;
         uint8_t requiredSubGroupSize = 0U;

@@ -46,10 +46,6 @@ class MockKernelInfo : public KernelInfo {
 
     void addExtendedMetadata(uint32_t index, const std::string &argName = "", const std::string &type = "", const std::string &accessQualifier = "", const std::string &addressQualifier = "", const std::string &typeQualifiers = "", size_t typeSize = 0u);
 
-    inline void addToPrintfStringsMap(uint32_t index, const std::string &string) {
-        kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
-        kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(index, string));
-    }
     void setPrintfSurface(uint8_t dataParamSize = sizeof(uintptr_t), CrossThreadDataOffset crossThreadDataOffset = undefined<CrossThreadDataOffset>, SurfaceStateHeapOffset sshOffset = undefined<SurfaceStateHeapOffset>);
     void setBindingTable(SurfaceStateHeapOffset tableOffset, uint8_t numEntries);
     void setGlobalVariablesSurface(uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful = undefined<CrossThreadDataOffset>);

@@ -4004,20 +4004,19 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
 
         auto &kernelDescriptor = kernelInfo->kernelDescriptor;
         kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-        kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
-        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
         kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
-        std::string expectedString("test123");
-        kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
+
+        const char *expectedString = "test123";
 
         constexpr size_t size = 128;
         uint64_t gpuAddress = 0x2000;
         uint32_t bufferArray[size] = {};
         void *buffer = reinterpret_cast<void *>(bufferArray);
         NEO::MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
-        auto printfAllocation = reinterpret_cast<uint32_t *>(buffer);
-        printfAllocation[0] = 8;
-        printfAllocation[1] = 0;
+        auto printfAllocation = reinterpret_cast<uint8_t *>(buffer);
+        uint32_t dataSize = sizeof(uint32_t) + sizeof(char *);
+        *reinterpret_cast<uint32_t *>(printfAllocation) = dataSize;
+        memcpy(printfAllocation + sizeof(uint32_t), &expectedString, sizeof(char *));
 
         StreamCapture capture;
         capture.captureStdout();
@@ -4032,7 +4031,7 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
             EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
             EXPECT_EQ(size, bcsCsr->receivedBlitProperties[0].copySize[0]);
         } else {
-            EXPECT_STREQ(expectedString.c_str(), output.c_str());
+            EXPECT_STREQ(expectedString, output.c_str());
         }
     }
 }
@@ -4069,20 +4068,19 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
 
         auto &kernelDescriptor = kernelInfo->kernelDescriptor;
         kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-        kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
-        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
         kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
-        std::string expectedString("test123");
-        kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
+
+        const char *expectedString = "test123";
 
         constexpr size_t size = 128;
         uint64_t gpuAddress = 0x2000;
         uint32_t bufferArray[size] = {};
         void *buffer = reinterpret_cast<void *>(bufferArray);
         NEO::MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
-        auto printfAllocation = reinterpret_cast<uint32_t *>(buffer);
-        printfAllocation[0] = 8;
-        printfAllocation[1] = 0;
+        auto printfAllocation = reinterpret_cast<uint8_t *>(buffer);
+        uint32_t dataSize = sizeof(uint32_t) + sizeof(char *);
+        *reinterpret_cast<uint32_t *>(printfAllocation) = dataSize;
+        memcpy(printfAllocation + sizeof(uint32_t), &expectedString, sizeof(char *));
 
         StreamCapture capture;
         capture.captureStdout();
@@ -4095,97 +4093,9 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
         EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
         EXPECT_EQ(size, bcsCsr->receivedBlitProperties[0].copySize[0]);
 
-        EXPECT_STREQ(expectedString.c_str(), output.c_str());
+        EXPECT_STREQ(expectedString, output.c_str());
         EXPECT_STREQ("Failed to copy printf buffer.\n", error.c_str());
     }
-}
-
-using KernelPatchtokensPrintfStringMapTests = Test<ModuleImmutableDataFixture>;
-
-TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsageEnabledWhenPrintOutputThenProperStringIsPrinted) {
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
-
-    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
-    kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
-    kernelDescriptor->kernelAttributes.flags.usesStringMapForPrintf = true;
-    kernelDescriptor->kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
-    std::string expectedString("test123");
-    kernelDescriptor->kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
-
-    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
-
-    auto kernel = std::make_unique<MockKernel>(module.get());
-
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernel->initialize(&kernelDesc);
-
-    auto printfAllocation = reinterpret_cast<uint32_t *>(kernel->getPrintfBufferAllocation()->getUnderlyingBuffer());
-    printfAllocation[0] = 8;
-    printfAllocation[1] = 0;
-
-    StreamCapture capture;
-    capture.captureStdout();
-    kernel->printPrintfOutput(false);
-    std::string output = capture.getCapturedStdout();
-    EXPECT_STREQ(expectedString.c_str(), output.c_str());
-}
-
-TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsageDisabledAndNoImplicitArgsWhenPrintOutputThenNothingIsPrinted) {
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
-
-    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
-    kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
-    kernelDescriptor->kernelAttributes.flags.usesStringMapForPrintf = false;
-    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
-    kernelDescriptor->kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
-    std::string expectedString("test123");
-    kernelDescriptor->kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
-
-    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
-
-    auto kernel = std::make_unique<MockKernel>(module.get());
-
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernel->initialize(&kernelDesc);
-
-    auto printfAllocation = reinterpret_cast<uint32_t *>(kernel->getPrintfBufferAllocation()->getUnderlyingBuffer());
-    printfAllocation[0] = 8;
-    printfAllocation[1] = 0;
-
-    StreamCapture capture;
-    capture.captureStdout();
-    kernel->printPrintfOutput(false);
-    std::string output = capture.getCapturedStdout();
-    EXPECT_STREQ("", output.c_str());
-}
-
-TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsageDisabledAndWithImplicitArgsWhenPrintOutputThenOutputIsPrinted) {
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
-
-    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
-    kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
-    kernelDescriptor->kernelAttributes.flags.usesStringMapForPrintf = false;
-    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
-    kernelDescriptor->kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
-    std::string expectedString("test123");
-    kernelDescriptor->kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
-
-    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
-
-    auto kernel = std::make_unique<MockKernel>(module.get());
-
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernel->initialize(&kernelDesc);
-
-    auto printfAllocation = reinterpret_cast<uint32_t *>(kernel->getPrintfBufferAllocation()->getUnderlyingBuffer());
-    printfAllocation[0] = 8;
-    printfAllocation[1] = 0;
-
-    StreamCapture capture;
-    capture.captureStdout();
-    kernel->printPrintfOutput(false);
-    std::string output = capture.getCapturedStdout();
-    EXPECT_STREQ(expectedString.c_str(), output.c_str());
 }
 
 using KernelImplicitArgTests = Test<ModuleImmutableDataFixture>;

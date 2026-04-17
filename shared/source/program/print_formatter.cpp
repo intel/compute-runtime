@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,10 @@
 namespace NEO {
 
 PrintFormatter::PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize,
-                               bool using32BitPointers, const StringMap *stringLiteralMap)
+                               bool using32BitPointers)
     : printfOutputBuffer(printfOutputBuffer),
       printfOutputBufferSize(printfOutputBufferMaxSize),
-      using32BitPointers(using32BitPointers),
-      usesStringMap(stringLiteralMap != nullptr),
-      stringLiteralMap(stringLiteralMap) {
+      using32BitPointers(using32BitPointers) {
 
     output.reset(new char[maxSinglePrintStringLength]);
 }
@@ -32,25 +30,14 @@ void PrintFormatter::printKernelOutput(const std::function<void(char *)> &print)
     read(&printfOutputBufferSizeRead);
     printfOutputBufferSize = std::min(printfOutputBufferSizeRead, printfOutputBufferSize);
 
-    if (usesStringMap) {
-        uint32_t stringIndex = 0;
-        while (currentOffset + 4 <= printfOutputBufferSize) {
-            read(&stringIndex);
-            const char *formatString = queryPrintfString(stringIndex);
-            if (formatString != nullptr) {
-                printString(formatString, print);
-            }
+    while (currentOffset + sizeof(char *) <= printfOutputBufferSize) {
+        char *formatString = nullptr;
+        read(&formatString);
+        if (formatString == reinterpret_cast<char *>(static_cast<uintptr_t>(0xffffffff))) {
+            break;
         }
-    } else {
-        while (currentOffset + sizeof(char *) <= printfOutputBufferSize) {
-            char *formatString = nullptr;
-            read(&formatString);
-            if (formatString == reinterpret_cast<char *>(static_cast<uintptr_t>(0xffffffff))) {
-                break;
-            }
-            if (formatString != nullptr) {
-                printString(formatString, print);
-            }
+        if (formatString != nullptr) {
+            printString(formatString, print);
         }
     }
 }
@@ -175,13 +162,7 @@ size_t PrintFormatter::printStringToken(char *output, size_t size, const char *f
     read(&type);
 
     const char *string = nullptr;
-    if (usesStringMap) {
-        int index = 0;
-        read(&index);
-        string = queryPrintfString(index);
-    } else {
-        read(&string);
-    }
+    read(&string);
 
     switch (type) {
     default:
@@ -201,11 +182,6 @@ size_t PrintFormatter::printPointerToken(char *output, size_t size, const char *
     }
 
     return simpleSprintf(output, size, formatString, value);
-}
-
-const char *PrintFormatter::queryPrintfString(uint32_t index) const {
-    auto stringEntry = stringLiteralMap->find(index);
-    return stringEntry == stringLiteralMap->end() ? nullptr : stringEntry->second.c_str();
 }
 
 char PrintFormatter::escapeChar(char escape) {

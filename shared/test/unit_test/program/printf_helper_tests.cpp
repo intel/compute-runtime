@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include <cmath>
+#include <deque>
 
 using namespace NEO;
 using namespace iOpenCL;
@@ -35,17 +36,16 @@ class PrintFormatterTest : public testing::Test {
     uint8_t underlyingBuffer[maxPrintfOutputLength];
     uint32_t offset;
 
-    int maxStringIndex;
+    std::deque<std::string> formatStrings;
 
   protected:
     void SetUp() override {
         offset = 4;
-        maxStringIndex = 0;
         data = new MockGraphicsAllocation(underlyingBuffer, maxPrintfOutputLength);
 
         kernelInfo = std::make_unique<MockKernelInfo>();
 
-        printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, is32bit, &kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
+        printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, is32bit));
 
         underlyingBuffer[0] = 0;
         underlyingBuffer[1] = 0;
@@ -82,7 +82,7 @@ class PrintFormatterTest : public testing::Test {
         }
     }
 
-    void injectStringValue(int value) {
+    void injectStringValue(const char *value) {
         storeData(PrintfDataType::stringType);
         storeData(value);
     }
@@ -104,10 +104,9 @@ class PrintFormatterTest : public testing::Test {
         *pointer = offset;
     }
 
-    int injectFormatString(std::string str) {
-        auto index = maxStringIndex++;
-        kernelInfo->addToPrintfStringsMap(index, str);
-        return index;
+    const char *injectFormatString(std::string str) {
+        formatStrings.push_back(std::move(str));
+        return formatStrings.back().c_str();
     }
 };
 
@@ -244,7 +243,7 @@ TEST_P(PrintfUint32Test, GivenFormatContainingUintWhenPrintingThenValueIsInserte
 
 TEST_P(PrintfUint32Test, GivenBufferSizeGreaterThanPrintBufferWhenPrintingThenBufferIsTrimmed) {
     auto input = GetParam();
-    printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), 0, is32bit, &kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
+    printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), 0, is32bit));
 
     auto stringIndex = injectFormatString(input.format);
     storeData(stringIndex);
@@ -868,7 +867,7 @@ TEST_F(PrintFormatterTest, GivenPointerWhenPrintingThenValueIsInserted) {
 }
 
 TEST_F(PrintFormatterTest, GivenPointerWith32BitKernelWhenPrintingThen32BitPointerIsPrinted) {
-    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true, &kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
+    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true));
     auto stringIndex = injectFormatString("%p");
     storeData(stringIndex);
     kernelInfo->kernelDescriptor.kernelAttributes.gpuPointerSize = 4;

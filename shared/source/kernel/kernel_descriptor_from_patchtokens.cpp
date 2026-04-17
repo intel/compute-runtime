@@ -191,7 +191,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatele
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrintfSurface &token) {
     dst.kernelAttributes.flags.usesPrintf = true;
-    dst.kernelAttributes.flags.usesStringMapForPrintf = true;
     populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.printfSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
@@ -207,12 +206,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateSyncBuf
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateRTGlobalBuffer &token) {
     populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.rtDispatchGlobals, token, dst.kernelAttributes.bufferAddressingMode);
-}
-
-void populateKernelDescriptor(KernelDescriptor &dst, const SPatchString &token) {
-    uint32_t stringIndex = token.Index;
-    const char *stringData = reinterpret_cast<const char *>(&token + 1);
-    dst.kernelMetadata.printfStringsMap[stringIndex].assign(stringData, stringData + token.StringSize);
 }
 
 template <typename TokenT, typename... ArgsT>
@@ -447,10 +440,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     for (size_t i = 0U; i < src.tokens.kernelArgs.size(); ++i) {
         auto &decodedKernelArg = src.tokens.kernelArgs[i];
         populateArgDescriptor(dst, i, decodedKernelArg);
-    }
-
-    for (auto &str : src.tokens.strings) {
-        populateKernelDescriptorIfNotNull(dst, str);
     }
 
     dst.entryPoints.systemKernel = src.tokens.stateSip ? src.tokens.stateSip->SystemKernelOffset : 0U;

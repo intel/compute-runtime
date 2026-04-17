@@ -41,8 +41,7 @@ void AssertHandler::printMessage() const {
     NEO::PrintFormatter printfFormatter{
         messageBuffer,
         messageBufferSize,
-        false,
-        nullptr};
+        false};
     printfFormatter.setInitialOffset(offsetof(AssertBufferHeader, begin));
 
     printToStderr("AssertHandler::printMessage\n");

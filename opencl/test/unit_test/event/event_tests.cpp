@@ -564,6 +564,13 @@ TEST_F(InternalsEventTest, GivenSubmitCommandTrueWhenSubmittingCommandsThenRefAp
     EXPECT_EQ(taskLevelBefore, taskLevelAfter);
 }
 
+static void writePrintfPointerToSurface(NEO::GraphicsAllocation *surface, const char *str) {
+    auto buf = reinterpret_cast<uint8_t *>(surface->getUnderlyingBuffer());
+    uint32_t dataSize = sizeof(uint32_t) + sizeof(char *);
+    *reinterpret_cast<uint32_t *>(buf) = dataSize;
+    memcpy(buf + sizeof(uint32_t), &str, sizeof(char *));
+}
+
 TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOutput) {
     MockCommandQueue mockCmdQueue(mockContext, pClDevice, nullptr, false);
 
@@ -580,15 +587,11 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
-    std::string testString = "test";
-
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
-    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
-    kernelInfo.addToPrintfStringsMap(0, testString);
 
     uint64_t crossThread[10];
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
@@ -598,9 +601,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     printfHandler->prepareDispatch(multiDispatchInfo);
     auto surface = printfHandler->getSurface();
 
-    auto printfSurface = reinterpret_cast<uint32_t *>(surface->getUnderlyingBuffer());
-    printfSurface[0] = 8;
-    printfSurface[1] = 0;
+    writePrintfPointerToSurface(surface, "test");
 
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
@@ -633,15 +634,11 @@ TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWit
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
-    std::string testString = "test";
-
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
-    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
-    kernelInfo.addToPrintfStringsMap(0, testString);
 
     uint64_t crossThread[10];
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
@@ -651,9 +648,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWit
     printfHandler.get()->prepareDispatch(multiDispatchInfo);
     auto surface = printfHandler.get()->getSurface();
 
-    auto printfSurface = reinterpret_cast<uint32_t *>(surface->getUnderlyingBuffer());
-    printfSurface[0] = 8;
-    printfSurface[1] = 0;
+    writePrintfPointerToSurface(surface, "test");
 
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
@@ -683,15 +678,11 @@ TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWi
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
-    std::string testString = "test";
-
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
-    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
-    kernelInfo.addToPrintfStringsMap(0, testString);
 
     uint64_t crossThread[10];
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
@@ -701,9 +692,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWi
     printfHandler.get()->prepareDispatch(multiDispatchInfo);
     auto surface = printfHandler.get()->getSurface();
 
-    auto printfSurface = reinterpret_cast<uint32_t *>(surface->getUnderlyingBuffer());
-    printfSurface[0] = 8;
-    printfSurface[1] = 0;
+    writePrintfPointerToSurface(surface, "test");
 
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,13 +16,10 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
 
 extern int memcpy_s(void *dst, size_t destSize, const void *src, size_t count); // NOLINT(readability-identifier-naming)
 
 namespace NEO {
-
-using StringMap = std::unordered_map<uint32_t, std::string>;
 
 enum class PrintfDataType : int {
     invalidType,
@@ -46,7 +43,7 @@ static_assert(sizeof(PrintfDataType) == sizeof(int));
 class PrintFormatter {
   public:
     PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize,
-                   bool using32BitPointers, const StringMap *stringLiteralMap = nullptr);
+                   bool using32BitPointers);
     void printKernelOutput(const std::function<void(char *)> &print = [](char *str) { printToStdout(str); });
     void setInitialOffset(uint32_t offset) {
         initialOffset = offset;
@@ -54,7 +51,6 @@ class PrintFormatter {
     constexpr static size_t maxSinglePrintStringLength = 16 * MemoryConstants::kiloByte;
 
   protected:
-    const char *queryPrintfString(uint32_t index) const;
     void printString(const char *formatString, const std::function<void(char *)> &print);
     size_t printToken(char *output, size_t size, const char *formatString);
     size_t printStringToken(char *output, size_t size, const char *formatString);
@@ -130,8 +126,6 @@ class PrintFormatter {
     uint32_t printfOutputBufferSize = 0;         // size of the data contained in the buffer
 
     bool using32BitPointers = false;
-    const bool usesStringMap;
-    const StringMap *stringLiteralMap;
 
     uint32_t currentOffset = 0; // current position in currently parsed buffer
     uint32_t initialOffset = 0; // initial offset - reserved memory for header in buffer

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,38 +82,6 @@ TEST_F(KernelDataTest, GivenAllocateStatelessGlobalMemoryWithInitWhenBuildingThe
     buildAndDecode();
 
     EXPECT_EQ_VAL(0xddu, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful);
-}
-
-TEST_F(KernelDataTest, GivenPrintfStringWhenBuildingThenProgramIsCorrect) {
-    char stringValue[] = "%d\n";
-    size_t strSize = strlen(stringValue) + 1;
-
-    iOpenCL::SPatchString printfString;
-    printfString.Token = PATCH_TOKEN_STRING;
-    printfString.Size = static_cast<uint32_t>(sizeof(SPatchString) + strSize);
-    printfString.Index = 0;
-    printfString.StringSize = static_cast<uint32_t>(strSize);
-
-    iOpenCL::SPatchString emptyString;
-    emptyString.Token = PATCH_TOKEN_STRING;
-    emptyString.Size = static_cast<uint32_t>(sizeof(SPatchString));
-    emptyString.Index = 1;
-    emptyString.StringSize = 0;
-
-    cl_char *pPrintfString = new cl_char[printfString.Size + emptyString.Size];
-
-    memcpy_s(pPrintfString, sizeof(SPatchString), &printfString, sizeof(SPatchString));
-    memcpy_s((cl_char *)pPrintfString + sizeof(printfString), strSize, stringValue, strSize);
-
-    memcpy_s((cl_char *)pPrintfString + printfString.Size, emptyString.Size, &emptyString, emptyString.Size);
-
-    pPatchList = (void *)pPrintfString;
-    patchListSize = printfString.Size + emptyString.Size;
-
-    buildAndDecode();
-
-    EXPECT_EQ_VAL(0, strcmp(stringValue, pKernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap.find(0)->second.c_str()));
-    delete[] pPrintfString;
 }
 
 TEST_F(KernelDataTest, GivenMediaVfeStateWhenBuildingThenProgramIsCorrect) {

@@ -608,11 +608,8 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     auto userEvent = makeReleaseable<UserEvent>(context);
 
     MockKernelWithInternals mockKernel(*pClDevice);
-    std::string testString = "test";
-    mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
+    const char *testString = "test";
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     mockKernel.kernelInfo.setBufferAddressingMode(KernelDescriptor::Stateless);
     mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 8);
     cl_uint workDim = 1;
@@ -636,9 +633,10 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
 
     auto pOutEvent = castToObject<Event>(outEvent);
 
-    auto printfAllocation = reinterpret_cast<uint32_t *>(static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler()->getSurface()->getUnderlyingBuffer());
-    printfAllocation[0] = 8;
-    printfAllocation[1] = 0;
+    auto printfBuf = reinterpret_cast<uint8_t *>(static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler()->getSurface()->getUnderlyingBuffer());
+    uint32_t dataSize = sizeof(uint32_t) + sizeof(char *);
+    *reinterpret_cast<uint32_t *>(printfBuf) = dataSize;
+    memcpy(printfBuf + sizeof(uint32_t), &testString, sizeof(char *));
 
     pOutEvent->release();
 
@@ -655,9 +653,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndI
 
     MockKernelWithInternals mockKernel(*pClDevice);
     std::string testString = "test";
-    mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = false;
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(mockKernel.kernelInfo.kernelDescriptor);
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();

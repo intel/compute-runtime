@@ -366,38 +366,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     kernelTokens.tokens.allocateSyncBuffer = nullptr;
 }
 
-TEST(KernelDescriptorFromPatchtokens, GivenPrintfStringThenPopulatesStringsMapInDescriptor) {
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
-    iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
-    kernelTokens.header = &kernelHeader;
-    NEO::KernelDescriptor kernelDescriptor;
-
-    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_TRUE(kernelDescriptor.kernelMetadata.printfStringsMap.empty());
-
-    std::vector<uint8_t> strTokStream;
-    std::string str0{"some_string0"};
-    std::string str1{"another_string"};
-    std::string str2{"yet_another_string"};
-    std::string str3;
-    auto string0Off = PatchTokensTestData::pushBackStringToken(str0, 0, strTokStream);
-    auto string1Off = PatchTokensTestData::pushBackStringToken(str1, 2, strTokStream);
-    auto string2Off = PatchTokensTestData::pushBackStringToken(str2, 1, strTokStream);
-    auto string3Off = PatchTokensTestData::pushBackStringToken(str3, 3, strTokStream);
-
-    kernelTokens.tokens.strings.push_back(reinterpret_cast<iOpenCL::SPatchString *>(strTokStream.data() + string0Off));
-    kernelTokens.tokens.strings.push_back(reinterpret_cast<iOpenCL::SPatchString *>(strTokStream.data() + string1Off));
-    kernelTokens.tokens.strings.push_back(reinterpret_cast<iOpenCL::SPatchString *>(strTokStream.data() + string2Off));
-    kernelTokens.tokens.strings.push_back(reinterpret_cast<iOpenCL::SPatchString *>(strTokStream.data() + string3Off));
-
-    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    ASSERT_EQ(4U, kernelDescriptor.kernelMetadata.printfStringsMap.size());
-    EXPECT_EQ(str0, kernelDescriptor.kernelMetadata.printfStringsMap[0]);
-    EXPECT_EQ(str1, kernelDescriptor.kernelMetadata.printfStringsMap[2]);
-    EXPECT_EQ(str2, kernelDescriptor.kernelMetadata.printfStringsMap[1]);
-    EXPECT_TRUE(kernelDescriptor.kernelMetadata.printfStringsMap[3].empty());
-}
-
 TEST(KernelDescriptorFromPatchtokens, GivenPureStatlessAddressingMdelThenBindfulOffsetIsLeftUndefined) {
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
     iOpenCL::SKernelBinaryHeaderCommon kernelHeader;

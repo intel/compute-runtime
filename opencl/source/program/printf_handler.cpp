@@ -81,7 +81,6 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 
 bool PrintfHandler::printEnqueueOutput() {
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
-    auto usesStringMap = kernel->getDescriptor().kernelAttributes.usesStringMap();
     const auto &productHelper = device.getProductHelper();
     auto printfOutputBuffer = reinterpret_cast<uint8_t *>(printfSurface->getUnderlyingBuffer());
     auto printfOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
@@ -107,8 +106,7 @@ bool PrintfHandler::printEnqueueOutput() {
         }
     }
     printfOutputBuffer[printfOutputSize - 1] = 0;
-    PrintFormatter printFormatter(printfOutputBuffer, printfOutputSize, kernel->is32Bit(),
-                                  usesStringMap ? &kernel->getDescriptor().kernelMetadata.printfStringsMap : nullptr);
+    PrintFormatter printFormatter(printfOutputBuffer, printfOutputSize, kernel->is32Bit());
     printFormatter.printKernelOutput();
 
     return true;

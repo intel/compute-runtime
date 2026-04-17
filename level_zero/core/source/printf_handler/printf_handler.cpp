@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,6 @@ NEO::GraphicsAllocation *PrintfHandler::createPrintfBuffer(Device *device) {
 void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
                                 NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter) {
     bool using32BitGpuPointers = kernelData->getDescriptor().kernelAttributes.gpuPointerSize == 4u;
-    auto usesStringMap = kernelData->getDescriptor().kernelAttributes.usesStringMap();
 
     auto printfOutputBuffer = static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer());
     auto printfOutputSize = static_cast<uint32_t>(printfBuffer->getUnderlyingBufferSize());
@@ -76,8 +75,7 @@ void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
     NEO::PrintFormatter printfFormatter{
         printfOutputBuffer,
         printfOutputSize,
-        using32BitGpuPointers,
-        usesStringMap ? &kernelData->getDescriptor().kernelMetadata.printfStringsMap : nullptr};
+        using32BitGpuPointers};
     printfFormatter.printKernelOutput();
 
     *reinterpret_cast<uint32_t *>(printfBuffer->getUnderlyingBuffer()) =
