@@ -38,7 +38,7 @@ DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
 
 void DebuggerL0::initialize() {
 
-    auto hwInfo = device->getHardwareInfo();
+    const auto &hwInfo = device->getHardwareInfo();
     auto &compilerProductHelper = device->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     debuggerRequiresSBATracking = !compilerProductHelper.isHeaplessModeEnabled(hwInfo);
 
