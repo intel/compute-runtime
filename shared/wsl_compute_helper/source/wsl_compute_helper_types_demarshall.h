@@ -1904,6 +1904,9 @@ struct Demarshaller<TOK_S_SKU_FEATURE_TABLE> {
                 case TOK_FBD_SKU_FEATURE_TABLE__FTR_EFFICIENT64_BIT_ADDRESSING:
                     dst.FtrEfficient64BitAddressing = readTokValue<decltype(dst.FtrEfficient64BitAddressing)>(*tok);
                     break;
+                case TOK_FBD_SKU_FEATURE_TABLE__FTR_HW_SEMAPHORE64:
+                    dst.FtrHwSemaphore64 = readTokValue<decltype(dst.FtrHwSemaphore64)>(*tok);
+                    break;
                 };
                 tok = tok + 1 + tok->valueDwordCount;
             } else {
@@ -3124,6 +3127,9 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                                 break;
                             case TOK_FBD_SKU_FEATURE_TABLE__FTR_EFFICIENT64_BIT_ADDRESSING:
                                 dst.SkuTable.FtrEfficient64BitAddressing = readTokValue<decltype(dst.SkuTable.FtrEfficient64BitAddressing)>(*tokSkuTable);
+                                break;
+                            case TOK_FBD_SKU_FEATURE_TABLE__FTR_HW_SEMAPHORE64:
+                                dst.SkuTable.FtrHwSemaphore64 = readTokValue<decltype(dst.SkuTable.FtrHwSemaphore64)>(*tokSkuTable);
                                 break;
                             };
                             tokSkuTable = tokSkuTable + 1 + tokSkuTable->valueDwordCount;

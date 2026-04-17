@@ -432,7 +432,7 @@ struct TOKSTR__SKU_FEATURE_TABLE {
     TokenVariableLength base;
 
     TOKSTR__SKU_FEATURE_TABLE(uint16_t tokenId, uint32_t elementId = 0)
-        : base(tokenId, elementId, offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrEfficient64BitAddressing) + sizeof(FtrEfficient64BitAddressing) - offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrBlitterRing), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+        : base(tokenId, elementId, offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrHwSemaphore64) + sizeof(FtrHwSemaphore64) - offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrBlitterRing), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
     TOKSTR__SKU_FEATURE_TABLE()
         : base(TOK_S_SKU_FEATURE_TABLE, 0, sizeof(*this) - sizeof(base)) {}
@@ -658,6 +658,7 @@ struct TOKSTR__SKU_FEATURE_TABLE {
     TokenDword FtrVgt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS89755__FTR_VGT};                                                        // Indirect field from anonymous struct
     TokenDword FtrAssignedGpuTile = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS91822__FTR_ASSIGNED_GPU_TILE};                              // Indirect field from anonymous struct
     TokenDword FtrEfficient64BitAddressing = {TOK_FBD_SKU_FEATURE_TABLE__FTR_EFFICIENT64_BIT_ADDRESSING};
+    TokenDword FtrHwSemaphore64 = {TOK_FBD_SKU_FEATURE_TABLE__FTR_HW_SEMAPHORE64};
 };
 static_assert(std::is_standard_layout_v<TOKSTR__SKU_FEATURE_TABLE>, "");
 static_assert(sizeof(TOKSTR__SKU_FEATURE_TABLE) % sizeof(uint32_t) == 0, "");

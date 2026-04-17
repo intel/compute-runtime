@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,4 +107,13 @@ TEST(SkuInfoReceiverTest, givenFtrEfficient64BitAddressingFlagWhenReceivingThenS
     SkuInfoReceiver::receiveFtrTableFromAdapterInfo(&requestedFeatureTable, &adapterInfo);
 
     EXPECT_TRUE(requestedFeatureTable.flags.ftrHeaplessMode);
+}
+
+TEST(SkuInfoReceiverTest, givenFtrHwSemaphore64FlagWhenReceivingThenSetFtrHwSemaphore64) {
+    FeatureTable requestedFeatureTable = {};
+    ADAPTER_INFO adapterInfo = {};
+    adapterInfo.SkuTable.FtrHwSemaphore64 = 1;
+    SkuInfoReceiver::receiveFtrTableFromAdapterInfo(&requestedFeatureTable, &adapterInfo);
+
+    EXPECT_TRUE(requestedFeatureTable.flags.ftrHwSemaphore64);
 }

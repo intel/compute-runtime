@@ -76,6 +76,7 @@ class SkuInfoReceiver {
         RECEIVE_FTR(Xe2PlusTiling);
         RECEIVE_FTR(Pml5Support);
         RECEIVE_FTR(L3TransientDataFlush);
+        RECEIVE_FTR(HwSemaphore64);
 
 #undef RECEIVE_FTR
     }

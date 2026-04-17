@@ -129,6 +129,7 @@ struct SkuInfoBaseReference {
         refFtrTable.flags.ftrPml5Support = true;
         refFtrTable.flags.ftrL3TransientDataFlush = true;
         refFtrTable.flags.ftrHeaplessMode = true;
+        refFtrTable.flags.ftrHwSemaphore64 = true;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {
