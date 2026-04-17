@@ -77,7 +77,7 @@ TranslationErrorCode CompilerInterface::build(
                                                   input.apiOptions,
                                                   input.internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igc.revision, igc.libSize, igc.libMTime);
 
-        bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output, device);
+        bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output);
         if (success) {
             return TranslationErrorCode::success;
         }
@@ -143,7 +143,7 @@ TranslationErrorCode CompilerInterface::build(
                                                   input.apiOptions,
                                                   input.internalOptions, specIdsRef, specValuesRef, igc.revision, igc.libSize, igc.libMTime);
 
-        bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output, device);
+        bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output);
         if (success) {
             return TranslationErrorCode::success;
         }
@@ -688,54 +688,13 @@ void CompilerCacheHelper::packAndCacheBinary(CompilerCache &compilerCache, const
     }
 }
 
-bool CompilerCacheHelper::loadCacheAndSetOutput(CompilerCache &compilerCache, const std::string &kernelFileHash, NEO::TranslationOutput &output, const NEO::Device &device) {
+bool CompilerCacheHelper::loadCacheAndSetOutput(CompilerCache &compilerCache, const std::string &kernelFileHash, NEO::TranslationOutput &output) {
     size_t cacheBinarySize = 0u;
     auto cacheBinary = compilerCache.loadCachedBinary(kernelFileHash, cacheBinarySize);
 
     if (cacheBinary) {
-        ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(cacheBinary.get()), cacheBinarySize);
-
-        if (isDeviceBinaryFormat<DeviceBinaryFormat::oclElf>(archive)) {
-            bool success = processPackedCacheBinary(archive, output, device);
-            if (success) {
-                return true;
-            }
-        } else {
-            output.deviceBinary.mem = std::move(cacheBinary);
-            output.deviceBinary.size = cacheBinarySize;
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool CompilerCacheHelper::processPackedCacheBinary(ArrayRef<const uint8_t> archive, TranslationOutput &output, const NEO::Device &device) {
-    auto productAbbreviation = NEO::hardwarePrefix[device.getHardwareInfo().platform.eProductFamily];
-    NEO::TargetDevice targetDevice = NEO::getTargetDevice(device.getRootDeviceEnvironment());
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto singleDeviceBinary = unpackSingleDeviceBinary(archive, NEO::ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
-                                                       decodeErrors, decodeWarnings);
-
-    if (false == singleDeviceBinary.deviceBinary.empty()) {
-        if (nullptr == output.deviceBinary.mem) {
-            output.deviceBinary.mem = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
-            output.deviceBinary.size = singleDeviceBinary.deviceBinary.size();
-        }
-
-        if (false == singleDeviceBinary.intermediateRepresentation.empty() &&
-            nullptr == output.intermediateRepresentation.mem) {
-            output.intermediateRepresentation.mem = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.intermediateRepresentation.begin()), singleDeviceBinary.intermediateRepresentation.size());
-            output.intermediateRepresentation.size = singleDeviceBinary.intermediateRepresentation.size();
-        }
-
-        if (false == singleDeviceBinary.debugData.empty() &&
-            nullptr == output.debugData.mem) {
-            output.debugData.mem = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
-            output.debugData.size = singleDeviceBinary.debugData.size();
-        }
-
+        output.deviceBinary.mem = std::move(cacheBinary);
+        output.deviceBinary.size = cacheBinarySize;
         return true;
     }
 

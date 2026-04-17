@@ -10,6 +10,8 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
@@ -18,7 +20,6 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/io_functions.h"
-#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
@@ -28,6 +29,7 @@
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "elements_struct.h"
@@ -529,9 +531,10 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCo
 
 class CompilerInterfaceOclElfCacheTest : public ::testing::Test, public CompilerCacheHelper {
   public:
-    using CompilerCacheHelper::processPackedCacheBinary;
-
     void SetUp() override {
+        ZebinTestData::ValidEmptyProgram<> zebin;
+        deviceBinaryData = zebin.storage;
+
         std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
         cache->config.enabled = true;
         compilerInterface = std::make_unique<MockCompilerInterface>();
@@ -555,18 +558,13 @@ class CompilerInterfaceOclElfCacheTest : public ::testing::Test, public Compiler
 
         igcDebugVarsDeviceBinary.fileName = igcFileName;
         igcDebugVarsDeviceBinary.forceBuildFailure = false;
-        igcDebugVarsDeviceBinary.binaryToReturn = patchtokensProgram.storage.data();
-        igcDebugVarsDeviceBinary.binaryToReturnSize = patchtokensProgram.storage.size();
-
-        igcDebugVarsInvalidDeviceBinary.fileName = igcFileName;
-        igcDebugVarsInvalidDeviceBinary.forceBuildFailure = false;
-        igcDebugVarsInvalidDeviceBinary.binaryToReturn = invalidBinary.data();
-        igcDebugVarsInvalidDeviceBinary.binaryToReturnSize = invalidBinary.size();
+        igcDebugVarsDeviceBinary.binaryToReturn = deviceBinaryData.data();
+        igcDebugVarsDeviceBinary.binaryToReturnSize = deviceBinaryData.size();
 
         igcDebugVarsDeviceBinaryDebugData.fileName = igcFileName;
         igcDebugVarsDeviceBinaryDebugData.forceBuildFailure = false;
-        igcDebugVarsDeviceBinaryDebugData.binaryToReturn = patchtokensProgram.storage.data();
-        igcDebugVarsDeviceBinaryDebugData.binaryToReturnSize = patchtokensProgram.storage.size();
+        igcDebugVarsDeviceBinaryDebugData.binaryToReturn = deviceBinaryData.data();
+        igcDebugVarsDeviceBinaryDebugData.binaryToReturnSize = deviceBinaryData.size();
         igcDebugVarsDeviceBinaryDebugData.debugDataToReturn = debugDataToReturn.data();
         igcDebugVarsDeviceBinaryDebugData.debugDataToReturnSize = debugDataToReturn.size();
 
@@ -581,19 +579,12 @@ class CompilerInterfaceOclElfCacheTest : public ::testing::Test, public Compiler
         gEnvironment->fclPopDebugVars();
     }
 
-    bool isPackedOclElf(const std::string &data) {
-        ArrayRef<const uint8_t> binary(reinterpret_cast<const uint8_t *>(data.data()), data.length());
-        return isDeviceBinaryFormat<DeviceBinaryFormat::oclElf>(binary);
-    }
-
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcFclDebugVarsForceBuildFailure;
     MockCompilerDebugVars igcDebugVarsDeviceBinary;
-    MockCompilerDebugVars igcDebugVarsInvalidDeviceBinary;
     MockCompilerDebugVars igcDebugVarsDeviceBinaryDebugData;
-    PatchTokensTestData::ValidEmptyProgram patchtokensProgram;
+    std::vector<uint8_t> deviceBinaryData;
     std::string debugDataToReturn = "dbgdata";
-    std::string invalidBinary = "abcdefg";
 
     std::unique_ptr<MockCompilerInterface> compilerInterface;
     CompilerCacheMock *mockCompilerCache;
@@ -603,8 +594,9 @@ class CompilerInterfaceOclElfCacheTest : public ::testing::Test, public Compiler
 TEST_F(CompilerInterfaceOclElfCacheTest, givenIncorrectBinaryCausingPackDeviceBinaryToReturnEmptyVectorWhenPackAndCacheBinaryThenBinaryIsNotStoredInCache) {
     TranslationOutput outputFromCompilation;
 
-    outputFromCompilation.deviceBinary.mem = makeCopy<char>(reinterpret_cast<const char *>(patchtokensProgram.storage.data()), patchtokensProgram.storage.size());
-    outputFromCompilation.deviceBinary.size = patchtokensProgram.storage.size();
+    const uint8_t deviceBinary[] = {0x01, 0x02, 0x03, 0x04};
+    outputFromCompilation.deviceBinary.mem = makeCopy<char>(reinterpret_cast<const char *>(deviceBinary), sizeof(deviceBinary));
+    outputFromCompilation.deviceBinary.size = sizeof(deviceBinary);
 
     std::string incorrectIr = "intermediateRepresentation";
     outputFromCompilation.intermediateRepresentation.mem = makeCopy(incorrectIr.c_str(), incorrectIr.length());
@@ -620,70 +612,6 @@ TEST_F(CompilerInterfaceOclElfCacheTest, givenIncorrectBinaryCausingPackDeviceBi
     EXPECT_EQ(0u, mockCompilerCache->hashToBinaryMap.size());
 }
 
-TEST_F(CompilerInterfaceOclElfCacheTest, givenEmptyTranslationOutputWhenProcessPackedCacheBinaryThenDeviceBinaryAndDebugDataAndIrAreCorrectlyStored) {
-    TranslationOutput outputFromCompilation;
-
-    outputFromCompilation.deviceBinary.mem = makeCopy<char>(reinterpret_cast<const char *>(patchtokensProgram.storage.data()), patchtokensProgram.storage.size());
-    outputFromCompilation.deviceBinary.size = patchtokensProgram.storage.size();
-
-    const char *debugData = "dbgdata";
-    outputFromCompilation.debugData.mem = makeCopy(debugData, strlen(debugData));
-    outputFromCompilation.debugData.size = strlen(debugData);
-
-    std::string ir = NEO::spirvMagic.str() + "intermediateRepresentation";
-    outputFromCompilation.intermediateRepresentation.mem = makeCopy(ir.c_str(), ir.length());
-    outputFromCompilation.intermediateRepresentation.size = ir.length();
-
-    MockDevice device;
-    CompilerCacheHelper::packAndCacheBinary(*mockCompilerCache, "some_hash", NEO::getTargetDevice(device.getRootDeviceEnvironment()), outputFromCompilation);
-
-    auto cachedBinary = mockCompilerCache->hashToBinaryMap.begin()->second;
-    ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(cachedBinary.c_str()), cachedBinary.length());
-
-    TranslationOutput emptyTranslationOutput;
-    CompilerCacheHelper::processPackedCacheBinary(archive, emptyTranslationOutput, device);
-
-    EXPECT_EQ(0, memcmp(outputFromCompilation.deviceBinary.mem.get(), emptyTranslationOutput.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
-    EXPECT_EQ(0, memcmp(outputFromCompilation.debugData.mem.get(), emptyTranslationOutput.debugData.mem.get(), outputFromCompilation.debugData.size));
-    EXPECT_EQ(0, memcmp(outputFromCompilation.intermediateRepresentation.mem.get(), emptyTranslationOutput.intermediateRepresentation.mem.get(), outputFromCompilation.intermediateRepresentation.size));
-}
-
-TEST_F(CompilerInterfaceOclElfCacheTest, givenNonEmptyTranslationOutputWhenProcessPackedCacheBinaryThenNonEmptyContainersAreNotOverwritten) {
-    TranslationOutput outputFromCompilation;
-
-    outputFromCompilation.deviceBinary.mem = makeCopy<char>(reinterpret_cast<const char *>(patchtokensProgram.storage.data()), patchtokensProgram.storage.size());
-    outputFromCompilation.deviceBinary.size = patchtokensProgram.storage.size();
-
-    const char *debugData = "dbgdata";
-    outputFromCompilation.debugData.mem = makeCopy(debugData, strlen(debugData));
-    outputFromCompilation.debugData.size = strlen(debugData);
-
-    std::string ir = NEO::spirvMagic.str() + "intermediateRepresentation";
-    outputFromCompilation.intermediateRepresentation.mem = makeCopy(ir.c_str(), ir.length());
-    outputFromCompilation.intermediateRepresentation.size = ir.length();
-
-    MockDevice device;
-    CompilerCacheHelper::packAndCacheBinary(*mockCompilerCache, "some_hash", NEO::getTargetDevice(device.getRootDeviceEnvironment()), outputFromCompilation);
-
-    auto cachedBinary = mockCompilerCache->hashToBinaryMap.begin()->second;
-    ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(cachedBinary.c_str()), cachedBinary.length());
-
-    TranslationOutput nonEmptyTranslationOutput;
-
-    const char *existingDeviceBinary = "existingDeviceBinary";
-    nonEmptyTranslationOutput.deviceBinary.mem = makeCopy(existingDeviceBinary, strlen(existingDeviceBinary));
-    const char *existingDebugData = "existingDebugData";
-    nonEmptyTranslationOutput.debugData.mem = makeCopy(existingDebugData, strlen(existingDebugData));
-    const char *existingIr = "existingIr";
-    nonEmptyTranslationOutput.intermediateRepresentation.mem = makeCopy(existingIr, strlen(existingIr));
-
-    CompilerCacheHelper::processPackedCacheBinary(archive, nonEmptyTranslationOutput, device);
-
-    EXPECT_EQ(0, memcmp(nonEmptyTranslationOutput.deviceBinary.mem.get(), existingDeviceBinary, strlen(existingDeviceBinary)));
-    EXPECT_EQ(0, memcmp(nonEmptyTranslationOutput.debugData.mem.get(), existingDebugData, strlen(existingDebugData)));
-    EXPECT_EQ(0, memcmp(nonEmptyTranslationOutput.intermediateRepresentation.mem.get(), existingIr, strlen(existingIr)));
-}
-
 TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenBuildingThenPackBinaryOnCacheSaveAndUnpackBinaryOnLoadFromCache) {
     gEnvironment->igcPushDebugVars(igcDebugVarsDeviceBinary);
 
@@ -696,11 +624,10 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenBuildingThen
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
     EXPECT_EQ(TranslationErrorCode::success, err);
-    EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
+    EXPECT_EQ(0, memcmp(deviceBinaryData.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCompilation.debugData.mem.get());
 
     EXPECT_EQ(1u, mockCompilerCache->hashToBinaryMap.size());
-    EXPECT_TRUE(isPackedOclElf(mockCompilerCache->hashToBinaryMap.begin()->second));
 
     gEnvironment->igcPopDebugVars();
 
@@ -712,73 +639,8 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenBuildingThen
     err = compilerInterface->build(device, inputArgs, outputFromCache);
     EXPECT_EQ(TranslationErrorCode::success, err);
 
-    EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
+    EXPECT_EQ(0, memcmp(deviceBinaryData.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCache.debugData.mem.get());
-
-    gEnvironment->igcPopDebugVars();
-}
-
-TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenLoadedCacheDoesNotUnpackCorrectlyThenDoNotEndInCacheAndContinueCompilation) {
-    gEnvironment->igcPushDebugVars(igcDebugVarsInvalidDeviceBinary);
-
-    TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
-
-    auto src = "#include \"header.h\"\n__kernel k() {}";
-    inputArgs.src = ArrayRef<const char>(src, strlen(src));
-
-    TranslationOutput outputFromCompilation;
-    MockDevice device;
-    auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
-    EXPECT_EQ(TranslationErrorCode::success, err);
-    EXPECT_EQ(0, memcmp(invalidBinary.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
-    EXPECT_EQ(nullptr, outputFromCompilation.debugData.mem.get());
-
-    gEnvironment->igcPopDebugVars();
-
-    // we force igc to fail compilation request
-    // at the end we expect buildFailure which means compilation does not end with loaded cache but continues in igc
-    gEnvironment->igcPushDebugVars(igcFclDebugVarsForceBuildFailure);
-
-    TranslationOutput outputFromCache;
-    err = compilerInterface->build(device, inputArgs, outputFromCache);
-    EXPECT_EQ(TranslationErrorCode::buildFailure, err);
-
-    EXPECT_EQ(nullptr, outputFromCache.deviceBinary.mem.get());
-    EXPECT_EQ(nullptr, outputFromCache.debugData.mem.get());
-
-    gEnvironment->igcPopDebugVars();
-}
-
-TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesAndDebugDataWhenBuildingThenPackBinaryOnCacheSaveAndUnpackBinaryOnLoadFromCache) {
-    gEnvironment->igcPushDebugVars(igcDebugVarsDeviceBinaryDebugData);
-
-    TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
-
-    auto src = "#include \"header.h\"\n__kernel k() {}";
-    inputArgs.src = ArrayRef<const char>(src, strlen(src));
-
-    TranslationOutput outputFromCompilation;
-    MockDevice device;
-    auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
-    EXPECT_EQ(TranslationErrorCode::success, err);
-    EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
-    EXPECT_EQ(0, std::strncmp(debugDataToReturn.c_str(), outputFromCompilation.debugData.mem.get(), debugDataToReturn.size()));
-
-    EXPECT_EQ(1u, mockCompilerCache->hashToBinaryMap.size());
-    EXPECT_TRUE(isPackedOclElf(mockCompilerCache->hashToBinaryMap.begin()->second));
-
-    gEnvironment->igcPopDebugVars();
-
-    // we force igc to fail compilation request
-    // at the end we expect CL_SUCCESS which means compilation ends in cache
-    gEnvironment->igcPushDebugVars(igcFclDebugVarsForceBuildFailure);
-
-    TranslationOutput outputFromCache;
-    err = compilerInterface->build(device, inputArgs, outputFromCache);
-    EXPECT_EQ(TranslationErrorCode::success, err);
-
-    EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
-    EXPECT_EQ(0, std::strncmp(debugDataToReturn.c_str(), outputFromCache.debugData.mem.get(), debugDataToReturn.size()));
 
     gEnvironment->igcPopDebugVars();
 }
@@ -795,11 +657,10 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryWhenBuildingThenPackBinaryOn
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
     EXPECT_EQ(TranslationErrorCode::success, err);
-    EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
+    EXPECT_EQ(0, memcmp(deviceBinaryData.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCompilation.debugData.mem.get());
 
     EXPECT_EQ(1u, mockCompilerCache->hashToBinaryMap.size());
-    EXPECT_TRUE(isPackedOclElf(mockCompilerCache->hashToBinaryMap.begin()->second));
 
     gEnvironment->igcPopDebugVars();
 
@@ -811,69 +672,8 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryWhenBuildingThenPackBinaryOn
     err = compilerInterface->build(device, inputArgs, outputFromCache);
     EXPECT_EQ(TranslationErrorCode::success, err);
 
-    EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
+    EXPECT_EQ(0, memcmp(deviceBinaryData.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCache.debugData.mem.get());
-
-    gEnvironment->fclPopDebugVars();
-}
-
-TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryWhenLoadedCacheDoesNotUnpackCorrectlyThenDoNotEndInCacheAndContinueCompilation) {
-    gEnvironment->igcPushDebugVars(igcDebugVarsInvalidDeviceBinary);
-
-    TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
-
-    auto src = "__kernel k() {}";
-    inputArgs.src = ArrayRef<const char>(src, strlen(src));
-
-    TranslationOutput outputFromCompilation;
-    MockDevice device;
-    auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
-    EXPECT_EQ(TranslationErrorCode::success, err);
-    EXPECT_EQ(0, memcmp(invalidBinary.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
-    EXPECT_EQ(nullptr, outputFromCompilation.debugData.mem.get());
-
-    gEnvironment->igcPopDebugVars();
-
-    // we force fcl to fail compilation request
-    // at the end we expect buildFailure which means compilation does not end with loaded cache but continues in fcl
-    gEnvironment->fclPushDebugVars(igcFclDebugVarsForceBuildFailure);
-
-    TranslationOutput outputFromCache;
-    err = compilerInterface->build(device, inputArgs, outputFromCache);
-    EXPECT_EQ(TranslationErrorCode::buildFailure, err);
-
-    gEnvironment->fclPopDebugVars();
-}
-
-TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryAndDebugDataWhenBuildingThenPackBinaryOnCacheSaveAndUnpackBinaryOnLoadFromCache) {
-    gEnvironment->igcPushDebugVars(igcDebugVarsDeviceBinaryDebugData);
-
-    TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
-
-    auto src = "__kernel k() {}";
-    inputArgs.src = ArrayRef<const char>(src, strlen(src));
-
-    TranslationOutput outputFromCompilation;
-    MockDevice device;
-    auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
-    EXPECT_EQ(TranslationErrorCode::success, err);
-    EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
-    EXPECT_EQ(0, std::strncmp(debugDataToReturn.c_str(), outputFromCompilation.debugData.mem.get(), debugDataToReturn.size()));
-
-    EXPECT_EQ(1u, mockCompilerCache->hashToBinaryMap.size());
-    EXPECT_TRUE(isPackedOclElf(mockCompilerCache->hashToBinaryMap.begin()->second));
-
-    gEnvironment->igcPopDebugVars();
-
-    // we force fcl to fail compilation request
-    // at the end we expect CL_SUCCESS which means compilation ends in cache
-    gEnvironment->fclPushDebugVars(igcFclDebugVarsForceBuildFailure);
-
-    TranslationOutput outputFromCache;
-    err = compilerInterface->build(device, inputArgs, outputFromCache);
-    EXPECT_EQ(TranslationErrorCode::success, err);
-    EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
-    EXPECT_EQ(0, std::strncmp(debugDataToReturn.c_str(), outputFromCache.debugData.mem.get(), debugDataToReturn.size()));
 
     gEnvironment->fclPopDebugVars();
 }
