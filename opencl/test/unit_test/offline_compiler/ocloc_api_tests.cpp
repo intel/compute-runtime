@@ -1902,12 +1902,16 @@ TEST(OclocApiTests, GivenCacheCommandWithVerboseArgThenSuccessIsReturned) {
         "/tmp/test_cache_dir"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
+    StreamCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    EXPECT_NE(std::string::npos, output.find("Ocloc cache directory changed to: /tmp/test_cache_dir"));
 }
 
 TEST(OclocApiTests, GivenCacheCommandWithVersionArgThenSuccessIsReturned) {

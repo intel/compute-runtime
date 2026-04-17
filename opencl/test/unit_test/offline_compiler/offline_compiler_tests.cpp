@@ -5723,13 +5723,14 @@ TEST_F(OfflineCompilerTests, GivenSpirvInputAndSpecConstFileWhenFileExistsThenSp
     capture.captureStdout();
 
     mockOfflineCompiler.initialize(argv.size(), argv);
-    std::string output = capture.getCapturedStdout();
-    EXPECT_NE(output.find("Loaded 2 specialization constants from: constants.txt"), std::string::npos);
 
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
     mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<NEO::IgcOclDeviceCtxTag>(mockIgcOclDeviceCtx);
 
     int retVal = mockOfflineCompiler.build();
+    std::string output = capture.getCapturedStdout();
+    EXPECT_NE(output.find("Loaded 2 specialization constants from: constants.txt"), std::string::npos);
+    EXPECT_NE(output.find("Compilation from IR - skipping loading of FCL"), std::string::npos);
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
     ASSERT_EQ(2u, mockOfflineCompiler.specConstants.size());
     EXPECT_EQ(42u, mockOfflineCompiler.specConstants[0]);
@@ -5794,7 +5795,11 @@ TEST_F(OfflineCompilerTests, GivenSpirvInputAndSpecConstFileAndNoVerboseModeWhen
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
     mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<NEO::IgcOclDeviceCtxTag>(mockIgcOclDeviceCtx);
 
+    StreamCapture buildCapture;
+    buildCapture.captureStdout();
     int retVal = mockOfflineCompiler.build();
+    std::string buildOutput = buildCapture.getCapturedStdout();
+    EXPECT_NE(buildOutput.find("Compilation from IR - skipping loading of FCL"), std::string::npos);
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
     ASSERT_EQ(2u, mockOfflineCompiler.specConstants.size());
     EXPECT_EQ(42u, mockOfflineCompiler.specConstants[0]);
