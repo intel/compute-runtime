@@ -174,6 +174,40 @@ TEST_F(CommandStreamReceiverTest, givenCsrWhenGettingCompletionAddressThenUnderl
     EXPECT_EQ(0u, *completionFence);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCheckingGpuHangBeforeCheckPeriodElapsedThenFalseIsReturnedAndLastHangCheckTimeIsNotUpdated) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.gpuHangCheckPeriod = std::chrono::microseconds{500};
+
+    std::chrono::high_resolution_clock::time_point lastHangCheckTime{};
+    auto currentTime = lastHangCheckTime + ultCsr.gpuHangCheckPeriod - std::chrono::microseconds{1};
+
+    EXPECT_FALSE(ultCsr.checkGpuHangDetected(currentTime, lastHangCheckTime));
+    EXPECT_EQ(std::chrono::high_resolution_clock::time_point{}, lastHangCheckTime);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCheckingGpuHangAfterCheckPeriodElapsedAndNoHangDetectedThenFalseIsReturnedAndLastHangCheckTimeIsUpdated) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.gpuHangCheckPeriod = std::chrono::microseconds{500};
+    ultCsr.isGpuHangDetectedReturnValue = false;
+
+    std::chrono::high_resolution_clock::time_point lastHangCheckTime{};
+    auto currentTime = lastHangCheckTime + ultCsr.gpuHangCheckPeriod + std::chrono::microseconds{1};
+
+    EXPECT_FALSE(ultCsr.checkGpuHangDetected(currentTime, lastHangCheckTime));
+    EXPECT_EQ(currentTime, lastHangCheckTime);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCheckingGpuHangAfterCheckPeriodElapsedAndHangDetectedThenTrueIsReturned) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.gpuHangCheckPeriod = std::chrono::microseconds{500};
+    ultCsr.isGpuHangDetectedReturnValue = true;
+
+    std::chrono::high_resolution_clock::time_point lastHangCheckTime{};
+    auto currentTime = lastHangCheckTime + ultCsr.gpuHangCheckPeriod + std::chrono::microseconds{1};
+
+    EXPECT_TRUE(ultCsr.checkGpuHangDetected(currentTime, lastHangCheckTime));
+}
+
 TEST_F(CommandStreamReceiverTest, givenBaseCsrWhenCallingWaitUserFenceThenReturnFalse) {
     EXPECT_FALSE(commandStreamReceiver->waitUserFence(1, commandStreamReceiver->getCompletionAddress(), -1, false, InterruptId::notUsed, nullptr, nullptr));
     EXPECT_FALSE(commandStreamReceiver->waitUserFenceSupported(nullptr));
