@@ -105,12 +105,4 @@ bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwIn
     return true;
 }
 
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
-    if (debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
-        return debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
-    }
-    return 2u;
-}
-
 } // namespace NEO

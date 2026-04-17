@@ -696,7 +696,7 @@ XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallGetCom
 
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue) {
     const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 2u);
+    EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 1u);
 
     DebugManagerStateRestore restorer;
     debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(3);

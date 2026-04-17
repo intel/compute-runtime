@@ -105,12 +105,4 @@ uint64_t ProductHelperHw<gfxProduct>::getPatIndex(CacheRegion cacheRegion, Cache
     return (static_cast<uint32_t>(cachePolicy) + (static_cast<uint16_t>(cacheRegion) * 2));
 }
 
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
-    if (debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
-        return debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
-    }
-    return 1u;
-}
-
 } // namespace NEO
