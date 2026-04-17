@@ -25,6 +25,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -225,7 +226,7 @@ class Drm : public DriverModel {
     std::string getPciPath() { return hwDeviceId->getPciPath(); }
     std::string getDeviceNode() { return hwDeviceId->getDeviceNode(); }
 
-    std::pair<uint64_t, uint64_t> getFenceAddressAndValToWait(uint32_t vmHandleId, bool isLocked);
+    std::optional<std::pair<uint64_t, uint64_t>> getFenceAddressAndValToWait(uint32_t vmHandleId, bool isLocked);
     void waitForBind(uint32_t vmHandleId);
     uint64_t getNextFenceVal(uint32_t vmHandleId) { return fenceVal[vmHandleId] + 1; }
     void incFenceVal(uint32_t vmHandleId) { fenceVal[vmHandleId]++; }

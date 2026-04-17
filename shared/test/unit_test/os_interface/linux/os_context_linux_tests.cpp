@@ -161,11 +161,7 @@ TEST(OSContextLinux, givenPerContextVmsAndBindCompleteWhenGetFenceAddressAndValT
     osContext.fenceVal[0] = 3u;
 
     auto fenceAddressAndValToWait = osContext.getFenceAddressAndValToWait(0, false);
-    const auto fenceAddressToWait = fenceAddressAndValToWait.first;
-    const auto fenceValToWait = fenceAddressAndValToWait.second;
-
-    EXPECT_GT(fenceAddressToWait, 0u);
-    EXPECT_GT(fenceValToWait, 0u);
+    EXPECT_TRUE(fenceAddressAndValToWait.has_value());
 }
 
 extern void *(*dlopenFunc)(const char *filename, int flags);

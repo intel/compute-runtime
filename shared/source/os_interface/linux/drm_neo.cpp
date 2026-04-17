@@ -1449,35 +1449,25 @@ void Drm::waitForBind(uint32_t vmHandleId) {
 
     auto fenceAddressAndValToWait = getFenceAddressAndValToWait(vmHandleId, false);
 
-    const auto fenceAddressToWait = fenceAddressAndValToWait.first;
-    const auto fenceValToWait = fenceAddressAndValToWait.second;
-
-    if (fenceAddressToWait != 0u) {
+    if (fenceAddressAndValToWait.has_value()) {
+        const auto fenceAddressToWait = fenceAddressAndValToWait->first;
+        const auto fenceValToWait = fenceAddressAndValToWait->second;
         waitUserFence(0u, fenceAddressToWait, fenceValToWait, ValueWidth::u64, -1, ioctlHelper->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
     }
 }
 
-std::pair<uint64_t, uint64_t> Drm::getFenceAddressAndValToWait(uint32_t vmHandleId, bool isLocked) {
-
-    std::pair<uint64_t, uint64_t> fenceAddressAndValToWait = std::make_pair(0, 0);
+std::optional<std::pair<uint64_t, uint64_t>> Drm::getFenceAddressAndValToWait(uint32_t vmHandleId, bool isLocked) {
     std::unique_lock<std::mutex> lock;
-
     if (!isLocked) {
         lock = this->lockBindFenceMutex();
     }
 
     if (!(*ioctlHelper->getPagingFenceAddress(vmHandleId, nullptr) >= fenceVal[vmHandleId])) {
-
         auto fenceAddress = castToUint64(ioctlHelper->getPagingFenceAddress(vmHandleId, nullptr));
         auto fenceValue = this->fenceVal[vmHandleId];
-        fenceAddressAndValToWait = std::make_pair(fenceAddress, fenceValue);
+        return std::make_pair(fenceAddress, fenceValue);
     }
-
-    if (!isLocked) {
-        lock.unlock();
-    }
-
-    return fenceAddressAndValToWait;
+    return std::nullopt;
 }
 
 bool Drm::isSetPairAvailable() {
@@ -1729,29 +1719,27 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         }
 
         if (incrementFenceValue) {
-            auto fenceAddressToWait = 0ull;
-            auto fenceValToWait = 0ull;
+            std::optional<std::pair<uint64_t, uint64_t>> fenceAddressAndValToWait = std::nullopt;
             if (isAsyncFence) {
                 bo->incAsyncFenceVal(osContext, vmHandleId);
             } else {
                 auto osContextLinux = static_cast<OsContextLinux *>(osContext);
-                std::pair<uint64_t, uint64_t> fenceAddressAndValToWait = osContextLinux->getFenceAddressAndValToWait(vmHandleId, true);
+                fenceAddressAndValToWait = osContextLinux->getFenceAddressAndValToWait(vmHandleId, true);
                 if (drm->isPerContextVMRequired()) {
                     osContextLinux->incFenceVal(vmHandleId);
                 } else {
                     drm->incFenceVal(vmHandleId);
                 }
-                fenceAddressToWait = fenceAddressAndValToWait.first;
-                fenceValToWait = fenceAddressAndValToWait.second;
             }
             lock.unlock();
 
-            if (fenceAddressToWait != 0u) {
+            if (fenceAddressAndValToWait.has_value()) {
                 bool waitOnUserFenceAfterBindAndUnbind = false;
                 if (debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.get() != -1) {
                     waitOnUserFenceAfterBindAndUnbind = !!debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.get();
                 }
-
+                const auto fenceAddressToWait = fenceAddressAndValToWait->first;
+                const auto fenceValToWait = fenceAddressAndValToWait->second;
                 if ((waitOnUserFenceAfterBindAndUnbind && drm->useVMBindImmediate()) || guaranteePagingFence) {
                     drm->waitUserFence(0u, fenceAddressToWait, fenceValToWait, Drm::ValueWidth::u64, -1, ioctlHelper->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
                 }
