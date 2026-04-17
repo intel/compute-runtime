@@ -801,22 +801,22 @@ HWTEST2_F(CommandEncoderTestXe3pAndLater, givenIndirectModeAndQwordDataWhenProgr
     auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT_LEGACY *>(buffer);
 
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
-    EXPECT_FALSE(semaphoreCmd->get64bCompareEnableWithGPR());
+    EXPECT_FALSE(semaphoreCmd->get64BCompareEnableWithGpr());
     EXPECT_FALSE(semaphoreCmd->getIndirectSemaphoreDataDword());
 
     linearStream.replaceBuffer(buffer, sizeof(buffer));
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, true, false, useSemaphore64bCmd, nullptr);
-    EXPECT_FALSE(semaphoreCmd->get64bCompareEnableWithGPR());
+    EXPECT_FALSE(semaphoreCmd->get64BCompareEnableWithGpr());
     EXPECT_TRUE(semaphoreCmd->getIndirectSemaphoreDataDword());
 
     linearStream.replaceBuffer(buffer, sizeof(buffer));
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, false, false, useSemaphore64bCmd, nullptr);
-    EXPECT_FALSE(semaphoreCmd->get64bCompareEnableWithGPR());
+    EXPECT_FALSE(semaphoreCmd->get64BCompareEnableWithGpr());
     EXPECT_FALSE(semaphoreCmd->getIndirectSemaphoreDataDword());
 
     linearStream.replaceBuffer(buffer, sizeof(buffer));
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(linearStream, 0x1230000, 0, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, true, false, useSemaphore64bCmd, nullptr);
-    EXPECT_TRUE(semaphoreCmd->get64bCompareEnableWithGPR());
+    EXPECT_TRUE(semaphoreCmd->get64BCompareEnableWithGpr());
     EXPECT_FALSE(semaphoreCmd->getIndirectSemaphoreDataDword());
 }
 

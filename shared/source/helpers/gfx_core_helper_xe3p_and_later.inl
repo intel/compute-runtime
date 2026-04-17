@@ -307,7 +307,7 @@ inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties
     pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush);
     pipeControl.setWorkloadPartitionIdOffsetEnable(args.workloadPartitionOffset);
     pipeControl.setAmfsFlushEnable(args.amfsFlushEnable);
-    pipeControl.setDisableGOSyncWithWalkerPostSync(!args.isWalkerWithProfilingEnqueued);
+    pipeControl.setDisableGoSyncWithWalkerPostSync(!args.isWalkerWithProfilingEnqueued);
     setPipeControlRequiredFields(pipeControl, args);
 
     auto flushCachesMask = debugManager.flags.FlushAllCaches.get();

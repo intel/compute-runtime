@@ -325,6 +325,7 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
     } else {
         using MI_SEMAPHORE_WAIT_LEGACY = typename Family::MI_SEMAPHORE_WAIT_LEGACY;
         using COMPARE_OPERATION_LEGACY = typename MI_SEMAPHORE_WAIT_LEGACY::COMPARE_OPERATION;
+        using _64B_COMPARE_ENABLE_WITH_GPR = typename MI_SEMAPHORE_WAIT_LEGACY::_64B_COMPARE_ENABLE_WITH_GPR;
 
         MI_SEMAPHORE_WAIT_LEGACY localCmd = Family::cmdInitMiSemaphoreWaitLegacy;
         localCmd.setCompareOperation(static_cast<COMPARE_OPERATION_LEGACY>(compareMode));
@@ -335,7 +336,7 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
         localCmd.setIndirectSemaphoreDataDword(indirect);
 
         if (indirect && useQwordData) {
-            localCmd.set64bCompareEnableWithGPR(true);
+            localCmd.set64BCompareEnableWithGpr(_64B_COMPARE_ENABLE_WITH_GPR::_64B_COMPARE_ENABLE_WITH_GPR_64B_GPR_COMPARE);
             localCmd.setIndirectSemaphoreDataDword(false);
             localCmd.setSemaphoreDataDword(0);
         }
