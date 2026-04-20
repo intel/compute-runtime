@@ -933,12 +933,77 @@ TEST_F(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecut
 
     {
         GraphInstatiateSettings instantiateAsInterleaved(nullptr, false);
-        ASSERT_EQ(GraphInstatiateSettings::ForkPolicySplitLevels, instantiateAsInterleaved.forkPolicy);
+        instantiateAsInterleaved.forkPolicy = GraphInstatiateSettings::ForkPolicySplitLevels;
 
         MockExecutableGraph execMultiGraph;
         execMultiGraph.instantiateFrom(srcGraph, instantiateAsInterleaved);
         EXPECT_EQ(2U, execMultiGraph.myOrderedSegments.size()); // parent0 -> child -> parent1
     }
+
+    {
+        GraphInstatiateSettings instantiateAsFlat(nullptr, false);
+        ASSERT_EQ(GraphInstatiateSettings::ForkPolicyFlat, instantiateAsFlat.forkPolicy);
+
+        MockExecutableGraph execMultiGraph;
+        execMultiGraph.instantiateFrom(srcGraph, instantiateAsFlat);
+        EXPECT_EQ(1U, execMultiGraph.myOrderedSegments.size()); //  parent0 -> child -> parent1 in a single commandlist
+    }
+}
+
+TEST_F(GraphInstantiation, GivenExecGraphBuilderWhenFlatCommandListSetThenGetterReturnsSameValue) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockGraph srcGraph(&ctx, true);
+    MockExecutableGraph execGraph;
+    ExecGraphBuilder builder(srcGraph, execGraph);
+
+    EXPECT_EQ(nullptr, builder.getFlatCommandList());
+
+    Mock<CommandList> flatCmdList;
+    builder.setFlatCommandList(&flatCmdList);
+
+    EXPECT_EQ(&flatCmdList, builder.getFlatCommandList());
+}
+
+TEST_F(GraphInstantiation, GivenFlatPolicyWhenInstantiatingForkedGraphThenSharedCommandListIsClosedOnce) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    Mock<Event> joinEvent;
+    ze_event_handle_t forkEventHandle = forkEvent.toHandle();
+    ze_event_handle_t joinEventHandle = joinEvent.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    cmdlist.setCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, &joinEvent, 1U, &forkEventHandle);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 1U, &joinEventHandle);
+
+    srcGraph.stopCapturing();
+    srcGraph.captureTargetDesc.hDevice = device->toHandle();
+    for (auto &srcSubgraph : srcGraph.getSubgraphs()) {
+        static_cast<MockGraph *>(srcSubgraph)->captureTargetDesc.hDevice = device->toHandle();
+    }
+
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+    auto *sharedFlatCmdList = ctx.cmdListsToReturn[0];
+
+    GraphInstatiateSettings instantiateAsFlat(nullptr, false);
+    ASSERT_EQ(GraphInstatiateSettings::ForkPolicyFlat, instantiateAsFlat.forkPolicy);
+
+    MockExecutableGraph execMultiGraph;
+    execMultiGraph.instantiateFrom(srcGraph, instantiateAsFlat);
+
+    EXPECT_EQ(1U, execMultiGraph.myOrderedSegments.size());
+    EXPECT_EQ(1U, sharedFlatCmdList->closeCalled);
 }
 
 TEST_F(GraphInstantiationValidation, WhenGraphIsStillCapturingThenItIsNotValidForInstantiation) {

@@ -358,10 +358,11 @@ struct GraphInstatiateSettings {
 
     enum ForkPolicy {
         ForkPolicyMonolythicLevels, // build and submit monolythic commandlists for each level
-        ForkPolicySplitLevels       // split commandlists on forks and interleave submission with child graphs (prevents deadlocks when submitting to single HW queue)
+        ForkPolicySplitLevels,      // split commandlists on forks and interleave submission with child graphs (prevents deadlocks when submitting to single HW queue)
+        ForkPolicyFlat              // commands are interleaved like with ForkPolicySplitLevels, but the resulting command sequence (graph) is flattened to a single cmdlist
     };
 
-    ForkPolicy forkPolicy = ForkPolicySplitLevels;
+    ForkPolicy forkPolicy = ForkPolicyFlat;
 };
 
 struct ExecutableGraph;
@@ -383,6 +384,14 @@ struct ExecGraphBuilder final {
     ExecGraphBuilder(Graph &rootSrc, ExecutableGraph &rootDst);
     void finalize();
 
+    L0::CommandList *getFlatCommandList() const {
+        return flatCommandList;
+    }
+
+    void setFlatCommandList(L0::CommandList *newFlatCommandList) {
+        flatCommandList = newFlatCommandList;
+    }
+
     ExecSubGraphBuilder &getSubGraphBuilder(const Graph *src) {
         auto it = subgraphs.find(src);
         UNRECOVERABLE_IF(it == subgraphs.end());
@@ -392,6 +401,7 @@ struct ExecGraphBuilder final {
   protected:
     Graph &rootSrc;
     ExecutableGraph &rootDst;
+    L0::CommandList *flatCommandList = nullptr;
     std::unordered_map<const Graph *, ExecSubGraphBuilder> subgraphs;
 };
 

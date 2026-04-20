@@ -26,7 +26,7 @@ namespace L0 {
 GraphInstatiateSettings::GraphInstatiateSettings(void *pNext, bool multiEngineGraph) {
     UNRECOVERABLE_IF(nullptr != pNext);
 
-    this->forkPolicy = multiEngineGraph ? ForkPolicy::ForkPolicyMonolythicLevels : ForkPolicy::ForkPolicySplitLevels;
+    this->forkPolicy = multiEngineGraph ? ForkPolicy::ForkPolicyMonolythicLevels : ForkPolicy::ForkPolicyFlat;
     int32_t overrideForceGraphForkPolicy = NEO::debugManager.flags.ForceGraphForkPolicy.get();
     if (overrideForceGraphForkPolicy != -1) {
         this->forkPolicy = static_cast<ForkPolicy>(overrideForceGraphForkPolicy);
@@ -521,9 +521,13 @@ ExecGraphBuilder::ExecGraphBuilder(Graph &rootSrc, ExecutableGraph &rootDst) : r
 }
 
 void ExecGraphBuilder::finalize() {
-    for (auto &subgraph : this->subgraphs) {
-        if (subgraph.second.currCmdList) {
-            subgraph.second.currCmdList->close();
+    if (this->flatCommandList) {
+        this->flatCommandList->close();
+    } else {
+        for (auto &subgraph : this->subgraphs) {
+            if (subgraph.second.currCmdList) {
+                subgraph.second.currCmdList->close();
+            }
         }
     }
 
@@ -561,8 +565,17 @@ ze_result_t ExecutableGraph::instantiateFrom(const OrderedCommandsSegment &segme
         for (CapturedCommandId cmdId = segment.subBegin; cmdId < segment.subBegin + segment.numCommands; ++cmdId) {
             auto &cmd = allCommands[cmdId];
             if (nullptr == segmentBuilder.currCmdList) {
-                segmentBuilder.currCmdList = this->allocateAndAddCommandListSubmissionNode();
-                this->myOrderedSegments[segment.begin] = segmentBuilder.currCmdList;
+                if (settings.forkPolicy == GraphInstatiateSettings::ForkPolicyFlat) {
+                    segmentBuilder.currCmdList = builder.getFlatCommandList();
+                    if (nullptr == segmentBuilder.currCmdList) {
+                        segmentBuilder.currCmdList = this->allocateAndAddCommandListSubmissionNode();
+                        this->myOrderedSegments[segment.begin] = segmentBuilder.currCmdList;
+                        builder.setFlatCommandList(segmentBuilder.currCmdList);
+                    }
+                } else {
+                    segmentBuilder.currCmdList = this->allocateAndAddCommandListSubmissionNode();
+                    this->myOrderedSegments[segment.begin] = segmentBuilder.currCmdList;
+                }
             }
             switch (static_cast<CaptureApi>(cmd.index())) {
             default:
