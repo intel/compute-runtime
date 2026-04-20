@@ -7,7 +7,9 @@
 
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/os_interface/linux/device_command_stream.inl"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
@@ -15,8 +17,17 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/fixtures/mock_aub_center_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/execution_environment_helper.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
@@ -28,6 +39,8 @@
 #include <thread>
 
 using namespace NEO;
+
+using DrmMemoryManagerBasicMt = NEO::DrmMemoryManagerBasic;
 
 class DrmMockForWorker : public Drm {
   public:
@@ -191,4 +204,94 @@ TEST_F(DrmGemCloseWorkerTests, givenDrmGemCloseWorkerWhenCloseIsCalledMultipleTi
     worker->close(true);
     worker->close(true);
     EXPECT_EQ(nullptr, worker->thread);
+}
+
+struct DrmCsrGemCloseWorkerMtTest : ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+        HardwareInfo *hwInfo = nullptr;
+        executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
+        executionEnvironment->incRefInternal();
+        MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
+    }
+
+    void TearDown() override {
+        executionEnvironment->decRefInternal();
+    }
+
+    ExecutionEnvironment *executionEnvironment;
+    DebugManagerStateRestore dbgState;
+};
+
+HWTEST_F(DrmCsrGemCloseWorkerMtTest, givenEnabledGemCloseWorkerWhenCsrIsCreatedThenGemCloseWorkerActiveModeIsSelected) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableGemCloseWorker.set(1u);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+
+    executionEnvironment->memoryManager = DrmMemoryManager::create(*executionEnvironment);
+
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
+    auto osContext = OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), 0, 0,
+                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, 0b1));
+    ptr->setupContext(*osContext);
+    auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
+
+    EXPECT_TRUE(drmCsr->isGemCloseWorkerActive());
+    delete osContext;
+}
+
+HWTEST_F(DrmCsrGemCloseWorkerMtTest, givenDefaultGemCloseWorkerWhenCsrIsCreatedThenGemCloseWorkerActiveModeIsSelected) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+
+    executionEnvironment->memoryManager = DrmMemoryManager::create(*executionEnvironment);
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
+    auto osContext = OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), 0, 0,
+                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, 0b1));
+    ptr->setupContext(*osContext);
+    auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
+
+    EXPECT_TRUE(drmCsr->isGemCloseWorkerActive());
+    delete osContext;
+}
+
+TEST_F(DrmMemoryManagerBasicMt, givenDrmMemoryManagerCreatedWithGemCloseWorkerActiveThenGemCloseWorkerIsCreated) {
+    VariableBackup<NEO::UltHwConfig> backup(&NEO::ultHwConfig);
+    NEO::ultHwConfig.useGemCloseWorker = true;
+    NEO::DrmMemoryManager drmMemoryManager(NEO::GemCloseWorkerMode::gemCloseWorkerActive, false, false, this->executionEnvironment);
+    EXPECT_NE(nullptr, drmMemoryManager.peekGemCloseWorker());
+}
+
+TEST_F(DrmMemoryManagerBasicMt, givenEnabledGemCloseWorkerWhenMemoryManagerIsCreatedThenGemCloseWorker) {
+    VariableBackup<NEO::UltHwConfig> backup(&NEO::ultHwConfig);
+    NEO::ultHwConfig.useGemCloseWorker = true;
+    DebugManagerStateRestore dbgStateRestore;
+    NEO::debugManager.flags.EnableGemCloseWorker.set(1u);
+
+    NEO::TestedDrmMemoryManager memoryManager(true, true, true, this->executionEnvironment);
+
+    EXPECT_NE(memoryManager.peekGemCloseWorker(), nullptr);
+}
+
+TEST_F(DrmMemoryManagerBasicMt, givenDefaultGemCloseWorkerWhenMemoryManagerIsCreatedThenGemCloseWorker) {
+    VariableBackup<NEO::UltHwConfig> backup(&NEO::ultHwConfig);
+    NEO::ultHwConfig.useGemCloseWorker = true;
+    NEO::MemoryManagerCreate<NEO::DrmMemoryManager> memoryManager(false, false, NEO::GemCloseWorkerMode::gemCloseWorkerActive, false, false, this->executionEnvironment);
+
+    EXPECT_NE(memoryManager.peekGemCloseWorker(), nullptr);
+}
+
+TEST_F(DrmMemoryManagerBasicMt, givenWorkerToCloseWhenCommonCleanupIsCalledThenClosingIsBlocking) {
+    VariableBackup<NEO::UltHwConfig> backup(&NEO::ultHwConfig);
+    NEO::ultHwConfig.useGemCloseWorker = true;
+    NEO::MockDrmMemoryManager memoryManager(NEO::GemCloseWorkerMode::gemCloseWorkerInactive, false, true, this->executionEnvironment);
+    memoryManager.gemCloseWorker.reset(new NEO::MockDrmGemCloseWorker(memoryManager));
+    auto pWorker = static_cast<NEO::MockDrmGemCloseWorker *>(memoryManager.gemCloseWorker.get());
+
+    memoryManager.commonCleanup();
+    EXPECT_TRUE(pWorker->wasBlocking);
 }

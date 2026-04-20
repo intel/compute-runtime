@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,42 +91,6 @@ HWTEST_F(DeviceCommandStreamLeaksTest, givenDisabledGemCloseWorkerWhenCsrIsCreat
     auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
 
     EXPECT_FALSE(drmCsr->isGemCloseWorkerActive());
-    delete osContext;
-}
-
-HWTEST_F(DeviceCommandStreamLeaksTest, givenEnabledGemCloseWorkerWhenCsrIsCreatedThenGemCloseWorkerActiveModeIsSelected) {
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useGemCloseWorker = true;
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableGemCloseWorker.set(1u);
-    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
-
-    executionEnvironment->memoryManager = DrmMemoryManager::create(*executionEnvironment);
-
-    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
-    auto osContext = OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), 0, 0,
-                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, 0b1));
-    ptr->setupContext(*osContext);
-    auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
-
-    EXPECT_TRUE(drmCsr->isGemCloseWorkerActive());
-    delete osContext;
-}
-
-HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultGemCloseWorkerWhenCsrIsCreatedThenGemCloseWorkerActiveModeIsSelected) {
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useGemCloseWorker = true;
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
-
-    executionEnvironment->memoryManager = DrmMemoryManager::create(*executionEnvironment);
-    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
-    auto osContext = OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), 0, 0,
-                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, 0b1));
-    ptr->setupContext(*osContext);
-    auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
-
-    EXPECT_TRUE(drmCsr->isGemCloseWorkerActive());
     delete osContext;
 }
 
