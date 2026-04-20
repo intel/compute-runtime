@@ -374,6 +374,10 @@ std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubd
     return "xe";
 }
 
+std::string SysmanKmdInterfaceXe::getTemperatureMaxFileName() const {
+    return "temp2_max";
+}
+
 std::optional<std::string> SysmanKmdInterfaceXe::getEngineClassString(uint16_t engineClass) {
     auto sysfEngineString = xeEngineClassToSysfsEngineMap.find(engineClass);
     if (sysfEngineString == xeEngineClassToSysfsEngineMap.end()) {

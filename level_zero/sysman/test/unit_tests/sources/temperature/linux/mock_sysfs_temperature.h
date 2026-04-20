@@ -9,6 +9,10 @@
 
 #include "level_zero/sysman/source/api/temperature/linux/sysman_os_temperature_imp.h"
 #include "level_zero/sysman/source/api/temperature/sysman_temperature_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/sysman_const.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
 
 namespace L0 {
 namespace Sysman {
@@ -70,6 +74,76 @@ const std::string telem5TelemFileName("/sys/class/intel_pmt/telem5/telem");
 const std::string telem6OffsetFileName("/sys/class/intel_pmt/telem6/offset");
 const std::string telem6GuidFileName("/sys/class/intel_pmt/telem6/guid");
 const std::string telem6TelemFileName("/sys/class/intel_pmt/telem6/telem");
+const std::string mockTemperatureHwmonDir("device/hwmon");
+const std::string mockTemperatureHwmonNameFile0("device/hwmon/hwmon0/name");
+const std::string mockTemperatureHwmonNameFile1("device/hwmon/hwmon1/name");
+const std::string mockTemperatureHwmonTempFile0("device/hwmon/hwmon0/temp2_max");
+
+class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
+  public:
+    ze_result_t scanResult = ZE_RESULT_SUCCESS;
+    std::vector<std::string> directoryEntries = {"hwmon0"};
+    ze_result_t hwmonNameReadResult0 = ZE_RESULT_SUCCESS;
+    ze_result_t hwmonNameReadResult1 = ZE_RESULT_SUCCESS;
+    ze_result_t temp2MaxReadResult = ZE_RESULT_SUCCESS;
+    std::string hwmonName0 = "xe";
+    std::string hwmonName1 = "dummy";
+    int32_t temp2MaxValue = 65000;
+    bool temp2MaxExists = true;
+
+    ze_result_t read(const std::string file, std::string &val) override {
+        if (file == mockTemperatureHwmonNameFile0) {
+            if (hwmonNameReadResult0 == ZE_RESULT_SUCCESS) {
+                val = hwmonName0;
+            }
+            return hwmonNameReadResult0;
+        }
+        if (file == mockTemperatureHwmonNameFile1) {
+            if (hwmonNameReadResult1 == ZE_RESULT_SUCCESS) {
+                val = hwmonName1;
+            }
+            return hwmonNameReadResult1;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t read(const std::string file, int32_t &val) override {
+        if (file == mockTemperatureHwmonTempFile0) {
+            if (temp2MaxReadResult == ZE_RESULT_SUCCESS) {
+                val = temp2MaxValue;
+            }
+            return temp2MaxReadResult;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t scanDirEntries(const std::string path, std::vector<std::string> &listOfEntries) override {
+        if (scanResult != ZE_RESULT_SUCCESS) {
+            return scanResult;
+        }
+        if (path != mockTemperatureHwmonDir) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        listOfEntries = directoryEntries;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    bool fileExists(const std::string file) override {
+        if (file == mockTemperatureHwmonTempFile0) {
+            return temp2MaxExists;
+        }
+        return false;
+    }
+};
+
+struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
+    MockTemperatureFsAccess() = default;
+};
+
+struct MockTemperatureProcfsAccess : public L0::Sysman::ProcFsAccessInterface {
+    MockTemperatureProcfsAccess() = default;
+    ~MockTemperatureProcfsAccess() override = default;
+};
 
 class PublicLinuxTemperatureImp : public L0::Sysman::LinuxTemperatureImp {
   public:

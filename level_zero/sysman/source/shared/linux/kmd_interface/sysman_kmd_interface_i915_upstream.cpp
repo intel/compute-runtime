@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -150,6 +150,10 @@ ze_result_t SysmanKmdInterfaceI915Upstream::readBusynessFromGroupFd(PmuInterface
 
 std::string SysmanKmdInterfaceI915Upstream::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {
     return getHwmonNameI915(subDeviceId, isSubdevice);
+}
+
+std::string SysmanKmdInterfaceI915Upstream::getTemperatureMaxFileName() const {
+    return "";
 }
 
 std::string SysmanKmdInterfaceI915Upstream::getEngineBasePath(uint32_t subDeviceId) const {

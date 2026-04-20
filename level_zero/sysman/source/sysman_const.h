@@ -36,6 +36,7 @@ inline constexpr uint32_t numComputeTemperatureEntries = 3; // entries would be 
 inline constexpr uint32_t invalidMaxTemperature = 125;
 inline constexpr uint32_t invalidMinTemperature = 10;
 inline constexpr uint32_t vendorIdIntel = 0x8086;
+inline constexpr double defaultMaxTemperature = -1;
 
 struct SteadyClock {
     typedef std::chrono::duration<uint64_t, std::milli> duration;
