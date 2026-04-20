@@ -94,13 +94,10 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchMediaVFEState &
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchThreadPayload &token) {
-    dst.kernelAttributes.flags.perThreadDataHeaderIsPresent = (0U != token.HeaderPresent);
     dst.kernelAttributes.numLocalIdChannels = token.LocalIDXPresent + token.LocalIDYPresent + token.LocalIDZPresent;
     dst.kernelAttributes.localId[0] = token.LocalIDXPresent;
     dst.kernelAttributes.localId[1] = token.LocalIDYPresent;
     dst.kernelAttributes.localId[2] = token.LocalIDZPresent;
-    dst.kernelAttributes.flags.usesFlattenedLocalIds = (0U != token.LocalIDFlattenedPresent);
-    dst.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent = (0U != token.UnusedPerThreadConstantPresent);
     dst.kernelAttributes.flags.passInlineData = (0 != token.PassInlineData);
     dst.entryPoints.skipPerThreadDataLoad = token.OffsetToSkipPerThreadDataLoad;
     dst.entryPoints.skipSetFFIDGP = token.OffsetToSkipSetFFIDGP;
@@ -196,7 +193,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatele
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateSystemThreadSurface &token) {
     dst.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = token.Offset;
-    dst.kernelAttributes.perThreadSystemThreadSurfaceSize = token.PerThreadSystemThreadSurfaceSize;
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateSyncBuffer &token) {

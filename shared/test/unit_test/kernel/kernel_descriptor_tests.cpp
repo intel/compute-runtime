@@ -18,7 +18,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadScratchSize[0]);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadScratchSize[1]);
     EXPECT_EQ(0U, desc.kernelAttributes.perHwThreadPrivateMemorySize);
-    EXPECT_EQ(0U, desc.kernelAttributes.perThreadSystemThreadSurfaceSize);
     EXPECT_EQ(0U, desc.kernelAttributes.requiredWorkgroupSize[0]);
     EXPECT_EQ(0U, desc.kernelAttributes.requiredWorkgroupSize[1]);
     EXPECT_EQ(0U, desc.kernelAttributes.requiredWorkgroupSize[2]);
@@ -28,7 +27,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_EQ(128U, desc.kernelAttributes.numGrfRequired);
     EXPECT_EQ(NEO::KernelDescriptor::BindfulAndStateless, desc.kernelAttributes.bufferAddressingMode);
     EXPECT_EQ(NEO::KernelDescriptor::Bindful, desc.kernelAttributes.imageAddressingMode);
-    EXPECT_EQ(NEO::KernelDescriptor::Bindful, desc.kernelAttributes.samplerAddressingMode);
     EXPECT_EQ(0U, desc.kernelAttributes.workgroupWalkOrder[0]);
     EXPECT_EQ(1U, desc.kernelAttributes.workgroupWalkOrder[1]);
     EXPECT_EQ(2U, desc.kernelAttributes.workgroupWalkOrder[2]);

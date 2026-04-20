@@ -66,7 +66,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         uint32_t slmInlineSize = 0U;
         uint32_t perThreadScratchSize[2] = {0U, 0U};
         uint32_t perHwThreadPrivateMemorySize = 0U;
-        uint32_t perThreadSystemThreadSurfaceSize = 0U;
         uint32_t numThreadsRequired = 0u;
         uint32_t spillFillScratchMemorySize = 0u;
         uint32_t privateScratchMemorySize = 0u;
@@ -91,7 +90,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
 
         AddressingMode bufferAddressingMode = BindfulAndStateless;
         AddressingMode imageAddressingMode = Bindful;
-        AddressingMode samplerAddressingMode = Bindful;
 
         DeviceBinaryFormat binaryFormat = DeviceBinaryFormat::unknown;
 
@@ -117,33 +115,29 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool usesSystolicPipelineSelectMode : 1;
                 bool usesPrintf : 1;
                 bool usesFencesForReadWriteImages : 1;
-                bool usesFlattenedLocalIds : 1;
                 bool usesPrivateMemory : 1;
                 bool usesImages : 1;
                 bool usesSamplers : 1;
                 bool usesSyncBuffer : 1;
-                // 1
                 bool hasIndirectCalls : 1;
+                // 1
                 bool usesStatelessWrites : 1;
                 bool passInlineData : 1;
-                bool perThreadDataHeaderIsPresent : 1;
-                bool perThreadDataUnusedGrfIsPresent : 1;
                 bool requiresDisabledEUFusion : 1;
                 bool requiresDisabledMidThreadPreemption : 1;
                 bool requiresSubgroupIndependentForwardProgress : 1;
-                // 2
                 bool requiresWorkgroupWalkOrder : 1;
                 bool requiresImplicitArgs : 1;
                 bool useStackCalls : 1;
+                // 2
                 bool hasRTCalls : 1;
                 bool isInvalid : 1;
                 bool hasSample : 1;
                 bool usesAssert : 1;
                 bool hasBindlessImageRead : 1;
-                // 3
-                bool reserved : 8;
+                bool reserved : 3;
             };
-            std::array<bool, 4> packed;
+            std::array<bool, 3> packed;
         } flags = {};
         static_assert(sizeof(KernelAttributes::flags) == sizeof(KernelAttributes::flags.packed), "");
 

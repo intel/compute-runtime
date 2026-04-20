@@ -142,11 +142,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenThreadPayloadThenSetsProperPartsOfDes
     kernelTokens.tokens.threadPayload = &threadPayload;
 
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.perThreadDataHeaderIsPresent);
-    threadPayload.HeaderPresent = 1;
-    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.perThreadDataHeaderIsPresent);
-
     EXPECT_EQ(0U, kernelDescriptor.kernelAttributes.numLocalIdChannels);
     threadPayload.LocalIDXPresent = 1;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
@@ -157,16 +152,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenThreadPayloadThenSetsProperPartsOfDes
     threadPayload.LocalIDZPresent = 1;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_EQ(3U, kernelDescriptor.kernelAttributes.numLocalIdChannels);
-
-    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesFlattenedLocalIds);
-    threadPayload.LocalIDFlattenedPresent = 1;
-    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesFlattenedLocalIds);
-
-    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent);
-    threadPayload.UnusedPerThreadConstantPresent = 1;
-    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent);
 
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.passInlineData);
     threadPayload.PassInlineData = 1;
@@ -328,7 +313,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     kernelDescriptor.kernelAttributes.numArgsStateful = 0;
     kernelTokens.tokens.allocateStatelessPrintfSurface = nullptr;
 
-    EXPECT_EQ(0U, kernelDescriptor.kernelAttributes.perThreadSystemThreadSurfaceSize);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.stateless));
     EXPECT_EQ(0U, kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.pointerSize);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful));
@@ -338,7 +322,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     systemThreadSurface.PerThreadSystemThreadSurfaceSize = 3;
     kernelTokens.tokens.allocateSystemThreadSurface = &systemThreadSurface;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_EQ(systemThreadSurface.PerThreadSystemThreadSurfaceSize, kernelDescriptor.kernelAttributes.perThreadSystemThreadSurfaceSize);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.stateless));
     EXPECT_EQ(0U, kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.pointerSize);
     EXPECT_EQ(systemThreadSurface.Offset, kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful);

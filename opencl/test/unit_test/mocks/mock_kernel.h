@@ -376,12 +376,10 @@ class MockDebugKernel : public MockKernel {
         if (!isValidOffset(kernelInfo.kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful)) {
             auto &kd = const_cast<KernelDescriptor &>(kernelInfo.kernelDescriptor);
             kd.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
-            kd.kernelAttributes.perThreadSystemThreadSurfaceSize = MockDebugKernel::perThreadSystemThreadSurfaceSize;
         }
     }
 
     ~MockDebugKernel() override {}
-    static const uint32_t perThreadSystemThreadSurfaceSize;
 };
 
 } // namespace NEO

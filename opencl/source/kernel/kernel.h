@@ -292,10 +292,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         return kernelInfo.kernelDescriptor.kernelAttributes.gpuPointerSize == 4;
     }
 
-    size_t getPerThreadSystemThreadSurfaceSize() const {
-        return kernelInfo.kernelDescriptor.kernelAttributes.perThreadSystemThreadSurfaceSize;
-    }
-
     std::vector<PatchInfoData> &getPatchInfoDataList() { return patchInfoDataList; };
     bool usesImages() const {
         return usingImages;

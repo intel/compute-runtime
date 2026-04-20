@@ -587,7 +587,6 @@ HWTEST_F(BindlessKernelTests, givenBindlessKernelAndSamplersWhenPatchBindlessSam
     argDescriptorSampler2.as<NEO::ArgDescSampler>().index = 1;
 
     KernelInfo kernelInfo = {};
-    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.samplerAddressingMode = NEO::KernelDescriptor::Bindless;
     pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorSampler1);
     pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorSampler2);
 

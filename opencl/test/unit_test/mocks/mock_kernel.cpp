@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,6 @@
 #include "opencl/source/program/printf_handler.h"
 
 namespace NEO {
-
-const uint32_t MockDebugKernel::perThreadSystemThreadSurfaceSize = 0x100;
 
 const KernelInfoContainer MockKernel::toKernelInfoContainer(const KernelInfo &kernelInfo, uint32_t rootDeviceIndex) {
     KernelInfoContainer kernelInfos;

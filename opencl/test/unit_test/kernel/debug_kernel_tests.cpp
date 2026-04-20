@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,19 +16,3 @@
 #include <memory>
 
 using namespace NEO;
-
-TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenCorrectValueIsReturned) {
-    auto device = std::make_unique<MockClDevice>(new MockDevice);
-    MockProgram program(toClDeviceVector(*device));
-    std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(device->getDevice(), &program));
-
-    EXPECT_EQ(MockDebugKernel::perThreadSystemThreadSurfaceSize, kernel->getPerThreadSystemThreadSurfaceSize());
-}
-
-TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenZeroIsReturned) {
-    auto device = std::make_unique<MockClDevice>(new MockDevice);
-    MockProgram program(toClDeviceVector(*device));
-    std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(device->getDevice(), &program));
-
-    EXPECT_EQ(0u, kernel->getPerThreadSystemThreadSurfaceSize());
-}
