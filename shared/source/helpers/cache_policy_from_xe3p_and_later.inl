@@ -15,9 +15,9 @@ template <PRODUCT_FAMILY gfxProduct>
 const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) {
     using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
 
-    static constexpr const char *writeBackCachingPolicy = "-cl-store-cache-default=7 -cl-load-cache-default=4";
-    static constexpr const char *writeByPassCachingPolicy = "-cl-store-cache-default=2 -cl-load-cache-default=4";
-    static constexpr const char *uncachedCachingPolicy = "-cl-store-cache-default=2 -cl-load-cache-default=2";
+    static constexpr const char *writeBackCachingPolicy = "-cl-store-cache-default=30 -cl-load-cache-default=25";
+    static constexpr const char *writeByPassCachingPolicy = "-cl-store-cache-default=18 -cl-load-cache-default=25";
+    static constexpr const char *uncachedCachingPolicy = "-cl-store-cache-default=18 -cl-load-cache-default=18";
 
     switch (L1CachePolicyHelper<gfxProduct>::getL1CachePolicy(isDebuggerActive)) {
     case GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP:
