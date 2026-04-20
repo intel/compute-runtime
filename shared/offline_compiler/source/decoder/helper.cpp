@@ -7,11 +7,8 @@
 
 #include "helper.h"
 
-#include "shared/offline_compiler/source/decoder/iga_wrapper.h"
-#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
 
 #include "neo_igfxfmid.h"
@@ -75,22 +72,6 @@ void readFileToVectorOfStrings(std::vector<std::string> &lines, const std::strin
     }
 }
 
-size_t findPos(const std::vector<std::string> &lines, const std::string &whatToFind) {
-    for (size_t i = 0; i < lines.size(); ++i) {
-        auto it = lines[i].find(whatToFind);
-        if (it != std::string::npos) {
-            if (it + whatToFind.size() == lines[i].size()) {
-                return i;
-            }
-            char delimiter = lines[i][it + whatToFind.size()];
-            if ((' ' == delimiter) || ('\t' == delimiter) || ('\n' == delimiter) || ('\r' == delimiter)) {
-                return i;
-            }
-        }
-    }
-    return lines.size();
-}
-
 PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &deviceName) {
     for (unsigned int productId = 0; productId < NEO::maxProductEnumValue; ++productId) {
         if (NEO::hardwarePrefix[productId] != nullptr &&
@@ -99,15 +80,4 @@ PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &deviceName) {
         }
     }
     return IGFX_UNKNOWN;
-}
-
-void setProductFamilyForIga(const std::string &device, IgaWrapper *iga, OclocArgHelper *argHelper) {
-    auto productFamily = argHelper->productConfigHelper->getProductFamilyFromDeviceName(device);
-    if (productFamily == IGFX_UNKNOWN) {
-        productFamily = getProductFamilyFromDeviceName(device);
-        if (productFamily != IGFX_UNKNOWN) {
-            argHelper->printf("Warning : Deprecated device name is being used.\n");
-        }
-    }
-    iga->setProductFamily(productFamily);
 }

@@ -4792,7 +4792,7 @@ TEST_F(OfflineCompilerTests, givenFormatFlagWithKnownFormatPassedThenEnforceSpec
     EXPECT_TRUE(output.empty());
 }
 
-TEST_F(OfflineCompilerTests, givenPatchtokensFormatFlagThenWarningAboutDeprecatedFormatIsProduced) {
+TEST_F(OfflineCompilerTests, givenPatchtokensFormatFlagThenInvalidFormatWarningIsProduced) {
     MockOfflineCompiler ocloc;
     ocloc.uniqueHelper->filesMap = filesMap;
 
@@ -4811,7 +4811,7 @@ TEST_F(OfflineCompilerTests, givenPatchtokensFormatFlagThenWarningAboutDeprecate
     const auto output = capture.getCapturedStdout();
     ASSERT_EQ(0, retVal);
 
-    const auto expectedOutput{"WARNING: Ignoring deprecated '--format patchtokens' option.\n"};
+    const auto expectedOutput{"Invalid format passed: patchtokens. Ignoring.\n"};
     EXPECT_EQ(expectedOutput, output);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,6 @@
 #include <string>
 #include <vector>
 
-class OclocArgHelper;
-struct IgaWrapper;
-
 extern void (*abortOclocExecution)(int);
 
 void abortOclocExecutionDefaultHandler(int errorCode);
@@ -28,9 +25,6 @@ std::vector<char> readBinaryFile(const std::string &fileName);
 
 void istreamToVectorOfStrings(std::istream &input, std::vector<std::string> &lines, bool replaceTabs = false);
 void readFileToVectorOfStrings(std::vector<std::string> &lines, const std::string &fileName, bool replaceTabs = false);
-void setProductFamilyForIga(const std::string &device, IgaWrapper *iga, OclocArgHelper *argHelper);
-
-size_t findPos(const std::vector<std::string> &lines, const std::string &whatToFind);
 
 PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &deviceName);
 

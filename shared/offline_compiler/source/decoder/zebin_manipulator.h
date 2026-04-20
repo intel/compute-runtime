@@ -45,7 +45,6 @@ struct Arguments {
 };
 
 enum BinaryFormats {
-    PatchTokens,
     Zebin32b,
     Zebin64b
 };

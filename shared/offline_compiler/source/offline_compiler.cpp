@@ -1867,8 +1867,6 @@ void OfflineCompiler::enforceFormat(std::string &format) {
                    [](auto c) { return std::tolower(c); });
     if (format == "zebin") {
         // zebin is enabled by default
-    } else if (format == "patchtokens") {
-        argHelper->printf("WARNING: Ignoring deprecated '--format patchtokens' option.\n");
     } else {
         argHelper->printf("Invalid format passed: %s. Ignoring.\n", format.c_str());
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -335,13 +335,13 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithoutProductFamilyOrGfxCoreFamily
     EXPECT_EQ(OCLOC_INVALID_DEVICE, retVal);
 }
 
-TEST(ZebinManipulatorTests, GivenNonZebinBinaryWhenGetBinaryFormatForDisassembleThenReturnPatchTokensFormat) {
+TEST(ZebinManipulatorTests, GivenNonZebinBinaryWhenGetBinaryFormatForDisassembleThenReturnZebin32bFormat) {
     MockOclocArgHelper::FilesMap files;
     files.insert({"binary.bin", "000000000000000"});
     MockOclocArgHelper argHelper(files);
 
     auto format = NEO::Zebin::Manipulator::getBinaryFormatForDisassemble(&argHelper, {"ocloc", "disasm", "-file", "binary.bin"});
-    EXPECT_EQ(NEO::Zebin::Manipulator::BinaryFormats::PatchTokens, format);
+    EXPECT_EQ(NEO::Zebin::Manipulator::BinaryFormats::Zebin32b, format);
 }
 
 TEST(ZebinManipulatorTests, GivenEmptySectionsInfoWhenCheckingIfIs64BitZebinThenReturnFalse) {
@@ -661,4 +661,28 @@ TEST_F(ZebinEncoderTests, GivenMissingFileWhenCheckIfAllFilesExistThenErrorIsRet
 TEST_F(ZebinEncoderTests, WhenPrintHelpIsCalledThenHelpIsPrinted) {
     encoder.printHelp();
     EXPECT_FALSE(getOutput().empty());
+}
+
+TEST(ZebinManipulatorTests, GivenNoDumpArgWhenGetBinaryFormatForAssembleThenUsesDefaultDumpPathAndReturnsZebin32b) {
+    MockOclocArgHelper::FilesMap files;
+    MockOclocArgHelper argHelper(files);
+
+    auto format = NEO::Zebin::Manipulator::getBinaryFormatForAssemble(&argHelper, {"ocloc", "asm", "-file", "binary.bin"});
+    EXPECT_EQ(NEO::Zebin::Manipulator::BinaryFormats::Zebin32b, format);
+}
+
+TEST(ZebinManipulatorTests, GivenDumpArgAsLastArgWhenGetBinaryFormatForAssembleThenUsesDefaultDumpPathAndReturnsZebin32b) {
+    MockOclocArgHelper::FilesMap files;
+    MockOclocArgHelper argHelper(files);
+
+    auto format = NEO::Zebin::Manipulator::getBinaryFormatForAssemble(&argHelper, {"ocloc", "asm", "-file", "binary.bin", "-dump"});
+    EXPECT_EQ(NEO::Zebin::Manipulator::BinaryFormats::Zebin32b, format);
+}
+
+TEST(ZebinManipulatorTests, GivenDumpArgWithValidPathWhenGetBinaryFormatForAssembleThenUsesProvidedDumpPathAndReturnsZebin32b) {
+    MockOclocArgHelper::FilesMap files;
+    MockOclocArgHelper argHelper(files);
+
+    auto format = NEO::Zebin::Manipulator::getBinaryFormatForAssemble(&argHelper, {"ocloc", "asm", "-file", "binary.bin", "-dump", "my_dump/"});
+    EXPECT_EQ(NEO::Zebin::Manipulator::BinaryFormats::Zebin32b, format);
 }

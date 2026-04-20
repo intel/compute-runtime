@@ -7,8 +7,6 @@
 
 #include "shared/offline_compiler/source/ocloc_interface.h"
 
-#include "shared/offline_compiler/source/decoder/binary_decoder.h"
-#include "shared/offline_compiler/source/decoder/binary_encoder.h"
 #include "shared/offline_compiler/source/decoder/zebin_manipulator.h"
 #include "shared/offline_compiler/source/multi_command.h"
 #include "shared/offline_compiler/source/ocloc_api.h"
@@ -294,11 +292,7 @@ int disassemble(OclocArgHelper *argHelper, const std::vector<std::string> &args)
         return (retVal == OCLOC_SUCCESS) ? decoder.decode() : retVal;
     };
 
-    if (binaryFormat == Zebin::Manipulator::BinaryFormats::PatchTokens) {
-        BinaryDecoder disasm(argHelper);
-        return decode(disasm);
-
-    } else if (binaryFormat == Zebin::Manipulator::BinaryFormats::Zebin32b) {
+    if (binaryFormat == Zebin::Manipulator::BinaryFormats::Zebin32b) {
         Zebin::Manipulator::ZebinDecoder<Elf::EI_CLASS_32> decoder(argHelper);
         return decode(decoder);
     } else {
@@ -317,10 +311,7 @@ int assemble(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
         }
         return (retVal == OCLOC_SUCCESS) ? encoder.encode() : retVal;
     };
-    if (binaryFormat == Zebin::Manipulator::BinaryFormats::PatchTokens) {
-        BinaryEncoder assembler(argHelper);
-        return encode(assembler);
-    } else if (binaryFormat == Zebin::Manipulator::BinaryFormats::Zebin32b) {
+    if (binaryFormat == Zebin::Manipulator::BinaryFormats::Zebin32b) {
         Zebin::Manipulator::ZebinEncoder<Elf::EI_CLASS_32> encoder(argHelper);
         return encode(encoder);
     } else {

@@ -831,7 +831,7 @@ TEST(OclocApiTests, GivenMissingFileNameWhenDecodingThenErrorIsReturned) {
     const auto output = capture.getCapturedStdout();
 
     EXPECT_NE(std::string::npos, output.find("Unknown argument -file\n"));
-    EXPECT_EQ(-1, retVal);
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
 }
 
 TEST_F(OclocApiTest, GivenOnlySpirVWithMultipleDevicesWhenCompilingThenFirstDeviceIsSelected) {
@@ -972,21 +972,6 @@ TEST(OclocApiTests, GivenHelpParameterWhenEncodingThenHelpMsgIsPrintedAndSuccess
 }
 
 TEST(OclocApiTests, GivenMissingDumpFileNameWhenEncodingThenErrorIsReturned) {
-    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
-        std::filesystem::path filePath = filename;
-        std::string fileNameWithExtension = filePath.filename().string();
-
-        std::vector<std::string> expectedFiles = {
-            "some_kernel.cl"};
-
-        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedFiles.end()) {
-            return reinterpret_cast<FILE *>(0x40);
-        }
-        return NULL;
-    });
-    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
-
     const char *argv[] = {
         "ocloc",
         "asm",
@@ -1002,44 +987,7 @@ TEST(OclocApiTests, GivenMissingDumpFileNameWhenEncodingThenErrorIsReturned) {
     const auto output = capture.getCapturedStdout();
 
     EXPECT_NE(std::string::npos, output.find("Unknown argument -dump\n"));
-    EXPECT_EQ(-1, retVal);
-}
-
-TEST(OclocApiTests, GivenValidArgumentsAndMissingPtmFileWhenEncodingThenErrorIsReturned) {
-    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
-        std::filesystem::path filePath = filename;
-        std::string fileNameWithExtension = filePath.filename().string();
-
-        std::vector<std::string> expectedFiles = {
-            "some_kernel.cl"};
-
-        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedFiles.end()) {
-            return reinterpret_cast<FILE *>(0x40);
-        }
-        return NULL;
-    });
-    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
-
-    const char *argv[] = {
-        "ocloc",
-        "asm",
-        "-dump",
-        "test_files/dump",
-        "-out",
-        "test_files/binary_gen.bin"};
-    unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-    StreamCapture capture;
-    capture.captureStdout();
-    const auto retVal = oclocInvoke(argc, argv,
-                                    0, nullptr, nullptr, nullptr,
-                                    0, nullptr, nullptr, nullptr,
-                                    nullptr, nullptr, nullptr, nullptr);
-    const auto output = capture.getCapturedStdout();
-
-    EXPECT_NE(std::string::npos, output.find("Error! Couldn't find PTM.txt"));
-    EXPECT_EQ(-1, retVal);
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
 }
 
 TEST(OclocApiTests, GiveMultiCommandHelpArgumentsWhenInvokingOclocThenHelpIsPrinted) {

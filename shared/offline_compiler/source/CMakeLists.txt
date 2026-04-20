@@ -84,10 +84,6 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/utilities/logger.h
     ${OCLOC_DIRECTORY}/source/default_cache_config.cpp
     ${OCLOC_DIRECTORY}/source/debug_variables_helper_ocloc.cpp
-    ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
-    ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.h
-    ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp
-    ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.h
     ${OCLOC_DIRECTORY}/source/decoder/helper.cpp
     ${OCLOC_DIRECTORY}/source/decoder/helper.h
     ${OCLOC_DIRECTORY}/source/decoder/iga_wrapper.h

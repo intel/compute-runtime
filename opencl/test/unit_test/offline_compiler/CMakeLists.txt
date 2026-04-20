@@ -7,8 +7,6 @@
 project(ocloc_tests)
 
 set(IGDRCL_SRCS_cloc
-    ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
-    ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp
     ${OCLOC_DIRECTORY}/source/offline_compiler.cpp
     ${OCLOC_DIRECTORY}/source/offline_linker.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_concat.cpp
@@ -28,8 +26,6 @@ else()
 endif()
 
 set(IGDRCL_SRCS_offline_compiler_mock
-    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_decoder.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_zebin_decoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_zebin_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_iga_wrapper.h
@@ -61,7 +57,6 @@ get_property(NEO_CORE_tests_compiler_mocks GLOBAL PROPERTY NEO_CORE_tests_compil
 set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/decoder_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/encoder_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/iga_wrapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/iga_wrapper_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/zebin_manipulator_tests.cpp

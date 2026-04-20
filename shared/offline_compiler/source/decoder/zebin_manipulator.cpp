@@ -129,11 +129,7 @@ BinaryFormats getBinaryFormatForAssemble(OclocArgHelper *argHelper, const std::v
     std::string dump = (it != args.end() && (it + 1) != args.end()) ? *(it + 1) : "dump/";
     addSlash(dump);
     auto sectionsInfoFilepath = dump + Manipulator::sectionsInfoFilename.str();
-    const bool usesZebin = argHelper->fileExists(sectionsInfoFilepath);
-    if (usesZebin) {
-        return Manipulator::is64BitZebin(argHelper, sectionsInfoFilepath) ? BinaryFormats::Zebin64b : BinaryFormats::Zebin32b;
-    }
-    return BinaryFormats::PatchTokens;
+    return Manipulator::is64BitZebin(argHelper, sectionsInfoFilepath) ? BinaryFormats::Zebin64b : BinaryFormats::Zebin32b;
 }
 
 BinaryFormats getBinaryFormatForDisassemble(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
@@ -146,7 +142,7 @@ BinaryFormats getBinaryFormatForDisassemble(OclocArgHelper *argHelper, const std
             return numBits == Elf::EI_CLASS_64 ? BinaryFormats::Zebin64b : BinaryFormats::Zebin32b;
         }
     }
-    return BinaryFormats::PatchTokens;
+    return BinaryFormats::Zebin32b;
 }
 
 template ZebinDecoder<Elf::EI_CLASS_32>::ZebinDecoder(OclocArgHelper *argHelper);
