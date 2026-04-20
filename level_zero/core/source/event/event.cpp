@@ -1160,16 +1160,12 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
                 completionValue = externalSyncAllocProperties->completionValue;
             }
 
-            if (!deviceAddress || !hostAddress) {
+            if (!deviceAddress) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
             auto deviceAlloc = getExternalCounterAllocationFromAddress(deviceAddress);
             auto hostAlloc = getExternalCounterAllocationFromAddress(hostAddress);
-
-            if (!hostAlloc) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
 
             inOrderExecHelper.assignData(completionValue, 0, 1, 1, deviceAlloc, hostAlloc, castToUint64(deviceAddress), 0, hostAddress, 0, 0, (deviceAlloc != hostAlloc), true);
 
