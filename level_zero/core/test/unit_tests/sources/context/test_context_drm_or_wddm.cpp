@@ -1728,5 +1728,36 @@ TEST_F(GetMemHandlePtrTest, givenWddmDriverWhenCloseExternalHandleCalledThenFdIs
     EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
 }
 
+using ContextStaticIpcTest = Test<DeviceFixture>;
+TEST_F(ContextStaticIpcTest, givenNullContextWhenCallingStaticIsIPCHandleSharingSupportedThenReturnsTrue) {
+    // Test that the static function can be called without a Context instance
+    bool ipcSupported = Context::isIPCHandleSharingSupported();
+    EXPECT_TRUE(ipcSupported);
+}
+
+TEST_F(ContextStaticIpcTest, givenDriverHandleWhenCallingStaticIsIPCHandleSharingSupportedThenDriverCanQueryBeforeContextCreation) {
+    // Test that driver can query IPC support before creating any context
+    // This proves the static function resolves the issue mentioned in review:
+    // "driver can report different IPC capabilities whenever L0 context was created or not"
+    bool ipcSupportedBeforeContext = Context::isIPCHandleSharingSupported();
+    EXPECT_TRUE(ipcSupportedBeforeContext);
+
+    // Now create a context and verify it returns the same value
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    bool ipcSupportedAfterContext = Context::isIPCHandleSharingSupported();
+    EXPECT_TRUE(ipcSupportedAfterContext);
+
+    // Verify both calls return the same value (platform capability, not instance-specific)
+    EXPECT_EQ(ipcSupportedBeforeContext, ipcSupportedAfterContext);
+
+    Context *contextImp = Context::fromHandle(hContext);
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 } // namespace ult
 } // namespace L0

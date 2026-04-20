@@ -1347,6 +1347,96 @@ TEST(zeDriverGetIpcProperties, givenEnableIpcHandleSharingEnabledWhenGetIpcPrope
     EXPECT_EQ(static_cast<uint32_t>(ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL), ipcProperties.flags);
 }
 
+using DriverHandleGetIPCPropertiesTest = Test<DeviceFixture>;
+TEST_F(DriverHandleGetIPCPropertiesTest, givenDeviceFixtureInitializedWhenGetIPCPropertiesCalledThenFlagsMatchStaticIsIPCHandleSharingSupported) {
+    // DeviceFixture creates a default context during driver initialization,
+    // which sets enableIpcHandleSharing from Context::isIPCHandleSharingSupported()
+    // Test that getIPCProperties returns flags consistent with the static function
+
+    // Query what the static function returns (platform capability)
+    bool ipcSupported = Context::isIPCHandleSharingSupported();
+
+    // After DeviceFixture setup (which creates default context),
+    // getIPCProperties should reflect Context::isIPCHandleSharingSupported()
+    ze_driver_ipc_properties_t ipcProperties = {};
+    ze_result_t result = driverHandle->getIPCProperties(&ipcProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    if (ipcSupported) {
+        EXPECT_EQ(static_cast<uint32_t>(ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL),
+                  ipcProperties.flags);
+    } else {
+        EXPECT_EQ(0u, ipcProperties.flags);
+    }
+}
+
+TEST_F(DriverHandleGetIPCPropertiesTest, givenEnableIpcHandleSharingExplicitlyDisabledWhenGetIPCPropertiesCalledThenFlagsAreZero) {
+    // Test that when enableIpcHandleSharing is explicitly set to false,
+    // getIPCProperties returns flags = 0 regardless of platform capability
+
+    driverHandle->enableIpcHandleSharing = false;
+
+    ze_driver_ipc_properties_t ipcProperties = {};
+    ze_result_t result = driverHandle->getIPCProperties(&ipcProperties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, ipcProperties.flags); // Should be 0 when explicitly disabled
+}
+
+TEST_F(DriverHandleGetIPCPropertiesTest, givenEnableIpcHandleSharingExplicitlyEnabledWhenGetIPCPropertiesCalledThenFlagsAreSet) {
+    // Test that when enableIpcHandleSharing is explicitly set to true,
+    // getIPCProperties returns the full set of IPC flags
+
+    driverHandle->enableIpcHandleSharing = true;
+
+    ze_driver_ipc_properties_t ipcProperties = {};
+    ze_result_t result = driverHandle->getIPCProperties(&ipcProperties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(static_cast<uint32_t>(ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL),
+              ipcProperties.flags);
+}
+
+TEST_F(DriverHandleGetIPCPropertiesTest, givenMultipleContextsCreatedWhenGetIPCPropertiesCalledThenFlagsRemainConsistent) {
+    // Test that creating multiple contexts doesn't change the IPC properties
+    // Since Context::isIPCHandleSharingSupported() is static (platform capability),
+    // all contexts should set the same value
+
+    bool ipcSupported = Context::isIPCHandleSharingSupported();
+
+    // Create first context
+    ze_context_handle_t hContext1;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t result = driverHandle->createContext(&desc, 0u, nullptr, &hContext1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_driver_ipc_properties_t ipcProperties1 = {};
+    result = driverHandle->getIPCProperties(&ipcProperties1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Create second context
+    ze_context_handle_t hContext2;
+    result = driverHandle->createContext(&desc, 0u, nullptr, &hContext2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_driver_ipc_properties_t ipcProperties2 = {};
+    result = driverHandle->getIPCProperties(&ipcProperties2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Both should report the same flags based on platform capability
+    EXPECT_EQ(ipcProperties1.flags, ipcProperties2.flags);
+
+    if (ipcSupported) {
+        EXPECT_EQ(static_cast<uint32_t>(ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL),
+                  ipcProperties2.flags);
+    } else {
+        EXPECT_EQ(0u, ipcProperties2.flags);
+    }
+
+    Context::fromHandle(hContext1)->destroy();
+    Context::fromHandle(hContext2)->destroy();
+}
+
 struct HostImportApiFixture : public HostPointerManagerFixure {
     void setUp() {
         HostPointerManagerFixure::setUp();

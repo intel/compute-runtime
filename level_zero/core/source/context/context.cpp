@@ -86,7 +86,8 @@ Context::Context(DriverHandle *driverHandle) {
     // Using Class::method syntax to make it explicit which class method is called and
     // avoid clang-tidy warning.
     settings.useOpaqueHandle = Context::isOpaqueHandleSupported(&settings.handleType);
-    settings.enableIpcHandleSharing = Context::isIPCHandleSharingSupported();
+    // Inherit IPC handle sharing setting from driver handle
+    settings.enableIpcHandleSharing = driverHandle->enableIpcHandleSharing;
 }
 
 Context::~Context() {
