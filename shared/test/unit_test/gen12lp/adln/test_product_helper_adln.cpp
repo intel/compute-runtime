@@ -70,10 +70,6 @@ ADLNTEST_F(AdlnProductHelper, givenCompilerProductHelperWhenGetProductConfigThen
     EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::ADL_N);
 }
 
-ADLNTEST_F(AdlnProductHelper, givenCompilerProductHelperWhenGettingOclocEnforceZebinFormatThenExpectTrue) {
-    EXPECT_TRUE(compilerProductHelper->oclocEnforceZebinFormat());
-}
-
 ADLNTEST_F(AdlnProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
 
     EXPECT_FALSE(productHelper->getScmPropertyThreadArbitrationPolicySupport());

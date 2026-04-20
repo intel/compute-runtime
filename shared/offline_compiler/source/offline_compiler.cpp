@@ -1070,12 +1070,6 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
     adjustHeaplessMode();
 
-    if (formatToEnforce.empty() &&
-        compilerProductHelper &&
-        compilerProductHelper->oclocEnforceZebinFormat()) {
-        formatToEnforce = "zebin";
-    }
-
     if (!formatToEnforce.empty()) {
         enforceFormat(formatToEnforce);
     }

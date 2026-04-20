@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,11 +19,6 @@ namespace NEO {
 template <>
 uint32_t CompilerProductHelperHw<IGFX_ALDERLAKE_P>::getDefaultHwIpVersion() const {
     return AOT::ADL_P;
-}
-
-template <>
-bool CompilerProductHelperHw<IGFX_ALDERLAKE_P>::oclocEnforceZebinFormat() const {
-    return true;
 }
 
 template <>

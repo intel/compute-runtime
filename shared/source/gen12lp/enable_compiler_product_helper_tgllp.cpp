@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,11 +24,6 @@ uint64_t CompilerProductHelperHw<IGFX_TIGERLAKE_LP>::getHwInfoConfig(const Hardw
 template <>
 uint32_t CompilerProductHelperHw<IGFX_TIGERLAKE_LP>::getDefaultHwIpVersion() const {
     return AOT::TGL;
-}
-
-template <>
-bool CompilerProductHelperHw<IGFX_TIGERLAKE_LP>::oclocEnforceZebinFormat() const {
-    return true;
 }
 
 static EnableCompilerProductHelper<IGFX_TIGERLAKE_LP> enableCompilerProductHelperTGLLP;

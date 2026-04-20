@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,11 +29,6 @@ bool CompilerProductHelperHw<IGFX_ROCKETLAKE>::isForceEmuInt32DivRemSPRequired()
 template <>
 uint32_t CompilerProductHelperHw<IGFX_ROCKETLAKE>::getDefaultHwIpVersion() const {
     return AOT::RKL;
-}
-
-template <>
-bool CompilerProductHelperHw<IGFX_ROCKETLAKE>::oclocEnforceZebinFormat() const {
-    return true;
 }
 
 static EnableCompilerProductHelper<IGFX_ROCKETLAKE> enableCompilerProductHelperRKL;
