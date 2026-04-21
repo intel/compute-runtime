@@ -611,7 +611,7 @@ void CommandQueueThreadArbitrationPolicyFixture::tearDown() {
     commandQueue->destroy();
 }
 
-void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode, int32_t heaplessModeEnabled, bool scratchAddressPatchingEnabled) {
+void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode, bool scratchAddressPatchingEnabled) {
     fixtureGlobalStatelessMode = globalStatelessMode;
     debugManager.flags.SelectCmdListHeapAddressModel.set(globalStatelessMode);
 

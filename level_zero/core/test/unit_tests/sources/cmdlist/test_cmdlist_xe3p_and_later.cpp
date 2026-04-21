@@ -802,24 +802,11 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWhenAppendC
     context->freeMem(devAddress);
 }
 
-using CommandListScratchPatchPrivateHeapsTestXe3pAndLater = Test<CommandListScratchPatchFixture<0, 0, true>>;
-using CommandListScratchPatchGlobalStatelessHeapsTestXe3pAndLater = Test<CommandListScratchPatchFixture<1, 0, true>>;
+using CommandListScratchPatchPrivateHeapsStateInitTestXe3pAndLater = Test<CommandListScratchPatchFixture<0, true>>;
+using CommandListScratchPatchGlobalStatelessHeapsStateInitTestXe3pAndLater = Test<CommandListScratchPatchFixture<1, true>>;
 
-using CommandListScratchPatchPrivateHeapsStateInitTestXe3pAndLater = Test<CommandListScratchPatchFixture<0, 1, true>>;
-using CommandListScratchPatchGlobalStatelessHeapsStateInitTestXe3pAndLater = Test<CommandListScratchPatchFixture<1, 1, true>>;
-
-using CommandListScratchPatchImmediatePrivateHeapsStateInitTestXe3pAndLater = Test<CommandListScratchPatchFixture<0, 1, false>>;
-using CommandListScratchPatchImmediateGlobalStatelessHeapsStateInitTestXe3pAndLater = Test<CommandListScratchPatchFixture<1, 1, false>>;
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsTestXe3pAndLater,
-          givenHeaplessWithScratchPatchEnabledOnImmediateCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXe3pCore) {
-    testScratchInline<FamilyType>(true, false);
-}
-
-HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTestXe3pAndLater,
-          givenHeaplessWithScratchPatchEnabledOnImmediateCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXe3pCore) {
-    testScratchInline<FamilyType>(true, false);
-}
+using CommandListScratchPatchImmediatePrivateHeapsStateInitTestXe3pAndLater = Test<CommandListScratchPatchFixture<0, false>>;
+using CommandListScratchPatchImmediateGlobalStatelessHeapsStateInitTestXe3pAndLater = Test<CommandListScratchPatchFixture<1, false>>;
 
 HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTestXe3pAndLater,
           givenHeaplessWithScratchPatchEnabledOnImmediateCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXe3pCore) {
@@ -829,16 +816,6 @@ HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTestXe3pAndLater,
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTestXe3pAndLater,
           givenHeaplessWithScratchPatchEnabledOnImmediateCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXe3pCore) {
     testScratchInline<FamilyType>(true, false);
-}
-
-HWTEST2_F(CommandListScratchPatchPrivateHeapsTestXe3pAndLater,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXe3pCore) {
-    testScratchInline<FamilyType>(false, false);
-}
-
-HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTestXe3pAndLater,
-          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXe3pCore) {
-    testScratchInline<FamilyType>(false, false);
 }
 
 HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTestXe3pAndLater,
