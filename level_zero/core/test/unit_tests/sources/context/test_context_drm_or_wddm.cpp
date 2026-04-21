@@ -245,10 +245,11 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpe
     EXPECT_EQ(0, NEO::SysCalls::pidfdgetfdCalled);
 }
 
-TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGetSyscallFailsWithNegativeValueThenNullptrIsReturned) {
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGetSyscallReturnFailThenCorrectHandleIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableIpcSocketFallback.set(0);
 
+    // Enable pidfd only (not sockets) for IPC so it falls back to original handle
     context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -259,22 +260,56 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
 
     VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
     VariableBackup<decltype(NEO::SysCalls::pidfdgetfdCalled)> pidfdGetFdCalledBackup(&NEO::SysCalls::pidfdgetfdCalled, 0u);
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdOpen)> mockPidfdOpen(&NEO::SysCalls::sysCallsPidfdOpen, [](pid_t, unsigned int) -> int {
-        return 100;
-    });
-
     VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> mockPidfdGet(&NEO::SysCalls::sysCallsPidfdGetfd, [](int, int, unsigned int) -> int {
         return -1;
     });
-
     uint64_t handle = 57;
-    auto result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false);
 
-    EXPECT_EQ(nullptr, result.first);
-    EXPECT_EQ(nullptr, result.second);
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false).second);
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
+}
+
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGetSyscallFailsWithNegativeValueThenFallbackHandleIsUsed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableIpcSocketFallback.set(0);
+
+    // Enable pidfd only (not sockets) for IPC so it falls back to original handle
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    fixtureMemoryManager->ntHandle = false;
+
+    uint64_t originalHandle = 42;
+    static bool pidfdGetFdCalled = false;
+    pidfdGetFdCalled = false;
+
+    VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
+    VariableBackup<decltype(NEO::SysCalls::pidfdgetfdCalled)> pidfdGetFdCalledBackup(&NEO::SysCalls::pidfdgetfdCalled, 0u);
+
+    // Mock pidfd_open to succeed
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdOpen)> mockPidfdOpen(&NEO::SysCalls::sysCallsPidfdOpen, [](pid_t, unsigned int) -> int {
+        return 100; // Valid pidfd
+    });
+
+    // Mock pidfd_getfd to fail with different negative values
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> mockPidfdGet(&NEO::SysCalls::sysCallsPidfdGetfd, [](int pidfd, int fd, unsigned int flags) -> int {
+        pidfdGetFdCalled = true;
+        EXPECT_EQ(100, pidfd); // Should receive the pidfd from pidfd_open
+        EXPECT_EQ(42, fd);     // Should receive the original handle
+        EXPECT_EQ(0u, flags);  // Flags should be 0
+        return -2;             // Fail with a different negative value
+    });
+
+    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false).second;
+
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
+    EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
+    EXPECT_TRUE(pidfdGetFdCalled);
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGetSyscallReturnsZeroThenSuccessfulHandleIsUsed) {
@@ -330,7 +365,6 @@ TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithOpaqueHandle
     ze_ipc_mem_handle_t ipcHandle = {};
     IpcOpaqueMemoryData *opaqueData = reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
     opaqueData->handle.fd = 123;
-    opaqueData->opaqueHandle.fd = 123;
     opaqueData->memoryType = 42;
     opaqueData->processId = 456;
     opaqueData->poolOffset = 789;
@@ -513,36 +547,6 @@ TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithNonEmptyRese
         EXPECT_EQ(0xAB, dataBytes[15]);
         EXPECT_EQ(0xFF, dataBytes[31]);
     }
-}
-
-TEST_F(GetDataFromIpcHandleTest, whenCallingGetDataFromIpcHandleWithDifferentHandleAndOpaqueHandleThenOpaqueHandleIsUsed) {
-    uint8_t useOpaque = context->settings.useOpaqueHandle;
-    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
-
-    ze_ipc_mem_handle_t ipcHandle = {};
-    IpcOpaqueMemoryData *opaqueData = reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
-    opaqueData->handle.fd = 42;
-    opaqueData->opaqueHandle.fd = 99;
-    opaqueData->memoryType = 7;
-    opaqueData->processId = 1234;
-    opaqueData->poolOffset = 0;
-
-    uint64_t handle = 0;
-    uint8_t type = 0;
-    unsigned int pid = 0;
-    uint64_t offst = 0;
-    uint64_t cacheID = 0;
-    bool compressed = false;
-    void *reservedHandleData = nullptr;
-
-    context->getDataFromIpcHandle(device, ipcHandle, handle, type, pid, offst, cacheID, reservedHandleData, compressed);
-
-    context->settings.useOpaqueHandle = useOpaque;
-
-    EXPECT_EQ(static_cast<uint64_t>(opaqueData->opaqueHandle.fd), handle);
-    EXPECT_NE(static_cast<uint64_t>(opaqueData->handle.fd), handle);
-    EXPECT_EQ(7u, type);
-    EXPECT_EQ(1234u, pid);
 }
 
 inline int mockPrctl(int option, unsigned long arg) {
