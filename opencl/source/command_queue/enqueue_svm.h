@@ -199,6 +199,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
         auto gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(getDevice().getRootDeviceIndex());
         gpuAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
         gpuAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
+        svmData->cpuAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
+        svmData->cpuAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
 
         GeneralSurface dstSurface(gpuAllocation);
         GeneralSurface srcSurface(svmData->cpuAllocation);

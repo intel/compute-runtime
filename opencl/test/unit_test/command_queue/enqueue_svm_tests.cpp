@@ -1574,6 +1574,26 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenNonReadOnlyMapWhenUnmappingThenSetAubTb
     EXPECT_EQ(2u, myQueue.waitUntilCompleteCalled);
 }
 
+HWTEST_F(EnqueueSvmTestLocalMemory, givenNonReadOnlyMapWhenUnmappingThenCpuAllocationIsWritable) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
+
+    retVal = queue.enqueueSVMMap(CL_TRUE, CL_MAP_WRITE, svmPtr, size, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto svmData = mockSvmManager->getSVMAlloc(svmPtr);
+    auto cpuAllocation = svmData->cpuAllocation;
+    ASSERT_NE(nullptr, cpuAllocation);
+
+    cpuAllocation->setAubWritable(false, GraphicsAllocation::defaultBank);
+    cpuAllocation->setTbxWritable(false, GraphicsAllocation::defaultBank);
+
+    retVal = queue.enqueueSVMUnmap(svmPtr, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(cpuAllocation->isAubWritable(GraphicsAllocation::defaultBank));
+    EXPECT_TRUE(cpuAllocation->isTbxWritable(GraphicsAllocation::defaultBank));
+}
+
 HWTEST_F(EnqueueSvmTestLocalMemory, givenReadOnlyMapWhenUnmappingThenDontResetAubTbxWritable) {
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
 

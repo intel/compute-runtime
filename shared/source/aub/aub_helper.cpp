@@ -35,6 +35,7 @@ bool AubHelper::isOneTimeAubWritableAllocationType(const AllocationType &type) {
     case AllocationType::timestampPacketTagBuffer:
     case AllocationType::externalHostPtr:
     case AllocationType::mapAllocation:
+    case AllocationType::svmCpu:
     case AllocationType::svmGpu:
     case AllocationType::gpuTimestampDeviceBuffer:
     case AllocationType::assertBuffer:
