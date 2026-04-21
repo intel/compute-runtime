@@ -8,6 +8,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -19,6 +20,7 @@
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/patch_store_operation.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
@@ -185,6 +187,16 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
                 pContext->getSpecialQueue(pContext->getDevices()[0]->getRootDeviceIndex())->enqueueFillBuffer(pBuffer, &pattern, sizeof(pattern), 0, size, 0, nullptr, nullptr);
                 clFinish(pContext->getSpecialQueue(pContext->getDevices()[0]->getRootDeviceIndex()));
             }
+        }
+
+        auto extendedPageCount = debugManager.flags.ForceExtendedBufferSize.get();
+        if ((extendedPageCount > 0) && (debugManager.flags.FillBufferTailWithPattern.get())) {
+            auto extSize = MemoryConstants::pageSize * extendedPageCount;
+            auto origSize = size - extSize;
+            const uint8_t fillPattern = Buffer::bufferTailFillPattern;
+            auto specialQueue = pContext->getSpecialQueue(pContext->getDevices()[0]->getRootDeviceIndex());
+            specialQueue->enqueueFillBuffer(pBuffer, &fillPattern, sizeof(fillPattern), origSize, extSize, 0, nullptr, nullptr);
+            clFinish(specialQueue);
         }
     }
 

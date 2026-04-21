@@ -224,6 +224,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, Force2dImageAsArray, -1, "-1: default, 0: WA Dis
 DECLARE_DEBUG_VARIABLE(int32_t, ForceExtendedBufferSize, -1, "-1: default, 0: disabled, >=1: Forces extended buffer size by specified pageSize number in clCreateBuffer, clCreateBufferWithProperties and clCreateBufferWithPropertiesINTEL calls")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceExtendedUSMBufferSize, -1, "-1: default, 0: disabled, >=1: Forces extended buffer size by specified pageSize number in USM calls")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceExtendedKernelIsaSize, -1, "-1: default, 0: disabled, >=1: Forces extended kernel isa size by specified pageSize number")
+DECLARE_DEBUG_VARIABLE(int32_t, FillBufferTailWithPattern, 0, "Fill extended buffer tail with pattern when ForceExtendedBufferSize is enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSimdMessageSizeInWalker, -1, "-1: default, >=0 Program given value in Walker command for SIMD size")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableRecoverablePageFaults, -1, "-1: default - ignore, 0: disable, 1: enable recoverable page faults on all VMs (on faultable hardware)")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableImplicitMigrationOnFaultableHardware, -1, "-1: default - ignore, 0: disable, 1: enable implicit migration on faultable hardware (for all allocations)")

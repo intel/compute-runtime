@@ -65,6 +65,7 @@ class Buffer : public MemObj {
     constexpr static size_t maxBufferSizeForCopyOnCpu = 64 * MemoryConstants::kiloByte;
     constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
     constexpr static cl_ulong objectMagic = MemObj::objectMagic | 0x02;
+    constexpr static uint8_t bufferTailFillPattern = 0xba;
     bool forceDisallowCPUCopy = false;
 
     ~Buffer() override;

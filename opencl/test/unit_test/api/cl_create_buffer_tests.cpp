@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
@@ -672,6 +673,96 @@ TEST_F(clCreateBufferWithMultiDeviceContextFaillingAllocationTests, GivenContext
     EXPECT_EQ(nullptr, buffer);
 
     alignedFree(hostBuffer);
+}
+
+struct SpyCommandQueue : public MockCommandQueue {
+    using MockCommandQueue::MockCommandQueue;
+
+    cl_int enqueueFillBuffer(Buffer *buffer, const void *pattern,
+                             size_t patternSize, size_t offset,
+                             size_t size, cl_uint numEventsInWaitList,
+                             const cl_event *eventWaitList, cl_event *event) override {
+        enqueueFillBufferCallCount++;
+        lastPatternSize = patternSize;
+        lastOffset = offset;
+        lastSize = size;
+        if (pattern && patternSize > 0) {
+            lastPattern = *static_cast<const uint8_t *>(pattern);
+        }
+        return CL_SUCCESS;
+    }
+
+    uint32_t enqueueFillBufferCallCount = 0u;
+    size_t lastPatternSize = 0u;
+    size_t lastOffset = 0u;
+    size_t lastSize = 0u;
+    uint8_t lastPattern = 0u;
+};
+
+struct BufferTailFillPatternTests : public ::testing::Test {
+    void SetUp() override {
+        context = std::make_unique<MockContext>();
+        auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
+
+        if (auto oldQueue = context->getSpecialQueue(rootDeviceIndex)) {
+            context->setSpecialQueue(nullptr, rootDeviceIndex);
+            delete oldQueue;
+        }
+
+        spyQueue = new SpyCommandQueue(context.get(), context->getDevice(0), nullptr, false);
+        context->overrideSpecialQueueAndDecrementRefCount(spyQueue, rootDeviceIndex);
+    }
+
+    void TearDown() override {
+        context.reset();
+    }
+
+    std::unique_ptr<MockContext> context;
+    SpyCommandQueue *spyQueue = nullptr;
+};
+
+TEST_F(BufferTailFillPatternTests, GivenBothDebugFlagsSetWhenCreatingBufferThenEnqueueFillBufferIsCalledForTailRegion) {
+    DebugManagerStateRestore restorer;
+    constexpr int32_t extendedPageCount = 2;
+    debugManager.flags.ForceExtendedBufferSize.set(extendedPageCount);
+    debugManager.flags.FillBufferTailWithPattern.set(1);
+
+    constexpr size_t bufferSize = MemoryConstants::pageSize * extendedPageCount + 64u;
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clCreateBuffer(context.get(), 0, bufferSize, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(1u, spyQueue->enqueueFillBufferCallCount);
+
+    const size_t expectedExtSize = MemoryConstants::pageSize * extendedPageCount;
+
+    EXPECT_EQ(bufferSize, spyQueue->lastOffset);
+    EXPECT_EQ(expectedExtSize, spyQueue->lastSize);
+    EXPECT_EQ(sizeof(uint8_t), spyQueue->lastPatternSize);
+    EXPECT_EQ(Buffer::bufferTailFillPattern, spyQueue->lastPattern);
+
+    clReleaseMemObject(buffer);
+}
+
+TEST_F(BufferTailFillPatternTests, GivenBothDebugFlagsSetWithSinglePageExtensionWhenCreatingBufferThenOffsetAndSizeAreCorrect) {
+    DebugManagerStateRestore restorer;
+    constexpr int32_t extendedPageCount = 1;
+    debugManager.flags.ForceExtendedBufferSize.set(extendedPageCount);
+    debugManager.flags.FillBufferTailWithPattern.set(1);
+
+    constexpr size_t originalSize = 128u;
+    constexpr size_t bufferSize = originalSize + MemoryConstants::pageSize * extendedPageCount;
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clCreateBuffer(context.get(), 0, bufferSize, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(1u, spyQueue->enqueueFillBufferCallCount);
+    EXPECT_EQ(bufferSize, spyQueue->lastOffset);
+    EXPECT_EQ(static_cast<size_t>(MemoryConstants::pageSize * extendedPageCount), spyQueue->lastSize);
+
+    clReleaseMemObject(buffer);
 }
 
 } // namespace ULT
