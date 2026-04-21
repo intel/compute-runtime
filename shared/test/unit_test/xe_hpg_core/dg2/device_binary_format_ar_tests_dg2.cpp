@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,8 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
-#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -25,8 +25,11 @@
 using Dg2UnpackSingleDeviceBinaryAr = ::testing::Test;
 
 DG2TEST_F(Dg2UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithDg2ProductConfigThenTryUnpackAnotherBestMatch) {
-    PatchTokensTestData::ValidEmptyProgram programTokens;
-    PatchTokensTestData::ValidEmptyProgram programTokensWrongTokenVersion;
+    ZebinTestData::ValidEmptyProgram zebinValid;
+    ZebinTestData::ValidEmptyProgram zebinWrongMachine;
+
+    zebinValid.elfHeader->machine = static_cast<uint16_t>(productFamily);
+    zebinWrongMachine.elfHeader->machine = 0U;
 
     NEO::HardwareIpVersion aotConfig0{}, aotConfig1{};
     aotConfig0.value = AOT::DG2_G10_A0;
@@ -35,23 +38,21 @@ DG2TEST_F(Dg2UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithDg2ProductCo
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig0);
     std::string anotherProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig1);
 
-    programTokensWrongTokenVersion.headerMutable->Version -= 1;
-    NEO::Ar::ArEncoder encoder;
+    NEO::Ar::ArEncoder encoder{true};
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
-    std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
-    std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
+    std::string requiredPointerSize = "64";
 
-    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize, programTokens.storage));
-    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProduct, programTokens.storage));
-    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "unk." + requiredStepping, programTokens.storage));
-    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + anotherProductConfig, programTokens.storage));
-    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProductConfig, programTokensWrongTokenVersion.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize, zebinValid.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProduct, zebinValid.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "unk.0", zebinValid.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + anotherProductConfig, zebinValid.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProductConfig, zebinWrongMachine.storage));
 
     NEO::TargetDevice target;
-    target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
+    target.productFamily = static_cast<PRODUCT_FAMILY>(productFamily);
     target.aotConfig = aotConfig0;
-    target.stepping = programTokens.header->SteppingId;
-    target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
+    target.stepping = 0U;
+    target.maxPointerSizeInBytes = 8U;
 
     auto arData = encoder.encode();
     std::string unpackErrors;
@@ -61,12 +62,20 @@ DG2TEST_F(Dg2UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithDg2ProductCo
     EXPECT_FALSE(unpackWarnings.empty());
     EXPECT_STREQ("Couldn't find perfectly matched binary in AR, using best usable", unpackWarnings.c_str());
 
+    EXPECT_FALSE(unpacked.deviceBinary.empty());
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpacked.format);
+
     unpackErrors.clear();
     unpackWarnings.clear();
     auto decodedAr = NEO::Ar::decodeAr(arData, unpackErrors, unpackWarnings);
     EXPECT_NE(nullptr, decodedAr.magic);
-    ASSERT_EQ(5U, decodedAr.files.size());
-    EXPECT_EQ(unpacked.deviceBinary.begin(), decodedAr.files[3].fileData.begin());
-    EXPECT_EQ(unpacked.deviceBinary.size(), decodedAr.files[3].fileData.size());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
+    bool foundMatch = false;
+    for (const auto &file : decodedAr.files) {
+        if (file.fileData.begin() == unpacked.deviceBinary.begin()) {
+            foundMatch = true;
+            EXPECT_TRUE(file.fileName.startsWith((requiredPointerSize + "." + anotherProductConfig).c_str()));
+            break;
+        }
+    }
+    EXPECT_TRUE(foundMatch);
 }

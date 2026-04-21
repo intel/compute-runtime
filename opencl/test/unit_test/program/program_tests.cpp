@@ -110,34 +110,6 @@ class SucceedingGenBinaryProgram : public MockProgram {
     cl_int processGenBinary(const ClDevice &clDevice) override { return CL_SUCCESS; }
 };
 
-class PatchtokensProgramWithDebugData : public MockProgram {
-  public:
-    using MockProgram::MockProgram;
-
-    PatchtokensProgramWithDebugData(ClDevice &device) : MockProgram(toClDeviceVector(device)) {
-        auto rootDeviceIdx = device.getRootDeviceIndex();
-        auto hwInfo = device.getHardwareInfo();
-
-        auto &compilerProductHelper = device.getCompilerProductHelper();
-        compilerProductHelper.adjustHwInfoForIgc(hwInfo);
-
-        this->buildInfos.resize(rootDeviceIdx + 1);
-        auto &buildInfo = this->buildInfos[rootDeviceIdx];
-
-        buildInfo.unpackedDeviceBinarySize = sizeof(SProgramBinaryHeader);
-        buildInfo.unpackedDeviceBinary = std::make_unique<char[]>(buildInfo.unpackedDeviceBinarySize);
-        memset(buildInfo.unpackedDeviceBinary.get(), 0, buildInfo.unpackedDeviceBinarySize);
-        auto programBinaryHeader = reinterpret_cast<SProgramBinaryHeader *>(buildInfo.unpackedDeviceBinary.get());
-        programBinaryHeader->Magic = iOpenCL::MAGIC_CL;
-        programBinaryHeader->Version = iOpenCL::CURRENT_ICBE_VERSION;
-        programBinaryHeader->Device = hwInfo.platform.eRenderCoreFamily;
-        programBinaryHeader->GPUPointerSizeInBytes = sizeof(uintptr_t);
-
-        buildInfo.debugData = std::make_unique<char[]>(0x10);
-        buildInfo.debugDataSize = 0x10;
-    }
-};
-
 using ProgramFromBinaryTest = ProgramFromBinaryFixture;
 
 TEST_F(ProgramFromBinaryTest, WhenBuildingProgramThenSuccessIsReturned) {
@@ -1893,31 +1865,6 @@ TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-using ProgramWithDebugDataTests = Test<ProgramSimpleFixture>;
-
-TEST_F(ProgramWithDebugDataTests, GivenPatchtokensProgramWithDebugSymbolsWhenPackDeviceBinaryThenDebugDataIsAddedToSingleDeviceBinary) {
-    auto clDevice = pContext->getDevices()[0];
-    auto rootDeviceIdx = clDevice->getRootDeviceIndex();
-
-    pProgram = new PatchtokensProgramWithDebugData(*clDevice);
-    auto &buildInfo = pProgram->buildInfos[rootDeviceIdx];
-
-    pProgram->packDeviceBinary(*clDevice);
-    EXPECT_NE(nullptr, buildInfo.packedDeviceBinary.get());
-
-    auto packedDeviceBinary = ArrayRef<const uint8_t>::fromAny(buildInfo.packedDeviceBinary.get(), buildInfo.packedDeviceBinarySize);
-    TargetDevice targetDevice = NEO::getTargetDevice(pDevice->getRootDeviceEnvironment());
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto singleDeviceBinary = unpackSingleDeviceBinary(packedDeviceBinary, {}, targetDevice,
-                                                       decodeErrors, decodeWarnings);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
-    EXPECT_FALSE(singleDeviceBinary.debugData.empty());
-    EXPECT_NE(nullptr, pProgram->getDebugData(rootDeviceIdx));
-    EXPECT_NE(0u, pProgram->getDebugDataSize(rootDeviceIdx));
-}
-
 TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclVersionIsInOptions) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DisableStatelessToStatefulOptimization.set(false);
@@ -3052,10 +2999,11 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebuildIsF
     debugManager.flags.RebuildPrecompiledKernels.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
-    PatchTokensTestData::ValidEmptyProgram programTokens;
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    ZebinTestData::ValidEmptyProgram<numBits> zebin;
 
     auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), programTokens.storage.data(), programTokens.storage.size(), &retVal));
+    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), zebin.storage.data(), zebin.storage.size(), &retVal));
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -3063,7 +3011,7 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebuildIsF
     StreamCapture capture;
     capture.captureStderr();
     debugManager.flags.PrintDebugMessages.set(true);
-    retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size(), *clDevice);
+    retVal = pProgram->createProgramFromBinary(zebin.storage.data(), zebin.storage.size(), *clDevice);
     debugManager.flags.PrintDebugMessages.set(false);
     std::string output = capture.getCapturedStderr();
     EXPECT_FALSE(pProgram->requiresRebuild);
@@ -3077,23 +3025,22 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIs
     debugManager.flags.RebuildPrecompiledKernels.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
-    PatchTokensTestData::ValidEmptyProgram programTokens;
     Elf::ElfEncoder<Elf::EI_CLASS_64> elfEncoder;
-    elfEncoder.getElfFileHeader().type = Elf::ET_OPENCL_EXECUTABLE;
+    elfEncoder.getElfFileHeader().type = Elf::ET_OPENCL_LIBRARY;
 
     constexpr auto mockSpirvDataSize = 0x10;
     uint8_t mockSpirvData[mockSpirvDataSize]{0};
     elfEncoder.appendSection(Elf::SHT_OPENCL_SPIRV, Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(mockSpirvData, mockSpirvDataSize));
-    programTokens.storage = elfEncoder.encode();
+    auto elfData = elfEncoder.encode();
 
     auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), programTokens.storage.data(), programTokens.storage.size(), &retVal));
+    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), elfData.data(), elfData.size(), &retVal));
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto rootDeviceIndex = clDevice->getRootDeviceIndex();
     pProgram->irBinarySize = 0x10;
-    retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size(), *clDevice);
+    retVal = pProgram->createProgramFromBinary(elfData.data(), elfData.size(), *clDevice);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get());
     EXPECT_EQ(0U, pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
@@ -3105,24 +3052,23 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIs
     DebugManagerStateRestore dbgRestorer{};
     debugManager.flags.RebuildPrecompiledKernels.set(true);
 
-    PatchTokensTestData::ValidEmptyProgram programTokens;
     Elf::ElfEncoder<Elf::EI_CLASS_64> elfEncoder;
-    elfEncoder.getElfFileHeader().type = Elf::ET_OPENCL_EXECUTABLE;
+    elfEncoder.getElfFileHeader().type = Elf::ET_OPENCL_LIBRARY;
 
     constexpr auto mockSpirvDataSize = 0x10;
     uint8_t mockSpirvData[mockSpirvDataSize]{0};
     elfEncoder.appendSection(Elf::SHT_OPENCL_SPIRV, Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(mockSpirvData, mockSpirvDataSize));
-    programTokens.storage = elfEncoder.encode();
+    auto elfData = elfEncoder.encode();
 
     cl_int retVal{CL_INVALID_BINARY};
 
     const auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), programTokens.storage.data(), programTokens.storage.size(), &retVal));
+    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), elfData.data(), elfData.size(), &retVal));
     ASSERT_NE(nullptr, pProgram.get());
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     pProgram->irBinarySize = 0x10;
-    retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size(), *clDevice);
+    retVal = pProgram->createProgramFromBinary(elfData.data(), elfData.size(), *clDevice);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     ASSERT_TRUE(pProgram->requiresRebuild);
@@ -3133,16 +3079,15 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramNotBuiltInWhenBuiltInKernel
     debugManager.flags.RebuildPrecompiledKernels.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
-    PatchTokensTestData::ValidEmptyProgram programTokens;
     Elf::ElfEncoder<Elf::EI_CLASS_64> elfEncoder;
-    elfEncoder.getElfFileHeader().type = Elf::ET_OPENCL_EXECUTABLE;
+    elfEncoder.getElfFileHeader().type = Elf::ET_OPENCL_LIBRARY;
 
     constexpr auto mockSpirvDataSize = 0x10;
     uint8_t mockSpirvData[mockSpirvDataSize]{0};
     elfEncoder.appendSection(Elf::SHT_OPENCL_SPIRV, Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(mockSpirvData, mockSpirvDataSize));
-    programTokens.storage = elfEncoder.encode();
-    const unsigned char *binaries[] = {programTokens.storage.data()};
-    size_t lengths[] = {programTokens.storage.size()};
+    auto elfData = elfEncoder.encode();
+    const unsigned char *binaries[] = {elfData.data()};
+    size_t lengths[] = {elfData.size()};
     auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>(
         nullptr,
@@ -3208,20 +3153,21 @@ kernels:
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsNotForcedThenDeviceBinaryIsUsed) {
     cl_int retVal = CL_INVALID_BINARY;
 
-    PatchTokensTestData::ValidEmptyProgram programTokens;
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    ZebinTestData::ValidEmptyProgram<numBits> zebin;
 
     auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), programTokens.storage.data(), programTokens.storage.size(), &retVal));
+    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), zebin.storage.data(), zebin.storage.size(), &retVal));
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-    retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size(), *clDevice);
+    retVal = pProgram->createProgramFromBinary(zebin.storage.data(), zebin.storage.size(), *clDevice);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, reinterpret_cast<uint8_t *>(pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()));
-    EXPECT_EQ(programTokens.storage.size(), pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
+    EXPECT_EQ(zebin.storage.size(), pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
     EXPECT_NE(nullptr, reinterpret_cast<uint8_t *>(pProgram->buildInfos[rootDeviceIndex].packedDeviceBinary.get()));
-    EXPECT_EQ(programTokens.storage.size(), pProgram->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
+    EXPECT_EQ(zebin.storage.size(), pProgram->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
 }
 
 struct SpecializationConstantProgramMock : public MockProgram {

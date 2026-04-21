@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,12 +41,8 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(con
     SingleDeviceBinary ret;
     switch (elf.elfFileHeader->type) {
     default:
-        outErrReason = "Not OCL ELF file type";
+        outErrReason = "Unsupported OCL ELF file type";
         return {};
-
-    case Elf::ET_OPENCL_EXECUTABLE:
-        ret.format = NEO::DeviceBinaryFormat::patchtokens;
-        break;
 
     case Elf::ET_OPENCL_LIBRARY:
         ret.format = NEO::DeviceBinaryFormat::oclLibrary;
@@ -63,10 +59,6 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(con
         case Elf::SHT_OPENCL_SPIRV:
         case Elf::SHT_OPENCL_LLVM_BINARY:
             ret.intermediateRepresentation = sectionData;
-            break;
-
-        case Elf::SHT_OPENCL_DEV_BINARY:
-            ret.deviceBinary = sectionData;
             break;
 
         case Elf::SHT_OPENCL_OPTIONS:
@@ -88,22 +80,6 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(con
         default:
             outErrReason = "Unhandled ELF section";
             return {};
-        }
-    }
-
-    if (NEO::DeviceBinaryFormat::patchtokens != ret.format) {
-        ret.deviceBinary.clear();
-        return ret;
-    }
-
-    if (false == ret.deviceBinary.empty()) {
-        auto unpackedOclDevBin = unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(ret.deviceBinary, requestedProductAbbreviation, requestedTargetDevice,
-                                                                                                outErrReason, outWarning);
-        if (unpackedOclDevBin.deviceBinary.empty()) {
-            ret.deviceBinary.clear();
-            ret.debugData.clear();
-        } else {
-            ret.targetDevice = unpackedOclDevBin.targetDevice;
         }
     }
 

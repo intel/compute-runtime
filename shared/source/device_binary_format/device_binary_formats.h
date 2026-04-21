@@ -128,9 +128,6 @@ inline bool isAnyDeviceBinaryFormat(const ArrayRef<const uint8_t> binary) {
     if (isDeviceBinaryFormat<DeviceBinaryFormat::oclElf>(binary)) {
         return true;
     }
-    if (isDeviceBinaryFormat<DeviceBinaryFormat::patchtokens>(binary)) {
-        return true;
-    }
     if (isDeviceBinaryFormat<DeviceBinaryFormat::archive>(binary)) {
         return true;
     }
@@ -159,8 +156,6 @@ inline SingleDeviceBinary unpackSingleDeviceBinary(const ArrayRef<const uint8_t>
     ret.format = DeviceBinaryFormat::unknown;
     if (isDeviceBinaryFormat<DeviceBinaryFormat::oclElf>(archive)) {
         return unpackSingleDeviceBinary<DeviceBinaryFormat::oclElf>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning);
-    } else if (isDeviceBinaryFormat<DeviceBinaryFormat::patchtokens>(archive)) {
-        return unpackSingleDeviceBinary<DeviceBinaryFormat::patchtokens>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::archive>(archive)) {
         return unpackSingleDeviceBinary<DeviceBinaryFormat::archive>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(archive)) {
@@ -192,10 +187,6 @@ inline bool isAnyPackedDeviceBinaryFormat(const ArrayRef<const uint8_t> binary) 
     return false;
 }
 
-inline bool isAnySingleDeviceBinaryFormat(const ArrayRef<const uint8_t> binary) {
-    return ((false == isAnyPackedDeviceBinaryFormat(binary)) && isAnyDeviceBinaryFormat(binary)) || isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(binary);
-}
-
 template <DeviceBinaryFormat format>
 DecodeError decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper);
 
@@ -215,10 +206,6 @@ inline std::pair<DecodeError, DeviceBinaryFormat> decodeSingleDeviceBinary(Progr
     if (isDeviceBinaryFormat<DeviceBinaryFormat::oclElf>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::oclElf;
         ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::oclElf>(dst, src, outErrReason, outWarning, gfxCoreHelper);
-    } else if (isDeviceBinaryFormat<DeviceBinaryFormat::patchtokens>(src.deviceBinary)) {
-        ret.second = DeviceBinaryFormat::patchtokens;
-        ret.first = DecodeError::invalidBinary;
-        outErrReason = "Deprecated format - patchtokens";
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::archive>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::archive;
         ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::archive>(dst, src, outErrReason, outWarning, gfxCoreHelper);

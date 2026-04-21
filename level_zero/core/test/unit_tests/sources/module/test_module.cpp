@@ -3713,28 +3713,30 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPackedTargetDeviceBinary) {
-    PatchTokensTestData::ValidEmptyProgram programTokens;
+    ZebinTestData::ValidEmptyProgram zebin;
     auto &compilerProductHelper = device->getCompilerProductHelper();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     HardwareIpVersion aotConfig = {0};
     aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
 
-    NEO::Ar::ArEncoder encoder;
+    zebin.elfHeader->machine = static_cast<uint16_t>(productFamily);
+
+    NEO::Ar::ArEncoder encoder{true};
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
-    std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
-    std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
+    std::string requiredStepping = "0";
+    std::string requiredPointerSize = "64";
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
 
-    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize, programTokens.storage));
-    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProduct, programTokens.storage));
-    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "unk." + requiredStepping, programTokens.storage));
-    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProductConfig, programTokens.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize, zebin.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProduct, zebin.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "unk." + requiredStepping, zebin.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProductConfig, zebin.storage));
 
     NEO::TargetDevice target;
-    target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
+    target.productFamily = static_cast<PRODUCT_FAMILY>(zebin.elfHeader->machine);
     target.aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
-    target.stepping = programTokens.header->SteppingId;
-    target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
+    target.stepping = 0U;
+    target.maxPointerSizeInBytes = 8U;
 
     auto arData = encoder.encode();
     auto moduleTuValid = MockModuleTranslationUnit{this->device};
