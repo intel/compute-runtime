@@ -16,9 +16,7 @@ bool CompilerProductHelperHw<gfxProduct>::isHeaplessModeEnabled(const HardwareIn
     if (!hwInfo.featureTable.flags.ftrHeaplessMode) {
         return false;
     }
-    if (debugManager.flags.Enable64BitAddressing.get() != -1) {
-        return (debugManager.flags.Enable64BitAddressing.get() == 1);
-    }
+
     return true;
 }
 

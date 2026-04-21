@@ -179,9 +179,6 @@ CRITEST_F(GfxCoreHelperTestsCri, whenCallingAreSecondaryContextsSupportedThenTru
 }
 
 CRITEST_F(GfxCoreHelperTestsCri, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeAndEnabled64BitAddressingThenCorrectWorkGroupSizeIsReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.Enable64BitAddressing.set(1);
-
     setUpImpl();
     auto defaultMaxWorkGroupSize = 2048u;
     const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();

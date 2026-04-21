@@ -99,30 +99,14 @@ NVLPTEST_F(NvlProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersion
 }
 
 NVLPTEST_F(NvlProductHelper, givenCompilerProductHelperWhenIsHeaplessModeEnabledThenCorrectValueIsSet) {
-    DebugManagerStateRestore restorer;
 
-    debugManager.flags.Enable64BitAddressing.set(-1);
-    EXPECT_TRUE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
-
-    debugManager.flags.Enable64BitAddressing.set(0);
-    EXPECT_FALSE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
-
-    debugManager.flags.Enable64BitAddressing.set(1);
     EXPECT_TRUE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
 }
 
 NVLPTEST_F(NvlProductHelper, givenFtrHeaplessModeFalseWhenIsHeaplessModeEnabledThen64BitAddressingIsAlwaysFalse) {
-    DebugManagerStateRestore restorer;
     VariableBackup<FeatureTableBase::Flags> ftrHeaplessModeBackup{&defaultHwInfo->featureTable.flags};
     defaultHwInfo->featureTable.flags.ftrHeaplessMode = false;
 
-    debugManager.flags.Enable64BitAddressing.set(-1);
-    EXPECT_FALSE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
-
-    debugManager.flags.Enable64BitAddressing.set(0);
-    EXPECT_FALSE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
-
-    debugManager.flags.Enable64BitAddressing.set(1);
     EXPECT_FALSE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
 }
 

@@ -189,7 +189,6 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, givenL3FlushInPostSyncWhenGettingMaxKer
     debugManager.flags.UsePipeControlMultiKernelEventSync.set(1);
     debugManager.flags.CompactL3FlushEventPacket.set(0);
     debugManager.flags.EnableL3FlushAfterPostSync.set(1);
-    debugManager.flags.Enable64BitAddressing.set(1);
 
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();

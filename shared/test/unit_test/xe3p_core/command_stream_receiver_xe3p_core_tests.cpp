@@ -88,7 +88,6 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, givenDebugEnabledWhenInitializing
     VariableBackup<bool> backupUseMockSip(&MockSipData::useMockSip, true);
     VariableBackup<bool> backupMockSipInit(&MockSipData::called, false);
     DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.Enable64BitAddressing.set(true);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;

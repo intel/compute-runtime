@@ -125,7 +125,6 @@ CRITEST_F(CriKernelSetupTests, givenParamsWhenFlagEnable64BitAddressingSetAndCal
     DebugManagerStateRestore restore;
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
 
-    debugManager.flags.Enable64BitAddressing.set(1);
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
         MockDeviceImp l0Device(mockNeoDevice);

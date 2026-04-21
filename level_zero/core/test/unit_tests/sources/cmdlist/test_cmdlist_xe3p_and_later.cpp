@@ -32,7 +32,6 @@ namespace ult {
 
 struct InOrderCmdListTestsXe3pCoreAndLater : public InOrderCmdListFixture {
     void SetUp() override {
-        debugManager.flags.Enable64BitAddressing.set(1);
         InOrderCmdListFixture::SetUp();
     }
 };

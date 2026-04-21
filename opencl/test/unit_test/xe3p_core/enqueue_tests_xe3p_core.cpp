@@ -131,7 +131,6 @@ XE3P_CORETEST_F(CommandQueueTestsXe3pCore, whenMultipleComputeCmdQueuesCreatedTh
 XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenE64EnabledAndTransientL3UnavailableWhenSetupTimestampPacketFlushL3ThenCorrectFlushOptionsAreSetInPostSync) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.Enable64BitAddressing.set(1);
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
     NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(0);
 
@@ -200,7 +199,6 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenE64EnabledAndTransientL3Unavail
 XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenEnableL3FlushAfterPostSyncNonBlockingWithoutEventWhenProgramWalkerThenKernelIsTaggedAndL3FlushIsNotSet) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.Enable64BitAddressing.set(1);
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
 
     auto &productHelper = this->clDevice->getDevice().getProductHelper();
@@ -274,7 +272,6 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenEnableL3FlushAfterPostSyncNonBl
 XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenForceL3FlushInPostSynchenProgramWalkerIsCalledThenCorrectFlushOptionsAreSetInPostSync) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.Enable64BitAddressing.set(1);
     NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.set(0);
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
 

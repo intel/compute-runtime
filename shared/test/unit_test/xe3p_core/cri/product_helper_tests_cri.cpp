@@ -84,15 +84,7 @@ CRITEST_F(CriProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionT
 }
 
 CRITEST_F(CriProductHelper, givenCompilerProductHelperWhenIsHeaplessModeEnabledThenCorrectValueIsSet) {
-    DebugManagerStateRestore restorer;
 
-    debugManager.flags.Enable64BitAddressing.set(-1);
-    EXPECT_TRUE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
-
-    debugManager.flags.Enable64BitAddressing.set(0);
-    EXPECT_FALSE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
-
-    debugManager.flags.Enable64BitAddressing.set(1);
     EXPECT_TRUE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
 }
 
@@ -101,13 +93,6 @@ CRITEST_F(CriProductHelper, givenFtrHeaplessModeFalseWhenIsHeaplessModeEnabledTh
     VariableBackup<FeatureTableBase::Flags> ftrHeaplessModeBackup{&defaultHwInfo->featureTable.flags};
     defaultHwInfo->featureTable.flags.ftrHeaplessMode = false;
 
-    debugManager.flags.Enable64BitAddressing.set(-1);
-    EXPECT_FALSE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
-
-    debugManager.flags.Enable64BitAddressing.set(0);
-    EXPECT_FALSE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
-
-    debugManager.flags.Enable64BitAddressing.set(1);
     EXPECT_FALSE(compilerProductHelper->isHeaplessModeEnabled(*defaultHwInfo));
 }
 

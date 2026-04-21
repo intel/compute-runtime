@@ -532,9 +532,6 @@ using CommandListCreateXe3pTest = Test<DeviceFixture>;
 
 XE3P_CORETEST_F(CommandListCreateXe3pTest,
                 givenHeaplessEnabledWhenCreatingRegularCommandListThenScratchAddressPatchingEnabled) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-
     ze_result_t returnValue;
     std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList.get());
@@ -544,9 +541,6 @@ XE3P_CORETEST_F(CommandListCreateXe3pTest,
 
 XE3P_CORETEST_F(CommandListCreateXe3pTest,
                 givenHeaplessEnabledWhenCreatingImmediateCommandListThenScratchAddressPatchingDisabled) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.Enable64BitAddressing.set(1);
-
     ze_result_t returnValue;
     const ze_command_queue_desc_t desc = {};
     std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue)));
@@ -831,7 +825,6 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
     }
     {
         debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::globalStateless));
-        debugManager.flags.Enable64BitAddressing.set(1);
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
         auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);

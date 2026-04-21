@@ -422,9 +422,6 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenScratchRequiredPatchingDisabledWh
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessAndScratchRequiredWhenEncodeComputeWalker2ThenInlineDataContainCorrectScratchAddress) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
-    DebugManagerStateRestore restore;
-    debugManager.flags.Enable64BitAddressing.set(1);
-
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     dispatchInterface->getCrossThreadDataSizeResult = 256u;
@@ -477,7 +474,6 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessAndBindlessHeapsHelperWhe
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
 
     DebugManagerStateRestore restore;
-    debugManager.flags.Enable64BitAddressing.set(1);
     debugManager.flags.UseBindlessMode.set(1);
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
 

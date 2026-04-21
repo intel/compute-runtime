@@ -48,7 +48,6 @@ struct AUBVariableRegisterPerThreadL0 : Test<AUBFixtureL0> {
 
 struct AUBVariableRegisterPerThreadL0Xe3p : public AUBVariableRegisterPerThreadL0 {
     void SetUp() override {
-        debugManager.flags.Enable64BitAddressing.set(1);
         AUBVariableRegisterPerThreadL0::setUp();
     }
 
