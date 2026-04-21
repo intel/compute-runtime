@@ -329,6 +329,39 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledThenItWritesChunkOfCommandBuffer) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    MemoryManager *memoryManager = tbxCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    auto mockManager = reinterpret_cast<MockAubManager *>(pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter->getAubManager());
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pCommandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+
+    LinearStream cs(commandBuffer);
+    constexpr auto offset = 16u;
+    cs.getSpace(offset);
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+    batchBuffer.startOffset = offset;
+    batchBuffer.usedSize = 16;
+    ResidencyContainer allocationsForResidency = {};
+
+    EXPECT_FALSE(commandBuffer->isResident(tbxCsr->getOsContext().getContextId()));
+
+    mockManager->storeAllocationParams = true;
+    tbxCsr->flush(batchBuffer, allocationsForResidency);
+
+    EXPECT_TRUE(commandBuffer->isResident(tbxCsr->getOsContext().getContextId()));
+
+    EXPECT_TRUE(mockManager->writeMemory2Called);
+    ASSERT_EQ(mockManager->storedAllocationParams.size(), 1u);
+    EXPECT_EQ(commandBuffer->getGpuAddress() + offset, mockManager->storedAllocationParams[0].gfxAddress);
+    EXPECT_EQ(commandBuffer->getUnderlyingBufferSize() - offset, mockManager->storedAllocationParams[0].size);
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingMakeSurfacePackNonResidentThenOnlyResidentAllocationsAddedAllocationsForDownload) {
     MockTbxCsr<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getDeviceBitfield()};
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));

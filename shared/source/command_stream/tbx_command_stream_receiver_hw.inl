@@ -209,6 +209,10 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
     batchBuffer.commandBufferAllocation->updateResidencyTaskCount(submissionTaskCount, this->osContext->getContextId());
     batchBuffer.commandBufferAllocation->updateTaskCount(submissionTaskCount, osContext->getContextId());
 
+    // Write only the new command buffer chunk to avoid overwriting data being executed by TBX
+    this->writeMemory(*batchBuffer.commandBufferAllocation, true, batchBuffer.startOffset, batchBuffer.commandBufferAllocation->getUnderlyingBufferSize() - batchBuffer.startOffset);
+    this->setTbxWritable(false, *batchBuffer.commandBufferAllocation);
+
     // Write allocations for residency
     processResidency(allocationsForResidency, 0u);
 
@@ -248,6 +252,7 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
         this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
         overrideRingHead);
 
+    this->setTbxWritable(true, *batchBuffer.commandBufferAllocation);
     if (subCaptureManager) {
         pollForCompletion();
         subCaptureManager->disableSubCapture();
