@@ -488,6 +488,11 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         if (performMigration) {
             this->migrateSharedAllocations();
         }
+        // madvise must precede prefetch
+        for (auto &operation : this->memAdviseOperations) {
+            this->executeMemAdvise(operation.hDevice, operation.ptr, operation.size, operation.advice);
+        }
+        this->memAdviseOperations.clear();
 
         if (this->performMemoryPrefetch) {
             auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
@@ -497,11 +502,6 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
                                                      *csr);
             this->removeMemoryPrefetchAllocations();
         }
-
-        for (auto &operation : this->memAdviseOperations) {
-            this->executeMemAdvise(operation.hDevice, operation.ptr, operation.size, operation.advice);
-        }
-        this->memAdviseOperations.clear();
 
         static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false, false, nullptr);
     } else {
