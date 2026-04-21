@@ -141,7 +141,7 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
                                    0u,
                                    flags,
                                    0u,
-                                   nullptr, false)
+                                   nullptr, false, false)
                        .second;
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -298,7 +298,7 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
                                    0u,
                                    flags,
                                    0u,
-                                   nullptr, false)
+                                   nullptr, false, false)
                        .second;
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1055,7 +1055,8 @@ ze_result_t Context::openIpcMemHandle(ze_device_handle_t hDevice,
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory);
+    bool isOpaqueHandle = false;
+    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory, isOpaqueHandle);
 
     NEO::AllocationType allocationType = NEO::AllocationType::unknown;
     if (type == static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
@@ -1074,7 +1075,8 @@ ze_result_t Context::openIpcMemHandle(ze_device_handle_t hDevice,
                            flags,
                            cacheID,
                            reservedHandleData,
-                           compressedMemory)
+                           compressedMemory,
+                           isOpaqueHandle)
                .second;
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1100,8 +1102,9 @@ ze_result_t Context::openIpcMemHandles(ze_device_handle_t hDevice,
         unsigned int processId;
         uint64_t cacheID;
         bool compressedMemory = false;
+        bool isOpaqueHandle = false;
         void *reservedHandleData = nullptr;
-        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory);
+        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory, isOpaqueHandle);
 
         if (type != static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -2020,9 +2023,11 @@ void Context::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint
         ipcData.type = handleType;
         if (handleType == IpcHandleType::ntHandle) {
             ipcData.handle.reserved = handle;
+            ipcData.opaqueHandle.reserved = handle;
         } else if (handleType == IpcHandleType::fdHandle) {
             // For fdHandle, we store the handle as an int
             ipcData.handle.fd = static_cast<int>(handle);
+            ipcData.opaqueHandle.fd = static_cast<int>(handle);
         }
         ipcData.compressedMemory = graphicsAllocation->isCompressionEnabled();
         memset(ipcData.reservedHandleData, 0, sizeof(IpcOpaqueMemoryData::reservedHandleData));

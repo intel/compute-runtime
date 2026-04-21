@@ -72,6 +72,7 @@ struct IpcOpaqueMemoryData {
     unsigned int processId = 0;
     IpcHandleType type = IpcHandleType::maxHandle;
     uint8_t memoryType = 0;
+    IpcHandle opaqueHandle = {};
     uint8_t reservedHandleData[32] = {0};
     // Computes and returns the cache ID hash
     uint64_t computeCacheID() const noexcept;
@@ -294,9 +295,9 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
         size_t *rowPitch);
 
     MOCKABLE_VIRTUAL bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle);
-    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory);
+    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle);
     MOCKABLE_VIRTUAL void closeExternalHandle(uint64_t handle);
-    MOCKABLE_VIRTUAL void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory);
+    MOCKABLE_VIRTUAL void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle);
     MOCKABLE_VIRTUAL uint8_t isOpaqueHandleSupported(IpcHandleType *handleType);
     static bool isIPCHandleSharingSupported();
 

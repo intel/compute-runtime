@@ -352,6 +352,8 @@ ze_result_t ContextGetIpcHandleMock::getIpcMemHandle(const void *ptr, void *pNex
     opaqueData->handle.fd = static_cast<int>(handle);
     opaqueData->poolOffset = 0;
     opaqueData->processId = 1234;
+    opaqueData->type = IpcHandleType::fdHandle;
+    opaqueData->opaqueHandle.fd = static_cast<int>(handle); // Must match handle.fd for opaque handle validation
 
     // Set legacy format fields (these overlap with opaque format)
     legacyData->handle = handle;

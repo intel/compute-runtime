@@ -84,14 +84,14 @@ void Context::closeExternalHandle(uint64_t handle) {
     NEO::SysCalls::close(static_cast<int>(handle));
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory) {
+std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
     uint64_t importHandle = handle;
     uint64_t effectiveCacheID = cacheID;
     bool pidfdSuccess = false;
     bool socketFallbackSuccess = false;
 
-    if (settings.useOpaqueHandle && processId != 0) {
+    if (isOpaqueHandle && settings.useOpaqueHandle && processId != 0) {
         // Check cache first for opaque handles
         if (this->driverHandle->tryGetCachedImportHandle(cacheID, importHandle)) {
             pidfdSuccess = true; // Mark as successful to skip import logic
@@ -169,7 +169,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
     auto result = this->driverHandle->importFdHandle(neoDevice, flags, importHandle, allocationType, isHostIpcAllocation, nullptr, &alloc, allocDataInternal, compressedMemory);
 
     // Store cacheID in IPC handle tracking if opaque handles are used
-    if (result && settings.useOpaqueHandle && effectiveCacheID != 0) {
+    if (result && isOpaqueHandle && settings.useOpaqueHandle && effectiveCacheID != 0) {
         auto lock = driverHandle->lockIPCHandleMap();
         auto &ipcMap = driverHandle->getIPCHandleMap();
         auto ipcIter = ipcMap.find(importHandle);
@@ -181,7 +181,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
     return {alloc, result};
 }
 
-void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory) {
+void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) {
     if (settings.useOpaqueHandle) {
         const IpcOpaqueMemoryData *ipcData = reinterpret_cast<const IpcOpaqueMemoryData *>(ipcHandle.data);
         handle = static_cast<uint64_t>(ipcData->handle.fd);
@@ -194,6 +194,11 @@ void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_
         if (std::memcmp(ipcData->reservedHandleData, emptyReservedData, sizeof(emptyReservedData)) != 0) {
             reservedHandleData = const_cast<void *>(static_cast<const void *>(&ipcData->reservedHandleData));
         }
+        // Check if opaqueHandle matches handle - if not, user changed it, so fallback to legacy path
+        uint64_t normalizedHandle = normalizeIPCHandle(*ipcData);
+        uint64_t normalizedOpaqueHandle = 0;
+        normalizedOpaqueHandle = static_cast<uint64_t>(static_cast<int64_t>(ipcData->opaqueHandle.fd));
+        isOpaqueHandle = (normalizedHandle == normalizedOpaqueHandle);
     } else {
         const IpcMemoryData *ipcData = reinterpret_cast<const IpcMemoryData *>(ipcHandle.data);
         handle = ipcData->handle;
@@ -202,6 +207,7 @@ void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_
         processId = 0;
         cacheID = 0;
         reservedHandleData = nullptr;
+        isOpaqueHandle = false;
     }
 }
 
