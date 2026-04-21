@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,11 @@ namespace NEO {
 uint32_t resolveExternalDependencies(const ExternalFunctionInfosT &externalFunctionInfos, const KernelDependenciesT &kernelDependencies,
                                      const FunctionDependenciesT &funcDependencies, const KernelDescriptorMapT &nameToKernelDescriptor) {
     FuncNameToIdMapT funcNameToId;
+    bool anyExtFuncHasPrintf = false;
     for (size_t i = 0U; i < externalFunctionInfos.size(); i++) {
         auto &extFuncInfo = externalFunctionInfos[i];
         funcNameToId[extFuncInfo->functionName] = i;
+        anyExtFuncHasPrintf |= extFuncInfo->hasPrintfCalls;
     }
 
     auto error = resolveExtFuncDependencies(externalFunctionInfos, funcNameToId, funcDependencies);
@@ -26,7 +28,20 @@ uint32_t resolveExternalDependencies(const ExternalFunctionInfosT &externalFunct
     }
 
     error = resolveKernelDependencies(externalFunctionInfos, funcNameToId, kernelDependencies, nameToKernelDescriptor);
-    return error;
+    if (error != RESOLVE_SUCCESS) {
+        return error;
+    }
+
+    // A kernel with indirect calls may dispatch any external function at runtime.
+    if (anyExtFuncHasPrintf) {
+        for (auto &[kernelName, kd] : nameToKernelDescriptor) {
+            if (kd->kernelAttributes.flags.hasIndirectCalls) {
+                kd->kernelAttributes.flags.usesPrintf = true;
+            }
+        }
+    }
+
+    return RESOLVE_SUCCESS;
 }
 
 uint32_t getExtFuncDependencies(const FuncNameToIdMapT &funcNameToId, const FunctionDependenciesT &funcDependencies, size_t numExternalFuncs,

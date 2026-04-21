@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -313,6 +313,32 @@ TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolv
     EXPECT_TRUE(nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.usesPrintf);
     EXPECT_FALSE(nameToKernelDescriptor["kernel1"]->kernelAttributes.flags.usesPrintf);
     EXPECT_TRUE(nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.usesPrintf);
+}
+
+TEST_F(ExternalFunctionsTests, GivenKernelWithIndirectCallsAndExternalFunctionWithPrintfWhenResolvingDependenciesThenKernelUsesPrintfIsSet) {
+    addKernel("kernel0");
+    addKernel("kernel1");
+    addExternalFunction("fun0", {.hasPrintfCalls = true});
+
+    set();
+
+    nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.hasIndirectCalls = true;
+    auto error = resolveExternalDependencies(extFuncInfo, kernelDependencies, functionDependencies, nameToKernelDescriptor);
+    EXPECT_EQ(RESOLVE_SUCCESS, error);
+    EXPECT_TRUE(nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.usesPrintf);
+    EXPECT_FALSE(nameToKernelDescriptor["kernel1"]->kernelAttributes.flags.usesPrintf);
+}
+
+TEST_F(ExternalFunctionsTests, GivenNoExternalFunctionWithPrintfWhenResolvingDependenciesThenIndirectCallKernelUsesPrintfIsNotSet) {
+    addKernel("kernel0");
+    addExternalFunction("fun0", {.hasPrintfCalls = false});
+
+    set();
+
+    nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.hasIndirectCalls = true;
+    auto error = resolveExternalDependencies(extFuncInfo, kernelDependencies, functionDependencies, nameToKernelDescriptor);
+    EXPECT_EQ(RESOLVE_SUCCESS, error);
+    EXPECT_FALSE(nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.usesPrintf);
 }
 
 TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolvingDependenciesThenSetAppropriateHasIndirectCallsAndReturnSuccess) {
