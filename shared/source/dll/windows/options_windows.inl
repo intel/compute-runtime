@@ -25,5 +25,5 @@ const char *metricsLibraryDllName = "igdml32.dll";
 } // namespace Os
 
 namespace ContextGroup {
-uint32_t maxContextCount = 64;
+uint32_t maxContextCount = 8;
 }
