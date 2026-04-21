@@ -479,5 +479,121 @@ TEST_F(ModuleTests, givenFP64EmulationEnabledWhenCreatingModuleThenEnableFP64Gen
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, BuildOptions::enableFP64GenEmu));
 };
 
+struct MockModuleTranslationUnitTrackProcessUnpacked : public L0::ModuleTranslationUnit {
+    using L0::ModuleTranslationUnit::ModuleTranslationUnit;
+
+    ze_result_t processUnpackedBinary() override {
+        ++processUnpackedBinaryCalled;
+        return ZE_RESULT_SUCCESS;
+    }
+    uint32_t processUnpackedBinaryCalled = 0u;
+};
+
+struct MockModuleTranslationUnitCaptureCompileArgs : public L0::ModuleTranslationUnit {
+    using L0::ModuleTranslationUnit::ModuleTranslationUnit;
+
+    ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs,
+                                 bool staticLink,
+                                 bool createLibrary) override {
+        capturedOutType = inputArgs.outType;
+        capturedStaticLink = staticLink;
+        capturedCreateLibrary = createLibrary;
+        ++compileGenBinaryCalled;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    IGC::CodeType::CodeType_t capturedOutType = IGC::CodeType::undefined;
+    bool capturedStaticLink = false;
+    bool capturedCreateLibrary = false;
+    uint32_t compileGenBinaryCalled = 0u;
+};
+
+TEST_F(ModuleTests, givenCompileGenBinaryCalledWithCreateLibraryTrueThenCreateLibraryCalledAndProcessUnpackedBinaryNotCalled) {
+    auto mockCompilerInterface = new MockCompilerInterface();
+    auto &rootDeviceEnv = *neoDevice->getExecutionEnvironment()
+                               ->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnv.compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnitTrackProcessUnpacked tu(device);
+
+    NEO::TranslationInput inputArgs{IGC::CodeType::elf, IGC::CodeType::llvmBc};
+
+    ze_result_t result = tu.compileGenBinary(inputArgs, /*staticLink=*/false, /*createLibrary=*/true);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, mockCompilerInterface->createLibraryCallCount);
+    EXPECT_EQ(0u, static_cast<uint32_t>(
+                      mockCompilerInterface->receivedApiOptions.empty() ? 0 : 1));
+    EXPECT_EQ(0u, tu.processUnpackedBinaryCalled);
+};
+
+TEST_F(ModuleTests, givenStaticLinkSpirVAndLlvmBcWithCreateLibraryOptionThenOutTypeIsLlvmBc) {
+    auto mockCompilerInterface = new MockCompilerInterface();
+    auto &rootDeviceEnv = *neoDevice->getExecutionEnvironment()
+                               ->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnv.compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnitCaptureCompileArgs tu(device);
+
+    const uint8_t dummySpirv[] = {0x03, 0x02, 0x23, 0x07, 0x00, 0x00, 0x00, 0x00};
+    std::vector<const char *> inputSpirVs = {reinterpret_cast<const char *>(dummySpirv)};
+    std::vector<uint32_t> inputModuleSizes = {static_cast<uint32_t>(sizeof(dummySpirv))};
+    std::vector<const ze_module_constants_t *> specConstants = {};
+    std::vector<const char *> inputLlvmBcs = {};
+    std::vector<uint32_t> inputLlvmBcSizes = {};
+
+    const char *buildOptions = NEO::CompilerOptions::createLibrary.data();
+
+    ze_result_t result = tu.staticLinkSpirVAndLlvmBc(
+        inputSpirVs, inputModuleSizes,
+        buildOptions, /*internalBuildOptions=*/nullptr,
+        specConstants,
+        inputLlvmBcs, inputLlvmBcSizes);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, tu.compileGenBinaryCalled);
+    EXPECT_EQ(IGC::CodeType::llvmBc, tu.capturedOutType);
+    EXPECT_TRUE(tu.capturedCreateLibrary);
+    EXPECT_TRUE(tu.capturedStaticLink);
+};
+
+TEST_F(ModuleTests, givenStaticLinkSpirVAndLlvmBcWithoutCreateLibraryOptionThenOutTypeIsOclGenBin) {
+    auto mockCompilerInterface = new MockCompilerInterface();
+    auto &rootDeviceEnv = *neoDevice->getExecutionEnvironment()
+                               ->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnv.compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnitCaptureCompileArgs tu(device);
+
+    const uint8_t dummySpirv[] = {0x03, 0x02, 0x23, 0x07, 0x00, 0x00, 0x00, 0x00};
+    std::vector<const char *> inputSpirVs = {reinterpret_cast<const char *>(dummySpirv)};
+    std::vector<uint32_t> inputModuleSizes = {static_cast<uint32_t>(sizeof(dummySpirv))};
+    std::vector<const ze_module_constants_t *> specConstants = {};
+    std::vector<const char *> inputLlvmBcs = {};
+    std::vector<uint32_t> inputLlvmBcSizes = {};
+
+    ze_result_t result = tu.staticLinkSpirVAndLlvmBc(
+        inputSpirVs, inputModuleSizes,
+        /*buildOptions=*/nullptr, /*internalBuildOptions=*/nullptr,
+        specConstants,
+        inputLlvmBcs, inputLlvmBcSizes);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, tu.compileGenBinaryCalled);
+    EXPECT_EQ(IGC::CodeType::oclGenBin, tu.capturedOutType);
+    EXPECT_FALSE(tu.capturedCreateLibrary);
+};
+
+TEST_F(ModuleTests, givenIsLlvmBcWhenFlagIsNotSetThenReturnsFalse) {
+    WhiteBox<L0::Module> module(device, nullptr, ModuleType::user);
+    EXPECT_FALSE(module.isLlvmBc());
+};
+
+TEST_F(ModuleTests, givenIsLlvmBcWhenFlagIsSetThenReturnsTrue) {
+    WhiteBox<L0::Module> module(device, nullptr, ModuleType::user);
+    module.isLlvmBitcode = true;
+    EXPECT_TRUE(module.isLlvmBc());
+};
+
 } // namespace ult
 } // namespace L0

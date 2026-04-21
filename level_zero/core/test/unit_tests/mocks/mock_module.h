@@ -46,11 +46,11 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
 
     ADDMETHOD(processUnpackedBinary, ze_result_t, true, ZE_RESULT_SUCCESS, (), ());
 
-    ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink) override {
+    ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink, bool createLibrary) override {
         if (unpackedDeviceBinarySize && unpackedDeviceBinary) {
             return ZE_RESULT_SUCCESS;
         } else {
-            return ModuleTranslationUnit::compileGenBinary(inputArgs, staticLink);
+            return ModuleTranslationUnit::compileGenBinary(inputArgs, staticLink, createLibrary);
         }
     }
 
@@ -82,6 +82,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::isFullyLinked;
     using BaseClass::isFunctionSymbolExportEnabled;
     using BaseClass::isGlobalSymbolExportEnabled;
+    using BaseClass::isLlvmBitcode;
     using BaseClass::kernelImmData;
     using BaseClass::linkInternalRequiredLibsModule;
     using BaseClass::setIsaGraphicsAllocations;
@@ -197,7 +198,14 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
 
         return NEO::TranslationErrorCode::success;
     }
+    NEO::TranslationErrorCode createLibrary(NEO::Device &device,
+                                            const NEO::TranslationInput &input,
+                                            NEO::TranslationOutput &output) override {
+        createLibraryCallCount++;
+        return NEO::TranslationErrorCode::success;
+    }
 
+    uint32_t createLibraryCallCount = 0u;
     std::string receivedApiOptions;
     std::string inputInternalOptions;
     bool failBuild = false;
