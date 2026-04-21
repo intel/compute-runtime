@@ -38,8 +38,8 @@ NAMEDDEVICE(0xB08F, PtlHwConfig, "Intel(R) Graphics")
 NAMEDDEVICE(0xB090, PtlHwConfig, "Intel(R) Graphics")
 NAMEDDEVICE(0xB0A0, PtlHwConfig, "Intel(R) Graphics")
 DEVICE(0xB0B0, PtlHwConfig)
-DEVICE(0xFD80, PtlHwConfig)
-DEVICE(0xFD81, PtlHwConfig)
+NAMEDDEVICE(0xFD80, PtlHwConfig, "Intel(R) Graphics")
+NAMEDDEVICE(0xFD81, PtlHwConfig, "Intel(R) Graphics")
 #endif
 #ifdef SUPPORT_NVLS
 DEVICE(0xD740, NvlsHwConfig)
