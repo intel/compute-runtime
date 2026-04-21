@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -153,6 +153,15 @@ uint32_t PmuRasUtil::rasGetCategoryCount() {
         return static_cast<uint32_t>(categoryToListOfEventsUncorrectable.size());
     }
     return static_cast<uint32_t>(categoryToListOfEventsCorrectable.size());
+}
+
+std::vector<zes_ras_error_category_exp_t> PmuRasUtil::getSupportedErrorCategoriesExp() {
+    const auto &categoryMap = (rasErrorType == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) ? categoryToListOfEventsUncorrectable : categoryToListOfEventsCorrectable;
+    std::vector<zes_ras_error_category_exp_t> categories;
+    for (const auto &entry : categoryMap) {
+        categories.push_back(entry.first);
+    }
+    return categories;
 }
 
 void PmuRasUtil::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId) {

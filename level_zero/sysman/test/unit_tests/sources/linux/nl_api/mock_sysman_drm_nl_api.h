@@ -25,6 +25,7 @@ class MockDrmNlApi : public L0::Sysman::DrmNlApi {
     bool getMockErrorList = false;
     bool callRealListNodes = false;
     bool returnEmptyErrorList = false;
+    bool returnAllErrorList = false;
     std::vector<DrmRasNode> mockListNodesReturnData;
 
     ze_result_t getErrorsList(const uint32_t &nodeId, std::vector<DrmErrorCounter> &errorList) override {
@@ -33,6 +34,24 @@ class MockDrmNlApi : public L0::Sysman::DrmNlApi {
         }
 
         if (returnEmptyErrorList) {
+            return ZE_RESULT_SUCCESS;
+        }
+
+        if (returnAllErrorList) {
+            std::vector<std::pair<std::string, uint32_t>> allErrors = {
+                {"core-compute", 10},
+                {"device-memory", 20},
+                {"fabric", 30},
+                {"scale", 40},
+                {"pcie", 50},
+                {"soc-internal", 60}};
+            for (const auto &e : allErrors) {
+                DrmErrorCounter counter = {};
+                counter.nodeId = nodeId;
+                counter.errorName = e.first;
+                counter.errorValue = e.second;
+                errorList.push_back(counter);
+            }
             return ZE_RESULT_SUCCESS;
         }
 

@@ -164,6 +164,117 @@ HWTEST2_F(SysmanProductHelperRasTest, GivenValidRasHandleAndRasSourcesWhenCallin
     }
 }
 
+HWTEST2_F(SysmanProductHelperRasTest, GivenPmuRasUtilForCorrectableErrorTypeWhenCallingGetSupportedErrorCategoriesExpThenCorrectCategoriesAreReturned, IsGtRasSupportedProduct) {
+    auto pRasUtil = std::make_unique<PmuRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, false, 0u);
+    auto categories = pRasUtil->getSupportedErrorCategoriesExp();
+    EXPECT_EQ(3u, categories.size());
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenPmuRasUtilForUncorrectableErrorTypeWhenCallingGetSupportedErrorCategoriesExpThenCorrectCategoriesAreReturned, IsGtRasSupportedProduct) {
+    auto pRasUtil = std::make_unique<PmuRasUtil>(ZES_RAS_ERROR_TYPE_UNCORRECTABLE, pLinuxSysmanImp, false, 0u);
+    auto categories = pRasUtil->getSupportedErrorCategoriesExp();
+    EXPECT_EQ(7u, categories.size());
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_RESET));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_PROGRAMMING_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_DRIVER_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenGscRasUtilWhenCallingGetSupportedErrorCategoriesExpThenMemoryErrorCategoryIsReturned, IsPVC) {
+    auto pRasUtil = std::make_unique<GscRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    auto categories = pRasUtil->getSupportedErrorCategoriesExp();
+    EXPECT_EQ(1u, categories.size());
+    EXPECT_EQ(ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS, categories[0]);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenNetlinkRasUtilWhenCallingGetSupportedErrorCategoriesExpThenAllSixCategoriesAreReturned, IsCRI) {
+    auto pRasUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[pRasUtil->rasNodeId] = {
+        {0, "core-compute", 10, 0}, {0, "device-memory", 20, 0}, {0, "fabric", 30, 0}, {0, "scale", 40, 0}, {0, "pcie", 50, 0}, {0, "soc-internal", 60, 0}};
+    auto categories = pRasUtil->getSupportedErrorCategoriesExp();
+    EXPECT_EQ(6u, categories.size());
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS)));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS)));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS)));
+    MockRasNetlinkUtil::rasErrorList.erase(pRasUtil->rasNodeId);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWhenCallingOsRasGetSupportedCategoriesExpWithZeroCountThenCorrectCountIsReturned, IsGtRasSupportedProduct) {
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+
+    auto pLinuxRasImpCorr = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+    uint32_t count = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImpCorr->osRasGetSupportedCategoriesExp(&count, nullptr));
+    EXPECT_EQ(3u, count);
+
+    auto pLinuxRasImpUncorr = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_UNCORRECTABLE, isSubDevice, subDeviceId);
+    count = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImpUncorr->osRasGetSupportedCategoriesExp(&count, nullptr));
+    EXPECT_EQ(7u, count);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWhenCallingOsRasGetSupportedCategoriesExpWithNonZeroCountThenCategoriesArePopulated, IsGtRasSupportedProduct) {
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+    uint32_t count = 3u;
+    std::vector<zes_ras_error_category_exp_t> categories(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetSupportedCategoriesExp(&count, categories.data()));
+    EXPECT_EQ(3u, count);
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWhenCallingOsRasGetSupportedCategoriesExpWithLowerCountThenRequestedCountIsPopulated, IsGtRasSupportedProduct) {
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_UNCORRECTABLE, isSubDevice, subDeviceId);
+    uint32_t fullCount = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetSupportedCategoriesExp(&fullCount, nullptr));
+    EXPECT_EQ(7u, fullCount);
+
+    uint32_t partialCount = fullCount - 1u;
+    std::vector<zes_ras_error_category_exp_t> categories(fullCount, ZES_RAS_ERROR_CATEGORY_EXP_FORCE_UINT32);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetSupportedCategoriesExp(&partialCount, categories.data()));
+    EXPECT_EQ(fullCount - 1u, partialCount);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWithHbmSourceWhenCallingOsRasGetSupportedCategoriesExpThenMemoryErrorCategoryIsIncluded, IsPVC) {
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+    pLinuxRasImp->rasSources.clear();
+    pLinuxRasImp->supportedErrorCategoriesExp.clear();
+    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceGt>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
+    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
+    for (const auto &rasSource : pLinuxRasImp->rasSources) {
+        auto cats = rasSource->getSupportedErrorCategoriesExp();
+        pLinuxRasImp->supportedErrorCategoriesExp.insert(pLinuxRasImp->supportedErrorCategoriesExp.end(), cats.begin(), cats.end());
+    }
+
+    uint32_t count = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetSupportedCategoriesExp(&count, nullptr));
+    EXPECT_EQ(4u, count);
+
+    std::vector<zes_ras_error_category_exp_t> categories(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetSupportedCategoriesExp(&count, categories.data()));
+    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

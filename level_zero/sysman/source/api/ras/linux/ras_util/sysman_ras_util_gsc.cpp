@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,6 +75,10 @@ ze_result_t GscRasUtil::rasClearStateExp(zes_ras_error_category_exp_t category) 
 uint32_t GscRasUtil::rasGetCategoryCount() {
     // Return one for "MEMORY" category
     return 1u;
+}
+
+std::vector<zes_ras_error_category_exp_t> GscRasUtil::getSupportedErrorCategoriesExp() {
+    return {ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS};
 }
 
 GscRasUtil::GscRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) : pLinuxSysmanImp(pLinuxSysmanImp), rasErrorType(type), subdeviceId(subdeviceId) {

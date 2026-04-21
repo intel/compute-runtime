@@ -14,12 +14,16 @@
 namespace L0 {
 namespace Sysman {
 
-std::map<zes_ras_error_category_exp_t, std::vector<std::string>> categoryToListOfErrors = {
-    {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, {"core-compute"}},
-    {ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS, {"soc-internal"}},
-};
+std::map<zes_ras_error_category_exp_t, std::string_view> categoryToErrorNameMap = {
+    {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, "core-compute"},
+    {ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS, "device-memory"},
+    {ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS, "scale"},
+    {static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS), "fabric"},
+    {static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS), "pcie"},
+    {static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS), "soc-internal"}};
 
 std::vector<DrmRasNode> NetlinkRasUtil::rasNodes;
+std::map<uint32_t, std::vector<DrmErrorCounter>> NetlinkRasUtil::rasErrorList;
 std::unique_ptr<DrmNlApi> (*NetlinkRasUtil::createDrmNlApi)() = []() { return std::make_unique<DrmNlApi>(); };
 
 void NetlinkRasUtil::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId) {
@@ -29,6 +33,12 @@ void NetlinkRasUtil::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &e
         ze_result_t result = pDrmNlApi->listNodes(rasNodes);
         if (result != ZE_RESULT_SUCCESS) {
             return;
+        }
+        // Cache the error list for each discovered node
+        for (const auto &node : rasNodes) {
+            std::vector<DrmErrorCounter> errorList;
+            pDrmNlApi->getErrorsList(node.nodeId, errorList);
+            rasErrorList[node.nodeId] = std::move(errorList);
         }
     }
 
@@ -48,37 +58,31 @@ void NetlinkRasUtil::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &e
 }
 
 uint32_t NetlinkRasUtil::rasGetCategoryCount() {
-    return static_cast<uint32_t>(categoryToListOfErrors.size());
+    return static_cast<uint32_t>(categoryToErrorNameMap.size());
+}
+
+std::vector<zes_ras_error_category_exp_t> NetlinkRasUtil::getSupportedErrorCategoriesExp() {
+    auto it = rasErrorList.find(rasNodeId);
+    if (it == rasErrorList.end()) {
+        return {};
+    }
+    const auto &errorList = it->second;
+    std::vector<zes_ras_error_category_exp_t> categories;
+    for (const auto &entry : categoryToErrorNameMap) {
+        // Only include categories for which we have error counters from netlink
+        auto err = std::find_if(errorList.begin(), errorList.end(),
+                                [&](const DrmErrorCounter &counter) -> bool {
+                                    return (counter.errorName == entry.second);
+                                });
+        if (err != errorList.end()) {
+            categories.push_back(entry.first);
+        }
+    }
+    return categories;
 }
 
 ze_result_t NetlinkRasUtil::rasGetState(zes_ras_state_t &state, ze_bool_t clear) {
-    // Step 1: Initialize all category counts to 0
-    for (auto const &rasErrorCatToListOfErrors : categoryToListOfErrors) {
-        state.category[rasErrorCatToListOfErrors.first] = 0;
-    }
-
-    // Step 2: Get ErrorsList for this RAS node type (correctable or uncorrectable)
-    std::vector<DrmErrorCounter> errorList;
-    ze_result_t result = drmNl->getErrorsList(rasNodeId, errorList);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
-
-    // Step 3: Aggregate error counts based on category
-    for (auto const &rasErrorCatToListOfErrors : categoryToListOfErrors) {
-        for (auto const &errorName : rasErrorCatToListOfErrors.second) {
-            auto err = std::find_if(errorList.begin(), errorList.end(),
-                                    [&](const DrmErrorCounter &counter) -> bool {
-                                        return (counter.errorName == errorName);
-                                    });
-
-            if (err != errorList.end()) {
-                state.category[rasErrorCatToListOfErrors.first] += err->errorValue;
-            }
-        }
-    }
-
-    return ZE_RESULT_SUCCESS;
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t NetlinkRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) {
@@ -91,22 +95,20 @@ ze_result_t NetlinkRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_
 
     // Step 2: Aggregate error counts based on category
     uint32_t categoryIdx = 0u;
-    for (auto const &rasErrorCatToListOfErrors : categoryToListOfErrors) {
+    for (auto const &rasErrorCatToListOfErrors : categoryToErrorNameMap) {
         if (categoryIdx >= numCategoriesRequested) {
             break;
         }
 
         uint64_t errorCountForCategory = 0;
 
-        for (auto const &errorName : rasErrorCatToListOfErrors.second) {
-            auto err = std::find_if(errorList.begin(), errorList.end(),
-                                    [&](const DrmErrorCounter &counter) -> bool {
-                                        return (counter.errorName == errorName);
-                                    });
+        auto err = std::find_if(errorList.begin(), errorList.end(),
+                                [&](const DrmErrorCounter &counter) -> bool {
+                                    return (counter.errorName == rasErrorCatToListOfErrors.second);
+                                });
 
-            if (err != errorList.end()) {
-                errorCountForCategory += err->errorValue;
-            }
+        if (err != errorList.end()) {
+            errorCountForCategory += err->errorValue;
         }
 
         pState[categoryIdx].category = rasErrorCatToListOfErrors.first;

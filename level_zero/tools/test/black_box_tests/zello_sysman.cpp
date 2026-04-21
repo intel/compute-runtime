@@ -958,7 +958,11 @@ std::string getRasErrorCategoryExp(zes_ras_error_category_exp_t category) {
         {ZES_RAS_ERROR_CATEGORY_EXP_DISPLAY_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_DISPLAY_ERRORS"},
         {ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS"},
         {ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS"},
-        {ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS"}};
+        {ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS, "ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS"},
+        {static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS), "ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS"},
+        {static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS), "ZES_INTEL_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS"},
+
+        {static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS), "ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS"}};
     auto i = rasErrorCategoryMap.find(category);
     if (i == rasErrorCategoryMap.end()) {
         return "Unknown RAS error category";
@@ -1040,7 +1044,7 @@ void testSysmanRasExp(ze_device_handle_t &device) {
                 std::cout << "Correctable errors listing:" << std::endl;
             }
             for (uint32_t i = 0; i < rasCategoryCount; i++) {
-                std::cout << " Error category: " << rasStates[i].category << "Count: " << rasStates[i].errorCounter << std::endl;
+                std::cout << " Error category: " << rasStates[i].category << ", Count: " << rasStates[i].errorCounter << std::endl;
             }
         }
 
@@ -1055,7 +1059,7 @@ void testSysmanRasExp(ze_device_handle_t &device) {
         if (verbose) {
             std::cout << "Supported error categories:" << std::endl;
             for (uint32_t i = 0; i < supportedCategoryCount; i++) {
-                std::cout << " Supported category: " << getRasErrorCategoryExp(supportedCategories[i]) << std::endl;
+                std::cout << "Supported category: " << getRasErrorCategoryExp(supportedCategories[i]) << std::endl;
             }
         }
 

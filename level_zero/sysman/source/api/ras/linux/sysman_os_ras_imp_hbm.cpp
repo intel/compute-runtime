@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,10 @@ ze_result_t LinuxRasSourceHbm::osRasGetStateExp(uint32_t numCategoriesRequested,
 
 uint32_t LinuxRasSourceHbm::osRasGetCategoryCount() {
     return pRasUtil->rasGetCategoryCount();
+}
+
+std::vector<zes_ras_error_category_exp_t> LinuxRasSourceHbm::getSupportedErrorCategoriesExp() {
+    return pRasUtil->getSupportedErrorCategoriesExp();
 }
 
 ze_result_t LinuxRasSourceHbm::osRasClearStateExp(zes_ras_error_category_exp_t category) {

@@ -197,6 +197,15 @@ typedef struct _zes_intel_freq_throttle_detailed_reason_exp_t {
 } zes_intel_freq_throttle_detailed_reason_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief RAS Error Categories
+typedef enum _zes_intel_ras_error_category_exp_t {
+    ZES_INTEL_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS = 10,         ///< The number of errors that have occurred in the PCIe subsystem
+    ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS = 11,       ///< The number of errors that have occurred in the Fabric interconnect in the SOC
+    ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS = 12, ///< The number of errors that have occurred in the SOC internal components
+    ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FORCE_UINT32 = 0x7fffffff ///< Value marking end of ZES_INTEL_RAS_ERROR_CATEGORY_EXP_* ENUMs
+} zes_intel_ras_error_category_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_RAS_ERROR_THRESHOLD_MANAGEMENT_EXTENSION_NAME
 /// @brief RAS Error Threshold Management Extension Name
 #define ZES_INTEL_RAS_ERROR_THRESHOLD_MANAGEMENT_EXTENSION_NAME "ZES_intel_experimental_ras_error_threshold_management"

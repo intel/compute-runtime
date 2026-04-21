@@ -53,13 +53,6 @@ struct SysmanRasExpFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetSupportedCategoriesExpThenErrorIsReturned) {
-    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
-    uint32_t count = 0u;
-    zes_ras_error_category_exp_t categories = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetSupportedCategoriesExp(&count, &categories));
-}
-
 TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetConfigExpThenErrorIsReturned) {
     auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
     const uint32_t count = 0u;
@@ -79,6 +72,27 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetStateExpThenErro
     const uint32_t count = 0u;
     zes_intel_ras_state_exp_t state = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetStateExp(count, &state));
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetSupportedCategoriesExpThenSuccessIsReturned) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    uint32_t count = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pRasImp->rasGetSupportedCategoriesExp(&count, nullptr));
+    std::vector<zes_ras_error_category_exp_t> categories(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pRasImp->rasGetSupportedCategoriesExp(&count, categories.data()));
+    EXPECT_EQ(count, static_cast<uint32_t>(categories.size()));
+}
+
+TEST_F(SysmanRasExpFixture, GivenNonNullCategoriesPointerWithZeroCountWhenCallingRasGetSupportedCategoriesExpThenCountIsReturnedAndSuccessIsReturned) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    uint32_t count = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pRasImp->rasGetSupportedCategoriesExp(&count, nullptr));
+    const uint32_t expectedCount = count;
+
+    zes_ras_error_category_exp_t dummyCategory{};
+    count = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pRasImp->rasGetSupportedCategoriesExp(&count, &dummyCategory));
+    EXPECT_EQ(count, expectedCount);
 }
 
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpThenSuccessIsReturned, IsPVC) {
@@ -650,7 +664,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExp
     }
 }
 
-HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExpWithInvalidCategoryThenCallFails, IsGtRasSupportedProduct) {
+HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExpWithUnknownCategoryThenNotAvailableIsReturned, IsGtRasSupportedProduct) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
         strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -677,7 +691,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExp
     auto handles = getRasHandles(mockHandleCount);
     for (const auto &handle : handles) {
         ASSERT_NE(nullptr, handle);
-        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, zesRasClearStateExp(handle, ZES_RAS_ERROR_CATEGORY_EXP_FORCE_UINT32));
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesRasClearStateExp(handle, ZES_RAS_ERROR_CATEGORY_EXP_FORCE_UINT32));
     }
 }
 
@@ -785,6 +799,12 @@ TEST_F(SysmanRasExpFixture, GivenRasUtilAsNoneWhenCallingRasGetStateExpAndRasCle
     std::vector<zes_ras_state_exp_t> rasStates(maxRasErrorCategoryExpCount);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasUtil->rasGetStateExp(maxRasErrorCategoryExpCount, rasStates.data()));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasUtil->rasClearStateExp(ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS));
+}
+
+TEST_F(SysmanRasExpFixture, GivenRasUtilAsNoneWhenCallingGetSupportedErrorCategoriesExpThenEmptyVectorIsReturned) {
+    auto pRasUtil = std::make_unique<RasUtilNone>();
+    auto categories = pRasUtil->getSupportedErrorCategoriesExp();
+    EXPECT_TRUE(categories.empty());
 }
 
 struct SysmanRasExpMultiDeviceFixture : public SysmanMultiDeviceFixture {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
@@ -125,10 +126,6 @@ ze_result_t LinuxRasImp::osRasClearStateExp(zes_ras_error_category_exp_t categor
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     }
 
-    if (ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS < category) {
-        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
-    }
-
     ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
     for (auto &rasSource : rasSources) {
         result = rasSource->osRasClearStateExp(category);
@@ -147,10 +144,29 @@ void LinuxRasImp::initSources() {
     if (isMemoryTypeHbm(pLinuxSysmanImp) == true) {
         rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, osRasErrorType, isSubdevice, subdeviceId));
     }
+
+    for (const auto &rasSource : rasSources) {
+        auto categories = rasSource->getSupportedErrorCategoriesExp();
+        for ([[maybe_unused]] const auto &category : categories) {
+            DEBUG_BREAK_IF(std::find(supportedErrorCategoriesExp.begin(), supportedErrorCategoriesExp.end(), category) != supportedErrorCategoriesExp.end());
+        }
+        supportedErrorCategoriesExp.insert(supportedErrorCategoriesExp.end(), categories.begin(), categories.end());
+    }
 }
 
 ze_result_t LinuxRasImp::osRasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (*pCount == 0) {
+        *pCount = static_cast<uint32_t>(supportedErrorCategoriesExp.size());
+        return ZE_RESULT_SUCCESS;
+    }
+
+    uint32_t numCategoriesToCopy = std::min(*pCount, static_cast<uint32_t>(supportedErrorCategoriesExp.size()));
+    for (uint32_t i = 0; i < numCategoriesToCopy; i++) {
+        pCategories[i] = supportedErrorCategoriesExp[i];
+    }
+    *pCount = numCategoriesToCopy;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxRasImp::osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {

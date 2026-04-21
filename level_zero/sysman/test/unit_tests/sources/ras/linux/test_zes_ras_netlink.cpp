@@ -12,6 +12,8 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_api.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_sysman_drm_nl_api.h"
 
+#include <map>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -20,6 +22,7 @@ class MockRasNetlinkUtil : public NetlinkRasUtil {
   public:
     using NetlinkRasUtil::drmNl;
     using NetlinkRasUtil::pLinuxSysmanImp;
+    using NetlinkRasUtil::rasErrorList;
     using NetlinkRasUtil::rasNodeId;
     using NetlinkRasUtil::rasNodes;
     MockRasNetlinkUtil(zes_ras_error_type_t type, L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) : NetlinkRasUtil(type, pLinuxSysmanImp, subdeviceId) {}
@@ -34,6 +37,7 @@ class SysmanRasNetlinkFixture : public SysmanDeviceFixture {
     std::unique_ptr<DrmNlApi> pDrmNlApiOriginal = nullptr;
     zes_ras_error_type_t errorType;
     std::vector<DrmRasNode> originalRasNodes = MockRasNetlinkUtil::rasNodes;
+    std::map<uint32_t, std::vector<DrmErrorCounter>> originalRasErrorList = MockRasNetlinkUtil::rasErrorList;
 
   public:
     void SetUp() override {
@@ -49,41 +53,15 @@ class SysmanRasNetlinkFixture : public SysmanDeviceFixture {
     void TearDown() override {
         pRasNetlinkUtil->drmNl = std::move(pDrmNlApiOriginal);
         MockRasNetlinkUtil::rasNodes = std::move(originalRasNodes);
+        MockRasNetlinkUtil::rasErrorList = std::move(originalRasErrorList);
         SysmanDeviceFixture::TearDown();
     }
 };
 
-TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndGetErrorListFailsWhenCallingRasGetStateThenErrorIsReturned) {
-    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
-    pDrmNlApi->getErrorsListReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
-    pRasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceWhenCallingRasGetStateThenUnsupportedFeatureIsReturned) {
     zes_ras_state_t state = {};
     auto result = pRasNetlinkUtil->rasGetState(state, true);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
-}
-
-TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndValidErrorsAreFetchedWhenCallingRasGetStateThenSuccessAndValidErrorCountIsReturned) {
-    zes_ras_state_t state = {};
-    auto result = pRasNetlinkUtil->rasGetState(state, true);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(state.category[ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS], 10u);
-    EXPECT_EQ(state.category[ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS], 20u);
-}
-
-TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndValidUncorrectableErrorsAreFetchedWhenCallingRasGetStateThenSuccessAndValidErrorCountIsReturned) {
-
-    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_UNCORRECTABLE, pLinuxSysmanImp, 0u);
-    auto localDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
-    localDrmNlApi->getMockErrorList = true;
-    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
-    rasNetlinkUtil->drmNl = std::move(localDrmNlApi);
-
-    zes_ras_state_t state = {};
-    auto result = rasNetlinkUtil->rasGetState(state, true);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(state.category[ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS], 10u);
-    EXPECT_EQ(state.category[ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS], 20u);
-    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndLoadEntryPointsFailsWhenCallingRasGetStateExpThenErrorIsReturned) {
@@ -101,8 +79,11 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndValidErrorsAreFet
     std::vector<zes_ras_state_exp_t> state(numCategories);
     auto result = pRasNetlinkUtil->rasGetStateExp(numCategories, state.data());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    // categoryToListOfErrors is sorted by key: COMPUTE(3) first, MEMORY(7) second
     EXPECT_EQ(state[0].category, ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS);
     EXPECT_EQ(state[0].errorCounter, 10u);
+    EXPECT_EQ(state[1].category, ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS);
+    EXPECT_EQ(state[1].errorCounter, 0u); // device_memory not in mock data
 }
 
 TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndValidUncorrectableErrorsAreFetchedWhenCallingRasGetStateExpThenSuccessAndValidErrorCountIsReturned) {
@@ -117,10 +98,11 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndValidUncorrectabl
     std::vector<zes_ras_state_exp_t> state(numCategories);
     auto result = rasNetlinkUtil->rasGetStateExp(numCategories, state.data());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    // categoryToListOfErrors is sorted by key: COMPUTE(3) first, MEMORY(7) second
     EXPECT_EQ(state[0].category, ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS);
     EXPECT_EQ(state[0].errorCounter, 10u);
-    EXPECT_EQ(state[1].category, ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS);
-    EXPECT_EQ(state[1].errorCounter, 20u);
+    EXPECT_EQ(state[1].category, ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS);
+    EXPECT_EQ(state[1].errorCounter, 0u); // device_memory not in mock data
     rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
 }
 
@@ -134,14 +116,14 @@ TEST_F(SysmanRasNetlinkFixture, givenRasClearStateExpCallToNetlinkThenReturnsUns
 TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenCallingRasGetCategoryCountCategoryForCorrectableErrorsThenValidCountIsReturned) {
     std::unique_ptr<NetlinkRasUtil> rasNetlinkUtil(new NetlinkRasUtil(errorType, pLinuxSysmanImp, 0u));
     auto errorCategoryCount = rasNetlinkUtil->rasGetCategoryCount();
-    EXPECT_EQ(2u, errorCategoryCount);
+    EXPECT_EQ(6u, errorCategoryCount);
 }
 
 TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenCallingRasGetCategoryCountCategoryForUncorrectableErrorsThenValidCountIsReturned) {
     errorType = ZES_RAS_ERROR_TYPE_UNCORRECTABLE;
     std::unique_ptr<NetlinkRasUtil> rasNetlinkUtil(new NetlinkRasUtil(errorType, pLinuxSysmanImp, 0u));
     auto errorCategoryCount = rasNetlinkUtil->rasGetCategoryCount();
-    EXPECT_EQ(2u, errorCategoryCount);
+    EXPECT_EQ(6u, errorCategoryCount);
 }
 
 TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceWhenRasNodesIsEmptyAndListNodesFailsThenGetSupportedRasErrorTypesReturnsEmptySet) {
@@ -266,19 +248,6 @@ TEST_F(SysmanRasNetlinkFixture, GivenNumCategoriesRequestedLessThanAvailableWhen
     EXPECT_EQ(pState[0].errorCounter, 10u);
 }
 
-TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndEmptyErrorListWhenCallingRasGetStateThenSuccessWithZeroCountIsReturned) {
-    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
-    pDrmNlApi->returnEmptyErrorList = true;
-    pRasNetlinkUtil->drmNl = std::move(pDrmNlApi);
-
-    zes_ras_state_t state = {};
-    auto result = pRasNetlinkUtil->rasGetState(state, true);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    for (uint32_t i = 0; i < ZES_MAX_RAS_ERROR_CATEGORY_COUNT; i++) {
-        EXPECT_EQ(state.category[i], 0u);
-    }
-}
-
 TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndEmptyErrorListWhenCallingRasGetStateExpThenSuccessIsReturnedWithZeroCounters) {
     auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
     pDrmNlApi->returnEmptyErrorList = true;
@@ -290,8 +259,54 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndEmptyErrorListWhe
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(pState[0].category, ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS);
     EXPECT_EQ(pState[0].errorCounter, 0u);
-    EXPECT_EQ(pState[1].category, ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS);
+    EXPECT_EQ(pState[1].category, ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS);
     EXPECT_EQ(pState[1].errorCounter, 0u);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenRasErrorListCacheIsEmptyWhenCallingGetSupportedErrorCategoriesExpThenEmptyVectorIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList.erase(rasNetlinkUtil->rasNodeId);
+    auto categories = rasNetlinkUtil->getSupportedErrorCategoriesExp();
+    EXPECT_EQ(0u, categories.size());
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenCallingGetSupportedErrorCategoriesExpForCorrectableErrorsThenAllSixCategoriesAreReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {
+        {0, "core-compute", 10, 0}, {0, "device-memory", 20, 0}, {0, "fabric", 30, 0}, {0, "scale", 40, 0}, {0, "pcie", 50, 0}, {0, "soc-internal", 60, 0}};
+    auto categories = rasNetlinkUtil->getSupportedErrorCategoriesExp();
+    EXPECT_EQ(6u, categories.size());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS)) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS)) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS)) != categories.end());
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenCallingGetSupportedErrorCategoriesExpForUncorrectableErrorsThenAllSixCategoriesAreReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_UNCORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {
+        {0, "core-compute", 10, 0}, {0, "device-memory", 20, 0}, {0, "fabric", 30, 0}, {0, "scale", 40, 0}, {0, "pcie", 50, 0}, {0, "soc-internal", 60, 0}};
+    auto categories = rasNetlinkUtil->getSupportedErrorCategoriesExp();
+    EXPECT_EQ(6u, categories.size());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS)) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS)) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS)) != categories.end());
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenErrorListContainsSubsetOfCategoriesThenOnlyMatchingCategoriesAreReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {
+        {0, "core-compute", 10, 0},
+        {0, "soc-internal", 20, 0}};
+    auto categories = rasNetlinkUtil->getSupportedErrorCategoriesExp();
+    EXPECT_EQ(2u, categories.size());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS)) != categories.end());
 }
 
 } // namespace ult

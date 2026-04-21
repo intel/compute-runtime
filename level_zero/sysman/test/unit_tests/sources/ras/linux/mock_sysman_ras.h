@@ -13,6 +13,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras_imp.h"
@@ -20,6 +21,7 @@
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_sysman_drm_nl_api.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/pmu/mock_pmu.h"
 
 using namespace NEO;
@@ -712,11 +714,23 @@ struct MockRasNeoDrm : public Drm {
     }
 };
 
+class MockRasNetlinkUtil : public NetlinkRasUtil {
+  public:
+    using NetlinkRasUtil::drmNl;
+    using NetlinkRasUtil::pLinuxSysmanImp;
+    using NetlinkRasUtil::rasErrorList;
+    using NetlinkRasUtil::rasNodeId;
+    using NetlinkRasUtil::rasNodes;
+    MockRasNetlinkUtil(zes_ras_error_type_t type, L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) : NetlinkRasUtil(type, pLinuxSysmanImp, subdeviceId) {}
+    ~MockRasNetlinkUtil() override = default;
+};
+
 class PublicLinuxRasImp : public L0::Sysman::LinuxRasImp {
   public:
     PublicLinuxRasImp(L0::Sysman::OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxRasImp(pOsSysman, type, onSubdevice, subdeviceId) {}
     using LinuxRasImp::pFsAccess;
     using LinuxRasImp::rasSources;
+    using LinuxRasImp::supportedErrorCategoriesExp;
 };
 
 } // namespace ult

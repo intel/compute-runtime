@@ -45,6 +45,7 @@ class RasUtil : public NEO::NonCopyableAndNonMovableClass {
     virtual ze_result_t rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) = 0;
     virtual ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) = 0;
     virtual uint32_t rasGetCategoryCount() = 0;
+    virtual std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() = 0;
     virtual ~RasUtil() = default;
 };
 
@@ -55,6 +56,7 @@ class PmuRasUtil : public RasUtil {
     ze_result_t rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) override;
     ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) override;
     uint32_t rasGetCategoryCount() override;
+    std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override;
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId);
     ~PmuRasUtil() override;
 
@@ -96,6 +98,7 @@ class GscRasUtil : public RasUtil {
     ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) override;
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId);
     uint32_t rasGetCategoryCount() override;
+    std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override;
     GscRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId);
     ~GscRasUtil() override {};
 
@@ -118,6 +121,7 @@ class NetlinkRasUtil : public RasUtil {
     ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) override;
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId);
     uint32_t rasGetCategoryCount() override;
+    std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override;
     NetlinkRasUtil(zes_ras_error_type_t type, L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId);
     ~NetlinkRasUtil() override;
     static std::unique_ptr<DrmNlApi> (*createDrmNlApi)();
@@ -128,6 +132,7 @@ class NetlinkRasUtil : public RasUtil {
     std::unique_ptr<DrmNlApi> drmNl;
     uint32_t rasNodeId = 0;
     static std::vector<DrmRasNode> rasNodes;
+    static std::map<uint32_t, std::vector<DrmErrorCounter>> rasErrorList;
 };
 
 class RasUtilNone : public RasUtil {
@@ -136,6 +141,7 @@ class RasUtilNone : public RasUtil {
     ze_result_t rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; };
     ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; };
     uint32_t rasGetCategoryCount() override { return 0u; };
+    std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override { return {}; };
     RasUtilNone() = default;
     ~RasUtilNone() override {};
 };

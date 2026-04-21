@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_nl_api_stub.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <map>
 #include <string>
@@ -16,21 +17,20 @@
 namespace L0 {
 namespace Sysman {
 
-std::map<zes_ras_error_category_exp_t, std::vector<std::string>> categoryToListOfErrors = {
-    {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, {"core-compute"}},
-    {ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS, {"soc-internal"}},
-};
-
 std::vector<DrmRasNode> NetlinkRasUtil::rasNodes;
+std::map<uint32_t, std::vector<DrmErrorCounter>> NetlinkRasUtil::rasErrorList;
 std::unique_ptr<DrmNlApi> (*NetlinkRasUtil::createDrmNlApi)() = nullptr;
 
 void NetlinkRasUtil::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId) {
-    errorType.insert(ZES_RAS_ERROR_TYPE_CORRECTABLE);
-    errorType.insert(ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
+    return;
 }
 
 uint32_t NetlinkRasUtil::rasGetCategoryCount() {
-    return static_cast<uint32_t>(categoryToListOfErrors.size());
+    return 0;
+}
+
+std::vector<zes_ras_error_category_exp_t> NetlinkRasUtil::getSupportedErrorCategoriesExp() {
+    return std::vector<zes_ras_error_category_exp_t>{};
 }
 
 ze_result_t NetlinkRasUtil::rasGetState(zes_ras_state_t &state, ze_bool_t clear) {
