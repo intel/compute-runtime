@@ -1505,6 +1505,49 @@ TEST(CommandQueue, givenEventWaitlistWhenEnqueueReleaseSharedObjectsThenWaitForN
     EXPECT_EQ(userEvent.waitCalled, 0);
 }
 
+TEST(CommandQueue, givenEventWithGpuHangWhenEnqueueReleaseSharedObjectsThenReturnError) {
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context;
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+    MockSharingHandler *mockSharingHandler = new MockSharingHandler;
+
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(&context));
+    image->setSharingHandler(mockSharingHandler);
+
+    cl_mem memObject = image.get();
+    cl_uint numObjects = 1;
+    cl_mem *memObjects = &memObject;
+
+    MockEvent<Event> event{&cmdQ, CL_COMMAND_READ_BUFFER, 0, 0};
+    event.waitReturnValue = WaitStatus::gpuHang;
+    const cl_event waitList[] = {&event};
+
+    auto result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 1, waitList, nullptr, CL_COMMAND_NDRANGE_KERNEL);
+    EXPECT_EQ(result, CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
+}
+
+TEST(CommandQueue, givenEventWithNegativeStatusWhenEnqueueReleaseSharedObjectsThenReturnError) {
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context;
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+    MockSharingHandler *mockSharingHandler = new MockSharingHandler;
+
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(&context));
+    image->setSharingHandler(mockSharingHandler);
+
+    cl_mem memObject = image.get();
+    cl_uint numObjects = 1;
+    cl_mem *memObjects = &memObject;
+
+    MockEvent<Event> event{&cmdQ, CL_COMMAND_READ_BUFFER, 0, 0};
+    event.setStatus(-1);
+    event.waitReturnValue = WaitStatus::ready;
+    const cl_event waitList[] = {&event};
+
+    auto result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 1, waitList, nullptr, CL_COMMAND_NDRANGE_KERNEL);
+    EXPECT_EQ(result, CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
+}
+
 TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenIncorrectArgumentsThenReturnProperError) {
     MockContext context;
     MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
