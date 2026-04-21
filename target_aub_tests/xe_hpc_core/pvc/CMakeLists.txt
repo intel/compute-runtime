@@ -1,9 +1,9 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-if(TESTS_PVC AND "${NEO_BITS}" STREQUAL "64")
+if(TESTS_PVC)
   add_subdirectories()
 endif()
