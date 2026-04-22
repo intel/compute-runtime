@@ -1613,7 +1613,7 @@ int main(int argc, char *argv[]) {
     std::vector<ze_driver_extension_properties_t> extensionVector;
     ze_driver_extension_properties_t graphExtension{};
     std::string graphExtensionString = "ZE_experimental_record_replay_graph";
-    strncpy(graphExtension.name, graphExtensionString.c_str(), graphExtensionString.size());
+    std::snprintf(graphExtension.name, sizeof(graphExtension.name), "%s", graphExtensionString.c_str());
     graphExtension.version = ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_1_0;
     extensionVector.push_back(graphExtension);
     bool graphExtensionPresent = LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionVector);

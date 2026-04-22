@@ -344,26 +344,30 @@ struct DrmMockXeDebug : public DrmMockCustom {
     std::unique_ptr<drm_xe_vm_bind_op[]> gemVmBindOps = nullptr;
     std::unique_ptr<VmBindOpExtDebugData[]> gemVmBindDebugData = nullptr;
 
+    static FILE *mockDebugFopen(const char *filename, const char *mode) {
+        std::string fsEntry(filename);
+        std::string expectedPath = std::string(DrmMockXeDebug::mockSysFsPciPath) + MockEuDebugInterface::sysFsXeEuDebugFile;
+        if (fsEntry == expectedPath) {
+            return reinterpret_cast<FILE *>(MockEuDebugInterface::sysFsFd);
+        }
+
+        return NEO::IoFunctions::mockFopen(filename, mode);
+    }
+
+    static size_t mockDebugFread(void *ptr, size_t size, size_t count, FILE *stream) {
+        if (stream == reinterpret_cast<FILE *>(MockEuDebugInterface::sysFsFd)) {
+
+            memcpy_s(ptr, size, &MockEuDebugInterface::sysFsContent, sizeof(MockEuDebugInterface::sysFsContent));
+            return sizeof(MockEuDebugInterface::sysFsContent);
+        }
+        return NEO::IoFunctions::mockFread(ptr, size, count, stream);
+    }
+
   protected:
     // Don't call directly, use the create() function
     DrmMockXeDebug(RootDeviceEnvironment &rootDeviceEnvironment)
         : DrmMockCustom(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
-        NEO::IoFunctions::fopenPtr = [](const char *filename, const char *mode) -> FILE * {
-            std::string fsEntry(filename);
-            std::string expectedPath = std::string(DrmMockXeDebug::mockSysFsPciPath) + MockEuDebugInterface::sysFsXeEuDebugFile;
-            if (fsEntry == expectedPath) {
-                return reinterpret_cast<FILE *>(MockEuDebugInterface::sysFsFd);
-            }
-
-            return NEO::IoFunctions::mockFopen(filename, mode);
-        };
-        NEO::IoFunctions::freadPtr = [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
-            if (stream == reinterpret_cast<FILE *>(MockEuDebugInterface::sysFsFd)) {
-
-                memcpy_s(ptr, size, &MockEuDebugInterface::sysFsContent, sizeof(MockEuDebugInterface::sysFsContent));
-                return sizeof(MockEuDebugInterface::sysFsContent);
-            }
-            return NEO::IoFunctions::mockFread(ptr, size, count, stream);
-        };
+        NEO::IoFunctions::fopenPtr = mockDebugFopen;
+        NEO::IoFunctions::freadPtr = mockDebugFread;
     }
 };

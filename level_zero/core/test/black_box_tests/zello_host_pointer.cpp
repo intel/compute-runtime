@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     std::vector<ze_driver_extension_properties_t> extensionVector;
     ze_driver_extension_properties_t hostImportExtension{};
     std::string extensionString = "ZEX_driver_import_host_pointer";
-    strncpy(hostImportExtension.name, extensionString.c_str(), extensionString.size());
+    std::snprintf(hostImportExtension.name, sizeof(hostImportExtension.name), "%s", extensionString.c_str());
     hostImportExtension.version = ZE_MAKE_VERSION(1, 0);
     extensionVector.push_back(hostImportExtension);
     bool extensionPresent = LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionVector);

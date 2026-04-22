@@ -14,6 +14,8 @@
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include <climits>
+
 #include <cstdio>
 #include <map>
 #include <optional>

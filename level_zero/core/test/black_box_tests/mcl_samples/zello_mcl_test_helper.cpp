@@ -7,6 +7,7 @@
 
 #include "level_zero/core/test/black_box_tests/mcl_samples/zello_mcl_test_helper.h"
 
+#include <cstdio>
 #include <cstring>
 #include <sstream>
 
@@ -27,7 +28,7 @@ ExecEnv::ExecEnv() {
 
     ze_driver_extension_properties_t mclExtension{};
 
-    strncpy(mclExtension.name, mclExtensionString.c_str(), mclExtensionString.size());
+    std::snprintf(mclExtension.name, sizeof(mclExtension.name), "%s", mclExtensionString.c_str());
     mclExtension.version = ZE_MUTABLE_COMMAND_LIST_EXP_VERSION_1_0;
 
     std::vector<ze_driver_extension_properties_t> extensionsToCheck;

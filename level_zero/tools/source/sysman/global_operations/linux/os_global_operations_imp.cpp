@@ -21,6 +21,8 @@
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
+#include <climits>
+
 #include <chrono>
 #include <cstring>
 

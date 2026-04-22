@@ -1672,7 +1672,7 @@ int main(int argc, char *argv[]) {
             std::string extensionName = "ZE_experimental_bindless_image";
             ze_driver_extension_properties_t extensionProperties{};
 
-            strncpy(extensionProperties.name, extensionName.c_str(), extensionName.size());
+            std::snprintf(extensionProperties.name, sizeof(extensionProperties.name), "%s", extensionName.c_str());
             extensionProperties.version = ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT;
 
             std::vector<ze_driver_extension_properties_t> extensionsToCheck;

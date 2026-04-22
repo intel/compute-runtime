@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
 
     ze_driver_extension_properties_t globalOffsetExtension{};
 
-    strncpy(globalOffsetExtension.name, globalOffsetName.c_str(), globalOffsetName.size());
+    std::snprintf(globalOffsetExtension.name, sizeof(globalOffsetExtension.name), "%s", globalOffsetName.c_str());
     globalOffsetExtension.version = ZE_GLOBAL_OFFSET_EXP_VERSION_1_0;
 
     std::vector<ze_driver_extension_properties_t> extensionsToCheck;
