@@ -89,7 +89,7 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpcThenSubgroupNamedBarrierIsN
     EXPECT_FALSE(compilerProductHelper.isSubgroupNamedBarrierSupported());
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterThenSubgroupExtendedBlockReadIsSupported, IsAtLeastXeHpcCore) {
+HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterThenSubgroupExtendedBlockReadIsSupported, IsWithinXeHpcCoreAndXe3pCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
     EXPECT_TRUE(compilerProductHelper.isSubgroupExtendedBlockReadSupported());
