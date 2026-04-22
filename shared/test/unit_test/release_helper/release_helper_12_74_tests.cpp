@@ -42,6 +42,7 @@ TEST_F(ReleaseHelper1274Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_FALSE(releaseHelper->getFtrXe2Compression());
         EXPECT_TRUE(releaseHelper->isDirectSubmissionLightSupported());
         EXPECT_FALSE(releaseHelper->isAvailableSemaphore64());
+        EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
 

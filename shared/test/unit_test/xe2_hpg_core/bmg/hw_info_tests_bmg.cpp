@@ -64,7 +64,7 @@ BMGTEST_F(BmgHwInfoTest, givenBoolWhenCallBmgHardwareInfoSetupThenFeatureTableAn
         EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
         EXPECT_EQ(1u, featureTable.ftrBcsInfo.to_ulong());
         EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrSelectiveWmtp);
+        EXPECT_EQ(false, featureTable.flags.ftrSelectiveWmtp);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrXe2Compression);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrXe2PlusTiling);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3TransientDataFlush);

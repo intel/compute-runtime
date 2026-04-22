@@ -65,7 +65,7 @@ NVLPTEST_F(NvlHwInfoTest, givenBoolWhenCallNvlHardwareInfoSetupThenFeatureTableA
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTile64Optimization);
             EXPECT_EQ(false, featureTable.flags.ftrTileY);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrSelectiveWmtp);
+            EXPECT_EQ(false, featureTable.flags.ftrSelectiveWmtp);
             EXPECT_TRUE(featureTable.flags.ftrHeaplessMode);
 
             EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
@@ -126,7 +126,7 @@ NVLPTEST_F(NvlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_TRUE(featureTable.flags.ftrFbc);
     EXPECT_TRUE(featureTable.flags.ftrAstcHdr2D);
     EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
-    EXPECT_TRUE(featureTable.flags.ftrSelectiveWmtp);
+    EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
     EXPECT_FALSE(featureTable.flags.ftrTileY);
     EXPECT_EQ(1u, featureTable.ftrBcsInfo.to_ulong());
     EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);

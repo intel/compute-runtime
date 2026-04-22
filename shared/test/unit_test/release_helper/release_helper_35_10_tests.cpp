@@ -41,6 +41,7 @@ TEST_F(ReleaseHelper3510Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_EQ(64u, releaseHelper->getStackSizePerRay());
         EXPECT_FALSE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_TRUE(releaseHelper->getFtrXe2Compression());
+        EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
 

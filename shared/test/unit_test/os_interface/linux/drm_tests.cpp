@@ -1534,7 +1534,7 @@ TEST(DrmTest, GivenDrmDriverModelWhenLatePreemptionStartSupportIsCheckedThenCorr
     EXPECT_FALSE(drmDefault.isLatePreemptionStartSupported(*NEO::defaultHwInfo));
 
     defaultHwInfo->featureTable.flags.ftrSelectiveWmtp = true;
-    EXPECT_TRUE(drmDefault.isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+    EXPECT_FALSE(drmDefault.isLatePreemptionStartSupported(*NEO::defaultHwInfo));
 
     debugManager.flags.OverrideLatePreemptionStart.set(0);
     EXPECT_FALSE(drmDefault.isLatePreemptionStartSupported(*NEO::defaultHwInfo));

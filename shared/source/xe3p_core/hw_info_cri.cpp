@@ -80,7 +80,6 @@ void CRI::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelp
     featureTable->flags.ftrFlatPhysCCS = false;
     featureTable->flags.ftrMultiTileArch = false;
     featureTable->flags.ftrWalkerMTP = true;
-    featureTable->flags.ftrSelectiveWmtp = true;
     featureTable->flags.ftrXe2PlusTiling = true;
     featureTable->flags.ftrL3TransientDataFlush = true;
     featureTable->flags.ftrPml5Support = true;

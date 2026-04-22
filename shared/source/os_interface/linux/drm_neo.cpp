@@ -1252,7 +1252,7 @@ bool Drm::isLatePreemptionStartSupported(const HardwareInfo &hwInfo) {
     if (debugManager.flags.OverrideLatePreemptionStart.get() != -1) {
         return debugManager.flags.OverrideLatePreemptionStart.get();
     }
-    return hwInfo.featureTable.flags.ftrSelectiveWmtp;
+    return false;
 }
 
 void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {

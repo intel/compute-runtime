@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -671,13 +672,14 @@ TEST_F(WddmTest, GivenWddmWhenMapGpuVaCalledWithMemoryFlagsWithReadOnlyThenMemor
 TEST_F(WddmTest, GivenWddmDriverModelWhenLatePreemptionStartSupportIsCheckedThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     VariableBackup<FeatureTableBase::Flags> ftrFlags{&defaultHwInfo->featureTable.flags};
+    auto releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
 
     debugManager.flags.OverrideLatePreemptionStart.set(-1);
     defaultHwInfo->featureTable.flags.ftrSelectiveWmtp = false;
     EXPECT_FALSE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
 
     defaultHwInfo->featureTable.flags.ftrSelectiveWmtp = true;
-    EXPECT_TRUE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
+    EXPECT_EQ(releaseHelper->isLatePreemptionStartSupportedHelper(), wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
 
     debugManager.flags.OverrideLatePreemptionStart.set(0);
     EXPECT_FALSE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));

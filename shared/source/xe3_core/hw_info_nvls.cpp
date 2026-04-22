@@ -74,7 +74,6 @@ void NVLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHel
     featureTable->flags.ftrE2ECompression = true;
     featureTable->flags.ftrFlatPhysCCS = true;
     featureTable->flags.ftrWalkerMTP = true;
-    featureTable->flags.ftrSelectiveWmtp = true;
     featureTable->flags.ftrTile64Optimization = true;
     featureTable->flags.ftrXe2PlusTiling = true;
     featureTable->flags.ftrPml5Support = true;

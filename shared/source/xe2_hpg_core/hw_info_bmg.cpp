@@ -78,7 +78,6 @@ void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelp
     featureTable->flags.ftrE2ECompression = true;
     featureTable->flags.ftrTile64Optimization = true;
     featureTable->flags.ftrWalkerMTP = true;
-    featureTable->flags.ftrSelectiveWmtp = true;
     featureTable->flags.ftrXe2PlusTiling = true;
     featureTable->flags.ftrL3TransientDataFlush = true;
     featureTable->flags.ftrPml5Support = true;

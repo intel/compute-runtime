@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -68,7 +69,8 @@ bool Wddm::isLatePreemptionStartSupported(const HardwareInfo &hwInfo) {
     if (debugManager.flags.OverrideLatePreemptionStart.get() != -1) {
         return debugManager.flags.OverrideLatePreemptionStart.get();
     }
-    return hwInfo.featureTable.flags.ftrSelectiveWmtp;
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+    return hwInfo.featureTable.flags.ftrSelectiveWmtp && releaseHelper->isLatePreemptionStartSupportedHelper();
 }
 
 void OsContextWin::prepareLatePreemptionStart(CREATECONTEXT_PVTDATA &privateData) {

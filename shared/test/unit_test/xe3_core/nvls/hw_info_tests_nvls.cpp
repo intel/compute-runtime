@@ -75,7 +75,7 @@ NVLSTEST_F(NvlsHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_TRUE(featureTable.flags.ftrFbc);
     EXPECT_TRUE(featureTable.flags.ftrAstcHdr2D);
     EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
-    EXPECT_TRUE(featureTable.flags.ftrSelectiveWmtp);
+    EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
     EXPECT_FALSE(featureTable.flags.ftrTileY);
     EXPECT_EQ(1u, featureTable.ftrBcsInfo.to_ulong());
     EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);

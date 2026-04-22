@@ -80,7 +80,7 @@ CRITEST_F(CriHwInfoTest, givenBoolWhenCallCriHardwareInfoSetupThenFeatureTableAn
             EXPECT_EQ(false, featureTable.flags.ftrTile64Optimization);
             EXPECT_EQ(false, featureTable.flags.ftrTileY);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrSelectiveWmtp);
+            EXPECT_EQ(false, featureTable.flags.ftrSelectiveWmtp);
             EXPECT_TRUE(featureTable.flags.ftrHeaplessMode);
 
             EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
@@ -148,7 +148,7 @@ CRITEST_F(CriHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
     EXPECT_FALSE(featureTable.flags.ftrTileY);
     EXPECT_FALSE(featureTable.flags.ftrHwSemaphore64);
-    EXPECT_TRUE(featureTable.flags.ftrSelectiveWmtp);
+    EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
     EXPECT_EQ(maxNBitValue(9), featureTable.ftrBcsInfo.to_ulong());
     EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
 }

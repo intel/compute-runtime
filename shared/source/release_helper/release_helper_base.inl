@@ -205,4 +205,9 @@ bool ReleaseHelperHw<releaseType>::isAvailableSemaphore64() const {
     return false;
 }
 
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isLatePreemptionStartSupportedHelper() const {
+    return false;
+}
+
 } // namespace NEO
