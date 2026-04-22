@@ -103,8 +103,8 @@ inline void CpuPageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultD
 }
 
 void CpuPageFaultManager::handlePageFault(void *ptr, PageFaultData &faultData) {
-    gpuDomainHandler(this, ptr, faultData);
     this->setAubWritable(true, ptr, faultData.unifiedMemoryManager);
+    gpuDomainHandler(this, ptr, faultData);
 }
 
 bool CpuPageFaultManager::verifyAndHandlePageFault(void *ptr, bool handleFault) {
@@ -192,15 +192,8 @@ void CpuPageFaultManager::selectGpuDomainHandler() {
 
 void CpuPageFaultManager::setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
     UNRECOVERABLE_IF(ptr == nullptr);
-    auto svmAllocData = unifiedMemoryManager->getSVMAlloc(ptr);
-    auto gpuAlloc = svmAllocData->gpuAllocations.getDefaultGraphicsAllocation();
-
-    if (svmAllocData->cpuAllocation) {
-        svmAllocData->cpuAllocation->setAubWritable(writable, GraphicsAllocation::allBanks);
-        svmAllocData->cpuAllocation->setTbxWritable(writable, GraphicsAllocation::allBanks);
-    }
+    auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
     gpuAlloc->setAubWritable(writable, GraphicsAllocation::allBanks);
-    gpuAlloc->setTbxWritable(writable, GraphicsAllocation::allBanks);
 }
 
 void CpuPageFaultManager::setCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
