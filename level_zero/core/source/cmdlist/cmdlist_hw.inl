@@ -1337,7 +1337,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         auto dstSlicePitch =
             (dstImage->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : dstRegion.height) * dstRowPitch;
 
-        auto status = appendCopyImageBlit(ptrOffset(srcImage->getAllocation()->getGpuAddress(), srcImage->getImageInfo().xOffset), srcImage->getAllocation(), ptrOffset(dstImage->getAllocation()->getGpuAddress(), dstImage->getImageInfo().xOffset), dstImage->getAllocation(),
+        auto status = appendCopyImageBlit(ptrOffset(srcImage->getAllocation()->getGpuAddress(), srcImage->getImageInfo().offset), srcImage->getAllocation(), ptrOffset(dstImage->getAllocation()->getGpuAddress(), dstImage->getImageInfo().offset), dstImage->getAllocation(),
                                           {srcRegion.originX, srcRegion.originY, srcRegion.originZ}, {dstRegion.originX, dstRegion.originY, dstRegion.originZ}, srcRowPitch, srcSlicePitch,
                                           dstRowPitch, dstSlicePitch, bytesPerPixel, {srcRegion.width, srcRegion.height, srcRegion.depth}, srcImgSize, dstImgSize,
                                           event, numWaitEvents, phWaitEvents, memoryCopyParams);
