@@ -1801,9 +1801,12 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         return ret;
     }
 
+    bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
+    if (isBind && !debuggingEnabled) {
+        return ret;
+    }
     constexpr auto oneSecTimeout = 1000000000ll;
     constexpr auto infiniteTimeout = -1;
-    bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
     uint64_t timeout = debuggingEnabled ? infiniteTimeout : oneSecTimeout;
     if (debugManager.flags.VmBindWaitUserFenceTimeout.get() != -1) {
         timeout = debugManager.flags.VmBindWaitUserFenceTimeout.get();
