@@ -179,6 +179,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
     }
 
+    implicitArgsSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
+
     if (this->bindlessImage) {
         auto result = allocateBindlessSlot();
         if (result != ZE_RESULT_SUCCESS) {
@@ -210,6 +212,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     {
         surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+        packedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
         uint32_t minArrayElement, renderTargetViewExtent, depth;
         NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(&surfaceState, imgInfo, gmm, *gmmHelper, __GMM_NO_CUBE_MAP,
                                                                       this->allocation->getGpuAddress(), surfaceOffsets,
@@ -269,8 +272,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     const auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
     if (this->bindlessImage && implicitArgsAllocation) {
-        implicitArgsSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
-
         NEO::ImageImplicitArgs imageImplicitArgs{};
         populateImageImplicitArgs(imageImplicitArgs);
 
