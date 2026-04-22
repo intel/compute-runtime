@@ -31,9 +31,9 @@ TEST_F(WddmAllocationInternalHandleTest, givenWddmAllocationWithNtSecureHandleWh
 
     uint64_t handle = 0;
     void *reservedHandleData = nullptr;
-    int ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
+    auto ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
 
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, InternalHandleStatus::success);
     EXPECT_EQ(handle, 0x1234u);
 }
 
@@ -43,9 +43,9 @@ TEST_F(WddmAllocationInternalHandleTest, givenWddmAllocationWithNoNtSecureHandle
 
     uint64_t handle = 0;
     void *reservedHandleData = nullptr;
-    int ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
+    auto ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
 
-    EXPECT_NE(ret, 0);
+    EXPECT_NE(ret, InternalHandleStatus::success);
     EXPECT_EQ(handle, 0u);
 }
 
@@ -59,9 +59,9 @@ TEST_F(WddmAllocationInternalHandleTest, givenWddmAllocationWithParentWhenPeekIn
 
     uint64_t handle = 0;
     void *reservedHandleData = nullptr;
-    int ret = childAllocation.peekInternalHandle(nullptr, handle, reservedHandleData);
+    auto ret = childAllocation.peekInternalHandle(nullptr, handle, reservedHandleData);
 
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, InternalHandleStatus::success);
     EXPECT_EQ(handle, 0x5678u); // Should return parent's handle
 }
 
@@ -74,9 +74,9 @@ TEST_F(WddmAllocationInternalHandleTest, givenWddmAllocationWithParentAndNoHandl
 
     uint64_t handle = 0;
     void *reservedHandleData = nullptr;
-    int ret = childAllocation.peekInternalHandle(nullptr, handle, reservedHandleData);
+    auto ret = childAllocation.peekInternalHandle(nullptr, handle, reservedHandleData);
 
-    EXPECT_NE(ret, 0);
+    EXPECT_NE(ret, InternalHandleStatus::success);
 }
 
 TEST_F(WddmAllocationInternalHandleTest, givenWddmAllocationWhenCreateInternalHandleWithExistingHandleThenHandleIsReturned) {
@@ -85,9 +85,9 @@ TEST_F(WddmAllocationInternalHandleTest, givenWddmAllocationWhenCreateInternalHa
 
     uint64_t handle = 0;
     void *reservedHandleData = nullptr;
-    int ret = allocation.createInternalHandle(nullptr, 0, handle, reservedHandleData);
+    auto ret = allocation.createInternalHandle(nullptr, 0, handle, reservedHandleData);
 
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, InternalHandleStatus::success);
     EXPECT_EQ(handle, 0x9ABCu);
 }
 
@@ -101,9 +101,9 @@ TEST_F(WddmAllocationInternalHandleTest, givenWddmAllocationWithParentWhenCreate
 
     uint64_t handle = 0;
     void *reservedHandleData = nullptr;
-    int ret = childAllocation.createInternalHandle(nullptr, 0, handle, reservedHandleData);
+    auto ret = childAllocation.createInternalHandle(nullptr, 0, handle, reservedHandleData);
 
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, InternalHandleStatus::success);
     EXPECT_EQ(handle, 0x5678u); // Should return parent's existing handle
 }
 

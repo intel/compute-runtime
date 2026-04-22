@@ -55,9 +55,9 @@ class MockGraphicsAllocation : public MemoryAllocation {
         this->memoryPool = pool;
     }
 
-    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
+    InternalHandleStatus peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
         handle = internalHandle;
-        return peekInternalHandleResult;
+        return static_cast<InternalHandleStatus>(peekInternalHandleResult);
     }
     void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId) override {
         updateCompletionDataForAllocationAndFragmentsCalledtimes++;

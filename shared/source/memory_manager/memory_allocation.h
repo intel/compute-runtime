@@ -46,16 +46,16 @@ class MemoryAllocation : public GraphicsAllocation {
         }
     }
 
-    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
+    InternalHandleStatus peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
         if (internalHandle == std::numeric_limits<uint64_t>::max()) {
-            return -1;
+            return InternalHandleStatus::outOfMemory;
         }
 
         handle = internalHandle;
-        return 0;
+        return InternalHandleStatus::success;
     }
 
-    int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
+    InternalHandleStatus createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
         return peekInternalHandle(memoryManager, handle, reservedHandleData);
     }
 };

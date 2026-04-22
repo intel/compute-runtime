@@ -842,8 +842,8 @@ ze_result_t DriverHandle::getPeerImage(Device *device, Image *image, Image **pee
     } else {
         uint64_t handle = 0;
 
-        int ret = image->getAllocation()->peekInternalHandle(this->getMemoryManager(), handle, nullptr);
-        if (ret < 0) {
+        auto ret = image->getAllocation()->peekInternalHandle(this->getMemoryManager(), handle, nullptr);
+        if (ret != NEO::InternalHandleStatus::success) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
 
@@ -933,8 +933,8 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
             std::vector<NEO::osHandle> handles;
             for (uint32_t i = 0; i < numHandles; i++) {
                 uint64_t handle = 0;
-                int ret = alloc->peekInternalHandle(this->getMemoryManager(), i, handle, nullptr);
-                if (ret < 0) {
+                auto ret = alloc->peekInternalHandle(this->getMemoryManager(), i, handle, nullptr);
+                if (ret != NEO::InternalHandleStatus::success) {
                     return nullptr;
                 }
                 handles.push_back(static_cast<NEO::osHandle>(handle));
@@ -943,8 +943,8 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
             peerPtr = this->importFdHandles(neoDevice, flags, handles, peerMapAddress, &alloc, allocDataInternal, false);
         } else {
             uint64_t handle = 0;
-            int ret = alloc->peekInternalHandle(this->getMemoryManager(), handle, nullptr);
-            if (ret < 0) {
+            auto ret = alloc->peekInternalHandle(this->getMemoryManager(), handle, nullptr);
+            if (ret != NEO::InternalHandleStatus::success) {
                 return nullptr;
             }
             peerPtr = this->importFdHandle(device->getNEODevice(),

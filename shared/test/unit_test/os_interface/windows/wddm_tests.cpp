@@ -983,8 +983,8 @@ TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsShar
     EXPECT_NE(nullptr, sharedHandleToModify);
     *sharedHandleToModify = 1234u;
     uint64_t handle = 0;
-    int ret = allocation.peekInternalHandle(nullptr, handle, nullptr);
-    EXPECT_EQ(ret, 0);
+    auto ret = allocation.peekInternalHandle(nullptr, handle, nullptr);
+    EXPECT_EQ(ret, NEO::InternalHandleStatus::success);
     EXPECT_EQ(*sharedHandleToModify, handle);
 }
 
@@ -993,8 +993,8 @@ TEST(WddmAllocationTest, whenAllocationIsNotShareableThenItDoesntReturnSharedHan
     auto sharedHandleToModify = allocation.getSharedHandleToModify();
     EXPECT_EQ(nullptr, sharedHandleToModify);
     uint64_t handle = 0;
-    int ret = allocation.peekInternalHandle(nullptr, handle, nullptr);
-    EXPECT_NE(ret, 0);
+    auto ret = allocation.peekInternalHandle(nullptr, handle, nullptr);
+    EXPECT_NE(ret, NEO::InternalHandleStatus::success);
 }
 
 TEST_F(WddmTests, whenInitializeFailureThenInitOsInterfaceWddmFails) {

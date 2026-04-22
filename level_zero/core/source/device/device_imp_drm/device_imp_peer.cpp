@@ -104,7 +104,7 @@ bool queryPeerAccessDrm(NEO::Device &device, NEO::Device &peerDevice, void **han
 
         const auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(*handlePtr);
         auto handleResult = alloc->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(driverHandle->getMemoryManager(), *handle, nullptr);
-        if (handleResult < 0) {
+        if (handleResult != NEO::InternalHandleStatus::success) {
             return false;
         }
     }

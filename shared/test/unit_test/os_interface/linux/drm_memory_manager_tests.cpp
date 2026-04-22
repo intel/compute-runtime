@@ -987,8 +987,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsR
     auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
     ASSERT_NE(allocation->getBO(), nullptr);
     uint64_t handle = 0;
-    int ret = allocation->peekInternalHandle(this->memoryManager, handle, nullptr);
-    ASSERT_EQ(ret, 0);
+    auto ret = allocation->peekInternalHandle(this->memoryManager, handle, nullptr);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     ASSERT_EQ(handle, static_cast<uint64_t>(1337));
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -1003,8 +1003,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCreateInternalHandleIsCalledThenBoI
     auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
     ASSERT_NE(allocation->getBO(), nullptr);
     uint64_t handle = 0;
-    int ret = allocation->createInternalHandle(this->memoryManager, 0u, handle, nullptr);
-    ASSERT_EQ(ret, 0);
+    auto ret = allocation->createInternalHandle(this->memoryManager, 0u, handle, nullptr);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     ASSERT_EQ(handle, static_cast<uint64_t>(1337));
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -1019,11 +1019,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCreateInternalHandleIsCalledThenCle
     auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
     ASSERT_NE(allocation->getBO(), nullptr);
     uint64_t handle = 0;
-    int ret = allocation->createInternalHandle(this->memoryManager, 0u, handle, nullptr);
-    ASSERT_EQ(ret, 0);
+    auto ret = allocation->createInternalHandle(this->memoryManager, 0u, handle, nullptr);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     allocation->clearInternalHandle(0u);
     ret = allocation->createInternalHandle(this->memoryManager, 0u, handle, nullptr);
-    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     ASSERT_EQ(handle, static_cast<uint64_t>(1337));
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -1038,8 +1038,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledAndObtain
     ASSERT_NE(allocation->getBO(), nullptr);
     memoryManager->failOnObtainFdFromHandle = true;
     uint64_t handle = 0;
-    int ret = allocation->peekInternalHandle(this->memoryManager, handle, nullptr);
-    ASSERT_EQ(ret, -1);
+    auto ret = allocation->peekInternalHandle(this->memoryManager, handle, nullptr);
+    ASSERT_NE(ret, NEO::InternalHandleStatus::success);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -1055,8 +1055,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithReser
     ASSERT_NE(allocation->getBO(), nullptr);
     uint8_t reservedHandleData[32] = {0};
     uint64_t handle = 0;
-    int ret = allocation->peekInternalHandle(this->memoryManager, handle, reservedHandleData);
-    ASSERT_EQ(ret, 0);
+    auto ret = allocation->peekInternalHandle(this->memoryManager, handle, reservedHandleData);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     ASSERT_EQ(handle, static_cast<uint64_t>(1337));
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -1074,8 +1074,80 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithReser
     ASSERT_NE(allocation->getBO(), nullptr);
     uint8_t reservedHandleData[32] = {0};
     uint64_t handle = 0;
-    int ret = allocation->peekInternalHandle(this->memoryManager, handle, reservedHandleData);
-    ASSERT_EQ(ret, -1);
+    auto ret = allocation->peekInternalHandle(this->memoryManager, handle, reservedHandleData);
+    ASSERT_NE(ret, NEO::InternalHandleStatus::success);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithReservedHandleDataAndObtainReturnsEOPNOTSUPPThenErrorCodeIsPropagated) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+    mock->outputFd = 1337;
+    memoryManager->mockObtainReservedHandleData = true;
+    memoryManager->mockObtainReservedHandleDataResult = static_cast<int>(NEO::InternalHandleStatus::unsupported);
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+    uint8_t reservedHandleData[32] = {0};
+    uint64_t handle = 0;
+    auto ret = allocation->peekInternalHandle(this->memoryManager, handle, reservedHandleData);
+    EXPECT_EQ(NEO::InternalHandleStatus::unsupported, ret);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithReservedHandleDataAndObtainReturnsEINVALThenErrorCodeIsPropagated) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+    mock->outputFd = 1337;
+    memoryManager->mockObtainReservedHandleData = true;
+    memoryManager->mockObtainReservedHandleDataResult = static_cast<int>(NEO::InternalHandleStatus::invalidArgument);
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+    uint8_t reservedHandleData[32] = {0};
+    uint64_t handle = 0;
+    auto ret = allocation->peekInternalHandle(this->memoryManager, handle, reservedHandleData);
+    EXPECT_EQ(NEO::InternalHandleStatus::invalidArgument, ret);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCreateInternalHandleIsCalledWithReservedHandleDataAndObtainReturnsEOPNOTSUPPThenErrorCodeIsPropagated) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+    mock->outputFd = 1337;
+    memoryManager->mockObtainReservedHandleData = true;
+    memoryManager->mockObtainReservedHandleDataResult = static_cast<int>(NEO::InternalHandleStatus::unsupported);
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+    uint8_t reservedHandleData[32] = {0};
+    uint64_t handle = 0;
+    auto ret = allocation->createInternalHandle(this->memoryManager, 0, handle, reservedHandleData);
+    EXPECT_EQ(NEO::InternalHandleStatus::unsupported, ret);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCreateInternalHandleIsCalledWithReservedHandleDataAndObtainReturnsEINVALThenErrorCodeIsPropagated) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+    mock->outputFd = 1337;
+    memoryManager->mockObtainReservedHandleData = true;
+    memoryManager->mockObtainReservedHandleDataResult = static_cast<int>(NEO::InternalHandleStatus::invalidArgument);
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+    uint8_t reservedHandleData[32] = {0};
+    uint64_t handle = 0;
+    auto ret = allocation->createInternalHandle(this->memoryManager, 0, handle, reservedHandleData);
+    EXPECT_EQ(NEO::InternalHandleStatus::invalidArgument, ret);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -1093,17 +1165,17 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingPeekInternalHandleSeveralTim
 
     EXPECT_EQ(mock->outputFd, static_cast<int32_t>(expectedFd));
     uint64_t handle0 = 0;
-    int ret = allocation->peekInternalHandle(this->memoryManager, handle0, nullptr);
-    ASSERT_EQ(ret, 0);
+    auto ret = allocation->peekInternalHandle(this->memoryManager, handle0, nullptr);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     EXPECT_NE(mock->outputFd, static_cast<int32_t>(expectedFd));
 
     uint64_t handle1 = 0;
     uint64_t handle2 = 0;
 
     ret = allocation->peekInternalHandle(this->memoryManager, handle1, nullptr);
-    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     ret = allocation->peekInternalHandle(this->memoryManager, handle2, nullptr);
-    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
 
     ASSERT_EQ(handle0, expectedFd);
     ASSERT_EQ(handle1, expectedFd);
@@ -1125,17 +1197,17 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingCreateInternalHandleSeveralT
 
     EXPECT_EQ(mock->outputFd, static_cast<int32_t>(expectedFd));
     uint64_t handle0 = 0;
-    int ret = allocation->createInternalHandle(this->memoryManager, 0u, handle0, nullptr);
-    ASSERT_EQ(ret, 0);
+    auto ret = allocation->createInternalHandle(this->memoryManager, 0u, handle0, nullptr);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     EXPECT_NE(mock->outputFd, static_cast<int32_t>(expectedFd));
 
     uint64_t handle1 = 0;
     uint64_t handle2 = 0;
 
     ret = allocation->createInternalHandle(this->memoryManager, 0u, handle1, nullptr);
-    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     ret = allocation->createInternalHandle(this->memoryManager, 0u, handle2, nullptr);
-    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
 
     ASSERT_EQ(handle0, expectedFd);
     ASSERT_EQ(handle1, expectedFd);
@@ -1155,8 +1227,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleWithHandleIdIsCal
 
     uint64_t handle = 0;
     uint32_t handleId = 0;
-    int ret = allocation->peekInternalHandle(this->memoryManager, handleId, handle, nullptr);
-    ASSERT_EQ(ret, 0);
+    auto ret = allocation->peekInternalHandle(this->memoryManager, handleId, handle, nullptr);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     ASSERT_EQ(handle, static_cast<uint64_t>(1337));
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -1176,16 +1248,16 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingPeekInternalHandleWithIdSeve
     EXPECT_EQ(mock->outputFd, static_cast<int32_t>(expectedFd));
     uint32_t handleId = 0;
     uint64_t handle0 = 0;
-    int ret = allocation->peekInternalHandle(this->memoryManager, handleId, handle0, nullptr);
-    ASSERT_EQ(ret, 0);
+    auto ret = allocation->peekInternalHandle(this->memoryManager, handleId, handle0, nullptr);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     EXPECT_NE(mock->outputFd, static_cast<int32_t>(expectedFd));
 
     uint64_t handle1 = 0;
     uint64_t handle2 = 0;
     ret = allocation->peekInternalHandle(this->memoryManager, handleId, handle1, nullptr);
-    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
     ret = allocation->peekInternalHandle(this->memoryManager, handleId, handle2, nullptr);
-    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(ret, NEO::InternalHandleStatus::success);
 
     ASSERT_EQ(handle0, expectedFd);
     ASSERT_EQ(handle1, expectedFd);
@@ -1458,7 +1530,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingInternalHandl
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
+    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
 
     memoryManager->closeInternalHandle(handleVal, 0u, graphicsAllocation);
 
@@ -1478,7 +1550,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNoAllocationWhenClosingInternalHan
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
+    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
 
     memoryManager->closeInternalHandle(handleVal, 0u, nullptr);
 
@@ -1498,7 +1570,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingInternalHandl
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
+    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
 
     memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, graphicsAllocation, nullptr);
 
@@ -1518,7 +1590,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNoAllocationWhenClosingInternalHan
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
+    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
 
     memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, nullptr, nullptr);
 
@@ -1538,7 +1610,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNullReservedDataWhenClosingInterna
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
+    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
 
     memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, graphicsAllocation, nullptr);
 
@@ -1558,7 +1630,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDrmMemoryManagerWhenClosingInterna
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
+    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal, nullptr));
 
     // Test that closeInternalHandleWithReservedData calls closeInternalHandle.
     memoryManager->closeInternalHandleWithReservedData(handleVal, 0u, graphicsAllocation, nullptr);
@@ -10318,22 +10390,22 @@ struct MockDrmFabric : public DrmFabric {
 
     bool isAvailable() const override { return true; }
 
-    int fdToHandle(int32_t dmabufFd, void *reservedHandleData) override {
+    InternalHandleStatus fdToHandle(int32_t dmabufFd, void *reservedHandleData) override {
         fdToHandleCalled++;
-        return -1;
+        return InternalHandleStatus::invalidArgument;
     }
 
-    int handleClose(const void *reservedHandleData) override {
+    InternalHandleStatus handleClose(const void *reservedHandleData) override {
         handleCloseCalled++;
-        return -1;
+        return InternalHandleStatus::invalidArgument;
     }
 
-    int handleToFd(const void *reservedHandleData, int32_t &dmabufFd) override {
+    InternalHandleStatus handleToFd(const void *reservedHandleData, int32_t &dmabufFd) override {
         handleToFdCalled++;
         if (handleToFdReturnValue == 0) {
             dmabufFd = 1;
         }
-        return handleToFdReturnValue;
+        return static_cast<InternalHandleStatus>(handleToFdReturnValue);
     }
 
     uint32_t fdToHandleCalled = 0;

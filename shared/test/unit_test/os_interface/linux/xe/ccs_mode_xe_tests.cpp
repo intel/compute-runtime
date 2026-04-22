@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ struct DrmMockXeCcs : public DrmMockCustom {
         setIoctlAnswer = a;
     }
     int ioctl(DrmIoctl request, void *arg) override {
-        int ret = -1;
+        auto ret = -1;
         ioctlCalled = true;
         if (forceIoctlAnswer) {
             return setIoctlAnswer;

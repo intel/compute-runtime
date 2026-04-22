@@ -234,7 +234,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentWhe
 
     uint64_t handleAfterSuccess = 0;
     auto ret = primaryAlloc->peekInternalHandle(memoryManager, handleAfterSuccess, nullptr);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, NEO::InternalHandleStatus::success);
     EXPECT_EQ(42u, handleAfterSuccess);
 
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
@@ -352,7 +352,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentWhe
 
     uint64_t handleAfterFailure = 0;
     auto ret = primaryAlloc->peekInternalHandle(memoryManager, handleAfterFailure, nullptr);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, NEO::InternalHandleStatus::success);
     EXPECT_EQ(42u, handleAfterFailure);
 
     memoryManager->freeGraphicsMemory(primaryAlloc);

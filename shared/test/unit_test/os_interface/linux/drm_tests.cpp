@@ -125,7 +125,7 @@ TEST(DrmTest, GivenInvalidPciPathWhenFrequencyIsQueriedThenReturnError) {
     int maxFrequency = 0;
 
     drm.setPciPath("invalidPci");
-    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
+    auto ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
     EXPECT_NE(0, ret);
 
     EXPECT_EQ(0, maxFrequency);
@@ -519,7 +519,7 @@ TEST(DrmTest, WhenEnablingTurboBoostThenSucceeds) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    int ret = pDrm->enableTurboBoost();
+    auto ret = pDrm->enableTurboBoost();
     EXPECT_EQ(0, ret);
 
     delete pDrm;
@@ -530,7 +530,7 @@ TEST(DrmTest, WhenGettingEnabledPooledEuThenCorrectValueIsReturned) {
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
     int enabled = 0;
-    int ret = 0;
+    auto ret = 0;
     pDrm->storedHasPooledEU = -1;
 #if defined(I915_PARAM_HAS_POOLED_EU)
     ret = pDrm->getEnabledPooledEu(enabled);
@@ -565,7 +565,7 @@ TEST(DrmTest, WhenGettingMinEuInPoolThenCorrectValueIsReturned) {
 
     pDrm->storedMinEUinPool = -1;
     int minEUinPool = 0;
-    int ret = 0;
+    auto ret = 0;
 #if defined(I915_PARAM_MIN_EU_IN_POOL)
     ret = pDrm->getMinEuInPool(minEUinPool);
     EXPECT_EQ(0, ret);
@@ -898,7 +898,7 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingTimestampFrequencyThenCaptur
     StreamCapture capture;
     capture.captureStdout(); // start capturing
 
-    int ret = drm.getTimestampFrequency(frequency);
+    auto ret = drm.getTimestampFrequency(frequency);
     debugManager.flags.PrintIoctlEntries.set(false);
     std::string outputString = capture.getCapturedStdout(); // stop capturing
 
@@ -921,7 +921,7 @@ TEST(DrmTest, givenPrintIoctlDebugFlagNotSetWhenGettingTimestampFrequencyThenCap
     StreamCapture capture;
     capture.captureStdout(); // start capturing
 
-    int ret = drm.getTimestampFrequency(frequency);
+    auto ret = drm.getTimestampFrequency(frequency);
     std::string outputString = capture.getCapturedStdout(); // stop capturing
 
     EXPECT_EQ(0, ret);
@@ -943,7 +943,7 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingOATimestampFrequencyThenCapt
     StreamCapture capture;
     capture.captureStdout(); // start capturing
 
-    int ret = drm.getOaTimestampFrequency(frequency);
+    auto ret = drm.getOaTimestampFrequency(frequency);
     debugManager.flags.PrintIoctlEntries.set(false);
     std::string outputString = capture.getCapturedStdout(); // stop capturing
 
@@ -1651,7 +1651,7 @@ class MockIoctlHelperResetStats : public MockIoctlHelper {
   public:
     using MockIoctlHelper::MockIoctlHelper;
     int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override {
-        int ret = MockIoctlHelper::getResetStats(resetStats, status, resetStatsFault);
+        auto ret = MockIoctlHelper::getResetStats(resetStats, status, resetStatsFault);
         if (status) {
             *status = statusReturnValue;
         }

@@ -28,10 +28,10 @@ TEST_F(GraphicsAllocationInternalHandleTest, givenBaseGraphicsAllocationWhenPeek
 
     uint64_t handle = 0xFFFFu; // Set to non-zero initially
     void *reservedHandleData = nullptr;
-    int ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
+    auto ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
 
-    EXPECT_EQ(ret, 0);
-    // Default implementation returns 0 without modifying handle
+    EXPECT_EQ(ret, NEO::InternalHandleStatus::success);
+    // Default implementation returns success without modifying handle
 }
 
 TEST_F(GraphicsAllocationInternalHandleTest, givenBaseGraphicsAllocationWhenCreateInternalHandleThenDefaultZeroIsReturned) {
@@ -39,10 +39,10 @@ TEST_F(GraphicsAllocationInternalHandleTest, givenBaseGraphicsAllocationWhenCrea
 
     uint64_t handle = 0xFFFFu; // Set to non-zero initially
     void *reservedHandleData = nullptr;
-    int ret = allocation.createInternalHandle(nullptr, 0, handle, reservedHandleData);
+    auto ret = allocation.createInternalHandle(nullptr, 0, handle, reservedHandleData);
 
-    EXPECT_EQ(ret, 0);
-    // Default implementation returns 0 without modifying handle
+    EXPECT_EQ(ret, NEO::InternalHandleStatus::success);
+    // Default implementation returns success without modifying handle
 }
 
 TEST_F(GraphicsAllocationInternalHandleTest, givenBaseGraphicsAllocationWhenClearInternalHandleThenNoOpReturns) {
@@ -75,18 +75,18 @@ TEST_F(GraphicsAllocationInternalHandleTest, givenNullReservedHandleDataWhenPeek
     MockGraphicsAllocation allocation(nullptr, 0);
 
     uint64_t handle = 0;
-    int ret = allocation.peekInternalHandle(nullptr, handle, nullptr);
+    auto ret = allocation.peekInternalHandle(nullptr, handle, nullptr);
 
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, NEO::InternalHandleStatus::success);
 }
 
 TEST_F(GraphicsAllocationInternalHandleTest, givenNullReservedHandleDataWhenCreateInternalHandleThenSucceeds) {
     MockGraphicsAllocation allocation(nullptr, 0);
 
     uint64_t handle = 0;
-    int ret = allocation.createInternalHandle(nullptr, 0, handle, nullptr);
+    auto ret = allocation.createInternalHandle(nullptr, 0, handle, nullptr);
 
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, NEO::InternalHandleStatus::success);
 }
 
 } // namespace NEO

@@ -82,14 +82,14 @@ class WddmAllocation : public GraphicsAllocation {
 
     void clearInternalHandle(uint32_t handleId) override;
 
-    int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override;
+    InternalHandleStatus createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override;
 
-    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
+    InternalHandleStatus peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
         if (parentAllocation) {
             return static_cast<WddmAllocation *>(parentAllocation)->peekInternalHandle(memoryManager, handle, reservedHandleData);
         }
         handle = ntSecureHandle;
-        return handle == 0;
+        return handle == 0 ? InternalHandleStatus::outOfMemory : InternalHandleStatus::success;
     }
 
     uint64_t *getSharedHandleToModify() {

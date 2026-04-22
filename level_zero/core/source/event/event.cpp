@@ -140,7 +140,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
                 allocatedMemory = true;
                 if (isIpcPoolFlagSet()) {
                     uint64_t handle = 0;
-                    this->isShareableEventMemory = (graphicsAllocation->peekInternalHandle(memoryManager, handle, nullptr) == 0);
+                    this->isShareableEventMemory = (graphicsAllocation->peekInternalHandle(memoryManager, handle, nullptr) == NEO::InternalHandleStatus::success);
                 }
             }
         }
@@ -482,7 +482,7 @@ ze_result_t Event::exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAs
     }
 
     uint64_t handle = 0;
-    if (int retCode = deviceAlloc->createInternalHandle(memoryManager, 0, handle, nullptr); retCode != 0) {
+    if (auto retCode = deviceAlloc->createInternalHandle(memoryManager, 0, handle, nullptr); retCode != NEO::InternalHandleStatus::success) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
@@ -500,7 +500,7 @@ ze_result_t Event::exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAs
 
     if (inOrderExecHelper.isHostStorageDuplicated()) {
         auto hostAlloc = inOrderExecHelper.getHostCounterAllocation();
-        if (int retCode = hostAlloc->createInternalHandle(memoryManager, 0, handle, nullptr); retCode != 0) {
+        if (auto retCode = hostAlloc->createInternalHandle(memoryManager, 0, handle, nullptr); retCode != NEO::InternalHandleStatus::success) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         memoryManager->registerIpcExportedAllocation(hostAlloc);
@@ -686,7 +686,7 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
     }
 
     uint64_t communicationHandle = 0;
-    if (int retCode = sharableEventDataHelper.getAllocation()->createInternalHandle(memoryManager, 0, communicationHandle, nullptr); retCode != 0) {
+    if (auto retCode = sharableEventDataHelper.getAllocation()->createInternalHandle(memoryManager, 0, communicationHandle, nullptr); retCode != NEO::InternalHandleStatus::success) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
     memoryManager->registerIpcExportedAllocation(sharableEventDataHelper.getAllocation());
@@ -709,7 +709,7 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     auto memoryManager = context->getDriverHandle()->getMemoryManager();
     auto allocation = eventPoolAllocations->getDefaultGraphicsAllocation();
     uint64_t handle{};
-    if (allocation->peekInternalHandle(memoryManager, handle, nullptr) != 0) {
+    if (allocation->peekInternalHandle(memoryManager, handle, nullptr) != NEO::InternalHandleStatus::success) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
     memoryManager->registerIpcExportedAllocation(allocation);

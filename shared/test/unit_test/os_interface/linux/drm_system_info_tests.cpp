@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
     debugManager.flags.PrintDebugMessages.set(true);
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 
@@ -118,7 +118,7 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     ASSERT_EQ(ret, 0);
 
     auto *releaseHelper = drm.getRootDeviceEnvironment().getReleaseHelper();
@@ -145,7 +145,7 @@ TEST(DrmSystemInfoTest, givenInvalidDeviceIdWhenSetupHardwareInfoThenReturnsSucc
     auto aotInfo = productConfigHelper->getDeviceAotInfo();
 
     DrmMockToQuerySystemInfo drm1(*executionEnvironment->rootDeviceEnvironments[0]);
-    int ret = drm1.setupHardwareInfo(aotInfo[0].deviceIds->front(), false); // valid device id, i915 kmd
+    auto ret = drm1.setupHardwareInfo(aotInfo[0].deviceIds->front(), false); // valid device id, i915 kmd
     EXPECT_EQ(ret, 0);
 
     DrmMockToQuerySystemInfo drm2(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -305,7 +305,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     drm.failQueryDeviceBlob = true;
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     debugManager.flags.PrintDebugMessages.set(false);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
@@ -333,7 +333,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -372,7 +372,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -398,7 +398,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsAndBlob
     drm.systemInfo.reset(new SystemInfo(inputBlobDataZeros));
     drm.systemInfoQueried = true;
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -420,7 +420,7 @@ TEST(DrmSystemInfoTest, givenZeroBankCountWhenCreatingSystemInfoThenUseDualSubsl
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -447,7 +447,7 @@ TEST(DrmSystemInfoTest, givenNonZeroBankCountWhenCreatingSystemInfoThenUseDualSu
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -472,7 +472,7 @@ TEST(DrmSystemInfoTest, givenL3GroupsInfoWhenCreatingSystemInfoThenUseL3GroupsTo
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -497,7 +497,7 @@ TEST(DrmSystemInfoTest, givenIncompleteL3GroupsInfoWhenCreatingSystemInfoThenDon
             drm.dontQueryL3BankGroups = dontQueryL3BankGroups;
             drm.dontQueryL3BanksPerGroup = dontQueryL3BanksPerGroup;
             drm.overrideDeviceDescriptor = &device;
-            int ret = drm.setupHardwareInfo(0, false);
+            auto ret = drm.setupHardwareInfo(0, false);
             EXPECT_EQ(ret, 0);
             EXPECT_NE(nullptr, drm.getSystemInfo());
             const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -543,7 +543,7 @@ TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopologyDataWhenCreatingSystemInfoTh
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -574,7 +574,7 @@ TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoSuccee
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -604,7 +604,7 @@ TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoFailsT
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
     drm.overrideDeviceDescriptor = &device;
 
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, -1);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 }
@@ -623,7 +623,7 @@ TEST(DrmSystemInfoTest, givenTopologyWithMoreEuPerDssThanInDeviceBlobWhenSetupHa
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
+    auto ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
