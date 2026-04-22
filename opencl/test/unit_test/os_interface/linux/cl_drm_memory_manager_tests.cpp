@@ -217,9 +217,6 @@ HWTEST2_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageI
 
     device->setPreemptionMode(PreemptionMode::Disabled);
 
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    constexpr uint32_t builtinsIsaAllocationCount = 8;
-
     mock->ioctlExpected.gemCreate = 1;
     mock->ioctlExpected.gemSetTiling = 1;
     mock->ioctlExpected.gemWait = 2;
@@ -228,14 +225,9 @@ HWTEST2_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageI
     mock->ioctlExpected.execbuffer2 = 1;
 
     // builtins kernels
-    if (!productHelper.useGemCreateExtInAllocateMemoryByKMD() || mock->getMemoryInfo() == nullptr) {
-        mock->ioctlExpected.gemCreate += builtinsIsaAllocationCount;
-    } else {
-        mock->ioctlExpected.gemCreateExt += builtinsIsaAllocationCount;
-    }
-    mock->ioctlExpected.gemMmapOffset += builtinsIsaAllocationCount;
-    mock->ioctlExpected.gemClose += builtinsIsaAllocationCount; // builtins cleaned up in ClDevice destructor
-    mock->ioctlExpected.gemWait += builtinsIsaAllocationCount;
+    mock->ioctlExpected.gemUserptr += 8;
+    mock->ioctlExpected.gemClose += 8; // builtins cleaned up in ClDevice destructor
+    mock->ioctlExpected.gemWait += 8;
 
     // command buffers
     mock->ioctlExpected.gemUserptr += 2;
@@ -287,8 +279,12 @@ HWTEST2_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageI
     EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType() ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
+    auto imageSize = drmAllocation->getUnderlyingBufferSize();
     auto rowPitch = dstImage->getImageDesc().image_row_pitch;
 
+    EXPECT_EQ(1u, this->mock->createParamsHandle);
+    EXPECT_EQ(imageSize, this->mock->createParamsSize);
     auto ioctlHelper = this->mock->getIoctlHelper();
     uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::tilingY);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);

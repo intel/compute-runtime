@@ -1116,116 +1116,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocateKmdMappedIsaIn32BitHeap(const AllocationData &allocationData, HeapIndex heapIndex) {
-    DEBUG_BREAK_IF(!GraphicsAllocation::isKernelIsaAllocationType(allocationData.type));
-    DEBUG_BREAK_IF(allocationData.hostPtr != nullptr);
-
-    const auto allocationSize = alignUp(allocationData.size, MemoryConstants::pageSize);
-    auto reservedSize = allocationSize;
-    auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-    auto gpuVA = gfxPartition->heapAllocate(heapIndex, reservedSize);
-
-    if (!gpuVA) {
-        return nullptr;
-    }
-
-    const auto memoryPool = MemoryPool::system4KBPagesWith32BitGpuAddressing;
-    const auto systemMemoryBanks = systemMemoryBitfield;
-    auto &drm = getDrm(allocationData.rootDeviceIndex);
-    auto ioctlHelper = drm.getIoctlHelper();
-    auto &productHelper = drm.getRootDeviceEnvironment().getProductHelper();
-    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
-
-    StorageInfo gmmStorageInfo = {};
-    gmmStorageInfo.isLockable = allocationData.storageInfo.isLockable;
-
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
-    auto gmm = std::make_unique<Gmm>(gmmHelper,
-                                     nullptr,
-                                     allocationSize,
-                                     0u,
-                                     CacheSettingsHelper::getGmmUsageType(allocationData.type,
-                                                                          allocationData.flags.uncacheable,
-                                                                          productHelper,
-                                                                          gmmHelper->getHardwareInfo()),
-                                     gmmStorageInfo,
-                                     gmmRequirements);
-
-    auto releaseGpuAddress = [&]() {
-        gfxPartition->heapFree(heapIndex, gpuVA, reservedSize);
-    };
-
-    int ret = -1;
-    uint32_t handle = 0;
-    const auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
-    bool tryToUseGemCreateExt = productHelper.useGemCreateExtInAllocateMemoryByKMD();
-    if (debugManager.flags.UseGemCreateExtInAllocateMemoryByKMD.get() != -1) {
-        tryToUseGemCreateExt = debugManager.flags.UseGemCreateExtInAllocateMemoryByKMD.get() == 1;
-    }
-
-    BufferObject::BOType boType = BufferObject::BOType::legacy;
-    if (tryToUseGemCreateExt && drm.getMemoryInfo()) {
-        ret = drm.getMemoryInfo()->createGemExtWithSingleRegion(systemMemoryBanks, allocationSize, handle, patIndex, -1, allocationData.flags.isUSMHostAllocation);
-        boType = getBOTypeFromPatIndex(patIndex, productHelper.isVmBindPatIndexProgrammingSupported());
-    }
-
-    if (ret != 0) {
-        auto isCoherent = productHelper.isCoherentAllocation(patIndex);
-        handle = ioctlHelper->createGem(allocationSize, static_cast<uint32_t>(systemMemoryBanks.to_ulong()), isCoherent);
-        boType = BufferObject::BOType::legacy;
-    }
-
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new (std::nothrow) BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, allocationSize, maxOsContextCount));
-    if (!bo) {
-        if (handle != 0u) {
-            GemClose close{};
-            close.handle = handle;
-            ioctlHelper->ioctl(DrmIoctl::gemClose, &close);
-        }
-        releaseGpuAddress();
-        return nullptr;
-    }
-
-    bo->setAddress(gpuVA);
-    bo->setBOType(boType);
-
-    uint64_t offset = 0;
-    const auto mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
-    if (!ioctlHelper->retrieveMmapOffsetForBufferObject(*bo, mmapOffsetWb, offset)) {
-        releaseGpuAddress();
-        return nullptr;
-    }
-    bo->setMmapOffset(offset);
-
-    auto cpuPointer = ioctlHelper->mmapFunction(*this, nullptr, allocationSize, PROT_READ | PROT_WRITE, MAP_SHARED, drm.getFileDescriptor(), static_cast<off_t>(offset));
-    DEBUG_BREAK_IF(cpuPointer == MAP_FAILED);
-    if (cpuPointer == MAP_FAILED) {
-        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
-        releaseGpuAddress();
-        return nullptr;
-    }
-
-    auto canonizedGpuAddress = gmmHelper->canonize(gpuVA);
-    auto allocation = new (std::nothrow) DrmAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bo.get(), cpuPointer, canonizedGpuAddress, allocationSize, memoryPool);
-    if (!allocation) {
-        ioctlHelper->munmapFunction(*this, cpuPointer, allocationSize);
-        releaseGpuAddress();
-        return nullptr;
-    }
-
-    allocation->set32BitAllocation(true);
-    allocation->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(heapIndex)));
-    allocation->setMmapPtr(cpuPointer);
-    allocation->setMmapSize(allocationSize);
-    allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuVA), reservedSize);
-    allocation->setDefaultGmm(gmm.release());
-
-    bo.release();
-    return allocation;
-}
-
 GraphicsAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
     auto allocatorToUse = heapAssigners[allocationData.rootDeviceIndex]->get32BitHeapIndex(allocationData.type, false, *hwInfo, allocationData.flags.use32BitFrontWindow);
@@ -1259,10 +1149,6 @@ GraphicsAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allo
         allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuVirtualAddress), realAllocationSize);
         bo.release();
         return allocation;
-    }
-
-    if (GraphicsAllocation::isKernelIsaAllocationType(allocationData.type)) {
-        return allocateKmdMappedIsaIn32BitHeap(allocationData, allocatorToUse);
     }
 
     size_t alignedAllocationSize = alignUp(allocationData.size, MemoryConstants::pageSize);

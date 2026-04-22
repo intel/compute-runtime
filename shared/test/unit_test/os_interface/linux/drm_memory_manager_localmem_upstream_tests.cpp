@@ -16,7 +16,6 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
-#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/heap_allocator.h"
@@ -736,12 +735,6 @@ struct DrmMemoryManagerToTestCopyMemoryToAllocation : public DrmMemoryManager {
         : DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
         std::fill(this->localMemorySupported.begin(), this->localMemorySupported.end(), localMemoryEnabled);
         lockedLocalMemorySize = lockableLocalMemorySize;
-        mmapFunction = [](void *addr, size_t len, int prot, int flags, int, off_t) noexcept {
-            return NEO::SysCalls::mmap(addr, len, prot, flags | MAP_ANONYMOUS, -1, 0);
-        };
-        munmapFunction = [](void *addr, size_t len) noexcept {
-            return NEO::SysCalls::munmap(addr, len);
-        };
     }
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override {
         if (lockedLocalMemorySize > 0) {

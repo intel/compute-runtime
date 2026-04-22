@@ -6,8 +6,6 @@
  */
 
 #include "shared/source/memory_manager/allocation_properties.h"
-#include "shared/source/os_interface/linux/drm_memory_manager.h"
-#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/create_command_stream.h"
@@ -35,14 +33,6 @@ struct CommandQueueLinuxTests : public Test<DeviceFixture> {
         prepareDeviceEnvironments(*executionEnvironment);
         executionEnvironment->initializeMemoryManager();
         setupWithExecutionEnvironment(*executionEnvironment);
-
-        auto memoryManager = static_cast<NEO::DrmMemoryManager *>(neoDevice->getMemoryManager());
-        memoryManager->mmapFunction = [](void *addr, size_t len, int prot, int flags, int, off_t) noexcept {
-            return NEO::SysCalls::mmap(addr, len, prot, flags | MAP_ANONYMOUS, -1, 0);
-        };
-        memoryManager->munmapFunction = [](void *addr, size_t len) noexcept {
-            return NEO::SysCalls::munmap(addr, len);
-        };
     }
 };
 
