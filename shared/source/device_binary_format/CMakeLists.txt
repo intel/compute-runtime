@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -26,10 +26,7 @@ set(NEO_DEVICE_BINARY_FORMAT
     ${CMAKE_CURRENT_SOURCE_DIR}/elf/ocl_elf.h
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zebin/debug_zebin.cpp

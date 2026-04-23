@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/utilities/logger.h"
 
 #include <algorithm>
 
@@ -65,7 +64,6 @@ inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, siz
         arg.objectType = type;
     } else if ((arg.objectType != type) && (type != ArgObjectType::none)) {
         kernel.decodeStatus = DecodeError::invalidBinary;
-        DBG_LOG(LogPatchTokens, "\n Mismatched metadata for kernel arg :", argNum);
         DEBUG_BREAK_IF(true);
     }
 
@@ -121,7 +119,6 @@ template <size_t s>
 inline void assignTokenInArray(const SPatchDataParameterBuffer *(&tokensArray)[s], const SPatchDataParameterBuffer *src, StackVecUnhandledTokens &unhandledTokens) {
     auto sourceIndex = src->SourceOffset >> 2;
     if (sourceIndex >= s) {
-        DBG_LOG(LogPatchTokens, "\n  .Type", "Unhandled sourceIndex ", sourceIndex);
         DEBUG_BREAK_IF(true);
         unhandledTokens.push_back(src);
         return;
@@ -141,7 +138,6 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
 
     switch (token->Type) {
     default:
-        DBG_LOG(LogPatchTokens, "\n  .Type", "Unhandled SPatchDataParameterBuffer ", token->Type);
         DEBUG_BREAK_IF(true);
         out.unhandledTokens.push_back(token);
         break;
@@ -152,7 +148,6 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
 
     case DATA_PARAMETER_LOCAL_WORK_SIZE: {
         if (sourceIndex >= 3) {
-            DBG_LOG(LogPatchTokens, "\n  .Type", "Unhandled sourceIndex ", sourceIndex);
             DEBUG_BREAK_IF(true);
             out.unhandledTokens.push_back(token);
             return;

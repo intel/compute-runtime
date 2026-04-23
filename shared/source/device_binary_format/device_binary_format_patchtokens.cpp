@@ -7,14 +7,11 @@
 
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/device_binary_format/patchtokens_dumper.h"
-#include "shared/source/device_binary_format/patchtokens_validator.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
-#include "shared/source/utilities/logger.h"
 
 namespace NEO {
 
@@ -50,14 +47,6 @@ template <>
 DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram = {};
     NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(src.deviceBinary, decodedProgram);
-    DBG_LOG(LogPatchTokens, NEO::PatchTokenBinary::asString(decodedProgram).c_str());
-
-    std::string validatorWarnings;
-    std::string validatorErrMessage;
-    auto validatorErr = PatchTokenBinary::validate(decodedProgram, outErrReason, outWarning);
-    if (DecodeError::success != validatorErr) {
-        return validatorErr;
-    }
 
     NEO::populateProgramInfo(dst, decodedProgram);
 
