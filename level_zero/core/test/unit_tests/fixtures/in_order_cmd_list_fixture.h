@@ -164,7 +164,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         standaloneCbEventStorage.push_back(1);
 
         uint64_t *hostAddress = &(standaloneCbEventStorage.data()[standaloneCbEventStorage.size() - 1]);
-        uint64_t *deviceAddress = ptrOffset(hostAddress, 0x1000);
+        uint64_t *deviceAddress = reinterpret_cast<uint64_t *>(0xABCDEF010000ULL);
 
         ze_result_t result = ZE_RESULT_SUCCESS;
         auto event = static_cast<InOrderFixtureMockEvent *>(Event::create<uint64_t>(eventDescriptor, device, result));
