@@ -184,12 +184,7 @@ bool CommandQueueHw<Family>::waitForTimestamps(std::span<CopyEngineState> copyEn
     bool waited = false;
 
     if (isWaitForTimestampsEnabled()) {
-        {
-            // mainContainer == this->timestampPacketContainer.get() means wait is called from command queue on its TS. Lock is needed, bacuase another enqueue might generate TS and modify container
-            TakeOwnershipWrapper<CommandQueue> queueOwnership(*this, mainContainer == this->timestampPacketContainer.get());
-            waited = waitForTimestampsWithinContainer<TSPacketType>(mainContainer, getGpgpuCommandStreamReceiver(), status);
-        }
-
+        waited = waitForTimestampsWithinContainer<TSPacketType>(mainContainer, getGpgpuCommandStreamReceiver(), status);
         if (waited) {
             getGpgpuCommandStreamReceiver().downloadAllocations(true);
             for (const auto &copyEngine : copyEnginesToWait) {

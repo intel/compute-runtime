@@ -28,7 +28,7 @@
 
 using namespace NEO;
 
-TEST(CommandQueue, givenCommandQueueWhenTakeOwnershipWrapperForCommandQueueThenWaitForTimestampsWaitsToBeUnlocked) {
+TEST(CommandQueue, givenCommandQueueWhenTakeOwnershipWrapperForCommandQueueThenWaitForTimestampsDoesNotWaitForLock) {
     DebugManagerStateRestore restorer;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useWaitForTimestamps = true;
@@ -49,12 +49,43 @@ TEST(CommandQueue, givenCommandQueueWhenTakeOwnershipWrapperForCommandQueueThenW
     auto status = WaitStatus::notReady;
 
     TakeOwnershipWrapper<CommandQueue> queueOwnership(*pCmdQ);
+    std::atomic<bool> threadFinished = false;
+
+    std::thread t([&]() {
+        pCmdQ->waitForTimestamps({}, status, const_cast<TimestampPacketContainer *>(pCmdQ->getTimestampPacketContainer()), const_cast<TimestampPacketContainer *>(pCmdQ->getTimestampPacketContainer()));
+        threadFinished = true;
+    });
+    t.join();
+    EXPECT_TRUE(threadFinished);
+    queueOwnership.unlock();
+    delete pCmdQ;
+}
+
+TEST(CommandQueue, givenCommandQueueWhenTakeOwnershipWrapperForCommandQueueThenWaitForAllEnginesWaitsToBeUnlocked) {
+    DebugManagerStateRestore restorer;
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useWaitForTimestamps = true;
+    debugManager.flags.EnableTimestampWaitForQueues.set(4);
+
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(pDevice.get());
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties propertiesQueue[5] = {};
+
+    auto pCmdQ = CommandQueue::create(
+        &context,
+        pDevice.get(),
+        propertiesQueue,
+        false,
+        retVal);
+
+    TakeOwnershipWrapper<CommandQueue> queueOwnership(*pCmdQ);
     std::atomic<bool> threadStarted = false;
     std::atomic<bool> threadFinished = false;
 
     std::thread t([&]() {
         threadStarted = true;
-        pCmdQ->waitForTimestamps({}, status, const_cast<TimestampPacketContainer *>(pCmdQ->getTimestampPacketContainer()), const_cast<TimestampPacketContainer *>(pCmdQ->getTimestampPacketContainer()));
+        pCmdQ->waitForAllEngines(false, nullptr, false, false);
         threadFinished = true;
     });
     while (!threadStarted) {

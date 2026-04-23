@@ -1406,12 +1406,11 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
     auto waitStatus = WaitStatus::notReady;
     bool waitedOnTimestamps = false;
 
+    TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
     waitedOnTimestamps = waitForTimestamps(activeBcsStates, waitStatus, this->timestampPacketContainer.get(), this->deferredTimestampPackets.get());
     if (waitStatus == WaitStatus::gpuHang) {
         return WaitStatus::gpuHang;
     }
-
-    TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
     auto taskCountToWait = taskCount;
     queueOwnership.unlock();
 
