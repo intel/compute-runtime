@@ -26,8 +26,6 @@
 namespace NEO {
 using namespace iOpenCL;
 
-void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnvironment &execEnv);
-
 struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
     MockKernelObjForAuxTranslation(Type type) : KernelObjForAuxTranslation(type, nullptr) {
         if (type == KernelObjForAuxTranslation::Type::memObj) {
@@ -265,10 +263,19 @@ class MockKernel : public Kernel {
     KernelInfo *kernelInfoAllocated = nullptr;
 };
 
+struct MockKernelWithInternalsConfig {
+    bool requiresSubgroupIndependentForwardProgress = false;
+    ThreadArbitrationPolicy threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+    bool addDefaultArgs = false;
+};
+
 // class below have enough internals to service Enqueue operation.
 class MockKernelWithInternals {
   public:
-    MockKernelWithInternals(const ClDeviceVector &deviceVector, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment execEnv = {}) {
+    MockKernelWithInternals(Context &context) {
+        context.incRefInternal();
+        mockContext = &context;
+        const auto &deviceVector = context.getDevices();
         memset(&kernelHeader, 0, sizeof(SKernelBinaryHeaderCommon));
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
@@ -278,20 +285,12 @@ class MockKernelWithInternals {
         kernelInfo.heapInfo.pDsh = dshLocal;
         kernelInfo.heapInfo.dynamicStateHeapSize = sizeof(dshLocal);
 
-        populateKernelDescriptor(kernelInfo.kernelDescriptor, execEnv);
         kernelInfo.kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
         kernelInfo.setCrossThreadDataSize(sizeof(crossThreadData));
         kernelInfo.setLocalIds({1, 1, 1});
         kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels = 3;
 
-        if (context == nullptr) {
-            mockContext = new MockContext(deviceVector);
-            context = mockContext;
-        } else {
-            context->incRefInternal();
-            mockContext = context;
-        }
         auto maxRootDeviceIndex = 0u;
 
         for (const auto &pClDevice : deviceVector) {
@@ -306,7 +305,7 @@ class MockKernelWithInternals {
             kernelInfos[pClDevice->getRootDeviceIndex()] = &kernelInfo;
         }
 
-        mockProgram = new MockProgram(context, false, deviceVector);
+        mockProgram = new MockProgram(mockContext, false, deviceVector);
         mockKernel = new MockKernel(mockProgram, kernelInfo, *deviceVector[0]);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
         KernelVectorType mockKernels;
@@ -320,8 +319,11 @@ class MockKernelWithInternals {
         mockMultiDeviceKernel = new MockMultiDeviceKernel(std::move(mockKernels), kernelInfos);
 
         mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal));
+    }
 
-        if (addDefaultArg) {
+    MockKernelWithInternals(Context &context, const MockKernelWithInternalsConfig &config)
+        : MockKernelWithInternals(context) {
+        if (config.addDefaultArgs) {
             defaultKernelArguments.resize(2);
             defaultKernelArguments[0] = {};
             defaultKernelArguments[1] = {};
@@ -339,11 +341,9 @@ class MockKernelWithInternals {
             mockKernel->kernelArgHandlers[0] = &Kernel::setArgBuffer;
             mockKernel->kernelArgHandlers[1] = &Kernel::setArgBuffer;
         }
-    }
 
-    MockKernelWithInternals(ClDevice &deviceArg, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment execEnv = {}) : MockKernelWithInternals(toClDeviceVector(deviceArg), context, addDefaultArg, execEnv) {
-    }
-    MockKernelWithInternals(ClDevice &deviceArg, SPatchExecutionEnvironment execEnv) : MockKernelWithInternals(deviceArg, nullptr, false, execEnv) {
+        kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = config.requiresSubgroupIndependentForwardProgress;
+        kernelInfo.kernelDescriptor.kernelAttributes.threadArbitrationPolicy = config.threadArbitrationPolicy;
         mockKernel->initialize();
     }
 
@@ -356,6 +356,7 @@ class MockKernelWithInternals {
     operator MockKernel *() {
         return mockKernel;
     }
+
     alignas(64) char sshLocal[128];
     alignas(64) char dshLocal[128];
     char crossThreadData[256];

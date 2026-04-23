@@ -64,7 +64,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
 
     std::atomic<bool> startEnqueueProcess(false);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
 
     auto enqueueCount = 10;

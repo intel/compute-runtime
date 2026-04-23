@@ -264,7 +264,7 @@ TEST_F(EventTests, WhenEnqueuingMarkerThenPassedEventHasTheSameLevelAsPreviousCo
 HWTEST_F(EventTests, givenEnqueueKernelBlockedOnserEventWhenEnqueueHasOutEventWithProfilingThenPCisProgrammed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     MockKernel *kernel = mockKernelWithInternals.mockKernel;
     UserEvent userEvent;
     cl_event userEventWaitlist[] = {&userEvent};

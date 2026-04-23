@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -171,7 +171,7 @@ struct ClEnqueueWaitForTimestampsTests : public ClEnqueueWaitForEventsTests {
 HWTEST_F(ClEnqueueWaitForTimestampsTests, givenIoqWhenWaitingForLatestEventThenDontCheckQueueCompletion) {
     MockCommandQueueHw<FamilyType> commandQueueHw(pContext, pDevice, nullptr);
 
-    MockKernelWithInternals kernel(*pDevice);
+    MockKernelWithInternals kernel(*pContext);
 
     cl_event event0, event1;
 

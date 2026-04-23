@@ -50,7 +50,7 @@ struct EnqueueHandlerTestBasicMt : public ::testing::Test {
 HWTEST_F(EnqueueHandlerTestBasicMt, givenBlockedEnqueueHandlerWhenCommandIsBlockingThenCompletionStampTaskCountIsPassedToWaitForTaskCountAndCleanAllocationListAsRequiredTaskCount) {
     auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<MockCommandQueueHw<FamilyType>, FamilyType>();
 
-    MockKernelWithInternals kernelInternals(*device, context.get());
+    MockKernelWithInternals kernelInternals(*context);
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel);
 

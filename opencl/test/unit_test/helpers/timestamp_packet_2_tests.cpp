@@ -214,7 +214,7 @@ HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenDontRequestPipeControlOn
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
 
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestampPackets<uint32_t>
 
     TimestampPacketContainer cmdQNodes;
@@ -237,7 +237,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistWhenEnqueueingBarrierThenProgramNonS
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
 
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
 
@@ -286,7 +286,7 @@ HWTEST_F(TimestampPacketTests, givenMultiTileConfigWhenProgrammingNonStallingBar
 
     *ptrOffset(csr.tagAddress, csr.immWritePostSyncWriteOffset) = *csr.tagAddress;
 
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
 
@@ -314,7 +314,7 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenEnqueueingBarrierThenRequest
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
 
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     cl_event event{};
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event); // obtain first TimestampPackets<uint32_t>
 
@@ -398,7 +398,7 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenFlushingThenProgramPip
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     cmdQ.setStallingCommandsOnNextFlush(true);
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
@@ -482,7 +482,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingNonBlockedThenM
     csr.timestampPacketWriteEnabled = true;
     csr.storeMakeResidentAllocations = true;
 
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     cl_event event{};
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
@@ -496,7 +496,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingBlockedThenMake
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
 
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
 
@@ -518,7 +518,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingBlockedThenMake
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockedThenVirtualEventIncrementsRefInternalAndDecrementsAfterCompleteEvent) {
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
-    MockKernelWithInternals mockKernelWithInternals(*device, context);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
 
@@ -549,7 +549,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
     cmdQ->setOoqEnabled();
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestampPackets<uint32_t>
 
     TimestampPacketContainer cmdQNodes;
@@ -588,7 +588,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestampPackets<uint32_t>
 
     TimestampPacketContainer cmdQNodes;

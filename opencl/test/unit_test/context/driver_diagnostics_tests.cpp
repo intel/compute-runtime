@@ -240,7 +240,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableCompute
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeNDIsDefaultWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
 }
@@ -249,7 +249,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
     bool isWorkGroupSizeEnabled = debugManager.flags.EnableComputeWorkSizeND.get();
     debugManager.flags.EnableComputeWorkSizeND.set(true);
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
     debugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
@@ -259,7 +259,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
     bool isWorkGroupSizeEnabled = debugManager.flags.EnableComputeWorkSizeND.get();
     debugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
     debugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
@@ -268,7 +268,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeSquaredIsDefaultWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
 }
@@ -278,7 +278,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
     debugManager.flags.EnableComputeWorkSizeSquared.set(true);
     debugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
 }
@@ -288,7 +288,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
     debugManager.flags.EnableComputeWorkSizeSquared.set(false);
     debugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
 }
@@ -296,7 +296,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
 TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsDefaultWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
 }
@@ -306,7 +306,7 @@ TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeS
     debugManager.flags.EnableComputeWorkSizeSquared.set(true);
     debugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 2, {32, 32, 1}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
 }
@@ -316,7 +316,7 @@ TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeS
     debugManager.flags.EnableComputeWorkSizeSquared.set(false);
     debugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 2, {32, 32, 1}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
 }
@@ -432,7 +432,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     debugManager.flags.PrintDriverDiagnostics.set(1);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     MockBuffer buffer;
     cl_mem clMem = &buffer;
 
@@ -467,7 +467,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.PrintDriverDiagnostics.set(1);
 
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
@@ -505,7 +505,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.PrintDriverDiagnostics.set(1);
 
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
@@ -537,7 +537,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
     }
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
@@ -568,7 +568,7 @@ TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNull
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
     }
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -794,7 +794,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
 TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenContextProvidesProperHint) {
 
     auto spillSize = zeroSized ? 0 : 1024;
-    MockKernelWithInternals mockKernel(context->getDevices(), context);
+    MockKernelWithInternals mockKernel(*context);
 
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.spillFillScratchMemorySize = spillSize;
 
@@ -818,7 +818,7 @@ TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThen
     for (auto isSimtThread : {false, true}) {
         auto size = zeroSized ? 0 : 1024;
 
-        MockKernelWithInternals mockKernel(*pDevice, context);
+        MockKernelWithInternals mockKernel(*context);
 
         mockKernel.kernelInfo.setPrivateMemory(size, isSimtThread, 8, 16, 0);
 

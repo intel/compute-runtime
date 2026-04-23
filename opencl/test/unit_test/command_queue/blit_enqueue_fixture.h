@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,7 +104,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         bcsMockContext = std::make_unique<BcsMockContext>(device.get());
         auto mockCmdQueue = new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr);
         commandQueue.reset(mockCmdQueue);
-        mockKernel = std::make_unique<MockKernelWithInternals>(*device, bcsMockContext.get());
+        mockKernel = std::make_unique<MockKernelWithInternals>(*bcsMockContext);
         auto mockProgram = mockKernel->mockProgram;
         mockProgram->setAllowNonUniform(true);
 

@@ -32,7 +32,7 @@
 using namespace NEO;
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddPipeControl) {
-    MockKernelWithInternals kernel2(*device);
+    MockKernelWithInternals kernel2(*context);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
     auto mockCmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
 
@@ -180,7 +180,7 @@ HWTEST_F(TimestampPacketTests, givenCrossCsrDependenciesWhenFillCsrDepsThendepen
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeWithWaitlistThenAddSizeForSemaphores) {
-    MockKernelWithInternals kernel2(*device);
+    MockKernelWithInternals kernel2(*context);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
     auto mockCmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
@@ -299,7 +299,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, TimestampPacketTests, givenTimestampPacketWhenDis
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     MockTimestampPacketContainer timestampPacket(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
 
-    MockKernelWithInternals kernel2(*device);
+    MockKernelWithInternals kernel2(*context);
 
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
 

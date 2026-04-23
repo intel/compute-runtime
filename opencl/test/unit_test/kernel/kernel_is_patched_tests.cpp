@@ -88,7 +88,7 @@ TEST_F(PatchedKernelTest, givenArgSvmWhenArgIsSetThenArgIsPatched) {
 
 TEST_F(PatchedKernelTest, givenKernelWithOneArgumentToPatchWhichIsNonzeroIndexedWhenThatArgumentIsSetThenKernelIsPatched) {
     uint32_t size = sizeof(int);
-    MockKernelWithInternals mockKernel(*device.get(), context.get());
+    MockKernelWithInternals mockKernel(*context);
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.numArgsToPatch = 1;
     mockKernel.kernelInfo.addArgBuffer(1, 0);
 

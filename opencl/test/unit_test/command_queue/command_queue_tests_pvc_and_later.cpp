@@ -1010,7 +1010,7 @@ HWTEST2_F(OoqCommandQueueHwBlitTest, givenBarrierBeforeFirstKernelWhenEnqueueNDR
     debugManager.flags.UpdateTaskCountFromWait.set(1);
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     MockKernel *kernel = mockKernelWithInternals.mockKernel;
     size_t offset = 0;
     size_t gws = 1;

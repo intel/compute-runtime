@@ -171,7 +171,8 @@ TEST(CommandTest, givenWaitlistRequestWhenCommandComputeKernelIsCreatedThenMakeL
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockCommandQueue cmdQ(nullptr, device.get(), nullptr, false);
-    MockKernelWithInternals kernel(*device);
+    MockContext mockCtx(&*device);
+    MockKernelWithInternals kernel(mockCtx);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
     cmdQ.allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
@@ -318,7 +319,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-    MockKernelWithInternals kernel(*device);
+    MockKernelWithInternals kernel(*context);
     kernelOperation->setHeaps(ih1, ih2, ih3);
 
     bool flushDC = false;
@@ -364,7 +365,7 @@ HWTEST_F(DispatchFlagsTests, givenClCommandCopyImageWhenSubmitThenFlushTextureCa
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-    MockKernelWithInternals kernel(*device);
+    MockKernelWithInternals kernel(*context);
     kernelOperation->setHeaps(ih1, ih2, ih3);
 
     bool flushDC = false;
@@ -514,7 +515,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-    MockKernelWithInternals kernel(*device);
+    MockKernelWithInternals kernel(*context);
     kernelOperation->setHeaps(ih1, ih2, ih3);
 
     bool flushDC = false;

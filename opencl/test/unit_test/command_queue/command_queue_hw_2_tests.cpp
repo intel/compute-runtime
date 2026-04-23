@@ -328,7 +328,7 @@ HWTEST_TEMPLATED_F(OOQueueHwTestWithMockCsr, givenBlockedOutOfOrderCmdQueueAndAs
 
     auto mockCSR = static_cast<MockCsr<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
     size_t offset = 0;
     size_t size = 1;
@@ -1256,7 +1256,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterNotFlush
     auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
     pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     size_t offset = 0;
     size_t size = 1;
     cl_int retVal = pCmdQ->enqueueKernel(mockKernelWithInternals.mockKernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
@@ -1286,7 +1286,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterFlushedK
     debugManager.flags.ForceCacheFlushForBcs.set(0);
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     size_t offset = 0;
     size_t size = 1;
     cl_int retVal = pCmdQ->enqueueKernel(mockKernelWithInternals.mockKernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
@@ -1319,7 +1319,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitAfterBarrierWhenEnqueueingCommandTh
     debugManager.flags.ForceCacheFlushForBcs.set(0);
     debugManager.flags.UpdateTaskCountFromWait.set(1);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     MockKernel *kernel = mockKernelWithInternals.mockKernel;
     size_t offset = 0;
     size_t gws = 1;
@@ -1376,7 +1376,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
     debugManager.flags.ForceCacheFlushForBcs.set(0);
     debugManager.flags.UpdateTaskCountFromWait.set(1);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     MockKernel *kernel = mockKernelWithInternals.mockKernel;
     size_t offset = 0;
     size_t gws = 1;
@@ -1464,7 +1464,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlockedBlitAfterBarrierWhenEnqueueingCo
 
     UserEvent userEvent;
     cl_event userEventWaitlist[] = {&userEvent};
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     MockKernel *kernel = mockKernelWithInternals.mockKernel;
     size_t offset = 0;
     size_t gws = 1;
@@ -1517,14 +1517,14 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlockedBlitAfterBarrierWhenEnqueueingCo
 HWTEST_F(CommandQueueHwTest, GivenBuiltinKernelWhenBuiltinDispatchInfoBuilderIsProvidedThenThisBuilderIsUsedForCreatingDispatchInfo) {
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
 
-    MockKernelWithInternals mockKernelToUse(*pClDevice);
+    MockKernelWithInternals mockKernelToUse(*context);
     MockBuilder builder(*pDevice->getBuiltIns(), *pClDevice);
     builder.paramsToUse.gws.x = 11;
     builder.paramsToUse.elws.x = 13;
     builder.paramsToUse.offset.x = 17;
     builder.paramsToUse.kernel = mockKernelToUse.mockKernel;
 
-    MockKernelWithInternals mockKernelToSend(*pClDevice);
+    MockKernelWithInternals mockKernelToSend(*context);
     mockKernelToSend.kernelInfo.builtinDispatchBuilder = &builder;
     NullSurface s;
     Surface *surfaces[] = {&s};
@@ -1575,7 +1575,7 @@ struct ImageTextureCacheFlushTest : public CommandQueueHwBlitTest<false> {
 
     template <typename FamilyType>
     void submitKernel(bool usingImages) {
-        MockKernelWithInternals kernelInternals(*pClDevice, context);
+        MockKernelWithInternals kernelInternals(*context);
         kernelInternals.mockKernel->usingImages = usingImages;
         Kernel *kernel = kernelInternals.mockKernel;
         MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);

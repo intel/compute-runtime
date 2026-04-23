@@ -206,7 +206,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTaskCountToWaitBiggerThanLate
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonDcFlushWithInitialTaskCountZeroWhenFinishingThenTaskCountIncremented) {
     MockContext ctx(pClDevice);
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(ctx);
     MockCommandQueueHw<FamilyType> mockCmdQueue(&ctx, pClDevice, nullptr);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t gws = 1;
@@ -235,7 +235,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonDcFlushWithInitialTaskCoun
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenDcFlushWhenFinishingThenTaskCountIncremented) {
     MockContext ctx(pClDevice);
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(ctx);
     MockCommandQueueHw<FamilyType> mockCmdQueue(&ctx, pClDevice, nullptr);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t gws = 1;
@@ -289,7 +289,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenDcFlushWhenFinishingThenTaskC
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenPowerOfTwoGlobalWorkSizeAndNullLocalWorkgroupSizeWhenEnqueueKernelIsCalledThenGpGpuWalkerHasOptimalSIMDmask) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     MockContext ctx(pClDevice);
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(ctx);
     size_t gws = 1024;
     CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
     commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
@@ -459,7 +459,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiver
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, GivenKernelWithSlmWhenPreviousSLML3WasSentThenDontProgramL3) {
     size_t gws = 1;
     MockContext ctx(pClDevice);
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(ctx);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
@@ -720,7 +720,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
     typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     MockContext ctx(pClDevice);
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(ctx);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
@@ -805,7 +805,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
     typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     MockContext ctx(pClDevice);
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(ctx);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 

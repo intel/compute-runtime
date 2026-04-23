@@ -120,8 +120,8 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndOffsetCrossThreadD
 
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueue commandQueue(&context, pClDevice, nullptr, false);
     commandQueue.heaplessModeEnabled = true;
 
@@ -156,8 +156,8 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndOffsetCrossThreadD
 XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndPartOfIndirectDataPointerAddressUndefinedWhenSendCrossThreadDataThenInlineDataIsNotProgrammed) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueue commandQueue(&context, pClDevice, nullptr, false);
     commandQueue.heaplessModeEnabled = true;
 
@@ -201,8 +201,8 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndPartOfIndirectData
 XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndScratchPointerAddressWhenSendCrossThreadDataThenScratchPointerIsCorrect) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueue commandQueue(&context, pClDevice, nullptr, false);
     commandQueue.heaplessModeEnabled = true;
 
@@ -232,8 +232,8 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndScratchPointerAddr
 XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndPartOfScratchPointerAddressUndefinedWhenSendCrossThreadDataThenInlineDataIsNotProgrammed) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueue commandQueue(&context, pClDevice, nullptr, false);
     commandQueue.heaplessModeEnabled = true;
 
@@ -277,8 +277,8 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndPartOfScratchPoint
 XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndOffsetCrossThreadDataAndImplicitArgsWhenSendCrossThreadDataThenIndirectDataAddressIsCorrect) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueue commandQueue(&context, pClDevice, nullptr, false);
     commandQueue.heaplessModeEnabled = true;
 
@@ -321,8 +321,8 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndOffsetCrossThreadD
 XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenHeaplessAndImplicitArgsAndScratchAddressWhenSendCrossThreadDataThenScratchIsPatchedInImplicitArgs) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueue commandQueue(&context, pClDevice, nullptr, false);
     commandQueue.heaplessModeEnabled = true;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ using CommandStreamReceiverHwTestGen12lp = CommandStreamReceiverHwTest<Gen12LpFa
 GEN12LPTEST_F(CommandStreamReceiverHwTestGen12lp, givenPreambleSentWhenL3ConfigRequestChangedThenDontProgramL3Register) {
     size_t gws = 1;
     MockContext ctx(pClDevice);
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(ctx);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);

@@ -754,7 +754,7 @@ TEST_F(EnqueueKernelTest, GivenKernelWithBuiltinDispatchInfoBuilderWhenBeingDisp
 
     MockBuiltInDispatchBuilder mockNuiltinDispatchBuilder(*pCmdQ->getDevice().getBuiltIns(), pCmdQ->getClDevice());
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     mockKernel.kernelInfo.builtinDispatchBuilder = &mockNuiltinDispatchBuilder;
 
     EXPECT_FALSE(mockNuiltinDispatchBuilder.wasValidateDispatchCalled);
@@ -799,7 +799,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameS
     size_t gws[3] = {1, 1, 1};
     uint32_t scratchSize = 4096u;
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
 
     auto sizeToProgram = PreambleHelper<FamilyType>::getScratchSizeValueToProgramMediaVfeState(scratchSize);
@@ -835,7 +835,7 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueingKernelThatRequirePrivateScratchThenPri
     size_t gws[3] = {1, 1, 1};
     uint32_t scratchSizeSlot1 = 4096u;
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[1] = scratchSizeSlot1;
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
@@ -853,7 +853,7 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteWhenSbaIsBeingP
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     mockKernel.mockKernel->containsStatelessWrites = false;
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
@@ -878,7 +878,7 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteOnBlockedCodePa
 
     auto userEvent = clCreateUserEvent(this->context, nullptr);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     mockKernel.mockKernel->containsStatelessWrites = false;
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 1, &userEvent, nullptr);
@@ -898,7 +898,7 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteOnBlockedCodePa
 
 HWTEST_F(EnqueueKernelTest, givenEnqueueWithGlobalWorkSizeWhenZeroValueIsPassedInDimensionThenTheKernelCommandWillTriviallySucceed) {
     size_t gws[3] = {0, 0, 0};
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     auto ret = pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
 }
@@ -914,7 +914,7 @@ HWTEST_F(EnqueueKernelTest, givenGpuHangAndBlockingCallAndEnqueueWithGlobalWorkS
     mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     size_t gws[3] = {0, 0, 0};
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     const auto enqueueResult = mockCommandQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
@@ -933,7 +933,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     auto ret = pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
@@ -970,7 +970,7 @@ HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtr
     AllocationProperties properties{device->getRootDeviceIndex(), false, 1, AllocationType::externalHostPtr, false, device->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     mockCsr->makeResident(*allocation);
     cmdQ.reset(createCommandQueue(device.get()));
@@ -995,7 +995,7 @@ HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtr
     AllocationProperties properties{device->getRootDeviceIndex(), false, 1, AllocationType::externalHostPtr, false, device->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = false;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     mockCsr->makeResident(*allocation);
     cmdQ.reset(createCommandQueue(device.get()));
@@ -1021,7 +1021,7 @@ HWTEST_F(EnqueueKernelTest, givenFullAddressSpaceGraphicsAllocationWhenEnqueueKe
     AllocationProperties properties{device->getRootDeviceIndex(), false, 1, AllocationType::externalHostPtr, false, device->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = false;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
-    MockKernelWithInternals mockKernel(*device, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     mockCsr->makeResident(*allocation);
     cmdQ.reset(createCommandQueue(device.get()));
@@ -1041,7 +1041,7 @@ HWTEST_F(EnqueueKernelTest, givenFullAddressSpaceGraphicsAllocationWhenEnqueueKe
 }
 
 HWTEST_F(EnqueueKernelTest, givenDefaultCommandStreamReceiverWhenClFlushIsCalledThenSuccessIsReturned) {
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     auto ret = clFlush(pCmdQ);
@@ -1057,7 +1057,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverIn
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsrmockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
@@ -1077,7 +1077,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverIn
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsrmockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     auto ret = clFlush(pCmdQ);
@@ -1100,7 +1100,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIs
 
     pDevice->getGpgpuCommandStreamReceiver().flushTagUpdate(); // to clear residency allocations after preallocations
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     // make sure csr emits something
     mockCsrmockCsr.mediaVfeStateDirty = true;
@@ -1130,7 +1130,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverIn
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -1151,7 +1151,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, EnqueueKernelTestWithMockCsrHw2, givenTwo
 
     ClHardwareParse hwParse;
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -1175,7 +1175,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -1199,7 +1199,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenTh
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -1222,7 +1222,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenWa
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     cl_event event;
@@ -1251,7 +1251,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenCo
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     cl_event event;
@@ -1285,7 +1285,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenNo
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     EXPECT_TRUE(this->destBuffer->isMemObjZeroCopy());
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     cl_event event;
@@ -1309,7 +1309,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenCo
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     cl_event event;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
@@ -1344,7 +1344,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenCl
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
@@ -1365,7 +1365,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenWa
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     cl_event event;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -1398,7 +1398,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     cl_event event;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -1429,7 +1429,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenOutOfOrderCommandQueueW
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     clEnqueueNDRangeKernel(ooq, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
@@ -1454,7 +1454,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelIsMadeThenP
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     clEnqueueNDRangeKernel(inOrderQueue, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
@@ -1479,7 +1479,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenInOrderCommandQueueWhen
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     mockKernel.mockKernel->setUsingSharedArgs(true);
     clEnqueueNDRangeKernel(inOrderQueue, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -1496,7 +1496,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenInOrderCommandQueueWhen
     auto *mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     mockKernel.mockKernel->setUsingSharedArgs(true);
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -1517,7 +1517,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenInOrderCommandQueueWhen
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     cl_event event;
 
@@ -1554,7 +1554,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenInOrderCommandQueueWhen
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     cl_event event;
 
@@ -1584,7 +1584,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenOutOfOrderCommandQueueW
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
     auto inOrderQueue = clCreateCommandQueueWithProperties(context, pClDevice, props, nullptr);
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     cl_event event;
 
@@ -1606,7 +1606,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenBl
     auto *mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     cl_event event;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
@@ -1627,7 +1627,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenBl
 HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenKernelWhenItIsEnqueuedThenAllResourceGraphicsAllocationsAreUpdatedWithCsrTaskCount) {
     auto *mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
@@ -1647,7 +1647,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenKernelWhenItIsEnqueuedT
 
 HWTEST_F(EnqueueKernelTest, givenKernelWhenItIsSubmittedFromTwoDifferentCommandQueuesThenCsrDoesntReloadAnyCommands) {
     auto &csr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
@@ -1685,7 +1685,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreNotAndEventExistSetThenClEnqu
 }
 
 TEST_F(EnqueueKernelTest, givenEnqueueCommandThatLwsExceedsDeviceCapabilitiesWhenEnqueueNDRangeKernelIsCalledThenErrorIsReturned) {
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     mockKernel.mockKernel->maxKernelWorkGroupSize = static_cast<uint32_t>(pDevice->getDeviceInfo().maxWorkGroupSize / 2);
 
@@ -1700,7 +1700,7 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandThatLwsExceedsDeviceCapabilitiesWhe
 TEST_F(EnqueueKernelTest, givenEnqueueCommandThatLocalWorkgroupSizeContainsZeroWhenEnqueueNDRangeKernelIsCalledThenClInvalidWorkGroupSizeIsReturned) {
     size_t globalWorkSize[3] = {1, 1, 1};
     size_t localWorkSize[3] = {1, 0, 1};
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     auto status = pCmdQ->enqueueKernel(mockKernel.mockKernel, 3, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, status);
@@ -1709,7 +1709,7 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandThatLocalWorkgroupSizeContainsZeroW
 TEST_F(EnqueueKernelTest, givenEnqueueCommandWithWorkDimLargerThanAllowedWhenEnqueueNDRangeKernelIsCalledThenClInvalidWorkDimensionIsReturned) {
     size_t globalWorkSize[3] = {1, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     auto testedWorkDim = pClDevice->deviceInfo.maxWorkItemDimensions;
     auto status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
@@ -1728,7 +1728,7 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandWithWorkDimsResultingInMoreThan32Bi
     size_t max32Bit = std::numeric_limits<uint32_t>::max();
     size_t globalWorkSize[3] = {max32Bit * 4, 4, 4};
     size_t localWorkSize[3] = {4, 4, 4};
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     auto testedWorkDim = 3;
 
     auto status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
@@ -1761,7 +1761,7 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandWithNullLwsAndWorkDimsResultingInMo
 
     size_t max32Bit = std::numeric_limits<uint32_t>::max();
     size_t globalWorkSize[3] = {(max32Bit + 1) * maxWgSize, 3, 4};
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     auto testedWorkDim = 3;
 
     auto status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
@@ -1792,7 +1792,7 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandWithNullLwsAndWorkDimsResultingInLe
 
     size_t max32Bit = std::numeric_limits<uint32_t>::max();
     size_t globalWorkSize[3] = {(max32Bit + 1) * 4, 1, 1};
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     auto testedWorkDim = 3;
 
     auto status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
@@ -1814,7 +1814,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenContextWithSeveralDevic
     auto *mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
-    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.areMultipleSubDevicesInContext);
@@ -1830,7 +1830,7 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithEngineHintsThenEpilogRequiredIs
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     pCmdQ->dispatchHints = 1;
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
@@ -1844,7 +1844,7 @@ HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocati
     debugManager.flags.UseKmdMigration.set(true);
     debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 1, 1};
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -1862,7 +1862,7 @@ HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocati
     auto ptr = context->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, pCmdQ);
     EXPECT_NE(nullptr, ptr);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 1, 1};
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -2055,7 +2055,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInser
 
     debugManager.flags.PauseOnEnqueue.set(1);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
@@ -2078,7 +2078,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetToMinusTwoWhenDispatchWalker
 
     debugManager.flags.PauseOnEnqueue.set(-2);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
@@ -2103,7 +2103,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeOnlyWhenDispatchingThenInsert
     debugManager.flags.PauseOnEnqueue.set(0);
     debugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeWorkload);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
@@ -2129,7 +2129,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToAfterOnlyWhenDispatchingThenInsertP
     debugManager.flags.PauseOnEnqueue.set(0);
     debugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::AfterWorkload);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
@@ -2153,7 +2153,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenIn
     debugManager.flags.PauseOnEnqueue.set(0);
     debugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeAndAfterWorkload);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
@@ -2175,7 +2175,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenDontI
 
     pCmdQ->setIsSpecialCommandQueue(true);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
@@ -2199,7 +2199,7 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchWalkersThenInse
     debugManager.flags.GpuScratchRegWriteRegisterData.set(0x1234);
     debugManager.flags.GpuScratchRegWriteRegisterOffset.set(0x5678);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
@@ -2224,7 +2224,7 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchMultiplehWalker
     debugManager.flags.GpuScratchRegWriteRegisterData.set(0x1234);
     debugManager.flags.GpuScratchRegWriteRegisterOffset.set(0x5678);
 
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
@@ -2243,7 +2243,7 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchMultiplehWalker
 }
 
 HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenEstimatingCommandStreamSizeThenMiLoadRegisterImmCommandSizeIsIncluded) {
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
     dispatchInfo.setKernel(mockKernel.mockKernel);
@@ -2258,7 +2258,7 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenEstimatingCommandStream
 }
 
 HWTEST_F(PauseOnGpuTests, givenResolveDependenciesByPipecontrolWhenEstimatingCommandStreamSizeThenStallingBarrierSizeIsIncluded) {
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
     dispatchInfo.setKernel(mockKernel.mockKernel);
@@ -2274,7 +2274,7 @@ HWTEST_F(PauseOnGpuTests, givenResolveDependenciesByPipecontrolWhenEstimatingCom
 }
 
 HWTEST_F(PauseOnGpuTests, givenTimestampPacketWriteDisabledAndMarkerWithProfilingWhenEstimatingCommandStreamSizeThenStoreMMIOSizeIsIncluded) {
-    MockKernelWithInternals mockKernel(*pClDevice);
+    MockKernelWithInternals mockKernel(*context);
     DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
     dispatchInfo.setKernel(mockKernel.mockKernel);

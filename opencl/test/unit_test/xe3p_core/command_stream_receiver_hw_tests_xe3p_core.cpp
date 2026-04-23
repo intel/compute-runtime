@@ -774,9 +774,9 @@ using CommandStreamReceiverXe3pCoreComputeWalker2Tests = UltCommandStreamReceive
 XE3P_CORETEST_F(CommandStreamReceiverXe3pCoreComputeWalker2Tests, givenHeaplessModeEnabledWhenDispatchKernelThenCorrectCmdsAreProgrammed) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    MockKernelWithInternals kernel(*pClDevice);
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel.mockKernel);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
+    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel.mockKernel);
     MockCommandQueue commandQueue(&context, pClDevice, nullptr, false);
     commandQueue.heaplessModeEnabled = true;
     auto &cmdStream = commandQueue.getCS(0);
@@ -801,11 +801,11 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pCoreComputeWalker2Tests, whenDispatchKe
     using EU_THREAD_SCHEDULING_MODE_OVERRIDE = typename INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE;
 
     DebugManagerStateRestore restore;
-    MockKernelWithInternals kernel(*pClDevice);
+    MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel.mockKernel);
-    MockContext context(pClDevice);
     HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
 
     {
@@ -884,7 +884,7 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pCoreComputeWalker2Tests, GivenComputeWa
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
 
-    std::unique_ptr<MockKernelWithInternals> mockKernelWithInternal = std::make_unique<MockKernelWithInternals>(*pClDevice, context.get());
+    std::unique_ptr<MockKernelWithInternals> mockKernelWithInternal = std::make_unique<MockKernelWithInternals>(*context);
 
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
 

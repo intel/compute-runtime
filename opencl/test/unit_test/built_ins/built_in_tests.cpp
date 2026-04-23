@@ -565,7 +565,7 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
     auto pMultiDeviceKernel = new MockMultiDeviceKernel(MockMultiDeviceKernel::toKernelVector(mockBuiltinKernel), kernelInfos);
     mockAuxBuiltInOp->usedKernels.at(0).reset(pMultiDeviceKernel);
 
-    MockKernelWithInternals mockKernel(*pClDevice, pContext);
+    MockKernelWithInternals mockKernel(*pContext);
     MockCommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, nullptr);
     size_t gws[3] = {1, 0, 0};
 

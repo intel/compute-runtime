@@ -270,7 +270,7 @@ TEST_F(MarkerTest, givenMultipleEventsAndCompletedUserEventWhenTheyArePassedToMa
 }
 
 HWTEST_F(MarkerTest, givenMarkerCallFollowingNdrangeCallInBatchedModeWhenWaitForEventsIsCalledThenFlushStampIsProperlyUpdated) {
-    MockKernelWithInternals mockKernel(*this->pClDevice, this->context);
+    MockKernelWithInternals mockKernel(*this->context);
 
     auto &ultCommandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     template <typename FamilyType>
     void setUpT() {
         SyncBufferEnqueueHandlerTest::SetUp();
-        kernelInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, context);
+        kernelInternals = std::make_unique<MockKernelWithInternals>(*context);
         kernelInternals->kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
         kernel = kernelInternals->mockKernel;
         kernel->executionType = KernelExecutionType::concurrent;

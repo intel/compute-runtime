@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -588,7 +588,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAc
 
     device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
 
-    MockKernelWithInternals kernel(*device);
+    MockKernelWithInternals kernel(*bcsMockContext);
     const size_t initialHeapSize = 0x40;
     kernel.kernelInfo.heapInfo.kernelHeapSize = initialHeapSize;
 

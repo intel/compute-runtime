@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,8 @@ TGLLPTEST_F(KernelTgllpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenS
 
         hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hwInfo);
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-        MockKernelWithInternals mockKernelWithInternals{*device};
+        MockContext mockCtx(&*device);
+        MockKernelWithInternals mockKernelWithInternals(mockCtx);
         mockKernelWithInternals.kernelInfo.kernelDescriptor.entryPoints.skipSetFFIDGP = additionalOffsetDueToFfid;
 
         for (auto isCcsUsed : ::testing::Bool()) {

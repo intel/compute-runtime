@@ -381,7 +381,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenOutEventForSingleDeviceContextWhenCalcu
     cl_device_id devices[] = {deviceFactory.rootDevices[0]};
 
     MockContext pContext(ClDeviceVector(devices, 1));
-    MockKernelWithInternals mockKernel(*pContext.getDevices()[0]);
+    MockKernelWithInternals mockKernel(pContext);
     DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
     dispatchInfo.setKernel(mockKernel.mockKernel);
@@ -402,7 +402,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenUserEventForMultiDeviceContextWhenCalcu
                               deviceFactory.rootDevices[1]};
 
     MockContext pContext(ClDeviceVector(devices, 2));
-    MockKernelWithInternals mockKernel(*pContext.getDevices()[0]);
+    MockKernelWithInternals mockKernel(pContext);
     DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
     dispatchInfo.setKernel(mockKernel.mockKernel);
@@ -423,7 +423,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenOutEventForMultiDeviceContextWhenCalcul
                               deviceFactory.rootDevices[1]};
 
     MockContext pContext(ClDeviceVector(devices, 2));
-    MockKernelWithInternals mockKernel(*pContext.getDevices()[0]);
+    MockKernelWithInternals mockKernel(pContext);
     DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
     dispatchInfo.setKernel(mockKernel.mockKernel);

@@ -42,7 +42,7 @@ HWTEST2_F(DispatchFlagsTests, whenSubmittingKernelWithAdditionalKernelExecInfoTh
 
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, device->getDeviceBitfield()}));
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-    MockKernelWithInternals mockKernelWithInternals(*device.get());
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(device.get(), pKernel);
 

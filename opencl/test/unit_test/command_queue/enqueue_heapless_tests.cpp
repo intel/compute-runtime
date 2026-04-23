@@ -44,7 +44,7 @@ HWTEST2_F(EnqueueHandlerTest, givenCommandStreamWithoutKernelAndHeaplessEnabledW
 
 HWTEST2_F(EnqueueHandlerTest, givenNonBlockingAndHeaplessWhenEnqueueHandlerNdRangeIsCalledThenSuccessIsReturned, HeaplessSupport) {
 
-    MockKernelWithInternals kernelInternals(*pClDevice, context);
+    MockKernelWithInternals kernelInternals(*context);
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
 

@@ -40,7 +40,7 @@ struct TimestampPacketTests : public ::testing::Test {
         executionEnvironment->calculateMaxOsContextCount();
         device = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         context = new MockContext(device.get());
-        kernel = std::make_unique<MockKernelWithInternals>(*device, context);
+        kernel = std::make_unique<MockKernelWithInternals>(*context);
         mockCmdQ = new MockCommandQueue(context, device.get(), nullptr, false);
     }
 

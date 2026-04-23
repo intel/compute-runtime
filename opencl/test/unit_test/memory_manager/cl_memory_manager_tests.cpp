@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,8 @@ using ClMemoryAllocatorTest = ::Test<MemoryAllocatorFixture>;
 
 TEST_F(ClMemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithBaseAddressOffset) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockKernelWithInternals kernel(*device);
+    MockContext mockCtx(&*device);
+    MockKernelWithInternals kernel(mockCtx);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
 
     kernel.kernelInfo.setBufferAddressingMode(KernelDescriptor::Stateless);
@@ -49,7 +50,8 @@ TEST_F(ClMemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsC
 HWTEST_F(ClMemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithCpuAddress) {
     auto rootDeviceIndex = 1u;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), rootDeviceIndex));
-    MockKernelWithInternals kernel(*device);
+    MockContext mockCtx(&*device);
+    MockKernelWithInternals kernel(mockCtx);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
 
     kernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 8, 16);

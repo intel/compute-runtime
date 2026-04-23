@@ -46,7 +46,7 @@ void HardwareCommandsTest::SetUp() {
     BuiltInFixture::setUp(pDevice);
     ASSERT_NE(nullptr, pBuiltIns);
 
-    mockKernelWithInternal = std::make_unique<MockKernelWithInternals>(*pClDevice, pContext);
+    mockKernelWithInternal = std::make_unique<MockKernelWithInternals>(*pContext);
 }
 
 void HardwareCommandsTest::TearDown() {

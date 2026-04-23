@@ -858,7 +858,7 @@ TEST_F(ClUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSy
     auto device = mockContext->getDevice(0u);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
-    MockKernelWithInternals mockKernel(*device, mockContext.get(), true);
+    MockKernelWithInternals mockKernel(*mockContext, MockKernelWithInternalsConfig{.addDefaultArgs = true});
 
     auto systemPointer = reinterpret_cast<void *>(0xfeedbac);
 
@@ -881,7 +881,7 @@ TEST_F(ClUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWith
     auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    MockKernelWithInternals mockKernel(*mockContext->getDevice(0u), mockContext.get(), true);
+    MockKernelWithInternals mockKernel(*mockContext, MockKernelWithInternalsConfig{.addDefaultArgs = true});
 
     retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockMultiDeviceKernel, 0, unifiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);

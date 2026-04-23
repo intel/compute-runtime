@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,8 @@ using namespace NEO;
 typedef Test<ClDeviceFixture> KernelSubstituteTest;
 
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeThenAllocatesNewKernelAllocation) {
-    MockKernelWithInternals kernel(*pClDevice);
+    MockContext mockCtx(&*pClDevice);
+    MockKernelWithInternals kernel(mockCtx);
     const size_t initialHeapSize = 0x40;
     kernel.kernelInfo.heapInfo.kernelHeapSize = initialHeapSize;
 
@@ -53,7 +54,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeT
 }
 
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThenDoesNotAllocateNewKernelAllocation) {
-    MockKernelWithInternals kernel(*pClDevice);
+    MockContext mockCtx(&*pClDevice);
+    MockKernelWithInternals kernel(mockCtx);
     const size_t initialHeapSize = 0x40;
     kernel.kernelInfo.heapInfo.kernelHeapSize = initialHeapSize;
 
@@ -84,7 +86,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThen
 }
 
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeThenDoesNotAllocateNewKernelAllocation) {
-    MockKernelWithInternals kernel(*pClDevice);
+    MockContext mockCtx(&*pClDevice);
+    MockKernelWithInternals kernel(mockCtx);
     const size_t initialHeapSize = 0x40;
     kernel.kernelInfo.heapInfo.kernelHeapSize = initialHeapSize;
 
@@ -115,7 +118,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeT
 }
 
 TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKernelHeapAndAllocateNewMemoryThenStoreOldAllocationOnTemporaryList) {
-    MockKernelWithInternals kernel(*pClDevice);
+    MockContext mockCtx(&*pClDevice);
+    MockKernelWithInternals kernel(mockCtx);
     auto memoryManager = pDevice->getMemoryManager();
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
 

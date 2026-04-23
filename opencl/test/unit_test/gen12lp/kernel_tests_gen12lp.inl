@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,12 +18,14 @@ using namespace NEO;
 using Gen12LpKernelTest = Test<ClDeviceFixture>;
 
 GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenNotUsingSharedObjArgsThenWaDisableRccRhwoOptimizationIsNotRequired) {
-    MockKernelWithInternals kernel(*pClDevice);
+    MockContext mockCtx(&*pClDevice);
+    MockKernelWithInternals kernel(mockCtx);
     EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization());
 }
 
 GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedThenWaDisableRccRhwoOptimizationIsRequired) {
-    MockKernelWithInternals kernel(*pClDevice);
+    MockContext mockCtx(&*pClDevice);
+    MockKernelWithInternals kernel(mockCtx);
     kernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(3);
     kernel.kernelInfo.addArgBuffer(0);
     kernel.kernelInfo.addArgImmediate(1);

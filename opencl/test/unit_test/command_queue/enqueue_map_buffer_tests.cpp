@@ -287,7 +287,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
     cl_event mapEventReturned = nullptr;
     cl_event unmapEventReturned = nullptr;
     *pTagMemory = 0;
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(*context);
     size_t gws = 1;
 
     struct E2Clb {
@@ -514,7 +514,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedT
     cl_event eventReturned = nullptr;
     uint32_t tagHW = 0;
     *pTagMemory = tagHW;
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(*context);
     size_t gws = 1;
 
     auto buffer = clCreateBuffer(
@@ -586,7 +586,7 @@ HWTEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsC
     const auto bufferSize = 100;
     auto localSize = bufferSize;
     char misaligned[bufferSize] = {1};
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(*context);
     size_t gws = 1;
 
     uintptr_t address = (uintptr_t)&misaligned[0];

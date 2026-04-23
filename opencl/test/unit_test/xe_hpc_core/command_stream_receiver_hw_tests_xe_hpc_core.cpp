@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,8 +72,8 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDisabledConfigurationTest, givenNoSystemMem
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, pClDevice, nullptr);
 
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -190,9 +190,9 @@ XE_HPC_CORETEST_F(SystemMemoryFenceViaComputeWalkerTest, givenSystemMemoryFenceG
 XE_HPC_CORETEST_F(SystemMemoryFenceViaComputeWalkerTest, givenSystemMemoryFenceGeneratedAsPostSyncOperationInComputeWalkerWhenDispatchWalkerIsCalledThenSystemMemoryFenceRequestInPostSyncDataIsProgrammed) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
-    MockKernelWithInternals kernel(*pClDevice);
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel.mockKernel);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
+    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel.mockKernel);
     MockCommandQueue commandQueue(&context, pClDevice, nullptr, false);
     auto &cmdStream = commandQueue.getCS(0);
     MockTimestampPacketContainer timestampPacket(*pClDevice->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
@@ -272,8 +272,8 @@ HWTEST2_F(SystemMemoryFenceInDefaultConfigurationTest, givenSpecificDeviceSteppi
     UltClDeviceFactory ultClDeviceFactory{1, 0};
     auto &clDevice = *ultClDeviceFactory.rootDevices[0];
 
-    MockKernelWithInternals kernel(clDevice);
     MockContext context(&clDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
     auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
 
@@ -311,8 +311,8 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
     UltClDeviceFactory ultClDeviceFactory{1, 0};
     auto &clDevice = *ultClDeviceFactory.rootDevices[0];
 
-    MockKernelWithInternals kernel(clDevice);
     MockContext context(&clDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
     auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
 
@@ -353,8 +353,8 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
     UltClDeviceFactory ultClDeviceFactory{1, 0};
     auto &clDevice = *ultClDeviceFactory.rootDevices[0];
 
-    MockKernelWithInternals kernel(clDevice);
     MockContext context(&clDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
     auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
 
@@ -396,8 +396,8 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
     UltClDeviceFactory ultClDeviceFactory{1, 0};
     auto &clDevice = *ultClDeviceFactory.rootDevices[0];
 
-    MockKernelWithInternals kernel(clDevice);
     MockContext context(&clDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
     auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
 
@@ -442,8 +442,8 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
     UltClDeviceFactory ultClDeviceFactory{1, 0};
     auto &clDevice = *ultClDeviceFactory.rootDevices[0];
 
-    MockKernelWithInternals kernel(clDevice);
     MockContext context(&clDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
     auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
 
@@ -489,8 +489,8 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
     UltClDeviceFactory ultClDeviceFactory{1, 0};
     auto &clDevice = *ultClDeviceFactory.rootDevices[0];
 
-    MockKernelWithInternals kernel(clDevice);
     MockContext context(&clDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
     auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,8 @@ using KernelTestsPvc = ::testing::Test;
 
 PVCTEST_F(KernelTestsPvc, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenUseNonFusedMinWorkGroupSize) {
     MockClDevice device{new MockDevice};
-    MockKernelWithInternals kernel(device);
+    MockContext mockCtx(&device);
+    MockKernelWithInternals kernel(mockCtx);
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
     DispatchInfo dispatchInfo;
     dispatchInfo.setClDevice(&device);

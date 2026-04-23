@@ -891,7 +891,7 @@ struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::tes
         cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
         pCmdQ.reset(CommandQueue::create(context.get(), pClDevice.get(), properties, false, retVal));
 
-        kernel = std::make_unique<MockKernelWithInternals>(*pClDevice);
+        kernel = std::make_unique<MockKernelWithInternals>(*context);
     }
 
     void TearDown() override {

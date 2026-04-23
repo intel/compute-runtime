@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(device.get());
     MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
-    MockKernelWithInternals kernel(*device);
+    MockKernelWithInternals kernel(context);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
     cmdQ.allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
@@ -137,7 +137,7 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(device.get());
     MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
-    MockKernelWithInternals kernel(*device);
+    MockKernelWithInternals kernel(context);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
     cmdQ.allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);

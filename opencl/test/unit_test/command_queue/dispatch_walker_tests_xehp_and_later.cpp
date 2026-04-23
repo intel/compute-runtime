@@ -66,7 +66,7 @@ struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
 
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), rootDeviceIndex));
         context = std::make_unique<MockContext>(device.get());
-        kernel = std::make_unique<MockKernelWithInternals>(*device, context.get());
+        kernel = std::make_unique<MockKernelWithInternals>(*context);
         sizeGrf = device->getHardwareInfo().capabilityTable.grfSize;
         sizeGrfDwords = sizeGrf / sizeof(uint32_t);
 
@@ -464,8 +464,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
 
-    MockKernelWithInternals kernel1(*device);
-    MockKernelWithInternals kernel2(*device);
+    MockKernelWithInternals kernel1(*context);
+    MockKernelWithInternals kernel2(*context);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
@@ -518,7 +518,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
     auto testDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext testContext(testDevice.get());
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&testContext, testDevice.get(), nullptr);
-    MockKernelWithInternals testKernel(*testDevice, &testContext);
+    MockKernelWithInternals testKernel(testContext);
 
     size_t gws[] = {1, 1, 1};
     cl_event event{};
@@ -551,7 +551,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
     auto testDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext testContext(testDevice.get());
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&testContext, testDevice.get(), nullptr);
-    MockKernelWithInternals testKernel(*testDevice, &testContext);
+    MockKernelWithInternals testKernel(testContext);
 
     size_t gws[] = {1, 1, 1};
     cl_event event{};
@@ -571,8 +571,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddEnoughSpace) {
     MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
-    MockKernelWithInternals kernel1(*device);
-    MockKernelWithInternals kernel2(*device);
+    MockKernelWithInternals kernel1(*context);
+    MockKernelWithInternals kernel2(*context);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
     const auto &productHelper = device->getProductHelper();
     const bool isResolveDependenciesByPipeControlsEnabled = productHelper.isResolveDependenciesByPipeControlsSupported();

@@ -39,7 +39,7 @@ struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
 
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), rootDeviceIndex));
         context = std::make_unique<MockContext>(device.get());
-        kernel = std::make_unique<MockKernelWithInternals>(*device, context.get());
+        kernel = std::make_unique<MockKernelWithInternals>(*context);
         sizeGrf = device->getHardwareInfo().capabilityTable.grfSize;
         sizeGrfDwords = sizeGrf / sizeof(uint32_t);
 
@@ -98,8 +98,8 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchin
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
 
-    MockKernelWithInternals kernel1(*device);
-    MockKernelWithInternals kernel2(*device);
+    MockKernelWithInternals kernel1(*context);
+    MockKernelWithInternals kernel2(*context);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
@@ -154,7 +154,7 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenDebugFlagToDisableL1FlushInPo
 
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    MockKernelWithInternals kernel1(*device);
+    MockKernelWithInternals kernel1(*context);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
@@ -193,7 +193,7 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnque
     auto testDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext testContext(testDevice.get());
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&testContext, testDevice.get(), nullptr);
-    MockKernelWithInternals testKernel(*testDevice, &testContext);
+    MockKernelWithInternals testKernel(testContext);
 
     size_t gws[] = {1, 1, 1};
     cmdQ->enqueueKernel(testKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);

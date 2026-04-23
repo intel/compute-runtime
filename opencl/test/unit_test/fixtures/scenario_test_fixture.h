@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ class ScenarioTest : public ::testing::Test,
         commandQueue = new MockCommandQueue(context, pDevice, 0, false);
         program = new MockProgram(context, false, toClDeviceVector(*pDevice));
 
-        kernelInternals = new MockKernelWithInternals(*pDevice, context);
+        kernelInternals = new MockKernelWithInternals(*context);
         kernel = kernelInternals->mockKernel;
 
         ASSERT_NE(nullptr, kernel);

@@ -577,7 +577,7 @@ struct SubmissionsAggregatorTests : public ::testing::Test {
 };
 
 HWTEST_TEMPLATED_F(SubmissionsAggregatorTests, givenMultipleQueuesWhenCmdBuffersAreRecordedThenAssignFlushStampObjFromCmdQueue) {
-    MockKernelWithInternals kernel(*device.get());
+    MockKernelWithInternals kernel(*context);
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
     CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0, false);
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&device->getGpgpuCommandStreamReceiver());
@@ -610,7 +610,7 @@ HWTEST_TEMPLATED_F(SubmissionsAggregatorTests, givenMultipleQueuesWhenCmdBuffers
 }
 
 HWTEST_TEMPLATED_F(SubmissionsAggregatorTests, givenCmdQueueWhenCmdBufferWithEventIsRecordedThenAssignFlushStampObjForEveryone) {
-    MockKernelWithInternals kernel(*device.get());
+    MockKernelWithInternals kernel(*context);
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&device->getGpgpuCommandStreamReceiver());
     mockCsr->useNewResourceImplicitFlush = false;
@@ -635,7 +635,7 @@ HWTEST_TEMPLATED_F(SubmissionsAggregatorTests, givenCmdQueueWhenCmdBufferWithEve
 }
 
 HWTEST_TEMPLATED_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenFlushThenUpdateAllRelatedFlushStamps) {
-    MockKernelWithInternals kernel(*device.get());
+    MockKernelWithInternals kernel(*context);
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
     CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0, false);
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&device->getGpgpuCommandStreamReceiver());
@@ -663,7 +663,7 @@ HWTEST_TEMPLATED_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenFlushT
 }
 
 HWTEST_TEMPLATED_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenNotAggregatedDuringFlushThenUpdateAllRelatedFlushStamps) {
-    MockKernelWithInternals kernel(*device.get());
+    MockKernelWithInternals kernel(*context);
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
     CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0, false);
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&device->getGpgpuCommandStreamReceiver());

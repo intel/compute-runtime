@@ -47,7 +47,7 @@ struct EnqueueFixtureXe3pCore : public ::testing::Test {
         clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, mockRootDeviceIndex));
         context = std::make_unique<MockContext>(clDevice.get());
 
-        mockKernel = std::make_unique<MockKernelWithInternals>(*clDevice, context.get());
+        mockKernel = std::make_unique<MockKernelWithInternals>(*context);
         mockKernel->kernelInfo.createKernelAllocation(clDevice->getDevice(), false);
 
         dispatchInfo = {clDevice.get(), mockKernel->mockKernel, 1, 0, 0, 0};

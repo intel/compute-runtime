@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceForSpillWh
     cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pContext);
     auto spillMemorySize = 1024u;
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.spillFillScratchMemorySize = spillMemorySize;
 
@@ -98,7 +98,7 @@ HWTEST2_F(ClGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocatio
     cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pContext);
     mockKernel.kernelInfo.setPrivateMemory(1024, false, 0, 0, 0);
 
     retVal = clGetKernelWorkGroupInfo(
@@ -119,7 +119,7 @@ TEST_F(ClGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocatio
     cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pContext);
 
     retVal = clGetKernelWorkGroupInfo(
         mockKernel.mockMultiDeviceKernel,

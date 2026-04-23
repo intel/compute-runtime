@@ -114,7 +114,7 @@ HWTEST_F(DebuggerCmdQTest, GivenDebuggingEnabledWhenInternalCommandQueueIsCreate
 HWTEST_TEMPLATED_F(DebuggerCmdQTestWithMockCsr, GivenDebuggingEnabledWhenEnqueueingKernelThenDebugSurfaceIsResident) {
     auto mockCSR = static_cast<MockCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
 
-    MockKernelWithInternals mockKernelWithInternals(*clDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     size_t offset = 0;

@@ -241,7 +241,8 @@ TEST_F(PrintfHandlerTests, givenMultiDispatchInfoWithMultipleKernelsWhenCreating
 
 TEST_F(PrintfHandlerTests, GivenEmptyMultiDispatchInfoWhenCreatingPrintfHandlerThenPrintfHandlerIsNotCreated) {
     MockClDevice device{new MockDevice};
-    MockKernelWithInternals mockKernelWithInternals{device};
+    MockContext mockCtx(&device);
+    MockKernelWithInternals mockKernelWithInternals(mockCtx);
     MockMultiDispatchInfo multiDispatchInfo{&device, mockKernelWithInternals.mockKernel};
     multiDispatchInfo.dispatchInfos.resize(0);
     EXPECT_EQ(nullptr, multiDispatchInfo.peekMainKernel());

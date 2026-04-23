@@ -540,7 +540,7 @@ HWTEST_TEMPLATED_F(CommandQueueHwTestWithMockCsr, GivenNotCompleteUserEventPasse
 
     auto userEvent = makeReleaseable<UserEvent>(context);
     KernelInfo kernelInfo;
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
     auto mockProgram = mockKernelWithInternals.mockProgram;
 
@@ -585,7 +585,7 @@ using BlockedCommandQueueTest = CommandQueueHwTest;
 
 HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhenBlockedCommandIsBeingSubmittedThenQueueHeapsAreNotUsed) {
     UserEvent userEvent(context);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     size_t offset = 0;
@@ -611,7 +611,7 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhenBlockedCommandIsBeingSubm
 
 HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWithUsedHeapsWhenBlockedCommandIsBeingSubmittedThenQueueHeapsAreNotUsed) {
     UserEvent userEvent(context);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     size_t offset = 0;
@@ -643,7 +643,7 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWithUsedHeapsWhenBlockedComma
 
 HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBlockedCommandIsBeingSubmittedThenThoseHeapsAreBeingUsed) {
     UserEvent userEvent(context);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     size_t offset = 0;
@@ -671,7 +671,7 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBl
 
 HWTEST_F(BlockedCommandQueueTest, givenEnqueueBlockedByUserEventWhenItIsEnqueuedThenKernelReferenceCountIsIncreased) {
     UserEvent userEvent(context);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     size_t offset = 0;
@@ -694,7 +694,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWhenNewBlockedEnqueueReplac
     auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
 
     UserEvent userEvent(context);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     size_t offset = 0;
@@ -726,7 +726,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWithOutputEventAsVirtualEve
     auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
 
     UserEvent userEvent(context);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     size_t offset = 0;
@@ -771,7 +771,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenSeriesOfBlockedEnqueuesWhenEveryEventI
     auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
 
     UserEvent *userEvent = new UserEvent(context);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     size_t offset = 0;
@@ -821,7 +821,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenSeriesOfBlockedEnqueuesWhenCmdQIsRelea
     auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
 
     UserEvent *userEvent = new UserEvent(context);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     size_t offset = 0;
@@ -941,7 +941,7 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueThatIsBlockedAndUsesCpuCopyWhenEve
 
 HWTEST_F(CommandQueueHwTest, givenNonBlockedEnqueueWhenEventIsPassedThenUpdateItsFlushStamp) {
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.flushStamp->setStamp(5);
 
@@ -962,7 +962,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedEnqueueWhenEventIsPassedThenDontUpdateI
     UserEvent userEvent;
     cl_event event, clUserEvent;
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.flushStamp->setStamp(5);
 
@@ -990,7 +990,7 @@ HWTEST_TEMPLATED_F(CommandQueueHwTestWithMockCsr, givenBlockedInOrderCmdQueueAnd
 
     auto mockCSR = static_cast<MockCsr<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
     size_t offset = 0;
     size_t size = 1;
@@ -1033,7 +1033,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedOutOfOrderQueueWhenUserEventIsSubmitted
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
     size_t offset = 0;
     size_t size = 1;
@@ -1064,7 +1064,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedOutOfOrderQueueWhenUserEventIsSubmitted
 
 HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenNoBlockedThenKernelMakeResidentCalledOnce) {
     KernelInfo kernelInfo;
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
     auto mockProgram = mockKernelWithInternals.mockProgram;
     mockProgram->setAllowNonUniform(true);
@@ -1083,7 +1083,7 @@ HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenNoBlockedThenKern
 HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenBlockedThenKernelGetResidencyCalledOnce) {
     UserEvent userEvent(context);
     KernelInfo kernelInfo;
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
     auto mockProgram = mockKernelWithInternals.mockProgram;
     mockProgram->setAllowNonUniform(true);
@@ -1105,7 +1105,7 @@ HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenBlockedThenKernel
 }
 
 HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenDispatchingWorkThenRegisterCsrClient) {
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -1147,7 +1147,7 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenDispatchingWorkThenRegisterCsr
 
 HWTEST_F(CommandQueueHwTest, givenCsrClientWhenCallingSyncPointsThenUnregister) {
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();

@@ -2805,7 +2805,7 @@ HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingNonBlockedEnq
         GTEST_SKIP();
     }
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-    MockKernelWithInternals mockKernelWithInternals(*device.get());
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     pKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
@@ -2827,7 +2827,7 @@ HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDo
         GTEST_SKIP();
     }
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-    MockKernelWithInternals mockKernelWithInternals(*device.get());
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto pKernel = mockKernelWithInternals.mockKernel;
     size_t gws[3] = {63, 0, 0};
     auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
@@ -2857,7 +2857,7 @@ HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingBlockedEnqueu
         GTEST_SKIP();
     }
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-    MockKernelWithInternals mockKernelWithInternals(*device.get());
+    MockKernelWithInternals mockKernelWithInternals(*context);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     pKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
@@ -3044,7 +3044,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenDebugFlagSetWhenSubmittingThenD
     EXPECT_EQ(1u, copyPrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
     EXPECT_EQ(0u, computePrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
 
-    MockKernelWithInternals mockKernelWithInternals(clDevice);
+    MockKernelWithInternals mockKernelWithInternals(context);
     size_t gws[3] = {1, 0, 0};
 
     queueCompute1.enqueueKernel(mockKernelWithInternals.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -3725,7 +3725,7 @@ struct PrefetchTests : public ::testing::Test {
         clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), mockRootDeviceIndex));
         context = std::make_unique<MockContext>(clDevice.get());
 
-        mockKernel = std::make_unique<MockKernelWithInternals>(*clDevice, context.get());
+        mockKernel = std::make_unique<MockKernelWithInternals>(*context);
         mockKernel->kernelInfo.createKernelAllocation(clDevice->getDevice(), false);
 
         dispatchInfo = {clDevice.get(), mockKernel->mockKernel, 1, 0, 0, 0};

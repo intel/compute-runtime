@@ -32,8 +32,7 @@ TEST_F(ClReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVir
 
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
-    ClDevice *device = (ClDevice *)testedClDevice;
-    MockKernelWithInternals kernelInternals(*device, pContext);
+    MockKernelWithInternals kernelInternals(*pContext);
 
     cmdQ = clCreateCommandQueue(pContext, testedClDevice, properties, &retVal);
 

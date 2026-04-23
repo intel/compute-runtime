@@ -188,8 +188,8 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDisabledConfigurationTestXe2HpgCore, given
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, pClDevice, nullptr);
 
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -314,9 +314,9 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaComputeWalkerTestXe2HpgCore, givenSystemM
 XE2_HPG_CORETEST_F(SystemMemoryFenceViaComputeWalkerTestXe2HpgCore, givenSystemMemoryFenceGeneratedAsPostSyncOperationInComputeWalkerWhenDispatchWalkerIsCalledThenSystemMemoryFenceRequestInPostSyncDataIsProgrammed) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
-    MockKernelWithInternals kernel(*pClDevice);
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel.mockKernel);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
+    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel.mockKernel);
     MockCommandQueue commandQueue(&context, pClDevice, nullptr, false);
     auto &cmdStream = commandQueue.getCS(0);
     MockTimestampPacketContainer timestampPacket(*pClDevice->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
@@ -399,8 +399,8 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
         GTEST_SKIP();
     }
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, pClDevice, nullptr);
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -439,8 +439,8 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
         GTEST_SKIP();
     }
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, pClDevice, nullptr);
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -480,8 +480,8 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
         GTEST_SKIP();
     }
 
-    MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
+    MockKernelWithInternals kernel(context);
     MockCommandQueueHw<FamilyType> commandQueue(&context, pClDevice, nullptr);
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
 

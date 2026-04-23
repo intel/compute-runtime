@@ -1947,7 +1947,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelDoesNotHaveDebugDataT
     gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
     gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pContext);
     mockKernel.kernelInfo.kernelDescriptor.external.debugData.reset();
     mockKernel.kernelInfo.createKernelAllocation(pDevice->getDevice(), false);
     gtpinNotifyKernelCreate(static_cast<cl_kernel>(mockKernel.mockKernel->getMultiDeviceKernel()));
@@ -1974,7 +1974,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelHasDebugDataThenCorre
     gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
     gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pContext);
     mockKernel.kernelInfo.kernelDescriptor.external.debugData.reset(new DebugData());
     mockKernel.kernelInfo.debugData.vIsa = reinterpret_cast<char *>(dummyDebugData);
     mockKernel.kernelInfo.debugData.vIsaSize = static_cast<uint32_t>(dummyDebugDataSize);
@@ -1999,7 +1999,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenInstrumentedBinaryIsZebinTh
     gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
 
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pContext);
     ASSERT_EQ(nullptr, mockKernel.kernelInfo.debugData.vIsa);
     ASSERT_EQ(0u, mockKernel.kernelInfo.debugData.vIsaSize);
 
@@ -2045,7 +2045,7 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-    MockKernelWithInternals kernel(*pDevice);
+    MockKernelWithInternals kernel(*pContext);
     kernelOperation->setHeaps(ih1, ih2, ih3);
 
     bool flushDC = false;
@@ -2345,7 +2345,7 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNot
         GTPIN_DI_STATUS status = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
         EXPECT_EQ(GTPIN_DI_SUCCESS, status);
 
-        MockKernelWithInternals mockkernel(*pDevice);
+        MockKernelWithInternals mockkernel(*pContext);
         MockCommandQueue mockCmdQueue;
         cl_context ctxt = (cl_context)((Context *)pContext);
         currContext = (gtpin::context_handle_t)(ctxt);

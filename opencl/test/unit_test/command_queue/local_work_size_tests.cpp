@@ -1067,7 +1067,8 @@ TEST_F(LocalWorkSizeTest, givenDeviceWith56ThreadsPerSubsliceWhenSimd16KernelIsB
 
 TEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenItHasCorrectNumberOfThreads) {
     MockClDevice device{new MockDevice};
-    MockKernelWithInternals kernel(device);
+    MockContext mockCtx(&device);
+    MockKernelWithInternals kernel(mockCtx);
     DispatchInfo dispatchInfo;
     dispatchInfo.setClDevice(&device);
     dispatchInfo.setKernel(kernel.mockKernel);
@@ -1087,7 +1088,8 @@ using IsCoreWithFusedEu = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HP_CORE>;
 
 HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusionFtr, IsCoreWithFusedEu) {
     MockClDevice device{new MockDevice};
-    MockKernelWithInternals kernel(device);
+    MockContext mockCtx(&device);
+    MockKernelWithInternals kernel(mockCtx);
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
     DispatchInfo dispatchInfo;
     dispatchInfo.setClDevice(&device);
@@ -1108,7 +1110,8 @@ HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestE
 HWTEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusionFtrForcedByDebugManager) {
     DebugManagerStateRestore dbgRestore;
     MockClDevice device{new MockDevice};
-    MockKernelWithInternals kernel(device);
+    MockContext mockCtx(&device);
+    MockKernelWithInternals kernel(mockCtx);
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
     DispatchInfo dispatchInfo;
     dispatchInfo.setClDevice(&device);
@@ -1160,7 +1163,8 @@ HWTEST_F(LocalWorkSizeTest, givenWorkSizeInfoIsCreatedWithHwInfoThenTestEuFusion
 
 TEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenHasBarriersIsCorrectlySet) {
     MockClDevice device{new MockDevice};
-    MockKernelWithInternals kernel(device);
+    MockContext mockCtx(&device);
+    MockKernelWithInternals kernel(mockCtx);
     DispatchInfo dispatchInfo;
     dispatchInfo.setClDevice(&device);
     dispatchInfo.setKernel(kernel.mockKernel);
@@ -1177,7 +1181,8 @@ TEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenHasCorre
     debugManager.flags.OverridePreferredWorkgroupCountPerSubslice.set(0);
 
     MockClDevice device{new MockDevice};
-    MockKernelWithInternals kernel(device);
+    MockContext mockCtx(&device);
+    MockKernelWithInternals kernel(mockCtx);
     DispatchInfo dispatchInfo;
     dispatchInfo.setClDevice(&device);
     dispatchInfo.setKernel(kernel.mockKernel);

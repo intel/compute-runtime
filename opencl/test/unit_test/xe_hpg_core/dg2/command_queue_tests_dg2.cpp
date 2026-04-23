@@ -76,7 +76,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithDpasAndOddWorkGroupWhenenqueueNonBl
     auto scratchController = new ScratchSpaceControllerBase(pDevice->getRootDeviceIndex(), *pDevice->executionEnvironment, *csr->getInternalAllocationStorage());
     csr->scratchSpaceController.reset(scratchController);
     MockCmdQueueOverrideCsr<FamilyType> cmdQ(pContext, mockDevice.get(), csr.get());
-    MockKernelWithInternals mockKernelWithInternals(*mockDevice.get());
+    MockKernelWithInternals mockKernelWithInternals(*pContext);
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(mockDevice.get(), pKernel);
     BlitPropertiesContainer blitPropertiesContainer;
@@ -107,7 +107,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithDpasAndNotOddWorkGroupWhenenqueueNo
     auto scratchController = new ScratchSpaceControllerBase(pDevice->getRootDeviceIndex(), *pDevice->executionEnvironment, *csr->getInternalAllocationStorage());
     csr->scratchSpaceController.reset(scratchController);
     MockCmdQueueOverrideCsr<FamilyType> cmdQ(pContext, mockDevice.get(), csr.get());
-    MockKernelWithInternals mockKernelWithInternals(*mockDevice.get());
+    MockKernelWithInternals mockKernelWithInternals(*pContext);
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(mockDevice.get(), pKernel);
     BlitPropertiesContainer blitPropertiesContainer;
@@ -143,7 +143,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithRequiredDisableEuFusionWhenenqueueN
     auto scratchController = new ScratchSpaceControllerBase(pDevice->getRootDeviceIndex(), *pDevice->executionEnvironment, *csr->getInternalAllocationStorage());
     csr->scratchSpaceController.reset(scratchController);
     MockCmdQueueOverrideCsr<FamilyType> cmdQ(pContext, mockDevice.get(), csr.get());
-    MockKernelWithInternals mockKernelWithInternals(*mockDevice.get());
+    MockKernelWithInternals mockKernelWithInternals(*pContext);
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(mockDevice.get(), pKernel);
     BlitPropertiesContainer blitPropertiesContainer;
@@ -170,7 +170,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithoutRequiredDisableEuFusionWhenenque
     auto scratchController = new ScratchSpaceControllerBase(pDevice->getRootDeviceIndex(), *pDevice->executionEnvironment, *csr->getInternalAllocationStorage());
     csr->scratchSpaceController.reset(scratchController);
     MockCmdQueueOverrideCsr<FamilyType> cmdQ(pContext, mockDevice.get(), csr.get());
-    MockKernelWithInternals mockKernelWithInternals(*mockDevice.get());
+    MockKernelWithInternals mockKernelWithInternals(*pContext);
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(mockDevice.get(), pKernel);
     BlitPropertiesContainer blitPropertiesContainer;

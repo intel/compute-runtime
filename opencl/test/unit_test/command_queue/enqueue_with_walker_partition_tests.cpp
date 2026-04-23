@@ -50,7 +50,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueWithWalkerPartitionTests,
     MockCommandQueueHw<FamilyType> commandQueue(context.get(), rootDevice.get(), nullptr);
     commandQueue.gpgpuEngine = &engineControlForFusedQueue;
     rootDevice->setPreemptionMode(PreemptionMode::Disabled);
-    MockKernelWithInternals kernel(*rootDevice, context.get());
+    MockKernelWithInternals kernel(*context);
 
     size_t offset[3] = {0, 0, 0};
     size_t gws[3] = {32, 32, 32};
@@ -88,7 +88,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueWithWalkerPartitionTests, givenOoqWhenDispat
     EXPECT_EQ(0u, timestampPacketContainer->peekNodes().size());
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
 
-    MockKernelWithInternals kernel(*rootDevice, context.get());
+    MockKernelWithInternals kernel(*context);
 
     size_t offset[3] = {0, 0, 0};
     size_t gws[3] = {32, 32, 32};

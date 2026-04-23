@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,7 +111,7 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenKernelWithReqdWorkGroupSizeW
     size_t suggestedLocalWorkSize[] = {0, 0, 0};
     uint16_t regdLocalWorkSize[] = {32, 32, 32};
 
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pContext);
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] = regdLocalWorkSize[0];
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1] = regdLocalWorkSize[1];
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2] = regdLocalWorkSize[2];

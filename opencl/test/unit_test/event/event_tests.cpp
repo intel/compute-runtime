@@ -492,7 +492,7 @@ TEST_F(InternalsEventTest, GivenSubmitCommandFalseWhenSubmittingCommandsThenRefA
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*mockContext);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &csr = cmdQ.getGpgpuCommandStreamReceiver();
@@ -544,7 +544,7 @@ TEST_F(InternalsEventTest, GivenSubmitCommandTrueWhenSubmittingCommandsThenRefAp
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*mockContext);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &csr = cmdQ.getGpgpuCommandStreamReceiver();
@@ -587,7 +587,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*mockContext);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
@@ -634,7 +634,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWit
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*mockContext);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
@@ -678,7 +678,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWi
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*mockContext);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
@@ -1262,7 +1262,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
                                                                             taskLevel, taskCount) {}
     };
 
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(mockContext);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
     pCmdQ->allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
@@ -1882,7 +1882,7 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.flushStamp->setStamp(5);
 
-    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernelWithInternals mockKernelWithInternals(*mockContext);
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));

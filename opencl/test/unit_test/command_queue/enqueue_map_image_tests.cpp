@@ -327,7 +327,7 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     size_t imageSlicePitch = 0;
     size_t gws = 1;
 
-    MockKernelWithInternals kernel(*pClDevice);
+    MockKernelWithInternals kernel(*context);
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
     auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
     auto tagAddress = commandStreamReceiver.getTagAddress();
