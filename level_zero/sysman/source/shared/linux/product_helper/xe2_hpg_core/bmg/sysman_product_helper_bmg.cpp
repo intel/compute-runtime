@@ -64,7 +64,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"reg_PCIESS_tx_pktcount_lsb", 304},
       {"reg_PCIESS_tx_pktcount_msb", 300},
       {"MSU_BITMASK", 3688},
-      {"NUM_OF_MEM_CHANNEL", 3660},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 376},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 380},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 536},
@@ -323,7 +322,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"reg_PCIESS_tx_pktcount_lsb", 304},
       {"reg_PCIESS_tx_pktcount_msb", 308},
       {"MSU_BITMASK", 3688},
-      {"NUM_OF_MEM_CHANNEL", 3660},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 380},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 376},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 540},
@@ -594,7 +592,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"reg_PCIESS_tx_pktcount_lsb", 304},
       {"reg_PCIESS_tx_pktcount_msb", 300},
       {"MSU_BITMASK", 3688},
-      {"NUM_OF_MEM_CHANNEL", 3660},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 376},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 380},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 536},
@@ -933,7 +930,6 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"reg_PCIESS_tx_pktcount_lsb", 304},
       {"reg_PCIESS_tx_pktcount_msb", 308},
       {"MSU_BITMASK", 3688},
-      {"NUM_OF_MEM_CHANNEL", 3660},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 380},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 376},
       {"GDDR1_CH0_GT_32B_RD_REQ_UPPER", 540},
@@ -1678,14 +1674,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSy
     // Get total number of MSUs
     uint32_t totalNumberOfMsus = std::popcount(supportedMsu);
 
-    // Get Number of Memory Channels per MSU
-    uint32_t numOfChannelsPerMsu = 0;
-    std::string numOfChannelsKey = "NUM_OF_MEM_CHANNEL";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[numOfChannelsKey], numOfChannelsKey, 0, numOfChannelsPerMsu)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    *pNumChannels = totalNumberOfMsus * numOfChannelsPerMsu;
+    *pNumChannels = totalNumberOfMsus;
     return ZE_RESULT_SUCCESS;
 }
 

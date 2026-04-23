@@ -18,7 +18,6 @@ namespace ult {
 
 using SysmanProductHelperMemoryXeTest = SysmanDeviceFixture;
 
-constexpr uint32_t mockOffsetNumChannelsPerMsu = 3660;
 constexpr uint32_t mockOffsetMsuBitmask = 3688;
 
 static int mockReadLinkSuccess(const char *path, char *buf, size_t bufsize) {
@@ -393,7 +392,6 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
 }
 
 HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenCallingGetNumberOfMemoryChannelsAndReadValueFailsThenErrorIsReturned, IsBMG) {
-    static int readFailCount = 1;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
@@ -406,11 +404,8 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
             memcpy(buf, validOobmsmGuid.data(), count);
         } else if (fd == 6 || fd == 9) {
             switch (offset) {
-            case mockOffsetNumChannelsPerMsu:
-                count = (readFailCount == 1) ? -1 : sizeof(uint32_t);
-                break;
             case mockOffsetMsuBitmask:
-                count = (readFailCount == 2) ? -1 : sizeof(uint32_t);
+                count = -1;
                 break;
             }
         }
@@ -420,15 +415,11 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t numChannels = 0;
 
-    while (readFailCount <= 2) {
-        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels));
-        readFailCount++;
-    }
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels));
 }
 
 HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryPropertiesWithGddr6AndGetNumberOfMemoryChannelsSucceedsThenValidPropertiesAreReturned, IsBMG) {
     static uint32_t mockMsuBitMask = 0b111111;
-    static uint32_t numChannelPerMsu = 2;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
@@ -441,9 +432,6 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
             memcpy(buf, validOobmsmGuid.data(), count);
         } else if (fd == 6 || fd == 9) {
             switch (offset) {
-            case mockOffsetNumChannelsPerMsu:
-                memcpy(buf, &numChannelPerMsu, count);
-                break;
             case mockOffsetMsuBitmask:
                 memcpy(buf, &mockMsuBitMask, count);
                 break;
@@ -464,8 +452,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
 
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(properties.type, ZES_MEM_TYPE_GDDR6);
-    uint32_t totalNumberOfMsus = std::popcount(mockMsuBitMask);
-    int32_t expectedNumChannels = static_cast<int32_t>(numChannelPerMsu * totalNumberOfMsus);
+    int32_t expectedNumChannels = std::popcount(mockMsuBitMask);
     EXPECT_EQ(properties.numChannels, expectedNumChannels);
     EXPECT_EQ(properties.busWidth, properties.numChannels * 32);
 }
@@ -701,109 +688,9 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     EXPECT_GT(memBandwidth.timestamp, 0u);
 }
 
-HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenCallingGetMemoryPropertiesThenErrorIsReturned, IsCRI) {
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_mem_properties_t properties = {};
-    bool isSubdevice = false;
-    uint32_t subDeviceId = 0;
-
-    std::unique_ptr<MockMemoryNeoDrm> pDrm = std::make_unique<MockMemoryNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
-
-    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
-HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceAndReadGuidFailsWhenCallingGetMemoryPropertiesThenErrorIsReturned, IsCRI) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return -1;
-    });
-
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_mem_properties_t properties = {};
-    bool isSubdevice = false;
-    uint32_t subDeviceId = 0;
-
-    std::unique_ptr<MockMemoryNeoDrm> pDrm = std::make_unique<MockMemoryNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
-
-    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
-HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceAndKeyOffsetMapIsNotAvailableWhenCallingGetMemoryPropertiesThenErrorIsReturned, IsCRI) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string invalidGuid = "0xABCDEF";
-
-        if (fd == 4) {
-            memcpy(buf, &telem1Offset, count);
-        } else if (fd == 5) {
-            memcpy(buf, invalidGuid.data(), count);
-        }
-        return count;
-    });
-
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_mem_properties_t properties = {};
-    bool isSubdevice = false;
-    uint32_t subDeviceId = 0;
-
-    std::unique_ptr<MockMemoryNeoDrm> pDrm = std::make_unique<MockMemoryNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
-
-    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
-HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceAndReadNumChannelsFailsWhenCallingGetMemoryPropertiesThenErrorIsReturned, IsCRI) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0x5e2fa230";
-
-        if (fd == 4) {
-            memcpy(buf, &telem1Offset, count);
-        } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
-        } else if (fd == 6) {
-            return -1;
-        }
-        return count;
-    });
-
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_mem_properties_t properties = {};
-    bool isSubdevice = false;
-    uint32_t subDeviceId = 0;
-
-    std::unique_ptr<MockMemoryNeoDrm> pDrm = std::make_unique<MockMemoryNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
-
-    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
-}
-
 HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryPropertiesThenValidPropertiesAreReturned, IsCRI) {
-    static const uint32_t numChannelPerMsu = 4;
     static const uint32_t memoryMsuCount = 20;
-    static const uint32_t busWidthPerChannelInBytes = 2;
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0x5e2fa230";
-
-        if (fd == 4) {
-            memcpy(buf, &telem1Offset, count);
-        } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
-        } else if (fd == 6) {
-            memcpy(buf, &numChannelPerMsu, count);
-        }
-        return count;
-    });
+    static const uint32_t busWidthPerChannelInBits = 16;
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_mem_properties_t properties = {};
@@ -811,8 +698,8 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     uint32_t subDeviceId = 1;
 
     std::unique_ptr<MockMemoryNeoDrm> pDrm = std::make_unique<MockMemoryNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
-    const int32_t expectedNumChannels = static_cast<int32_t>(numChannelPerMsu * memoryMsuCount);
-    const int32_t expectedBusWidth = expectedNumChannels * busWidthPerChannelInBytes;
+    const int32_t expectedNumChannels = static_cast<int32_t>(memoryMsuCount);
+    const int32_t expectedBusWidth = expectedNumChannels * busWidthPerChannelInBits;
 
     ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);

@@ -25,7 +25,7 @@ constexpr static auto gfxProduct = IGFX_CRI;
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
 
 constexpr static uint32_t memoryMsuCount = 20;
-constexpr static uint32_t busWidthPerChannelInBytes = 2; // 16 bits = 2 bytes
+constexpr static uint32_t busWidthPerChannelInBits = 16;
 constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
@@ -138,8 +138,7 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"MEMSS16_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2000},
       {"MEMSS17_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2080},
       {"MEMSS18_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2160},
-      {"MEMSS19_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2240},
-      {"NUM_OF_MEM_CHANNEL", 3660}}}};
+      {"MEMSS19_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2240}}}};
 
 static ze_result_t getErrorCode(ze_result_t result) {
     if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
@@ -922,29 +921,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
 
-    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
-    std::map<std::string, uint64_t> keyOffsetMap;
-    std::unordered_map<std::string, std::string> keyTelemInfoMap;
-
-    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
-        return result;
-    }
-
-    uint32_t numOfChannelsPerMsu = 0;
-    std::string numOfChannelsKey = "NUM_OF_MEM_CHANNEL";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[numOfChannelsKey], numOfChannelsKey, 0, numOfChannelsPerMsu)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, numOfChannelsKey.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
     pProperties->location = ZES_MEM_LOC_DEVICE;
     pProperties->type = static_cast<zes_mem_type_t>(ZES_INTEL_MEM_TYPE_LPDDR5X);
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subDeviceId;
-    pProperties->numChannels = numOfChannelsPerMsu * memoryMsuCount;
-    pProperties->busWidth = pProperties->numChannels * busWidthPerChannelInBytes;
+    pProperties->numChannels = memoryMsuCount;
+    pProperties->busWidth = pProperties->numChannels * busWidthPerChannelInBits;
     pProperties->physicalSize = 0;
     return ZE_RESULT_SUCCESS;
 }
