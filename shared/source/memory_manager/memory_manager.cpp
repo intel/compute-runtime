@@ -46,6 +46,7 @@
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/utilities/logger_neo_only.h"
 
+#include <iostream>
 namespace NEO {
 uint32_t MemoryManager::maxOsContextCount = 0u;
 
@@ -657,10 +658,14 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.cantBeReadOnly = properties.flags.cantBeReadOnly;
     allocationData.usmInitialPlacement = properties.usmInitialPlacement;
 
-    if (properties.allocationType == AllocationType::commandBuffer && rootDeviceEnvironment.debugger.get()) {
-        auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-        allocationData.flags.cantBeReadOnly = rootDeviceEnvironment.debugger->getSingleAddressSpaceSbaTracking();
-        allocationData.flags.cantBeReadOnly |= !compilerProductHelper.isHeaplessModeEnabled(hwInfo);
+    if (properties.allocationType == AllocationType::commandBuffer) {
+        if (executionEnvironment.isDebuggingEnabled()) {
+            auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+            allocationData.flags.cantBeReadOnly = !compilerProductHelper.isHeaplessModeEnabled(hwInfo);
+        }
+        if (rootDeviceEnvironment.debugger.get()) {
+            allocationData.flags.cantBeReadOnly |= rootDeviceEnvironment.debugger->getSingleAddressSpaceSbaTracking();
+        }
     }
 
     if (GraphicsAllocation::isDebugSurfaceAllocationType(properties.allocationType) ||
