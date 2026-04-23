@@ -370,13 +370,13 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionCurrentRingBuffersInUseWhenS
 
     nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(4u, directSubmission.ringBuffers.size());
-    EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
-    EXPECT_EQ(0u, directSubmission.currentRingBuffer);
+    EXPECT_EQ(directSubmission.ringBuffers[2].ringBuffer, nextRing);
+    EXPECT_EQ(2u, directSubmission.currentRingBuffer);
 
     nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(4u, directSubmission.ringBuffers.size());
-    EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
-    EXPECT_EQ(1u, directSubmission.currentRingBuffer);
+    EXPECT_EQ(directSubmission.ringBuffers[3].ringBuffer, nextRing);
+    EXPECT_EQ(3u, directSubmission.currentRingBuffer);
 
     nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(4u, directSubmission.ringBuffers.size());

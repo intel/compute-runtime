@@ -721,8 +721,13 @@ template <typename GfxFamily, typename Dispatcher>
 inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersAllocations(ResidencyContainer *allocationsForResidency) {
     this->previousRingBuffer = this->currentRingBuffer;
     GraphicsAllocation *nextAllocation = nullptr;
-    for (uint32_t ringBufferIndex = 0; ringBufferIndex < this->ringBuffers.size(); ringBufferIndex++) {
-        if (ringBufferIndex != this->currentRingBuffer && this->isCompleted(ringBufferIndex)) {
+
+    UNRECOVERABLE_IF(this->ringBuffers.empty());
+    auto ringBuffersCount = this->ringBuffers.size();
+    for (uint32_t ringBufferIndex = (this->previousRingBuffer + 1) % ringBuffersCount;
+         ringBufferIndex != this->previousRingBuffer;
+         ringBufferIndex = (ringBufferIndex + 1) % ringBuffersCount) {
+        if (this->isCompleted(ringBufferIndex)) {
             this->currentRingBuffer = ringBufferIndex;
             nextAllocation = this->ringBuffers[ringBufferIndex].ringBuffer;
             break;
