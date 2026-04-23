@@ -310,9 +310,7 @@ HWTEST_F(SamplerSetArgTest, GivenFilteringNearestAndAddressingClampWhenSettingKe
     auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
     auto snapWaCrossThreadData = ptrOffset(crossThreadData, 0x4);
 
-    unsigned int snapWaValue = 0xffffffff;
-
-    EXPECT_EQ(snapWaValue, *snapWaCrossThreadData);
+    EXPECT_EQ(NEO::samplerSnapWaValue, *snapWaCrossThreadData);
 }
 
 HWTEST_F(SamplerSetArgTest, GivenKernelWithoutObjIdOffsetWhenSettingArgThenObjIdNotPatched) {

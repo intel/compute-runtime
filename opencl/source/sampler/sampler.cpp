@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,11 @@
 
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
-
-#include "patch_list.h"
 
 #include <limits>
 
@@ -146,9 +145,9 @@ Sampler *Sampler::create(Context *context,
 
 unsigned int Sampler::getSnapWaValue() const {
     if (filterMode == CL_FILTER_NEAREST && addressingMode == CL_ADDRESS_CLAMP) {
-        return iOpenCL::CONSTANT_REGISTER_BOOLEAN_TRUE;
+        return samplerSnapWaValue;
     } else {
-        return iOpenCL::CONSTANT_REGISTER_BOOLEAN_FALSE;
+        return 0;
     }
 }
 

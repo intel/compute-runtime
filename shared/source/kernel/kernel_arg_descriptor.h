@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,8 @@ struct ArgDescImage final {
     NEOImageType imageType;
     uint8_t size = undefined<uint8_t>;
 };
+
+inline constexpr uint32_t samplerSnapWaValue = std::numeric_limits<uint32_t>::max();
 
 struct ArgDescSampler final {
     uint32_t samplerType = 0;

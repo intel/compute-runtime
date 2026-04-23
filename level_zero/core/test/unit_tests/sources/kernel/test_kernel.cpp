@@ -722,7 +722,7 @@ HWTEST2_F(SetKernelArg, givenSamplerAndKernelWhenSetArgSamplerThenCrossThreadDat
     auto crossThreadData = kernel->getCrossThreadData();
 
     auto pSamplerSnapWa = ptrOffset(crossThreadData, samplerArg.metadataPayload.samplerSnapWa);
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), *reinterpret_cast<const uint32_t *>(pSamplerSnapWa));
+    EXPECT_EQ(NEO::samplerSnapWaValue, *reinterpret_cast<const uint32_t *>(pSamplerSnapWa));
 
     auto pSamplerAddressingMode = ptrOffset(crossThreadData, samplerArg.metadataPayload.samplerAddressingMode);
     EXPECT_EQ(static_cast<uint32_t>(SamplerPatchValues::addressClampToBorder), *pSamplerAddressingMode);
