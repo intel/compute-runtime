@@ -48,6 +48,7 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenIsStateCacheInvalidationNoCsStallRequiredCalledWithDebugFlagSetThenFalseReturned();
     void whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities();
     void whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities();
+    void whenGettingSupportedNumGrfsThenValuesUpTo512Returned();
     virtual std::vector<uint32_t> getRevisions() = 0;
 
     std::unique_ptr<ReleaseHelper> releaseHelper;

@@ -303,3 +303,13 @@ void ReleaseHelperTestsBase::whenGettingAdditionalExtraKernelCapabilitiesThenRet
         EXPECT_TRUE(isValueSet(extraCaps, FpAtomicExtFlags::loadStoreAtomicCaps));
     }
 }
+
+void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValuesUpTo512Returned() {
+    SupportedNumGrfs expectedValues{32u, 64u, 96u, 128u, 160u, 192u, 256u, 512u};
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_EQ(expectedValues, releaseHelper->getSupportedNumGrfs());
+    }
+}
