@@ -1385,8 +1385,23 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         return false;
     }
 
+    if (getCsr(false)->getType() == NEO::CommandStreamReceiverType::aub) {
+        return false;
+    }
+
     if (((cpuMemCopyInfo.srcAllocInfo.svmAlloc != nullptr) && (cpuMemCopyInfo.srcAllocInfo.svmAlloc->isImportedAllocation)) ||
         ((cpuMemCopyInfo.dstAllocInfo.svmAlloc != nullptr) && (cpuMemCopyInfo.dstAllocInfo.svmAlloc->isImportedAllocation))) {
+        return false;
+    }
+
+    auto isAllocationCompressed = [](const MemAllocInfo &allocInfo) {
+        if (allocInfo.svmAlloc == nullptr) {
+            return false;
+        }
+        return allocInfo.svmAlloc->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled();
+    };
+
+    if (isAllocationCompressed(cpuMemCopyInfo.srcAllocInfo) || isAllocationCompressed(cpuMemCopyInfo.dstAllocInfo)) {
         return false;
     }
 
