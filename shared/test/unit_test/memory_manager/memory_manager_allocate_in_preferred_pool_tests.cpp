@@ -1140,9 +1140,6 @@ TEST(MemoryManagerTest, givenSingleAddressSpaceSbaTrackingWhenAllocationIsComman
 TEST(MemoryManagerTest, givenPlatformNotHeaplessWhenAllocationIsCommandBufferAndMultiContextCapableIsFalseThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.setDebuggingMode(NEO::DebuggingMode::offline);
-    auto debugger = new MockDebugger;
-    debugger->singleAddressSpaceSbaTracking = false;
-    executionEnvironment.rootDeviceEnvironments[0]->debugger.reset(debugger);
 
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
