@@ -345,33 +345,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     bool isFlushL3ForExternalAllocationRequired = false;
     bool isFlushL3ForHostUsmRequired = false;
-
-    if constexpr (l3FlushAfterWalkerSupported) {
-        isFlushL3ForExternalAllocationRequired = isFlushL3AfterPostSync && isKernelUsingExternalAllocation;
-        isFlushL3ForHostUsmRequired = isFlushL3AfterPostSync && isKernelUsingSystemAllocation;
-
-        if (NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.get() && isFlushL3ForHostUsmRequired) {
-            isFlushL3ForExternalAllocationRequired = true;
-            isFlushL3ForHostUsmRequired = false;
-        }
-
-        auto flushCachesMask = NEO::debugManager.flags.FlushAllCaches.get();
-        if (flushCachesMask) {
-            if (flushCachesMask & NEO::FlushCachesBitmask::l2Flush) {
-                isFlushL3ForExternalAllocationRequired = true;
-            }
-            if (flushCachesMask & NEO::FlushCachesBitmask::l2TransientFlush) {
-                isFlushL3ForHostUsmRequired = true;
-            }
-        }
-
-        if (NEO::debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.get()) {
-            isFlushL3ForExternalAllocationRequired = true;
-        }
-        if (NEO::debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.get()) {
-            isFlushL3ForHostUsmRequired = true;
-        }
-    }
+    setupFlushL3Flags(isFlushL3ForExternalAllocationRequired, isFlushL3ForHostUsmRequired, isFlushL3AfterPostSync, isKernelUsingExternalAllocation, isKernelUsingSystemAllocation);
 
     NEO::EncodeKernelArgsExt dispatchKernelArgsExt = {};
 

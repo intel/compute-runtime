@@ -20,6 +20,10 @@ void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInImplicitArgs(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::setupFlushL3Flags(bool &isFlushL3ForExternalAllocationRequired, bool &isFlushL3ForHostUsmRequired, bool isFlushL3AfterPostSync, bool isKernelUsingExternalAllocation, bool isKernelUsingSystemAllocation) {
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const {
     if (!NEO::debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.get()) {
         return false;
