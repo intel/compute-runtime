@@ -462,6 +462,12 @@ std::unique_ptr<SysFsAccessInterface> SysFsAccessInterface::create(const std::st
     return std::unique_ptr<SysFsAccessInterface>(new SysFsAccessInterface(std::move(dev)));
 }
 
+std::unique_ptr<SysFsAccessInterface> SysFsAccessInterface::createForSurvivability(std::string_view sysfsPath) {
+    auto pSysfsInterface = std::unique_ptr<SysFsAccessInterface>(new SysFsAccessInterface());
+    pSysfsInterface->dirname = std::string(sysfsPath) + "/";
+    return pSysfsInterface;
+}
+
 ze_result_t SysFsAccessInterface::canRead(const std::string file) {
     // Prepend sysfs directory path and call the base canRead
     return FsAccessInterface::canRead(fullPath(file));

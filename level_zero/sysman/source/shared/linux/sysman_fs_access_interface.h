@@ -103,6 +103,7 @@ class ProcFsAccessInterface : private FsAccessInterface {
 class SysFsAccessInterface : protected FsAccessInterface {
   public:
     static std::unique_ptr<SysFsAccessInterface> create(const std::string file);
+    static std::unique_ptr<SysFsAccessInterface> createForSurvivability(std::string_view sysfsPath);
     ~SysFsAccessInterface() override;
 
     ze_result_t canRead(const std::string file) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,7 @@ class SysmanFixtureDeviceI915Prelim : public SysmanDeviceFixture {
     }
 
     void mockInitFsAccess() {
-        pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pLinuxSysmanImp->getDrm());
+        pLinuxSysmanImp->pSysmanKmdInterface->initAllAccessInterfaces(*pLinuxSysmanImp->getDrm());
     }
 
     void TearDown() override {

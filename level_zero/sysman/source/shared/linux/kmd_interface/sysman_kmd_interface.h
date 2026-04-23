@@ -148,7 +148,8 @@ class SysmanKmdInterface {
     virtual bool isStandbyModeControlAvailable() const = 0;
     virtual bool clientInfoAvailableInFdInfo() const = 0;
     virtual bool isGroupEngineInterfaceAvailable() const = 0;
-    ze_result_t initFsAccessInterface(const NEO::Drm &drm);
+    ze_result_t initAllAccessInterfaces(const NEO::Drm &drm);
+    void initAllAccessInterfaces(std::string &devicePath);
     virtual bool isBaseFrequencyFactorAvailable() const = 0;
     virtual bool isMediaFrequencyFactorAvailable() const = 0;
     virtual bool isSystemPowerBalanceAvailable() const = 0;

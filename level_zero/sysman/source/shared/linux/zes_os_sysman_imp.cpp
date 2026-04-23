@@ -27,6 +27,8 @@
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
+#include <cstdlib>
+
 namespace L0 {
 namespace Sysman {
 
@@ -58,7 +60,7 @@ ze_result_t LinuxSysmanImp::init() {
     }
 
     pSysmanKmdInterface = SysmanKmdInterface::create(*getDrm(), pSysmanProductHelper.get());
-    auto result = pSysmanKmdInterface->initFsAccessInterface(*getDrm());
+    auto result = pSysmanKmdInterface->initAllAccessInterfaces(*getDrm());
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -609,12 +611,56 @@ static NEO::PhysicalDevicePciBusInfo getPciBufInfo(const char *bdfString) {
     return NEO::PhysicalDevicePciBusInfo{domain, bus, device, function};
 }
 
+PRODUCT_FAMILY LinuxSysmanImp::getProductFamilyFromDeviceId(uint32_t deviceId) {
+    for (size_t i = 0; NEO::deviceDescriptorTable[i].deviceId != 0; i++) {
+        if (deviceId == NEO::deviceDescriptorTable[i].deviceId) {
+            DEBUG_BREAK_IF(nullptr == NEO::deviceDescriptorTable[i].pHwInfo);
+            return NEO::deviceDescriptorTable[i].pHwInfo->platform.eProductFamily;
+        }
+    }
+    return IGFX_UNKNOWN;
+}
+
 ze_result_t LinuxSysmanImp::initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) {
     const auto hwDeviceIdDrm = static_cast<NEO::HwDeviceIdDrm *>(hwDeviceId.get());
     pciBdfInfo = getPciBufInfo(hwDeviceIdDrm->getPciPath());
     if (pciBdfInfo.pciDomain == pciBdfInfo.invalidValue) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+
+    // Construct the base PCI device path in sysfs
+    std::string pciDevicePath = "/sys/bus/pci/devices/" + std::string(hwDeviceIdDrm->getPciPath());
+    std::string deviceIdFile = pciDevicePath + "/device";
+
+    int fd = NEO::SysCalls::open(deviceIdFile.c_str(), O_RDONLY);
+    if (fd < 0) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    char deviceIdStr[16] = {};
+    ssize_t bytesRead = NEO::SysCalls::read(fd, deviceIdStr, sizeof(deviceIdStr) - 1);
+    NEO::SysCalls::close(fd);
+
+    if (bytesRead <= 0) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    uint32_t deviceId = static_cast<uint32_t>(std::strtoul(deviceIdStr, nullptr, 16));
+    PRODUCT_FAMILY productFamily = getProductFamilyFromDeviceId(deviceId);
+    if (productFamily == IGFX_UNKNOWN) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    pSysmanProductHelper = SysmanProductHelper::create(productFamily);
+    DEBUG_BREAK_IF(nullptr == pSysmanProductHelper);
+
+    pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pSysmanProductHelper.get());
+    pSysmanKmdInterface->initAllAccessInterfaces(pciDevicePath);
+
+    pFsAccess = pSysmanKmdInterface->getFsAccess();
+    pProcfsAccess = pSysmanKmdInterface->getProcFsAccess();
+    pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
+
     return ZE_RESULT_SUCCESS;
 }
 

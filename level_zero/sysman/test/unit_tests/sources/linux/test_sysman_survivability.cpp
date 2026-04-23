@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
@@ -14,6 +16,7 @@
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/driver/sysman_os_driver.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_survivability.h"
 #include <level_zero/zes_api.h>
 
 #include "gtest/gtest.h"
@@ -131,7 +134,13 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenC
         return reinterpret_cast<DIR *>(0xc001);
     });
 
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess};
+    constexpr int deviceFileFd = 5;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+                                                                         if (std::string(pathname).find("/device") != std::string::npos) {
+                                                                             return deviceFileFd;
+                                                                         }
+                                                                         return 3;
+                                                                     }};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
         &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;
@@ -143,6 +152,18 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenC
         });
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> mockClosedir(&NEO::SysCalls::sysCallsClosedir, [](DIR *dir) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readBackup(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (fd == deviceFileFd) {
+            char deviceIdStr[16];
+            snprintf(deviceIdStr, sizeof(deviceIdStr), "0x%04x", getValidDeviceIdForProduct());
+            std::strcpy(static_cast<char *>(buf), deviceIdStr);
+            return strlen(deviceIdStr);
+        }
+        return -1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
         return 0;
     });
     SysmanDriverHandle *sysmanDriverHandle = nullptr;
@@ -175,7 +196,13 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenS
         return reinterpret_cast<DIR *>(0xc001);
     });
 
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess};
+    constexpr int deviceFileFd = 5;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+                                                                         if (std::string(pathname).find("/device") != std::string::npos) {
+                                                                             return deviceFileFd;
+                                                                         }
+                                                                         return 3;
+                                                                     }};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
         &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;
@@ -187,6 +214,18 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenS
         });
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> mockClosedir(&NEO::SysCalls::sysCallsClosedir, [](DIR *dir) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readBackup(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (fd == deviceFileFd) {
+            char deviceIdStr[16];
+            snprintf(deviceIdStr, sizeof(deviceIdStr), "0x%04x", getValidDeviceIdForProduct());
+            std::strcpy(static_cast<char *>(buf), deviceIdStr);
+            return strlen(deviceIdStr);
+        }
+        return -1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
         return 0;
     });
 
@@ -242,7 +281,13 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSysmanDriverHandleWhenSurvivabi
         return reinterpret_cast<DIR *>(0xc001);
     });
 
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess};
+    constexpr int deviceFileFd = 5;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+                                                                         if (std::string(pathname).find("/device") != std::string::npos) {
+                                                                             return deviceFileFd;
+                                                                         }
+                                                                         return 3;
+                                                                     }};
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
         &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;
@@ -254,6 +299,18 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSysmanDriverHandleWhenSurvivabi
         });
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> mockClosedir(&NEO::SysCalls::sysCallsClosedir, [](DIR *dir) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readBackup(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (fd == deviceFileFd) {
+            char deviceIdStr[16];
+            snprintf(deviceIdStr, sizeof(deviceIdStr), "0x%04x", getValidDeviceIdForProduct());
+            std::strcpy(static_cast<char *>(buf), deviceIdStr);
+            return strlen(deviceIdStr);
+        }
+        return -1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
         return 0;
     });
 
@@ -291,7 +348,27 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenC
     EXPECT_TRUE(sysmanDriverHandle == nullptr);
 }
 
-TEST_F(SysmanDriverTestSurvivabilityDevice, GivenValidSurvivabilityModeDeviceWhenCalllingGetFwUtilInterfaceWithNoValidFwUtilInterfaceSupportThenReturnsNullPointer) {
+TEST_F(SysmanDriverTestSurvivabilityDevice, GivenValidSurvivabilityModeDeviceWhenCallingGetFwUtilInterfaceWithNoValidFwUtilInterfaceSupportThenReturnsNullPointer) {
+    constexpr int deviceFileFd = 5;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+                                                                         if (std::string(pathname).find("/device") != std::string::npos) {
+                                                                             return deviceFileFd;
+                                                                         }
+                                                                         return 3;
+                                                                     }};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readBackup(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (fd == deviceFileFd) {
+            char deviceIdStr[16];
+            snprintf(deviceIdStr, sizeof(deviceIdStr), "0x%04x", getValidDeviceIdForProduct());
+            std::strcpy(static_cast<char *>(buf), deviceIdStr);
+            return strlen(deviceIdStr);
+        }
+        return -1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
+        return 0;
+    });
+
     std::vector<std::unique_ptr<NEO::HwDeviceId>> hwSurvivabilityDeviceIds;
     hwSurvivabilityDeviceIds.push_back(std::make_unique<NEO::HwDeviceIdDrm>(0, "0000:03:00.0", "dummy file path"));
     ze_result_t result;
@@ -307,6 +384,118 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenValidSurvivabilityModeDeviceWhe
     EXPECT_EQ(nullptr, pLinuxSysmanImp->getFwUtilInterface());
     delete sysmanDriverHandle;
     globalSysmanDriver = nullptr;
+}
+
+TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenOpeningDeviceFileFailsThenSysmanDriverHandleIsNullPointer) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+                                                                         // Only fail open for the device file, allow other opens to succeed
+                                                                         if (std::string(pathname).find("/device") != std::string::npos) {
+                                                                             return -1;
+                                                                         }
+                                                                         return 3; // Return a valid fd for other files
+                                                                     }};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readBackup(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        // Should not be called since open fails
+        return -1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
+        return 0;
+    });
+
+    std::vector<std::unique_ptr<NEO::HwDeviceId>> hwSurvivabilityDeviceIds;
+    hwSurvivabilityDeviceIds.push_back(std::make_unique<NEO::HwDeviceIdDrm>(0, "0000:03:00.0", "dummy file path"));
+    ze_result_t result;
+
+    std::unique_ptr<LinuxDriverImp> pLinuxDriverImp = std::make_unique<LinuxDriverImp>();
+    auto sysmanDriverHandle = pLinuxDriverImp->createInSurvivabilityMode(std::move(hwSurvivabilityDeviceIds), &result);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
+    EXPECT_TRUE(sysmanDriverHandle == nullptr);
+}
+
+TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenReadingDeviceIdFailsThenSysmanDriverHandleIsNullPointer) {
+    constexpr int deviceFileFd = 5;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+                                                                         if (std::string(pathname).find("/device") != std::string::npos) {
+                                                                             return deviceFileFd;
+                                                                         }
+                                                                         return 3;
+                                                                     }};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readBackup(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (fd == deviceFileFd) {
+            return -1; // Fail read for device file
+        }
+        return -1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
+        return 0;
+    });
+
+    std::vector<std::unique_ptr<NEO::HwDeviceId>> hwSurvivabilityDeviceIds;
+    hwSurvivabilityDeviceIds.push_back(std::make_unique<NEO::HwDeviceIdDrm>(0, "0000:03:00.0", "dummy file path"));
+    ze_result_t result;
+
+    std::unique_ptr<LinuxDriverImp> pLinuxDriverImp = std::make_unique<LinuxDriverImp>();
+    auto sysmanDriverHandle = pLinuxDriverImp->createInSurvivabilityMode(std::move(hwSurvivabilityDeviceIds), &result);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
+    EXPECT_TRUE(sysmanDriverHandle == nullptr);
+}
+
+TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenReadingDeviceIdReturnsZeroBytesThenSysmanDriverHandleIsNullPointer) {
+    constexpr int deviceFileFd = 5;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+                                                                         if (std::string(pathname).find("/device") != std::string::npos) {
+                                                                             return deviceFileFd;
+                                                                         }
+                                                                         return 3;
+                                                                     }};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readBackup(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (fd == deviceFileFd) {
+            return 0; // Return 0 bytes read for device file
+        }
+        return -1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
+        return 0;
+    });
+
+    std::vector<std::unique_ptr<NEO::HwDeviceId>> hwSurvivabilityDeviceIds;
+    hwSurvivabilityDeviceIds.push_back(std::make_unique<NEO::HwDeviceIdDrm>(0, "0000:03:00.0", "dummy file path"));
+    ze_result_t result;
+
+    std::unique_ptr<LinuxDriverImp> pLinuxDriverImp = std::make_unique<LinuxDriverImp>();
+    auto sysmanDriverHandle = pLinuxDriverImp->createInSurvivabilityMode(std::move(hwSurvivabilityDeviceIds), &result);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
+    EXPECT_TRUE(sysmanDriverHandle == nullptr);
+}
+
+TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenDeviceIdIsUnrecognizedThenSysmanDriverHandleIsNullPointer) {
+    constexpr int deviceFileFd = 5;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+                                                                         if (std::string(pathname).find("/device") != std::string::npos) {
+                                                                             return deviceFileFd;
+                                                                         }
+                                                                         return 3;
+                                                                     }};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readBackup(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (fd == deviceFileFd) {
+            // Return an invalid device ID that's not in deviceDescriptorTable
+            std::strcpy(static_cast<char *>(buf), "0xFFFF");
+            return 6;
+        }
+        return -1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
+        return 0;
+    });
+
+    std::vector<std::unique_ptr<NEO::HwDeviceId>> hwSurvivabilityDeviceIds;
+    hwSurvivabilityDeviceIds.push_back(std::make_unique<NEO::HwDeviceIdDrm>(0, "0000:03:00.0", "dummy file path"));
+    ze_result_t result;
+
+    std::unique_ptr<LinuxDriverImp> pLinuxDriverImp = std::make_unique<LinuxDriverImp>();
+    auto sysmanDriverHandle = pLinuxDriverImp->createInSurvivabilityMode(std::move(hwSurvivabilityDeviceIds), &result);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
+    EXPECT_TRUE(sysmanDriverHandle == nullptr);
 }
 
 } // namespace ult

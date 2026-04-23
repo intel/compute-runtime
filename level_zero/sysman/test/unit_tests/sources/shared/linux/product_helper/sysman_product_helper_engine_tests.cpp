@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class SysmanProductHelperEngineTestsFixture : public SysmanMultiDeviceFixture {
         osInterface->setDriverModel(std::unique_ptr<MockEngineNeoDrmPrelim>(pDrm));
 
         pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getSysmanProductHelper()));
-        pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pDrm);
+        pLinuxSysmanImp->pSysmanKmdInterface->initAllAccessInterfaces(*pDrm);
 
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImpPrelim>(pLinuxSysmanImp);
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;

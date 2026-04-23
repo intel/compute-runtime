@@ -50,7 +50,7 @@ class ZesEngineFixtureXe : public SysmanDeviceFixture {
 
         pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
-        pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pDrm);
+        pLinuxSysmanImp->pSysmanKmdInterface->initAllAccessInterfaces(*pDrm);
 
         pPmuInterface = std::make_unique<MockPmuInterfaceImp>(pLinuxSysmanImp);
         pPmuInterface->pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();

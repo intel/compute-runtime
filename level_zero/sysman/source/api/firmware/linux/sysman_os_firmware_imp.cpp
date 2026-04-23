@@ -32,11 +32,9 @@ void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes,
     supportedFwTypes.clear();
     bool isDeviceInSurvivabilityMode = pLinuxSysmanImp->isDeviceInSurvivabilityMode();
 
-    if (pSysmanKmdInterface != nullptr) {
-        if (isDeviceInSurvivabilityMode && pSysmanKmdInterface->isDeviceInFdoMode()) {
-            supportedFwTypes.push_back(fdoFwType);
-            return;
-        }
+    if (isDeviceInSurvivabilityMode && pSysmanKmdInterface->isDeviceInFdoMode()) {
+        supportedFwTypes.push_back(fdoFwType);
+        return;
     }
 
     if (pFwInterface != nullptr) {

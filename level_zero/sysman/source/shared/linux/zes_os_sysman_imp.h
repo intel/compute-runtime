@@ -59,6 +59,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     uint32_t getMemoryType();
     static std::string getPciRootPortDirectoryPath(std::string realPciPath);
+    PRODUCT_FAMILY getProductFamilyFromDeviceId(uint32_t deviceId);
     PRODUCT_FAMILY getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
     SysmanHwDeviceIdDrm::SingleInstance getSysmanHwDeviceIdInstance();
     NEO::Drm *getDrm();

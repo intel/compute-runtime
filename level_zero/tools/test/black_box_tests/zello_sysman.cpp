@@ -138,6 +138,7 @@ void usage() {
                  "\n        [--setconfig <deviceNo subdevId engineFlags pFactor>]                                     optionally set the performance factor for the particular handle"
                  "\n  -C,   --ecc                                                                                     selectively run ecc black box test"
                  "\n  -a,   --fan                                                                                     selectively run fan black box test"
+                 "\n  -z,   --survive                                                                                 test survivability mode"
                  "\n  -h,   --help                                                                                    display help message"
                  "\n  -re,  --rasexp                                                                                  selectively run ras experimental API black box test"
                  "\n  -v,   --vftelemetry                                                                             selectively run vf telemetry API black box test"

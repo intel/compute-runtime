@@ -23,7 +23,7 @@ struct MockFdoSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
             return readResult;
         }
 
-        if (!file.compare("device/survivability_info/fdo_mode")) {
+        if (!file.compare("survivability_info/fdo_mode")) {
             val = mockFdoValue;
         }
         return ZE_RESULT_SUCCESS;

@@ -5,9 +5,13 @@
  *
  */
 
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+
 #include "level_zero/sysman/source/driver/sysman_os_driver.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware/linux/mock_zes_sysman_firmware.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_survivability.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mtd/mock_mtd.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
@@ -106,21 +110,6 @@ TEST_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenFlashingUnkownFirmw
     delete ptestFirmwareImp;
 }
 
-TEST_F(ZesSysmanFirmwareFixture, GivenSurvivabilityModeWithNullKmdInterfaceWhenEnumeratingFirmwareThenFirmwareTypesFromFwUtilAreReturned) {
-    device->isDeviceInSurvivabilityMode = true;
-    pLinuxSysmanImp->pSysmanKmdInterface.reset(nullptr);
-
-    uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(mockSupportedFirmwareTypes.size(), count);
-
-    auto handles = getFirmwareHandles(count);
-    EXPECT_EQ(count, handles.size());
-    for (const auto &handle : handles) {
-        EXPECT_NE(nullptr, handle);
-    }
-}
-
 TEST_F(ZesSysmanFirmwareFixture, GivenNonSurvivabilityModeWithNullKmdInterfaceWhenEnumeratingFirmwareThenLateBindingTypesAreNotAdded) {
     device->isDeviceInSurvivabilityMode = false;
     pLinuxSysmanImp->pSysmanKmdInterface.reset(nullptr);
@@ -135,18 +124,31 @@ struct dirent mockSurvivabilityDevEntries[] = {
     {0, 0, 0, 0, "0000:09:00.0"},
 };
 
-inline static int openMockReturnSuccess(const char *pathname, int flags) {
-    NEO::SysCalls::closeFuncCalled = 0;
-    return 0;
-}
-
 TEST_F(SysmanSurvivabilityDeviceTest, GivenSurvivabilityDeviceWhenFirmwareEnumerationApiIsCalledThenFirmwareHandlesAreReturned) {
     const uint32_t numEntries = sizeof(mockSurvivabilityDevEntries) / sizeof(mockSurvivabilityDevEntries[0]);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpendir(&NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
         return reinterpret_cast<DIR *>(0xc001);
     });
 
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess};
+    constexpr int deviceFileFd = 5;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+                                                                         if (std::string(pathname).find("/device") != std::string::npos) {
+                                                                             return deviceFileFd;
+                                                                         }
+                                                                         return 0;
+                                                                     }};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readBackup(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
+        if (fd == deviceFileFd) {
+            char deviceIdStr[16];
+            snprintf(deviceIdStr, sizeof(deviceIdStr), "0x%04x", getValidDeviceIdForProduct());
+            std::strcpy(static_cast<char *>(buf), deviceIdStr);
+            return strlen(deviceIdStr);
+        }
+        return -1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
+        return 0;
+    });
     VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
         &NEO::SysCalls::sysCallsReaddir, [](DIR *dir) -> struct dirent * {
             static uint32_t entryIndex = 0u;

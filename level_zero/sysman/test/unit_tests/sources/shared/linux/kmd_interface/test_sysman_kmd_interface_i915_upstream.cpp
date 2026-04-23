@@ -67,7 +67,7 @@ class SysmanFixtureDeviceI915Upstream : public SysmanDeviceFixture {
     }
 
     void mockInitFsAccess() {
-        pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pLinuxSysmanImp->getDrm());
+        pLinuxSysmanImp->pSysmanKmdInterface->initAllAccessInterfaces(*pLinuxSysmanImp->getDrm());
     }
 
     void TearDown() override {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(NEO::Drm &drm, Sy
     return pSysmanKmdInterface;
 }
 
-ze_result_t SysmanKmdInterface::initFsAccessInterface(const NEO::Drm &drm) {
+ze_result_t SysmanKmdInterface::initAllAccessInterfaces(const NEO::Drm &drm) {
     pFsAccess = FsAccessInterface::create();
     pProcfsAccess = ProcFsAccessInterface::create();
     std::string deviceName;
@@ -67,6 +67,12 @@ ze_result_t SysmanKmdInterface::initFsAccessInterface(const NEO::Drm &drm) {
     }
     pSysfsAccess = SysFsAccessInterface::create(std::move(deviceName));
     return result;
+}
+
+void SysmanKmdInterface::initAllAccessInterfaces(std::string &devicePath) {
+    pFsAccess = FsAccessInterface::create();
+    pProcfsAccess = ProcFsAccessInterface::create();
+    pSysfsAccess = SysFsAccessInterface::createForSurvivability(devicePath);
 }
 
 FsAccessInterface *SysmanKmdInterface::getFsAccess() {

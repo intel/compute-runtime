@@ -56,7 +56,7 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
             val = mockLateBindingVersion;
         }
 
-        if (!file.compare("device/survivability_info/fdo_mode")) {
+        if (!file.compare("survivability_info/fdo_mode")) {
             val = mockFdoValue;
         }
         return ZE_RESULT_SUCCESS;

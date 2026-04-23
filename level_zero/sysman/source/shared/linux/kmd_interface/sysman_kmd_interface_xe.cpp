@@ -482,7 +482,7 @@ bool SysmanKmdInterfaceXe::isLateBindingVersionAvailable(std::string fwType, std
 }
 
 bool SysmanKmdInterfaceXe::isDeviceInFdoMode() {
-    std::string survivabilitySysFsNodeName = "device/survivability_info/fdo_mode";
+    std::string survivabilitySysFsNodeName = "survivability_info/fdo_mode";
     std::string survivabilityFdoNodeVal = {};
     ze_result_t result = pSysfsAccess->read(survivabilitySysFsNodeName, survivabilityFdoNodeVal);
     if (result != ZE_RESULT_SUCCESS) {
