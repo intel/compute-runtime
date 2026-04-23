@@ -15,6 +15,7 @@ struct PipeControlArgs {
 
     bool blockSettingPostSyncProperties = false;
     bool csStallOnly = false;
+    bool disableCsStall = false;
     bool dcFlushEnable = false;
     bool renderTargetCacheFlushEnable = false;
     bool instructionCacheInvalidateEnable = false;

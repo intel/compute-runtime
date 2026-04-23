@@ -286,7 +286,7 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
 
     PIPE_CONTROL pipeControl = GfxFamily::cmdInitPipeControl;
 
-    pipeControl.setCommandStreamerStallEnable(true);
+    pipeControl.setCommandStreamerStallEnable(!args.disableCsStall);
     setPipeControlExtraProperties(pipeControl, args);
 
     pipeControl.setConstantCacheInvalidationEnable(args.constantCacheInvalidationEnable);

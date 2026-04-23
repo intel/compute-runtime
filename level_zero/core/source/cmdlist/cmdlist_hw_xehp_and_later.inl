@@ -569,9 +569,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         kernelWithAssertAppended = true;
     }
 
-    bool stateCacheInvalidationWaRequired = neoDevice->getReleaseHelper()->isStateCacheInvalidationWaRequired() && kernelImp->checkKernelContainsStatefulAccess();
+    auto releaseHelper = neoDevice->getReleaseHelper();
+    bool kernelContainsStatefulAccess = kernelImp->checkKernelContainsStatefulAccess();
+    bool kernelUsesRayTracing = kernelImp->usesRayTracing();
+    bool useStateCacheInvalidationWithoutCsStall = this->isImmediateType() &&
+                                                   kernelContainsStatefulAccess &&
+                                                   releaseHelper->isStateCacheInvalidationNoCsStallRequired() &&
+                                                   !kernelUsesRayTracing;
+    bool useStateCacheInvalidationWithCsStall = kernelUsesRayTracing ||
+                                                (kernelContainsStatefulAccess && releaseHelper->isStateCacheInvalidationWaRequired());
 
-    if (stateCacheInvalidationWaRequired || kernelImp->usesRayTracing()) {
+    if (useStateCacheInvalidationWithoutCsStall) {
+        NEO::PipeControlArgs args{};
+        args.stateCacheInvalidationEnable = true;
+        args.disableCsStall = true;
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+    } else if (useStateCacheInvalidationWithCsStall) {
         NEO::PipeControlArgs args{};
         args.stateCacheInvalidationEnable = true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

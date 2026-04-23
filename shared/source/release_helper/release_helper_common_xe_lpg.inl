@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/release_helper/release_helper.h"
 
@@ -28,6 +29,14 @@ inline bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
 template <>
 bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
     return false;
+}
+
+template <>
+bool ReleaseHelperHw<release>::isStateCacheInvalidationNoCsStallRequired() const {
+    if (debugManager.flags.EnableStateCacheInvalidationWa.get() != -1) {
+        return false;
+    }
+    return true;
 }
 
 } // namespace NEO

@@ -48,6 +48,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(shouldQueryPeerAccess, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isSingleDispatchRequiredForMultiCCS, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isStateCacheInvalidationWaRequired, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isStateCacheInvalidationNoCsStallRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isAvailableSemaphore64, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isLatePreemptionStartSupportedHelper, bool, false, ());
 

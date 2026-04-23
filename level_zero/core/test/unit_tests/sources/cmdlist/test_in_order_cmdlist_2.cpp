@@ -3763,7 +3763,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
             auto pcItors = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
             ASSERT_NE(pcItors.size(), 0u);
             auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.back());
-            if (device->getNEODevice()->getReleaseHelper()->isStateCacheInvalidationWaRequired()) {
+            auto releaseHelper = device->getNEODevice()->getReleaseHelper();
+            if (releaseHelper->isStateCacheInvalidationWaRequired() || (immCmdList->isImmediateType() && releaseHelper->isStateCacheInvalidationNoCsStallRequired())) {
                 pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.front());
             }
 

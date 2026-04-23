@@ -201,6 +201,11 @@ bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired() const {
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationNoCsStallRequired() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isAvailableSemaphore64() const {
     return false;
 }

@@ -257,6 +257,30 @@ void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenTru
     }
 }
 
+void ReleaseHelperTestsBase::whenIsStateCacheInvalidationNoCsStallRequiredCalledThenTrueReturned() {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableStateCacheInvalidationWa.set(-1);
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isStateCacheInvalidationNoCsStallRequired());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsStateCacheInvalidationNoCsStallRequiredCalledWithDebugFlagSetThenFalseReturned() {
+    DebugManagerStateRestore restorer;
+    for (auto enableStateCacheInvalidationWa : {0, 1}) {
+        debugManager.flags.EnableStateCacheInvalidationWa.set(enableStateCacheInvalidationWa);
+        for (auto &revision : getRevisions()) {
+            ipVersion.revision = revision;
+            releaseHelper = ReleaseHelper::create(ipVersion);
+            ASSERT_NE(nullptr, releaseHelper);
+            EXPECT_FALSE(releaseHelper->isStateCacheInvalidationNoCsStallRequired());
+        }
+    }
+}
+
 void ReleaseHelperTestsBase::whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

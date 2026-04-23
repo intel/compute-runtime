@@ -134,3 +134,11 @@ TEST_F(ReleaseHelper1274Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThen
 TEST_F(ReleaseHelper1274Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
 }
+
+TEST_F(ReleaseHelper1274Tests, whenIsStateCacheInvalidationNoCsStallRequiredCalledThenTrueReturned) {
+    whenIsStateCacheInvalidationNoCsStallRequiredCalledThenTrueReturned();
+}
+
+TEST_F(ReleaseHelper1274Tests, whenIsStateCacheInvalidationNoCsStallRequiredCalledWithDebugFlagSetThenFalseReturned) {
+    whenIsStateCacheInvalidationNoCsStallRequiredCalledWithDebugFlagSetThenFalseReturned();
+}
