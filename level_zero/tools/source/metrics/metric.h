@@ -132,6 +132,7 @@ class MetricSource {
 
     template <typename T>
     ze_result_t activatePreferDeferredHierarchical(Device *device, const uint32_t count, zet_metric_group_handle_t *phMetricGroups);
+    uint32_t getRootDevMetricComputeScopeIdForSubDevice(MetricDeviceContext &metricDeviceContext);
 
   protected:
     uint32_t type = MetricSource::metricSourceTypeUndefined;

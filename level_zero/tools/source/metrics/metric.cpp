@@ -64,6 +64,16 @@ void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceCont
     metricDeviceContext.setComputeMetricScopeInitialized();
 }
 
+uint32_t MetricSource::getRootDevMetricComputeScopeIdForSubDevice(MetricDeviceContext &metricDeviceContext) {
+    UNRECOVERABLE_IF(metricDeviceContext.getDevice().getNEODevice()->isSubDevice() == false);
+    uint32_t scopeId = metricDeviceContext.getSubDeviceIndex();
+    auto &l0GfxCoreHelper = metricDeviceContext.getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    if (l0GfxCoreHelper.supportMetricsAggregation()) {
+        scopeId++;
+    }
+    return scopeId;
+}
+
 ze_result_t MetricSource::validateMetricsAgainstScopesAndGetExcludedMetrics(const std::vector<MetricImp *> &metrics,
                                                                             uint32_t scopeCount,
                                                                             zet_intel_metric_scope_exp_handle_t *phMetricScopes,

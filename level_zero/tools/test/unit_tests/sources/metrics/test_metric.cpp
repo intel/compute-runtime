@@ -755,6 +755,17 @@ TEST_F(MetricScopesMultiDeviceFixture, WhenAttemptingToDeleteANoneExistingMetric
     EXPECT_EQ(metricScopesCount2, metricScopesCount - 1);
 }
 
+TEST_F(MetricScopesMultiDeviceFixture, WhenSubDeviceQueriesComputeScopeIdFromRootDeviceResultDependsOnWhetherRootDeviceSupportsMetricsAggregation) {
+
+    uint32_t scopeId = mockSubMetricSource->getRootDevMetricComputeScopeIdForSubDevice(*mockSubDeviceContext);
+    uint32_t subdeviceIndex = subDevice->getMetricDeviceContext().getSubDeviceIndex();
+    auto &l0GfxCoreHelper = subDevice->getMetricDeviceContext().getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    if (l0GfxCoreHelper.supportMetricsAggregation()) {
+        subdeviceIndex++;
+    }
+    EXPECT_EQ(scopeId, subdeviceIndex);
+}
+
 using MetricGroupTest = Test<DeviceFixture>;
 
 TEST_F(MetricGroupTest, GivenNoMetricSourceIsAvailableThenNoMetricGroupsAreReturnedAndErrorIsReturned) {
