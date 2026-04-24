@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_base.inl"
 #include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/memory_manager/memory_banks.h"
 
 namespace NEO {
 typedef Gen12LpFamily Family;

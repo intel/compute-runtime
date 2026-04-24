@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
@@ -16,8 +15,11 @@
 #include "shared/source/os_interface/defs.h"
 
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <utility>
 #include <vector>
 
 namespace NEO {
