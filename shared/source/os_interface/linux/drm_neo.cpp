@@ -47,6 +47,7 @@
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/directory.h"
@@ -406,13 +407,23 @@ int Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bo
 
     GemContextCreateExtSetParam extSetparam = {};
     GemContextCreateExtSetParam extSetparamLowLatency = {};
+    GemContextCreateExtSetParam extSetparamSlmLimit = {};
+    GemContextCreateExtSetParam *slmLimitPrev = nullptr;
+    auto last = &extSetparam;
     if (drmVmId > 0) {
         extSetparam.base.name = ioctlHelper->getDrmParamValue(DrmParam::contextCreateExtSetparam);
         extSetparam.param.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamVm);
         extSetparam.param.value = drmVmId;
         if (ioctlHelper->hasContextFreqHint()) {
-            extSetparam.base.nextExtension = reinterpret_cast<uint64_t>(&extSetparamLowLatency.base);
+            last->base.nextExtension = reinterpret_cast<uint64_t>(&extSetparamLowLatency.base);
             ioctlHelper->fillExtSetparamLowLatency(extSetparamLowLatency);
+            last = &extSetparamLowLatency;
+        }
+        auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+        if (releaseHelper && releaseHelper->isSlmLimitationTo96KNeeded()) {
+            slmLimitPrev = last;
+            last->base.nextExtension = reinterpret_cast<uint64_t>(&extSetparamSlmLimit.base);
+            ioctlHelper->setSlmLimitTo96KContextParam(extSetparamSlmLimit);
         }
         gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
         gcc.flags |= ioctlHelper->getDrmParamValue(DrmParam::contextCreateFlagsUseExtensions);
@@ -429,6 +440,11 @@ int Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bo
         return ioctlHelper->createCooperativeContext(gcc);
     }
     auto ioctlResult = ioctlHelper->ioctl(DrmIoctl::gemContextCreateExt, &gcc);
+
+    if (ioctlResult < 0 && slmLimitPrev != nullptr) {
+        slmLimitPrev->base.nextExtension = extSetparamSlmLimit.base.nextExtension;
+        ioctlResult = ioctlHelper->ioctl(DrmIoctl::gemContextCreateExt, &gcc);
+    }
 
     if (ioctlResult < 0) {
         PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: GemContextCreateExt ioctl failed. Not exposing this root device\n");
