@@ -29,6 +29,7 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <mutex>
 
 namespace aub_stream {
 struct AllocationParams;
@@ -629,6 +630,12 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     virtual void submitLateMidThreadPreemptionStart() {}
 
+    void initializeResourcesAndDirectSubmission(const PreemptionMode preemptionMode) {
+        this->initializeResources(false, preemptionMode);
+        this->fillReusableAllocationsList();
+        this->initDirectSubmission();
+    }
+
   protected:
     MOCKABLE_VIRTUAL void startHostFunctionWorker(HostFunctionAllocator *allocator);
 
@@ -747,6 +754,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;
     std::atomic<bool> hostFunctionWorkerStarted = false;
+    std::once_flag preallocateResourcesFlag;
     bool isPreambleSent = false;
     bool isStateSipSent = false;
     bool skipPreemptionAllocation = false;

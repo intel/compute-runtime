@@ -265,8 +265,7 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
         osContext.reInitializeContext();
     }
 
-    csr->initializeResources(false, device->getDevicePreemptionMode());
-    csr->initDirectSubmission();
+    csr->initializeResourcesAndDirectSubmission(device->getDevicePreemptionMode());
     if (commandQueue->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
         csr->createGlobalStatelessHeap();
     }

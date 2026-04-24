@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,8 +56,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
             return BlitOperationResult::unsupported;
         }
 
-        bcsEngine->commandStreamReceiver->initializeResources(false, device.getPreemptionMode());
-        bcsEngine->commandStreamReceiver->initDirectSubmission();
+        bcsEngine->commandStreamReceiver->initializeResourcesAndDirectSubmission(device.getPreemptionMode());
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
             BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
@@ -113,9 +112,7 @@ BlitOperationResult BlitHelper::blitMemsetAllocationBanks(const Device &device, 
             return BlitOperationResult::unsupported;
         }
 
-        bcsEngine->commandStreamReceiver->initializeResources(false, device.getPreemptionMode());
-        bcsEngine->commandStreamReceiver->initDirectSubmission();
-
+        bcsEngine->commandStreamReceiver->initializeResourcesAndDirectSubmission(device.getPreemptionMode());
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
             BlitProperties::constructPropertiesForMemoryFill(
