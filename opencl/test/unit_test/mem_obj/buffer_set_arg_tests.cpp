@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,7 +86,6 @@ class BufferSetArgTest : public ContextFixture,
     MultiDeviceKernel *pMultiDeviceKernel = nullptr;
     MockKernel *pKernel = nullptr;
     std::unique_ptr<MockKernelInfo> pKernelInfo;
-    SKernelBinaryHeaderCommon kernelHeader;
     char surfaceStateHeap[0x80];
     char pCrossThreadData[64];
     Buffer *buffer = nullptr;

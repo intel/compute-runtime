@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -934,8 +934,8 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
         pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
         // setup kernel arg offsets
-        pKernelInfo->addArgImage(0, 0x00, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK);
-        pKernelInfo->addArgImage(0, 0x40, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK);
+        pKernelInfo->addArgImage(0, 0x00, static_cast<uint32_t>(NEOImageType::imageType2DMediaBlock));
+        pKernelInfo->addArgImage(0, 0x40, static_cast<uint32_t>(NEOImageType::imageType2DMediaBlock));
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
         retVal = CL_INVALID_VALUE;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,10 +25,6 @@ class MockKernelInfo;
 struct KernelInfo;
 } // namespace NEO
 
-namespace iOpenCL {
-struct SKernelBinaryHeaderCommon;
-}
-
 class KernelImageArgTest : public Test<NEO::ClDeviceFixture> {
   public:
     KernelImageArgTest();
@@ -41,7 +37,6 @@ class KernelImageArgTest : public Test<NEO::ClDeviceFixture> {
     void TearDown() override;
 
     cl_int retVal = 0;
-    std::unique_ptr<iOpenCL::SKernelBinaryHeaderCommon> kernelHeader;
     std::unique_ptr<NEO::MockContext> context;
     std::unique_ptr<NEO::MockProgram> program;
     std::unique_ptr<NEO::MockKernelInfo> pKernelInfo;

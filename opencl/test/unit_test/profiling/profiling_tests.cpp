@@ -60,7 +60,6 @@ struct ProfilingTests : public CommandEnqueueFixture,
 
     ReleaseableObjectPtr<MockProgram> program;
 
-    SKernelBinaryHeaderCommon kernelHeader = {};
     MockKernelInfo kernelInfo;
     MockContext ctx;
 

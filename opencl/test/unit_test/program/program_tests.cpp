@@ -57,8 +57,6 @@
 #include "opencl/test/unit_test/program/program_with_source.h"
 
 #include "gtest/gtest.h"
-#include "patch_list.h"
-#include "patch_shared.h"
 
 #include <map>
 #include <memory>

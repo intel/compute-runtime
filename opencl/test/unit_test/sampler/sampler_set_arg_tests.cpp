@@ -27,11 +27,7 @@ class Surface;
 
 class SamplerSetArgFixture : public ClDeviceFixture {
   public:
-    SamplerSetArgFixture()
-
-    {
-        memset(&kernelHeader, 0, sizeof(kernelHeader));
-    }
+    SamplerSetArgFixture() = default;
 
   protected:
     void setUp() {
@@ -96,7 +92,6 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
     MultiDeviceKernel *pMultiDeviceKernel = nullptr;
-    SKernelBinaryHeaderCommon kernelHeader;
     std::unique_ptr<MockKernelInfo> pKernelInfo;
     char samplerStateHeap[0x80];
     MockContext *context;

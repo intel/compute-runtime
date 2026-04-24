@@ -18,10 +18,6 @@
 #include <type_traits>
 #include <unordered_map>
 
-namespace iOpenCL {
-struct SPatchExecutionEnvironment;
-}
-
 namespace NEO {
 class MockCommandQueue;
 class MockContext;
@@ -43,7 +39,6 @@ class DevicePreemptionTests : public ::testing::Test {
     NEO::WorkaroundTable *waTable = nullptr;
     std::unique_ptr<NEO::MockDevice> device;
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;
-    std::unique_ptr<iOpenCL::SPatchExecutionEnvironment> executionEnvironment;
 };
 
 struct PreemptionTestHwDetails {

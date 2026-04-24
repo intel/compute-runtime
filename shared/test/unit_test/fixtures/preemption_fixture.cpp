@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
-#include "patch_g7.h"
 
 using namespace NEO;
 
@@ -27,8 +26,6 @@ void DevicePreemptionTests::SetUp() {
     }
 
     device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    executionEnvironment.reset(new iOpenCL::SPatchExecutionEnvironment);
-    memset(executionEnvironment.get(), 0, sizeof(iOpenCL::SPatchExecutionEnvironment));
 
     ASSERT_NE(nullptr, device);
 

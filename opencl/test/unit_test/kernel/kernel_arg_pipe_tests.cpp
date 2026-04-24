@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,6 @@ class KernelArgPipeFixture : public ContextFixture, public ClDeviceFixture {
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;
     std::unique_ptr<MockKernelInfo> pKernelInfo;
-    SKernelBinaryHeaderCommon kernelHeader;
 };
 
 using KernelArgPipeTest = Test<KernelArgPipeFixture>;

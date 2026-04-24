@@ -24,7 +24,6 @@
 #include <cassert>
 
 namespace NEO {
-using namespace iOpenCL;
 
 struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
     MockKernelObjForAuxTranslation(Type type) : KernelObjForAuxTranslation(type, nullptr) {
@@ -276,8 +275,6 @@ class MockKernelWithInternals {
         context.incRefInternal();
         mockContext = &context;
         const auto &deviceVector = context.getDevices();
-        memset(&kernelHeader, 0, sizeof(SKernelBinaryHeaderCommon));
-
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.kernelHeapSize = sizeof(kernelIsa);
         kernelInfo.heapInfo.pSsh = sshLocal;
@@ -368,7 +365,6 @@ class MockKernelWithInternals {
     MockProgram *mockProgram;
     Context *mockContext;
     KernelInfoContainer kernelInfos;
-    SKernelBinaryHeaderCommon kernelHeader = {};
     std::vector<Kernel::SimpleKernelArgInfo> defaultKernelArguments;
 };
 class MockDebugKernel : public MockKernel {

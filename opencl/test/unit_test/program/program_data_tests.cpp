@@ -516,6 +516,13 @@ TEST(ProgramLinkBinaryTest, whenLinkerInputEmptyThenLinkSuccessful) {
     EXPECT_EQ(CL_SUCCESS, ret);
 }
 
+TEST(ProgramLinkBinaryTest, givenNoLinkerInputWhenLinkBinaryThenReturnsSuccess) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockProgram program{nullptr, false, toClDeviceVector(*device)};
+    auto ret = program.linkBinary(&device->getDevice(), nullptr, 0, nullptr, 0, {}, program.externalFunctions);
+    EXPECT_EQ(CL_SUCCESS, ret);
+}
+
 TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLogAvailable) {
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
     NEO::LinkerInput::RelocationInfo relocation = {};

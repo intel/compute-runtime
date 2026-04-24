@@ -2686,7 +2686,6 @@ struct KernelExecutionEnvironmentTest : public Test<ClDeviceFixture> {
     MockKernel *kernel;
     std::unique_ptr<MockProgram> program;
     std::unique_ptr<KernelInfo> pKernelInfo;
-    SPatchExecutionEnvironment executionEnvironment = {};
 };
 
 TEST_F(KernelExecutionEnvironmentTest, GivenCompiledWorkGroupSizeIsZeroWhenGettingMaxRequiredWorkGroupSizeThenMaxWorkGroupSizeIsCorrect) {
@@ -2760,7 +2759,6 @@ struct KernelCrossThreadTests : Test<ClDeviceFixture> {
 
     std::unique_ptr<MockProgram> program;
     std::unique_ptr<MockKernelInfo> pKernelInfo;
-    SPatchExecutionEnvironment executionEnvironment = {};
 };
 
 TEST_F(KernelCrossThreadTests, WhenLocalWorkSize2OffsetsAreValidThenIsLocalWorkSize2PatchableReturnsTrue) {
@@ -3782,7 +3780,6 @@ struct KernelLargeGrfTests : Test<ClDeviceFixture> {
 
     std::unique_ptr<MockProgram> program;
     std::unique_ptr<KernelInfo> pKernelInfo;
-    SPatchExecutionEnvironment executionEnvironment = {};
 };
 
 HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSizeThenCorrectValueReturned, IsAtLeastXeCore) {

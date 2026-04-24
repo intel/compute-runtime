@@ -7,13 +7,37 @@
 
 #include "shared/test/common/mocks/mock_kernel_info.h"
 
-#include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
 using namespace NEO;
-namespace NEO {
-void populatePointerKernelArg(KernelDescriptor &kernelDesc, ArgDescPointer &dst,
-                              CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful, CrossThreadDataOffset bindless,
-                              KernelDescriptor::AddressingMode addressingMode);
+
+static void populatePointerKernelArg(KernelDescriptor &kernelDesc, ArgDescPointer &dst,
+                                     CrossThreadDataOffset stateless, uint8_t pointerSize,
+                                     SurfaceStateHeapOffset bindful, CrossThreadDataOffset bindless,
+                                     KernelDescriptor::AddressingMode addressingMode) {
+    switch (addressingMode) {
+    default:
+        UNRECOVERABLE_IF(KernelDescriptor::Stateless != addressingMode);
+        dst.bindful = undefined<SurfaceStateHeapOffset>;
+        dst.stateless = stateless;
+        dst.bindless = undefined<CrossThreadDataOffset>;
+        dst.pointerSize = pointerSize;
+        break;
+    case KernelDescriptor::BindfulAndStateless:
+        dst.bindful = bindful;
+        dst.stateless = stateless;
+        dst.bindless = undefined<CrossThreadDataOffset>;
+        dst.pointerSize = pointerSize;
+        kernelDesc.kernelAttributes.numArgsStateful++;
+        break;
+    case KernelDescriptor::BindlessAndStateless:
+        dst.bindful = undefined<SurfaceStateHeapOffset>;
+        dst.stateless = stateless;
+        dst.bindless = bindless;
+        dst.pointerSize = pointerSize;
+        kernelDesc.kernelAttributes.numArgsStateful++;
+        break;
+    }
 }
 
 void MockKernelInfo::addArgBuffer(uint32_t index, CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful, CrossThreadDataOffset bindless) {
@@ -32,7 +56,7 @@ void MockKernelInfo::addArgImage(uint32_t index, SurfaceStateHeapOffset offset, 
         arg.bindless = offset;
     }
 
-    if (type == iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK) {
+    if (type == static_cast<uint32_t>(NEOImageType::imageType2DMediaBlock)) {
         argAt(index).getExtendedTypeInfo().isMediaBlockImage = true;
     }
 
@@ -78,7 +102,7 @@ void MockKernelInfo::addArgSampler(uint32_t index, SurfaceStateHeapOffset bindfu
 
     auto &arg = argAt(index).as<ArgDescSampler>(true);
     arg.bindful = bindful;
-    arg.samplerType = iOpenCL::SAMPLER_OBJECT_TEXTURE;
+    arg.samplerType = 1u;
 
     arg.metadataPayload.samplerAddressingMode = addressingMode;
     arg.metadataPayload.samplerNormalizedCoords = normalizedCoords;

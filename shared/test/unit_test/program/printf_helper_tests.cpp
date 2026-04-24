@@ -18,7 +18,6 @@
 #include <deque>
 
 using namespace NEO;
-using namespace iOpenCL;
 
 // -------------------- Base Fixture ------------------------
 class PrintFormatterTest : public testing::Test {

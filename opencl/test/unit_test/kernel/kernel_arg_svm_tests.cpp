@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,6 @@ class KernelArgSvmFixture : public ContextFixture, public ClDeviceFixture {
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;
     std::unique_ptr<MockKernelInfo> pKernelInfo;
-    SKernelBinaryHeaderCommon kernelHeader;
     char pSshLocal[64];
     char pCrossThreadData[64];
 };

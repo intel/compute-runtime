@@ -30,8 +30,6 @@ struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
         LinearStreamFixture::setUp();
         memset(globalOffsets, 0, sizeof(globalOffsets));
         memset(startWorkGroups, 0, sizeof(startWorkGroups));
-        memset(&threadPayload, 0, sizeof(threadPayload));
-
         localWorkSizesIn[0] = 16;
         localWorkSizesIn[1] = localWorkSizesIn[2] = 1;
         numWorkGroups[0] = numWorkGroups[1] = numWorkGroups[2] = 1;
@@ -62,8 +60,6 @@ struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
     uint32_t sizeGrfDwords;
     uint32_t crossThreadDataGrf[16];
     uint32_t crossThreadDataTwoGrf[32];
-    iOpenCL::SPatchThreadPayload threadPayload;
-
     const uint32_t rootDeviceIndex = 1u;
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
