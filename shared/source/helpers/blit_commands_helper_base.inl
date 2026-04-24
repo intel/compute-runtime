@@ -124,7 +124,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(bool withFlush
 
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket, bool profilingEnabled,
-                                                              bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool relaxedOrderingEnabled) {
+                                                              bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool relaxedOrderingEnabled, bool validPitches) {
     size_t timestampCmdSize = 0;
     if (updateTimestampPacket) {
         EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
@@ -141,8 +141,12 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t>
         nBlits = getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed);
         sizePerBlit = sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT);
     } else {
-        nBlits = std::min(getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed),
-                          getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed));
+        if (validPitches) {
+            nBlits = std::min(getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed),
+                              getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed));
+        } else {
+            nBlits = getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed);
+        }
         sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
     }
 
@@ -163,8 +167,10 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
     for (auto &blitProperties : blitPropertiesContainer) {
         auto updateTimestampPacket = blitProperties.blitSyncProperties.outputTimestampPacket != nullptr;
         auto isImage = blitProperties.isImageOperation();
+        auto validPitches = BlitCommandsHelper<GfxFamily>::validatePitchesForCopyRegion(blitProperties.srcRowPitch, blitProperties.dstRowPitch);
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, updateTimestampPacket,
-                                                                       profilingEnabled, isImage, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, relaxedOrderingEnabled);
+                                                                       profilingEnabled, isImage, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed,
+                                                                       relaxedOrderingEnabled, validPitches);
         if (blitProperties.multiRootDeviceEventSync != nullptr) {
             size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
         }
@@ -391,7 +397,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(const BlitProperties &b
         if (blitProperties.blitDirection == BlitterConstants::BlitDirection::fill) {
             dispatchBlitMemoryFill(blitProperties, linearStream, rootDeviceEnvironment);
         } else {
-            bool preferCopyBufferRegion = isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+            bool preferCopyBufferRegion = validatePitchesForCopyRegion(blitProperties.srcRowPitch, blitProperties.dstRowPitch) &&
+                                          isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
             preferCopyBufferRegion ? dispatchBlitCommandsForBufferRegion(blitProperties, linearStream, rootDeviceEnvironment)
                                    : dispatchBlitCommandsForBufferPerRow(blitProperties, linearStream, rootDeviceEnvironment);
         }
@@ -489,6 +496,11 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferR
         }
     }
     return result;
+}
+
+template <typename GfxFamily>
+bool BlitCommandsHelper<GfxFamily>::validatePitchesForCopyRegion(size_t srcRowPitch, size_t dstRowPitch) {
+    return srcRowPitch <= BlitterConstants::maxBlitPitch && dstRowPitch <= BlitterConstants::maxBlitPitch;
 }
 
 template <typename GfxFamily>

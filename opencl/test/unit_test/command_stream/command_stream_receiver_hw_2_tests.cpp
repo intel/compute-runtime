@@ -67,9 +67,9 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredComman
     auto notAlignedCopySize = Vec3<size_t>{notAlignedBltSize, 1, 1};
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        alignedCopySize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false);
+        alignedCopySize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false, true);
     auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        notAlignedCopySize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false);
+        notAlignedCopySize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false, true);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
@@ -179,9 +179,9 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeForReadBufferRectThenAdd
     }
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        alignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false);
+        alignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false, true);
     auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        notAlignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false);
+        notAlignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false, true);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
@@ -218,9 +218,9 @@ HWTEST_F(BcsTests, givenBltWithBigCopySizeWhenEstimatingCommandSizeForReadBuffer
     }
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        alignedBltSize, csrDependencies, false, false, false, rootDeviceEnvironment, false, false);
+        alignedBltSize, csrDependencies, false, false, false, rootDeviceEnvironment, false, false, true);
     auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        notAlignedBltSize, csrDependencies, false, false, false, rootDeviceEnvironment, false, false);
+        notAlignedBltSize, csrDependencies, false, false, false, rootDeviceEnvironment, false, false, true);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);

@@ -1612,7 +1612,7 @@ HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlit
     Vec3<size_t> copySize{maxBlitWidth - 1, 1, 1};
     NEO::CsrDependencies csrDependencies{};
 
-    size_t totalSize = NEO::BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(copySize, csrDependencies, false, false, true, pDevice->getRootDeviceEnvironmentRef(), false, false);
+    size_t totalSize = NEO::BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(copySize, csrDependencies, false, false, true, pDevice->getRootDeviceEnvironmentRef(), false, false, false);
 
     size_t expectedSize = sizeof(typename FamilyType::XY_BLOCK_COPY_BLT);
     expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired);
@@ -1922,4 +1922,126 @@ TEST(BlitPropertiesTest, givenNoMemObjAllocationAndNoPreallocatedHostAllocationW
     EXPECT_EQ(nullptr, blitProperties.dstAllocation);
     EXPECT_EQ(hostAllocGpuVa, blitProperties.srcGpuAddress);
     EXPECT_EQ(memObjGpuVa, blitProperties.dstGpuAddress);
+}
+
+HWTEST_F(BlitTests, givenSrcAndDstPitchesThenValidatePitchesReturnsCorrectValues) {
+    size_t constexpr maxBlitPitch = static_cast<size_t>(BlitterConstants::maxBlitPitch);
+    std::vector<std::pair<std::pair<size_t, size_t>, bool>> testCases =
+        {
+            {{maxBlitPitch, maxBlitPitch}, true}, // srcPitch, dstPitch, result
+            {{maxBlitPitch, maxBlitPitch + 1}, false},
+            {{maxBlitPitch + 1, maxBlitPitch}, false},
+            {{maxBlitPitch + 1, maxBlitPitch + 1}, false},
+        };
+
+    for (auto &[pitches, expected] : testCases) {
+        auto &[srcPitch, dstPitch] = pitches;
+        EXPECT_EQ(expected, BlitCommandsHelper<FamilyType>::validatePitchesForCopyRegion(srcPitch, dstPitch));
+    }
+}
+
+HWTEST_F(BlitTests, givenValidPitchesWhenEstimatingBufferCopyThenUsesMinOfRegionAndPerRow) {
+    Vec3<size_t> copySize{256, 256, 1};
+    NEO::CsrDependencies csrDependencies{};
+
+    size_t nRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(
+        copySize, pDevice->getRootDeviceEnvironmentRef(), false);
+    size_t nPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(
+        copySize, pDevice->getRootDeviceEnvironmentRef(), false);
+
+    size_t sizeValid = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, true);
+
+    size_t sizeInvalid = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, false);
+
+    size_t expectedMinBlits = std::min(nRegion, nPerRow);
+    if (expectedMinBlits < nPerRow) {
+        EXPECT_LT(sizeValid, sizeInvalid);
+    } else {
+        EXPECT_EQ(sizeValid, sizeInvalid);
+    }
+}
+
+HWTEST_F(BlitTests, givenInvalidPitchesWhenEstimatingBufferCopyThenUsesPerRowCountOnly) {
+    Vec3<size_t> copySize{256, 256, 1};
+    NEO::CsrDependencies csrDependencies{};
+
+    size_t sizeValid = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, true);
+
+    size_t sizeInvalid = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, false);
+
+    EXPECT_GE(sizeInvalid, sizeValid);
+}
+
+HWTEST_F(BlitTests, givenValidPitchesAndRegionPreferredWhenDispatchingBufferCopyThenCopyRegionUsed) {
+    Vec3<size_t> copySize{256, 256, 1};
+    size_t nRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, pDevice->getRootDeviceEnvironmentRef(), false);
+
+    BlitProperties blitProperties{};
+    blitProperties.srcRowPitch = BlitterConstants::maxBlitPitch / 2; // Valid
+    blitProperties.dstRowPitch = BlitterConstants::maxBlitPitch / 2; // Valid
+    blitProperties.copySize = copySize;
+
+    uint32_t streamBuffer[10000] = {};
+    LinearStream linearStream{streamBuffer, sizeof(streamBuffer)};
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommands(
+        blitProperties, linearStream, pDevice->getRootDeviceEnvironmentRef());
+
+    GenCmdList commands{};
+    CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
+
+    auto copyCmdList = findAll<typename FamilyType::XY_COPY_BLT *>(commands.begin(), commands.end());
+
+    EXPECT_GT(copyCmdList.size(), 0u);
+    EXPECT_EQ(copyCmdList.size(), nRegion);
+}
+
+HWTEST_F(BlitTests, givenInvalidPitchesButRegionPreferredWhenDispatchingBufferCopyThenFallsBackToPerRow) {
+    Vec3<size_t> copySize{256, 256, 1};
+    size_t nPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(
+        copySize, pDevice->getRootDeviceEnvironmentRef(), false);
+
+    BlitProperties blitProperties{};
+    blitProperties.srcRowPitch = BlitterConstants::maxBlitPitch * 2; // Invalid - triggers fallback
+    blitProperties.dstRowPitch = BlitterConstants::maxBlitPitch * 2; // Invalid - triggers fallback
+    blitProperties.copySize = copySize;
+
+    uint32_t streamBuffer[10000] = {};
+    LinearStream linearStream{streamBuffer, sizeof(streamBuffer)};
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommands(
+        blitProperties, linearStream, pDevice->getRootDeviceEnvironmentRef());
+
+    GenCmdList commands{};
+    CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
+
+    auto copyCmdList = findAll<typename FamilyType::XY_COPY_BLT *>(commands.begin(), commands.end());
+
+    EXPECT_EQ(copyCmdList.size(), nPerRow);
+}
+
+HWTEST_F(BlitTests, givenMaxValidPitchesAndRegionPreferredWhenDispatchingBufferCopyThenCopyRegionUsedOnce) {
+    Vec3<size_t> copySize{256, 256, 1};
+    size_t nRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, pDevice->getRootDeviceEnvironmentRef(), false);
+
+    BlitProperties blitProperties{};
+    blitProperties.srcRowPitch = BlitterConstants::maxBlitPitch; // Max valid
+    blitProperties.dstRowPitch = BlitterConstants::maxBlitPitch; // Max valid
+    blitProperties.copySize = copySize;
+
+    uint32_t streamBuffer[10000] = {};
+    LinearStream linearStream{streamBuffer, sizeof(streamBuffer)};
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommands(
+        blitProperties, linearStream, pDevice->getRootDeviceEnvironmentRef());
+
+    GenCmdList commands{};
+    CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
+
+    auto copyCmdList = findAll<typename FamilyType::XY_COPY_BLT *>(commands.begin(), commands.end());
+
+    EXPECT_GT(copyCmdList.size(), 0u);
+    EXPECT_EQ(1u, nRegion);
+    EXPECT_EQ(copyCmdList.size(), nRegion);
 }

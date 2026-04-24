@@ -63,6 +63,7 @@ inline constexpr uint64_t maxBlitWidth = 0x4000;
 inline constexpr uint64_t maxBlitHeight = 0x4000;
 inline constexpr uint64_t maxBlitSetWidth = 0x1FF80;  // 0x20000 aligned to 128
 inline constexpr uint64_t maxBlitSetHeight = 0x1FFC0; // 0x20000 aligned to cacheline size
+inline constexpr uint64_t maxBlitPitch = 0x3FFFF;
 
 inline constexpr uint64_t maxBytesPerPixel = 0x10;
 enum class BlitDirection : uint32_t {

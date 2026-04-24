@@ -210,6 +210,7 @@ TEST(BcsConstantsTests, givenBlitConstantsThenTheyHaveDesiredValues) {
     EXPECT_EQ(BlitterConstants::maxBlitHeight, 0x4000u);
     EXPECT_EQ(BlitterConstants::maxBlitSetWidth, 0x1FF80u);
     EXPECT_EQ(BlitterConstants::maxBlitSetHeight, 0x1FFC0u);
+    EXPECT_EQ(BlitterConstants::maxBlitPitch, 0x3FFFFu);
 }
 
 HWTEST2_F(UltCommandStreamReceiverTest, WhenExceptionsRelatedFunctionsAreCalledThenNothingHappens, IsAtMostXe3pCore) {
