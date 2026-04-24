@@ -1696,7 +1696,9 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         bool incrementFenceValue = false;
         bool isAsyncFence = bind && bo->isAsyncPagingFenceRequired();
         if ((ioctlHelper->requiresUserFenceSetup(bind) && drm->useVMBindImmediate()) || guaranteePagingFence) {
-            lock = drm->lockBindFenceMutex();
+            if (!isAsyncFence) {
+                lock = drm->lockBindFenceMutex();
+            }
             auto nextExtension = vmBind.extensions;
             incrementFenceValue = true;
             programUserFence(drm, osContext, bo, vmBindExtUserFence, vmHandleId, nextExtension, isAsyncFence);
@@ -1730,8 +1732,8 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
                 } else {
                     drm->incFenceVal(vmHandleId);
                 }
+                lock.unlock();
             }
-            lock.unlock();
 
             if (fenceAddressAndValToWait.has_value()) {
                 bool waitOnUserFenceAfterBindAndUnbind = false;

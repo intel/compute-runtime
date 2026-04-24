@@ -294,6 +294,27 @@ TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredAndPerContextVmsWhenBindingThen
     EXPECT_NE(castToUint64(osContext.getFenceAddr(vmHandleId)), drm.context.receivedVmBindUserFence->addr);
 }
 
+TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenBindingThenBindFenceMutexIsNotAcquired) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.pageFaultSupported = true;
+
+    MockBufferObject bo(0, &drm, 3, 0, 0, 1);
+    bo.requireExplicitResidency(true);
+    bo.requireImmediateBinding(true);
+    bo.setAsyncPagingFenceRequired();
+
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized(false);
+    uint32_t vmHandleId = 0;
+
+    bo.bind(&osContext, vmHandleId, false);
+
+    EXPECT_EQ(0u, drm.lockBindFenceMutexCallCount);
+}
+
 TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenUnbindingThenRegularPagingFenceIsUsed) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUserFenceUponUnbind.set(1);

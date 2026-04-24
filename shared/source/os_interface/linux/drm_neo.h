@@ -253,7 +253,7 @@ class Drm : public DriverModel {
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath);
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment, std::string &osPciPath);
 
-    [[nodiscard]] std::unique_lock<std::mutex> lockBindFenceMutex();
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockBindFenceMutex();
 
     void setPciDomain(uint32_t domain) {
         pciDomain = domain;

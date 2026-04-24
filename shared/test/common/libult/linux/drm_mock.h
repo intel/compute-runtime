@@ -341,6 +341,12 @@ class DrmMock : public Drm {
         }
         return Drm::getDeviceDescriptor(usDeviceId);
     }
+
+    [[nodiscard]] std::unique_lock<std::mutex> lockBindFenceMutex() override {
+        lockBindFenceMutexCallCount++;
+        return Drm::lockBindFenceMutex();
+    }
+    uint32_t lockBindFenceMutexCallCount = 0u;
 };
 
 class DrmMockNonFailing : public DrmMock {
