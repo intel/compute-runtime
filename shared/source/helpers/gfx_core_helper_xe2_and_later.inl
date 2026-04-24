@@ -134,12 +134,4 @@ uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
     return 2u;
 }
 
-template <>
-bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
-    if (debugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
-        return debugManager.flags.ExperimentalCopyThroughLock.get() == 1;
-    }
-    return this->isLocalMemoryEnabled(hwInfo);
-}
-
 } // namespace NEO
