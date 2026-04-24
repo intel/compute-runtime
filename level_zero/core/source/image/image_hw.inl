@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -132,7 +133,18 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 NEO::MemoryManager::OsHandleData osHandleData{lookupTable.sharedHandleType.ntHandle};
                 NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::sharedImage, device->getNEODevice()->getDeviceBitfield());
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-                allocation->getDefaultGmm()->queryImageParams(imgInfo);
+                if (allocation != nullptr && lookupTable.glTextureExt.present) {
+                    this->device = device;
+                    this->applyGlTextureExtOverrides(allocation, imgInfo,
+                                                     lookupTable.glTextureExt.pGmmResInfo,
+                                                     lookupTable.glTextureExt.textureBufferOffset,
+                                                     lookupTable.glTextureExt.glHWFormat,
+                                                     lookupTable.glTextureExt.isAuxEnabled);
+                }
+                if (allocation != nullptr) {
+                    auto importedGmm = allocation->getDefaultGmm();
+                    importedGmm->queryImageParams(imgInfo);
+                }
             }
         } else {
 
@@ -204,21 +216,32 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             }
         }
         gmm->updateImgInfoAndDesc(imgInfo, 0u, yuvPlaneType);
+
+        if (lookupTable.isSharedHandle && lookupTable.glTextureExt.present) {
+            imgInfo.offset = 0;
+            imgInfo.xOffset = 0;
+            imgInfo.yOffset = 0;
+            imgInfo.yOffsetForUVPlane = 0;
+        }
     }
 
     imgInfo.print();
 
     NEO::SurfaceOffsets surfaceOffsets = {imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane};
 
+    const uint32_t cubeFaceIndex = (lookupTable.isSharedHandle && lookupTable.glTextureExt.present)
+                                       ? lookupTable.glTextureExt.cubeFaceIndex
+                                       : static_cast<uint32_t>(__GMM_NO_CUBE_MAP);
+
     {
         surfaceState = GfxFamily::cmdInitRenderSurfaceState;
         packedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
         uint32_t minArrayElement, renderTargetViewExtent, depth;
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(&surfaceState, imgInfo, gmm, *gmmHelper, __GMM_NO_CUBE_MAP,
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(&surfaceState, imgInfo, gmm, *gmmHelper, cubeFaceIndex,
                                                                       this->allocation->getGpuAddress(), surfaceOffsets,
                                                                       isMediaFormatLayout, minArrayElement, renderTargetViewExtent);
 
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(&surfaceState, imgInfo, __GMM_NO_CUBE_MAP, surfaceType, depth);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(&surfaceState, imgInfo, cubeFaceIndex, surfaceType, depth);
         surfaceState.setSurfaceMinLOD(0u);
         surfaceState.setMIPCountLOD(0u);
         NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(&surfaceState, gmm);
@@ -306,10 +329,10 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
         uint32_t minArrayElement, renderTargetViewExtent, depth;
         NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(&redescribedSurfaceState, imgInfoRedescirebed, gmm, *gmmHelper,
-                                                                      __GMM_NO_CUBE_MAP, this->allocation->getGpuAddress(), surfaceOffsets,
+                                                                      cubeFaceIndex, this->allocation->getGpuAddress(), surfaceOffsets,
                                                                       desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12, minArrayElement, renderTargetViewExtent);
 
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(&redescribedSurfaceState, imgInfoRedescirebed, __GMM_NO_CUBE_MAP, surfaceType, depth);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(&redescribedSurfaceState, imgInfoRedescirebed, cubeFaceIndex, surfaceType, depth);
         redescribedSurfaceState.setSurfaceMinLOD(0u);
         redescribedSurfaceState.setMIPCountLOD(0u);
         NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(&redescribedSurfaceState, gmm);

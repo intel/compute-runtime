@@ -71,6 +71,13 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     ze_result_t allocateImplicitArgsOnDemand() override;
     void encodeImplicitArgsSurfaceState() override {};
 
+    void applyGlTextureExtOverrides(NEO::GraphicsAllocation *allocation,
+                                    NEO::ImageInfo &imgInfo,
+                                    void *pGmmResInfo,
+                                    uint64_t textureBufferOffset,
+                                    uint32_t glHWFormat,
+                                    bool isAuxEnabled);
+
   protected:
     Device *device = nullptr;
     NEO::ImageInfo imgInfo = {};
@@ -86,6 +93,8 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     bool sampledImage = false;
     bool mimickedImagefor3Ch = false;
     bool srgbImage = false;
+    NEO::SurfaceFormatInfo overriddenSurfaceFormat = {};
+    bool hasOverriddenSurfaceFormat = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<ImageImp>);

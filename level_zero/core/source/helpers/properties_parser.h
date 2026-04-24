@@ -79,6 +79,15 @@ struct StructuresLookupTable {
         uint64_t size;
     } externalMemmapSystem;
 
+    struct GlTextureExt {
+        void *pGmmResInfo;
+        uint64_t textureBufferOffset;
+        uint32_t glHWFormat;
+        uint32_t cubeFaceIndex;
+        bool isAuxEnabled;
+        bool present;
+    } glTextureExt;
+
     bool areImageProperties;
     bool exportMemory;
     bool isSharedHandle;
@@ -195,6 +204,14 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             const ze_image_allocation_type_ext_desc_t *allocationTypeDesc = reinterpret_cast<const ze_image_allocation_type_ext_desc_t *>(extendedDesc);
             lookupTable.imageProperties.imageAllocationType = allocationTypeDesc->allocationType;
             lookupTable.overrideAllocationType = true;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_GL_TEXTURE_EXT_DESC) {
+            const ze_external_gl_texture_ext_desc_t *glDesc = reinterpret_cast<const ze_external_gl_texture_ext_desc_t *>(extendedDesc);
+            lookupTable.glTextureExt.pGmmResInfo = glDesc->pGmmResInfo;
+            lookupTable.glTextureExt.textureBufferOffset = glDesc->textureBufferOffset;
+            lookupTable.glTextureExt.glHWFormat = glDesc->glHWFormat;
+            lookupTable.glTextureExt.cubeFaceIndex = glDesc->cubeFaceIndex;
+            lookupTable.glTextureExt.isAuxEnabled = glDesc->isAuxEnabled;
+            lookupTable.glTextureExt.present = true;
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }

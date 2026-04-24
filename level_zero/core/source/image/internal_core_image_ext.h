@@ -23,6 +23,18 @@ struct ze_image_allocation_type_ext_desc_t {
     NEO::AllocationType allocationType = NEO::AllocationType::unknown;
 };
 
+constexpr ze_structure_type_t ZE_STRUCTURE_TYPE_EXTERNAL_GL_TEXTURE_EXT_DESC = static_cast<ze_structure_type_t>(0x00050001);
+
+struct ze_external_gl_texture_ext_desc_t {
+    ze_structure_type_t stype = ZE_STRUCTURE_TYPE_EXTERNAL_GL_TEXTURE_EXT_DESC;
+    const void *pNext = nullptr;
+    void *pGmmResInfo = nullptr;      // GMM_RESOURCE_INFO* obtained from the GL driver
+    uint64_t textureBufferOffset = 0; // byte offset of the texture data within the shared allocation
+    uint32_t glHWFormat = 0;          // genx surface-state format override (0 means no override)
+    uint32_t cubeFaceIndex = 0;       // GMM cube face index (__GMM_NO_CUBE_MAP for non-cube targets)
+    bool isAuxEnabled = false;        // request aux/compression mapping
+};
+
 // NOLINTEND(readability-identifier-naming)
 
 } // namespace L0

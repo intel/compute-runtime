@@ -11,6 +11,8 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -337,5 +339,47 @@ void ImageImp::populateImageImplicitArgs(NEO::ImageImplicitArgs &imageImplicitAr
     imageImplicitArgs.flatWidth = (imgInfo.imgDesc.imageWidth * pixelSize) - 1u;
     imageImplicitArgs.flagHeight = (imgInfo.imgDesc.imageHeight * pixelSize) - 1u;
     imageImplicitArgs.flatPitch = imgInfo.imgDesc.imageRowPitch - 1u;
+}
+
+void ImageImp::applyGlTextureExtOverrides(NEO::GraphicsAllocation *allocation,
+                                          NEO::ImageInfo &imgInfo,
+                                          void *pGmmResInfo,
+                                          uint64_t textureBufferOffset,
+                                          uint32_t glHWFormat,
+                                          bool isAuxEnabled) {
+    if (allocation == nullptr) {
+        return;
+    }
+
+    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+
+    if (pGmmResInfo) {
+        auto importedGmmResInfo = std::unique_ptr<NEO::GmmResourceInfo>(NEO::GmmResourceInfo::create(gmmHelper->getClientContext(), reinterpret_cast<GMM_RESOURCE_INFO *>(pGmmResInfo)));
+        if (importedGmmResInfo) {
+            allocation->setDefaultGmm(new NEO::Gmm(gmmHelper, importedGmmResInfo.get()));
+        }
+    }
+
+    if (textureBufferOffset != 0) {
+        allocation->setAllocationOffset(textureBufferOffset);
+    }
+
+    if (glHWFormat != 0 && glHWFormat != static_cast<uint32_t>(NEO::NUM_GFX3DSTATE_SURFACEFORMATS)) {
+        this->overriddenSurfaceFormat = *imgInfo.surfaceFormat;
+        this->overriddenSurfaceFormat.genxSurfaceFormat = static_cast<NEO::SurfaceFormat>(glHWFormat);
+        this->hasOverriddenSurfaceFormat = true;
+        imgInfo.surfaceFormat = &this->overriddenSurfaceFormat;
+    }
+
+    if (isAuxEnabled && allocation->getDefaultGmm() != nullptr &&
+        allocation->getDefaultGmm()->unifiedAuxTranslationCapable()) {
+        const auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+        auto memoryManager = this->device->getNEODevice()->getMemoryManager();
+        bool compressionEnabled = productHelper.isPageTableManagerSupported(this->device->getNEODevice()->getHardwareInfo())
+                                      ? memoryManager->mapAuxGpuVA(allocation)
+                                      : true;
+        allocation->getDefaultGmm()->setCompressionEnabled(compressionEnabled);
+    }
 }
 } // namespace L0
