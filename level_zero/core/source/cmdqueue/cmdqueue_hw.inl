@@ -1512,10 +1512,12 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::prefetchMemoryToDeviceAssociatedWithCmdList(CommandList *commandList) {
     if (commandList->isMemoryPrefetchRequested()) {
         auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
-        prefetchManager->migrateAllocationsToGpu(commandList->getPrefetchContext(),
-                                                 *this->device->getDriverHandle()->getSvmAllocsManager(),
-                                                 *this->device->getNEODevice(),
-                                                 *this->csr);
+        if (prefetchManager) {
+            prefetchManager->migrateAllocationsToGpu(commandList->getPrefetchContext(),
+                                                     *this->device->getDriverHandle()->getSvmAllocsManager(),
+                                                     *this->device->getNEODevice(),
+                                                     *this->csr);
+        }
     }
 }
 

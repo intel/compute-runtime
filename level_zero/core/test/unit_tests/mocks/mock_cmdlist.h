@@ -953,10 +953,21 @@ class MockCommandListForExecuteMemAdvise : public WhiteBox<::L0::CommandListCore
                                  const void *ptr, size_t size,
                                  ze_memory_advice_t advice) override {
         executeMemAdviseCallCount++;
+        if (this->performMemoryPrefetch == true) {
+            executeMemAdviseBeforePrefetch = true;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t appendMemoryPrefetch(const void *ptr, size_t count) override {
+        this->performMemoryPrefetch = true;
+        appendMemoryPrefetchCallCount++;
         return ZE_RESULT_SUCCESS;
     }
 
     uint32_t executeMemAdviseCallCount = 0;
+    uint32_t appendMemoryPrefetchCallCount = 0;
+    bool executeMemAdviseBeforePrefetch = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
