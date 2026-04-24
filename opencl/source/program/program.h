@@ -26,10 +26,6 @@ namespace NEO {
 namespace Zebin::Debug {
 struct Segments;
 }
-namespace PatchTokenBinary {
-struct ProgramFromPatchtokens;
-}
-
 enum class BuildPhase;
 namespace BuiltIn {
 class DispatchInfoBuilder;

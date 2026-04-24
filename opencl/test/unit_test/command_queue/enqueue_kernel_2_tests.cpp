@@ -655,7 +655,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndI
     std::string testString = "test";
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(mockKernel.kernelInfo.kernelDescriptor);
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::oclElf;
     mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
     *mockKernel.mockKernel->pImplicitArgs = {};
 

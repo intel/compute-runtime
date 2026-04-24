@@ -27,7 +27,6 @@ enum class DeviceBinaryFormat : uint8_t {
     oclElf,
     oclLibrary,
     oclCompiledObject,
-    patchtokens,
     archive,
     zebin
 };
@@ -118,8 +117,6 @@ bool isDeviceBinaryFormat(const ArrayRef<const uint8_t> binary);
 template <>
 bool isDeviceBinaryFormat<DeviceBinaryFormat::oclElf>(const ArrayRef<const uint8_t>);
 template <>
-bool isDeviceBinaryFormat<DeviceBinaryFormat::patchtokens>(const ArrayRef<const uint8_t>);
-template <>
 bool isDeviceBinaryFormat<DeviceBinaryFormat::archive>(const ArrayRef<const uint8_t>);
 template <>
 bool isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(const ArrayRef<const uint8_t>);
@@ -143,8 +140,6 @@ SingleDeviceBinary unpackSingleDeviceBinary(const ArrayRef<const uint8_t> archiv
 
 template <>
 SingleDeviceBinary unpackSingleDeviceBinary<DeviceBinaryFormat::oclElf>(const ArrayRef<const uint8_t>, const ConstStringRef, const TargetDevice &, std::string &, std::string &);
-template <>
-SingleDeviceBinary unpackSingleDeviceBinary<DeviceBinaryFormat::patchtokens>(const ArrayRef<const uint8_t>, const ConstStringRef, const TargetDevice &, std::string &, std::string &);
 template <>
 SingleDeviceBinary unpackSingleDeviceBinary<DeviceBinaryFormat::archive>(const ArrayRef<const uint8_t>, const ConstStringRef, const TargetDevice &, std::string &, std::string &);
 template <>
@@ -192,8 +187,6 @@ DecodeError decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary 
 
 template <>
 DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::oclElf>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
-template <>
-DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::patchtokens>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
 template <>
 DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::archive>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
 template <>

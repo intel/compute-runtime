@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,23 +7,12 @@
 
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
-#include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 namespace L0 {
 namespace ult {
 
 Mock<::L0::KernelImp>::Mock() : BaseClass() {
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
-    iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
-    kernelTokens.header = &kernelHeader;
-
-    iOpenCL::SPatchExecutionEnvironment execEnv = {};
-    execEnv.NumGRFRequired = 128;
-    execEnv.LargestCompiledSIMDSize = 8;
-    kernelTokens.tokens.executionEnvironment = &execEnv;
-
     this->sharedState->kernelImmData = &immutableData;
 
     auto allocation = new NEO::GraphicsAllocation(0,
@@ -38,7 +27,8 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
 
     immutableData.isaGraphicsAllocation.reset(allocation);
 
-    NEO::populateKernelDescriptor(descriptor, kernelTokens, 8);
+    descriptor.kernelAttributes.simdSize = 8;
+    descriptor.kernelAttributes.numGrfRequired = 128;
     immutableData.kernelDescriptor = &descriptor;
     immutableData.kernelInfo = &info;
     privateState.crossThreadData.clear();
