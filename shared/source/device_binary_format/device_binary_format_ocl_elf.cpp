@@ -41,8 +41,11 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(con
     SingleDeviceBinary ret;
     switch (elf.elfFileHeader->type) {
     default:
-        outErrReason = "Unsupported OCL ELF file type";
+        outErrReason = "Not OCL ELF file type";
         return {};
+
+    case Elf::ET_OPENCL_EXECUTABLE:
+        break;
 
     case Elf::ET_OPENCL_LIBRARY:
         ret.format = NEO::DeviceBinaryFormat::oclLibrary;
@@ -60,6 +63,10 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(con
         case Elf::SHT_OPENCL_LLVM_BINARY:
             ret.intermediateRepresentation = sectionData;
             break;
+
+        case Elf::SHT_OPENCL_DEV_BINARY:
+            // ignoring intentionally - only intermediate representation is extracted from legacy OCL ELF executables
+            continue;
 
         case Elf::SHT_OPENCL_OPTIONS:
             ret.buildOptions = ConstStringRef(reinterpret_cast<const char *>(sectionData.begin()), sectionData.size());

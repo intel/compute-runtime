@@ -72,7 +72,7 @@ TEST(UnpackSingleDeviceBinaryOclElf, GivenNotOclElfThenUnpackingFails) {
     EXPECT_TRUE(unpackResult.intermediateRepresentation.empty());
     EXPECT_TRUE(unpackResult.buildOptions.empty());
     EXPECT_TRUE(unpackWarnings.empty());
-    EXPECT_STREQ("Unsupported OCL ELF file type", unpackErrors.c_str());
+    EXPECT_STREQ("Not OCL ELF file type", unpackErrors.c_str());
 }
 
 TEST(UnpackSingleDeviceBinaryOclElf, GivenOclElfThenSetsProperOutputFormat) {
@@ -108,19 +108,26 @@ TEST(UnpackSingleDeviceBinaryOclElf, GivenOclElfThenSetsProperOutputFormat) {
     EXPECT_EQ(NEO::llvmBcMagic.size(), unpackResult.intermediateRepresentation.size());
 }
 
-TEST(UnpackSingleDeviceBinaryOclElf, GivenOclElfExecutableThenUnpackingFails) {
+TEST(UnpackSingleDeviceBinaryOclElf, GivenOclElfExecutableWithDevBinaryAndIrWhenUnpackingThenIrIsExtracted) {
+    const uint8_t ir[] = "235711";
+    const uint8_t devBin[] = "old_dev_binary";
     NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEnc64;
+    elfEnc64.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+    elfEnc64.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, NEO::Elf::SectionNamesOpenCl::deviceBinary,
+                           ArrayRef<const uint8_t>(devBin, sizeof(devBin)));
+    elfEnc64.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, NEO::Elf::SectionNamesOpenCl::spirvObject,
+                           ArrayRef<const uint8_t>(ir, sizeof(ir)));
+
+    auto encodedElf = elfEnc64.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    elfEnc64.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(elfEnc64.encode(), "", {}, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(encodedElf, "", {}, unpackErrors, unpackWarnings);
+
+    EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
+    EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
     EXPECT_TRUE(unpackResult.deviceBinary.empty());
-    EXPECT_TRUE(unpackResult.debugData.empty());
-    EXPECT_TRUE(unpackResult.intermediateRepresentation.empty());
-    EXPECT_TRUE(unpackResult.buildOptions.empty());
-    EXPECT_TRUE(unpackWarnings.empty());
-    EXPECT_STREQ("Unsupported OCL ELF file type", unpackErrors.c_str());
+    ASSERT_EQ(sizeof(ir), unpackResult.intermediateRepresentation.size());
+    EXPECT_EQ(0, memcmp(ir, unpackResult.intermediateRepresentation.begin(), sizeof(ir)));
 }
 
 TEST(UnpackSingleDeviceBinaryOclElf, GivenOclElfWithBuildOptionsThenBuildOptionsAreExtracted) {
