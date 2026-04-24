@@ -130,6 +130,9 @@ struct DeviceGetCapsTest : public ::testing::Test {
                 EXPECT_STREQ("__opencl_c_ext_bfloat16_local_atomic_min_max", (++openclCFeatureIterator)->name);
             }
         }
+        if (hwInfo.capabilityTable.supportsImages) {
+            EXPECT_STREQ("cl_khr_gl_msaa_sharing", (++openclCFeatureIterator)->name);
+        }
         EXPECT_EQ(clDevice.getDeviceInfo().openclCFeatures.end(), ++openclCFeatureIterator);
     }
 

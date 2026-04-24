@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include <string>
 #include <string_view>
 
-using OpenClCFeaturesContainer = StackVec<cl_name_version, 35>;
+using OpenClCFeaturesContainer = StackVec<cl_name_version, 36>;
 
 namespace NEO {
 struct HardwareInfo;

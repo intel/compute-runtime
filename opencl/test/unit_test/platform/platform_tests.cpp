@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -346,6 +346,26 @@ TEST_F(PlatformTest, givenNotSupportedImagesWhenCreateExtentionsListThenDeviceNo
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_khr_3d_image_writes")));
+}
+
+TEST_F(PlatformTest, givenSupportedImagesWhenCreatingFeaturesListThenSharingExtensionsAreReported) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.supportsImages = true;
+    OpenClCFeaturesContainer features;
+    getOpenclCFeaturesList(hwInfo, features, *compilerProductHelper.get(), releaseHelper.get());
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions("", features);
+
+    EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_gl_msaa_sharing")));
+}
+
+TEST_F(PlatformTest, givenNotSupportedImagesWhenCreatingFeaturesListThenSharingExtensionsAreNotReported) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.supportsImages = false;
+    OpenClCFeaturesContainer features;
+    getOpenclCFeaturesList(hwInfo, features, *compilerProductHelper.get(), releaseHelper.get());
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions("", features);
+
+    EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_khr_gl_msaa_sharing")));
 }
 
 TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledTwiceThenTheSamePlatformIsReturned) {
