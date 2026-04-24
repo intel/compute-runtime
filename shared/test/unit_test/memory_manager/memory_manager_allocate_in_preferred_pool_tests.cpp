@@ -1402,3 +1402,42 @@ TEST(MemoryManagerTest, givenPreferredPoolAllocationInSystemMemoryThenNotQualifi
     EXPECT_EQ(allocation, &mockGa);
     EXPECT_FALSE(allocation->qualifiesFor2MBPages());
 }
+
+TEST(MemoryManagerTest, givenReadOnlyFlagInAllocationPropertiesWhenAllocatingInPreferredPoolThenAllocationIsSetAsReadOnly) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+
+    MockGraphicsAllocation mockGa(nullptr, MemoryConstants::pageSize, MemoryConstants::pageSize);
+    mockGa.overrideMemoryPool(MemoryPool::localMemory);
+
+    memoryManager.mockGa = &mockGa;
+    memoryManager.returnMockGAFromDevicePool = true;
+
+    AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield};
+    properties.flags.readOnly = 1;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(properties, nullptr);
+    EXPECT_EQ(allocation, &mockGa);
+    EXPECT_EQ(1u, mockGa.setAsReadOnlyCalled);
+}
+
+TEST(MemoryManagerTest, givenNoReadOnlyFlagInAllocationPropertiesWhenAllocatingInPreferredPoolThenAllocationIsNotSetAsReadOnly) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->supportReadOnlyAllocationsResult = false;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+
+    MockGraphicsAllocation mockGa(nullptr, MemoryConstants::pageSize, MemoryConstants::pageSize);
+    mockGa.overrideMemoryPool(MemoryPool::localMemory);
+
+    memoryManager.mockGa = &mockGa;
+    memoryManager.returnMockGAFromDevicePool = true;
+
+    AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield};
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(properties, nullptr);
+    EXPECT_EQ(allocation, &mockGa);
+    EXPECT_EQ(0u, mockGa.setAsReadOnlyCalled);
+}

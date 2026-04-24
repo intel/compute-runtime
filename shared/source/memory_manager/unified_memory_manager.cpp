@@ -535,6 +535,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.preferCompressed &= memoryManager->isCompressionSupportedForShareable(memoryProperties.allocationFlags.flags.shareable);
     unifiedMemoryProperties.flags.preferCompressed &= preferCompressed;
     unifiedMemoryProperties.flags.resource48Bit = memoryProperties.allocationFlags.flags.resource48Bit;
+    unifiedMemoryProperties.flags.readOnly = memoryProperties.allocationFlags.flags.readOnly;
 
     if (memoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory) {
         unifiedMemoryProperties.flags.isHostInaccessibleAllocation = true;
@@ -562,7 +563,9 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
             return nullptr;
         }
     }
-    setUnifiedAllocationProperties(unifiedMemoryAllocation, {});
+    SvmAllocationProperties svmProperties{};
+    svmProperties.readOnly = memoryProperties.allocationFlags.flags.readOnly;
+    setUnifiedAllocationProperties(unifiedMemoryAllocation, svmProperties);
 
     SvmAllocationData allocData(rootDeviceIndex);
     allocData.gpuAllocations.addAllocation(unifiedMemoryAllocation);

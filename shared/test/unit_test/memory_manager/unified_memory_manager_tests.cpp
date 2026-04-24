@@ -741,3 +741,44 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenLocalMemoryEnabledAndCompressionEnabled
 
     svmManager->freeSVMAlloc(ptr);
 }
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenReadOnlyFlagSetInAllocationPropertiesWhenCreatingUnifiedMemoryAllocationThenAllocationIsNotWritable) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.allocationFlags.flags.readOnly = 1;
+
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+
+    auto graphicsAllocation = svmData->gpuAllocations.getDefaultGraphicsAllocation();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    EXPECT_FALSE(graphicsAllocation->isMemObjectsAllocationWithWritableFlags());
+
+    svmManager->freeSVMAlloc(ptr, true);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenReadOnlyFlagNotSetInAllocationPropertiesWhenCreatingUnifiedMemoryAllocationThenAllocationIsWritable) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+
+    auto graphicsAllocation = svmData->gpuAllocations.getDefaultGraphicsAllocation();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    EXPECT_TRUE(graphicsAllocation->isMemObjectsAllocationWithWritableFlags());
+
+    svmManager->freeSVMAlloc(ptr, true);
+}

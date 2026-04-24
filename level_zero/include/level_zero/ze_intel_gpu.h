@@ -612,6 +612,10 @@ typedef struct _zex_bfloat16_atomic_ext_properties_t {
     ze_device_fp_atomic_ext_flags_t bfloat16Flags; ///< [out] Capabilities for brain floating-point atomic operations
 } zex_bfloat16_atomic_ext_properties_t;
 
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 15)
+#define ZE_HOST_MEM_ALLOC_FLAG_MEM_READ_ONLY ZE_BIT(4)
+#endif
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

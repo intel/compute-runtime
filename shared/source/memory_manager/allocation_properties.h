@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,8 +29,9 @@ struct AllocationProperties {
             uint32_t forceSystemMemory : 1;
             uint32_t preferCompressed : 1;
             uint32_t cantBeReadOnly : 1;
+            uint32_t readOnly : 1;
             uint32_t shareableWithoutNTHandle : 1;
-            uint32_t reserved : 17;
+            uint32_t reserved : 16;
         } flags;
         uint32_t allFlags = 0;
     };
