@@ -76,6 +76,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Ecc
     bool isEccConfigurationSupported() override;
+    ze_result_t getEccAvailable(LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t *pAvailable) override;
+    ze_result_t getEccConfigurable(LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t *pConfigurable) override;
+    ze_result_t getEccState(LinuxSysmanImp *pLinuxSysmanImp, zes_device_ecc_properties_t *pState) override;
 
     // Device
     bool isUpstreamPortConnected() override;

@@ -13,9 +13,17 @@
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
+#include <string_view>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+inline constexpr std::string_view eccSysfsPathTelem1 = "/sys/class/intel_pmt/telem1";
+inline constexpr std::string_view eccRealPathTelem1 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
+inline constexpr std::string_view eccTelem1OffsetFileName = "/sys/class/intel_pmt/telem1/offset";
+inline constexpr std::string_view eccTelem1GuidFileName = "/sys/class/intel_pmt/telem1/guid";
+inline constexpr std::string_view eccTelem1TelemFileName = "/sys/class/intel_pmt/telem1/telem";
 
 struct MockEccFwInterface : public L0::Sysman::FirmwareUtil {
     ze_result_t mockFwGetEccConfigResult = ZE_RESULT_SUCCESS;

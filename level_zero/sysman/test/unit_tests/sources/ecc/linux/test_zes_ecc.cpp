@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ class ZesEccFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndEccUnsupportedWhenCallingZesDeviceEccAvailableThenVerifyApiCallFails) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndEccUnsupportedWhenCallingEccApisThenVerifyApiCallFails) {
     struct MockSysmanProductHelperEcc : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
         MockSysmanProductHelperEcc() = default;
     };
@@ -46,8 +46,17 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndEccUnsupportedWhenCallingZesDevic
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
     ze_bool_t eccAvailable = true;
-
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceEccAvailable(device, &eccAvailable));
+
+    ze_bool_t eccConfigurable = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceEccConfigurable(device, &eccConfigurable));
+
+    zes_device_ecc_properties_t props = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetEccState(device, &props));
+
+    zes_device_ecc_desc_t newState = {ZES_STRUCTURE_TYPE_DEVICE_ECC_DESC, nullptr, ZES_DEVICE_ECC_STATE_ENABLED};
+    zes_device_ecc_properties_t setProps = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceSetEccState(device, &newState, &setProps));
 }
 
 } // namespace ult

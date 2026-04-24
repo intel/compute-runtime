@@ -35,6 +35,9 @@ class EccImp : public Ecc, NEO::NonCopyableAndNonMovableClass {
 
     zes_device_ecc_state_t getEccState(uint8_t state);
     static FirmwareUtil *getFirmwareUtilInterface(OsSysman *pOsSysman);
+    static ze_result_t getEccAvailable(OsSysman *pOsSysman, ze_bool_t *pAvailable);
+    static ze_result_t getEccConfigurable(OsSysman *pOsSysman, ze_bool_t *pConfigurable);
+    static ze_result_t getEccState(OsSysman *pOsSysman, zes_device_ecc_properties_t *pState);
     ze_result_t getEccFwUtilInterface(FirmwareUtil *&pFwUtil);
 };
 

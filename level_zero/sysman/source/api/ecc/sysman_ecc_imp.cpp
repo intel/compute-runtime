@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ ze_result_t EccImp::deviceEccAvailable(ze_bool_t *pAvailable) {
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
-            return result;
+            return getEccAvailable(pOsSysman, pAvailable);
         }
         UNRECOVERABLE_IF(pFwInterface == nullptr);
     }
@@ -50,7 +50,7 @@ ze_result_t EccImp::deviceEccConfigurable(ze_bool_t *pConfigurable) {
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
-            return result;
+            return getEccConfigurable(pOsSysman, pConfigurable);
         }
         UNRECOVERABLE_IF(pFwInterface == nullptr);
     }
@@ -62,7 +62,7 @@ ze_result_t EccImp::getEccState(zes_device_ecc_properties_t *pState) {
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
-            return result;
+            return getEccState(pOsSysman, pState);
         }
         UNRECOVERABLE_IF(pFwInterface == nullptr);
     }
