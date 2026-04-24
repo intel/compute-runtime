@@ -11,7 +11,6 @@
 
 namespace NEO {
 GmmClientContext::GmmClientContext() = default;
-GmmClientContext::~GmmClientContext() = default;
 
 GMM_CLIENT_CONTEXT *GmmClientContext::getHandle() const {
     return clientContext.get();

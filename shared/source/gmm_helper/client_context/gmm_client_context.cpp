@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
@@ -16,6 +17,8 @@
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
 
 namespace NEO {
+
+GmmClientContext::~GmmClientContext() = default;
 
 void GmmClientContext::initialize(const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto hardwareInfo = rootDeviceEnvironment.getHardwareInfo();
