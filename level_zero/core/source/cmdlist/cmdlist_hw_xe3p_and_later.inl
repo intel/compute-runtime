@@ -25,6 +25,40 @@ constexpr bool CommandListCoreFamily<gfxCoreFamily>::checkIfAllocationImportedRe
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInInlineData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsScratchSpace, bool kernelNeedsImplicitArgs) {
+    if (this->scratchAddressPatchingEnabled && kernelNeedsScratchSpace) {
+        auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
+        launchParams.scratchAddressPatchIndex = commandsToPatch.size();
+        commandsToPatch.push_back(PatchComputeWalkerInlineDataScratch{});
+
+        auto &scratchInlineData =
+            std::get<PatchComputeWalkerInlineDataScratch>(commandsToPatch[launchParams.scratchAddressPatchIndex]);
+
+        scratchInlineData.pDestination = dispatchKernelArgs.outWalkerPtr;
+        scratchInlineData.gpuAddress = dispatchKernelArgs.outWalkerGpuVa;
+        scratchInlineData.scratchAddressAfterPatch = 0;
+        scratchInlineData.offset = NEO::isDefined(scratchPointerAddress.offset)
+                                       ? NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) + scratchPointerAddress.offset
+                                       : NEO::undefined<size_t>;
+        scratchInlineData.patchSize = NEO::isDefined(scratchPointerAddress.pointerSize)
+                                          ? scratchPointerAddress.pointerSize
+                                          : NEO::undefined<size_t>;
+        if (NEO::isDefined(scratchPointerAddress.offset)) {
+            this->activeScratchPatchElements++;
+        }
+
+        auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
+        if (ssh != nullptr) {
+            scratchInlineData.baseAddress = ssh->getGpuBase();
+        }
+
+        if (NEO::isDefined(scratchPointerAddress.pointerSize) && NEO::isValidOffset(scratchPointerAddress.offset)) {
+            addPatchScratchAddressInImplicitArgs(commandsToPatch, dispatchKernelArgs, kernelDescriptor, kernelNeedsImplicitArgs);
+        }
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::setupFlushL3Flags(bool &isFlushL3ForExternalAllocationRequired, bool &isFlushL3ForHostUsmRequired, bool isFlushL3AfterPostSync, bool isKernelUsingExternalAllocation, bool isKernelUsingSystemAllocation) {
     isFlushL3ForExternalAllocationRequired = isFlushL3AfterPostSync && isKernelUsingExternalAllocation;
     isFlushL3ForHostUsmRequired = isFlushL3AfterPostSync && isKernelUsingSystemAllocation;

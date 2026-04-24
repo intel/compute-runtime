@@ -406,36 +406,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
     launchParams.outWalker = dispatchKernelArgs.outWalkerPtr;
 
-    if (this->heaplessModeEnabled && this->scratchAddressPatchingEnabled && kernelNeedsScratchSpace) {
-        auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
-        launchParams.scratchAddressPatchIndex = commandsToPatch.size();
-        commandsToPatch.push_back(PatchComputeWalkerInlineDataScratch{});
-
-        auto &scratchInlineData =
-            std::get<PatchComputeWalkerInlineDataScratch>(commandsToPatch[launchParams.scratchAddressPatchIndex]);
-
-        scratchInlineData.pDestination = dispatchKernelArgs.outWalkerPtr;
-        scratchInlineData.gpuAddress = dispatchKernelArgs.outWalkerGpuVa;
-        scratchInlineData.scratchAddressAfterPatch = 0;
-        scratchInlineData.offset = NEO::isDefined(scratchPointerAddress.offset)
-                                       ? NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) + scratchPointerAddress.offset
-                                       : NEO::undefined<size_t>;
-        scratchInlineData.patchSize = NEO::isDefined(scratchPointerAddress.pointerSize)
-                                          ? scratchPointerAddress.pointerSize
-                                          : NEO::undefined<size_t>;
-        if (NEO::isDefined(scratchPointerAddress.offset)) {
-            this->activeScratchPatchElements++;
-        }
-
-        auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
-        if (ssh != nullptr) {
-            scratchInlineData.baseAddress = ssh->getGpuBase();
-        }
-
-        if (NEO::isDefined(scratchPointerAddress.pointerSize) && NEO::isValidOffset(scratchPointerAddress.offset)) {
-            addPatchScratchAddressInImplicitArgs(commandsToPatch, dispatchKernelArgs, kernelDescriptor, kernelNeedsImplicitArgs);
-        }
-    }
+    addPatchScratchAddressInInlineData(commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, kernelNeedsScratchSpace, kernelNeedsImplicitArgs);
 
     if (!isImmediateType()) {
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
