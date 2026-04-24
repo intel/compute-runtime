@@ -159,10 +159,19 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
         }
         void *allocationPtr = allocationIter->allocation;
         DEBUG_BREAK_IF(nullptr == allocationIter->svmData);
+        auto hasAllRootDeviceMappings = [&]() {
+            for (const auto &rootDeviceIndex : unifiedMemoryProperties.rootDeviceIndices) {
+                if (allocationIter->svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex) == nullptr) {
+                    return false;
+                }
+            }
+            return true;
+        };
         if (allocationIter->svmData->device == unifiedMemoryProperties.device &&
             allocationIter->svmData->allocationFlagsProperty.allFlags == unifiedMemoryProperties.allocationFlags.allFlags &&
             allocationIter->svmData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags &&
             alignmentAllows(allocationIter->allocation, unifiedMemoryProperties.alignment) &&
+            hasAllRootDeviceMappings() &&
             false == isInUse(*allocationIter)) {
             if (allocationIter->svmData->device) {
                 auto lock = allocationIter->svmData->device->usmReuseInfo.obtainAllocationsReuseLock();

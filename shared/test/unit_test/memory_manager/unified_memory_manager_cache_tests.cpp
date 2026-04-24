@@ -1006,15 +1006,17 @@ struct SvmDeviceAllocationCacheTestDataType {
                                          std::map<uint32_t, DeviceBitfield> &subdeviceBitFields,
                                          Device *device,
                                          std::string name) : allocationSize(allocationSize),
+                                                             rootDeviceIndicesStorage(rootDeviceIndicesArg),
                                                              unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory,
                                                                                      1,
-                                                                                     rootDeviceIndicesArg,
+                                                                                     rootDeviceIndicesStorage,
                                                                                      subdeviceBitFields),
                                                              name(name) {
         unifiedMemoryProperties.device = device;
     };
     size_t allocationSize;
     void *allocation{nullptr};
+    RootDeviceIndicesContainer rootDeviceIndicesStorage;
     UnifiedMemoryProperties unifiedMemoryProperties;
     std::string name;
 };
@@ -1053,7 +1055,7 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentFlagsWhenAlloc
                            subDeviceBitfields,
                            rootDevice, "allocWriteCombined"),
         secondDevice(defaultAllocSize,
-                     {rootDevice->getRootDeviceIndex()},
+                     {secondRootDevice->getRootDeviceIndex()},
                      subDeviceBitfields,
                      secondRootDevice, "secondDevice"),
         subDevice(defaultAllocSize,
@@ -2226,6 +2228,118 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCalle
     EXPECT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
     EXPECT_EQ(baseTimePoint + timeDiff * 2, svmManager->usmHostAllocationsCache->allocations[0].saveTime);
 
+    svmManager->cleanupUSMAllocCaches();
+}
+
+TEST_F(SvmHostAllocationCacheTest, givenMultiDeviceWhenHostAllocationCachedForOneDeviceThenItIsNotReusedForDifferentDevice) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(2, 0);
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+    auto device0 = deviceFactory->rootDevices[0];
+    auto device1 = deviceFactory->rootDevices[1];
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(device0->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    memoryManager->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device0);
+    ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
+
+    constexpr auto allocationSize = MemoryConstants::pageSize64k;
+
+    RootDeviceIndicesContainer rootDeviceIndices0;
+    rootDeviceIndices0.pushUnique(device0->getRootDeviceIndex());
+    std::map<uint32_t, DeviceBitfield> deviceBitfields0 = {{device0->getRootDeviceIndex(), device0->getDeviceBitfield()}};
+    UnifiedMemoryProperties propertiesForDevice0(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices0, deviceBitfields0);
+
+    RootDeviceIndicesContainer rootDeviceIndices1;
+    rootDeviceIndices1.pushUnique(device1->getRootDeviceIndex());
+    std::map<uint32_t, DeviceBitfield> deviceBitfields1 = {{device1->getRootDeviceIndex(), device1->getDeviceBitfield()}};
+    UnifiedMemoryProperties propertiesForDevice1(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices1, deviceBitfields1);
+
+    auto allocation = svmManager->createHostUnifiedMemoryAllocation(allocationSize, propertiesForDevice0);
+    ASSERT_NE(allocation, nullptr);
+
+    svmManager->freeSVMAlloc(allocation);
+    EXPECT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    auto newAllocation = svmManager->createHostUnifiedMemoryAllocation(allocationSize, propertiesForDevice1);
+    EXPECT_NE(newAllocation, nullptr);
+    EXPECT_NE(newAllocation, allocation);
+    EXPECT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    svmManager->freeSVMAlloc(newAllocation);
+    svmManager->cleanupUSMAllocCaches();
+}
+
+TEST_F(SvmHostAllocationCacheTest, givenMultiDeviceWhenHostAllocationCachedForOneDeviceThenItIsReusedForSameDevice) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(2, 0);
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+    auto device0 = deviceFactory->rootDevices[0];
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(device0->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    memoryManager->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device0);
+    ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
+
+    constexpr auto allocationSize = MemoryConstants::pageSize64k;
+
+    RootDeviceIndicesContainer rootDeviceIndices0;
+    rootDeviceIndices0.pushUnique(device0->getRootDeviceIndex());
+    std::map<uint32_t, DeviceBitfield> deviceBitfields0 = {{device0->getRootDeviceIndex(), device0->getDeviceBitfield()}};
+    UnifiedMemoryProperties propertiesForDevice0(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices0, deviceBitfields0);
+
+    auto allocation = svmManager->createHostUnifiedMemoryAllocation(allocationSize, propertiesForDevice0);
+    ASSERT_NE(allocation, nullptr);
+
+    svmManager->freeSVMAlloc(allocation);
+    EXPECT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    auto recycledAllocation = svmManager->createHostUnifiedMemoryAllocation(allocationSize, propertiesForDevice0);
+    EXPECT_EQ(recycledAllocation, allocation);
+    EXPECT_EQ(0u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    svmManager->freeSVMAlloc(recycledAllocation);
+    svmManager->cleanupUSMAllocCaches();
+}
+
+TEST_F(SvmHostAllocationCacheTest, givenMultiDeviceWhenHostAllocationCachedForBothDevicesThenItIsReusedForEitherDevice) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(2, 0);
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+    auto device0 = deviceFactory->rootDevices[0];
+    auto device1 = deviceFactory->rootDevices[1];
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(device0->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    memoryManager->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device0);
+    ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
+
+    constexpr auto allocationSize = MemoryConstants::pageSize64k;
+
+    RootDeviceIndicesContainer bothRootDeviceIndices;
+    bothRootDeviceIndices.pushUnique(device0->getRootDeviceIndex());
+    bothRootDeviceIndices.pushUnique(device1->getRootDeviceIndex());
+    std::map<uint32_t, DeviceBitfield> bothDeviceBitfields = {
+        {device0->getRootDeviceIndex(), device0->getDeviceBitfield()},
+        {device1->getRootDeviceIndex(), device1->getDeviceBitfield()}};
+    UnifiedMemoryProperties propertiesForBothDevices(InternalMemoryType::hostUnifiedMemory, 1, bothRootDeviceIndices, bothDeviceBitfields);
+
+    auto allocation = svmManager->createHostUnifiedMemoryAllocation(allocationSize, propertiesForBothDevices);
+    ASSERT_NE(allocation, nullptr);
+
+    svmManager->freeSVMAlloc(allocation);
+    EXPECT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    RootDeviceIndicesContainer rootDeviceIndices1;
+    rootDeviceIndices1.pushUnique(device1->getRootDeviceIndex());
+    std::map<uint32_t, DeviceBitfield> deviceBitfields1 = {{device1->getRootDeviceIndex(), device1->getDeviceBitfield()}};
+    UnifiedMemoryProperties propertiesForDevice1(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices1, deviceBitfields1);
+
+    auto recycledAllocation = svmManager->createHostUnifiedMemoryAllocation(allocationSize, propertiesForDevice1);
+    EXPECT_EQ(recycledAllocation, allocation);
+    EXPECT_EQ(0u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    svmManager->freeSVMAlloc(recycledAllocation);
     svmManager->cleanupUSMAllocCaches();
 }
 } // namespace NEO
