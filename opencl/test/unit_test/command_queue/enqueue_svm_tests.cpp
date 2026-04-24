@@ -17,6 +17,7 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/hw_timestamps.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -2871,6 +2872,25 @@ HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenDstIsMappedThenR
     EXPECT_FALSE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), mappedPtr, usmPtr, buffer->getSize(), false));
 }
 
+HWTEST_F(StagingBufferTest, givenStagingBufferAllocationFailureWhenEnqueueStagingBufferMemcpyThenReturnOutOfHostMemory) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(context->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    auto retVal = myCmdQ.enqueueStagingBufferMemcpy(
+        false,    // cl_bool blocking_copy
+        usmPtr,   // void *dst_ptr
+        hostPtr,  // const void *src_ptr
+        copySize, // size_t size
+        nullptr   // cl_event *event
+    );
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+}
 HWTEST_F(EnqueueSvmTest, givenSrcSystemPtrWithSharedSystemEnabledWhenEnqueueSVMMemcpyThenNoTemporaryAllocationCreated) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);

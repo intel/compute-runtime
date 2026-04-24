@@ -491,6 +491,29 @@ HWTEST_F(StagingBufferManagerTest, givenFailedAllocationWhenRequestStagingBuffer
     EXPECT_EQ(stagingBuffer, 0u);
 }
 
+HWTEST_F(StagingBufferManagerTest, givenFailedStagingBufferAllocationWhenPerformCopyThenReturnAllocationFailedStatus) {
+    constexpr size_t totalCopySize = stagingBufferSize * 2;
+    auto usmBuffer = allocateDeviceBuffer(totalCopySize);
+    auto nonUsmBuffer = new unsigned char[totalCopySize];
+
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    size_t chunkCounter = 0;
+    ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) {
+        chunkCounter++;
+        return 0;
+    };
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
+
+    EXPECT_EQ(stagingBufferAllocationFailedStatus, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_EQ(0u, chunkCounter);
+    svmAllocsManager->freeSVMAlloc(usmBuffer);
+    delete[] nonUsmBuffer;
+}
+
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyD2HThenCopyData) {
     constexpr size_t numOfChunkCopies = 8;
     constexpr size_t remainder = 1024;

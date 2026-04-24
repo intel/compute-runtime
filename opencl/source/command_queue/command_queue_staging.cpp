@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -155,6 +155,8 @@ cl_event *CommandQueue::assignEventForStaging(cl_event *userEvent, cl_event *pro
 cl_int CommandQueue::postStagingTransferSync(const StagingTransferStatus &status, cl_event *event, const cl_event profilingEvent, bool isSingleTransfer, bool isBlocking, cl_command_type commandType) {
     if (status.waitStatus == WaitStatus::gpuHang) {
         return CL_OUT_OF_RESOURCES;
+    } else if (status.chunkCopyStatus == stagingBufferAllocationFailedStatus) {
+        return CL_OUT_OF_HOST_MEMORY;
     } else if (status.chunkCopyStatus != CL_SUCCESS) {
         return status.chunkCopyStatus;
     }

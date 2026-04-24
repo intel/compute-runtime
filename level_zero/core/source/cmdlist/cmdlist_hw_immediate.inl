@@ -1903,6 +1903,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::stagingStatusToL0(con
     if (status.waitStatus == NEO::WaitStatus::gpuHang) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
+    if (status.chunkCopyStatus == NEO::stagingBufferAllocationFailedStatus) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
     return static_cast<ze_result_t>(status.chunkCopyStatus);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,6 +83,7 @@ struct StagingTransferStatus {
 };
 
 constexpr size_t maxInFlightReads = 2u;
+constexpr int32_t stagingBufferAllocationFailedStatus = -1;
 using StagingQueue = StackVec<std::pair<UserData, StagingBufferTracker>, maxInFlightReads>;
 
 class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {

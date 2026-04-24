@@ -17,6 +17,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -1557,6 +1558,25 @@ HWTEST_F(StagingBuffersFixture, givenStagingBufferManagerDestroyedAndHostSynchro
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
     auto res = cmdList.hostSynchronize(std::numeric_limits<uint64_t>::max());
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+HWTEST_F(StagingBuffersFixture, givenStagingBufferAllocationFailureWhenAppendMemoryCopyThenReturnOutOfHostMemory) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto memoryManager = static_cast<NEO::MockMemoryManager *>(device->getNEODevice()->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+    driverHandle->svmAllocsManager->cleanupUSMAllocCaches();
+    driverHandle->stagingBufferManager.reset(new NEO::StagingBufferManager{driverHandle->svmAllocsManager, driverHandle->rootDeviceIndices, driverHandle->deviceBitfields, false});
+
+    res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingWhenAppendFailedThenPropagateError) {

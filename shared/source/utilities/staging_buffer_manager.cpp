@@ -68,6 +68,10 @@ StagingTransferStatus StagingBufferManager::performChunkTransfer(size_t chunkTra
     } else {
         auto allocatedSize = userData.size;
         auto [allocator, stagingBuffer] = requestStagingBuffer(allocatedSize);
+        if (allocator == nullptr || stagingBuffer == 0) {
+            result.chunkCopyStatus = stagingBufferAllocationFailedStatus;
+            return result;
+        }
         tracker = StagingBufferTracker{allocator, stagingBuffer, allocatedSize, csr};
     }
 
