@@ -205,29 +205,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool isKernelUsingSystemAllocation = false;
     bool isKernelUsingExternalAllocation = false;
 
+    const bool externalAllocationScanRequired = l3FlushAfterWalkerSupported && isHostSignalScopeEvent && this->l3FlushAfterPostSyncEnabled;
+    const bool systemAllocationScanRequired = isHostSignalScopeEvent && (this->systemMemoryFenceInPostSyncRequired || externalAllocationScanRequired);
+
     if (!launchParams.isBuiltInKernel) {
-        auto verifyKernelUsingSystemAllocations = [&]<bool l3FlushAfterWalkerSupported>(const NEO::ResidencyContainer &kernelResidencyContainer) {
-            for (const auto &allocation : kernelResidencyContainer) {
-                if (allocation == nullptr) {
-                    continue;
-                }
-                auto type = allocation->getAllocationType();
-
-                if (type == NEO::AllocationType::bufferHostMemory) {
-                    isKernelUsingSystemAllocation = true;
-                }
-
-                if constexpr (l3FlushAfterWalkerSupported) {
-                    isKernelUsingExternalAllocation = allocation->getIsImported();
-                }
-            }
-        };
-
         if (!launchParams.makeKernelCommandView) {
-            verifyKernelUsingSystemAllocations.template operator()<l3FlushAfterWalkerSupported>(kernel->getArgumentsResidencyContainer());
-            verifyKernelUsingSystemAllocations.template operator()<false>(kernel->getInternalResidencyContainer());
+            if (systemAllocationScanRequired) {
+                isKernelUsingSystemAllocation = this->containsSystemAllocation(kernel->getArgumentsResidencyContainer()) ||
+                                                this->containsSystemAllocation(kernel->getInternalResidencyContainer());
+            }
+            if (externalAllocationScanRequired) {
+                isKernelUsingExternalAllocation = this->containsExternalAllocation(kernel->getArgumentsResidencyContainer());
+            }
         }
-
     } else {
         isKernelUsingSystemAllocation = launchParams.isDestinationAllocationInSystemMemory;
         if constexpr (l3FlushAfterWalkerSupported) {

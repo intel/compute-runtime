@@ -71,6 +71,8 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
+    using BaseClass::containsExternalAllocation;
+    using BaseClass::containsSystemAllocation;
     using BaseClass::copyOffloadMode;
     using BaseClass::copyOperationFenceSupported;
     using BaseClass::currentBindingTablePoolBaseAddress;
@@ -138,6 +140,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::subCmdListsForRecordedBcsSplit;
     using BaseClass::syncDispatchQueueId;
     using BaseClass::synchronizedDispatchMode;
+    using BaseClass::systemMemoryFenceInPostSyncRequired;
     using BaseClass::unifiedMemoryControls;
     using BaseClass::updateStreamProperties;
     using BaseClass::useAdditionalBlitProperties;
@@ -353,6 +356,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
     using BaseClass::stateComputeModeTracking;
     using BaseClass::statelessBuiltinsEnabled;
     using BaseClass::subCmdListsForRecordedBcsSplit;
+    using BaseClass::systemMemoryFenceInPostSyncRequired;
     using CommandList::dispatchHostFunction;
     using CommandList::flags;
     using CommandList::internalUsage;

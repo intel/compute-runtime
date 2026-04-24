@@ -246,6 +246,26 @@ void CommandListCoreFamily<gfxCoreFamily>::handlePostSubmissionState() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::containsSystemAllocation(const NEO::ResidencyContainer &residencyContainer) {
+    for (const auto &allocation : residencyContainer) {
+        if (allocation != nullptr && allocation->getAllocationType() == NEO::AllocationType::bufferHostMemory) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::containsExternalAllocation(const NEO::ResidencyContainer &residencyContainer) {
+    for (const auto &allocation : residencyContainer) {
+        if (allocation != nullptr && allocation->getIsImported()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO::EngineGroupType engineGroupType,
                                                              ze_command_list_flags_t flags) {
     this->device = device;
@@ -291,6 +311,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->implicitSynchronizedDispatchForCooperativeKernelsAllowed = l0GfxCoreHelper.implicitSynchronizedDispatchForCooperativeKernelsAllowed();
     this->maxLocalSubRegionSize = productHelper.getMaxLocalSubRegionSize(hwInfo);
     this->l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported();
+    this->systemMemoryFenceInPostSyncRequired = productHelper.isGlobalFenceInPostSyncRequired(hwInfo);
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo, this->l3FlushAfterPostSyncEnabled);
     this->useAdditionalBlitProperties = productHelper.useAdditionalBlitProperties();
     this->isPostImageWriteFlushRequired = releaseHelper ? releaseHelper->isPostImageWriteFlushRequired() : false;

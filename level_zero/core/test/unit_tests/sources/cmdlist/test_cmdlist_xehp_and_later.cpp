@@ -19,6 +19,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_encoder.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
@@ -3083,6 +3084,53 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 
     auto kernelAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), eventAlloaction);
     EXPECT_EQ(kernelAllocationIt, cmdlistResidency.end());
+}
+
+using CommandListSystemMemoryFenceCacheTest = Test<DeviceFixture>;
+
+HWTEST2_F(CommandListSystemMemoryFenceCacheTest, givenCommandListWhenInitializedThenSystemMemoryFenceInPostSyncRequiredMatchesProductHelper, IsAtLeastXeCore) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    auto &productHelper = device->getProductHelper();
+    EXPECT_EQ(productHelper.isGlobalFenceInPostSyncRequired(device->getHwInfo()), commandList->systemMemoryFenceInPostSyncRequired);
+}
+
+using ContainsAllocationHelpersTest = Test<DeviceFixture>;
+
+HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForSystemAllocationThenReturnsTrueOnlyWhenBufferHostMemoryPresent, IsAtLeastXeCore) {
+    using CommandListType = WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
+
+    NEO::ResidencyContainer emptyContainer;
+    EXPECT_FALSE(CommandListType::containsSystemAllocation(emptyContainer));
+
+    NEO::MockGraphicsAllocation deviceAllocation{};
+    deviceAllocation.setAllocationType(NEO::AllocationType::buffer);
+    NEO::MockGraphicsAllocation hostAllocation{};
+    hostAllocation.setAllocationType(NEO::AllocationType::bufferHostMemory);
+
+    NEO::ResidencyContainer containerWithoutHost{&deviceAllocation, nullptr};
+    EXPECT_FALSE(CommandListType::containsSystemAllocation(containerWithoutHost));
+
+    NEO::ResidencyContainer containerWithHost{&deviceAllocation, nullptr, &hostAllocation};
+    EXPECT_TRUE(CommandListType::containsSystemAllocation(containerWithHost));
+}
+
+HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForExternalAllocationThenReturnsTrueOnlyWhenImportedAllocationPresent, IsAtLeastXeCore) {
+    using CommandListType = WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
+
+    NEO::ResidencyContainer emptyContainer;
+    EXPECT_FALSE(CommandListType::containsExternalAllocation(emptyContainer));
+
+    NEO::MockGraphicsAllocation localAllocation{};
+    NEO::MockGraphicsAllocation importedAllocation{};
+    importedAllocation.setIsImported();
+
+    NEO::ResidencyContainer containerWithoutImported{&localAllocation, nullptr};
+    EXPECT_FALSE(CommandListType::containsExternalAllocation(containerWithoutImported));
+
+    NEO::ResidencyContainer containerWithImported{&localAllocation, nullptr, &importedAllocation};
+    EXPECT_TRUE(CommandListType::containsExternalAllocation(containerWithImported));
 }
 
 } // namespace ult

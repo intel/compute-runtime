@@ -424,6 +424,9 @@ struct CommandListCoreFamily : public CommandList {
 
     static constexpr bool checkIfAllocationImportedRequired();
 
+    static bool containsSystemAllocation(const NEO::ResidencyContainer &residencyContainer);
+    static bool containsExternalAllocation(const NEO::ResidencyContainer &residencyContainer);
+
     bool isKernelUncachedMocsRequired(bool kernelState);
 
     bool isUsingSystemAllocation(const NEO::AllocationType &allocType) const {
