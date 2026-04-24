@@ -633,6 +633,7 @@ static const std::map<uint32_t, const char *> memoryTypeNames = {
     {7, "DDR"},
     {8, "HBM"},
     {9, "HBM"},
+    {10, "DDR"},
 };
 
 const char *Device::getDeviceMemoryName() {
@@ -640,6 +641,7 @@ const char *Device::getDeviceMemoryName() {
     if (it != memoryTypeNames.end()) {
         return it->second;
     }
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Unknown memory type: %u\n", getHwInfo().gtSystemInfo.MemoryType);
     UNRECOVERABLE_IF(true);
     return "unknown memory type";
 }
@@ -682,7 +684,7 @@ ze_result_t Device::getMemoryProperties(uint32_t *pCount, ze_device_memory_prope
             auto extendedProperties = reinterpret_cast<ze_device_memory_ext_properties_t *>(pNext);
 
             // GT_MEMORY_TYPES map to ze_device_memory_ext_type_t
-            const std::array<ze_device_memory_ext_type_t, 10> sysInfoMemType = {
+            const std::array<ze_device_memory_ext_type_t, 11> sysInfoMemType = {
                 ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
                 ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
                 ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
@@ -693,6 +695,7 @@ ze_result_t Device::getMemoryProperties(uint32_t *pCount, ze_device_memory_prope
                 ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
                 ZE_DEVICE_MEMORY_EXT_TYPE_HBM3E,
                 ZE_DEVICE_MEMORY_EXT_TYPE_HBM4,
+                ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
             };
 
             UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MemoryType >= sizeof(sysInfoMemType));
