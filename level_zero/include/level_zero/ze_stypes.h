@@ -70,5 +70,6 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_PROPERTIES_EXP static_cast<zes_structure_type_ext_t>(0x00040008)
 #define ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_PENDING_ACTION_EXP static_cast<zes_structure_type_ext_t>(0x00040009)
 #define ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP static_cast<zes_structure_type_ext_t>(0x0004000A)
+#define ZES_INTEL_STRUCTURE_TYPE_RAS_STATE_EXP2 static_cast<zes_structure_type_ext_t>(0x0004000B)
 
 #endif

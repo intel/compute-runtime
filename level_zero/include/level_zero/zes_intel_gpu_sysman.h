@@ -360,24 +360,37 @@ ze_result_t ZE_APICALL zesIntelRasSetConfigExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef ZES_INTEL_RAS_GET_STATE_EXP_NAME
-/// @brief RAS get state extension name
-#define ZES_INTEL_RAS_GET_STATE_EXP_NAME "ZES_intel_experimental_ras_get_state"
-#endif // ZES_INTEL_RAS_GET_STATE_EXP_NAME
+#ifndef ZES_INTEL_RAS_GET_STATE_EXP2_NAME
+/// @brief RAS get state (v2) extension name
+#define ZES_INTEL_RAS_GET_STATE_EXP2_NAME "ZES_intel_experimental_ras_get_state2"
+#endif // ZES_INTEL_RAS_GET_STATE_EXP2_NAME
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief RAS get state extension Version(s)
-typedef enum _zes_intel_ras_get_state_exp_version_t {
-    ZES_INTEL_RAS_GET_STATE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
-    ZES_INTEL_RAS_GET_STATE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
-    ZES_INTEL_RAS_GET_STATE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
-} zes_intel_ras_get_state_exp_version_t;
+/// @brief RAS get state (v2) extension Version(s)
+typedef enum _zes_intel_ras_get_state_exp2_version_t {
+    ZES_INTEL_RAS_GET_STATE_EXP2_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_RAS_GET_STATE_EXP2_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_RAS_GET_STATE_EXP2_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_ras_get_state_exp2_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Ras Get Driver Experimental Extension State
+/// @brief RAS State (v2) structure - one entry per queried category.
+typedef struct _zes_intel_ras_state_exp2_t {
+    zes_structure_type_ext_t stype; ///< [in] must be ZES_INTEL_STRUCTURE_TYPE_RAS_STATE_EXP2
+    void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    uint64_t errorCounter;          ///< [out] Current value of RAS counter for the corresponding input category.
+} zes_intel_ras_state_exp2_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief RAS Get Driver Experimental Extension State (v2)
 ///
 /// @details
-///     - This function retrieves error counters for different RAS error categories.
+///     - This function retrieves error counters for a caller-specified set of
+///       RAS error categories.
+///     - The caller provides an input array of error categories and an output
+///       array of zes_intel_ras_state_exp2_t structures of the same length.
+///       pStates[i].errorCounter is populated for pCategories[i].
 ///
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
@@ -387,10 +400,14 @@ typedef enum _zes_intel_ras_get_state_exp_version_t {
 ///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
 ///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
 ///         + `nullptr == hRas`
-ze_result_t ZE_APICALL zesIntelRasGetStateExp(
-    zes_ras_handle_t hRas,            ///< [in] Handle for the RAS module.
-    const uint32_t count,             ///< [in] Number of elements in the pState array.
-    zes_intel_ras_state_exp_t *pState ///< [in][out] Array of RAS error states.
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pCategories`
+///         + `nullptr == pStates`
+ze_result_t ZE_APICALL zesIntelRasGetStateExp2(
+    zes_ras_handle_t hRas,                           ///< [in] Handle for the RAS module.
+    const uint32_t categoryCount,                    ///< [in] Number of elements in pCategories and pStates.
+    const zes_ras_error_category_exp_t *pCategories, ///< [in] Array of error categories to query.
+    zes_intel_ras_state_exp2_t *pStates              ///< [in][out] Array of RAS state structures, one per category.
 );
 
 ///////////////////////////////////////////////////////////////////////////////

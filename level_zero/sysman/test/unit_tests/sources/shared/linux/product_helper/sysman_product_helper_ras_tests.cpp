@@ -25,6 +25,7 @@ class MockLinuxRasSources : public L0::Sysman::LinuxRasSources {
     ze_result_t osRasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     uint32_t osRasGetCategoryCount() override { return 0u; }
     ze_result_t osRasClearStateExp(zes_ras_error_category_exp_t category) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    ze_result_t osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override { return {}; }
     ze_result_t osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override { return setConfigReturnStatus; }
     ze_result_t osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override { return getConfigReturnStatus; }
@@ -286,6 +287,338 @@ HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWithHbmSourceWhenCallingOs
     std::vector<zes_ras_error_category_exp_t> categories(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetSupportedCategoriesExp(&count, categories.data()));
     EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenPmuRasUtilWhenGroupFdIsInvalidAndCallingRasGetStateExp2ThenDependencyUnavailableIsReturned, IsGtRasSupportedProduct) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    auto pFsAccess = std::make_unique<MockRasFsAccess>();
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPerfEvent = true;
+    VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    auto pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pRasUtil = std::make_unique<PmuRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, false, 0u);
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pRasUtil->rasGetStateExp2(1u, &category, &state2));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenPmuRasUtilWhenPmuReadFailsAndCallingRasGetStateExp2ThenDependencyUnavailableIsReturned, IsGtRasSupportedProduct) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    auto pFsAccess = std::make_unique<MockRasFsAccess>();
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPmuReadResult = true;
+    VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    auto pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pRasUtil = std::make_unique<PmuRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, false, 0u);
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pRasUtil->rasGetStateExp2(1u, &category, &state2));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenPmuRasUtilWhenCallingRasGetStateExp2WithUnsupportedCategoryThenZeroCounterIsReturned, IsGtRasSupportedProduct) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    auto pFsAccess = std::make_unique<MockRasFsAccess>();
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPmuReadAfterClear = true;
+    VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    auto pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pRasUtil = std::make_unique<PmuRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, false, 0u);
+    // ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS is not in correctable PMU category map
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pRasUtil->rasGetStateExp2(1u, &category, &state2));
+    EXPECT_EQ(state2.errorCounter, 0u);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenGscRasUtilWhenCallingRasGetStateExp2WithMemoryErrorCategoryThenSuccessAndValidCounterIsReturned, IsPVC) {
+    auto pFwInterface = std::make_unique<MockRasFwInterface>();
+    pFwInterface->mockMemorySuccess = true;
+    VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = pFwInterface.get();
+
+    auto pRasUtil = std::make_unique<GscRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pRasUtil->rasGetStateExp2(1u, &category, &state2));
+    EXPECT_EQ(state2.errorCounter, hbmCorrectableErrorCount);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenGscRasUtilWhenCallingRasGetStateExp2WithNonMemoryErrorCategoryThenZeroCounterIsReturned, IsPVC) {
+    auto pFwInterface = std::make_unique<MockRasFwInterface>();
+    pFwInterface->mockMemorySuccess = true;
+    VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = pFwInterface.get();
+
+    auto pRasUtil = std::make_unique<GscRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pRasUtil->rasGetStateExp2(1u, &category, &state2));
+    EXPECT_EQ(state2.errorCounter, 0u);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenGscRasUtilWhenFwCallFailsAndCallingRasGetStateExp2ThenErrorIsReturned, IsPVC) {
+    auto pFwInterface = std::make_unique<MockRasFwInterface>();
+    VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = pFwInterface.get();
+
+    auto pRasUtil = std::make_unique<GscRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasUtil->rasGetStateExp2(1u, &category, &state2));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenGscRasUtilWhenCallingRasGetStateExp2WithNonMemoryErrorCategoryAndFwFailsThenSuccessAndZeroCounterIsReturned, IsPVC) {
+    auto pFwInterface = std::make_unique<MockRasFwInterface>();
+    VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = pFwInterface.get();
+
+    auto pRasUtil = std::make_unique<GscRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pRasUtil->rasGetStateExp2(1u, &category, &state2));
+    EXPECT_EQ(0u, state2.errorCounter);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenGscRasUtilWhenCallingRasGetStateExp2WithMixedCategoriesIncludingMemoryThenMemoryCounterIsValidAndOthersAreZero, IsPVC) {
+    auto pFwInterface = std::make_unique<MockRasFwInterface>();
+    pFwInterface->mockMemorySuccess = true;
+    VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = pFwInterface.get();
+
+    auto pRasUtil = std::make_unique<GscRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    std::vector<zes_ras_error_category_exp_t> categories = {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS};
+    std::vector<zes_intel_ras_state_exp2_t> states(categories.size());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pRasUtil->rasGetStateExp2(static_cast<uint32_t>(categories.size()), categories.data(), states.data()));
+    EXPECT_EQ(0u, states[0].errorCounter);
+    EXPECT_EQ(hbmCorrectableErrorCount, states[1].errorCounter);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWhenCallingOsRasGetStateExp2ForGtThenSuccessIsReturned, IsGtRasSupportedProduct) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    auto pFsAccess = std::make_unique<MockRasFsAccess>();
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    auto pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPmuReadAfterClear = true;
+    VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetStateExp2(1u, &category, &state2));
+    uint64_t expectedErrCount = correctableGrfErrorCount + correctableEuErrorCount + initialCorrectableComputeErrors;
+    EXPECT_EQ(state2.errorCounter, expectedErrCount);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWhenCallingOsRasGetStateExp2WithUnsupportedCategoryForGtThenZeroCounterIsReturned, IsGtRasSupportedProduct) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    auto pFsAccess = std::make_unique<MockRasFsAccess>();
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    auto pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPmuReadAfterClear = true;
+    VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+
+    // MEMORY_ERRORS is not in the correctable errorCategoryToEventCount (GT only tracks COMPUTE),
+    // so the ternary false branch fires and errorCounter stays 0.
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetStateExp2(1u, &category, &state2));
+    EXPECT_EQ(state2.errorCounter, 0u);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenPmuOpenFailsWhenCallingOsRasGetStateExp2ForGtThenUnsupportedFeatureIsReturned, IsGtRasSupportedProduct) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
+    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    auto pFsAccess = std::make_unique<MockRasFsAccess>();
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    auto pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
+    pPmuInterface->mockPerfEvent = true;
+    VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+    pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxRasImp->osRasGetStateExp2(1u, &category, &state2));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWhenCallingOsRasGetStateExp2ForHbmThenSuccessIsReturned, IsPVC) {
+    auto pFwInterface = std::make_unique<MockRasFwInterface>();
+    pFwInterface->mockMemorySuccess = true;
+    VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = pFwInterface.get();
+
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+
+    auto pLinuxRasImpCorr = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+    pLinuxRasImpCorr->rasSources.clear();
+    pLinuxRasImpCorr->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
+
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImpCorr->osRasGetStateExp2(1u, &category, &state2));
+    EXPECT_EQ(state2.errorCounter, hbmCorrectableErrorCount);
+
+    auto pLinuxRasImpUncorr = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_UNCORRECTABLE, isSubDevice, subDeviceId);
+    pLinuxRasImpUncorr->rasSources.clear();
+    pLinuxRasImpUncorr->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_UNCORRECTABLE, isSubDevice, subDeviceId));
+
+    state2.errorCounter = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImpUncorr->osRasGetStateExp2(1u, &category, &state2));
+    EXPECT_EQ(state2.errorCounter, hbmUncorrectableErrorCount);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWhenCallingOsRasGetStateExp2WithNonMemoryErrorCategoryForHbmThenZeroCounterIsReturned, IsPVC) {
+    auto pFwInterface = std::make_unique<MockRasFwInterface>();
+    pFwInterface->mockMemorySuccess = true;
+    VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = pFwInterface.get();
+
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+    pLinuxRasImp->rasSources.clear();
+    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
+
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_intel_ras_state_exp2_t state2 = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetStateExp2(1u, &category, &state2));
+    EXPECT_EQ(state2.errorCounter, 0u);
 }
 
 HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasSourceHbmWhenCallingOsRasGetConfigExpThenUnsupportedFeatureIsReturned, IsPVC) {

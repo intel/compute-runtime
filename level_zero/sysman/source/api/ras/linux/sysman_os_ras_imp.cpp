@@ -195,8 +195,28 @@ ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_intel
     return anySourceSucceeded ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t LinuxRasImp::osRasGetStateExp(const uint32_t count, zes_intel_ras_state_exp_t *pState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t LinuxRasImp::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+    // Initialize all output error counters to zero
+    for (uint32_t i = 0; i < categoryCount; i++) {
+        pStates[i].errorCounter = 0;
+    }
+
+    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::vector<zes_intel_ras_state_exp2_t> sourceStates(categoryCount);
+    for (auto &rasSource : rasSources) {
+        for (uint32_t i = 0; i < categoryCount; i++) {
+            sourceStates[i].errorCounter = 0;
+        }
+        ze_result_t localResult = rasSource->osRasGetStateExp2(categoryCount, pCategories, sourceStates.data());
+        if (localResult != ZE_RESULT_SUCCESS) {
+            continue;
+        }
+        for (uint32_t i = 0; i < categoryCount; i++) {
+            pStates[i].errorCounter += sourceStates[i].errorCounter;
+        }
+        result = ZE_RESULT_SUCCESS;
+    }
+    return result;
 }
 
 LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId) : osRasErrorType(type), isSubdevice(onSubdevice), subdeviceId(subdeviceId) {

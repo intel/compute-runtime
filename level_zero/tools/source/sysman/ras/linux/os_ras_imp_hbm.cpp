@@ -63,6 +63,22 @@ ze_result_t LinuxRasSourceHbm::osRasGetStateExp(uint32_t numCategoriesRequested,
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t LinuxRasSourceHbm::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+    uint64_t errorCount = 0;
+    ze_result_t result = getMemoryErrorCountFromFw(osRasErrorType, this->subDeviceCount, errorCount);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    for (uint32_t i = 0; i < categoryCount; i++) {
+        pStates[i].errorCounter = 0;
+        if (pCategories[i] == ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) {
+            pStates[i].errorCounter = errorCount - errorBaseline;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t LinuxRasSourceHbm::osRasClearStateExp(zes_ras_error_category_exp_t category) {
     if (category == ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) {
         uint64_t errorCount = 0;

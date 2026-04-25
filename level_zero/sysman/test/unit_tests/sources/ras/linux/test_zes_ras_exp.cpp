@@ -53,11 +53,11 @@ struct SysmanRasExpFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetStateExpThenErrorIsReturned) {
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetStateExp2ThenUnsupportedFeatureIsReturned) {
     auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
-    const uint32_t count = 0u;
-    zes_intel_ras_state_exp_t state = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetStateExp(count, &state));
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_intel_ras_state_exp2_t state = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetStateExp2(1u, &category, &state));
 }
 
 TEST_F(SysmanRasExpFixture, GivenRasUtilNoneWhenCallingRasGetAndSetConfigExpThenUnsupportedFeatureIsReturned) {
@@ -771,6 +771,13 @@ TEST_F(SysmanRasExpFixture, GivenRasUtilAsNoneWhenCallingGetSupportedErrorCatego
     auto pRasUtil = std::make_unique<RasUtilNone>();
     auto categories = pRasUtil->getSupportedErrorCategoriesExp();
     EXPECT_TRUE(categories.empty());
+}
+
+TEST_F(SysmanRasExpFixture, GivenRasUtilAsNoneWhenCallingRasGetStateExp2ThenUnsupportedFeatureIsReturned) {
+    auto pRasUtil = std::make_unique<RasUtilNone>();
+    zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
+    zes_intel_ras_state_exp2_t state = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasUtil->rasGetStateExp2(1u, &category, &state));
 }
 
 struct SysmanRasExpMultiDeviceFixture : public SysmanMultiDeviceFixture {

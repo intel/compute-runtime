@@ -66,7 +66,7 @@ ze_result_t NetlinkRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_
 
     // Step 2: Aggregate error counts based on category
     uint32_t categoryIdx = 0u;
-    for (auto const &rasErrorCatToListOfErrors : categoryToErrorNameMap) {
+    for (auto const &categoryToErrorPair : categoryToErrorNameMap) {
         if (categoryIdx >= numCategoriesRequested) {
             break;
         }
@@ -75,16 +75,40 @@ ze_result_t NetlinkRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_
 
         auto err = std::find_if(errorList.begin(), errorList.end(),
                                 [&](const DrmErrorCounter &counter) -> bool {
-                                    return (counter.errorName == rasErrorCatToListOfErrors.second);
+                                    return (counter.errorName == categoryToErrorPair.second);
                                 });
 
         if (err != errorList.end()) {
             errorCountForCategory += err->errorValue;
         }
 
-        pState[categoryIdx].category = rasErrorCatToListOfErrors.first;
+        pState[categoryIdx].category = categoryToErrorPair.first;
         pState[categoryIdx].errorCounter = errorCountForCategory;
         categoryIdx++;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t NetlinkRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+    std::vector<DrmErrorCounter> errorList;
+    ze_result_t result = drmNl->getErrorsList(rasNodeId, errorList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    for (uint32_t i = 0; i < count; i++) {
+        pStates[i].errorCounter = 0;
+        auto it = categoryToErrorNameMap.find(pCategories[i]);
+        if (it != categoryToErrorNameMap.end()) {
+            auto err = std::find_if(errorList.begin(), errorList.end(),
+                                    [&](const DrmErrorCounter &counter) -> bool {
+                                        return counter.errorName == it->second;
+                                    });
+            if (err != errorList.end()) {
+                pStates[i].errorCounter = err->errorValue;
+            }
+        }
     }
 
     return ZE_RESULT_SUCCESS;
@@ -206,7 +230,6 @@ NetlinkRasUtil::NetlinkRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinux
     }
 
     // Find the nodeId matching the target node name and device name from the static nodes list
-    rasNodeId = 0;
     for (const auto &node : rasNodes) {
         if ((node.nodeName == targetNodeName) && (node.deviceName == devicePciBdf)) {
             rasNodeId = node.nodeId;

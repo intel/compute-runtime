@@ -60,6 +60,33 @@ ze_result_t GscRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t GscRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+    bool memoryErrorRequested = false;
+    for (uint32_t i = 0; i < count; i++) {
+        pStates[i].errorCounter = 0;
+        if (pCategories[i] == ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) {
+            memoryErrorRequested = true;
+        }
+    }
+
+    if (!memoryErrorRequested) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    uint64_t errorCount = 0;
+    ze_result_t result = getMemoryErrorCountFromFw(rasErrorType, this->subDeviceCount, errorCount);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    for (uint32_t i = 0; i < count; i++) {
+        if (pCategories[i] == ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) {
+            pStates[i].errorCounter = errorCount - errorBaseline;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t GscRasUtil::rasClearStateExp(zes_ras_error_category_exp_t category) {
     if (category == ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) {
         uint64_t errorCount = 0;

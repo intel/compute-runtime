@@ -40,6 +40,10 @@ ze_result_t LinuxRasSourceGt::osRasGetStateExp(uint32_t numCategoriesRequested, 
     return pRasUtil->rasGetStateExp(numCategoriesRequested, pState);
 }
 
+ze_result_t LinuxRasSourceGt::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+    return pRasUtil->rasGetStateExp2(categoryCount, pCategories, pStates);
+}
+
 ze_result_t LinuxRasSourceGt::osRasClearStateExp(zes_ras_error_category_exp_t category) {
     return pRasUtil->rasClearStateExp(category);
 }

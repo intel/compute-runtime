@@ -33,6 +33,10 @@ ze_result_t NetlinkRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t NetlinkRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t NetlinkRasUtil::rasClearStateExp(zes_ras_error_category_exp_t category) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

@@ -248,6 +248,38 @@ ze_result_t PmuRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t PmuRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+    initRasErrors(false);
+    if (groupFd < 0) {
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
+    auto numEvents = memberFds.size() + 1;
+    std::vector<std::uint64_t> data(2 + numEvents, 0);
+    if (pPmuInterface->pmuRead(static_cast<int>(groupFd), data.data(), sizeof(uint64_t) * data.size()) < 0) {
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
+    // Build a lookup: category -> errorCounter by iterating errorCategoryToEventCount in order
+    std::map<zes_ras_error_category_exp_t, uint64_t> categoryToCounter;
+    uint64_t initialIndex = 2;
+    for (auto const &catEventCount : errorCategoryToEventCount) {
+        uint64_t errorCount = 0;
+        for (uint64_t j = 0; j < catEventCount.second; j++) {
+            errorCount += data[initialIndex + j];
+        }
+        categoryToCounter[catEventCount.first] = errorCount + absoluteErrorCount[catEventCount.first];
+        initialIndex += catEventCount.second;
+    }
+
+    for (uint32_t i = 0; i < count; i++) {
+        auto it = categoryToCounter.find(pCategories[i]);
+        pStates[i].errorCounter = (it != categoryToCounter.end()) ? it->second : 0u;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t PmuRasUtil::rasClearStateExp(zes_ras_error_category_exp_t category) {
     ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
     // check requested category is already initialized

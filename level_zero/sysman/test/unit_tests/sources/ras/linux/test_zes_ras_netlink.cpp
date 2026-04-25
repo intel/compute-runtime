@@ -302,6 +302,36 @@ TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenErrorListContain
     EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS)) != categories.end());
 }
 
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndGetErrorListFailsWhenCallingRasGetStateExp2ThenErrorIsReturned) {
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    pDrmNlApi->getErrorsListReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
+    pRasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+    std::vector<zes_ras_error_category_exp_t> categories = {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS};
+    std::vector<zes_intel_ras_state_exp2_t> states(categories.size());
+    auto result = pRasNetlinkUtil->rasGetStateExp2(static_cast<uint32_t>(categories.size()), categories.data(), states.data());
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceWhenCallingRasGetStateExp2ThenSuccessAndValidCounterIsReturned) {
+    std::vector<zes_ras_error_category_exp_t> categories = {
+        ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS,
+        ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS,
+    };
+    std::vector<zes_intel_ras_state_exp2_t> states(categories.size());
+    auto result = pRasNetlinkUtil->rasGetStateExp2(static_cast<uint32_t>(categories.size()), categories.data(), states.data());
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(states[0].errorCounter, 10u);
+    EXPECT_EQ(states[1].errorCounter, 0u);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceWhenCallingRasGetStateExp2WithCategoryNotInMapThenZeroCounterIsReturned) {
+    std::vector<zes_ras_error_category_exp_t> categories = {ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS};
+    std::vector<zes_intel_ras_state_exp2_t> states(categories.size());
+    auto result = pRasNetlinkUtil->rasGetStateExp2(static_cast<uint32_t>(categories.size()), categories.data(), states.data());
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(states[0].errorCounter, 0u);
+}
+
 TEST_F(SysmanRasNetlinkFixture, GivenInvalidRasErrorCategoryWhenCallingRasClearStateExpThenErrorIsReturned) {
     std::unique_ptr<NetlinkRasUtil> rasNetlinkUtil(new NetlinkRasUtil(errorType, pLinuxSysmanImp, 0u));
     zes_ras_error_category_exp_t errorCat = ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS;

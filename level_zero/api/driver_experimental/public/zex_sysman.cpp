@@ -53,11 +53,11 @@ ze_result_t ZE_APICALL zesIntelRasSetConfigExp(zes_ras_handle_t hRas, const uint
     }
 }
 
-ze_result_t ZE_APICALL zesIntelRasGetStateExp(zes_ras_handle_t hRas, const uint32_t count, zes_intel_ras_state_exp_t *pState) {
+ze_result_t ZE_APICALL zesIntelRasGetStateExp2(zes_ras_handle_t hRas, const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
     if (L0::sysmanInitFromCore) {
-        return L0::Ras::fromHandle(hRas)->rasGetStateExp(count, pState);
+        return L0::Ras::fromHandle(hRas)->rasGetStateExp2(categoryCount, pCategories, pStates);
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::Ras::fromHandle(hRas)->rasGetStateExp(count, pState);
+        return L0::Sysman::Ras::fromHandle(hRas)->rasGetStateExp2(categoryCount, pCategories, pStates);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -123,8 +123,8 @@ ze_result_t ZE_APICALL zesIntelRasSetConfigExp(zes_ras_handle_t hRas, const uint
     return L0::zesIntelRasSetConfigExp(hRas, count, pConfig);
 }
 
-ze_result_t ZE_APICALL zesIntelRasGetStateExp(zes_ras_handle_t hRas, const uint32_t count, zes_intel_ras_state_exp_t *pState) {
-    return L0::zesIntelRasGetStateExp(hRas, count, pState);
+ze_result_t ZE_APICALL zesIntelRasGetStateExp2(zes_ras_handle_t hRas, const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+    return L0::zesIntelRasGetStateExp2(hRas, categoryCount, pCategories, pStates);
 }
 
 ze_result_t ZE_APICALL zesIntelPowerGetLimitsExp(zes_pwr_handle_t hPower, uint32_t *pLimit) {

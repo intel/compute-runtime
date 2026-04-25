@@ -53,8 +53,8 @@ ze_result_t RasImp::rasSetConfigExp(const uint32_t count, const zes_intel_ras_co
     return pOsRas->osRasSetConfigExp(count, pConfig);
 }
 
-ze_result_t RasImp::rasGetStateExp(const uint32_t count, zes_intel_ras_state_exp_t *pState) {
-    return pOsRas->osRasGetStateExp(count, pState);
+ze_result_t RasImp::rasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+    return pOsRas->osRasGetStateExp2(categoryCount, pCategories, pStates);
 }
 
 void RasImp::init() {
