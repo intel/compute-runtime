@@ -47,7 +47,6 @@
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
-#include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -1322,121 +1321,6 @@ TEST_F(ModuleStaticLinkTests, givenMultipleModulesProvidedForSpirVStaticLinkAndB
 
 TEST_F(ModuleStaticLinkTests, givenSingleModuleProvidedForSpirVStaticLinkAndBuildFlagsRequestedThenSuccessisReturned) {
     runSprivLinkBuildWithOneModule();
-}
-
-struct ModuleLlvmBcStaticLinkFixture : public ModuleStaticLinkFixture {
-    void setUp() {
-        ModuleStaticLinkFixture::setUp();
-    }
-    void tearDown() {
-        ModuleStaticLinkFixture::tearDown();
-    }
-
-    void loadLlvmBcModule() {
-        auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv}; // actual content not important
-        llvmBcZebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
-        const auto &storage = llvmBcZebinData->storage;
-        llvmSrcModule = storage.data();
-        llvmSizeModule = storage.size();
-        ASSERT_NE(nullptr, llvmSrcModule);
-        ASSERT_NE(0u, llvmSizeModule);
-    }
-
-    void chainLlvmBcExtDesc() {
-        llvmInputModules.push_back(llvmSrcModule);
-        llvmInputSizes.push_back(llvmSizeModule);
-
-        llvmBcDesc.count = static_cast<uint32_t>(llvmInputModules.size());
-        llvmBcDesc.inputSizes = llvmInputSizes.data();
-        llvmBcDesc.pInputModules = llvmInputModules.data();
-
-        staticLinkModuleDesc.pNext = &llvmBcDesc;
-    }
-
-    void runSpirVAndLlvmBcLinkSuccessTest() {
-        auto *mockCompiler = new MockCompilerInterface();
-        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->compilerInterface.reset(mockCompiler);
-        mockTranslationUnit = new MockModuleTranslationUnit(device);
-        mockTranslationUnit->processUnpackedBinaryCallBase = false;
-
-        loadModules(testMultiple);
-        loadLlvmBcModule();
-        setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV, testMultiple);
-        chainLlvmBcExtDesc();
-
-        auto module = new Module(device, nullptr, ModuleType::user);
-        module->translationUnit.reset(mockTranslationUnit);
-
-        ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-        result = module->initialize(&combinedModuleDesc, neoDevice);
-        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        module->destroy();
-    }
-
-    void runSpirVAndLlvmBcLinkFailureTest() {
-        auto *mockCompiler = new MockCompilerInterfaceLinkFailure();
-        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->compilerInterface.reset(mockCompiler);
-        mockTranslationUnit = new MockModuleTranslationUnit(device);
-
-        loadModules(testMultiple);
-        loadLlvmBcModule();
-        setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV, testMultiple);
-        chainLlvmBcExtDesc();
-
-        auto module = new Module(device, nullptr, ModuleType::user);
-        module->translationUnit.reset(mockTranslationUnit);
-
-        ze_result_t result = ZE_RESULT_SUCCESS;
-        result = module->initialize(&combinedModuleDesc, neoDevice);
-        EXPECT_NE(result, ZE_RESULT_SUCCESS);
-        module->destroy();
-    }
-
-    void runLlvmBcExtDescAloneIsValidTest() {
-        uint8_t dummySpirV{};
-        ze_module_desc_t desc{};
-        desc.stype = ZE_STRUCTURE_TYPE_MODULE_DESC;
-        desc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-        desc.inputSize = sizeof(dummySpirV);
-        desc.pInputModule = &dummySpirV;
-
-        L0::ze_module_program_llvmbc_exp_desc_t llvmExt{};
-        llvmExt.count = 0;
-        desc.pNext = &llvmExt;
-
-        auto *mockCompiler = new MockCompilerInterface();
-        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->compilerInterface.reset(mockCompiler);
-        mockTranslationUnit = new MockModuleTranslationUnit(device);
-        mockTranslationUnit->processUnpackedBinaryCallBase = false;
-
-        auto module = new Module(device, nullptr, ModuleType::user);
-        module->translationUnit.reset(mockTranslationUnit);
-
-        ze_result_t result = module->initialize(&desc, neoDevice);
-        EXPECT_NE(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
-        module->destroy();
-    }
-
-    std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> llvmBcZebinData;
-    const uint8_t *llvmSrcModule = nullptr;
-    size_t llvmSizeModule = 0u;
-    L0::ze_module_program_llvmbc_exp_desc_t llvmBcDesc{};
-    std::vector<const uint8_t *> llvmInputModules;
-    std::vector<size_t> llvmInputSizes;
-};
-
-using ModuleLlvmBcStaticLinkTests = Test<ModuleLlvmBcStaticLinkFixture>;
-
-TEST_F(ModuleLlvmBcStaticLinkTests, givenSpirVAndLlvmBcModulesProvidedForStaticLinkWhenCompilerSucceedsThenSuccessIsReturned) {
-    runSpirVAndLlvmBcLinkSuccessTest();
-}
-
-TEST_F(ModuleLlvmBcStaticLinkTests, givenSpirVAndLlvmBcModulesProvidedForStaticLinkWhenCompilerFailsThenFailureIsReturned) {
-    runSpirVAndLlvmBcLinkFailureTest();
-}
-
-TEST_F(ModuleLlvmBcStaticLinkTests, givenLlvmBcExtDescAloneInPNextChainThenValidationDoesNotRejectIt) {
-    runLlvmBcExtDescAloneIsValidTest();
 }
 
 using ModuleLinkingTest = Test<DeviceFixture>;
@@ -4271,7 +4155,7 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingCompileGenBinaryThe
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     TranslationInput inputArgs = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
-    result = moduleTu.compileGenBinary(inputArgs, false, false);
+    result = moduleTu.compileGenBinary(inputArgs, false);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
     Os::frontEndDllName = oldFclDllName;
 }
@@ -4293,84 +4177,6 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingStaticLinkSpirVThen
     result = moduleTu.staticLinkSpirV(inputSpirVs, inputModuleSizes, "", "", specConstants);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
     Os::frontEndDllName = oldFclDllName;
-}
-
-HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingStaticLinkSpirVAndLlvmBcThenFailureReturned) {
-    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
-    rootDeviceEnvironment->compilerInterface.reset(nullptr);
-    auto oldFclDllName = Os::frontEndDllName;
-    Os::frontEndDllName = "_invalidFCL";
-    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
-
-    L0::ModuleTranslationUnit moduleTu(this->device);
-    moduleTu.options = "abcd";
-
-    std::vector<const char *> inputSpirVs;
-    std::vector<uint32_t> inputModuleSizes;
-    std::vector<const ze_module_constants_t *> specConstants;
-    std::vector<const char *> inputLlvmBcs;
-    std::vector<uint32_t> inputLlvmBcSizes;
-
-    ze_result_t result = moduleTu.staticLinkSpirVAndLlvmBc(inputSpirVs, inputModuleSizes, "", "", specConstants,
-                                                           inputLlvmBcs, inputLlvmBcSizes);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-    Os::frontEndDllName = oldFclDllName;
-}
-
-HWTEST_F(ModuleTranslationUnitTest, GivenSpirVInputWhenCallingGenerateElfFromSpirVThenOutputMatchesGenerateElfFromSpirVAndLlvmBcWithEmptyLlvmBcVectors) {
-    L0::ModuleTranslationUnit moduleTu(this->device);
-
-    const char dummySpirV[] = "dummy_spirv_payload";
-    std::vector<const char *> inputSpirVs = {dummySpirV};
-    std::vector<uint32_t> inputSizes = {static_cast<uint32_t>(sizeof(dummySpirV))};
-
-    auto elfViaWrapper = moduleTu.generateElfFromSpirV(inputSpirVs, inputSizes);
-    auto elfViaNewFunction = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSizes, {}, {});
-
-    EXPECT_FALSE(elfViaWrapper.empty());
-    EXPECT_EQ(elfViaWrapper, elfViaNewFunction);
-}
-
-HWTEST_F(ModuleTranslationUnitTest, GivenSpirVAndLlvmBcInputsWhenGeneratingElfThenElfIsLargerThanSpirVOnlyElf) {
-    L0::ModuleTranslationUnit moduleTu(this->device);
-
-    const char dummySpirV[] = "dummy_spirv_payload";
-    const char dummyLlvmBc[] = "dummy_llvmbc_payload_longer";
-    std::vector<const char *> inputSpirVs = {dummySpirV};
-    std::vector<uint32_t> inputSpirVSizes = {static_cast<uint32_t>(sizeof(dummySpirV))};
-    std::vector<const char *> inputLlvmBcs = {dummyLlvmBc};
-    std::vector<uint32_t> inputLlvmBcSizes = {static_cast<uint32_t>(sizeof(dummyLlvmBc))};
-
-    auto elfSpirVOnly = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes, {}, {});
-    auto elfSpirVAndLlvmBc = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes,
-                                                                    inputLlvmBcs, inputLlvmBcSizes);
-
-    EXPECT_FALSE(elfSpirVAndLlvmBc.empty());
-    EXPECT_GT(elfSpirVAndLlvmBc.size(), elfSpirVOnly.size());
-}
-
-HWTEST_F(ModuleTranslationUnitTest, GivenMultipleLlvmBcInputsWhenGeneratingElfThenEachLlvmBcAddsToElfSize) {
-    L0::ModuleTranslationUnit moduleTu(this->device);
-
-    const char dummySpirV[] = "dummy_spirv";
-    const char dummyLlvmBc1[] = "llvmbc_module_one";
-    const char dummyLlvmBc2[] = "llvmbc_module_two_longer_payload";
-    std::vector<const char *> inputSpirVs = {dummySpirV};
-    std::vector<uint32_t> inputSpirVSizes = {static_cast<uint32_t>(sizeof(dummySpirV))};
-
-    std::vector<const char *> oneLlvmBc = {dummyLlvmBc1};
-    std::vector<uint32_t> oneLlvmBcSz = {static_cast<uint32_t>(sizeof(dummyLlvmBc1))};
-    std::vector<const char *> twoLlvmBcs = {dummyLlvmBc1, dummyLlvmBc2};
-    std::vector<uint32_t> twoLlvmBcsSz = {static_cast<uint32_t>(sizeof(dummyLlvmBc1)),
-                                          static_cast<uint32_t>(sizeof(dummyLlvmBc2))};
-
-    auto elfOneLlvmBc = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes,
-                                                               oneLlvmBc, oneLlvmBcSz);
-    auto elfTwoLlvmBcs = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes,
-                                                                twoLlvmBcs, twoLlvmBcsSz);
-
-    EXPECT_FALSE(elfOneLlvmBc.empty());
-    EXPECT_GT(elfTwoLlvmBcs.size(), elfOneLlvmBc.size());
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOptions) {

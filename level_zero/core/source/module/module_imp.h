@@ -66,29 +66,14 @@ struct ModuleTranslationUnit {
 
     MOCKABLE_VIRTUAL ze_result_t buildFromIntermediate(IGC::CodeType::CodeType_t intermediateType, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
                                                        const ze_module_constants_t *pConstants);
-    ze_result_t staticLinkSpirV(const std::vector<const char *> &inputSpirVs,
-                                const std::vector<uint32_t> &inputModuleSizes,
-                                const char *buildOptions,
-                                const char *internalBuildOptions,
-                                const std::vector<const ze_module_constants_t *> &specConstants);
-    ze_result_t staticLinkSpirVAndLlvmBc(const std::vector<const char *> &inputSpirVs,
-                                         const std::vector<uint32_t> &inputModuleSizes,
-                                         const char *buildOptions,
-                                         const char *internalBuildOptions,
-                                         const std::vector<const ze_module_constants_t *> &specConstants,
-                                         const std::vector<const char *> &inputLlvmBcs,
-                                         const std::vector<uint32_t> &inputLlvmBcSizes);
+    MOCKABLE_VIRTUAL ze_result_t staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
+                                                 std::vector<const ze_module_constants_t *> specConstants);
     MOCKABLE_VIRTUAL ze_result_t createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions);
     MOCKABLE_VIRTUAL ze_result_t processUnpackedBinary();
-    std::vector<uint8_t> generateElfFromSpirV(const std::vector<const char *> &inputSpirVs,
-                                              const std::vector<uint32_t> &inputModuleSizes);
-    std::vector<uint8_t> generateElfFromSpirVAndLlvmBc(const std::vector<const char *> &inputSpirVs,
-                                                       const std::vector<uint32_t> &inputModuleSizes,
-                                                       const std::vector<const char *> &inputLlvmBcs,
-                                                       const std::vector<uint32_t> &inputLlvmBcSizes);
+    std::vector<uint8_t> generateElfFromSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes);
     bool processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize);
     std::string generateCompilerOptions(const char *buildOptions, const char *internalBuildOptions);
-    MOCKABLE_VIRTUAL ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink, bool createLibrary);
+    MOCKABLE_VIRTUAL ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink);
     void updateBuildLog(const std::string &newLogEntry);
     void processDebugData();
     void freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocation> &buffer);
@@ -178,8 +163,6 @@ struct ModuleImp : public Module {
 
     bool isSPIRv() { return builtFromSpirv; }
 
-    bool isLlvmBc() { return isLlvmBitcode; }
-
     bool isPrecompiled() { return precompiled; }
 
     bool shouldAllocatePrivateMemoryPerDispatch() const override {
@@ -247,7 +230,6 @@ struct ModuleImp : public Module {
     std::unordered_map<std::string, HostGlobalSymbol> hostGlobalSymbolsMap;
 
     bool builtFromSpirv = false;
-    bool isLlvmBitcode = false;
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
     bool isZebinBinary = false;

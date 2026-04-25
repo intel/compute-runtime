@@ -131,9 +131,9 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
                                                                ArrayRef<const char> srcSpirV, SpecConstantInfo &output);
 
-    MOCKABLE_VIRTUAL TranslationErrorCode createLibrary(NEO::Device &device,
-                                                        const TranslationInput &input,
-                                                        TranslationOutput &output);
+    TranslationErrorCode createLibrary(NEO::Device &device,
+                                       const TranslationInput &input,
+                                       TranslationOutput &output);
 
     MOCKABLE_VIRTUAL TranslationErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
                                                              std::vector<char> &stateSaveAreaHeader);

@@ -7,7 +7,6 @@
 target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${CMAKE_CURRENT_SOURCE_DIR}/internal_core_program_ext.h
                ${CMAKE_CURRENT_SOURCE_DIR}/module.h
                ${CMAKE_CURRENT_SOURCE_DIR}/module_build_log.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/module_build_log.h

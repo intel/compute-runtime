@@ -55,7 +55,6 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/helpers/pnext.h"
 #include "level_zero/core/source/kernel/kernel.h"
-#include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/module/modules_package_binary.h"
 
@@ -149,18 +148,7 @@ void ModuleTranslationUnit::freeGlobalBufferAllocation(std::unique_ptr<NEO::Shar
     }
 }
 
-std::vector<uint8_t> ModuleTranslationUnit::generateElfFromSpirV(const std::vector<const char *> &inputSpirVs,
-                                                                 const std::vector<uint32_t> &inputModuleSizes) {
-    return generateElfFromSpirVAndLlvmBc(inputSpirVs,
-                                         inputModuleSizes,
-                                         {}, // empty, no LLVM BCs
-                                         {});
-}
-
-std::vector<uint8_t> ModuleTranslationUnit::generateElfFromSpirVAndLlvmBc(const std::vector<const char *> &inputSpirVs,
-                                                                          const std::vector<uint32_t> &inputModuleSizes,
-                                                                          const std::vector<const char *> &inputLlvmBcs,
-                                                                          const std::vector<uint32_t> &inputLlvmBcSizes) {
+std::vector<uint8_t> ModuleTranslationUnit::generateElfFromSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes) {
     NEO::Elf::ElfEncoder<> elfEncoder(true, false, 1U);
     elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
 
@@ -185,12 +173,6 @@ std::vector<uint8_t> ModuleTranslationUnit::generateElfFromSpirVAndLlvmBc(const 
         auto sectionType = NEO::Elf::SHT_OPENCL_SPIRV;
         NEO::ConstStringRef sectionName = NEO::Elf::SectionNamesOpenCl::spirvObject;
         elfEncoder.appendSection(sectionType, sectionName, ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(inputSpirVs[i]), inputModuleSizes[i]));
-    }
-
-    for (uint32_t i = 0; i < static_cast<uint32_t>(inputLlvmBcs.size()); i++) {
-        auto sectionType = NEO::Elf::SHT_OPENCL_LLVM_BINARY;
-        NEO::ConstStringRef sectionName = NEO::Elf::SectionNamesOpenCl::llvmObject;
-        elfEncoder.appendSection(sectionType, sectionName, ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(inputLlvmBcs[i]), inputLlvmBcSizes[i]));
     }
 
     return elfEncoder.encode();
@@ -250,7 +232,7 @@ bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *comp
     return true;
 }
 
-ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink, bool createLibrary) {
+ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink) {
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
     const auto driverHandle = device->getDriverHandle();
     if (!compilerInterface) {
@@ -262,9 +244,8 @@ ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &input
 
     NEO::TranslationOutput compilerOuput = {};
     NEO::TranslationErrorCode compilerErr;
-    if (createLibrary) {
-        compilerErr = compilerInterface->createLibrary(*device->getNEODevice(), inputArgs, compilerOuput);
-    } else if (staticLink) {
+
+    if (staticLink) {
         compilerErr = compilerInterface->link(*device->getNEODevice(), inputArgs, compilerOuput);
     } else {
         compilerErr = compilerInterface->build(*device->getNEODevice(), inputArgs, compilerOuput);
@@ -284,33 +265,12 @@ ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &input
     this->unpackedDeviceBinarySize = compilerOuput.deviceBinary.size;
     this->debugData = std::move(compilerOuput.debugData.mem);
     this->debugDataSize = compilerOuput.debugData.size;
-    if (createLibrary) {
-        return ZE_RESULT_SUCCESS;
-    }
+
     return processUnpackedBinary();
 }
 
-ze_result_t ModuleTranslationUnit::staticLinkSpirV(const std::vector<const char *> &inputSpirVs,
-                                                   const std::vector<uint32_t> &inputModuleSizes,
-                                                   const char *buildOptions,
-                                                   const char *internalBuildOptions,
-                                                   const std::vector<const ze_module_constants_t *> &specConstants) {
-    return staticLinkSpirVAndLlvmBc(inputSpirVs,
-                                    inputModuleSizes,
-                                    buildOptions,
-                                    internalBuildOptions,
-                                    specConstants,
-                                    {},  // empty inputLlvmBcs
-                                    {}); // empty inputLlvmBcSizes
-}
-
-ze_result_t ModuleTranslationUnit::staticLinkSpirVAndLlvmBc(const std::vector<const char *> &inputSpirVs,
-                                                            const std::vector<uint32_t> &inputModuleSizes,
-                                                            const char *buildOptions,
-                                                            const char *internalBuildOptions,
-                                                            const std::vector<const ze_module_constants_t *> &specConstants,
-                                                            const std::vector<const char *> &inputLlvmBcs,
-                                                            const std::vector<uint32_t> &inputLlvmBcSizes) {
+ze_result_t ModuleTranslationUnit::staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
+                                                   std::vector<const ze_module_constants_t *> specConstants) {
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
     const auto driverHandle = device->getDriverHandle();
     if (!compilerInterface) {
@@ -319,6 +279,7 @@ ze_result_t ModuleTranslationUnit::staticLinkSpirVAndLlvmBc(const std::vector<co
     }
 
     std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
+
     for (uint32_t i = 0; i < static_cast<uint32_t>(specConstants.size()); i++) {
         auto specConstantResult = this->processSpecConstantInfo(compilerInterface, specConstants[i], inputSpirVs[i], inputModuleSizes[i]);
         if (!specConstantResult) {
@@ -328,17 +289,13 @@ ze_result_t ModuleTranslationUnit::staticLinkSpirVAndLlvmBc(const std::vector<co
     }
 
     NEO::TranslationInput linkInputArgs = {IGC::CodeType::elf, IGC::CodeType::oclGenBin};
-    const bool createLibrary = NEO::CompilerOptions::contains(this->options, NEO::CompilerOptions::createLibrary);
-    if (createLibrary) {
-        linkInputArgs.outType = IGC::CodeType::llvmBc;
-    }
 
-    auto spirvElfSource = generateElfFromSpirVAndLlvmBc(inputSpirVs, inputModuleSizes, inputLlvmBcs, inputLlvmBcSizes);
+    auto spirvElfSource = generateElfFromSpirV(inputSpirVs, inputModuleSizes);
 
     linkInputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(spirvElfSource.data()), spirvElfSource.size());
     linkInputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
     linkInputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
-    return this->compileGenBinary(linkInputArgs, true, createLibrary);
+    return this->compileGenBinary(linkInputArgs, true);
 }
 
 ze_result_t ModuleTranslationUnit::buildFromSource(ze_module_format_t inputFormat, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions) {
@@ -358,7 +315,7 @@ ze_result_t ModuleTranslationUnit::buildFromSource(ze_module_format_t inputForma
     inputArgs.src = ArrayRef<const char>(input, inputSize);
     inputArgs.apiOptions = ArrayRef<const char>(this->options.c_str(), this->options.length());
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
-    return this->compileGenBinary(inputArgs, false, false);
+    return this->compileGenBinary(inputArgs, false);
 }
 
 ze_result_t ModuleTranslationUnit::buildFromIntermediate(IGC::CodeType::CodeType_t intermediateType, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
@@ -384,7 +341,7 @@ ze_result_t ModuleTranslationUnit::buildFromIntermediate(IGC::CodeType::CodeType
     inputArgs.src = ArrayRef<const char>(input, inputSize);
     inputArgs.apiOptions = ArrayRef<const char>(this->options.c_str(), this->options.length());
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
-    return this->compileGenBinary(inputArgs, false, false);
+    return this->compileGenBinary(inputArgs, false);
 }
 
 ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions) {
@@ -803,13 +760,11 @@ std::pair<const void *, size_t> ModuleImp::getKernelHeapPointerAndSize(const std
 inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
     std::string buildOptions;
     std::string internalBuildOptions;
-
     auto extensions = L0::PNextRange(desc->pNext);
     auto moduleProgExt = extensions.get<ze_module_program_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC);
-    auto llvmProgExt = extensions.get<ze_module_program_llvmbc_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_LLVMBC_EXT_DESC);
+
     for (auto &ext : extensions) {
-        if (ext.stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC &&
-            ext.stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_LLVMBC_EXT_DESC) {
+        if (ext.stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     }
@@ -820,10 +775,8 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
         std::vector<uint32_t> inputModuleSizes;
         std::vector<const ze_module_constants_t *> specConstants;
         const ze_module_constants_t *firstSpecConstants = nullptr;
-        std::vector<const char *> inputLlvmBcs;
-        std::vector<uint32_t> inputLlvmBcSizes;
-        this->createBuildOptions(desc->pBuildFlags, buildOptions, internalBuildOptions);
-        this->isLlvmBitcode = NEO::CompilerOptions::contains(buildOptions, NEO::CompilerOptions::createLibrary);
+
+        this->createBuildOptions(nullptr, buildOptions, internalBuildOptions);
 
         inputSpirVs.reserve(moduleProgExt->count);
         inputModuleSizes.reserve(moduleProgExt->count);
@@ -831,7 +784,8 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
             std::string tmpBuildOptions;
             std::string tmpInternalBuildOptions;
             inputSpirVs.push_back(reinterpret_cast<const char *>(moduleProgExt->pInputModules[i]));
-            uint32_t inputSize = static_cast<uint32_t>(moduleProgExt->inputSizes[i]);
+            auto inputSizesInfo = const_cast<size_t *>(moduleProgExt->inputSizes);
+            uint32_t inputSize = static_cast<uint32_t>(inputSizesInfo[i]);
             inputModuleSizes.push_back(inputSize);
             if (moduleProgExt->pConstants) {
                 specConstants.push_back(moduleProgExt->pConstants[i]);
@@ -845,24 +799,8 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
                 internalBuildOptions = internalBuildOptions + tmpInternalBuildOptions;
             }
         }
-        if (llvmProgExt) {
-            for (uint32_t i = 0; i < static_cast<uint32_t>(llvmProgExt->count); i++) {
-                inputLlvmBcs.push_back(reinterpret_cast<const char *>(llvmProgExt->pInputModules[i]));
-                uint32_t inputSize = static_cast<uint32_t>(llvmProgExt->inputSizes[i]);
-                inputLlvmBcSizes.push_back(inputSize);
-            }
-        }
-        if (inputLlvmBcs.size() > 0) {
-            // internal path for linking with llvm bcs
-            this->precompiled = false;
-            return this->translationUnit->staticLinkSpirVAndLlvmBc(std::move(inputSpirVs),
-                                                                   std::move(inputModuleSizes),
-                                                                   buildOptions.c_str(),
-                                                                   internalBuildOptions.c_str(),
-                                                                   std::move(specConstants),
-                                                                   std::move(inputLlvmBcs),
-                                                                   std::move(inputLlvmBcSizes));
-        } else if (inputSpirVs.size() > 1) {
+        // If the user passed in only 1 SPIRV, then fallback to standard build
+        if (inputSpirVs.size() > 1) {
             this->precompiled = false;
             return this->translationUnit->staticLinkSpirV(std::move(inputSpirVs),
                                                           std::move(inputModuleSizes),
@@ -870,7 +808,6 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
                                                           internalBuildOptions.c_str(),
                                                           std::move(specConstants));
         } else {
-            // If the user passed in only 1 SPIRV, then fallback to standard build
             this->precompiled = false;
             return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(moduleProgExt->pInputModules[0]),
                                                          inputModuleSizes[0],

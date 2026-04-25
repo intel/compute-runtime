@@ -273,7 +273,7 @@ TranslationErrorCode CompilerInterface::link(
     CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> currOut;
     inSrc->Retain(); // shared with currSrc
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> currSrc(inSrc.get());
-    IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, input.outType};
+    IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, IGC::CodeType::oclGenBin};
     constexpr size_t numTranslations = sizeof(translationChain) / sizeof(translationChain[0]);
     for (size_t ti = 1; ti < numTranslations; ti++) {
         IGC::CodeType::CodeType_t inType = translationChain[ti - 1];
