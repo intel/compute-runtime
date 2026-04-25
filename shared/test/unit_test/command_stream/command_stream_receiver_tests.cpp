@@ -221,6 +221,17 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {
     EXPECT_FALSE(csr.isPreambleSent);
 }
 
+HWTEST_F(CommandStreamReceiverTest, WhenInitializeResourcesThenCallFillReusableAllocationsListOnce) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.fillReusableAllocationsListCalled = 0u;
+    ultCsr.resourcesInitialized = false;
+
+    commandStreamReceiver->initializeResources(false, pDevice->getPreemptionMode());
+    EXPECT_EQ(1u, pDevice->getUltCommandStreamReceiver<FamilyType>().fillReusableAllocationsListCalled);
+    commandStreamReceiver->initializeResources(false, pDevice->getPreemptionMode());
+    EXPECT_EQ(1u, pDevice->getUltCommandStreamReceiver<FamilyType>().fillReusableAllocationsListCalled);
+}
+
 HWTEST_F(CommandStreamReceiverTest, WhenCheckingPerQueuePrologueRequirementsThenCorrectValueAreReturned) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -265,7 +276,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagsDisabledWhenCallFillReusableAlloca
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForCommandBuffersWhenCallFillReusableAllocationsListThenAllocateCommandBufferOnceAndMakeItResident) {
+HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForCommandBuffersWhenCallFillReusableAllocationsListThenAllocateCommandBufferAndMakeItResident) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
     debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
@@ -281,9 +292,6 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForCommandBuffersWhenCallFil
 
     auto allocation = internalAllocationStorage->getAllocationsForReuse().peekHead();
     EXPECT_EQ(AllocationType::commandBuffer, allocation->getAllocationType());
-
-    commandStreamReceiver->fillReusableAllocationsList();
-    EXPECT_EQ(1u, commandStreamReceiver->getResidencyAllocations().size());
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForInternalHeapsWhenCallFillReusableAllocationsListThenAllocateInternalHeapAndMakeItResident) {

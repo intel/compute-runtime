@@ -56,7 +56,8 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
             return BlitOperationResult::unsupported;
         }
 
-        bcsEngine->commandStreamReceiver->initializeResourcesAndDirectSubmission(device.getPreemptionMode());
+        bcsEngine->commandStreamReceiver->initializeResources(false, device.getPreemptionMode());
+        bcsEngine->commandStreamReceiver->initDirectSubmission();
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
             BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
@@ -112,7 +113,9 @@ BlitOperationResult BlitHelper::blitMemsetAllocationBanks(const Device &device, 
             return BlitOperationResult::unsupported;
         }
 
-        bcsEngine->commandStreamReceiver->initializeResourcesAndDirectSubmission(device.getPreemptionMode());
+        bcsEngine->commandStreamReceiver->initializeResources(false, device.getPreemptionMode());
+        bcsEngine->commandStreamReceiver->initDirectSubmission();
+
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
             BlitProperties::constructPropertiesForMemoryFill(

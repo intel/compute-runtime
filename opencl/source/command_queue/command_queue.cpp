@@ -232,8 +232,9 @@ void CommandQueue::initializeGpgpuInternals() const {
         }
     }
 
-    gpgpuEngine->commandStreamReceiver->initializeResourcesAndDirectSubmission(device->getPreemptionMode());
+    gpgpuEngine->commandStreamReceiver->initializeResources(false, device->getPreemptionMode());
     gpgpuEngine->commandStreamReceiver->requestPreallocation();
+    gpgpuEngine->commandStreamReceiver->initDirectSubmission();
 
     if (getCmdQueueProperties<cl_queue_properties>(propertiesVector.data(), CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) && !this->gpgpuEngine->commandStreamReceiver->isUpdateTagFromWaitEnabled()) {
         this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(DispatchMode::batchedDispatch);
@@ -420,7 +421,8 @@ void CommandQueue::constructBcsEnginesForSplit() {
 
             if (bcsEngines[i]) {
                 bcsQueueEngineType = engineType;
-                bcsEngines[i]->commandStreamReceiver->initializeResourcesAndDirectSubmission(device->getPreemptionMode());
+                bcsEngines[i]->commandStreamReceiver->initializeResources(false, device->getPreemptionMode());
+                bcsEngines[i]->commandStreamReceiver->initDirectSubmission();
             }
         }
     }
