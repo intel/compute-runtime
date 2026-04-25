@@ -13,7 +13,7 @@ GraphicsAllocation *WddmAllocation::createView(size_t offsetInParentAllocation, 
     return new WddmAllocation(this, offsetInParentAllocation, viewSize);
 }
 
-InternalHandleStatus WddmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) {
+int WddmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) {
     if (parentAllocation) {
         return static_cast<WddmAllocation *>(parentAllocation)->createInternalHandle(memoryManager, handleId, handle, reservedHandleData);
     }
@@ -23,12 +23,12 @@ InternalHandleStatus WddmAllocation::createInternalHandle(MemoryManager *memoryM
         WddmMemoryManager *wddmMemoryManager = reinterpret_cast<WddmMemoryManager *>(memoryManager);
         auto status = wddmMemoryManager->createInternalNTHandle(&resourceHandle, &ntSharedHandle, this->getRootDeviceIndex());
         if (status != STATUS_SUCCESS) {
-            return InternalHandleStatus::outOfMemory;
+            return handle == 0;
         }
         ntSecureHandle = castToUint64(ntSharedHandle);
         handle = ntSecureHandle;
     }
-    return handle == 0 ? InternalHandleStatus::outOfMemory : InternalHandleStatus::success;
+    return handle == 0;
 }
 void WddmAllocation::clearInternalHandle(uint32_t handleId) {
     if (parentAllocation) {

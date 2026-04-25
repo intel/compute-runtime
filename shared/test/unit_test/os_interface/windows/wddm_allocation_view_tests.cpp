@@ -67,8 +67,8 @@ TEST_F(WddmAllocationViewTest, whenPeekInternalHandleOnViewThenDelegatesToParent
 
     uint64_t viewHandle = 0;
     uint64_t parentHandle = 0;
-    auto viewResult = view->peekInternalHandle(memoryManager.get(), viewHandle, nullptr);
-    auto parentResult = parentAllocation->peekInternalHandle(memoryManager.get(), parentHandle, nullptr);
+    int viewResult = view->peekInternalHandle(memoryManager.get(), viewHandle, nullptr);
+    int parentResult = parentAllocation->peekInternalHandle(memoryManager.get(), parentHandle, nullptr);
 
     // Verify view delegates to parent by checking same results
     EXPECT_EQ(parentResult, viewResult);
@@ -82,9 +82,9 @@ TEST_F(WddmAllocationViewTest, whenCreateInternalHandleOnViewThenDelegatesToPare
     auto view = std::unique_ptr<WddmAllocation>(static_cast<WddmAllocation *>(parentAllocation->createView(viewOffset, viewSize)));
 
     uint64_t handle = 0;
-    auto result = view->createInternalHandle(memoryManager.get(), 0u, handle, nullptr);
+    int result = view->createInternalHandle(memoryManager.get(), 0u, handle, nullptr);
 
-    EXPECT_EQ(InternalHandleStatus::success, result);
+    EXPECT_EQ(0, result);
 }
 
 TEST_F(WddmAllocationViewTest, whenClearInternalHandleOnViewThenDelegatesToParent) {

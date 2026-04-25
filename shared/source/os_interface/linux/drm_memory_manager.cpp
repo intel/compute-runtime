@@ -876,7 +876,7 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
     BufferObject *physicalBo = drmPhysicalAllocation->getBO();
     uint64_t mmapOffset = physicalBo->getMmapOffset();
     uint64_t internalHandle = 0;
-    if ((rootDeviceIndices.size() > 1) && (physicalAllocation->peekInternalHandle(this, internalHandle, nullptr) != NEO::InternalHandleStatus::success)) {
+    if ((rootDeviceIndices.size() > 1) && (physicalAllocation->peekInternalHandle(this, internalHandle, nullptr) < 0)) {
         return false;
     }
 
@@ -1624,8 +1624,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
         properties.gpuAddress = castToUint64(ptr);
 
         uint64_t internalHandle = 0;
-        auto ret = defaultAlloc->peekInternalHandle(this, internalHandle, nullptr);
-        if (ret != NEO::InternalHandleStatus::success) {
+        int ret = defaultAlloc->peekInternalHandle(this, internalHandle, nullptr);
+        if (ret < 0) {
             return nullptr;
         }
         auto result = createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, ptr, true, true);

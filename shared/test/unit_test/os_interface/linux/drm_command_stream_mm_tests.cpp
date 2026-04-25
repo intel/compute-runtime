@@ -128,7 +128,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndComplet
     uint64_t expectedCompletionGpuAddress = csr->getTagAllocation()->getGpuAddress() + TagAllocationLayout::completionFenceOffset;
     testCsr->latestSentTaskCount = 2;
 
-    auto ret = testCsr->exec(batchBuffer, 1, 2, 0);
+    int ret = testCsr->exec(batchBuffer, 1, 2, 0);
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(expectedCompletionGpuAddress, bo.receivedCompletionGpuAddress);
@@ -163,7 +163,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndNotComp
     auto *testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testCsr->latestSentTaskCount = 2;
 
-    auto ret = testCsr->exec(batchBuffer, 1, 2, 0);
+    int ret = testCsr->exec(batchBuffer, 1, 2, 0);
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(expectedCompletionGpuAddress, bo.receivedCompletionGpuAddress);
@@ -198,7 +198,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsCompletionFenceA
     auto *testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testCsr->latestSentTaskCount = 2;
 
-    auto ret = testCsr->exec(batchBuffer, 1, 2, 0);
+    int ret = testCsr->exec(batchBuffer, 1, 2, 0);
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(expectedCompletionGpuAddress, bo.receivedCompletionGpuAddress);

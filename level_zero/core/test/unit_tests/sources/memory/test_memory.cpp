@@ -3901,8 +3901,8 @@ TEST_F(MemoryExportImportTest,
       public:
         ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
-        NEO::InternalHandleStatus peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
-            return NEO::InternalHandleStatus::invalidArgument;
+        int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
+            return -1;
         }
     };
 
@@ -3922,8 +3922,8 @@ TEST_F(MemoryExportImportTest,
       public:
         ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
-        NEO::InternalHandleStatus peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
-            return NEO::InternalHandleStatus::invalidArgument;
+        int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
+            return -1;
         }
     };
 
@@ -6489,8 +6489,8 @@ class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
   public:
     ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
-    NEO::InternalHandleStatus peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
-        return NEO::InternalHandleStatus::invalidArgument;
+    int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
+        return -1;
     }
 };
 

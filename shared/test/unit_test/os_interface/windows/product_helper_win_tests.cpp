@@ -52,7 +52,7 @@ using ProductHelperTestWindows = ProductHelperTestWindows;
 
 TEST_F(ProductHelperTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenReturnSuccess) {
 
-    auto ret = productHelper->configureHwInfoWddm(&pInHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
+    int ret = productHelper->configureHwInfoWddm(&pInHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_EQ(0, ret);
 }
 

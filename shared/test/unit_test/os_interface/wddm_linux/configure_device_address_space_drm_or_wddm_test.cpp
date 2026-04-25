@@ -704,11 +704,11 @@ TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCloseInternalHandleThenSharedHandle
     auto alloc = memoryManager.allocatePhysicalDeviceMemory(allocData, status);
     ASSERT_NE(nullptr, alloc);
     uint64_t handle = 0;
-    EXPECT_EQ(NEO::InternalHandleStatus::success, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
 
     memoryManager.closeInternalHandle(handle, 0u, alloc);
 
-    EXPECT_EQ(NEO::InternalHandleStatus::success, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
 
     memoryManager.freeGraphicsMemoryImpl(alloc);
 }
@@ -729,7 +729,7 @@ TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCloseInternalHandleWithoutAllocatio
     auto alloc = memoryManager.allocatePhysicalDeviceMemory(allocData, status);
     ASSERT_NE(nullptr, alloc);
     uint64_t handle = 0;
-    EXPECT_EQ(NEO::InternalHandleStatus::success, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
 
     memoryManager.closeInternalHandle(handle, 0u, nullptr);
 
@@ -753,12 +753,12 @@ TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCreateInternalHandleFailedThenEmpyH
     ASSERT_NE(nullptr, alloc);
 
     uint64_t handle = 0;
-    EXPECT_EQ(NEO::InternalHandleStatus::success, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
 
     memoryManager.closeInternalHandle(handle, 0u, alloc);
 
     memoryManager.failCreateInternalNTHandle = true;
-    EXPECT_NE(NEO::InternalHandleStatus::success, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(1, alloc->createInternalHandle(&memoryManager, 0u, handle, nullptr));
 
     memoryManager.freeGraphicsMemoryImpl(alloc);
 }

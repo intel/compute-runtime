@@ -38,7 +38,7 @@ struct DrmMockXeCcs : public DrmMockCustom {
         setIoctlAnswer = a;
     }
     int ioctl(DrmIoctl request, void *arg) override {
-        auto ret = -1;
+        int ret = -1;
         ioctlCalled = true;
         if (forceIoctlAnswer) {
             return setIoctlAnswer;

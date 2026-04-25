@@ -214,7 +214,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
 
     case CL_MEM_ALLOCATION_HANDLE_INTEL: {
         auto retVal = allocation->peekInternalHandle(this->memoryManager, internalHandle, nullptr);
-        if (retVal != NEO::InternalHandleStatus::success) {
+        if (retVal != 0) {
             return CL_OUT_OF_RESOURCES;
         }
         srcParamSize = sizeof(internalHandle);

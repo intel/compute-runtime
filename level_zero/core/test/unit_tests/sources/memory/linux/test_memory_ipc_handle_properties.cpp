@@ -144,37 +144,9 @@ class MockFailingGraphicsAllocation : public NEO::MockGraphicsAllocation {
     MockFailingGraphicsAllocation(uint32_t rootDeviceIndex, void *buffer, size_t sizeIn)
         : NEO::MockGraphicsAllocation(rootDeviceIndex, buffer, sizeIn) {}
 
-    NEO::InternalHandleStatus createInternalHandle(NEO::MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
+    int createInternalHandle(NEO::MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
         createInternalHandleCalled = true;
-        return NEO::InternalHandleStatus::outOfMemory; // Return out of memory error
-    }
-
-    bool createInternalHandleCalled = false;
-};
-
-// Mock allocation that returns unsupported
-class MockUnsupportedGraphicsAllocation : public NEO::MockGraphicsAllocation {
-  public:
-    MockUnsupportedGraphicsAllocation(uint32_t rootDeviceIndex, void *buffer, size_t sizeIn)
-        : NEO::MockGraphicsAllocation(rootDeviceIndex, buffer, sizeIn) {}
-
-    NEO::InternalHandleStatus createInternalHandle(NEO::MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
-        createInternalHandleCalled = true;
-        return NEO::InternalHandleStatus::unsupported; // Return unsupported
-    }
-
-    bool createInternalHandleCalled = false;
-};
-
-// Mock allocation that returns invalid argument
-class MockInvalidArgumentGraphicsAllocation : public NEO::MockGraphicsAllocation {
-  public:
-    MockInvalidArgumentGraphicsAllocation(uint32_t rootDeviceIndex, void *buffer, size_t sizeIn)
-        : NEO::MockGraphicsAllocation(rootDeviceIndex, buffer, sizeIn) {}
-
-    NEO::InternalHandleStatus createInternalHandle(NEO::MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
-        createInternalHandleCalled = true;
-        return NEO::InternalHandleStatus::invalidArgument; // Return invalid argument
+        return -1; // Return error
     }
 
     bool createInternalHandleCalled = false;
@@ -217,90 +189,6 @@ TEST_F(MemoryIpcHandleErrorPathTest,
 
     // Should return out of host memory error
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
-    EXPECT_TRUE(mockAllocation->createInternalHandleCalled);
-
-    // Restore original allocation before cleanup
-    allocData->gpuAllocations.removeAllocation(originalRootDeviceIndex);
-    allocData->gpuAllocations.addAllocation(originalAllocation);
-    delete mockAllocation;
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(MemoryIpcHandleErrorPathTest,
-       givenCreateInternalHandleReturnsUnsupportedWhenGettingIpcMemHandleThenUnsupportedFeatureIsReturned) {
-
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    // Get the allocation data
-    NEO::SvmAllocationData *allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
-    ASSERT_NE(nullptr, allocData);
-
-    // Replace the allocation with our mock that returns unsupported
-    auto originalAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
-    auto originalRootDeviceIndex = originalAllocation->getRootDeviceIndex();
-    auto *mockAllocation = new MockUnsupportedGraphicsAllocation(originalRootDeviceIndex, nullptr, size);
-    mockAllocation->setGpuBaseAddress(originalAllocation->getGpuBaseAddress());
-    allocData->gpuAllocations.removeAllocation(originalRootDeviceIndex);
-    allocData->gpuAllocations.addAllocation(mockAllocation);
-
-    ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
-
-    // Should return unsupported feature error
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-    EXPECT_TRUE(mockAllocation->createInternalHandleCalled);
-
-    // Restore original allocation before cleanup
-    allocData->gpuAllocations.removeAllocation(originalRootDeviceIndex);
-    allocData->gpuAllocations.addAllocation(originalAllocation);
-    delete mockAllocation;
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(MemoryIpcHandleErrorPathTest,
-       givenCreateInternalHandleReturnsInvalidArgumentWhenGettingIpcMemHandleThenInvalidArgumentIsReturned) {
-
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    // Get the allocation data
-    NEO::SvmAllocationData *allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
-    ASSERT_NE(nullptr, allocData);
-
-    // Replace the allocation with our mock that returns invalid argument
-    auto originalAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
-    auto originalRootDeviceIndex = originalAllocation->getRootDeviceIndex();
-    auto *mockAllocation = new MockInvalidArgumentGraphicsAllocation(originalRootDeviceIndex, nullptr, size);
-    mockAllocation->setGpuBaseAddress(originalAllocation->getGpuBaseAddress());
-    allocData->gpuAllocations.removeAllocation(originalRootDeviceIndex);
-    allocData->gpuAllocations.addAllocation(mockAllocation);
-
-    ze_ipc_mem_handle_t ipcHandle = {};
-    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
-
-    // Should return invalid argument error
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     EXPECT_TRUE(mockAllocation->createInternalHandleCalled);
 
     // Restore original allocation before cleanup

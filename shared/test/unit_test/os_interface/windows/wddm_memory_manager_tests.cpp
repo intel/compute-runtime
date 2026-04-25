@@ -371,11 +371,11 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationThenCreateInternalHa
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
     uint64_t handle = 0;
-    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->closeInternalHandle(handle, 0u, graphicsAllocation);
 
-    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -388,7 +388,7 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenNoAllocationThenCreateInternalHandl
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
     uint64_t handle = 0;
-    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->closeInternalHandle(handle, 0u, nullptr);
 
@@ -403,9 +403,9 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationThenCreateInternalHa
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
     uint64_t handle = 0;
-    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
-    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->closeInternalHandle(handle, 0u, graphicsAllocation);
 
@@ -420,12 +420,12 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationWithFailingCreateInt
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
     uint64_t handle = 0;
-    EXPECT_EQ(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->closeInternalHandle(handle, 0u, graphicsAllocation);
 
     memoryManager->failCreateInternalNTHandle = true;
-    EXPECT_NE(NEO::InternalHandleStatus::success, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
+    EXPECT_EQ(1, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle, nullptr));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

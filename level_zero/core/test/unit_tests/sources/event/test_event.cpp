@@ -453,9 +453,9 @@ TEST_F(EventPoolCreate, GivenEnabledTimestampPoolAllocatorWhenCreatingEventPoolW
 struct EventPoolIpcMockGraphicsAllocation : public NEO::MockGraphicsAllocation {
     using NEO::MockGraphicsAllocation::MockGraphicsAllocation;
 
-    InternalHandleStatus peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
+    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) override {
         handle = peekInternalHandleValue;
-        return static_cast<InternalHandleStatus>(peekInternalHandleRetCode);
+        return peekInternalHandleRetCode;
     }
 
     int peekInternalHandleRetCode = 0;

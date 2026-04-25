@@ -785,8 +785,8 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         delete gmm;
     }
     uint64_t handle = 0;
-    auto ret = input->peekInternalHandle(nullptr, handle, nullptr);
-    if (ret == NEO::InternalHandleStatus::success) {
+    int ret = input->peekInternalHandle(nullptr, handle, nullptr);
+    if (ret == 0) {
         [[maybe_unused]] auto status = SysCalls::closeHandle(reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(handle)));
         DEBUG_BREAK_IF(!status);
     }

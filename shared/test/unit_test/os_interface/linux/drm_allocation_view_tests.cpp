@@ -65,9 +65,9 @@ TEST_F(DrmAllocationViewTest, whenPeekInternalHandleOnViewThenDelegatesToParent)
     auto view = std::unique_ptr<DrmAllocation>(static_cast<DrmAllocation *>(parentAllocation->createView(viewOffset, viewSize)));
 
     uint64_t handle = 0;
-    auto result = view->peekInternalHandle(memoryManager.get(), 0u, handle, nullptr);
+    int result = view->peekInternalHandle(memoryManager.get(), 0u, handle, nullptr);
 
-    EXPECT_EQ(NEO::InternalHandleStatus::success, result);
+    EXPECT_EQ(0, result);
     EXPECT_EQ(static_cast<uint64_t>(bo->peekHandle()), handle);
 
     parentAllocation->getBufferObjectToModify(0) = nullptr;

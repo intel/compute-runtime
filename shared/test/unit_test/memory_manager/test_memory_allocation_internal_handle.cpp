@@ -30,9 +30,9 @@ TEST_F(MemoryAllocationInternalHandleTest, givenMemoryAllocationWithValidInterna
 
     uint64_t handle = 0;
     void *reservedHandleData = nullptr;
-    auto ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
+    int ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
 
-    EXPECT_EQ(ret, NEO::InternalHandleStatus::success);
+    EXPECT_EQ(ret, 0);
     EXPECT_EQ(handle, 0x1234u);
 }
 
@@ -42,9 +42,9 @@ TEST_F(MemoryAllocationInternalHandleTest, givenMemoryAllocationWithInvalidInter
 
     uint64_t handle = 0;
     void *reservedHandleData = nullptr;
-    auto ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
+    int ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
 
-    EXPECT_EQ(ret, NEO::InternalHandleStatus::outOfMemory);
+    EXPECT_EQ(ret, -1);
     EXPECT_EQ(handle, 0u);
 }
 
@@ -54,9 +54,9 @@ TEST_F(MemoryAllocationInternalHandleTest, givenMemoryAllocationWithZeroHandleWh
 
     uint64_t handle = 0xFFFFu; // Set to non-zero initially
     void *reservedHandleData = nullptr;
-    auto ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
+    int ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
 
-    EXPECT_EQ(ret, NEO::InternalHandleStatus::success);
+    EXPECT_EQ(ret, 0);
     EXPECT_EQ(handle, 0u);
 }
 
@@ -66,9 +66,9 @@ TEST_F(MemoryAllocationInternalHandleTest, givenMemoryAllocationWithMaxMinusOneH
 
     uint64_t handle = 0;
     void *reservedHandleData = nullptr;
-    auto ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
+    int ret = allocation.peekInternalHandle(nullptr, handle, reservedHandleData);
 
-    EXPECT_EQ(ret, NEO::InternalHandleStatus::success);
+    EXPECT_EQ(ret, 0);
     EXPECT_EQ(handle, std::numeric_limits<uint64_t>::max() - 1);
 }
 

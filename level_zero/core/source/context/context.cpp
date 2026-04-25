@@ -988,13 +988,8 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
                 reservedHandleData = reservedHandleDataStorage;
             }
         }
-        auto ret = alloc->createInternalHandle(memoryManager, i, handle, reservedHandleData);
-        if (ret != NEO::InternalHandleStatus::success) {
-            if (ret == NEO::InternalHandleStatus::unsupported) {
-                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            } else if (ret == NEO::InternalHandleStatus::invalidArgument) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
+        int ret = alloc->createInternalHandle(memoryManager, i, handle, reservedHandleData);
+        if (ret < 0) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
 
@@ -1163,7 +1158,7 @@ ze_result_t Context::handleAllocationExtensions(NEO::GraphicsAllocation *alloc, 
             if (result != ZE_RESULT_SUCCESS) {
                 // If this memory is not an SVM Allocation like Images, then retrieve only the handle untracked.
                 auto ret = alloc->peekInternalHandle(driverHandle->getMemoryManager(), handle, nullptr);
-                if (ret != NEO::InternalHandleStatus::success) {
+                if (ret < 0) {
                     return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
                 }
             } else {
@@ -1178,8 +1173,8 @@ ze_result_t Context::handleAllocationExtensions(NEO::GraphicsAllocation *alloc, 
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
             uint64_t handle = 0;
-            auto ret = alloc->peekInternalHandle(driverHandle->getMemoryManager(), handle, nullptr);
-            if (ret != NEO::InternalHandleStatus::success) {
+            int ret = alloc->peekInternalHandle(driverHandle->getMemoryManager(), handle, nullptr);
+            if (ret < 0) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
             exportStructure->handle = reinterpret_cast<void *>(handle);
@@ -1733,7 +1728,7 @@ ze_result_t Context::getPhysicalMemProperties(ze_physical_mem_handle_t hPhysical
                 reinterpret_cast<ze_external_memory_export_fd_t *>(extendedProperties);
             uint64_t handle = 0;
             auto ret = allocation->peekInternalHandle(this->driverHandle->getMemoryManager(), handle, nullptr);
-            if (ret != NEO::InternalHandleStatus::success) {
+            if (ret < 0) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
             extendedMemoryExportProperties->fd = static_cast<int>(handle);

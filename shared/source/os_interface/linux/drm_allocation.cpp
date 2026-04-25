@@ -106,38 +106,38 @@ void DrmAllocation::clearInternalHandle(uint32_t handleId) {
     handles[handleId] = std::numeric_limits<uint64_t>::max();
 }
 
-InternalHandleStatus DrmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) {
+int DrmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) {
     return peekInternalHandle(memoryManager, handleId, handle, reservedHandleData);
 }
 
-InternalHandleStatus DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) {
+int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) {
     return peekInternalHandle(memoryManager, 0u, handle, reservedHandleData);
 }
 
-InternalHandleStatus DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) {
+int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) {
     if (parentAllocation) {
         return static_cast<DrmAllocation *>(parentAllocation)->peekInternalHandle(memoryManager, handleId, handle, reservedHandleData);
     }
 
     if (handles[handleId] != std::numeric_limits<uint64_t>::max()) {
         handle = handles[handleId];
-        return InternalHandleStatus::success;
+        return 0;
     }
 
     int64_t ret = static_cast<int64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBufferObjectToModify(handleId)->peekHandle(), this->rootDeviceIndex));
     if (ret < 0) {
-        return InternalHandleStatus::outOfMemory;
+        return -1;
     }
     if (reservedHandleData) {
         int reservedHandleRet = static_cast<DrmMemoryManager *>(memoryManager)->obtainReservedHandleData(static_cast<int>(ret), this->getRootDeviceIndex(), reservedHandleData);
         if (reservedHandleRet != 0) {
-            return static_cast<InternalHandleStatus>(reservedHandleRet);
+            return -1;
         }
     }
 
     handle = handles[handleId] = ret;
 
-    return InternalHandleStatus::success;
+    return 0;
 }
 
 void DrmAllocation::setCachePolicy(CachePolicy memType) {

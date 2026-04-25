@@ -14,14 +14,14 @@ namespace NEO {
 
 int DrmMemoryManager::obtainReservedHandleData(int fd, uint32_t rootDeviceindex, void *reservedHandleData) {
     auto &drm = getDrm(rootDeviceindex);
-    return static_cast<int>(drm.getDrmFabric()->fdToHandle(fd, reservedHandleData));
+    return drm.getDrmFabric()->fdToHandle(fd, reservedHandleData);
 }
 
 void DrmMemoryManager::closeInternalHandleWithReservedData(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation, void *reservedHandleData) {
     closeInternalHandle(handle, handleId, graphicsAllocation);
     if (reservedHandleData && graphicsAllocation) {
         auto &drm = getDrm(graphicsAllocation->getRootDeviceIndex());
-        int ret = static_cast<int>(drm.getDrmFabric()->handleClose(reservedHandleData));
+        int ret = drm.getDrmFabric()->handleClose(reservedHandleData);
         PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "handleClose for reservedHandleData returned %d\n", ret);
         DEBUG_BREAK_IF(ret != 0);
     }
@@ -34,7 +34,7 @@ int DrmMemoryManager::getImportHandleFromReservedHandleData(void *reservedHandle
 
     auto &drm = getDrm(rootDeviceIndex);
     int32_t dmabufFd = -1;
-    int ret = static_cast<int>(drm.getDrmFabric()->handleToFd(reservedHandleData, dmabufFd));
+    int ret = drm.getDrmFabric()->handleToFd(reservedHandleData, dmabufFd);
 
     if (ret != 0) {
         return -1;

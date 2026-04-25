@@ -21,18 +21,18 @@ TEST(DrmFabricStubTest, givenDrmFabricStubWhenFdToHandleCalledThenReturnsMinusOn
     DrmFabricStub fabricStub;
     uint8_t handleData[32] = {0};
 
-    auto result = fabricStub.fdToHandle(123, handleData);
+    int result = fabricStub.fdToHandle(123, handleData);
 
-    EXPECT_EQ(NEO::InternalHandleStatus::unsupported, result);
+    EXPECT_EQ(-1, result);
 }
 
 TEST(DrmFabricStubTest, givenDrmFabricStubWhenHandleCloseCalledThenReturnsMinusOne) {
     DrmFabricStub fabricStub;
     uint8_t handleData[32] = {1, 2, 3};
 
-    auto result = fabricStub.handleClose(handleData);
+    int result = fabricStub.handleClose(handleData);
 
-    EXPECT_EQ(NEO::InternalHandleStatus::unsupported, result);
+    EXPECT_EQ(-1, result);
 }
 
 TEST(DrmFabricStubTest, givenDrmFabricStubWhenHandleToFdCalledThenReturnsMinusOne) {
@@ -40,9 +40,9 @@ TEST(DrmFabricStubTest, givenDrmFabricStubWhenHandleToFdCalledThenReturnsMinusOn
     uint8_t handleData[32] = {1, 2, 3};
     int32_t outFd = 0;
 
-    auto result = fabricStub.handleToFd(handleData, outFd);
+    int result = fabricStub.handleToFd(handleData, outFd);
 
-    EXPECT_EQ(NEO::InternalHandleStatus::unsupported, result);
+    EXPECT_EQ(-1, result);
     EXPECT_EQ(0, outFd);
 }
 
