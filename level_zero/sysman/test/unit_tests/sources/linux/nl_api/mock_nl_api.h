@@ -62,6 +62,8 @@ class MockNlApi : public L0::Sysman::NlApi {
     bool isErrorAvailable = false;
     bool queryNodeList = false;
     bool clearErrorCounter = false;
+    bool setThreshold = false;
+    bool getThreshold = false;
     bool isErrorDataInvalid = false;
     bool callbackInvoked = false;
 
@@ -108,6 +110,7 @@ class MockNlApi : public L0::Sysman::NlApi {
     } mockNlmsghdr = {};
     struct nlmsghdr *nlmsgHdrResult = &mockNlmsghdr.hdr;
     uint32_t nlmsgHdrCalled = 0u;
+    uint32_t mockThresholdValue = 100u;
 
     void setNlmsgHdrError(int errorCode) {
         mockNlmsghdr.err.error = errorCode;

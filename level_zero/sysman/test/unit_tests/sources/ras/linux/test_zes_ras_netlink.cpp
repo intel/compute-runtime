@@ -355,6 +355,151 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndErrorCounterNotFo
     rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
 }
 
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndErrorListNotFoundWhenCallingRasSetConfigExpThenDependencyUnavailableIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList.erase(rasNetlinkUtil->rasNodeId);
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 100};
+    auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndValidConfigWhenCallingRasSetConfigExpThenSuccessIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {
+        {1, "core-compute", 10, 0}};
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 500};
+    auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndUnknownCategoryWhenCallingRasSetConfigExpThenSuccessIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {{1, "core-compute", 10, 0}};
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS, .threshold = 500};
+    auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndCounterNotFoundWhenCallingRasSetConfigExpThenSuccessIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {{1, "device-memory", 10, 0}};
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 500};
+    auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndSetThresholdFailsWhenCallingRasSetConfigExpThenErrorIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {{1, "core-compute", 10, 0}};
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    pDrmNlApi->setErrorThresholdReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 500};
+    auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndErrorListNotFoundWhenCallingRasGetConfigExpThenDependencyUnavailableIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList.erase(rasNetlinkUtil->rasNodeId);
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
+    auto result = rasNetlinkUtil->rasGetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndValidConfigWhenCallingRasGetConfigExpThenSuccessAndThresholdIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {{1, "core-compute", 10, 0}};
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    pDrmNlApi->mockThresholdResponse.threshold = 200u;
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
+    auto result = rasNetlinkUtil->rasGetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(config.threshold, 200u);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndUnknownCategoryWhenCallingRasGetConfigExpThenSuccessIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {{1, "core-compute", 10, 0}};
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS, .threshold = 0};
+    auto result = rasNetlinkUtil->rasGetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndCounterNotFoundWhenCallingRasGetConfigExpThenSuccessIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {{1, "device-memory", 10, 0}};
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
+    auto result = rasNetlinkUtil->rasGetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndGetThresholdFailsWhenCallingRasGetConfigExpThenErrorIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {{1, "core-compute", 10, 0}};
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    pDrmNlApi->getErrorThresholdReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
+    auto result = rasNetlinkUtil->rasGetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

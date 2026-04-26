@@ -7,19 +7,12 @@
 
 #pragma once
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_ras_types.h"
+#include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_ras_uapi_ext.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_nl_api.h"
 #include <level_zero/zes_api.h>
 
-#include "third_party/uapi/drm-next/drm/drm_ras.h"
-
 #include <linux/types.h>
 #include <vector>
-
-#ifndef DRM_RAS_CMD_CLEAR_ERROR_COUNTER
-#define DRM_RAS_CMD_CLEAR_ERROR_COUNTER (DRM_RAS_CMD_MAX + 1)
-#endif
-
-#define DRM_RAS_CMD_SYSMAN_MAX (DRM_RAS_CMD_CLEAR_ERROR_COUNTER + 1)
 
 namespace L0 {
 namespace Sysman {
@@ -34,6 +27,8 @@ class DrmNlApi {
     MOCKABLE_VIRTUAL ze_result_t listNodes(std::vector<DrmRasNode> &nodeList);
     MOCKABLE_VIRTUAL ze_result_t getErrorCounter(const uint32_t &nodeId, const uint32_t &errorId, DrmErrorCounter &errorCounter);
     MOCKABLE_VIRTUAL ze_result_t getErrorsList(const uint32_t &nodeId, std::vector<DrmErrorCounter> &errorList);
+    MOCKABLE_VIRTUAL ze_result_t setErrorThreshold(const uint32_t &nodeId, const uint32_t &errorId, const uint32_t &threshold);
+    MOCKABLE_VIRTUAL ze_result_t getErrorThreshold(const uint32_t &nodeId, const uint32_t &errorId, DrmErrorThreshold &threshold);
     MOCKABLE_VIRTUAL ze_result_t clearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId);
 
     int handleMsg(struct nl_msg *msg);
@@ -41,6 +36,7 @@ class DrmNlApi {
     ze_result_t listNodesRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info);
     ze_result_t getErrorListRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info);
     ze_result_t getSingleErrorCounterRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info);
+    ze_result_t getErrorThresholdRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info);
 
   protected:
     struct Operation {
@@ -61,6 +57,8 @@ class DrmNlApi {
     ze_result_t allocMsg(const uint16_t &cmdOp, const bool useDumpFlags, struct nl_msg *&msg);
     ze_result_t issueRequestReadOne(const uint16_t cmdOp, const uint32_t &nodeId, const uint32_t &errorId, void *pOutput);
     ze_result_t issueRequestQueryErrors(const uint16_t &cmdOp, const uint32_t &nodeId, void *pOutput);
+    ze_result_t issueRequestSetThreshold(const uint32_t &nodeId, const uint32_t &errorId, const uint32_t &threshold);
+    ze_result_t issueRequestGetThreshold(const uint32_t &nodeId, const uint32_t &errorId, void *pOutput);
     ze_result_t performTransaction(const uint16_t &cmdOp, struct nl_msg *msg, void *pOutput, const bool parseSingleErrorCounter);
     ze_result_t issueRequestListNodes(void *pOutput);
     ze_result_t issueRequestClearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId);
@@ -72,9 +70,10 @@ class DrmNlApi {
 
     struct genl_ops ops = {};
 
-    struct genl_cmd newCmds[DRM_RAS_CMD_SYSMAN_MAX] = {};
+    struct genl_cmd newCmds[NEO_DRM_RAS_CMD_MAX] = {};
     struct nla_policy nodePolicy[DRM_RAS_A_NODE_ATTRS_MAX + 1] = {};
     struct nla_policy errorPolicy[DRM_RAS_A_ERROR_COUNTER_ATTRS_MAX + 1] = {};
+    struct nla_policy thresholdPolicy[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1] = {};
 
     std::string deviceName = {};
 };

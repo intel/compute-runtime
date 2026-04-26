@@ -7,11 +7,8 @@
 
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_api.h"
 
+#include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_ras_uapi_ext.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
-
-#ifndef DRM_RAS_CMD_CLEAR_ERROR_COUNTER
-#define DRM_RAS_CMD_CLEAR_ERROR_COUNTER (DRM_RAS_CMD_MAX + 1)
-#endif
 
 #include "gtest/gtest.h"
 #include "third_party/uapi/drm-next/drm/drm_ras.h"
@@ -339,6 +336,17 @@ int MockNlApi::genlHandleMsg(struct nl_msg *msg, void *arg) {
                 }
             }
         }
+    } else if (getThreshold) {
+        next = addAttrib(info, next, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_ID, 1);
+        next = addAttrib(info, next, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_NAME, 7);
+        addAttrib(info, next, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_THRESHOLD, mockThresholdValue);
+        for (int i = 0; i < pOps->o_ncmds; i++) {
+            if (pOps->o_cmds[i].c_id == DRM_RAS_CMD_GET_ERROR_THRESHOLD && pOps->o_cmds[i].c_msg_parser != nullptr) {
+                if (0 == (pOps->o_cmds[i].c_msg_parser)(reinterpret_cast<struct nl_cache_ops *>(this), &pOps->o_cmds[i], &info, arg)) {
+                    succeeded = true;
+                }
+            }
+        }
     } else if (clearErrorCounter) {
         // CLEAR_ERROR_COUNTER is ACK-only, no data parser needed
         // Just mark as succeeded so the test continues
@@ -408,8 +416,8 @@ int MockNlApi::nlRecvmsgsDefault(struct nl_sock *sock) {
 
     // Only call callbacks once
     if (!callbackInvoked) {
-        // Set error in mock header if clearErrorCounter and isErrorDataInvalid
-        if (clearErrorCounter && isErrorDataInvalid) {
+        // Set error in mock header if clearErrorCounter/setThreshold and isErrorDataInvalid
+        if ((clearErrorCounter || setThreshold) && isErrorDataInvalid) {
             mockNlmsghdr.hdr.nlmsg_type = NLMSG_ERROR;
             mockNlmsghdr.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct nlmsgerr));
             mockNlmsghdr.err.error = -EINVAL;
@@ -419,8 +427,8 @@ int MockNlApi::nlRecvmsgsDefault(struct nl_sock *sock) {
         struct nl_msg *msg = nlmsgAlloc();
         int callbackResult = 0;
 
-        // For clearErrorCounter, call the ACK callback
-        if (clearErrorCounter && myAckCallback != nullptr) {
+        // For clearErrorCounter or setThreshold (ACK-only), call the ACK callback
+        if ((clearErrorCounter || setThreshold) && myAckCallback != nullptr) {
             callbackResult = myAckCallback(msg, myArgP);
         }
         // For data commands, call the VALID callback

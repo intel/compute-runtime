@@ -33,6 +33,8 @@ class LinuxRasSources : NEO::NonCopyableAndNonMovableClass {
     virtual uint32_t osRasGetCategoryCount() = 0;
     virtual ze_result_t osRasClearStateExp(zes_ras_error_category_exp_t category) = 0;
     virtual std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() = 0;
+    virtual ze_result_t osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) = 0;
+    virtual ze_result_t osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) = 0;
     virtual ~LinuxRasSources() = default;
 };
 
@@ -75,6 +77,8 @@ class LinuxRasSourceGt : public LinuxRasSources {
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId);
     uint32_t osRasGetCategoryCount() override;
     std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override;
+    ze_result_t osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override;
+    ze_result_t osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override;
     LinuxRasSourceGt(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxRasSourceGt() = default;
     ~LinuxRasSourceGt() override;
@@ -91,6 +95,8 @@ class LinuxRasSourceHbm : public LinuxRasSources {
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId);
     uint32_t osRasGetCategoryCount() override;
     std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override;
+    ze_result_t osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    ze_result_t osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     LinuxRasSourceHbm(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, ze_bool_t isSubDevice, uint32_t subdeviceId);
     LinuxRasSourceHbm() = default;
     ~LinuxRasSourceHbm() override;

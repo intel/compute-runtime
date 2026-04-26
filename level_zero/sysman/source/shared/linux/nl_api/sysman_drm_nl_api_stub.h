@@ -27,6 +27,8 @@ class DrmNlApi {
     virtual ze_result_t listNodes(std::vector<DrmRasNode> &nodeList) { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     virtual ze_result_t getErrorCounter(const uint32_t &nodeId, const uint32_t &errorId, DrmErrorCounter &errorCounter) { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     virtual ze_result_t getErrorsList(const uint32_t &nodeId, std::vector<DrmErrorCounter> &errorList) { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    virtual ze_result_t setErrorThreshold(const uint32_t &nodeId, const uint32_t &errorId, const uint32_t &threshold) { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    virtual ze_result_t getErrorThreshold(const uint32_t &nodeId, const uint32_t &errorId, DrmErrorThreshold &threshold) { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
 };
 
 } // namespace Sysman

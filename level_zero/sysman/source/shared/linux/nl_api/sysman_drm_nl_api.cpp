@@ -38,6 +38,12 @@ static int drmNlOperationListNodes(struct nl_cache_ops *ops, struct genl_cmd *cm
     drmNlApi->listNodesRsp(ops, cmd, info);
     return NL_OK;
 }
+
+static int drmNlOperationGetThreshold(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info, void *arg) {
+    DrmNlApi *drmNlApi = reinterpret_cast<DrmNlApi *>(arg);
+    drmNlApi->getErrorThresholdRsp(ops, cmd, info);
+    return NL_OK;
+}
 }
 
 DrmNlApi::DrmNlApi() {
@@ -65,6 +71,18 @@ ze_result_t DrmNlApi::getErrorsList(const uint32_t &nodeId,
     return issueRequestQueryErrors(DRM_RAS_CMD_GET_ERROR_COUNTER, nodeId, reinterpret_cast<void *>(&errorList));
 }
 
+ze_result_t DrmNlApi::setErrorThreshold(const uint32_t &nodeId,
+                                        const uint32_t &errorId,
+                                        const uint32_t &threshold) {
+    return issueRequestSetThreshold(nodeId, errorId, threshold);
+}
+
+ze_result_t DrmNlApi::getErrorThreshold(const uint32_t &nodeId,
+                                        const uint32_t &errorId,
+                                        DrmErrorThreshold &threshold) {
+    return issueRequestGetThreshold(nodeId, errorId, reinterpret_cast<void *>(&threshold));
+}
+
 ze_result_t DrmNlApi::clearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId) {
     return issueRequestClearErrorCounter(nodeId, errorId);
 }
@@ -74,9 +92,13 @@ int DrmNlApi::handleMsg(struct nl_msg *msg) {
 }
 
 int DrmNlApi::handleAck(struct nl_msg *msg) {
+    auto isAckOnlyCmd = [](uint16_t cmdOp) {
+        return cmdOp == DRM_RAS_CMD_CLEAR_ERROR_COUNTER || cmdOp == DRM_RAS_CMD_SET_ERROR_THRESHOLD;
+    };
+
     struct nlmsghdr *nlh = pNlApi->nlmsgHdr(msg);
     if (!nlh) {
-        if (currentOperation && currentOperation->cmdOp == DRM_RAS_CMD_CLEAR_ERROR_COUNTER) {
+        if (currentOperation && isAckOnlyCmd(currentOperation->cmdOp)) {
             currentOperation->result = ZE_RESULT_ERROR_UNKNOWN;
             currentOperation->done = true;
         }
@@ -85,14 +107,14 @@ int DrmNlApi::handleAck(struct nl_msg *msg) {
 
     if (nlh->nlmsg_type == NLMSG_ERROR) {
         if (nlh->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
-            if (currentOperation && currentOperation->cmdOp == DRM_RAS_CMD_CLEAR_ERROR_COUNTER) {
+            if (currentOperation && isAckOnlyCmd(currentOperation->cmdOp)) {
                 currentOperation->result = ZE_RESULT_ERROR_UNKNOWN;
                 currentOperation->done = true;
             }
             return NL_STOP;
         }
         auto *err = static_cast<struct nlmsgerr *>(NLMSG_DATA(nlh));
-        if (currentOperation && currentOperation->cmdOp == DRM_RAS_CMD_CLEAR_ERROR_COUNTER) {
+        if (currentOperation && isAckOnlyCmd(currentOperation->cmdOp)) {
             if (err->error == 0) {
                 currentOperation->result = ZE_RESULT_SUCCESS;
             } else {
@@ -248,6 +270,27 @@ ze_result_t DrmNlApi::getSingleErrorCounterRsp(struct nl_cache_ops *ops, struct 
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t DrmNlApi::getErrorThresholdRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info) {
+    DrmErrorThreshold *threshold = reinterpret_cast<DrmErrorThreshold *>(currentOperation->pOutput);
+    UNRECOVERABLE_IF(threshold == nullptr);
+
+    if (info->attrs[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_ID]) {
+        threshold->errorId = pNlApi->nlaGetU32(
+            info->attrs[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_ID]);
+    }
+    if (info->attrs[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_NAME]) {
+        threshold->errorName = pNlApi->nlaGetString(
+            info->attrs[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_NAME]);
+    }
+    if (info->attrs[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_THRESHOLD]) {
+        threshold->threshold = pNlApi->nlaGetU32(
+            info->attrs[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_THRESHOLD]);
+    }
+
+    currentOperation->done = true;
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t DrmNlApi::initConnection() {
 
     if (!initted) {
@@ -396,6 +439,43 @@ ze_result_t DrmNlApi::issueRequestQueryErrors(const uint16_t &cmdOp, const uint3
     return result;
 }
 
+ze_result_t DrmNlApi::issueRequestSetThreshold(const uint32_t &nodeId, const uint32_t &errorId, const uint32_t &threshold) {
+    ze_result_t result = initConnection();
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    struct nl_msg *msg;
+    result = allocMsg(DRM_RAS_CMD_SET_ERROR_THRESHOLD, false, msg);
+    if (ZE_RESULT_SUCCESS == result) {
+        pNlApi->nlaPutU32(msg, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_NODE_ID, nodeId);
+        pNlApi->nlaPutU32(msg, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_ID, errorId);
+        pNlApi->nlaPutU32(msg, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_THRESHOLD, threshold);
+        result = performTransaction(DRM_RAS_CMD_SET_ERROR_THRESHOLD, msg, nullptr, false);
+    }
+
+    cleanupConnection(true);
+    return result;
+}
+
+ze_result_t DrmNlApi::issueRequestGetThreshold(const uint32_t &nodeId, const uint32_t &errorId, void *pOutput) {
+    ze_result_t result = initConnection();
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    struct nl_msg *msg;
+    result = allocMsg(DRM_RAS_CMD_GET_ERROR_THRESHOLD, false, msg);
+    if (ZE_RESULT_SUCCESS == result) {
+        pNlApi->nlaPutU32(msg, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_NODE_ID, nodeId);
+        pNlApi->nlaPutU32(msg, DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_ID, errorId);
+        result = performTransaction(DRM_RAS_CMD_GET_ERROR_THRESHOLD, msg, pOutput, false);
+    }
+
+    cleanupConnection(true);
+    return result;
+}
+
 ze_result_t DrmNlApi::issueRequestClearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId) {
     ze_result_t result = initConnection();
     if (ZE_RESULT_SUCCESS != result) {
@@ -429,8 +509,15 @@ void DrmNlApi::setupNlOperations() {
     errorPolicy[DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_NAME].type = NLA_NUL_STRING;
     errorPolicy[DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_VALUE].type = NLA_U32;
 
+    // Setup threshold attribute policy
+    memset(thresholdPolicy, 0, sizeof(nla_policy) * (DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1));
+    thresholdPolicy[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_NODE_ID].type = NLA_U32;
+    thresholdPolicy[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_ID].type = NLA_U32;
+    thresholdPolicy[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_NAME].type = NLA_NUL_STRING;
+    thresholdPolicy[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_ERROR_THRESHOLD].type = NLA_U32;
+
     // Setup commands
-    memset(newCmds, 0, sizeof(genl_cmd) * DRM_RAS_CMD_SYSMAN_MAX);
+    memset(newCmds, 0, sizeof(genl_cmd) * NEO_DRM_RAS_CMD_MAX);
 
     newCmds[0].c_id = DRM_RAS_CMD_LIST_NODES;
     newCmds[0].c_name = const_cast<char *>("LIST_NODES");
@@ -450,11 +537,23 @@ void DrmNlApi::setupNlOperations() {
     newCmds[2].c_attr_policy = errorPolicy;
     newCmds[2].c_msg_parser = nullptr; // ACK-only command, no data parser needed
 
+    newCmds[3].c_id = DRM_RAS_CMD_SET_ERROR_THRESHOLD;
+    newCmds[3].c_name = const_cast<char *>("SET_ERROR_THRESHOLD");
+    newCmds[3].c_maxattr = DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX;
+    newCmds[3].c_attr_policy = thresholdPolicy;
+    newCmds[3].c_msg_parser = nullptr; // SET has no reply payload; ACK is handled by NL_CB_ACK
+
+    newCmds[4].c_id = DRM_RAS_CMD_GET_ERROR_THRESHOLD;
+    newCmds[4].c_name = const_cast<char *>("GET_ERROR_THRESHOLD");
+    newCmds[4].c_maxattr = DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX;
+    newCmds[4].c_attr_policy = thresholdPolicy;
+    newCmds[4].c_msg_parser = &drmNlOperationGetThreshold;
+
     // Use fixed family name
     ops.o_name = const_cast<char *>(DRM_RAS_FAMILY_NAME); // "drm-ras"
     ops.o_hdrsize = 0U;
     ops.o_cmds = newCmds;
-    ops.o_ncmds = DRM_RAS_CMD_SYSMAN_MAX;
+    ops.o_ncmds = NEO_DRM_RAS_CMD_MAX;
 }
 
 } // namespace Sysman

@@ -83,6 +83,24 @@ class SysmanDrmNlApiFixture : public ::testing::Test {
         pNlApi->isErrorDataInvalid = errorDataInvalid;
         return pNlApi;
     }
+    std::unique_ptr<MockNlApi> setupMockNlApiForSetThresholdOperation(bool errorDataInvalid = false) {
+        auto pNlApi = setupInitConnectionSuccess();
+        pNlApi->mockGenlmsgPutReturnValue.push_back(pNlApi.get());
+        pNlApi->mockNlSendAutoReturnValue.push_back(1);
+        pNlApi->mockNlRecvmsgsDefaultReturnValue.push_back(0);
+        pNlApi->setThreshold = true;
+        pNlApi->isErrorDataInvalid = errorDataInvalid;
+        return pNlApi;
+    }
+
+    std::unique_ptr<MockNlApi> setupMockNlApiForGetThresholdOperation() {
+        auto pNlApi = setupInitConnectionSuccess();
+        pNlApi->mockGenlmsgPutReturnValue.push_back(pNlApi.get());
+        pNlApi->mockNlSendAutoReturnValue.push_back(1);
+        pNlApi->mockNlRecvmsgsDefaultReturnValue.push_back(0);
+        pNlApi->getThreshold = true;
+        return pNlApi;
+    }
 };
 
 TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceAndLoadEntryPointsFailsWhenCallingInitConnectionThenErrorIsReturned) {
@@ -794,6 +812,68 @@ TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceWithMalformedErrorMessageAndN
     EXPECT_EQ(nullptr, drmNlApi->currentOperation);
 
     drmNlApi->pNlApi->nlmsgFree(msg);
+}
+
+TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceWhenCallingSetErrorThresholdThenSuccessIsReturned) {
+    drmNlApi->pNlApi = setupMockNlApiForSetThresholdOperation();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, drmNlApi->DrmNlApi::setErrorThreshold(0, 1, 500));
+}
+
+TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceAndLoadEntryPointsFailsWhenCallingSetErrorThresholdThenErrorIsReturned) {
+    auto pNlApi = std::make_unique<MockNlApi>();
+    pNlApi->mockLoadEntryPointsReturnValue.push_back(false);
+    drmNlApi->pNlApi = std::move(pNlApi);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, drmNlApi->DrmNlApi::setErrorThreshold(0, 1, 500));
+}
+
+TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceAndAllocMsgFailsWhenCallingSetErrorThresholdThenErrorIsReturned) {
+    auto pNlApi = setupInitConnectionSuccess();
+    pNlApi->mockNlmsgAllocReturnValue.push_back(nullptr);
+    drmNlApi->pNlApi = std::move(pNlApi);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, drmNlApi->DrmNlApi::setErrorThreshold(0, 1, 500));
+}
+
+TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceWhenCallingGetErrorThresholdThenSuccessIsReturned) {
+    drmNlApi->pNlApi = setupMockNlApiForGetThresholdOperation();
+    DrmErrorThreshold threshold = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, drmNlApi->DrmNlApi::getErrorThreshold(0, 1, threshold));
+    EXPECT_EQ(100u, threshold.threshold);
+}
+
+TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceAndLoadEntryPointsFailsWhenCallingGetErrorThresholdThenErrorIsReturned) {
+    auto pNlApi = std::make_unique<MockNlApi>();
+    pNlApi->mockLoadEntryPointsReturnValue.push_back(false);
+    drmNlApi->pNlApi = std::move(pNlApi);
+    DrmErrorThreshold threshold = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, drmNlApi->DrmNlApi::getErrorThreshold(0, 1, threshold));
+}
+
+TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiInstanceAndAllocMsgFailsWhenCallingGetErrorThresholdThenErrorIsReturned) {
+    auto pNlApi = setupInitConnectionSuccess();
+    pNlApi->mockNlmsgAllocReturnValue.push_back(nullptr);
+    drmNlApi->pNlApi = std::move(pNlApi);
+    DrmErrorThreshold threshold = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, drmNlApi->DrmNlApi::getErrorThreshold(0, 1, threshold));
+}
+
+TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiAndNoThresholdAttrsWhenCallingGetErrorThresholdRspThenThresholdRemainsZero) {
+    DrmErrorThreshold threshold = {};
+    drmNlApi->currentOperation = std::make_unique<MockDrmNlApi::Operation>(DRM_RAS_CMD_GET_ERROR_THRESHOLD, &threshold);
+
+    auto pNlApi = std::make_unique<MockNlApi>();
+    drmNlApi->pNlApi = std::move(pNlApi);
+
+    auto attrs = std::make_unique<struct nlattr *[]>(DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1);
+    std::fill(attrs.get(), attrs.get() + DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1, nullptr);
+
+    struct genl_info info = {};
+    info.attrs = attrs.get();
+    info.nlh = nullptr;
+
+    drmNlApi->getErrorThresholdRsp(nullptr, nullptr, &info);
+
+    EXPECT_EQ(0u, threshold.errorId);
+    EXPECT_EQ(0u, threshold.threshold);
 }
 
 } // namespace ult

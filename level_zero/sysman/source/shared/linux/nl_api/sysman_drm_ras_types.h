@@ -27,5 +27,11 @@ struct DrmErrorCounter {
     uint32_t errorId = 0;
 };
 
+struct DrmErrorThreshold {
+    uint32_t errorId = 0;
+    std::string errorName = {};
+    uint32_t threshold = 0;
+};
+
 } // namespace Sysman
 } // namespace L0

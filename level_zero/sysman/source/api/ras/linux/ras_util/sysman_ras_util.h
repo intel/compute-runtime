@@ -12,6 +12,7 @@
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_ras_types.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include <level_zero/zes_api.h>
+#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <map>
 #include <memory>
@@ -46,6 +47,8 @@ class RasUtil : public NEO::NonCopyableAndNonMovableClass {
     virtual ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) = 0;
     virtual uint32_t rasGetCategoryCount() = 0;
     virtual std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() = 0;
+    virtual ze_result_t rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) = 0;
+    virtual ze_result_t rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) = 0;
     virtual ~RasUtil() = default;
 };
 
@@ -57,6 +60,8 @@ class PmuRasUtil : public RasUtil {
     ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) override;
     uint32_t rasGetCategoryCount() override;
     std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override;
+    ze_result_t rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    ze_result_t rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId);
     ~PmuRasUtil() override;
 
@@ -99,6 +104,8 @@ class GscRasUtil : public RasUtil {
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId);
     uint32_t rasGetCategoryCount() override;
     std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override;
+    ze_result_t rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    ze_result_t rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     GscRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId);
     ~GscRasUtil() override {};
 
@@ -122,6 +129,8 @@ class NetlinkRasUtil : public RasUtil {
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId);
     uint32_t rasGetCategoryCount() override;
     std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override;
+    ze_result_t rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override;
+    ze_result_t rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override;
     NetlinkRasUtil(zes_ras_error_type_t type, L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId);
     ~NetlinkRasUtil() override;
     static std::unique_ptr<DrmNlApi> (*createDrmNlApi)();
@@ -142,6 +151,8 @@ class RasUtilNone : public RasUtil {
     ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; };
     uint32_t rasGetCategoryCount() override { return 0u; };
     std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override { return {}; };
+    ze_result_t rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; };
+    ze_result_t rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; };
     RasUtilNone() = default;
     ~RasUtilNone() override {};
 };

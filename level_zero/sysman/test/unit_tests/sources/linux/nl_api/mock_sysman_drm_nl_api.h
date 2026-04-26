@@ -26,6 +26,9 @@ class MockDrmNlApi : public L0::Sysman::DrmNlApi {
     ze_result_t getErrorCounterReturnStatus = ZE_RESULT_SUCCESS;
     ze_result_t getErrorsListReturnStatus = ZE_RESULT_SUCCESS;
     ze_result_t clearErrorCounterReturnStatus = ZE_RESULT_SUCCESS;
+    ze_result_t setErrorThresholdReturnStatus = ZE_RESULT_SUCCESS;
+    ze_result_t getErrorThresholdReturnStatus = ZE_RESULT_SUCCESS;
+    DrmErrorThreshold mockThresholdResponse = {};
     bool getMockErrorList = false;
     bool callRealListNodes = false;
     bool returnEmptyErrorList = false;
@@ -118,6 +121,21 @@ class MockDrmNlApi : public L0::Sysman::DrmNlApi {
         }
 
         return DrmNlApi::clearErrorCounter(nodeId, errorId);
+    }
+
+    ze_result_t setErrorThreshold(const uint32_t &nodeId, const uint32_t &errorId, const uint32_t &threshold) override {
+        if (setErrorThresholdReturnStatus != ZE_RESULT_SUCCESS) {
+            return setErrorThresholdReturnStatus;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getErrorThreshold(const uint32_t &nodeId, const uint32_t &errorId, DrmErrorThreshold &threshold) override {
+        if (getErrorThresholdReturnStatus != ZE_RESULT_SUCCESS) {
+            return getErrorThresholdReturnStatus;
+        }
+        threshold = mockThresholdResponse;
+        return ZE_RESULT_SUCCESS;
     }
 };
 

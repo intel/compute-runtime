@@ -17,6 +17,19 @@ namespace ult {
 
 using SysmanProductHelperRasTest = SysmanDeviceFixture;
 
+class MockLinuxRasSources : public L0::Sysman::LinuxRasSources {
+  public:
+    ze_result_t getConfigReturnStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t setConfigReturnStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    ze_result_t osRasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    uint32_t osRasGetCategoryCount() override { return 0u; }
+    ze_result_t osRasClearStateExp(zes_ras_error_category_exp_t category) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    std::vector<zes_ras_error_category_exp_t> getSupportedErrorCategoriesExp() override { return {}; }
+    ze_result_t osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override { return setConfigReturnStatus; }
+    ze_result_t osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override { return getConfigReturnStatus; }
+};
+
 HWTEST2_F(SysmanProductHelperRasTest, GivenSysmanProductHelperInstanceWhenQueryingRasInterfaceThenVerifyProperInterfacesAreReturned, IsPVC) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(NEO::defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(RasInterfaceType::pmu, pSysmanProductHelper->getGtRasUtilInterface());
@@ -273,6 +286,83 @@ HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWithHbmSourceWhenCallingOs
     std::vector<zes_ras_error_category_exp_t> categories(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetSupportedCategoriesExp(&count, categories.data()));
     EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasSourceHbmWhenCallingOsRasGetConfigExpThenUnsupportedFeatureIsReturned, IsPVC) {
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+    auto hbmSource = std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, hbmSource->osRasGetConfigExp(0, &config));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, hbmSource->osRasSetConfigExp(0, &config));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenGscRasUtilWhenCallingRasGetConfigExpThenUnsupportedFeatureIsReturned, IsPVC) {
+    auto pRasUtil = std::make_unique<GscRasUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasUtil->rasGetConfigExp(0, &config));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasUtil->rasSetConfigExp(0, &config));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWithHbmSourceWhenCallingOsRasGetConfigExpThenUnsupportedFeatureIsReturned, IsPVC) {
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+    pLinuxRasImp->rasSources.clear();
+    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
+
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxRasImp->osRasGetConfigExp(0, &config));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxRasImp->osRasSetConfigExp(0, &config));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWithMockSourceWhenCallingOsRasGetConfigExpSucceedsThenSuccessIsReturned, IsPVC) {
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+    pLinuxRasImp->rasSources.clear();
+    auto mockSource = std::make_unique<MockLinuxRasSources>();
+    mockSource->getConfigReturnStatus = ZE_RESULT_SUCCESS;
+    mockSource->setConfigReturnStatus = ZE_RESULT_SUCCESS;
+    pLinuxRasImp->rasSources.push_back(std::move(mockSource));
+
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetConfigExp(0, &config));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasSetConfigExp(0, &config));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWithMockSourceWhenCallingOsRasGetConfigExpFailsThenErrorIsReturned, IsPVC) {
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0u;
+
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+    pLinuxRasImp->rasSources.clear();
+    auto mockSource = std::make_unique<MockLinuxRasSources>();
+    mockSource->getConfigReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
+    mockSource->setConfigReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
+    pLinuxRasImp->rasSources.push_back(std::move(mockSource));
+
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxRasImp->osRasGetConfigExp(0, &config));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxRasImp->osRasSetConfigExp(0, &config));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenValidRasHandleWhenCallingRasGetAndSetConfigExpThenUnsupportedFeatureIsReturned, IsPVC) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    const uint32_t count = 0u;
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetConfigExp(count, &config));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasSetConfigExp(count, &config));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenValidRasHandleWhenCallingRasGetAndSetConfigExpThenDependencyUnavailableIsReturned, IsCRI) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    const uint32_t count = 0u;
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pRasImp->rasGetConfigExp(count, &config));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pRasImp->rasSetConfigExp(count, &config));
 }
 
 } // namespace ult

@@ -119,6 +119,78 @@ ze_result_t NetlinkRasUtil::rasClearStateExp(zes_ras_error_category_exp_t catego
     return drmNl->clearErrorCounter(rasNodeId, errorId);
 }
 
+ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+    // For each requested category, look up the corresponding DRM error name via categoryToErrorNameMap,
+    // then find the matching error counter in the cached error list and call getErrorThreshold on the
+    // DRM netlink interface to populate pConfig[i].threshold.
+    auto errListIt = rasErrorList.find(rasNodeId);
+    if (errListIt == rasErrorList.end()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+    const auto &errorList = errListIt->second;
+
+    for (uint32_t i = 0; i < count; i++) {
+        auto categoryIt = categoryToErrorNameMap.find(pConfig[i].category);
+        if (categoryIt == categoryToErrorNameMap.end()) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Debug@ %s(): RAS category 0x%x not supported by Netlink, skipping \n", __FUNCTION__, pConfig[i].category);
+            continue;
+        }
+
+        auto errIt = std::find_if(errorList.begin(), errorList.end(),
+                                  [&](const DrmErrorCounter &counter) {
+                                      return counter.errorName == categoryIt->second;
+                                  });
+        if (errIt == errorList.end()) {
+            continue;
+        }
+
+        DrmErrorThreshold threshold = {};
+        ze_result_t result = drmNl->getErrorThreshold(rasNodeId, errIt->errorId, threshold);
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getErrorThreshold failed and returning error:0x%x \n", __FUNCTION__, result);
+            return result;
+        }
+        pConfig[i].threshold = static_cast<uint64_t>(threshold.threshold);
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+    // For each requested category, look up the corresponding DRM error name via categoryToErrorNameMap,
+    // then find the matching error counter in the cached error list and call setErrorThreshold on the
+    // DRM netlink interface.
+    auto errListIt = rasErrorList.find(rasNodeId);
+    if (errListIt == rasErrorList.end()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+    const auto &errorList = errListIt->second;
+
+    for (uint32_t i = 0; i < count; i++) {
+        auto categoryIt = categoryToErrorNameMap.find(pConfig[i].category);
+        if (categoryIt == categoryToErrorNameMap.end()) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Debug@ %s(): RAS category 0x%x not supported by Netlink, skipping \n", __FUNCTION__, pConfig[i].category);
+            continue;
+        }
+
+        auto errIt = std::find_if(errorList.begin(), errorList.end(),
+                                  [&](const DrmErrorCounter &counter) {
+                                      return counter.errorName == categoryIt->second;
+                                  });
+        if (errIt == errorList.end()) {
+            continue;
+        }
+
+        ze_result_t result = drmNl->setErrorThreshold(rasNodeId, errIt->errorId, static_cast<uint32_t>(pConfig[i].threshold));
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): setErrorThreshold failed and returning error:0x%x \n", __FUNCTION__, result);
+            return result;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 NetlinkRasUtil::NetlinkRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) : pLinuxSysmanImp(pLinuxSysmanImp), rasErrorType(type) {
     std::string devicePciBdf = pLinuxSysmanImp->getDevicePciBdf();
 

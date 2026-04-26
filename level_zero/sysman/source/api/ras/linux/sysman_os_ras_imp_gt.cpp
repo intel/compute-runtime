@@ -52,6 +52,14 @@ std::vector<zes_ras_error_category_exp_t> LinuxRasSourceGt::getSupportedErrorCat
     return pRasUtil->getSupportedErrorCategoriesExp();
 }
 
+ze_result_t LinuxRasSourceGt::osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+    return pRasUtil->rasSetConfigExp(count, pConfig);
+}
+
+ze_result_t LinuxRasSourceGt::osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+    return pRasUtil->rasGetConfigExp(count, pConfig);
+}
+
 LinuxRasSourceGt::LinuxRasSourceGt(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId) {
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     pRasUtil = RasUtil::create(pSysmanProductHelper->getGtRasUtilInterface(), pLinuxSysmanImp, type, onSubdevice, subdeviceId);

@@ -170,11 +170,29 @@ ze_result_t LinuxRasImp::osRasGetSupportedCategoriesExp(uint32_t *pCount, zes_ra
 }
 
 ze_result_t LinuxRasImp::osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    bool anySourceSucceeded = false;
+    for (auto &rasSource : rasSources) {
+        ze_result_t result = rasSource->osRasGetConfigExp(count, pConfig);
+        if (result == ZE_RESULT_SUCCESS) {
+            anySourceSucceeded = true;
+        } else if (result != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+            return result;
+        }
+    }
+    return anySourceSucceeded ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    bool anySourceSucceeded = false;
+    for (auto &rasSource : rasSources) {
+        ze_result_t result = rasSource->osRasSetConfigExp(count, pConfig);
+        if (result == ZE_RESULT_SUCCESS) {
+            anySourceSucceeded = true;
+        } else if (result != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+            return result;
+        }
+    }
+    return anySourceSucceeded ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t LinuxRasImp::osRasGetStateExp(const uint32_t count, zes_intel_ras_state_exp_t *pState) {
