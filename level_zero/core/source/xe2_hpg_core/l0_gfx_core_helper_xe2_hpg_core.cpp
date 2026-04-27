@@ -66,5 +66,10 @@ void L0GfxCoreHelperHw<Family>::p2pDecompressBufferIfRequired(NEO::GraphicsAlloc
 
 #include "level_zero/core/source/helpers/l0_gfx_core_helper_factory_init.inl"
 
+template <>
+void L0GfxCoreHelperHw<Family>::adjustBuiltInImageModeToBindful(NEO::BuiltIn::AddressingMode &mode) const {
+    mode.imageMode = NEO::BuiltIn::AddressingMode::ImageMode::bindful;
+}
+
 template class L0GfxCoreHelperHw<Family>;
 } // namespace L0

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
@@ -1001,6 +1002,32 @@ HWTEST2_F(L0GfxCoreHelperFusedEuTest, givenBitmaskWithAttentionBitsForHalfOfThre
             subsliceIndex++;
         }
     }
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenXe2OrXe3PlatformWhenAdjustBuiltInImageModeToBindfulCalledThenImageModeIsBindful, IsWithinXe2HpgCoreAndXe3Core) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+
+    NEO::BuiltIn::AddressingMode mode = NEO::BuiltIn::bindlessImageStatelessBuffer;
+    EXPECT_EQ(NEO::BuiltIn::AddressingMode::ImageMode::bindless, mode.imageMode);
+
+    l0GfxCoreHelper.adjustBuiltInImageModeToBindful(mode);
+
+    EXPECT_EQ(NEO::BuiltIn::AddressingMode::ImageMode::bindful, mode.imageMode);
+    EXPECT_EQ(NEO::BuiltIn::AddressingMode::BufferMode::stateless, mode.bufferMode);
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenNonXe2Xe3PlatformWhenAdjustBuiltInImageModeToBindfulCalledThenImageModeIsUnchanged, IsAtLeastXe3pCore) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+
+    NEO::BuiltIn::AddressingMode mode = NEO::BuiltIn::bindlessImageStatelessBuffer;
+    EXPECT_EQ(NEO::BuiltIn::AddressingMode::ImageMode::bindless, mode.imageMode);
+
+    l0GfxCoreHelper.adjustBuiltInImageModeToBindful(mode);
+
+    EXPECT_EQ(NEO::BuiltIn::AddressingMode::ImageMode::bindless, mode.imageMode);
+    EXPECT_EQ(NEO::BuiltIn::AddressingMode::BufferMode::stateless, mode.bufferMode);
 }
 
 HWTEST2_F(L0GfxCoreHelperTest, whenAlwaysAllocateEventInLocalMemCalledThenReturnFalse, IsNotXeHpcCore) {

@@ -915,6 +915,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     }
 
     auto builtInMode = this->defaultBuiltInMode;
+    device->getL0GfxCoreHelper().adjustBuiltInImageModeToBindful(builtInMode);
     builtInMode.adjustToWideStatelessIfRequired(bufferSize);
     ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyBufferToImage3dBytes;
 
@@ -1133,6 +1134,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     }
 
     auto builtInMode = this->defaultBuiltInMode;
+    device->getL0GfxCoreHelper().adjustBuiltInImageModeToBindful(builtInMode);
     builtInMode.adjustToWideStatelessIfRequired(bufferSize);
     ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyImage3dToBufferBytes;
 

@@ -28,6 +28,9 @@ namespace NEO {
 enum class EngineGroupType : uint32_t;
 struct HardwareInfo;
 struct EngineGroupT;
+namespace BuiltIn {
+struct AddressingMode;
+} // namespace BuiltIn
 struct RootDeviceEnvironment;
 class Debugger;
 class ProductHelper;
@@ -127,6 +130,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual uint64_t getSupportedCustomOperations1() const = 0;
     virtual uint64_t getSupportedCustomOperations2() const = 0;
     virtual void p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, L0::DriverHandle *driverHandle) const = 0;
+    virtual void adjustBuiltInImageModeToBindful(NEO::BuiltIn::AddressingMode &mode) const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -192,6 +196,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     uint64_t getSupportedCustomOperations1() const override;
     uint64_t getSupportedCustomOperations2() const override;
     void p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, L0::DriverHandle *driverHandle) const override;
+    void adjustBuiltInImageModeToBindful(NEO::BuiltIn::AddressingMode &mode) const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

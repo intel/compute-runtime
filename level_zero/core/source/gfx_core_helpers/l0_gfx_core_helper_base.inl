@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -128,6 +129,10 @@ uint64_t L0GfxCoreHelperHw<Family>::getSupportedCustomOperations2() const {
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::isMetricTracerSupported() const {
     return false;
+}
+
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::adjustBuiltInImageModeToBindful(NEO::BuiltIn::AddressingMode &mode) const {
 }
 
 } // namespace L0

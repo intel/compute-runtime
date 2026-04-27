@@ -27,5 +27,10 @@ uint32_t L0GfxCoreHelperHw<Family>::getGrfRegisterCount(uint32_t *regPtr) const 
     return (regPtr[4] & 0x1FF);
 }
 
+template <>
+void L0GfxCoreHelperHw<Family>::adjustBuiltInImageModeToBindful(NEO::BuiltIn::AddressingMode &mode) const {
+    mode.imageMode = NEO::BuiltIn::AddressingMode::ImageMode::bindful;
+}
+
 template class L0GfxCoreHelperHw<Family>;
 } // namespace L0
