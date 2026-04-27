@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -712,8 +712,10 @@ int IafNlApi::nlOperation(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct
             }
         }
         pOperation->done = true;
+        return NL_OK;
     }
-    return NL_OK;
+    // Context attribute is missing - return error to break the transaction loop
+    return NL_STOP;
 }
 
 ze_result_t IafNlApi::init() {

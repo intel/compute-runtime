@@ -695,34 +695,6 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExp
     }
 }
 
-HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenCallingzesGetClearStateExpForHbmThenCallFails, IsNotPVC) {
-    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
-    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-
-    bool isSubDevice = true;
-    uint32_t subDeviceId = 0u;
-
-    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
-    pLinuxRasImp->rasSources.clear();
-    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxRasImp->osRasClearStateExp(ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS));
-}
-
-HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenCallingzesGetClearStateExpForGtThenCallFails, isRasNotSupportedProduct) {
-    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
-    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-
-    bool isSubDevice = true;
-    uint32_t subDeviceId = 0u;
-
-    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
-    pLinuxRasImp->rasSources.clear();
-    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceGt>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxRasImp->osRasClearStateExp(ZES_RAS_ERROR_CATEGORY_EXP_DRIVER_ERRORS));
-}
-
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesRasClearStateExpAndGetStateExpForHbmThenVerifyErrorCountersAreCleared, IsPVC) {
     pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2);
     pPmuInterface->mockPmuReadResult = true;

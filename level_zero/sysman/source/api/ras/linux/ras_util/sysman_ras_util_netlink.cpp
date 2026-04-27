@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_nl_api.h"
@@ -14,7 +16,7 @@
 namespace L0 {
 namespace Sysman {
 
-std::map<zes_ras_error_category_exp_t, std::string_view> categoryToErrorNameMap = {
+static const std::map<zes_ras_error_category_exp_t, std::string_view> categoryToErrorNameMap = {
     {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, "core-compute"},
     {ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS, "device-memory"},
     {ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS, "scale"},
@@ -120,7 +122,32 @@ ze_result_t NetlinkRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_
 }
 
 ze_result_t NetlinkRasUtil::rasClearStateExp(zes_ras_error_category_exp_t category) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    auto categoryToErrorNameIt = categoryToErrorNameMap.find(category);
+    if (categoryToErrorNameIt == categoryToErrorNameMap.end()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): RAS error category not supported by Netlink and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    std::string_view errorName = categoryToErrorNameIt->second;
+
+    auto rasErrorListIt = rasErrorList.find(rasNodeId);
+    if (rasErrorListIt == rasErrorList.end()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error list found for RAS node and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+    const auto &errorList = rasErrorListIt->second;
+
+    auto err = std::find_if(errorList.begin(), errorList.end(),
+                            [&](const DrmErrorCounter &counter) -> bool {
+                                return (counter.errorName == errorName);
+                            });
+
+    if (err == errorList.end()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No error counter found for RAS error category and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+    uint32_t errorId = err->errorId;
+    return drmNl->clearErrorCounter(rasNodeId, errorId);
 }
 
 NetlinkRasUtil::NetlinkRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) : pLinuxSysmanImp(pLinuxSysmanImp), rasErrorType(type) {

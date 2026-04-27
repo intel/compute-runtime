@@ -15,6 +15,12 @@
 #include <linux/types.h>
 #include <vector>
 
+#ifndef DRM_RAS_CMD_CLEAR_ERROR_COUNTER
+#define DRM_RAS_CMD_CLEAR_ERROR_COUNTER (DRM_RAS_CMD_MAX + 1)
+#endif
+
+#define DRM_RAS_CMD_SYSMAN_MAX (DRM_RAS_CMD_CLEAR_ERROR_COUNTER + 1)
+
 namespace L0 {
 namespace Sysman {
 
@@ -28,18 +34,15 @@ class DrmNlApi {
     MOCKABLE_VIRTUAL ze_result_t listNodes(std::vector<DrmRasNode> &nodeList);
     MOCKABLE_VIRTUAL ze_result_t getErrorCounter(const uint32_t &nodeId, const uint32_t &errorId, DrmErrorCounter &errorCounter);
     MOCKABLE_VIRTUAL ze_result_t getErrorsList(const uint32_t &nodeId, std::vector<DrmErrorCounter> &errorList);
+    MOCKABLE_VIRTUAL ze_result_t clearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId);
 
     int handleMsg(struct nl_msg *msg);
+    int handleAck(struct nl_msg *msg);
     ze_result_t listNodesRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info);
     ze_result_t getErrorListRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info);
     ze_result_t getSingleErrorCounterRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info);
 
   protected:
-    std::unique_ptr<NlApi> pNlApi;
-    ze_result_t initConnection();
-    void cleanupConnection(bool freeSocket);
-
-  private:
     struct Operation {
         uint16_t cmdOp;
         bool done = false;
@@ -49,12 +52,18 @@ class DrmNlApi {
         Operation(uint16_t cmdOp, void *pOutput) : cmdOp(cmdOp), pOutput(pOutput) {}
     };
 
+    std::unique_ptr<NlApi> pNlApi;
+    std::unique_ptr<Operation> currentOperation = nullptr;
+    ze_result_t initConnection();
+    void cleanupConnection(bool freeSocket);
+
+  private:
     ze_result_t allocMsg(const uint16_t &cmdOp, const bool useDumpFlags, struct nl_msg *&msg);
     ze_result_t issueRequestReadOne(const uint16_t cmdOp, const uint32_t &nodeId, const uint32_t &errorId, void *pOutput);
     ze_result_t issueRequestQueryErrors(const uint16_t &cmdOp, const uint32_t &nodeId, void *pOutput);
     ze_result_t performTransaction(const uint16_t &cmdOp, struct nl_msg *msg, void *pOutput, const bool parseSingleErrorCounter);
-
     ze_result_t issueRequestListNodes(void *pOutput);
+    ze_result_t issueRequestClearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId);
     void setupNlOperations();
 
     bool initted = false;
@@ -63,11 +72,10 @@ class DrmNlApi {
 
     struct genl_ops ops = {};
 
-    struct genl_cmd newCmds[DRM_RAS_CMD_MAX] = {};
+    struct genl_cmd newCmds[DRM_RAS_CMD_SYSMAN_MAX] = {};
     struct nla_policy nodePolicy[DRM_RAS_A_NODE_ATTRS_MAX + 1] = {};
     struct nla_policy errorPolicy[DRM_RAS_A_ERROR_COUNTER_ATTRS_MAX + 1] = {};
 
-    std::unique_ptr<Operation> currentOperation = nullptr;
     std::string deviceName = {};
 };
 

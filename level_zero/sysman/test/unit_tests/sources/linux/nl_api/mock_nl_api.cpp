@@ -9,10 +9,16 @@
 
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
 
+#ifndef DRM_RAS_CMD_CLEAR_ERROR_COUNTER
+#define DRM_RAS_CMD_CLEAR_ERROR_COUNTER (DRM_RAS_CMD_MAX + 1)
+#endif
+
 #include "gtest/gtest.h"
 #include "third_party/uapi/drm-next/drm/drm_ras.h"
 
 #include <cstring>
+#include <errno.h>
+#include <linux/netlink.h>
 
 namespace L0 {
 namespace Sysman {
@@ -333,6 +339,10 @@ int MockNlApi::genlHandleMsg(struct nl_msg *msg, void *arg) {
                 }
             }
         }
+    } else if (clearErrorCounter) {
+        // CLEAR_ERROR_COUNTER is ACK-only, no data parser needed
+        // Just mark as succeeded so the test continues
+        succeeded = true;
     } else {
         if (0 == (pOps->o_cmds[cmdIndex].c_msg_parser)(reinterpret_cast<struct nl_cache_ops *>(this), &pOps->o_cmds[cmdIndex], &info, arg)) {
             succeeded = true;
@@ -381,17 +391,52 @@ int MockNlApi::genlCtrlResolve(struct nl_sock *sock, const char *name) {
 
 int MockNlApi::nlRecvmsgsDefault(struct nl_sock *sock) {
     int returnValue = 0;
-    if (!mockNlRecvmsgsDefaultReturnValue.empty()) {
+    bool hasMockedReturnValue = !mockNlRecvmsgsDefaultReturnValue.empty();
+
+    // Get the mocked return value if set
+    if (hasMockedReturnValue) {
         returnValue = mockNlRecvmsgsDefaultReturnValue.front();
         if (isRepeated != true) {
             mockNlRecvmsgsDefaultReturnValue.erase(mockNlRecvmsgsDefaultReturnValue.begin());
         }
+    }
+
+    // If we have a mocked return value and it's an error, don't call callbacks
+    if (hasMockedReturnValue && returnValue < 0) {
         return returnValue;
     }
 
-    struct nl_msg *msg = nlmsgAlloc();
-    returnValue = myCallback(msg, myArgP);
-    nlmsgFree(msg);
+    // Only call callbacks once
+    if (!callbackInvoked) {
+        // Set error in mock header if clearErrorCounter and isErrorDataInvalid
+        if (clearErrorCounter && isErrorDataInvalid) {
+            mockNlmsghdr.hdr.nlmsg_type = NLMSG_ERROR;
+            mockNlmsghdr.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct nlmsgerr));
+            mockNlmsghdr.err.error = -EINVAL;
+        }
+
+        // Call the appropriate callback
+        struct nl_msg *msg = nlmsgAlloc();
+        int callbackResult = 0;
+
+        // For clearErrorCounter, call the ACK callback
+        if (clearErrorCounter && myAckCallback != nullptr) {
+            callbackResult = myAckCallback(msg, myArgP);
+        }
+        // For data commands, call the VALID callback
+        else if (myValidCallback != nullptr) {
+            callbackResult = myValidCallback(msg, myArgP);
+        }
+
+        nlmsgFree(msg);
+        callbackInvoked = true;
+
+        // If no mocked return value was set, use the callback's return value
+        if (!hasMockedReturnValue) {
+            returnValue = callbackResult;
+        }
+    }
+
     return returnValue;
 }
 
@@ -522,6 +567,8 @@ void MockNlApi::nlmsgFree(struct nl_msg *msg) {
 
 int MockNlApi::nlSendAuto(struct nl_sock *sock, struct nl_msg *msg) {
     int returnValue = 0;
+    // Reset callback tracking when sending a new message
+    callbackInvoked = false;
     if (!mockNlSendAutoReturnValue.empty()) {
         returnValue = mockNlSendAutoReturnValue.front();
         mockNlSendAutoReturnValue.erase(mockNlSendAutoReturnValue.begin());
@@ -583,7 +630,11 @@ int MockNlApi::genlConnect(struct nl_sock *sock) {
 
 int MockNlApi::nlSocketModifyCb(struct nl_sock *sock, enum nl_cb_type type, enum nl_cb_kind kind, nl_recvmsg_msg_cb_t cb, void *arg) {
     int returnValue = 0;
-    myCallback = cb;
+    if (type == NL_CB_VALID) {
+        myValidCallback = cb;
+    } else if (type == NL_CB_ACK) {
+        myAckCallback = cb;
+    }
     myArgP = arg;
     if (!mockNlSocketModifyCbReturnValue.empty()) {
         returnValue = mockNlSocketModifyCbReturnValue.front();
@@ -603,6 +654,13 @@ int MockNlApi::genlUnregisterFamily(struct genl_ops *ops) {
         }
     }
     return returnValue;
+}
+
+struct nlmsghdr *MockNlApi::nlmsgHdr(struct nl_msg *msg) {
+    nlmsgHdrCalled++;
+    mockNlmsghdr.hdr.nlmsg_type = NLMSG_ERROR;
+    mockNlmsghdr.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct nlmsgerr));
+    return nlmsgHdrResult;
 }
 
 } // namespace ult

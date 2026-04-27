@@ -61,6 +61,9 @@ class MockNlApi : public L0::Sysman::NlApi {
     bool queryErrorList = false;
     bool isErrorAvailable = false;
     bool queryNodeList = false;
+    bool clearErrorCounter = false;
+    bool isErrorDataInvalid = false;
+    bool callbackInvoked = false;
 
     int genlUnregisterFamily(struct genl_ops *ops) override;
     int genlHandleMsg(struct nl_msg *msg, void *arg) override;
@@ -95,15 +98,31 @@ class MockNlApi : public L0::Sysman::NlApi {
     struct nlattr *nlaNestStart(struct nl_msg *msg, int id) override;
     int nlaNestEnd(struct nl_msg *msg, struct nlattr *attr) override;
 
-    ADDMETHOD_NOBASE(nlmsgHdr, struct nlmsghdr *, nullptr, (struct nl_msg * msg));
+    struct nlmsghdr *nlmsgHdr(struct nl_msg *msg) override;
     ADDMETHOD_NOBASE_VOIDRETURN(nlSocketDisableSeqCheck, (struct nl_sock * sock));
     ADDMETHOD_NOBASE_VOIDRETURN(nlSocketFree, (struct nl_sock * sock));
+
+    struct {
+        struct nlmsghdr hdr;
+        struct nlmsgerr err;
+    } mockNlmsghdr = {};
+    struct nlmsghdr *nlmsgHdrResult = &mockNlmsghdr.hdr;
+    uint32_t nlmsgHdrCalled = 0u;
+
+    void setNlmsgHdrError(int errorCode) {
+        mockNlmsghdr.err.error = errorCode;
+    }
+
+    void setNlmsgHdrType(uint16_t type) {
+        mockNlmsghdr.hdr.nlmsg_type = type;
+    }
 
     MockNlApi() = default;
     ~MockNlApi() override = default;
 
-    nl_recvmsg_msg_cb_t myCallback;
-    void *myArgP;
+    nl_recvmsg_msg_cb_t myValidCallback = nullptr;
+    nl_recvmsg_msg_cb_t myAckCallback = nullptr;
+    void *myArgP = nullptr;
 
     static constexpr L0::Sysman::IafPortId testPortId{0x10000000U, 0x1U, 7};
     const uint64_t testGuid = 0x1234567887654321;

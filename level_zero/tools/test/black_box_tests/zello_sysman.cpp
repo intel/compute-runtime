@@ -1106,6 +1106,33 @@ void testSysmanRasExp(ze_device_handle_t &device) {
                     std::cout << " Getting threshold " << getConfig[i].threshold << " for category " << getRasErrorCategoryExp(getConfig[i].category) << std::endl;
                 }
             }
+
+            std::cout << "Testing zesRasClearStateExp for supported categories." << std::endl;
+            std::vector<zes_ras_state_exp_t> rasStatesBeforeClear(rasCategoryCount);
+            VALIDATECALL(zesRasGetStateExp(handle, &rasCategoryCount, rasStatesBeforeClear.data()));
+            if (verbose) {
+                std::cout << "Error counts before clearing:" << std::endl;
+                for (uint32_t i = 0; i < rasCategoryCount; i++) {
+                    std::cout << " Category: " << getRasErrorCategoryExp(rasStatesBeforeClear[i].category)
+                              << " Count: " << rasStatesBeforeClear[i].errorCounter << std::endl;
+                }
+            }
+
+            // Clear error states for each supported category
+            for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+                VALIDATECALL(zesRasClearStateExp(handle, supportedCategories[i]));
+            }
+
+            std::vector<zes_ras_state_exp_t> rasStatesAfterClear(rasCategoryCount);
+            VALIDATECALL(zesRasGetStateExp(handle, &rasCategoryCount, rasStatesAfterClear.data()));
+
+            if (verbose) {
+                std::cout << "Error counts after clearing:" << std::endl;
+                for (uint32_t i = 0; i < rasCategoryCount; i++) {
+                    std::cout << " Category: " << getRasErrorCategoryExp(rasStatesAfterClear[i].category)
+                              << " Count: " << rasStatesAfterClear[i].errorCounter << std::endl;
+                }
+            }
         }
     }
 }

@@ -9,6 +9,9 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include <errno.h>
+#include <linux/netlink.h>
+
 namespace L0 {
 namespace Sysman {
 
@@ -17,6 +20,11 @@ extern "C" {
 static int globalDrmHandleMsg(struct nl_msg *msg, void *arg) {
     DrmNlApi *pDrmNlApi = reinterpret_cast<DrmNlApi *>(arg);
     return pDrmNlApi->handleMsg(msg);
+}
+
+static int globalDrmHandleAck(struct nl_msg *msg, void *arg) {
+    DrmNlApi *pDrmNlApi = reinterpret_cast<DrmNlApi *>(arg);
+    return pDrmNlApi->handleAck(msg);
 }
 
 static int drmNlOperationReadAll(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info, void *arg) {
@@ -57,8 +65,67 @@ ze_result_t DrmNlApi::getErrorsList(const uint32_t &nodeId,
     return issueRequestQueryErrors(DRM_RAS_CMD_GET_ERROR_COUNTER, nodeId, reinterpret_cast<void *>(&errorList));
 }
 
+ze_result_t DrmNlApi::clearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId) {
+    return issueRequestClearErrorCounter(nodeId, errorId);
+}
+
 int DrmNlApi::handleMsg(struct nl_msg *msg) {
     return pNlApi->genlHandleMsg(msg, reinterpret_cast<void *>(this));
+}
+
+int DrmNlApi::handleAck(struct nl_msg *msg) {
+    struct nlmsghdr *nlh = pNlApi->nlmsgHdr(msg);
+    if (!nlh) {
+        if (currentOperation && currentOperation->cmdOp == DRM_RAS_CMD_CLEAR_ERROR_COUNTER) {
+            currentOperation->result = ZE_RESULT_ERROR_UNKNOWN;
+            currentOperation->done = true;
+        }
+        return NL_STOP;
+    }
+
+    if (nlh->nlmsg_type == NLMSG_ERROR) {
+        if (nlh->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
+            if (currentOperation && currentOperation->cmdOp == DRM_RAS_CMD_CLEAR_ERROR_COUNTER) {
+                currentOperation->result = ZE_RESULT_ERROR_UNKNOWN;
+                currentOperation->done = true;
+            }
+            return NL_STOP;
+        }
+        auto *err = static_cast<struct nlmsgerr *>(NLMSG_DATA(nlh));
+        if (currentOperation && currentOperation->cmdOp == DRM_RAS_CMD_CLEAR_ERROR_COUNTER) {
+            if (err->error == 0) {
+                currentOperation->result = ZE_RESULT_SUCCESS;
+            } else {
+                switch (-err->error) {
+                case EPERM:
+                case EACCES:
+                    currentOperation->result = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+                    break;
+                case ENOENT:
+                    currentOperation->result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                    break;
+                case ENODEV:
+                    currentOperation->result = ZE_RESULT_ERROR_DEVICE_LOST;
+                    break;
+                case EINVAL:
+                    currentOperation->result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                    break;
+                case EOPNOTSUPP:
+                case ENOSYS:
+                    currentOperation->result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+                    break;
+                case EBUSY:
+                    currentOperation->result = ZE_RESULT_NOT_READY;
+                    break;
+                default:
+                    currentOperation->result = ZE_RESULT_ERROR_UNKNOWN;
+                    break;
+                }
+            }
+            currentOperation->done = true;
+        }
+    }
+    return NL_STOP;
 }
 
 ze_result_t DrmNlApi::listNodes(std::vector<DrmRasNode> &nodeList) {
@@ -231,6 +298,13 @@ ze_result_t DrmNlApi::initConnection() {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
+    retval = pNlApi->nlSocketModifyCb(nlSock, NL_CB_ACK, NL_CB_CUSTOM,
+                                      globalDrmHandleAck, reinterpret_cast<void *>(this));
+    if (retval < 0) {
+        cleanupConnection(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -322,6 +396,24 @@ ze_result_t DrmNlApi::issueRequestQueryErrors(const uint16_t &cmdOp, const uint3
     return result;
 }
 
+ze_result_t DrmNlApi::issueRequestClearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId) {
+    ze_result_t result = initConnection();
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    struct nl_msg *msg;
+    result = allocMsg(DRM_RAS_CMD_CLEAR_ERROR_COUNTER, false, msg);
+    if (ZE_RESULT_SUCCESS == result) {
+        pNlApi->nlaPutU32(msg, DRM_RAS_A_ERROR_COUNTER_ATTRS_NODE_ID, nodeId);
+        pNlApi->nlaPutU32(msg, DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID, errorId);
+        result = performTransaction(DRM_RAS_CMD_CLEAR_ERROR_COUNTER, msg, nullptr, false);
+    }
+
+    cleanupConnection(true);
+    return result;
+}
+
 void DrmNlApi::setupNlOperations() {
     // Setup node attribute policy
     memset(nodePolicy, 0, sizeof(nla_policy) * (DRM_RAS_A_NODE_ATTRS_MAX + 1));
@@ -338,7 +430,7 @@ void DrmNlApi::setupNlOperations() {
     errorPolicy[DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_VALUE].type = NLA_U32;
 
     // Setup commands
-    memset(newCmds, 0, sizeof(genl_cmd) * DRM_RAS_CMD_MAX);
+    memset(newCmds, 0, sizeof(genl_cmd) * DRM_RAS_CMD_SYSMAN_MAX);
 
     newCmds[0].c_id = DRM_RAS_CMD_LIST_NODES;
     newCmds[0].c_name = const_cast<char *>("LIST_NODES");
@@ -352,11 +444,17 @@ void DrmNlApi::setupNlOperations() {
     newCmds[1].c_attr_policy = errorPolicy;
     newCmds[1].c_msg_parser = &drmNlOperationReadAll;
 
+    newCmds[2].c_id = DRM_RAS_CMD_CLEAR_ERROR_COUNTER;
+    newCmds[2].c_name = const_cast<char *>("CLEAR_ERROR_COUNTER");
+    newCmds[2].c_maxattr = DRM_RAS_A_ERROR_COUNTER_ATTRS_MAX;
+    newCmds[2].c_attr_policy = errorPolicy;
+    newCmds[2].c_msg_parser = nullptr; // ACK-only command, no data parser needed
+
     // Use fixed family name
     ops.o_name = const_cast<char *>(DRM_RAS_FAMILY_NAME); // "drm-ras"
     ops.o_hdrsize = 0U;
     ops.o_cmds = newCmds;
-    ops.o_ncmds = 2;
+    ops.o_ncmds = DRM_RAS_CMD_SYSMAN_MAX;
 }
 
 } // namespace Sysman

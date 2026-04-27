@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -327,7 +327,7 @@ TEST_F(SysmanIafNlApiFixture, GivenIafNlApiWhenRemRequestCalledAndNlOperationFai
     setupExpectCleanup();
     pMockNlApi->cmdMakeContextNotPresent = true;
     pMockNlApi->mockNlSendAutoReturnValue.push_back(0);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testIafNlApi.remRequest());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, testIafNlApi.remRequest());
 }
 
 TEST_F(SysmanIafNlApiFixture, GivenIafNlApiWhenRemRequestCalledAndAllocMsgFailsWhenGenlmsgPutReturnNullPtrThenUnknownErrorReturned) {

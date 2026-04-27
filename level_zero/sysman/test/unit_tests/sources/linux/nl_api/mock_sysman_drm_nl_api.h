@@ -15,13 +15,17 @@ namespace ult {
 
 class MockDrmNlApi : public L0::Sysman::DrmNlApi {
   public:
+    using DrmNlApi::currentOperation;
+    using DrmNlApi::handleAck;
     using DrmNlApi::initConnection;
+    using DrmNlApi::Operation;
     using DrmNlApi::pNlApi;
     MockDrmNlApi(std::string devId) : L0::Sysman::DrmNlApi() {}
     ~MockDrmNlApi() override = default;
     ze_result_t listNodesReturnStatus = ZE_RESULT_SUCCESS;
     ze_result_t getErrorCounterReturnStatus = ZE_RESULT_SUCCESS;
     ze_result_t getErrorsListReturnStatus = ZE_RESULT_SUCCESS;
+    ze_result_t clearErrorCounterReturnStatus = ZE_RESULT_SUCCESS;
     bool getMockErrorList = false;
     bool callRealListNodes = false;
     bool returnEmptyErrorList = false;
@@ -106,6 +110,14 @@ class MockDrmNlApi : public L0::Sysman::DrmNlApi {
         nodeList.push_back(node2);
 
         return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t clearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId) override {
+        if (clearErrorCounterReturnStatus != ZE_RESULT_SUCCESS) {
+            return clearErrorCounterReturnStatus;
+        }
+
+        return DrmNlApi::clearErrorCounter(nodeId, errorId);
     }
 };
 
