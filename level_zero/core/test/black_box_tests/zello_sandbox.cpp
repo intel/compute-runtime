@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -598,11 +598,101 @@ void executeMemoryCopyOnSystemMemory(ze_context_handle_t &context, ze_device_han
     free(memory);
 }
 
+void executeBarrierBetweenKernelsOnOutOfOrderQueue(ze_context_handle_t &context, ze_device_handle_t &device,
+                                                   bool &outputValidationSuccessful, bool aubMode) {
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
+
+    std::string buildLog;
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::openCLKernelsSource, "", buildLog);
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
+    SUCCESS_OR_TERMINATE((0 == spirV.size()));
+
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = spirV.data();
+    moduleDesc.inputSize = spirV.size();
+    moduleDesc.pBuildFlags = "";
+
+    SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
+
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = "add_constant";
+    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
+
+    // Create command queue and regular command list
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
+    cmdQueueDesc.index = 0;
+    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    ze_command_queue_handle_t cmdQueue = nullptr;
+    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
+
+    ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    cmdListDesc.commandQueueGroupOrdinal = cmdQueueDesc.ordinal;
+    ze_command_list_handle_t cmdList = nullptr;
+    SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
+
+    const uint32_t elementCount = 64;
+    const size_t bufferSize = elementCount * sizeof(int);
+
+    void *sharedBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc, bufferSize, 1, device, &sharedBuffer));
+
+    memset(sharedBuffer, 0, bufferSize);
+
+    uint32_t groupSizeX = elementCount;
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
+
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    // First kernel: add 1 to each element (0 + 1 = 1)
+    int addVal1 = 1;
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(sharedBuffer), &sharedBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(addVal1), &addVal1));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
+
+    // Barrier to ensure first kernel completes before second
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+
+    // Second kernel: add 10 to each element (1 + 10 = 11)
+    int addVal2 = 10;
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(addVal2), &addVal2));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &groupCount, nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+
+    // Validate: each element should be 11 (0 + 1 + 10)
+    if (!aubMode) {
+        int expectedValue = 11;
+        outputValidationSuccessful = LevelZeroBlackBoxTests::validateToValue<int>(expectedValue, sharedBuffer, elementCount);
+        if (!outputValidationSuccessful) {
+            std::cerr << "Barrier between kernels validation FAILED. Expected all elements to be " << expectedValue << std::endl;
+        }
+    }
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, sharedBuffer));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+}
+
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestMemoryTransfer5x = 0u;
     constexpr uint32_t bitNumberTestEventSyncForMultiTileAndCopy = 1u;
     constexpr uint32_t bitNumberTestImmediateAndRegularCommandLists = 2u;
     constexpr uint32_t bitNumberTestSystemMemory = 3u;
+    constexpr uint32_t bitNumberTestBarrierBetweenKernels = 4u;
 
     const std::string blackBoxName = "Zello Sandbox";
     std::string currentTest;
@@ -709,6 +799,14 @@ int main(int argc, char *argv[]) {
         if (outputValidationSuccessful || aubMode) {
             currentTest = "executeMemoryCopyOnSystemMemory\n";
             executeMemoryCopyOnSystemMemory(context, device, outputValidationSuccessful, aubMode);
+            LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        }
+    }
+
+    if (testMask.test(bitNumberTestBarrierBetweenKernels)) {
+        if (outputValidationSuccessful || aubMode) {
+            currentTest = "Barrier between kernels on out-of-order queue";
+            executeBarrierBetweenKernelsOnOutOfOrderQueue(context, device, outputValidationSuccessful, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
         }
     }
