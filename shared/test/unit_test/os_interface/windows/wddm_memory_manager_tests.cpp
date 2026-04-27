@@ -2137,6 +2137,89 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNotSetUseSystemMemoryWhenGraphicsAlloca
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataAlignmentLargerThanSelectedAlignmentWhenAllocateInDevicePoolThenAllocationDataAlignmentIsRespected) {
+    const bool localMemoryEnabled = true;
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.alignment = MemoryConstants::pageSize2M;
+    allocData.type = AllocationType::buffer;
+    allocData.flags.allocateMemory = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(alignUp(allocData.size, MemoryConstants::pageSize2M), allocation->getUnderlyingBufferSize());
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(allocation->getUnderlyingBufferSize()));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataAlignmentSmallerThanSelectedAlignmentWhenAllocateInDevicePoolThenSelectedAlignmentIsUsed) {
+    const bool localMemoryEnabled = true;
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize64k;
+    allocData.alignment = MemoryConstants::pageSize;
+    allocData.type = AllocationType::buffer;
+    allocData.flags.allocateMemory = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(allocation->getUnderlyingBufferSize()));
+    EXPECT_GE(allocation->getUnderlyingBufferSize(), MemoryConstants::pageSize64k);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenZeroAllocationDataAlignmentWhenAllocateInDevicePoolThenSelectedAlignmentIsUsed) {
+    const bool localMemoryEnabled = true;
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.alignment = 0;
+    allocData.type = AllocationType::buffer;
+    allocData.flags.allocateMemory = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(allocation->getUnderlyingBufferSize()));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenSvmGpuAllocationWithNonZeroAlignmentLargerThanSelectorLimitWhenAllocateInDevicePoolThenAllocationDataAlignmentIsRespected) {
+    const bool localMemoryEnabled = true;
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.alignment = MemoryConstants::pageSize2M;
+    allocData.type = AllocationType::svmGpu;
+    allocData.flags.allocateMemory = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(alignUp(allocData.size, MemoryConstants::pageSize2M), allocation->getUnderlyingBufferSize());
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(allocation->getUnderlyingBufferSize()));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateInDevicePoolThenMemoryIsNotLocableAndLocalOnlyIsSet) {
     const bool localMemoryEnabled = true;
 
