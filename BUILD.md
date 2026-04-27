@@ -33,6 +33,7 @@ Neo requires:
 Please visit their repositories for building and installation instructions.
 
 Use versions compatible with selected [Neo release](https://github.com/intel/compute-runtime/releases).
+The exact required versions are listed in `manifests/manifest.yml` for each release.
 
 3. Create workspace folder and download sources:
 
@@ -66,6 +67,83 @@ cmake -DCMAKE_BUILD_TYPE=Release -DNEO_SKIP_UNIT_TESTS=1 ../neo
 make -j`nproc`
 sudo make install
 ```
+
+## Checking dependency versions
+
+Each compute-runtime release pins its required dependency versions in
+`manifests/manifest.yml`. Before building, verify the system-installed versions
+are compatible:
+
+```shell
+# Check installed versions
+pkg-config --modversion igc-opencl   # IGC (e.g. 2.32.1)
+pkg-config --modversion igdgmm       # GmmLib (e.g. 12.9.0)
+
+# Check required versions
+grep -A3 'gmmlib:' manifests/manifest.yml  # "revision" field (e.g. intel-gmmlib-22.9.0)
+grep -A3 'igc:' manifests/manifest.yml     # "branch" field (e.g. releases/2.32.x)
+```
+
+If the installed versions are too old or missing, follow the instructions below
+to install compatible versions to a local prefix, or see
+[BUILD_LOCAL.md](BUILD_LOCAL.md) for detailed instructions.
+
+## Building without root access
+
+If you cannot install dependencies system-wide (no sudo), you can build GmmLib
+from source and use prebuilt IGC packages, both installed to a local prefix.
+
+### Build and install GmmLib to a local prefix
+
+The required GmmLib version is listed as the `gmmlib` `revision` in `manifests/manifest.yml`.
+Replace the tag below with the one from your manifest.
+
+```shell
+git clone --depth 1 -b <GMMLIB_TAG> https://github.com/intel/gmmlib.git
+cd gmmlib && mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/local ..
+make -j`nproc`
+make install
+```
+
+### Install IGC from prebuilt packages
+
+The required IGC version can be determined from the `igc` `branch` field in
+`manifests/manifest.yml` (e.g. `releases/2.32.x`). Find the matching release
+at https://github.com/intel/intel-graphics-compiler/releases and download
+the four `_amd64.deb` packages (core, core-devel, opencl, opencl-devel).
+
+```shell
+mkdir -p $HOME/local/igc_extract && cd $HOME/local/igc_extract
+for f in /path/to/intel-igc-*.deb; do dpkg-deb -x "$f" .; done
+cp -r usr/local/include/* $HOME/local/include/
+cp -r usr/local/lib/* $HOME/local/lib/
+```
+
+Then fix the prefix in `$HOME/local/lib/pkgconfig/igc-opencl.pc`:
+
+```
+prefix=/home/<user>/local
+```
+
+### Build compute-runtime with local dependencies
+
+```shell
+cd build
+PKG_CONFIG_PATH=$HOME/local/lib/pkgconfig cmake \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DNEO_SKIP_UNIT_TESTS=1 \
+  -DCMAKE_PREFIX_PATH=$HOME/local \
+  -DCOMPILE_BUILT_INS=OFF \
+  ../neo
+make -j`nproc`
+```
+
+Note: `-DCOMPILE_BUILT_INS=OFF` is required because the offline compiler (ocloc)
+loads IGC at runtime via `dlopen` and will find the old system-installed IGC
+instead of the local one. To enable built-in kernel compilation, either replace
+the system IGC libraries or run `make` with `LD_LIBRARY_PATH=$HOME/local/lib`.
+
 ## Optional - Building NEO with support for XeKMD EU Debugging
 
 NEO Driver has build options to enable support for EU Debugging with XeKMD. Kernel support for this feature is currently only available via a topic branch hosted at https://gitlab.freedesktop.org/miku/kernel/-/tree/eudebug-dev 
