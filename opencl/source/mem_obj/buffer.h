@@ -67,6 +67,7 @@ class Buffer : public MemObj {
     constexpr static cl_ulong objectMagic = MemObj::objectMagic | 0x02;
     constexpr static uint8_t bufferTailFillPattern = 0xba;
     bool forceDisallowCPUCopy = false;
+    bool poolBuffer = false;
 
     ~Buffer() override;
 
@@ -159,6 +160,8 @@ class Buffer : public MemObj {
     BufferCreateFunc createFunction = nullptr;
     bool isSubBuffer();
     bool isValidSubBufferOffset(size_t offset);
+    void setAsPoolBuffer(bool value) { this->poolBuffer = value; }
+    bool isPoolBuffer() const { return poolBuffer; }
     uint64_t setArgStateless(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex, bool set32BitAddressing);
     virtual void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation,
                                 bool isReadOnly, const Device &device, bool areMultipleSubDevicesInContext) = 0;
