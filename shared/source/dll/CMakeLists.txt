@@ -25,6 +25,7 @@ set(NEO_SHARED_DLLS
     ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocator_sizes.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pool_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_pool_size.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/async_launch_mode.cpp
 )
 
 add_library(neo_shared_dlls_precompiled_objects OBJECT ${NEO_SHARED_DLLS})

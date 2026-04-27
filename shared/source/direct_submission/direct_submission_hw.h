@@ -13,6 +13,7 @@
 #include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include <future>
 #include <memory>
 
 namespace NEO {
@@ -112,6 +113,8 @@ class DirectSubmissionHw {
 
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
     static constexpr size_t prefetchNoops = prefetchSize / sizeof(uint32_t);
+    static constexpr size_t minimumRingRequiredSize = 256 * MemoryConstants::kiloByte;
+    static constexpr size_t additionalRingAllocationSize = MemoryConstants::pageSize;
     bool allocateResources();
     MOCKABLE_VIRTUAL void deallocateResources();
     MOCKABLE_VIRTUAL bool makeResourcesResident(DirectSubmissionAllocations &allocations);
@@ -129,6 +132,7 @@ class DirectSubmissionHw {
     uint64_t switchRingBuffers(ResidencyContainer *allocationsForResidency);
     virtual void handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) = 0;
     GraphicsAllocation *switchRingBuffersAllocations(ResidencyContainer *allocationsForResidency);
+    GraphicsAllocation *allocateRingBuffer();
 
     constexpr static uint64_t updateTagValueFail = std::numeric_limits<uint64_t>::max();
     virtual uint64_t updateTagValue(bool requireMonitorFence) = 0;
@@ -200,6 +204,9 @@ class DirectSubmissionHw {
     void handleSemaphoreDataOverflow();
 
     virtual void makeGlobalFenceAlwaysResident() {};
+
+    MOCKABLE_VIRTUAL GraphicsAllocation *fetchAsyncRingBuffer(bool blockingWait);
+
     struct RingBufferUse {
         RingBufferUse() = default;
         RingBufferUse(FlushStamp completionFence, FlushStamp completionFenceForSwitch, GraphicsAllocation *ringBuffer) : completionFence(completionFence), completionFenceForSwitch(completionFenceForSwitch), ringBuffer(ringBuffer) {};
@@ -213,6 +220,7 @@ class DirectSubmissionHw {
     std::vector<RingBufferUse> ringBuffers;
     std::unique_ptr<uint8_t[]> preinitializedTaskStoreSection;
     std::unique_ptr<uint8_t[]> preinitializedRelaxedOrderingScheduler;
+    std::future<GraphicsAllocation *> asyncNewRingBufferAllocation;
     uint32_t currentRingBuffer = 0u;
     uint32_t previousRingBuffer = 0u;
     uint32_t maxRingBufferCount = std::numeric_limits<uint32_t>::max();

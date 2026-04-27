@@ -16,6 +16,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass = DirectSubmissionHw<GfxFamily, Dispatcher>;
     using BaseClass::activeTiles;
     using BaseClass::allocateResources;
+    using BaseClass::asyncNewRingBufferAllocation;
     using BaseClass::completionFenceAllocation;
     using BaseClass::copyCommandBufferIntoRing;
     using BaseClass::currentQueueWorkCount;
@@ -53,6 +54,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::immWritePostSyncOffset;
     using BaseClass::isDisablePrefetcherRequired;
     using BaseClass::lastSubmittedThrottle;
+    using BaseClass::maxRingBufferCount;
     using BaseClass::miMemFenceRequired;
     using BaseClass::notifyKmdDuringMonitorFence;
     using BaseClass::osContext;
@@ -167,6 +169,14 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
         getTagAddressValue(tagData);
     }
 
+    GraphicsAllocation *fetchAsyncRingBuffer(bool blockingWait) override {
+        fetchAsyncRingBufferCalled++;
+        if (disableNonBlockingFetch && !blockingWait) {
+            return nullptr;
+        }
+        return BaseClass::fetchAsyncRingBuffer(blockingWait);
+    }
+
     uint64_t updateTagValueReturn = 1ull;
     uint64_t tagAddressSetValue = MemoryConstants::pageSize;
     uint64_t tagValueSetValue = 1ull;
@@ -182,11 +192,13 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     uint32_t dispatchTaskStoreSectionCalled = 0;
     uint32_t ensureRingCompletionCalled = 0;
     uint32_t getTagAddressValueForRingSwitchCalled = 0;
+    uint32_t fetchAsyncRingBufferCalled = 0;
     uint32_t makeResourcesResidentVectorSize = 0u;
     bool allocateOsResourcesReturn = true;
     bool submitReturn = true;
     bool handleResidencyReturn = true;
     bool callBaseResident = false;
     bool isCompletedReturn = true;
+    bool disableNonBlockingFetch = false;
 };
 } // namespace NEO

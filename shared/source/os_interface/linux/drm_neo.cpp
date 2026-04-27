@@ -1589,7 +1589,7 @@ void programUserFence(Drm *drm, OsContext *osContext, BufferObject *bo, VmBindEx
     uint64_t value = 0;
     if (isAsyncFence) {
         address = castToUint64(bo->getAsyncFenceAddr(osContext, vmHandleId));
-        value = bo->getAsyncFenceVal(osContext, vmHandleId);
+        value = bo->getAsyncFenceVal(osContext, vmHandleId) + 1;
         ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, address, value, nextExtension);
         return;
     }

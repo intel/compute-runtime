@@ -231,6 +231,7 @@ TEST(DrmVmBindTest, givenAsyncPagingFenceRequiredWhenBindingThenAsyncPagingFence
     bo.bind(&osContext, vmHandleId, false);
     ASSERT_TRUE(drm.context.receivedVmBindUserFence);
 
+    EXPECT_EQ(bo.getAsyncFenceVal(&osContext, vmHandleId), drm.context.receivedVmBindUserFence->val);
     EXPECT_EQ(castToUint64(bo.getAsyncFenceAddr(&osContext, vmHandleId)), drm.context.receivedVmBindUserFence->addr);
     EXPECT_NE(castToUint64(drm.getFenceAddr(vmHandleId)), drm.context.receivedVmBindUserFence->addr);
 }

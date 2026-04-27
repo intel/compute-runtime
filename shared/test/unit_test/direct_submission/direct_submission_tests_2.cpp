@@ -229,6 +229,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
             givenDirectSubmissionInPartitionModeWhenDispatchingCommandBufferThenExpectDispatchPartitionedPipeControlInCommandBuffer) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
 
     FlushStampTracker flushStamp(true);
 
@@ -503,6 +504,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
 HWTEST_F(DirectSubmissionDispatchBufferTest,
          givenDirectSubmissionRingStartWhenDispatchingCommandBufferThenExpectDispatchInCommandBufferAndQueueCountIncrease) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
@@ -544,6 +546,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
 HWTEST_F(DirectSubmissionDispatchBufferTest,
          givenDirectSubmissionRingNotStartWhenDispatchingCommandBufferThenExpectDispatchInCommandBufferQueueCountIncreaseAndSubmitToGpu) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
@@ -1547,7 +1550,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
 
 HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenNotEnoughSpaceForTaskStoreSectionWhenDispatchingThenSwitchRingBuffers) {
     using Dispatcher = RenderDispatcher<FamilyType>;
-
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
     directSubmission.initialize(true);

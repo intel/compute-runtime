@@ -2990,6 +2990,20 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerAnd
         memoryManager->unlockResource(allocation);
         memoryManager->freeGraphicsMemory(allocation);
     }
+
+    {
+        MockAllocationProperties props{rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::ringBuffer};
+        auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(props);
+        ASSERT_NE(nullptr, allocation);
+
+        auto ptr = memoryManager->lockResource(allocation);
+        EXPECT_NE(nullptr, ptr);
+
+        EXPECT_FALSE(allocation->isAlwaysResident(osContext->getContextId()));
+
+        memoryManager->unlockResource(allocation);
+        memoryManager->freeGraphicsMemory(allocation);
+    }
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithCpuPtrThenReturnCpuPtrAndSetCpuDomain) {

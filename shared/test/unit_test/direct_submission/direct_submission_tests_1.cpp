@@ -308,6 +308,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsNotStar
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsPrimaryThenExpectNextSecondary) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
     bool ret = directSubmission.initialize(false);
@@ -319,7 +320,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsPr
     EXPECT_EQ(1u, directSubmission.currentRingBuffer);
 }
 
-HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsSecondaryThenExpectNextPrimary) {
+HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsSecondaryThenExpectNewRingBuffer) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
     bool ret = directSubmission.initialize(false);
@@ -331,8 +333,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsSe
     EXPECT_EQ(1u, directSubmission.currentRingBuffer);
 
     nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
-    EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
-    EXPECT_EQ(0u, directSubmission.currentRingBuffer);
+    EXPECT_EQ(directSubmission.ringBuffers[2].ringBuffer, nextRing);
+    EXPECT_EQ(2u, directSubmission.currentRingBuffer);
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionCurrentRingBuffersInUseWhenSwitchRingBufferThenAllocateNewInsteadOfWaiting) {
@@ -391,6 +393,140 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionCurrentRingBuffersInUseWhenS
     EXPECT_EQ(4u, directSubmission.currentRingBuffer);
 
     pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.release();
+}
+
+HWTEST_F(DirectSubmissionTest, givenOnlyOneCompletedRingBufferWhenSwitchRingBufferThenAsyncAllocationIsTriggered) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(2u, directSubmission.ringBuffers.size());
+
+    directSubmission.isCompletedReturn = true;
+    auto nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
+    EXPECT_EQ(1u, directSubmission.currentRingBuffer);
+    EXPECT_TRUE(directSubmission.asyncNewRingBufferAllocation.valid());
+
+    auto ringBufferSizeBefore = directSubmission.ringBuffers.size();
+    nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_EQ(ringBufferSizeBefore + 1, directSubmission.ringBuffers.size());
+    EXPECT_EQ(directSubmission.ringBuffers[2].ringBuffer, nextRing);
+    EXPECT_EQ(2u, directSubmission.currentRingBuffer);
+}
+
+HWTEST_F(DirectSubmissionTest, givenMultipleCompletedRingBuffersWhenSwitchRingBufferThenAsyncAllocationIsNotTriggered) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+
+    directSubmission.isCompletedReturn = false;
+    directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_EQ(3u, directSubmission.ringBuffers.size());
+
+    directSubmission.isCompletedReturn = true;
+    auto nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
+    EXPECT_FALSE(directSubmission.asyncNewRingBufferAllocation.valid());
+}
+
+HWTEST_F(DirectSubmissionTest, givenMaxRingBufferCountReachedWhenSwitchRingBufferThenAsyncAllocationIsNotTriggered) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.maxRingBufferCount = 2u;
+
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(2u, directSubmission.ringBuffers.size());
+
+    directSubmission.isCompletedReturn = true;
+    directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_EQ(2u, directSubmission.ringBuffers.size());
+    EXPECT_FALSE(directSubmission.asyncNewRingBufferAllocation.valid());
+}
+
+HWTEST_F(DirectSubmissionTest, givenPendingAsyncAllocationWhenDeallocateResourcesThenAsyncAllocationIsFreed) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
+    {
+        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+        bool ret = directSubmission.initialize(false);
+        EXPECT_TRUE(ret);
+        directSubmission.isCompletedReturn = true;
+        directSubmission.switchRingBuffersAllocations(nullptr);
+        EXPECT_TRUE(directSubmission.asyncNewRingBufferAllocation.valid());
+    }
+}
+
+HWTEST_F(DirectSubmissionTest, givenAsyncAllocationNotReadyAndNoCompletedRingBuffersWhenSwitchRingBufferThenBlockingFetchIsUsed) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.isCompletedReturn = true;
+
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(2u, directSubmission.ringBuffers.size());
+
+    directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_TRUE(directSubmission.asyncNewRingBufferAllocation.valid());
+
+    directSubmission.disableNonBlockingFetch = true;
+    directSubmission.isCompletedReturn = false;
+    directSubmission.fetchAsyncRingBufferCalled = 0;
+
+    auto ringBufferSizeBefore = directSubmission.ringBuffers.size();
+    auto nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_EQ(2u, directSubmission.fetchAsyncRingBufferCalled);
+    EXPECT_NE(nullptr, nextRing);
+    EXPECT_EQ(ringBufferSizeBefore + 1, directSubmission.ringBuffers.size());
+}
+
+HWTEST_F(DirectSubmissionTest, givenAsyncAllocationNotReadyButCompletedRingBufferAvailableWhenSwitchRingBufferThenNoBlockingFetch) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.isCompletedReturn = true;
+
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(2u, directSubmission.ringBuffers.size());
+
+    directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_TRUE(directSubmission.asyncNewRingBufferAllocation.valid());
+
+    directSubmission.disableNonBlockingFetch = true;
+    directSubmission.isCompletedReturn = true;
+    directSubmission.fetchAsyncRingBufferCalled = 0;
+
+    auto nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_EQ(1u, directSubmission.fetchAsyncRingBufferCalled);
+    EXPECT_NE(nullptr, nextRing);
+    EXPECT_TRUE(directSubmission.asyncNewRingBufferAllocation.valid());
+}
+
+HWTEST_F(DirectSubmissionTest, givenAsyncAllocationSucceedsWhenSwitchRingBufferThenCheckForCurrentRingBufferIsSkipped) {
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(new MockMemoryOperations{});
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.isCompletedReturn = true;
+
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(2u, directSubmission.ringBuffers.size());
+    EXPECT_EQ(0u, directSubmission.currentRingBuffer);
+
+    auto nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_EQ(1u, directSubmission.currentRingBuffer);
+    EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
+    EXPECT_TRUE(directSubmission.asyncNewRingBufferAllocation.valid());
+
+    directSubmission.isCompletedReturn = false;
+
+    nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
+    EXPECT_EQ(3u, directSubmission.ringBuffers.size());
+    EXPECT_EQ(2u, directSubmission.currentRingBuffer);
+    EXPECT_EQ(directSubmission.ringBuffers[2].ringBuffer, nextRing);
+    EXPECT_TRUE(directSubmission.asyncNewRingBufferAllocation.valid());
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAllocateFailWhenRingIsStartedThenExpectRingNotStarted) {

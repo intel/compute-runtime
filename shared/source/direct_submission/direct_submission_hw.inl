@@ -15,6 +15,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/async_launch_mode.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -30,6 +31,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <future>
 
 namespace NEO {
 
@@ -107,23 +109,14 @@ template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     DirectSubmissionAllocations allocations;
 
-    bool isMultiOsContextCapable = osContext.getNumSupportedDevices() > 1u;
-    constexpr size_t minimumRequiredSize = 256 * MemoryConstants::kiloByte;
-    constexpr size_t additionalAllocationSize = MemoryConstants::pageSize;
-    const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
-    const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex,
-                                                                 true, allocationSize,
-                                                                 AllocationType::ringBuffer,
-                                                                 isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
-
     for (uint32_t ringBufferIndex = 0; ringBufferIndex < RingBufferUse::initialRingBufferCount; ringBufferIndex++) {
-        auto ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
+        auto ringBuffer = allocateRingBuffer();
         this->ringBuffers[ringBufferIndex].ringBuffer = ringBuffer;
         UNRECOVERABLE_IF(ringBuffer == nullptr);
         allocations.push_back(ringBuffer);
-        memset(ringBuffer->getUnderlyingBuffer(), 0, allocationSize);
+        memset(ringBuffer->getUnderlyingBuffer(), 0, ringBuffer->getUnderlyingBufferSize());
     }
-
+    bool isMultiOsContextCapable = osContext.getNumSupportedDevices() > 1u;
     const AllocationProperties semaphoreAllocationProperties{rootDeviceIndex,
                                                              true, MemoryConstants::pageSize,
                                                              AllocationType::semaphoreBuffer,
@@ -177,7 +170,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     }
 
     handleResidency(nullptr);
-    ringCommandStream.replaceBuffer(this->ringBuffers[0u].ringBuffer->getUnderlyingBuffer(), minimumRequiredSize);
+    ringCommandStream.replaceBuffer(this->ringBuffers[0u].ringBuffer->getUnderlyingBuffer(), minimumRingRequiredSize);
     ringCommandStream.replaceGraphicsAllocation(this->ringBuffers[0].ringBuffer);
 
     semaphorePtr = semaphores->getUnderlyingBuffer();
@@ -718,20 +711,72 @@ inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers(Res
 }
 
 template <typename GfxFamily, typename Dispatcher>
+GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::allocateRingBuffer() {
+    bool isMultiOsContextCapable = osContext.getNumSupportedDevices() > 1u;
+    const auto allocationSize = alignUp(minimumRingRequiredSize + additionalRingAllocationSize, MemoryConstants::pageSize64k);
+    AllocationProperties commandStreamAllocationProperties{rootDeviceIndex,
+                                                           true, allocationSize,
+                                                           AllocationType::ringBuffer,
+                                                           isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
+    return memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::fetchAsyncRingBuffer(bool blockingWait) {
+    UNRECOVERABLE_IF(!this->asyncNewRingBufferAllocation.valid());
+    if (blockingWait || this->asyncNewRingBufferAllocation.wait_for(std::chrono::microseconds(0)) != std::future_status::timeout) {
+        auto alloc = this->asyncNewRingBufferAllocation.get();
+        this->memoryOperationHandler->waitForAsyncResidency(&this->osContext, alloc);
+        return alloc;
+    }
+    return nullptr;
+}
+
+template <typename GfxFamily, typename Dispatcher>
 inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersAllocations(ResidencyContainer *allocationsForResidency) {
     this->previousRingBuffer = this->currentRingBuffer;
     GraphicsAllocation *nextAllocation = nullptr;
+    auto availableRingBuffersCount = 0u;
+
+    auto addNewRingBufferToContainer = [&](GraphicsAllocation *allocation) {
+        this->currentRingBuffer = static_cast<uint32_t>(this->ringBuffers.size());
+        this->ringBuffers.emplace_back(0ull, 0ull, allocation);
+        this->handleResidencyContainerForUllsLightNewRingAllocation(allocationsForResidency);
+    };
+
+    if (this->asyncNewRingBufferAllocation.valid()) {
+        availableRingBuffersCount++;
+        nextAllocation = fetchAsyncRingBuffer(false);
+        if (nextAllocation) {
+            addNewRingBufferToContainer(nextAllocation);
+        }
+    }
 
     UNRECOVERABLE_IF(this->ringBuffers.empty());
     auto ringBuffersCount = this->ringBuffers.size();
     for (uint32_t ringBufferIndex = (this->previousRingBuffer + 1) % ringBuffersCount;
          ringBufferIndex != this->previousRingBuffer;
          ringBufferIndex = (ringBufferIndex + 1) % ringBuffersCount) {
+        if (ringBufferIndex == this->currentRingBuffer) {
+            continue;
+        }
         if (this->isCompleted(ringBufferIndex)) {
-            this->currentRingBuffer = ringBufferIndex;
-            nextAllocation = this->ringBuffers[ringBufferIndex].ringBuffer;
+            availableRingBuffersCount++;
+            if (nextAllocation == nullptr) {
+                this->currentRingBuffer = ringBufferIndex;
+                nextAllocation = this->ringBuffers[ringBufferIndex].ringBuffer;
+            }
+        }
+
+        if (availableRingBuffersCount > 1) {
             break;
         }
+    }
+
+    if (this->asyncNewRingBufferAllocation.valid() && nextAllocation == nullptr) {
+        nextAllocation = fetchAsyncRingBuffer(true);
+        UNRECOVERABLE_IF(nextAllocation == nullptr);
+        addNewRingBufferToContainer(nextAllocation);
     }
 
     if (nextAllocation == nullptr) {
@@ -739,23 +784,24 @@ inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRing
             this->currentRingBuffer = (this->currentRingBuffer + 1) % this->ringBuffers.size();
             nextAllocation = this->ringBuffers[this->currentRingBuffer].ringBuffer;
         } else {
-            bool isMultiOsContextCapable = osContext.getNumSupportedDevices() > 1u;
-            constexpr size_t minimumRequiredSize = 256 * MemoryConstants::kiloByte;
-            constexpr size_t additionalAllocationSize = MemoryConstants::pageSize;
-            const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
-            const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex,
-                                                                         true, allocationSize,
-                                                                         AllocationType::ringBuffer,
-                                                                         isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
-            nextAllocation = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
-            this->currentRingBuffer = static_cast<uint32_t>(this->ringBuffers.size());
-            this->ringBuffers.emplace_back(0ull, 0ull, nextAllocation);
+            nextAllocation = allocateRingBuffer();
             auto ret = memoryOperationHandler->makeResidentWithinOsContext(&this->osContext, ArrayRef<GraphicsAllocation *>(&nextAllocation, 1u), false, false, false) == MemoryOperationsStatus::success;
             UNRECOVERABLE_IF(!ret);
-
-            this->handleResidencyContainerForUllsLightNewRingAllocation(allocationsForResidency);
+            addNewRingBufferToContainer(nextAllocation);
         }
     }
+
+    if (availableRingBuffersCount == 1 && this->ringBuffers.size() < this->maxRingBufferCount) {
+        UNRECOVERABLE_IF(this->asyncNewRingBufferAllocation.valid());
+        this->asyncNewRingBufferAllocation = std::async(getAsyncLaunchPolicy(), [this]() {
+            auto asyncAllocation = this->allocateRingBuffer();
+            UNRECOVERABLE_IF(asyncAllocation == nullptr);
+            auto ret = memoryOperationHandler->makeResidentAsync(&this->osContext, asyncAllocation) == MemoryOperationsStatus::success;
+            UNRECOVERABLE_IF(!ret);
+            return asyncAllocation;
+        });
+    }
+
     UNRECOVERABLE_IF(this->currentRingBuffer == this->previousRingBuffer);
     return nextAllocation;
 }
@@ -767,6 +813,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(boo
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::deallocateResources() {
+    if (this->asyncNewRingBufferAllocation.valid()) {
+        auto asyncAllocation = fetchAsyncRingBuffer(true);
+        memoryManager->freeGraphicsMemory(asyncAllocation);
+    }
     for (uint32_t ringBufferIndex = 0; ringBufferIndex < this->ringBuffers.size(); ringBufferIndex++) {
         memoryManager->freeGraphicsMemory(this->ringBuffers[ringBufferIndex].ringBuffer);
     }

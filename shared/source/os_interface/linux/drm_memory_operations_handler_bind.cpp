@@ -230,9 +230,13 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bo
 /**
  * @note CSR won't implicitly wait for residency of this allocation.
  * Caller must ensure that waitForAsyncResidency is called before submitting any command that uses this allocation.
- * This method does not obtain lock on the handler mutex, caller must ensure that no other thread can access this allocation.
  */
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentAsync(OsContext *osContext, GraphicsAllocation *gfxAllocation) {
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        gfxAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
+    }
+
     auto deviceBitfield = osContext->getDeviceBitfield();
     auto devicesDone = 0u;
     for (auto drmIterator = 0u; devicesDone < deviceBitfield.count(); drmIterator++) {
@@ -240,7 +244,6 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentAsync(OsConte
             continue;
         }
         devicesDone++;
-
         auto &drmAllocation = *static_cast<DrmAllocation *>(gfxAllocation);
         auto bo = drmAllocation.storageInfo.getNumBanks() > 1 ? drmAllocation.getBOs()[drmIterator] : drmAllocation.getBO();
 
@@ -253,9 +256,10 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentAsync(OsConte
 
         int result = drmAllocation.makeBOsResident(osContext, drmIterator, nullptr, true, false);
         if (result) {
+            std::lock_guard<std::mutex> lock(mutex);
+            gfxAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, osContext->getContextId());
             return MemoryOperationsStatus::outOfMemory;
         }
-        drmAllocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
     }
     return MemoryOperationsStatus::success;
 }

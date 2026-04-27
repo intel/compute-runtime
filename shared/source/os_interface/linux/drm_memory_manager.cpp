@@ -1901,7 +1901,8 @@ Drm &DrmMemoryManager::getDrm(uint32_t rootDeviceIndex) const {
 
 void DrmMemoryManager::makeAllocationResidentIfNeeded(GraphicsAllocation *allocation) {
     auto allocType = allocation->getAllocationType();
-    if (GraphicsAllocation::isDebugSurfaceAllocationType(allocType) || allocType == AllocationType::debugModuleArea) {
+    if (GraphicsAllocation::isDebugSurfaceAllocationType(allocType) ||
+        allocType == AllocationType::debugModuleArea || allocType == AllocationType::ringBuffer) {
         return;
     }
 

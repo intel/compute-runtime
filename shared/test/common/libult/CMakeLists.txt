@@ -216,6 +216,7 @@ set(neo_libult_SRCS_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_pool_allocator_sizes.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_pool_info.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_buffer_pool_size.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_async_launch_mode.cpp
 )
 
 set_property(GLOBAL APPEND PROPERTY neo_libult_SRCS_LINUX ${neo_libult_SRCS_LINUX})
@@ -237,6 +238,7 @@ set(neo_libult_SRCS_WINDOWS
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_pool_allocator_sizes.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_pool_info.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_buffer_pool_size.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_async_launch_mode.cpp
 )
 
 set_property(GLOBAL APPEND PROPERTY neo_libult_SRCS_WINDOWS ${neo_libult_SRCS_WINDOWS})
