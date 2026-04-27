@@ -109,6 +109,8 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             return 0 != barrierCount;
         }
 
+        bool usesImageOrSamplerState() const;
+
         union {
             struct {
                 // 0

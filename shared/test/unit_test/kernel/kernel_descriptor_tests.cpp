@@ -104,6 +104,22 @@ TEST(KernelDescriptorAttributesSupportsBuffersBiggerThan4Gb, GivenStatefulBuffer
     EXPECT_FALSE(desc.kernelAttributes.supportsBuffersBiggerThan4Gb());
 }
 
+TEST(KernelDescriptorAttributes, GivenImageOrSamplerStateFlagsWhenUsesImageOrSamplerStateIsCalledThenCorrectValueIsReturned) {
+    NEO::KernelDescriptor desc;
+    EXPECT_FALSE(desc.kernelAttributes.usesImageOrSamplerState());
+
+    desc.kernelAttributes.flags.usesImages = true;
+    EXPECT_TRUE(desc.kernelAttributes.usesImageOrSamplerState());
+
+    desc.kernelAttributes.flags.usesImages = false;
+    desc.kernelAttributes.flags.usesSamplers = true;
+    EXPECT_TRUE(desc.kernelAttributes.usesImageOrSamplerState());
+
+    desc.kernelAttributes.flags.usesSamplers = false;
+    desc.kernelAttributes.flags.hasSample = true;
+    EXPECT_TRUE(desc.kernelAttributes.usesImageOrSamplerState());
+}
+
 TEST(KernelDescriptor, GivenBufferOrImageBindlessAddressingWhenIsBindlessAddressingKernelCalledThenTrueIsReturned) {
     NEO::KernelDescriptor desc;
     desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::Bindful;

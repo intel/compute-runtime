@@ -9,6 +9,10 @@
 
 namespace NEO {
 
+bool KernelDescriptor::KernelAttributes::usesImageOrSamplerState() const {
+    return flags.usesImages || flags.usesSamplers || flags.hasSample;
+}
+
 bool KernelDescriptor::isBindlessAddressingKernel(const KernelDescriptor &desc) {
     bool bindlessBuffers = false;
     bool bindlessImages = false;

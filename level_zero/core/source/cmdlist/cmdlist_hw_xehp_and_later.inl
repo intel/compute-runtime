@@ -509,6 +509,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool kernelUsesRayTracing = kernelImp->usesRayTracing();
     bool useStateCacheInvalidationWithoutCsStall = this->isImmediateType() &&
                                                    kernelContainsStatefulAccess &&
+                                                   kernelDescriptor.kernelAttributes.usesImageOrSamplerState() &&
                                                    releaseHelper->isStateCacheInvalidationNoCsStallRequired() &&
                                                    !kernelUsesRayTracing;
     bool useStateCacheInvalidationWithCsStall = kernelUsesRayTracing ||
