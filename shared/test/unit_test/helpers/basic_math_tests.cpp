@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/basic_math_float.h"
 #include "shared/source/helpers/vec.h"
 
 #include "gtest/gtest.h"

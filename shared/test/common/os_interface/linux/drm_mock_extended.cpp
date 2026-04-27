@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
 
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
+
+#include <cmath>
 
 DrmMockExtended::DrmMockExtended(RootDeviceEnvironment &rootDeviceEnvironmentIn, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironmentIn) {
     rootDeviceEnvironment.setHwInfoAndInitHelpers(inputHwInfo);
