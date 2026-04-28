@@ -139,11 +139,6 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
             openclCFeatures.push_back(openClCFeature);
         }
     }
-
-    if (hwInfo.capabilityTable.supportsImages) {
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "cl_khr_gl_msaa_sharing");
-        openclCFeatures.push_back(openClCFeature);
-    }
 }
 
 std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enabledExtensions,

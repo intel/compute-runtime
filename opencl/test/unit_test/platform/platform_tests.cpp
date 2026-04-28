@@ -348,26 +348,6 @@ TEST_F(PlatformTest, givenNotSupportedImagesWhenCreateExtentionsListThenDeviceNo
     EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_khr_3d_image_writes")));
 }
 
-TEST_F(PlatformTest, givenSupportedImagesWhenCreatingFeaturesListThenSharingExtensionsAreReported) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = true;
-    OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(hwInfo, features, *compilerProductHelper.get(), releaseHelper.get());
-    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions("", features);
-
-    EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_gl_msaa_sharing")));
-}
-
-TEST_F(PlatformTest, givenNotSupportedImagesWhenCreatingFeaturesListThenSharingExtensionsAreNotReported) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = false;
-    OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(hwInfo, features, *compilerProductHelper.get(), releaseHelper.get());
-    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions("", features);
-
-    EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_khr_gl_msaa_sharing")));
-}
-
 TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledTwiceThenTheSamePlatformIsReturned) {
     platformsImpl->clear();
     auto platform1 = constructPlatform();
