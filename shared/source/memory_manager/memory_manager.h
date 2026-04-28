@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_reuse.h"
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -104,6 +105,18 @@ struct CustomHeapAllocatorConfig {
 
 constexpr size_t paddingBufferSize = 2 * MemoryConstants::megaByte;
 
+struct PeerAllocationDeps {
+    std::function<void *(Device *peerDevice, uint64_t handle, AllocationType allocationType,
+                         void *basePointer, GraphicsAllocation **pAlloc,
+                         SvmAllocationData &mappedPeerAllocData, bool compressedMemory)>
+        importFd;
+    std::function<void *(Device *peerDevice, const std::vector<osHandle> &handles,
+                         void *basePointer, GraphicsAllocation **pAlloc,
+                         SvmAllocationData &mappedPeerAllocData, bool compressedMemory)>
+        importFds;
+    std::function<void(GraphicsAllocation *sourceAllocation)> decompressP2P;
+};
+
 namespace MemoryTransferHelper {
 bool transferMemoryToAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory, size_t srcSize);
 bool transferMemoryToAllocationBanks(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory,
@@ -161,6 +174,38 @@ class MemoryManager {
     virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandleWithReservedData(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation, void *reservedHandleData) { closeInternalHandle(handle, handleId, graphicsAllocation); };
+
+    MOCKABLE_VIRTUAL void *importFdHandle(Device *neoDevice,
+                                          SVMAllocsManager *svmAllocsManager,
+                                          uint64_t handle,
+                                          AllocationType allocationType,
+                                          bool isHostIpcAllocation,
+                                          void *basePointer,
+                                          GraphicsAllocation **pAlloc,
+                                          SvmAllocationData &mappedPeerAllocData,
+                                          bool compressedMemory,
+                                          bool uncachedBias);
+
+    MOCKABLE_VIRTUAL void *importFdHandles(Device *neoDevice,
+                                           SVMAllocsManager *svmAllocsManager,
+                                           const std::vector<osHandle> &handles,
+                                           void *basePointer,
+                                           GraphicsAllocation **pAlloc,
+                                           SvmAllocationData &mappedPeerAllocData,
+                                           bool compressedMemory,
+                                           bool uncachedBias);
+
+    bool isRemoteResourceNeeded(GraphicsAllocation *alloc, SvmAllocationData *allocData, Device *device);
+
+    GraphicsAllocation *getOrImportPeerAllocation(Device *device,
+                                                  SVMAllocsManager *svmAllocsManager,
+                                                  SVMAllocsManager::MapBasedAllocationTracker &storage,
+                                                  SvmAllocationData *allocData,
+                                                  void *basePtr,
+                                                  uintptr_t *peerGpuAddress,
+                                                  SvmAllocationData **peerAllocData,
+                                                  bool decompressP2PAllocation,
+                                                  const PeerAllocationDeps &deps);
 
     virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation);
 

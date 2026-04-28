@@ -22,6 +22,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/multi_graphics_allocation_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/page_table_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/peer_allocation_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/physical_address_allocator_hw_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/physical_address_allocator_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/prefetch_manager_tests.cpp

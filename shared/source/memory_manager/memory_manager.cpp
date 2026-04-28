@@ -40,6 +40,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -1452,4 +1453,218 @@ bool MemoryManager::getLocalOnlyRequired(AllocationType allocationType, const Pr
 void MemoryManager::destroyPageFaultManager() {
     pageFaultManager.reset();
 }
+
+bool MemoryManager::isRemoteResourceNeeded(GraphicsAllocation *alloc, SvmAllocationData *allocData, Device *device) {
+    return (alloc == nullptr || (allocData && ((allocData->gpuAllocations.getGraphicsAllocations().size() - 1) < device->getRootDeviceIndex())));
+}
+
+void *MemoryManager::importFdHandle(Device *neoDevice,
+                                    SVMAllocsManager *svmAllocsManager,
+                                    uint64_t handle,
+                                    AllocationType allocationType,
+                                    bool isHostIpcAllocation,
+                                    void *basePointer,
+                                    GraphicsAllocation **pAlloc,
+                                    SvmAllocationData &mappedPeerAllocData,
+                                    bool compressedMemory,
+                                    bool uncachedBias) {
+    MemoryManager::OsHandleData osHandleData{handle};
+    AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
+                                                 MemoryConstants::pageSize,
+                                                 allocationType,
+                                                 neoDevice->getDeviceBitfield()};
+    unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
+    unifiedMemoryProperties.flags.preferCompressed = compressedMemory;
+    GraphicsAllocation *alloc = this->createGraphicsAllocationFromSharedHandle(osHandleData,
+                                                                               unifiedMemoryProperties,
+                                                                               false,
+                                                                               isHostIpcAllocation,
+                                                                               false,
+                                                                               basePointer);
+    if (alloc == nullptr) {
+        return nullptr;
+    }
+
+    SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
+    SvmAllocationData *allocDataTmp = nullptr;
+    if (basePointer) {
+        allocDataTmp = &mappedPeerAllocData;
+        allocDataTmp->mappedAllocData = true;
+    } else {
+        allocDataTmp = &allocData;
+        allocDataTmp->mappedAllocData = false;
+    }
+    allocDataTmp->gpuAllocations.addAllocation(alloc);
+    allocDataTmp->cpuAllocation = nullptr;
+    allocDataTmp->size = alloc->getUnderlyingBufferSize();
+    allocDataTmp->memoryType =
+        isHostIpcAllocation ? InternalMemoryType::hostUnifiedMemory : InternalMemoryType::deviceUnifiedMemory;
+    allocDataTmp->device = neoDevice;
+    allocDataTmp->isImportedAllocation = true;
+    alloc->setIsImported();
+    allocDataTmp->setAllocId(++svmAllocsManager->allocationsCounter);
+    if (uncachedBias) {
+        allocDataTmp->allocationFlagsProperty.flags.locallyUncachedResource = 1;
+    }
+
+    if (!basePointer) {
+        svmAllocsManager->insertSVMAlloc(allocData);
+    }
+    if (pAlloc) {
+        *pAlloc = alloc;
+    }
+
+    return reinterpret_cast<void *>(alloc->getGpuAddress());
+}
+
+void *MemoryManager::importFdHandles(Device *neoDevice,
+                                     SVMAllocsManager *svmAllocsManager,
+                                     const std::vector<osHandle> &handles,
+                                     void *basePtr,
+                                     GraphicsAllocation **pAlloc,
+                                     SvmAllocationData &mappedPeerAllocData,
+                                     bool compressedMemory,
+                                     bool uncachedBias) {
+    AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
+                                                 MemoryConstants::pageSize,
+                                                 AllocationType::buffer,
+                                                 neoDevice->getDeviceBitfield()};
+    unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
+    unifiedMemoryProperties.flags.preferCompressed = compressedMemory;
+    GraphicsAllocation *alloc = this->createGraphicsAllocationFromMultipleSharedHandles(handles,
+                                                                                        unifiedMemoryProperties,
+                                                                                        false,
+                                                                                        false,
+                                                                                        false,
+                                                                                        basePtr);
+    if (alloc == nullptr) {
+        return nullptr;
+    }
+
+    SvmAllocationData *allocDataTmp = nullptr;
+    SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
+
+    if (basePtr) {
+        allocDataTmp = &mappedPeerAllocData;
+        allocDataTmp->mappedAllocData = true;
+    } else {
+        allocDataTmp = &allocData;
+        allocDataTmp->mappedAllocData = false;
+    }
+
+    allocDataTmp->gpuAllocations.addAllocation(alloc);
+    allocDataTmp->cpuAllocation = nullptr;
+    allocDataTmp->size = alloc->getUnderlyingBufferSize();
+    allocDataTmp->memoryType = InternalMemoryType::deviceUnifiedMemory;
+    allocDataTmp->device = neoDevice;
+    allocDataTmp->isImportedAllocation = true;
+    alloc->setIsImported();
+
+    allocDataTmp->setAllocId(++svmAllocsManager->allocationsCounter);
+
+    if (uncachedBias) {
+        allocDataTmp->allocationFlagsProperty.flags.locallyUncachedResource = 1;
+    }
+
+    if (!basePtr) {
+        svmAllocsManager->insertSVMAlloc(allocData);
+    }
+
+    if (pAlloc) {
+        *pAlloc = alloc;
+    }
+
+    return reinterpret_cast<void *>(alloc->getGpuAddress());
+}
+
+GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
+                                                             SVMAllocsManager *svmAllocsManager,
+                                                             SVMAllocsManager::MapBasedAllocationTracker &storage,
+                                                             SvmAllocationData *allocData,
+                                                             void *basePtr,
+                                                             uintptr_t *peerGpuAddress,
+                                                             SvmAllocationData **peerAllocData,
+                                                             bool decompressP2PAllocation,
+                                                             const PeerAllocationDeps &deps) {
+    GraphicsAllocation *alloc = nullptr;
+    void *peerMapAddress = basePtr;
+    void *peerPtr = nullptr;
+
+    SvmAllocationData *peerAllocDataInternal = nullptr;
+
+    std::unique_lock<SpinLock> lock(storage.mutex);
+
+    auto iter = storage.allocations.find(basePtr);
+    if (iter != storage.allocations.end()) {
+        peerAllocDataInternal = &iter->second;
+        alloc = peerAllocDataInternal->gpuAllocations.getDefaultGraphicsAllocation();
+        UNRECOVERABLE_IF(alloc == nullptr);
+        peerPtr = reinterpret_cast<void *>(alloc->getGpuAddress());
+    } else {
+        alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+        UNRECOVERABLE_IF(alloc == nullptr);
+        uint32_t numHandles = alloc->getNumHandles();
+
+        if (allocData->memoryType == InternalMemoryType::reservedDeviceMemory) {
+            peerMapAddress = nullptr;
+        }
+
+        uint32_t peerAllocRootDeviceIndex = device->getRootDeviceIndex();
+        if (numHandles > 1) {
+            peerAllocRootDeviceIndex = device->getRootDevice()->getRootDeviceIndex();
+        }
+
+        if (decompressP2PAllocation && (alloc->getRootDeviceIndex() != peerAllocRootDeviceIndex) && deps.decompressP2P) {
+            deps.decompressP2P(alloc);
+        }
+
+        SvmAllocationData allocDataInternal(peerAllocRootDeviceIndex);
+
+        if (numHandles > 1) {
+            UNRECOVERABLE_IF(numHandles == 0);
+            std::vector<osHandle> handles;
+            for (uint32_t i = 0; i < numHandles; i++) {
+                uint64_t handle = 0;
+                int ret = alloc->peekInternalHandle(this, i, handle, nullptr);
+                if (ret < 0) {
+                    return nullptr;
+                }
+                handles.push_back(static_cast<osHandle>(handle));
+            }
+            auto neoDevice = device->getRootDevice();
+            peerPtr = deps.importFds(neoDevice, handles, peerMapAddress, &alloc, allocDataInternal, false);
+        } else {
+            uint64_t handle = 0;
+            int ret = alloc->peekInternalHandle(this, handle, nullptr);
+            if (ret < 0) {
+                return nullptr;
+            }
+            peerPtr = deps.importFd(device, handle, AllocationType::buffer, peerMapAddress, &alloc, allocDataInternal, false);
+        }
+
+        if (peerPtr == nullptr) {
+            return nullptr;
+        }
+
+        peerAllocDataInternal = &allocDataInternal;
+        if (peerMapAddress == nullptr) {
+            peerAllocDataInternal = svmAllocsManager->getSVMAlloc(peerPtr);
+        }
+        storage.allocations.insert(std::make_pair(basePtr, *peerAllocDataInternal));
+        if (peerMapAddress) {
+            peerAllocDataInternal = &storage.allocations.at(basePtr);
+        }
+    }
+
+    if (peerAllocData) {
+        *peerAllocData = peerAllocDataInternal;
+    }
+
+    if (peerGpuAddress) {
+        *peerGpuAddress = reinterpret_cast<uintptr_t>(peerPtr);
+    }
+
+    return alloc;
+}
+
 } // namespace NEO
