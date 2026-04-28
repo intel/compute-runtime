@@ -25,6 +25,7 @@ class MockGraphicsAllocation : public MemoryAllocation {
     using MemoryAllocation::aubInfo;
     using MemoryAllocation::cpuPtr;
     using MemoryAllocation::gpuAddress;
+    using MemoryAllocation::inspectionIds;
     using MemoryAllocation::MemoryAllocation;
     using MemoryAllocation::memoryPool;
     using MemoryAllocation::objectNotResident;
@@ -46,8 +47,8 @@ class MockGraphicsAllocation : public MemoryAllocation {
         : MemoryAllocation(rootDeviceIndex, 1u /*num gmms*/, AllocationType::unknown, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::memoryNull, MemoryManager::maxOsContextCount) {}
 
     void resetInspectionIds() {
-        for (auto &usageInfo : usageInfos) {
-            usageInfo.inspectionId = 0u;
+        for (auto &id : inspectionIds) {
+            id = 0u;
         }
     }
 

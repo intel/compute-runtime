@@ -603,3 +603,128 @@ TEST(GraphicsAllocationTest, givenOtherThanPreemptionAllocationTypeWhenIsZeroIni
         }
     }
 }
+
+TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenCheckingShareableHostMemoryThenFalseReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_FALSE(graphicsAllocation.isShareableHostMemory());
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSettingShareableHostMemoryThenValueIsReflected) {
+    MockGraphicsAllocation graphicsAllocation;
+
+    graphicsAllocation.setShareableHostMemory(true);
+    EXPECT_TRUE(graphicsAllocation.isShareableHostMemory());
+
+    graphicsAllocation.setShareableHostMemory(false);
+    EXPECT_FALSE(graphicsAllocation.isShareableHostMemory());
+}
+
+TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenCheckingCanBeReadOnlyThenTrueReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_TRUE(graphicsAllocation.canBeReadOnly());
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSettingCantBeReadOnlyThenCanBeReadOnlyReturnsFalse) {
+    MockGraphicsAllocation graphicsAllocation;
+
+    graphicsAllocation.setAsCantBeReadOnly(true);
+    EXPECT_FALSE(graphicsAllocation.canBeReadOnly());
+
+    graphicsAllocation.setAsCantBeReadOnly(false);
+    EXPECT_TRUE(graphicsAllocation.canBeReadOnly());
+}
+
+TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenCheckingExplicitlyMadeResidentThenFalseReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_FALSE(graphicsAllocation.isExplicitlyMadeResident());
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSettingExplicitlyMadeResidentThenValueIsReflected) {
+    MockGraphicsAllocation graphicsAllocation;
+
+    graphicsAllocation.setExplicitlyMadeResident(true);
+    EXPECT_TRUE(graphicsAllocation.isExplicitlyMadeResident());
+
+    graphicsAllocation.setExplicitlyMadeResident(false);
+    EXPECT_FALSE(graphicsAllocation.isExplicitlyMadeResident());
+}
+
+TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenCheckingIsImportedThenFalseReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_FALSE(graphicsAllocation.getIsImported());
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSettingIsImportedThenGetIsImportedReturnsTrue) {
+    MockGraphicsAllocation graphicsAllocation;
+
+    graphicsAllocation.setIsImported();
+    EXPECT_TRUE(graphicsAllocation.getIsImported());
+}
+
+TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenCheckingQualifiesFor2MBPagesThenFalseReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_FALSE(graphicsAllocation.qualifiesFor2MBPages());
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSettingQualifiesFor2MBPagesThenValueIsReflected) {
+    MockGraphicsAllocation graphicsAllocation;
+
+    graphicsAllocation.setQualifiesFor2MBPages(true);
+    EXPECT_TRUE(graphicsAllocation.qualifiesFor2MBPages());
+
+    graphicsAllocation.setQualifiesFor2MBPages(false);
+    EXPECT_FALSE(graphicsAllocation.qualifiesFor2MBPages());
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSettingInspectionIdThenGetInspectionIdReturnsUpdatedValue) {
+    MockGraphicsAllocation graphicsAllocation;
+    const uint32_t contextId = 0u;
+    EXPECT_EQ(0u, graphicsAllocation.getInspectionId(contextId));
+
+    graphicsAllocation.setInspectionId(42u, contextId);
+    EXPECT_EQ(42u, graphicsAllocation.getInspectionId(contextId));
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenResettingInspectionIdsThenAllContextsAreZero) {
+    MockGraphicsAllocation graphicsAllocation;
+
+    for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {
+        graphicsAllocation.setInspectionId(i + 1u, i);
+    }
+
+    graphicsAllocation.resetInspectionIds();
+
+    for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {
+        EXPECT_EQ(0u, graphicsAllocation.getInspectionId(i));
+    }
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenClearingUsageInfoThenInspectionIdsAreZeroed) {
+    MockGraphicsAllocation graphicsAllocation;
+
+    for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {
+        graphicsAllocation.setInspectionId(i + 1u, i);
+        graphicsAllocation.updateTaskCount(1u, i);
+        graphicsAllocation.updateResidencyTaskCount(1u, i);
+    }
+
+    graphicsAllocation.clearUsageInfo();
+
+    for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {
+        EXPECT_EQ(0u, graphicsAllocation.getInspectionId(i));
+        EXPECT_EQ(GraphicsAllocation::objectNotUsed, graphicsAllocation.getTaskCount(i));
+        EXPECT_EQ(GraphicsAllocation::objectNotResident, graphicsAllocation.getResidencyTaskCount(i));
+    }
+}
+
+TEST(GraphicsAllocationTest, givenAllocationInfoFlagsThatInspectionIdExistsInSeparateArrayFromTaskCounts) {
+    MockGraphicsAllocation graphicsAllocation;
+
+    graphicsAllocation.setInspectionId(99u, 0u);
+    graphicsAllocation.updateTaskCount(5u, 0u);
+    graphicsAllocation.updateResidencyTaskCount(3u, 0u);
+
+    EXPECT_EQ(99u, graphicsAllocation.getInspectionId(0u));
+    EXPECT_EQ(5u, graphicsAllocation.getTaskCount(0u));
+    EXPECT_EQ(3u, graphicsAllocation.getResidencyTaskCount(0u));
+}

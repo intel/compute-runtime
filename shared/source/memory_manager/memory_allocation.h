@@ -40,9 +40,11 @@ class MemoryAllocation : public GraphicsAllocation {
 
     void clearUsageInfo() {
         for (auto &info : usageInfos) {
-            info.inspectionId = 0u;
             info.residencyTaskCount = objectNotResident;
             info.taskCount = objectNotUsed;
+        }
+        for (auto &id : inspectionIds) {
+            id = 0u;
         }
     }
 

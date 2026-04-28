@@ -67,6 +67,12 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         GPU
     };
 
+    static constexpr uint32_t defaultBank = 0b1u;
+    static constexpr uint32_t allBanks = 0xffffffff;
+    constexpr static TaskCountType objectNotResident = std::numeric_limits<TaskCountType>::max();
+    constexpr static TaskCountType objectNotUsed = std::numeric_limits<TaskCountType>::max();
+    constexpr static TaskCountType objectAlwaysResident = std::numeric_limits<TaskCountType>::max() - 1;
+
     ~GraphicsAllocation() override;
 
     GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn,
@@ -77,6 +83,68 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
 
   protected:
     GraphicsAllocation(GraphicsAllocation *parentAllocation, size_t offsetInParentAllocation, size_t viewSize);
+
+    struct UsageInfo {
+        TaskCountType taskCount = objectNotUsed;
+        TaskCountType residencyTaskCount = objectNotResident;
+    };
+
+    struct SharingInfo {
+        uint32_t reuseCount = 0;
+        osHandle sharedHandle = Sharing::nonSharedResource;
+    };
+
+    struct AllocationInfo {
+        union {
+            struct {
+                uint32_t coherent : 1;
+                uint32_t evictable : 1;
+                uint32_t flushL3Required : 1;
+                uint32_t uncacheable : 1;
+                uint32_t is32BitAllocation : 1;
+                uint32_t lockedMemory : 1;
+                uint32_t shareableHostMemory : 1;
+                uint32_t cantBeReadOnly : 1;
+                uint32_t explicitlyMadeResident : 1;
+                uint32_t isImported : 1;
+                uint32_t qualifiedFor2MBPages : 1;
+                uint32_t reserved : 21;
+            } flags;
+            uint32_t allFlags = 0u;
+        };
+        static_assert(sizeof(AllocationInfo::flags) == sizeof(AllocationInfo::allFlags), "");
+        AllocationInfo() {
+            flags.coherent = false;
+            flags.evictable = true;
+            flags.flushL3Required = true;
+            flags.is32BitAllocation = false;
+            flags.lockedMemory = false;
+            flags.shareableHostMemory = false;
+            flags.cantBeReadOnly = false;
+            flags.explicitlyMadeResident = false;
+            flags.isImported = false;
+            flags.qualifiedFor2MBPages = false;
+        }
+    };
+
+    struct ReservedAddressRange {
+        void *addressPtr = nullptr;
+        size_t rangeSize = 0;
+    };
+
+    friend class SubmissionAggregator;
+
+    StackVec<UsageInfo, 32> usageInfos;
+    uint64_t gpuBaseAddress = 0;
+    uint64_t gpuAddress = 0;
+    uint64_t allocationOffset = 0u;
+    size_t size = 0;
+    void *cpuPtr = nullptr;
+    MemoryPool memoryPool = MemoryPool::memoryNull;
+    AllocationType allocationType = AllocationType::unknown;
+    AllocationInfo allocationInfo;
+    const uint32_t rootDeviceIndex;
+    std::atomic<uint32_t> registeredContextsNum{0};
 
   public:
     bool isView() const { return parentAllocation != nullptr; }
@@ -244,14 +312,14 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         if (parentAllocation) {
             return parentAllocation->getInspectionId(contextId);
         }
-        return usageInfos[contextId].inspectionId;
+        return inspectionIds[contextId];
     }
     void setInspectionId(uint32_t newInspectionId, uint32_t contextId) {
         if (parentAllocation) {
             parentAllocation->setInspectionId(newInspectionId, contextId);
             return;
         }
-        usageInfos[contextId].inspectionId = newInspectionId;
+        inspectionIds[contextId] = newInspectionId;
     }
 
     MOCKABLE_VIRTUAL bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
@@ -397,8 +465,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
 
     uint32_t getUsedPageSize() const;
 
-    bool qualifiesFor2MBPages() const { return qualifiedFor2MBPages; }
-    void setQualifiesFor2MBPages(bool value) { qualifiedFor2MBPages = value; }
+    bool qualifiesFor2MBPages() const { return allocationInfo.flags.qualifiedFor2MBPages; }
+    void setQualifiesFor2MBPages(bool value) { allocationInfo.flags.qualifiedFor2MBPages = value; }
 
     bool isAllocatedInLocalMemoryPool() const { return (this->memoryPool == MemoryPool::localMemory); }
     bool isAllocationLockable() const;
@@ -429,25 +497,19 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         return bindlessInfo;
     }
     bool canBeReadOnly() {
-        return !cantBeReadOnly;
+        return !allocationInfo.flags.cantBeReadOnly;
     }
     void setAsCantBeReadOnly(bool cantBeReadOnly) {
-        this->cantBeReadOnly = cantBeReadOnly;
+        allocationInfo.flags.cantBeReadOnly = cantBeReadOnly;
     }
     MOCKABLE_VIRTUAL void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId);
-    void setShareableHostMemory(bool shareableHostMemory) { this->shareableHostMemory = shareableHostMemory; }
-    bool isShareableHostMemory() const { return shareableHostMemory; }
+    void setShareableHostMemory(bool shareableHostMemory) { allocationInfo.flags.shareableHostMemory = shareableHostMemory; }
+    bool isShareableHostMemory() const { return allocationInfo.flags.shareableHostMemory; }
     MOCKABLE_VIRTUAL bool hasAllocationReadOnlyType();
     MOCKABLE_VIRTUAL void checkAllocationTypeReadOnlyRestrictions(const AllocationData &allocData);
 
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
-
-    static constexpr uint32_t defaultBank = 0b1u;
-    static constexpr uint32_t allBanks = 0xffffffff;
-    constexpr static TaskCountType objectNotResident = std::numeric_limits<TaskCountType>::max();
-    constexpr static TaskCountType objectNotUsed = std::numeric_limits<TaskCountType>::max();
-    constexpr static TaskCountType objectAlwaysResident = std::numeric_limits<TaskCountType>::max() - 1;
 
     uint32_t getHostPtrTaskCountAssignment() const {
         if (parentAllocation) {
@@ -481,14 +543,14 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         if (parentAllocation) {
             return parentAllocation->isExplicitlyMadeResident();
         }
-        return this->explicitlyMadeResident;
+        return allocationInfo.flags.explicitlyMadeResident;
     }
     void setExplicitlyMadeResident(bool explicitlyMadeResidentValue) {
         if (parentAllocation) {
             parentAllocation->setExplicitlyMadeResident(explicitlyMadeResidentValue);
             return;
         }
-        this->explicitlyMadeResident = explicitlyMadeResidentValue;
+        allocationInfo.flags.explicitlyMadeResident = explicitlyMadeResidentValue;
     }
 
     void setIsImported() {
@@ -496,87 +558,29 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
             parentAllocation->setIsImported();
             return;
         }
-        isImported = true;
+        allocationInfo.flags.isImported = true;
     }
 
     bool getIsImported() const {
         if (parentAllocation) {
             return parentAllocation->getIsImported();
         }
-        return isImported;
+        return allocationInfo.flags.isImported;
     }
 
   protected:
-    struct UsageInfo {
-        TaskCountType taskCount = objectNotUsed;
-        TaskCountType residencyTaskCount = objectNotResident;
-        uint32_t inspectionId = 0u;
-    };
-
-    struct SharingInfo {
-        uint32_t reuseCount = 0;
-        osHandle sharedHandle = Sharing::nonSharedResource;
-    };
-    struct AllocationInfo {
-        union {
-            struct {
-                uint32_t coherent : 1;
-                uint32_t evictable : 1;
-                uint32_t flushL3Required : 1;
-                uint32_t uncacheable : 1;
-                uint32_t is32BitAllocation : 1;
-                uint32_t lockedMemory : 1;
-                uint32_t reserved : 26;
-            } flags;
-            uint32_t allFlags = 0u;
-        };
-        static_assert(sizeof(AllocationInfo::flags) == sizeof(AllocationInfo::allFlags), "");
-        AllocationInfo() {
-            flags.coherent = false;
-            flags.evictable = true;
-            flags.flushL3Required = true;
-            flags.is32BitAllocation = false;
-            flags.lockedMemory = false;
-        }
-    };
-
-    struct ReservedAddressRange {
-        void *addressPtr = nullptr;
-        size_t rangeSize = 0;
-    };
-
-    friend class SubmissionAggregator;
-
-    const uint32_t rootDeviceIndex;
-    AllocationInfo allocationInfo;
+    StackVec<uint32_t, 32> inspectionIds;
+    StackVec<Gmm *, EngineLimits::maxHandleCount> gmms;
     AubInfo aubInfo;
     SharingInfo sharingInfo;
     ReservedAddressRange reservedAddressRangeInfo;
-    SurfaceStateInHeapInfo bindlessInfo = {nullptr, 0, nullptr};
-
-    uint64_t allocationOffset = 0u;
-    uint64_t gpuBaseAddress = 0;
-    uint64_t gpuAddress = 0;
-    void *driverAllocatedCpuPointer = nullptr;
-    size_t size = 0;
-    void *cpuPtr = nullptr;
+    SurfaceStateInHeapInfo bindlessInfo = {};
     void *lockedPtr = nullptr;
-
-    MemoryPool memoryPool = MemoryPool::memoryNull;
-    AllocationType allocationType = AllocationType::unknown;
-
-    StackVec<UsageInfo, 32> usageInfos;
-    StackVec<Gmm *, EngineLimits::maxHandleCount> gmms;
+    void *driverAllocatedCpuPointer = nullptr;
     ResidencyData residency;
-    std::atomic<uint32_t> registeredContextsNum{0};
-    std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
     GraphicsAllocation *parentAllocation = nullptr;
     size_t offsetInParent = 0u;
-    bool shareableHostMemory = false;
-    bool cantBeReadOnly = false;
-    bool explicitlyMadeResident = false;
-    bool isImported = false;
-    bool qualifiedFor2MBPages = false;
+    std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<GraphicsAllocation>);

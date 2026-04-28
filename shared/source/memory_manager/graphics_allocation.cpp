@@ -29,47 +29,51 @@ void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
 
 GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedGpuAddress,
                                        uint64_t baseAddress, size_t sizeIn, MemoryPool pool, size_t maxOsContextCount)
-    : rootDeviceIndex(rootDeviceIndex),
+    : usageInfos(maxOsContextCount),
       gpuBaseAddress(baseAddress),
       gpuAddress(canonizedGpuAddress),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
       allocationType(allocationType),
-      usageInfos(maxOsContextCount),
+      rootDeviceIndex(rootDeviceIndex),
+      inspectionIds(maxOsContextCount),
       residency(maxOsContextCount) {
     gmms.resize(numGmms);
 }
 
 GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
                                        osHandle sharedHandleIn, MemoryPool pool, size_t maxOsContextCount, uint64_t canonizedGpuAddress)
-    : rootDeviceIndex(rootDeviceIndex),
+    : usageInfos(maxOsContextCount),
       gpuAddress(canonizedGpuAddress),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
       allocationType(allocationType),
-      usageInfos(maxOsContextCount),
+      rootDeviceIndex(rootDeviceIndex),
+      inspectionIds(maxOsContextCount),
       residency(maxOsContextCount) {
     sharingInfo.sharedHandle = sharedHandleIn;
     gmms.resize(numGmms);
 }
 
 GraphicsAllocation::GraphicsAllocation(GraphicsAllocation *parent, size_t offsetInParentAllocation, size_t viewSize)
-    : rootDeviceIndex(parent->rootDeviceIndex),
-      allocationInfo(parent->allocationInfo),
-      sharingInfo(parent->sharingInfo),
+    : usageInfos(parent->usageInfos.size()),
       gpuBaseAddress(parent->gpuBaseAddress),
       gpuAddress(parent->gpuAddress + offsetInParentAllocation),
       size(viewSize),
       cpuPtr(parent->cpuPtr ? ptrOffset(parent->cpuPtr, offsetInParentAllocation) : nullptr),
       memoryPool(parent->memoryPool),
       allocationType(parent->allocationType),
-      usageInfos(parent->usageInfos.size()),
+      allocationInfo(parent->allocationInfo),
+      rootDeviceIndex(parent->rootDeviceIndex),
+      inspectionIds(parent->inspectionIds.size()),
+      sharingInfo(parent->sharingInfo),
       residency(parent->residency.resident.size()),
       parentAllocation(parent),
-      offsetInParent(offsetInParentAllocation),
-      qualifiedFor2MBPages(parent->qualifiedFor2MBPages) {
+      offsetInParent(offsetInParentAllocation) {
+    allocationInfo.flags.shareableHostMemory = false;
+    allocationInfo.flags.cantBeReadOnly = false;
     this->storageInfo = parent->storageInfo;
     for (uint32_t i = 0; i < parent->getNumGmms(); i++) {
         this->gmms.push_back(parent->getGmm(i));
@@ -93,7 +97,7 @@ std::string GraphicsAllocation::getPatIndexInfoString(const ProductHelper &) con
 uint32_t GraphicsAllocation::getUsedPageSize() const {
     switch (this->memoryPool) {
     case MemoryPool::localMemory:
-        if (this->qualifiedFor2MBPages) {
+        if (this->allocationInfo.flags.qualifiedFor2MBPages) {
             return static_cast<uint32_t>(MemoryConstants::pageSize2M);
         }
         return MemoryConstants::pageSize64k;
