@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ struct AubManagerOptions {
     SharedMemoryInfo sharedMemoryInfo{};
     bool throwOnError{};
     uint64_t dataStolenMemorySize{};
+    bool programAdditionalEngineMMIO{};
 };
 
 class AubManager {
