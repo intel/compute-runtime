@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/app_resource_classification.h"
 #include "shared/source/helpers/app_resource_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
@@ -29,6 +30,8 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
 
     AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, properties.allocationType,
                                           sizeof(storageInfo.resourceTag));
+
+    storageInfo.isApplicationResource = AppResourceClassification::isApplicationResource(properties.allocationType);
 
     if (properties.subDevicesBitfield.count() == 0) {
         return storageInfo;

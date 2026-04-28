@@ -14,6 +14,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/api_gfx_core_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_classification.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_defines.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.cpp

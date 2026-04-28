@@ -900,6 +900,15 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAl
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+template <typename GmmResourceParams>
+inline int compareResourceTag(GmmResourceParams *params, const char *expectedTag) {
+    if constexpr (AppResourceDefines::hasResourceTag<std::decay_t<decltype(*params)>>) {
+        return memcmp(params->ResourceTag, expectedTag, strlen(expectedTag) + 1);
+    } else {
+        return 0;
+    }
+}
+
 auto compareStorageInfo = [](const StorageInfo &left, const StorageInfo &right) -> void {
     EXPECT_EQ(left.memoryBanks, right.memoryBanks);
     EXPECT_EQ(left.pageTablesVisibility, right.pageTablesVisibility);
@@ -2600,6 +2609,148 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocatePhysicalLocalDeviceMemoryWithMu
     EXPECT_EQ(0u, allocation->getGpuAddress());
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenResourceTagInStorageInfoWhenAllocatePhysicalDeviceMemoryThenResourceTagIsPropagated) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableResourceTags.set(1);
+
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::buffer;
+    strcpy_s(allocationData.storageInfo.resourceTag, sizeof(allocationData.storageInfo.resourceTag), "TESTBUF");
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    auto allocation = memoryManager->allocatePhysicalDeviceMemory(allocationData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    EXPECT_STREQ("TESTBUF", allocation->storageInfo.resourceTag);
+
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(0, compareResourceTag(gmmResourceParams, "TESTBUF"));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenResourceTagInStorageInfoWhenAllocateMemoryByKMDThenResourceTagIsPropagated) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableResourceTags.set(1);
+
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::buffer;
+    strcpy_s(allocationData.storageInfo.resourceTag, sizeof(allocationData.storageInfo.resourceTag), "TESTBUF");
+
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_STREQ("TESTBUF", allocation->storageInfo.resourceTag);
+
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(0, compareResourceTag(gmmResourceParams, "TESTBUF"));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenResourceTagInStorageInfoWhenAllocateHugeGraphicsMemoryThenResourceTagIsPropagated) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableResourceTags.set(1);
+
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
+    AllocationData allocationData{};
+    allocationData.size = 100 * MemoryConstants::megaByte;
+    allocationData.type = AllocationType::buffer;
+    strcpy_s(allocationData.storageInfo.resourceTag, sizeof(allocationData.storageInfo.resourceTag), "HUGEBUF");
+
+    auto allocation = memoryManager->allocateHugeGraphicsMemory(allocationData, false);
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_STREQ("HUGEBUF", allocation->storageInfo.resourceTag);
+
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(0, compareResourceTag(gmmResourceParams, "HUGEBUF"));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenResourceTagInStorageInfoWhenAllocateGraphicsMemoryForNonSvmHostPtrThenResourceTagIsPropagated) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableResourceTags.set(1);
+
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    void *hostPtr = reinterpret_cast<void *>(0x10000);
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.hostPtr = hostPtr;
+    allocationData.type = AllocationType::externalHostPtr;
+    strcpy_s(allocationData.storageInfo.resourceTag, sizeof(allocationData.storageInfo.resourceTag), "HOSTPTR");
+
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_STREQ("HOSTPTR", allocation->storageInfo.resourceTag);
+
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(0, compareResourceTag(gmmResourceParams, "HOSTPTR"));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenResourceTagInStorageInfoWhenAllocateGraphicsMemoryWithHostPtrThenResourceTagIsPropagated) {
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableResourceTags.set(1);
+
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.hostPtr = hostPtr;
+    allocationData.type = AllocationType::externalHostPtr;
+    strcpy_s(allocationData.storageInfo.resourceTag, sizeof(allocationData.storageInfo.resourceTag), "HSTMEM");
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_STREQ("HSTMEM", allocation->storageInfo.resourceTag);
+
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(0, compareResourceTag(gmmResourceParams, "HSTMEM"));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenResourceTagInStorageInfoWhenAllocate32BitGraphicsMemoryImplThenResourceTagIsPropagated) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableResourceTags.set(1);
+
+    class MockWddmMemoryManagerWith32Bit : public MockWddmMemoryManager {
+      public:
+        using MockWddmMemoryManager::allocate32BitGraphicsMemoryImpl;
+        using MockWddmMemoryManager::MockWddmMemoryManager;
+    };
+
+    auto mockMemoryManager = std::make_unique<MockWddmMemoryManagerWith32Bit>(false, false, executionEnvironment);
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::kernelIsa;
+    strcpy_s(allocationData.storageInfo.resourceTag, sizeof(allocationData.storageInfo.resourceTag), "KERNLISA");
+
+    auto allocation = mockMemoryManager->allocate32BitGraphicsMemoryImpl(allocationData);
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_STREQ("KERNLISA", allocation->storageInfo.resourceTag);
+
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(0, compareResourceTag(gmmResourceParams, "KERNLISA"));
+
+    mockMemoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, whenMemoryIsAllocatedInLocalMemoryThenTheAllocationNeedsMakeResidentBeforeLock) {

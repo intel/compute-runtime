@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,7 @@ struct StorageInfo {
     bool localOnlyRequired = false;
     bool systemMemoryPlacement = true;
     bool systemMemoryForced = false;
+    bool isApplicationResource = false;
     char resourceTag[AppResourceDefines::maxStrLen + 1] = "";
     bool isChunked = false;
     bool needsToBeZeroedAtInit = false;
