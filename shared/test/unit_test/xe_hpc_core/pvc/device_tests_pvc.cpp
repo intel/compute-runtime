@@ -9,6 +9,7 @@
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -67,6 +68,44 @@ PVCTEST_F(DeviceTestsPvc, givenZexNumberOfCssEnvVariableDefinedForXeHpcWhenSingl
         executionEnvironment.adjustCcsCount();
         EXPECT_EQ(std::min(4u, defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled), hardwareInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
     }
+}
+
+PVCTEST_F(DeviceTestsPvc, givenOnlineDebuggingModeAndMoreThanOneCcsRequestedWhenAdjustCcsCountThenFailWithError) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:2");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1);
+    executionEnvironment.setDebuggingMode(DebuggingMode::online);
+
+    StreamCapture capture;
+    capture.captureStderr();
+    EXPECT_FALSE(executionEnvironment.adjustCcsCount());
+    auto output = capture.getCapturedStderr();
+    EXPECT_NE(std::string::npos, output.find("ZEX_NUMBER_OF_CCS requests more than 1 CCS"));
+}
+
+PVCTEST_F(DeviceTestsPvc, givenOnlineDebuggingModeAndOneCcsRequestedWhenAdjustCcsCountThenSucceeds) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:1");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1);
+    executionEnvironment.setDebuggingMode(DebuggingMode::online);
+
+    EXPECT_TRUE(executionEnvironment.adjustCcsCount());
 }
 
 struct MemoryManagerDirectSubmissionImplicitScalingPvcTest : public ::testing::Test {
