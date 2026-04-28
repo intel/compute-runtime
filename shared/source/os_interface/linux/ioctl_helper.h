@@ -259,6 +259,7 @@ class IoctlHelper {
     virtual bool makeResidentBeforeLockNeeded() const { return false; }
     virtual bool hasContextFreqHint() { return false; }
     virtual void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) { return; }
+    virtual void setSlmLimitTo96KContextParam(GemContextCreateExtSetParam &extSetparam) { return; }
     virtual bool isSmallBarConfigAllowed() const = 0;
     virtual bool overrideMaxSlicesSupported() const { return false; }
     virtual bool is2MBSizeAlignmentRequired(AllocationType allocationType) const { return false; }
@@ -310,6 +311,7 @@ class IoctlHelperI915 : public IoctlHelper {
     uint32_t getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const override { return tileId; }
     bool hasContextFreqHint() override;
     void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) override;
+    void setSlmLimitTo96KContextParam(GemContextCreateExtSetParam &extSetparam) override;
     bool isSmallBarConfigAllowed() const override { return true; }
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
     bool overrideMaxSlicesSupported() const override { return true; }

@@ -304,6 +304,14 @@ void ReleaseHelperTestsBase::whenGettingAdditionalExtraKernelCapabilitiesThenRet
     }
 }
 
+void ReleaseHelperTestsBase::whenIsSlmLimitationTo96KNeededCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isSlmLimitationTo96KNeeded());
+    }
+}
 void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValuesUpTo512Returned() {
     SupportedNumGrfs expectedValues{32u, 64u, 96u, 128u, 160u, 192u, 256u, 512u};
     for (auto &revision : getRevisions()) {

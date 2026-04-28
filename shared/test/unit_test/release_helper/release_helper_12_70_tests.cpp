@@ -129,6 +129,9 @@ TEST_F(ReleaseHelper1270Tests, whenIsStateCacheInvalidationWaRequiredCalledThenF
     whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
 }
 
+TEST_F(ReleaseHelper1270Tests, whenIsSlmLimitationTo96KNeededCalledThenFalseReturned) {
+    whenIsSlmLimitationTo96KNeededCalledThenFalseReturned();
+}
 TEST_F(ReleaseHelper1270Tests, whenIsStateCacheInvalidationNoCsStallRequiredCalledThenTrueReturned) {
     whenIsStateCacheInvalidationNoCsStallRequiredCalledThenTrueReturned();
 }

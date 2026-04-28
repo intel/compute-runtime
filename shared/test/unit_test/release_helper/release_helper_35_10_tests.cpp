@@ -227,3 +227,7 @@ TEST_F(ReleaseHelper3510Tests, whenIsAvailableSemaphore64CalledThenCorrectValueR
         }
     }
 }
+
+TEST_F(ReleaseHelper3510Tests, whenIsSlmLimitationTo96KNeededCalledThenFalseReturned) {
+    whenIsSlmLimitationTo96KNeededCalledThenFalseReturned();
+}
