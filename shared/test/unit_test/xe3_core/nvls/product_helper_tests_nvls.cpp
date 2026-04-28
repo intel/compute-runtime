@@ -58,7 +58,7 @@ NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCallIsStagingBuffersEnabledT
 }
 
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
+    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
