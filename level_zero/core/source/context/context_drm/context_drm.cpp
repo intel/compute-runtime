@@ -86,82 +86,16 @@ void Context::closeExternalHandle(uint64_t handle) {
 
 std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
-    uint64_t importHandle = handle;
     uint64_t effectiveCacheID = cacheID;
-    bool pidfdSuccess = false;
-    bool socketFallbackSuccess = false;
+    uint64_t importHandle = handle;
 
-    if (isOpaqueHandle && settings.useOpaqueHandle && processId != 0) {
-        // Check cache first for opaque handles
-        if (this->driverHandle->tryGetCachedImportHandle(cacheID, importHandle)) {
-            pidfdSuccess = true; // Mark as successful to skip import logic
+    if (isOpaqueHandle && settings.useOpaqueHandle) {
+        // Use helper to import opaque handle with fallback
+        auto importResult = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice);
+        if (!importResult.success) {
+            return {nullptr, nullptr};
         }
-
-        if (!pidfdSuccess && reservedHandleData) {
-            int importHandleFromReserved = -1;
-            importHandleFromReserved = this->driverHandle->getMemoryManager()->getImportHandleFromReservedHandleData(reservedHandleData, neoDevice->getRootDeviceIndex());
-            if (importHandleFromReserved != -1) {
-                importHandle = static_cast<uint64_t>(importHandleFromReserved);
-                pidfdSuccess = true;
-            }
-        }
-
-        // Try pidfd approach first (unless forced to use socket fallback or already cached)
-        if (!pidfdSuccess && (settings.useOpaqueHandle & OpaqueHandlingType::pidfd) && !NEO::debugManager.flags.ForceIpcSocketFallback.get()) {
-            pid_t exporterPid = static_cast<pid_t>(processId);
-            unsigned int pidfdFlags = 0u;
-            int pidfd = NEO::SysCalls::pidfdopen(exporterPid, pidfdFlags);
-            if (pidfd == -1) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_open Syscall failed: %s\n", strerror(errno));
-            } else {
-                unsigned int getfdFlags = 0u;
-                int newfd = NEO::SysCalls::pidfdgetfd(pidfd, static_cast<int>(handle), getfdFlags);
-                NEO::SysCalls::close(pidfd);
-                if (newfd < 0) {
-                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_getfd Syscall failed: %s\n", strerror(errno));
-                } else {
-                    importHandle = static_cast<uint64_t>(newfd);
-                    pidfdSuccess = true;
-                    // Cache the imported handle for future use
-                    this->driverHandle->setCachedImportHandle(cacheID, importHandle);
-                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                 "Cached import handle %lu for cache ID %lu\n",
-                                 importHandle, cacheID);
-                }
-            }
-        }
-
-        // Try socket fallback if pidfd failed and socket fallback is enabled
-        if (!pidfdSuccess && (settings.useOpaqueHandle == OpaqueHandlingType::sockets)) {
-            pid_t exporterPid = static_cast<pid_t>(processId);
-            std::string socketPath = "neo_ipc_" + std::to_string(exporterPid);
-            NEO::IpcSocketClient socketClient;
-
-            if (socketClient.connectToServer(socketPath)) {
-                int receivedFd = socketClient.requestHandle(handle);
-                if (receivedFd != -1) {
-                    importHandle = static_cast<uint64_t>(receivedFd);
-                    socketFallbackSuccess = true;
-                    // Cache the imported handle for future use
-                    this->driverHandle->setCachedImportHandle(cacheID, importHandle);
-                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                 "IPC socket fallback successful for handle %lu, cached as %lu\n",
-                                 handle, importHandle);
-                } else {
-                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                 "IPC socket fallback failed for handle %lu\n", handle);
-                }
-            } else {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                             "Failed to connect to IPC socket server at %s\n", socketPath.c_str());
-            }
-
-            if (!socketFallbackSuccess) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                             "Socket fallback failed for handle %lu, returning nullptr\n", handle);
-                return {nullptr, nullptr};
-            }
-        }
+        importHandle = importResult.importHandle;
     }
 
     NEO::GraphicsAllocation *alloc = nullptr;
@@ -245,5 +179,87 @@ ze_result_t Context::systemBarrier(ze_device_handle_t hDevice) {
 
     NEO::SysCalls::munmap(ptr, MemoryConstants::pageSize);
     return ZE_RESULT_SUCCESS;
+}
+
+Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64_t handle,
+                                                                          unsigned int processId,
+                                                                          uint64_t cacheID,
+                                                                          void *reservedHandleData,
+                                                                          NEO::Device *neoDevice) {
+    uint64_t importHandle = handle;
+    bool handleRetrieved = false;
+    bool socketFallbackSuccess = false;
+
+    // Check cache first for opaque handles
+    if (this->driverHandle->tryGetCachedImportHandle(cacheID, importHandle)) {
+        handleRetrieved = true; // Mark as successful to skip import logic
+    }
+
+    if (!handleRetrieved && reservedHandleData) {
+        int importHandleFromReserved = -1;
+        importHandleFromReserved = this->driverHandle->getMemoryManager()->getImportHandleFromReservedHandleData(reservedHandleData, neoDevice->getRootDeviceIndex());
+        if (importHandleFromReserved != -1) {
+            importHandle = static_cast<uint64_t>(importHandleFromReserved);
+            handleRetrieved = true;
+        }
+    }
+
+    // Try pidfd approach first (unless forced to use socket fallback or already cached)
+    if (!handleRetrieved && (settings.useOpaqueHandle & OpaqueHandlingType::pidfd) && !NEO::debugManager.flags.ForceIpcSocketFallback.get()) {
+        pid_t exporterPid = static_cast<pid_t>(processId);
+        unsigned int pidfdFlags = 0u;
+        int pidfd = NEO::SysCalls::pidfdopen(exporterPid, pidfdFlags);
+        if (pidfd == -1) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_open Syscall failed: %s\n", strerror(errno));
+        } else {
+            unsigned int getfdFlags = 0u;
+            int newfd = NEO::SysCalls::pidfdgetfd(pidfd, static_cast<int>(handle), getfdFlags);
+            NEO::SysCalls::close(pidfd);
+            if (newfd < 0) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_getfd Syscall failed: %s\n", strerror(errno));
+                return {0, false};
+            } else {
+                importHandle = static_cast<uint64_t>(newfd);
+                handleRetrieved = true;
+                // Cache the imported handle for future use
+                this->driverHandle->setCachedImportHandle(cacheID, importHandle);
+            }
+        }
+    }
+
+    // Try socket fallback if pidfd failed and socket fallback is enabled
+    if (!handleRetrieved && (settings.useOpaqueHandle & OpaqueHandlingType::sockets)) {
+        pid_t exporterPid = static_cast<pid_t>(processId);
+        std::string socketPath = "neo_ipc_" + std::to_string(exporterPid);
+
+        NEO::IpcSocketClient socketClient;
+        if (socketClient.connectToServer(socketPath)) {
+            int receivedFd = socketClient.requestHandle(handle);
+            if (receivedFd != -1) {
+                importHandle = static_cast<uint64_t>(receivedFd);
+                socketFallbackSuccess = true;
+                // Cache the imported handle for future use
+                this->driverHandle->setCachedImportHandle(cacheID, importHandle);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "IPC socket fallback successful for handle %lu, cached as %lu\n",
+                             handle, importHandle);
+            } else {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "IPC socket fallback failed for handle %lu\n", handle);
+            }
+        } else {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Failed to connect to IPC socket server at %s\n", socketPath.c_str());
+        }
+
+        // If socket fallback was attempted but failed, return failure
+        if (!socketFallbackSuccess) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Socket fallback failed for handle %lu, returning failure\n", handle);
+            return {0, false};
+        }
+    }
+
+    return {importHandle, true};
 }
 } // namespace L0

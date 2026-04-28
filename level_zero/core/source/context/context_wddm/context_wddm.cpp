@@ -56,4 +56,12 @@ void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_
 ze_result_t Context::systemBarrier(ze_device_handle_t hDevice) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
+
+Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64_t handle,
+                                                                          unsigned int processId,
+                                                                          uint64_t cacheID,
+                                                                          void *reservedHandleData,
+                                                                          NEO::Device *neoDevice) {
+    return {handle, true};
+}
 } // namespace L0

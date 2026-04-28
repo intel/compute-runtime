@@ -87,6 +87,11 @@ struct IpcOpaqueEventPoolData {
     bool isEventPoolTsFlagSet : 1 = false;
     IpcHandleType type = IpcHandleType::maxHandle;
     unsigned int processId = 0;
+    union {
+        int fd;
+        uint64_t nt;
+        uint64_t val; // Generic value
+    } opaqueHandle = {};
 };
 #pragma pack()
 static_assert(sizeof(IpcOpaqueEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");

@@ -182,7 +182,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpe
     EXPECT_EQ(0, NEO::SysCalls::pidfdgetfdCalled);
 }
 
-TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGetSyscallReturnFailThenCorrectHandleIsReturned) {
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGetSyscallReturnFailThenFailureIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableIpcSocketFallback.set(0);
     debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
@@ -195,7 +195,8 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
     });
     uint64_t handle = 57;
 
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false, true).second);
+    // With new behavior: when pidfd fails and no socket fallback is available, should return nullptr
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false, true).second);
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
 }

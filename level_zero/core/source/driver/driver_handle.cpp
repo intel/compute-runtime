@@ -1031,9 +1031,6 @@ bool DriverHandle::tryGetCachedImportHandle(uint64_t cacheID, uint64_t &importHa
         }
         cacheIt->second.refCount++;
         importHandle = static_cast<uint64_t>(dupFd);
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Reusing cached import handle %lu (dup'd fd %d, refCount %u) for cache ID %lu\n",
-                     importHandle, dupFd, cacheIt->second.refCount, cacheID);
         return true;
     }
     return false;
@@ -1044,9 +1041,6 @@ void DriverHandle::setCachedImportHandle(uint64_t cacheID, uint64_t importHandle
     int dupFd = duplicateFd(static_cast<int>(importHandle));
     if (dupFd >= 0) {
         opaqueHandleImportCache[cacheID] = CachedImportEntry{dupFd, 1};
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Cached import handle (dup'd fd %d) for cache ID %lu\n",
-                     dupFd, cacheID);
     }
 }
 

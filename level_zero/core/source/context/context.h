@@ -349,6 +349,17 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     void registerIpcHandleWithServer(uint64_t handleId);
     void unregisterIpcHandleWithServer(uint64_t handleId);
 
+    struct OpaqueHandleImportResult {
+        uint64_t importHandle;
+        bool success;
+    };
+
+    OpaqueHandleImportResult importOpaqueHandleWithFallback(uint64_t handle,
+                                                            unsigned int processId,
+                                                            uint64_t cacheID,
+                                                            void *reservedHandleData,
+                                                            NEO::Device *neoDevice);
+
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, void *pNext, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
     template <typename IpcDataT>

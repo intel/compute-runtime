@@ -729,6 +729,8 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     if (context->settings.useOpaqueHandle) {
         ipcData.type = context->settings.handleType;
         ipcData.processId = NEO::SysCalls::getCurrentProcessId();
+        // Set opaqueHandle to same value as handle (similar to IPC memory)
+        ipcData.opaqueHandle.val = handle;
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -758,16 +760,38 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 
     uint32_t parentID = 0;
     uint32_t shareWithNoNTHandle = 0;
+    uint64_t importHandle = poolData.handle;
     if (context->settings.useOpaqueHandle) {
         IpcOpaqueEventPoolData ipcData = *reinterpret_cast<const IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
         parentID = ipcData.processId;
+
+        // Check if opaque handle should be used (similar to IPC memory)
+        uint64_t handle = static_cast<uint64_t>(ipcData.handle.val);
+        uint64_t opaqueHandle = static_cast<uint64_t>(ipcData.opaqueHandle.val);
+        bool isOpaqueHandle = (handle == opaqueHandle);
+
+        if (isOpaqueHandle) {
+            // Use helper to import opaque handle with fallback
+            auto importResult = context->importOpaqueHandleWithFallback(
+                handle,
+                parentID,
+                0,       // cacheID not used for event pools
+                nullptr, // reservedHandleData not used for event pools
+                neoDevice);
+
+            if (!importResult.success) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            importHandle = importResult.importHandle;
+        }
+
         if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
             auto &productHelper = neoDevice->getProductHelper();
             shareWithNoNTHandle = productHelper.canShareMemoryWithoutNTHandle();
         }
     }
     osHandleData.parentProcessId = parentID;
-
+    osHandleData.handle = static_cast<NEO::osHandle>(importHandle);
     if (poolData.numDevices == 1) {
         for (uint32_t i = 0; i < numDevices; i++) {
             auto deviceStruct = Device::fromHandle(deviceHandles[i]);
