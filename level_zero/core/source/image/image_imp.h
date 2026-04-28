@@ -76,13 +76,30 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
                                     void *pGmmResInfo,
                                     uint64_t textureBufferOffset,
                                     uint32_t glHWFormat,
-                                    bool isAuxEnabled);
+                                    bool isAuxEnabled,
+                                    uint32_t numberOfSamples,
+                                    void *mcsNtHandle,
+                                    void *pGmmResInfoMcs,
+                                    bool hasUnifiedMcsSurface);
+
+    NEO::GraphicsAllocation *getMcsAllocation() override { return mcsAllocation; }
+    uint32_t getMcsPitch() const { return mcsPitch; }
+    uint32_t getMcsQPitch() const { return mcsQPitch; }
+    uint32_t getMcsMultisampleCount() const { return mcsMultisampleCount; }
+    uint32_t getNumSamples() const { return numSamples; }
+    bool getIsUnifiedMcsSurface() const { return isUnifiedMcsSurface; }
 
   protected:
     Device *device = nullptr;
     NEO::ImageInfo imgInfo = {};
     NEO::GraphicsAllocation *allocation = nullptr;
     NEO::GraphicsAllocation *implicitArgsAllocation = nullptr;
+    NEO::GraphicsAllocation *mcsAllocation = nullptr;
+    uint32_t mcsPitch = 0;
+    uint32_t mcsQPitch = 0;
+    uint32_t mcsMultisampleCount = 0;
+    uint32_t numSamples = 0;
+    bool isUnifiedMcsSurface = false;
     std::mutex implicitArgsAllocationMutex;
     ze_image_desc_t imageFormatDesc = {};
     ze_sampler_desc_t samplerDesc = {};

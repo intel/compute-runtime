@@ -135,11 +135,18 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
                 if (allocation != nullptr && lookupTable.glTextureExt.present) {
                     this->device = device;
+                    if (lookupTable.glTextureExt.numberOfSamples > 1) {
+                        imgInfo.imgDesc.numSamples = lookupTable.glTextureExt.numberOfSamples;
+                    }
                     this->applyGlTextureExtOverrides(allocation, imgInfo,
                                                      lookupTable.glTextureExt.pGmmResInfo,
                                                      lookupTable.glTextureExt.textureBufferOffset,
                                                      lookupTable.glTextureExt.glHWFormat,
-                                                     lookupTable.glTextureExt.isAuxEnabled);
+                                                     lookupTable.glTextureExt.isAuxEnabled,
+                                                     lookupTable.glTextureExt.numberOfSamples,
+                                                     lookupTable.glTextureExt.mcsNtHandle,
+                                                     lookupTable.glTextureExt.pGmmResInfoMcs,
+                                                     lookupTable.glTextureExt.hasUnifiedMcsSurface);
                 }
                 if (allocation != nullptr) {
                     auto importedGmm = allocation->getDefaultGmm();
@@ -233,6 +240,39 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                                        ? lookupTable.glTextureExt.cubeFaceIndex
                                        : static_cast<uint32_t>(__GMM_NO_CUBE_MAP);
 
+    const uint32_t numSamplesForSurfaceState = this->getNumSamples();
+    auto programMultisampleSurfaceState = [&](RENDER_SURFACE_STATE *surfaceState) {
+        using NUMBER_OF_MULTISAMPLES = typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES;
+
+        if (numSamplesForSurfaceState <= 1) {
+            surfaceState->setNumberOfMultisamples(NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
+            return;
+        }
+        surfaceState->setNumberOfMultisamples(static_cast<NUMBER_OF_MULTISAMPLES>(this->getMcsMultisampleCount()));
+
+        auto mcsAlloc = this->getMcsAllocation();
+        const bool unifiedMcs = this->getIsUnifiedMcsSurface();
+        if (mcsAlloc != nullptr || unifiedMcs) {
+            auto mcsGmm = mcsAlloc ? mcsAlloc->getDefaultGmm() : gmm;
+            auto *releaseHelper = device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper();
+            NEO::EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);
+            surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
+            surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());
+            NEO::EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);
+            NEO::ImageSurfaceStateHelper<GfxFamily>::setUnifiedAuxBaseAddress(surfaceState, mcsGmm);
+        } else {
+            using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
+            const bool isDepthResource = gmm && gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+            if (isDepthResource && surfaceState->getSurfaceFormat() != SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS) {
+                surfaceState->setMultisampledSurfaceStorageFormat(
+                    RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
+            } else {
+                surfaceState->setMultisampledSurfaceStorageFormat(
+                    RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
+            }
+        }
+    };
+
     {
         surfaceState = GfxFamily::cmdInitRenderSurfaceState;
         packedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
@@ -266,10 +306,15 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             surfaceState.setShaderChannelSelectAlpha(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
         }
 
-        surfaceState.setNumberOfMultisamples(RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
+        programMultisampleSurfaceState(&surfaceState);
 
-        if (allocation->isCompressionEnabled()) {
+        if (numSamplesForSurfaceState <= 1 && allocation->isCompressionEnabled()) {
             NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&surfaceState, gmm);
+        }
+
+        if (gmm) {
+            const bool isDepthResource = gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+            surfaceState.setDepthStencilResource(isDepthResource);
         }
     }
 
@@ -353,10 +398,15 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             redescribedSurfaceState.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE);
         }
 
-        redescribedSurfaceState.setNumberOfMultisamples(RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
+        programMultisampleSurfaceState(&redescribedSurfaceState);
 
-        if (allocation->isCompressionEnabled()) {
+        if (numSamplesForSurfaceState <= 1 && allocation->isCompressionEnabled()) {
             NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&redescribedSurfaceState, gmm);
+        }
+
+        if (gmm) {
+            const bool isDepthResource = gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+            redescribedSurfaceState.setDepthStencilResource(isDepthResource);
         }
     }
 

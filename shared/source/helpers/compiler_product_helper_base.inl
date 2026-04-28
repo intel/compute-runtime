@@ -130,6 +130,8 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_khr_image2d_from_buffer ";
         extensions += "cl_khr_depth_images ";
         extensions += "cl_khr_3d_image_writes ";
+        extensions += "cl_khr_gl_msaa_sharing ";
+        extensions += "cl_khr_gl_depth_images ";
     }
 
     if (hwInfo.capabilityTable.supportsMediaBlock) {

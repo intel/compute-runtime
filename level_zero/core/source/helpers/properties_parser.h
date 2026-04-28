@@ -86,6 +86,12 @@ struct StructuresLookupTable {
         uint32_t cubeFaceIndex;
         bool isAuxEnabled;
         bool present;
+
+        // Multisample / MCS sharing
+        uint32_t numberOfSamples;
+        void *mcsNtHandle;
+        void *pGmmResInfoMcs;
+        bool hasUnifiedMcsSurface;
     } glTextureExt;
 
     bool areImageProperties;
@@ -211,6 +217,10 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             lookupTable.glTextureExt.glHWFormat = glDesc->glHWFormat;
             lookupTable.glTextureExt.cubeFaceIndex = glDesc->cubeFaceIndex;
             lookupTable.glTextureExt.isAuxEnabled = glDesc->isAuxEnabled;
+            lookupTable.glTextureExt.numberOfSamples = glDesc->numberOfSamples;
+            lookupTable.glTextureExt.mcsNtHandle = glDesc->mcsNtHandle;
+            lookupTable.glTextureExt.pGmmResInfoMcs = glDesc->pGmmResInfoMcs;
+            lookupTable.glTextureExt.hasUnifiedMcsSurface = glDesc->hasUnifiedMcsSurface;
             lookupTable.glTextureExt.present = true;
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;

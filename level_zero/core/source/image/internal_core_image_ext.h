@@ -33,6 +33,12 @@ struct ze_external_gl_texture_ext_desc_t {
     uint32_t glHWFormat = 0;          // genx surface-state format override (0 means no override)
     uint32_t cubeFaceIndex = 0;       // GMM cube face index (__GMM_NO_CUBE_MAP for non-cube targets)
     bool isAuxEnabled = false;        // request aux/compression mapping
+
+    // Multisample / MCS sharing (cl_khr_gl_msaa_sharing)
+    uint32_t numberOfSamples = 0;      // GL texture sample count (>1 for MSAA)
+    void *mcsNtHandle = nullptr;       // NT handle of the MCS / auxiliary surface (nullptr if unified)
+    void *pGmmResInfoMcs = nullptr;    // GMM_RESOURCE_INFO* of the MCS surface
+    bool hasUnifiedMcsSurface = false; // MCS lives inside the main allocation (unified aux)
 };
 
 // NOLINTEND(readability-identifier-naming)
