@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,40 @@ PVCTEST_F(DeviceTestsPvc, givenZexNumberOfCssEnvVariableDefinedForXeHpcWhenSingl
         executionEnvironment.adjustCcsCount();
         EXPECT_EQ(std::min(4u, defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled), hardwareInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
     }
+}
+
+PVCTEST_F(DeviceTestsPvc, givenOnlineDebuggingModeAndMoreThanOneCcsRequestedWhenAdjustCcsCountThenFailWithError) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:2");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1);
+    executionEnvironment.setDebuggingMode(DebuggingMode::online);
+
+    EXPECT_FALSE(executionEnvironment.adjustCcsCount());
+}
+
+PVCTEST_F(DeviceTestsPvc, givenOnlineDebuggingModeAndOneCcsRequestedWhenAdjustCcsCountThenSucceeds) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:1");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1);
+    executionEnvironment.setDebuggingMode(DebuggingMode::online);
+
+    EXPECT_TRUE(executionEnvironment.adjustCcsCount());
 }
 
 struct MemoryManagerDirectSubmissionImplicitScalingPvcTest : public ::testing::Test {

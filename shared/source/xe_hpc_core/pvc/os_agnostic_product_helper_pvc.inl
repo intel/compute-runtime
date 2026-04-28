@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
 #include "shared/source/helpers/string_helpers.h"
@@ -163,6 +164,12 @@ bool ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::u
         if (rootDeviceIndexParsed == rootDeviceIndex) {
             uint32_t maxCcsCount = StringHelpers::toUint32t(subEntries[1]);
             if (!rootDeviceEnvironment->setNumberOfCcs(maxCcsCount)) {
+                return false;
+            }
+
+            if (maxCcsCount > 1 && rootDeviceEnvironment->executionEnvironment.getDebuggingMode() == DebuggingMode::online) {
+                IoFunctions::fprintf(stderr, "Error: ZEX_NUMBER_OF_CCS requests more than 1 CCS for device %u, which is not supported with online debugging\n",
+                                     rootDeviceIndex);
                 return false;
             }
 
