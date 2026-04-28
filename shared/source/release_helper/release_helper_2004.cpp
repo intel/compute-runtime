@@ -37,6 +37,11 @@ bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
     return false;
 }
 
+template <>
+bool ReleaseHelperHw<release>::isLatePreemptionStartSupportedHelper() const {
+    return true;
+}
+
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe2.inl"
