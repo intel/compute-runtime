@@ -62,7 +62,10 @@ FdCacheInterface::~FdCacheInterface() {
 
 template <typename T>
 ze_result_t FsAccessInterface::readValue(const std::string file, T &val) {
-    auto lock = this->obtainMutex();
+    std::unique_lock<std::mutex> lockObj;
+    if (needLock) {
+        lockObj = this->obtainMutex();
+    }
 
     std::string readVal(64, '\0');
     int fd = pFdCacheInterface->getFd(std::move(file));
@@ -85,7 +88,7 @@ ze_result_t FsAccessInterface::readValue(const std::string file, T &val) {
 }
 
 // Generic Filesystem Access
-FsAccessInterface::FsAccessInterface() {
+FsAccessInterface::FsAccessInterface(bool needLock) : needLock(needLock) {
     pFdCacheInterface = std::make_unique<FdCacheInterface>();
 }
 
@@ -431,7 +434,7 @@ void ProcFsAccessInterface::kill(const ::pid_t pid) {
 }
 
 // Sysfs Access
-SysFsAccessInterface::SysFsAccessInterface() = default;
+SysFsAccessInterface::SysFsAccessInterface() : FsAccessInterface(false) {}
 SysFsAccessInterface::~SysFsAccessInterface() = default;
 
 const std::string SysFsAccessInterface::drmPath = "/sys/class/drm/";
