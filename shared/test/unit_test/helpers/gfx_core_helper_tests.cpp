@@ -1240,12 +1240,10 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSuppor
     EXPECT_FALSE(gfxCoreHelper.isRelaxedOrderingSupported());
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenNoLocalMemoryAndCallCopyThroughLockedPtrEnabledThenReturnFalse, IsNotXeCore) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrLocalMemory = false;
+HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse, IsNotXeCore) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper));
+    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallCopyThroughLockedPtrEnabledThenReturnCorrectValue) {

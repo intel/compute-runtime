@@ -1387,36 +1387,9 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         return false;
     }
 
-    if (!getCsr(false)->isHardwareMode()) {
-        return false;
-    }
-
     if (((cpuMemCopyInfo.srcAllocInfo.svmAlloc != nullptr) && (cpuMemCopyInfo.srcAllocInfo.svmAlloc->isImportedAllocation)) ||
         ((cpuMemCopyInfo.dstAllocInfo.svmAlloc != nullptr) && (cpuMemCopyInfo.dstAllocInfo.svmAlloc->isImportedAllocation))) {
         return false;
-    }
-
-    auto isAllocationCompressed = [](const MemAllocInfo &allocInfo) {
-        if (allocInfo.svmAlloc == nullptr) {
-            return false;
-        }
-        auto graphicsAllocation = allocInfo.svmAlloc->gpuAllocations.getDefaultGraphicsAllocation();
-        if (graphicsAllocation == nullptr) {
-            return false;
-        }
-        return graphicsAllocation->isCompressionEnabled();
-    };
-
-    if (isAllocationCompressed(cpuMemCopyInfo.srcAllocInfo) || isAllocationCompressed(cpuMemCopyInfo.dstAllocInfo)) {
-        return false;
-    }
-
-    for (uint32_t i = 0; phWaitEvents != nullptr && i < numWaitEvents; i++) {
-        auto *waitEvent = Event::fromHandle(phWaitEvents[i]);
-        const auto &waitEventHelper = waitEvent->getInOrderExecEventHelper();
-        if (waitEvent->isCounterBased() && waitEventHelper.isDataAssigned() && waitEventHelper.getBaseHostCpuAddress() == nullptr) {
-            return false;
-        }
     }
 
     const TransferType transferType = getTransferType(cpuMemCopyInfo);
@@ -1484,10 +1457,6 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMSharedAlloc(NEO
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-    if (hSignalEvent && Event::isAggregatedEvent(Event::fromHandle(hSignalEvent))) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
     bool lockingFailed = false;
     auto srcLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.srcAllocInfo.svmAlloc, const_cast<void *>(cpuMemCopyInfo.srcPtr), lockingFailed);
     if (lockingFailed) {

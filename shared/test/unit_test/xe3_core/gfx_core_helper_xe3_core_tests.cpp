@@ -37,30 +37,6 @@
 
 using GfxCoreHelperTestsXe3Core = GfxCoreHelperTest;
 
-XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnValueDependsOnLocalMemory) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &productHelper = getHelper<ProductHelper>();
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    hwInfo.featureTable.flags.ftrLocalMemory = true;
-    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper));
-
-    hwInfo.featureTable.flags.ftrLocalMemory = false;
-    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper));
-}
-
-XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDebugFlagSetWhenCallCopyThroughLockedPtrEnabledThenReturnCorrectValue) {
-    DebugManagerStateRestore restorer;
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &productHelper = getHelper<ProductHelper>();
-
-    debugManager.flags.ExperimentalCopyThroughLock.set(0);
-    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
-
-    debugManager.flags.ExperimentalCopyThroughLock.set(1);
-    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
-}
-
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenGettingMetricsLibraryGenIdThenXe3IsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe3), gfxCoreHelper.getMetricsLibraryGenId());
