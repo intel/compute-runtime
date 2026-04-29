@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -231,6 +231,7 @@ TEST(DrmPrelimTest, GivenDebuggerOpenIoctlWhenErrorEbusyReturnedThenErrorIsRetur
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.allowDebugAttachCallBase = true;
+    drm.baseErrno = false;
 
     VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
         return -1;
