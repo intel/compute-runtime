@@ -273,7 +273,7 @@ Image *Image::create(Context *context,
         }
 
         if (parentImage) {
-            setImageDesriptorIfParentImage(imageDescriptor, imageWidth, imageHeight, imageDesc->mem_object);
+            setImageDescriptorIfParentImage(imageDescriptor, imageWidth, imageHeight, imageDesc->mem_object);
             parentImage->incRefInternal();
             imgInfo.imgDesc = Image::convertDescriptor(imageDescriptor);
         }
@@ -1272,7 +1272,7 @@ void Image::providePerformanceHintForCreateImage(Image *image, const HardwareInf
     }
 }
 
-void Image::setImageDesriptorIfParentImage(cl_image_desc &imageDescriptor, size_t imageWidth, size_t imageHeight, cl_mem memObject) {
+void Image::setImageDescriptorIfParentImage(cl_image_desc &imageDescriptor, size_t imageWidth, size_t imageHeight, cl_mem memObject) {
     imageDescriptor.image_height = imageHeight;
     imageDescriptor.image_width = imageWidth;
     imageDescriptor.image_type = CL_MEM_OBJECT_IMAGE2D;

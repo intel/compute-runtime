@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1661,33 +1661,6 @@ INSTANTIATE_TEST_SUITE_P(HasSlices,
                                            std::make_pair(CL_MEM_OBJECT_PIPE, false)));
 
 typedef ::testing::Test ImageTransformTest;
-HWTEST_F(ImageTransformTest, givenSurfaceStateWhenTransformImage3dTo2dArrayIsCalledThenSurface2dArrayIsSet) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-    MockContext context;
-    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(&context));
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    surfaceState.setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D);
-    surfaceState.setSurfaceArray(false);
-    imageHw->transformImage3dTo2dArray(reinterpret_cast<void *>(&surfaceState));
-    EXPECT_EQ(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D, surfaceState.getSurfaceType());
-    EXPECT_TRUE(surfaceState.getSurfaceArray());
-}
-
-HWTEST_F(ImageTransformTest, givenSurfaceStateWhenTransformImage2dArrayTo3dIsCalledThenSurface3dIsSet) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-    MockContext context;
-    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(&context));
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    surfaceState.setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
-    surfaceState.setSurfaceArray(true);
-    imageHw->transformImage2dArrayTo3d(reinterpret_cast<void *>(&surfaceState));
-    EXPECT_EQ(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D, surfaceState.getSurfaceType());
-    EXPECT_FALSE(surfaceState.getSurfaceArray());
-}
 
 HWTEST_F(ImageTransformTest, givenSurfaceBaseAddressAndUnifiedSurfaceWhenSetUnifiedAuxAddressCalledThenAddressIsSet) {
     MockContext context;

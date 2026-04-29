@@ -961,8 +961,6 @@ TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenRetu
         }
 
         void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) override {}
-        void transformImage2dArrayTo3d(void *memory) override {}
-        void transformImage3dTo2dArray(void *memory) override {}
     };
 
     const size_t origin[3] = {0, 0, 0};

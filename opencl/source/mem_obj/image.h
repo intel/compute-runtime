@@ -194,9 +194,6 @@ class Image : public MemObj {
     ImagePlane getPlane() const { return this->plane; }
     size_t calculateOffsetForMapping(const MemObjOffsetArray &origin) const override;
 
-    virtual void transformImage2dArrayTo3d(void *memory) = 0;
-    virtual void transformImage3dTo2dArray(void *memory) = 0;
-
     bool hasSameDescriptor(const cl_image_desc &imageDesc) const;
     bool hasValidParentImageFormat(const cl_image_format &imageFormat) const;
 
@@ -289,7 +286,7 @@ class Image : public MemObj {
 
     static void providePerformanceHintForCreateImage(Image *image, const HardwareInfo &hwInfo, CreateMemObj::AllocationInfo &allocationInfo, Context *context);
 
-    static void setImageDesriptorIfParentImage(cl_image_desc &imageDescriptor, size_t imageWidth, size_t imageHeight, cl_mem memObject);
+    static void setImageDescriptorIfParentImage(cl_image_desc &imageDescriptor, size_t imageWidth, size_t imageHeight, cl_mem memObject);
 };
 
 template <typename GfxFamily>
@@ -343,8 +340,6 @@ class ImageHw : public Image {
     void appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex);
     void appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
     void appendSurfaceStateExt(void *memory);
-    void transformImage2dArrayTo3d(void *memory) override;
-    void transformImage3dTo2dArray(void *memory) override;
     static void adjustDepthLimitations(RENDER_SURFACE_STATE *surfaceState, uint32_t minArrayElement, uint32_t renderTargetViewExtent, uint32_t depth, uint32_t mipCount, bool is3DUavOrRtv);
     static Image *create(Context *context,
                          const MemoryProperties &memoryProperties,

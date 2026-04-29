@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -145,23 +145,6 @@ void ImageHw<GfxFamily>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceS
 
 template <typename GfxFamily>
 inline void ImageHw<GfxFamily>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
-}
-
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::transformImage2dArrayTo3d(void *memory) {
-    DEBUG_BREAK_IF(imageDesc.image_type != CL_MEM_OBJECT_IMAGE3D);
-    using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
-    surfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D);
-    surfaceState->setSurfaceArray(false);
-}
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
-    DEBUG_BREAK_IF(imageDesc.image_type != CL_MEM_OBJECT_IMAGE3D);
-    using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
-    surfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
-    surfaceState->setSurfaceArray(true);
 }
 
 template <typename GfxFamily>
