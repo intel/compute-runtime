@@ -96,6 +96,12 @@ struct ResetStatsFault {
     uint16_t access;
     uint16_t flags;
 };
+struct ResetFaultContext {
+    ResetStatsFault fault;
+    uint32_t id;
+    bool banned;
+    bool vmFault;
+};
 
 using IoctlFunc = std::function<int(void *, int, unsigned long int, void *, bool)>;
 
@@ -173,7 +179,7 @@ class IoctlHelper {
     virtual std::optional<uint32_t> getVmAdviseAtomicAttribute() = 0;
     virtual int vmBind(const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(const VmBindParams &vmBindParams) = 0;
-    virtual int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) = 0;
+    virtual int getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) = 0;
     virtual bool isEuStallSupported() = 0;
     virtual uint32_t getEuStallFdParameter() = 0;
     virtual bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) = 0;
@@ -374,7 +380,7 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     std::optional<uint32_t> getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
+    int getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) override;
     bool isEuStallSupported() override;
     uint32_t getEuStallFdParameter() override;
     bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override;
@@ -437,7 +443,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     std::optional<uint32_t> getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
+    int getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) override;
     bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override;
     bool perfDisableEuStallStream(int32_t *stream) override;
     bool isEuStallSupported() override;

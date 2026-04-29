@@ -273,6 +273,10 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         ioctlCnt.getResetStats++;
         break;
     }
+    case DrmIoctl::getResetStatsPrelim: {
+        ioctlCnt.getResetStats++;
+        break;
+    }
     default:
         int res = ioctlExtra(request, arg);
         if (returnIoctlExtraErrorValue) {

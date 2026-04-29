@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,6 +122,7 @@ class DrmMemoryManagerFixturePrelim : public DrmMemoryManagerFixture {
   public:
     template <typename GfxFamily>
     void setUpT() {
+        validateResetStats = false;
         regionInfo.resize(2);
         regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
         regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};

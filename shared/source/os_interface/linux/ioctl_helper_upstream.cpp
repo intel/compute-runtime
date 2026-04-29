@@ -249,7 +249,7 @@ int IoctlHelperUpstream::vmUnbind(const VmBindParams &vmBindParams) {
     return 0;
 }
 
-int IoctlHelperUpstream::getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) {
+int IoctlHelperUpstream::getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) {
     return ioctl(DrmIoctl::getResetStats, &resetStats);
 }
 

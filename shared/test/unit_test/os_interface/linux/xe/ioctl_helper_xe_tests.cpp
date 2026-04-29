@@ -672,6 +672,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     verifyIoctlString(DrmIoctl::syncObjTimelineWait, "DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT");
     verifyIoctlString(DrmIoctl::syncObjTimelineSignal, "DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL");
     verifyIoctlString(DrmIoctl::getResetStats, "DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY");
+    verifyIoctlString(DrmIoctl::vmGetProperty, "DRM_IOCTL_XE_VM_GET_PROPERTY");
 
     EXPECT_TRUE(xeIoctlHelper->completionFenceExtensionSupported(true));
 
@@ -838,6 +839,7 @@ TEST_F(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned
     verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_SIGNAL, DrmIoctl::syncObjSignal);
     verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT, DrmIoctl::syncObjTimelineWait);
     verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL, DrmIoctl::syncObjTimelineSignal);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_VM_GET_PROPERTY, DrmIoctl::vmGetProperty);
 }
 
 TEST_F(IoctlHelperXeTest, verifyPublicFunctions) {
@@ -2736,18 +2738,369 @@ TEST_F(IoctlHelperXeTest, whenCallingGetResetStatsThenSuccessIsReturned) {
     ResetStats resetStats{};
     resetStats.contextId = 0;
 
-    EXPECT_EQ(0, xeIoctlHelper->getResetStats(resetStats, nullptr, nullptr));
+    std::vector<ResetFaultContext> faultsVector;
+    bool reportFaults = true;
+    EXPECT_EQ(0, xeIoctlHelper->getResetStats(resetStats, nullptr, nullptr, faultsVector, reportFaults));
 }
 
-TEST_F(IoctlHelperXeTest, whenCallingGetStatusAndFlagsForResetStatsThenZeroIsReturned) {
+TEST_F(IoctlHelperXeTest, givenVmIdWhenCallingGetVmFaultsThenFaultsAreReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    xeIoctlHelper->initialize();
+
+    uint32_t vmId = 123;
+    std::vector<ResetStatsFault> faults;
+
+    auto ret = xeIoctlHelper->getVmFaults(vmId, faults);
+    EXPECT_EQ(0, ret);
+    EXPECT_TRUE(faults.empty());
+}
+
+TEST_F(IoctlHelperXeTest, givenVmFaultsWhenCallingGetVmFaultsThenFaultDataIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    xeIoctlHelper->initialize();
+
+    // Add mock faults
+    drm->mockVmFaults.push_back({0xDEADBEEF000, 0, 1, 2, 3});
+    drm->mockVmFaults.push_back({0xCAFEBABE000, 1, 2, 3, 4});
+
+    uint32_t vmId = 123;
+    std::vector<ResetStatsFault> faults;
+
+    auto ret = xeIoctlHelper->getVmFaults(vmId, faults);
+    EXPECT_EQ(0, ret);
+    ASSERT_EQ(2u, faults.size());
+
+    EXPECT_EQ(0xDEADBEEF000u, faults[0].addr);
+    EXPECT_EQ(1u, faults[0].access);
+    EXPECT_EQ(2u, faults[0].type);
+    EXPECT_EQ(3u, faults[0].level);
+    EXPECT_EQ(1u, faults[0].flags); // Valid flag
+
+    EXPECT_EQ(0xCAFEBABE000u, faults[1].addr);
+    EXPECT_EQ(2u, faults[1].access);
+    EXPECT_EQ(3u, faults[1].type);
+    EXPECT_EQ(4u, faults[1].level);
+    EXPECT_EQ(1u, faults[1].flags); // Valid flag
+}
+
+TEST_F(IoctlHelperXeTest, givenSecondIoctlFailureWhenCallingGetVmFaultsThenErrorIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    xeIoctlHelper->initialize();
+
+    // Add mock faults to ensure first ioctl succeeds with non-zero size
+    drm->mockVmFaults.push_back({0xDEADBEEF000, 0, 1, 2, 3});
+
+    // Make the second vmGetProperty call fail (first call gets size, second gets data)
+    drm->vmGetPropertyFailOnCall = 2;
+
+    uint32_t vmId = 123;
+    std::vector<ResetStatsFault> faults;
+
+    auto ret = xeIoctlHelper->getVmFaults(vmId, faults);
+    EXPECT_EQ(-1, ret);
+}
+
+TEST_F(IoctlHelperXeTest, givenFirstIoctlFailureWhenCallingGetVmFaultsThenErrorIsReturnedAndNoFurtherIoctlIssued) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    xeIoctlHelper->initialize();
+
+    // Make the first vmGetProperty call (the size query) fail
+    drm->vmGetPropertyFailOnCall = 1;
+
+    uint32_t vmId = 123;
+    std::vector<ResetStatsFault> faults;
+
+    drm->vmGetPropertyCallCount = 0;
+    auto ret = xeIoctlHelper->getVmFaults(vmId, faults);
+
+    // Early return at ioctl_helper_xe.cpp:1415: error propagated, no faults, and no second (data) ioctl
+    EXPECT_EQ(-1, ret);
+    EXPECT_TRUE(faults.empty());
+    EXPECT_EQ(1, drm->vmGetPropertyCallCount);
+}
+
+TEST_F(IoctlHelperXeTest, whenCallingGetStatusAndFlagsForResetStatsThenCorrectValuesReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
 
     EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(true));
     EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(false));
+}
 
+TEST_F(IoctlHelperXeTest, whenCallingValidPageFaultThenFalseIsReturnedRegardlessOfFlags) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    // IoctlHelperXe does not override validPageFault; the base implementation ignores the flags and returns false
     EXPECT_FALSE(ioctlHelper->validPageFault(0u));
+    EXPECT_FALSE(ioctlHelper->validPageFault(1u));
+    EXPECT_FALSE(ioctlHelper->validPageFault(0xFFFFu));
+}
+
+TEST_F(IoctlHelperXeTest, givenGetResetStatsFailsWhenCheckingResetStatusThenNoHangDetected) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    MockOsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.drmContextIds.push_back(0);
+
+    // Simulate getResetStats ioctl failure
+    drm->getResetStatsReturn = -1;
+
+    // No VM faults, getResetStats fails, should not detect hang
+    EXPECT_FALSE(drm->checkResetStatus(osContext));
+    EXPECT_FALSE(osContext.isHangDetected());
+}
+
+TEST_F(IoctlHelperXeTest, givenVmFaultsWhenCheckingResetStatusWithDisabledScratchThenProcessTerminated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableScratchPages.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->configureScratchPagePolicy();
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    // Add mock VM faults
+    drm->mockVmFaults.push_back({0xDEADBEEF000, 0, 1, 2, 3});
+
+    MockOsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.drmContextIds.push_back(0);
+    osContext.drmVmIds.push_back(123); // Add VM ID
+
+    // Make getResetStats succeed but return not banned
+    drm->execQueueBanPropertyReturn = 0;
+
+    // Capture output to avoid SIGPIPE when test runner pipes are closed
+    StreamCapture capture;
+    capture.captureStderr();
+    capture.captureStdout();
+
+    // Should terminate due to VM fault (UNRECOVERABLE_IF)
+    EXPECT_THROW(drm->checkResetStatus(osContext), std::runtime_error);
+
+    // Verify output contains expected fault message
+    auto stderrOutput = capture.getCapturedStderr();
+    auto stdoutOutput = capture.getCapturedStdout();
+    EXPECT_TRUE(stderrOutput.find("Segmentation fault from GPU") != std::string::npos);
+    EXPECT_TRUE(stdoutOutput.find("Segmentation fault from GPU") != std::string::npos);
+}
+
+TEST_F(IoctlHelperXeTest, givenBannedExecQueueWithVmFaultsAndDebuggingEnabledWhenCheckingResetStatusThenProcessTerminated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableScratchPages.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->setDebuggingMode(DebuggingMode::online);
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->configureScratchPagePolicy();
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    drm->mockVmFaults.push_back({0xDEADBEEF000, 0, 1, 2, 3});
+
+    MockOsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.drmContextIds.push_back(0);
+    osContext.drmVmIds.push_back(123);
+
+    drm->execQueueBanPropertyReturn = 1; // banned == true
+
+    StreamCapture capture;
+    capture.captureStderr();
+    capture.captureStdout();
+
+    EXPECT_THROW(drm->checkResetStatus(osContext), std::runtime_error);
+
+    auto stderrOutput = capture.getCapturedStderr();
+    auto stdoutOutput = capture.getCapturedStdout();
+    EXPECT_TRUE(stderrOutput.find("Segmentation fault from GPU") != std::string::npos);
+    EXPECT_TRUE(stdoutOutput.find("Segmentation fault from GPU") != std::string::npos);
+}
+
+TEST_F(IoctlHelperXeTest, givenBannedExecQueueWithVmFaultsAndDebuggingDisabledWhenCheckingResetStatusThenProcessTerminated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableScratchPages.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->configureScratchPagePolicy();
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    drm->mockVmFaults.push_back({0xDEADBEEF000, 0, 1, 2, 3});
+
+    MockOsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.drmContextIds.push_back(0);
+    osContext.drmVmIds.push_back(123);
+
+    drm->execQueueBanPropertyReturn = 1; // banned == true
+
+    StreamCapture capture;
+    capture.captureStderr();
+    capture.captureStdout();
+
+    EXPECT_THROW(drm->checkResetStatus(osContext), std::runtime_error);
+
+    auto stderrOutput = capture.getCapturedStderr();
+    auto stdoutOutput = capture.getCapturedStdout();
+    EXPECT_TRUE(stderrOutput.find("Segmentation fault from GPU") != std::string::npos);
+    EXPECT_TRUE(stdoutOutput.find("Segmentation fault from GPU") != std::string::npos);
+}
+
+TEST_F(IoctlHelperXeTest, givenVmFaultsAndDebuggingEnabledWhenCheckingResetStatusThenNoHangDetected) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableScratchPages.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->setDebuggingMode(DebuggingMode::online);
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->configureScratchPagePolicy();
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    // Add mock VM faults
+    drm->mockVmFaults.push_back({0xDEADBEEF000, 0, 1, 2, 3});
+
+    MockOsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.drmContextIds.push_back(0);
+    osContext.drmVmIds.push_back(123); // Add VM ID
+
+    // Make getResetStats succeed but return not banned (debugging case)
+    drm->execQueueBanPropertyReturn = 0;
+
+    // Should return false (early return) when debugging is enabled and not banned
+    EXPECT_FALSE(drm->checkResetStatus(osContext));
+    EXPECT_FALSE(osContext.isHangDetected());
+}
+
+TEST_F(IoctlHelperXeTest, givenNoFaultsWhenCheckingResetStatusWithDisabledScratchThenNoHangDetected) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableScratchPages.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->configureScratchPagePolicy();
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    // No mock VM faults added
+
+    MockOsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.drmContextIds.push_back(0);
+    osContext.drmVmIds.push_back(123); // Add VM ID
+
+    // Make getResetStats succeed but return not banned
+    drm->execQueueBanPropertyReturn = 0;
+
+    // Should not detect hang since there are no VM faults and exec queue is not banned
+    EXPECT_FALSE(drm->checkResetStatus(osContext));
+    EXPECT_FALSE(osContext.isHangDetected());
+}
+
+TEST_F(IoctlHelperXeTest, givenPerContextVmRequiredWhenCheckingResetStatusThenContextVmIdsAreChecked) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableScratchPages.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->configureScratchPagePolicy();
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    drm->mockVmFaults.push_back({0xDEADBEEF000, 0, 1, 2, 3});
+
+    drm->setPerContextVMRequired(true);
+    drm->virtualMemoryIds.clear(); // the global VM ids must NOT be the source in this branch
+
+    MockOsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.drmContextIds.push_back(0);
+    osContext.drmVmIds.push_back(123); // the id that must be checked
+
+    drm->execQueueBanPropertyReturn = 0; // not banned; debugging disabled -> faults are reported and process terminates
+
+    StreamCapture capture;
+    capture.captureStderr();
+    capture.captureStdout();
+
+    // The context VM id (123) faults -> terminate. If the else branch were taken, the (empty) global
+    // VM id list would yield no check and no termination.
+    EXPECT_THROW(drm->checkResetStatus(osContext), std::runtime_error);
+
+    auto stderrOutput = capture.getCapturedStderr();
+    auto stdoutOutput = capture.getCapturedStdout();
+    EXPECT_TRUE(stderrOutput.find("Segmentation fault from GPU") != std::string::npos);
+    EXPECT_TRUE(stdoutOutput.find("Segmentation fault from GPU") != std::string::npos);
+}
+
+TEST_F(IoctlHelperXeTest, givenPerContextVmNotRequiredWhenCheckingResetStatusThenContextVmIdsAreIgnored) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableScratchPages.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->configureScratchPagePolicy();
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    drm->mockVmFaults.push_back({0xDEADBEEF000, 0, 1, 2, 3});
+
+    drm->setPerContextVMRequired(false);
+    drm->virtualMemoryIds.clear(); // no global VM ids -> nothing to check
+
+    MockOsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.drmContextIds.push_back(0);
+    osContext.drmVmIds.push_back(123); // must NOT be used in this branch
+
+    drm->execQueueBanPropertyReturn = 0; // not banned
+
+    EXPECT_FALSE(drm->checkResetStatus(osContext));
+    EXPECT_FALSE(osContext.isHangDetected());
+}
+
+TEST_F(IoctlHelperXeTest, givenZeroVmIdInVirtualMemoryIdsWhenCheckingResetStatusThenZeroVmIdIsSkipped) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableScratchPages.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->configureScratchPagePolicy();
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    // Exercise the non per-context VM path, which reads drm.getVirtualMemoryIds()
+    drm->setPerContextVMRequired(false);
+    drm->virtualMemoryIds.clear();
+    drm->virtualMemoryIds.push_back(0);
+    drm->virtualMemoryIds.push_back(123); // valid VM id - must be queried
+
+    MockOsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.drmContextIds.push_back(0);
+
+    drm->execQueueBanPropertyReturn = 0; // not banned
+    drm->vmGetPropertyCallCount = 0;
+
+    EXPECT_FALSE(drm->checkResetStatus(osContext));
+    EXPECT_FALSE(osContext.isHangDetected());
+
+    // Only the non-zero VM id (123) is queried; the reserved id 0 is skipped
+    EXPECT_EQ(1, drm->vmGetPropertyCallCount);
 }
 
 TEST_F(IoctlHelperXeTest, whenInitializeThenProperHwInfoIsSet) {

@@ -802,24 +802,40 @@ int IoctlHelperPrelim20::vmUnbind(const VmBindParams &vmBindParams) {
     return IoctlHelper::ioctl(DrmIoctl::gemVmUnbind, &prelimVmBind);
 }
 
-int IoctlHelperPrelim20::getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) {
+int IoctlHelperPrelim20::getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) {
     prelim_drm_i915_reset_stats prelimResetStats{};
     prelimResetStats.ctx_id = resetStats.contextId;
     prelimResetStats.flags = resetStats.flags;
 
-    const auto retVal = ioctl(DrmIoctl::getResetStatsPrelim, &prelimResetStats);
+    auto retVal = ioctl(DrmIoctl::getResetStatsPrelim, &prelimResetStats);
     if (retVal != 0) {
-        return ioctl(DrmIoctl::getResetStats, &resetStats);
+        retVal = ioctl(DrmIoctl::getResetStats, &resetStats);
+    } else {
+        resetStats.resetCount = prelimResetStats.reset_count;
+        resetStats.batchActive = prelimResetStats.batch_active;
+        resetStats.batchPending = prelimResetStats.batch_pending;
+        if (status) {
+            *status = prelimResetStats.status;
+        }
     }
-    resetStats.resetCount = prelimResetStats.reset_count;
-    resetStats.batchActive = prelimResetStats.batch_active;
-    resetStats.batchPending = prelimResetStats.batch_pending;
-    if (status) {
-        *status = prelimResetStats.status;
-    }
-    if (resetStatsFault) {
-        auto fault = reinterpret_cast<ResetStatsFault *>(&(prelimResetStats.fault));
-        *resetStatsFault = *fault;
+
+    auto debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
+    if ((retVal == 0) && drm.checkToDisableScratchPage() && validPageFault(prelimResetStats.fault.flags)) {
+        bool banned = ((prelimResetStats.status & getStatusForResetStats(true)) != 0);
+        if (!banned && debuggingEnabled) {
+            reportFaults = false;
+            return retVal;
+        }
+        faultsVector.clear();
+        ResetFaultContext faultContext{};
+        faultContext.id = prelimResetStats.ctx_id;
+        faultContext.banned = banned;
+        faultContext.fault.addr = prelimResetStats.fault.addr;
+        faultContext.fault.type = prelimResetStats.fault.type;
+        faultContext.fault.level = prelimResetStats.fault.level;
+        faultContext.fault.access = prelimResetStats.fault.access;
+        faultContext.fault.flags = prelimResetStats.fault.flags;
+        faultsVector.push_back(faultContext);
     }
 
     return retVal;

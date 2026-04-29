@@ -1347,8 +1347,104 @@ int IoctlHelperXe::vmUnbind(const VmBindParams &vmBindParams) {
     return xeVmBind(vmBindParams, false);
 }
 
-int IoctlHelperXe::getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) {
-    return ioctl(DrmIoctl::getResetStats, &resetStats);
+int IoctlHelperXe::getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) {
+    drm_xe_exec_queue_get_property getProperty{};
+    getProperty.exec_queue_id = resetStats.contextId;
+    getProperty.property = DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN;
+    getProperty.value = 0;
+
+    auto banned = false;
+
+    const auto retVal = ioctl(DrmIoctl::getResetStats, &getProperty);
+    if (retVal == 0) {
+        banned = (getProperty.value != 0);
+        resetStats.batchActive = banned ? 1 : 0;
+        resetStats.batchPending = 0;
+        resetStats.resetCount = 0;
+
+        if (status) {
+            *status = static_cast<uint32_t>(getProperty.value);
+        }
+    }
+
+    auto debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
+    if (drm.checkToDisableScratchPage()) {
+        std::vector<uint32_t> vmIdsToCheck;
+        if (drm.isPerContextVMRequired()) {
+            vmIdsToCheck = osContextLinux->getDrmVmIds();
+        } else {
+            auto virtualMemoryIds = drm.getVirtualMemoryIds();
+            for (size_t i = 0; i < virtualMemoryIds.size(); i++) {
+                if (virtualMemoryIds[i] != 0) {
+                    vmIdsToCheck.push_back(virtualMemoryIds[i]);
+                }
+            }
+        }
+
+        for (const auto vmId : vmIdsToCheck) {
+            std::vector<ResetStatsFault> vmFaults;
+            if (getVmFaults(vmId, vmFaults) == 0 && !vmFaults.empty()) {
+                if (!banned && debuggingEnabled) {
+                    reportFaults = false;
+                    return retVal;
+                }
+                for (const auto &vmFault : vmFaults) {
+                    ResetFaultContext faultContext{};
+                    faultContext.id = vmId;
+                    faultContext.banned = banned;
+                    faultContext.vmFault = true;
+                    faultContext.fault = vmFault;
+                    faultsVector.push_back(faultContext);
+                }
+            }
+        }
+    }
+    return retVal;
+}
+
+int IoctlHelperXe::getVmFaults(uint32_t vmId, std::vector<ResetStatsFault> &faults) {
+    drm_xe_vm_get_property getProperty{};
+    getProperty.vm_id = vmId;
+    getProperty.property = DRM_XE_VM_GET_PROPERTY_FAULTS;
+    getProperty.size = 0;
+    getProperty.data = 0;
+
+    // First call to get the size
+    auto retVal = ioctl(DrmIoctl::vmGetProperty, &getProperty);
+    XELOG(" -> IoctlHelperXe::getVmFaults vmId=%u retVal=%d size=%u\n", vmId, retVal, getProperty.size);
+    if (retVal != 0) {
+        return retVal;
+    }
+
+    if (getProperty.size == 0) {
+        faults.clear();
+        return 0;
+    }
+
+    // Allocate buffer and get the faults
+    auto numFaults = getProperty.size / sizeof(xe_vm_fault);
+    std::vector<xe_vm_fault> faultBuffer(numFaults);
+    getProperty.data = reinterpret_cast<uint64_t>(faultBuffer.data());
+
+    retVal = ioctl(DrmIoctl::vmGetProperty, &getProperty);
+    if (retVal != 0) {
+        return retVal;
+    }
+
+    // Convert to ResetStatsFault format
+    faults.clear();
+    faults.reserve(numFaults);
+    for (const auto &fault : faultBuffer) {
+        ResetStatsFault resetFault{};
+        resetFault.addr = fault.address;
+        resetFault.type = fault.fault_type;
+        resetFault.level = fault.fault_level;
+        resetFault.access = fault.access_type;
+        resetFault.flags = 1; // Mark as valid
+        faults.push_back(resetFault);
+    }
+
+    return 0;
 }
 
 UuidRegisterResult IoctlHelperXe::registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
@@ -1637,6 +1733,10 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::perfQuery:
     case DrmIoctl::perfOpen: {
         ret = perfOpenIoctl(request, arg);
+    } break;
+    case DrmIoctl::vmGetProperty: {
+        ret = IoctlHelper::ioctl(request, arg);
+        XELOG(" -> IoctlHelperXe::ioctl VmGetProperty r=%d\n", ret);
     } break;
 
     default:
@@ -2254,6 +2354,8 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
         RETURN_ME(DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL);
     case DrmIoctl::getResetStats:
         RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY);
+    case DrmIoctl::vmGetProperty:
+        RETURN_ME(DRM_IOCTL_XE_VM_GET_PROPERTY);
     case DrmIoctl::debuggerOpen:
     case DrmIoctl::metadataCreate:
     case DrmIoctl::metadataDestroy:
@@ -2325,6 +2427,8 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_DESTROY);
     case DrmIoctl::getResetStats:
         STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY);
+    case DrmIoctl::vmGetProperty:
+        STRINGIFY_ME(DRM_IOCTL_XE_VM_GET_PROPERTY);
     default:
         return "???";
     }

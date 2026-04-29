@@ -32,6 +32,7 @@
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
@@ -1566,7 +1567,7 @@ TEST(DrmTest, GivenMinusEbusyIoctlErrorWhenCallingExecbufferThenCallIoctlAgain) 
     EXPECT_EQ(0, drm.Drm::ioctl(DrmIoctl::gemExecbuffer2, nullptr));
 }
 
-TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
+TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenNoHangDetected) {
     MockExecutionEnvironment executionEnvironment{};
 
     DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
@@ -1577,7 +1578,26 @@ TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
-    EXPECT_THROW(drm.isGpuHangDetected(mockOsContextLinux), std::runtime_error);
+    // getResetStats fails (no resetStatsToReturn entries), but gracefully handled
+    EXPECT_FALSE(drm.isGpuHangDetected(mockOsContextLinux));
+    EXPECT_FALSE(mockOsContextLinux.isHangDetected());
+}
+
+TEST(DrmTest, GivenNonLinuxOsContextWhenCheckResetStatusIsCalledThenFalseIsReturnedAndNoResetStatsIoctlIsIssued) {
+    MockExecutionEnvironment executionEnvironment{};
+
+    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+
+    // Prime the mock so a hang would be reported if the reset-stats path were reached
+    ResetStats resetStats{};
+    resetStats.batchActive = 2;
+    drm.resetStatsToReturn.push_back(resetStats);
+
+    MockOsContext baseOsContext{0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
+    EXPECT_EQ(nullptr, baseOsContext.asOsContextLinux());
+
+    EXPECT_FALSE(drm.checkResetStatus(baseOsContext));
+    EXPECT_EQ(0, drm.ioctlCount.getResetStats);
 }
 
 TEST(DrmTest, GivenZeroBatchActiveAndZeroBatchPendingResetStatsWhenIsGpuHangIsCalledThenNoHangIsReported) {
@@ -1650,14 +1670,18 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
 class MockIoctlHelperResetStats : public MockIoctlHelper {
   public:
     using MockIoctlHelper::MockIoctlHelper;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override {
-        int ret = MockIoctlHelper::getResetStats(resetStats, status, resetStatsFault);
+    int getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) override {
+        int ret = MockIoctlHelper::getResetStats(resetStats, status, osContextLinux, faultsVector, reportFaults);
         if (status) {
             *status = statusReturnValue;
         }
-        if (resetStatsFault) {
-            *resetStatsFault = resetStatsFaultReturnValue;
-        }
+
+        faultsVector.clear();
+        ResetFaultContext faultContext{};
+        faultContext.id = resetStats.contextId;
+        faultContext.banned = statusReturnValue;
+        faultContext.fault = resetStatsFaultReturnValue;
+        faultsVector.push_back(faultContext);
         return ret;
     }
 
@@ -2650,6 +2674,17 @@ TEST(IoctlHelperTest, givenIoctlHelperWhenCallCreateGemThenProperValuesSet) {
     // dummy mock handle
     EXPECT_EQ(1u, drm.createParamsHandle);
     EXPECT_EQ(handle, drm.createParamsHandle);
+}
+
+TEST(IoctlHelperTest, givenIoctlHelperWhenCallGetStatusForResetStatsThenProperValueReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto ioctlHelper = drm.getIoctlHelper();
+    ASSERT_NE(nullptr, ioctlHelper);
+
+    EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(true));
+    EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(false));
 }
 
 TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorrectRegionsSet) {

@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
@@ -31,6 +32,8 @@ namespace ult {
 class WddmSemaphoreFixture : public DeviceFixture {
   public:
     void setUp() {
+        debugManager.flags.DisableGpuHangDetection.set(1);
+
         DeviceFixture::setUp();
 
         auto &rootDeviceEnvironment{*neoDevice->executionEnvironment->rootDeviceEnvironments[0]};
@@ -43,6 +46,8 @@ class WddmSemaphoreFixture : public DeviceFixture {
     void tearDown() {
         DeviceFixture::tearDown();
     }
+
+    DebugManagerStateRestore restorer;
 
     void ensureThreadCompletion(ExternalSemaphoreController &controller) {
         while (true) {

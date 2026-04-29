@@ -16,6 +16,7 @@
 namespace NEO {
 class CommandStreamReceiver;
 class OSInterface;
+class OsContextLinux;
 class ProductHelper;
 
 struct DirectSubmissionProperties;
@@ -31,6 +32,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool ensureContextInitialized();
 
     uint32_t getContextId() const { return contextId; }
+    virtual OsContextLinux *asOsContextLinux() { return nullptr; }
     virtual uint64_t getOfflineDumpContextId(uint32_t deviceIndex) const { return 0; };
     uint32_t getNumSupportedDevices() const { return numSupportedDevices; }
     DeviceBitfield getDeviceBitfield() const { return deviceBitfield; }

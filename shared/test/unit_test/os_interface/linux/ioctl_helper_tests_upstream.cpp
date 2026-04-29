@@ -889,7 +889,9 @@ TEST(IoctlHelperTestsUpstream, whenCallingGetResetStatsThenSuccessIsReturned) {
     resetStats.contextId = 0;
     drm->resetStatsToReturn.push_back(resetStats);
 
-    EXPECT_EQ(0, ioctlHelper.getResetStats(resetStats, nullptr, nullptr));
+    std::vector<ResetFaultContext> faultsVector;
+    bool reportFaults = true;
+    EXPECT_EQ(0, ioctlHelper.getResetStats(resetStats, nullptr, nullptr, faultsVector, reportFaults));
 }
 
 TEST(IoctlHelperTestsUpstream, whenCallingGetStatusAndFlagsForResetStatsThenZeroIsReturned) {

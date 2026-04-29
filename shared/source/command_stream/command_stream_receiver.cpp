@@ -276,7 +276,7 @@ WaitStatus CommandStreamReceiver::waitForTaskCount(TaskCountType requiredTaskCou
     auto address = getTagAddress();
     if (!skipResourceCleanup() && address) {
         this->downloadTagAllocation(requiredTaskCount);
-        return baseWaitFunction(address, WaitParams{false, false, false, 0}, requiredTaskCount);
+        return baseWaitFunction(address, WaitParams{false, false, false, 0}, requiredTaskCount); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall) - when DRMCSR, resolves to DrmCommandStreamReceiver::baseWaitFunction, which is correct
     }
 
     return WaitStatus::ready;

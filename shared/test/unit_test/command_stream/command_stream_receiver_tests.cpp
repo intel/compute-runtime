@@ -566,6 +566,20 @@ HWTEST_F(CommandStreamReceiverTest, givenCheckingGpuHangWhenGpuHangDetectedThenG
     EXPECT_EQ(1u, driverModel->getDeviceStateCalledCount);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCheckingGpuHangWhenNoGpuHangDetectedThenFalseIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = false;
+    auto driverModel = driverModelMock.get();
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+
+    EXPECT_FALSE(csr.isGpuHangDetected());
+    EXPECT_EQ(0u, driverModel->getDeviceStateCalledCount);
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForCompletionWithTimeoutThenGpuHangIsReturned) {
     auto driverModelMock = std::make_unique<MockDriverModel>();
     driverModelMock->isGpuHangDetectedToReturn = true;
