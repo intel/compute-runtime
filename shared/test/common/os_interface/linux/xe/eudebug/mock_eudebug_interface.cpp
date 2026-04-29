@@ -32,6 +32,7 @@ uint32_t MockEuDebugInterface::getParamValue(EuDebugParam param) const {
         RETURN_AS_IS(EuDebugParam::euControlCmdInterruptAll);
         RETURN_AS_IS(EuDebugParam::euControlCmdResume);
         RETURN_AS_IS(EuDebugParam::euControlCmdStopped);
+        RETURN_AS_IS(EuDebugParam::euControlCmdUnlock);
         RETURN_AS_IS(EuDebugParam::execQueueSetPropertyEuDebug);
         RETURN_AS_IS(EuDebugParam::execQueueSetPropertyValueEnable);
         RETURN_AS_IS(EuDebugParam::execQueueSetPropertyValuePageFaultEnable);

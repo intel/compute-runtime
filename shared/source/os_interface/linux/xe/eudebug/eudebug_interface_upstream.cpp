@@ -24,6 +24,8 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
         return DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME;
     case EuDebugParam::euControlCmdStopped:
         return DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED;
+    case EuDebugParam::euControlCmdUnlock:
+        return 0;
     case EuDebugParam::eventBitCreate:
         return DRM_XE_EUDEBUG_EVENT_CREATE;
     case EuDebugParam::eventBitDestroy:

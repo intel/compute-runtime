@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,10 +17,6 @@ void DebugSessionLinuxXe::additionalEvents(NEO::EuDebugEvent *event) {
 
 bool DebugSessionLinuxXe::eventTypeIsAttention(uint16_t eventType) {
     return (eventType == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeEuAttention));
-}
-
-int DebugSessionLinuxXe::getEuControlCmdUnlock() const {
-    return -1;
 }
 
 } // namespace L0

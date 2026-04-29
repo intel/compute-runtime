@@ -23,6 +23,8 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
         return PRELIM_DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME;
     case EuDebugParam::euControlCmdStopped:
         return PRELIM_DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED;
+    case EuDebugParam::euControlCmdUnlock:
+        return PRELIM_DRM_XE_EUDEBUG_EU_CONTROL_CMD_UNLOCK;
     case EuDebugParam::eventBitCreate:
         return PRELIM_DRM_XE_EUDEBUG_EVENT_CREATE;
     case EuDebugParam::eventBitDestroy:

@@ -17,6 +17,7 @@ TEST(EuDebugInterfacePrelimTest, whenGettingParamValueThenCorrectValueIsReturned
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL), euDebugInterface.getParamValue(EuDebugParam::euControlCmdInterruptAll));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME), euDebugInterface.getParamValue(EuDebugParam::euControlCmdResume));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED), euDebugInterface.getParamValue(EuDebugParam::euControlCmdStopped));
+    EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EU_CONTROL_CMD_UNLOCK), euDebugInterface.getParamValue(EuDebugParam::euControlCmdUnlock));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_CREATE), euDebugInterface.getParamValue(EuDebugParam::eventBitCreate));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_DESTROY), euDebugInterface.getParamValue(EuDebugParam::eventBitDestroy));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_NEED_ACK), euDebugInterface.getParamValue(EuDebugParam::eventBitNeedAck));

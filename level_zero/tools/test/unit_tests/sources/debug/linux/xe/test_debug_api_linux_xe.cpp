@@ -3506,7 +3506,7 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForResumeThenProperIoctlsIsC
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     if (l0GfxCoreHelper.threadResumeRequiresUnlock()) {
         EXPECT_EQ(2, handler->ioctlCalled);
-        EXPECT_EQ(static_cast<uint32_t>(sessionMock->getEuControlCmdUnlock()), handler->euControlArgs[0].euControl.cmd);
+        EXPECT_EQ(sessionMock->euDebugInterface->getParamValue(NEO::EuDebugParam::euControlCmdUnlock), handler->euControlArgs[0].euControl.cmd);
         EXPECT_EQ(static_cast<uint32_t>(NEO::EuDebugParam::euControlCmdResume), handler->euControlArgs[1].euControl.cmd);
     } else {
         EXPECT_EQ(1, handler->ioctlCalled);

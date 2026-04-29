@@ -1249,7 +1249,7 @@ int DebugSessionLinuxXe::threadControlResume(const std::vector<EuThread::ThreadI
     };
 
     if (l0GfxCoreHelper.threadResumeRequiresUnlock()) {
-        invokeIoctl(getEuControlCmdUnlock());
+        invokeIoctl(euDebugInterface->getParamValue(NEO::EuDebugParam::euControlCmdUnlock));
     }
 
     invokeIoctl(euDebugInterface->getParamValue(NEO::EuDebugParam::euControlCmdResume));

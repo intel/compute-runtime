@@ -217,6 +217,7 @@ enum class EuDebugParam {
     euControlCmdInterruptAll,
     euControlCmdResume,
     euControlCmdStopped,
+    euControlCmdUnlock,
     eventBitCreate,
     eventBitDestroy,
     eventBitNeedAck,

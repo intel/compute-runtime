@@ -78,7 +78,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     bool handleMetadataOpEvent(NEO::EuDebugEventVmBindOpMetadata *vmBindOpMetadata);
     void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, const AttentionEventFields &attention) override;
     int eventAckIoctl(EventToAck &event) override;
-    MOCKABLE_VIRTUAL int getEuControlCmdUnlock() const;
     Module &getModule(uint64_t moduleHandle) override {
         auto connection = clientHandleToConnection[clientHandle].get();
         if (euDebugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::upstream) {

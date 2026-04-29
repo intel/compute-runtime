@@ -191,7 +191,6 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::euControlInterruptSeqno;
     using L0::DebugSessionLinuxXe::euDebugInterface;
     using L0::DebugSessionLinuxXe::eventTypeIsAttention;
-    using L0::DebugSessionLinuxXe::getEuControlCmdUnlock;
     using L0::DebugSessionLinuxXe::getModule;
     using L0::DebugSessionLinuxXe::getThreadStateMutexForTileSession;
     using L0::DebugSessionLinuxXe::getVmHandleFromClientAndlrcHandle;
