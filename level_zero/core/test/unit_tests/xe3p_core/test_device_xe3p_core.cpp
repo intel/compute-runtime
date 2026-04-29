@@ -30,7 +30,9 @@ XE3P_CORETEST_F(DeviceXe3pCoreTest, whenCallingGetMemoryPropertiesWithNonNullPtr
     EXPECT_EQ(1u, count);
 
     EXPECT_EQ(memProperties.maxClockRate, 0u);
-    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
+    auto &productHelper = device->getProductHelper();
+    auto hwInfo = *NEO::defaultHwInfo;
+    EXPECT_EQ(memProperties.maxBusWidth, productHelper.getDeviceMemoryMaxBusWidthInBits(hwInfo));
     EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
 }
 

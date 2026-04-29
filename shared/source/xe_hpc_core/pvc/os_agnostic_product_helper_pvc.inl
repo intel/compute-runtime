@@ -301,6 +301,12 @@ bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const Hard
 }
 
 template <>
+uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBusWidthInBits(const HardwareInfo &hwInfo) const {
+    const uint32_t busWidthPerHbmStack = 1024u;
+    const uint32_t numberOfActiveHbmStacksPerTile = PVC::isXl(hwInfo) ? 4u : 3u;
+    return numberOfActiveHbmStacksPerTile * busWidthPerHbmStack;
+}
+template <>
 uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
     if (isMaxThreadsForWorkgroupWARequired(hwInfo)) {
         return std::min(getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice), 64u);

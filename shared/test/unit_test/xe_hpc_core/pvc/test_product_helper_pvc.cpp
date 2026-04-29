@@ -281,6 +281,18 @@ PVCTEST_F(PvcProductHelper, whenQueryingMaxNumSamplersThenReturnZero) {
     EXPECT_EQ(0u, productHelper->getMaxNumSamplers());
 }
 
+PVCTEST_F(PvcProductHelper, givenPvcXtWhenGettingDeviceMemoryMaxBusWidthInBitsThenReturns3072) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = pvcXtDeviceIds.front();
+    const uint32_t expectedBusWidth = 3u * 1024u;
+    EXPECT_EQ(expectedBusWidth, productHelper->getDeviceMemoryMaxBusWidthInBits(hwInfo));
+}
+PVCTEST_F(PvcProductHelper, givenPvcXlWhenGettingDeviceMemoryMaxBusWidthInBitsThenReturns4096) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = pvcXlDeviceIds.front();
+    const uint32_t expectedBusWidth = 4u * 1024u;
+    EXPECT_EQ(expectedBusWidth, productHelper->getDeviceMemoryMaxBusWidthInBits(hwInfo));
+}
 PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskingForReadOnlyResourceSupportThenTrueReturned) {
     EXPECT_TRUE(productHelper->supportReadOnlyAllocations());
 }

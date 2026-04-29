@@ -62,6 +62,34 @@ PVCTEST_F(DeviceTestPvc, GivenPvcWhenGettingPhysicalEuSimdWidthThenReturn16) {
     EXPECT_EQ(16u, properties.physicalEUSimdWidth);
 }
 
+PVCTEST_F(DeviceTestPvc, GivenPvcXtWhenGettingMemoryPropertiesThenCorrectMaxBusWidthIsReturned) {
+    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->platform.usDeviceID = pvcXtDeviceIds.front();
+    uint32_t count = 0;
+    ze_result_t res = device->getMemoryProperties(&count, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+    ze_device_memory_properties_t memProperties = {};
+    res = device->getMemoryProperties(&count, &memProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+    const uint32_t expectedBusWidth = 3u * 1024u;
+    EXPECT_EQ(memProperties.maxBusWidth, expectedBusWidth);
+}
+PVCTEST_F(DeviceTestPvc, GivenPvcXlWhenGettingMemoryPropertiesThenCorrectMaxBusWidthIsReturned) {
+    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->platform.usDeviceID = pvcXlDeviceIds.front();
+    uint32_t count = 0;
+    ze_result_t res = device->getMemoryProperties(&count, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+    ze_device_memory_properties_t memProperties = {};
+    res = device->getMemoryProperties(&count, &memProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+    const uint32_t expectedBusWidth = 4u * 1024u;
+    EXPECT_EQ(memProperties.maxBusWidth, expectedBusWidth);
+}
 PVCTEST_F(DeviceTestPvc, givenPvcXlDeviceIdAndRevIdWhenGetDeviceIpVersion) {
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_device_ip_version_ext_t zeDeviceIpVersion = {ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT};

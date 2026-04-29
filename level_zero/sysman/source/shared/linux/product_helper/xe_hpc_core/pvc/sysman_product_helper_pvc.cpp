@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/pmt_util.h"
+#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
@@ -17,7 +18,9 @@
 namespace L0 {
 namespace Sysman {
 constexpr static auto gfxProduct = IGFX_PVC;
-static const uint32_t numHbmModules = 4;
+static uint32_t getActiveHbmModuleCount(const NEO::HardwareInfo &hwInfo) {
+    return NEO::PVC::isXl(hwInfo) ? 4u : 3u;
+}
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 
@@ -177,7 +180,7 @@ ze_result_t getVFIDString(std::map<std::string, uint64_t> keyOffsetMap, std::str
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t getHBMBandwidth(std::map<std::string, uint64_t> keyOffsetMap, zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, std::string telemDir, uint64_t telemOffset, uint32_t subdeviceId, unsigned short stepping) {
+ze_result_t getHBMBandwidth(std::map<std::string, uint64_t> keyOffsetMap, zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, std::string telemDir, uint64_t telemOffset, uint32_t subdeviceId, unsigned short stepping, uint32_t numActiveHbmModules) {
 
     pBandwidth->readCounter = 0;
     pBandwidth->writeCounter = 0;
@@ -191,7 +194,7 @@ ze_result_t getHBMBandwidth(std::map<std::string, uint64_t> keyOffsetMap, zes_me
         return result;
     }
 
-    for (auto hbmModuleIndex = 0u; hbmModuleIndex < numHbmModules; hbmModuleIndex++) {
+    for (auto hbmModuleIndex = 0u; hbmModuleIndex < numActiveHbmModules; hbmModuleIndex++) {
         uint32_t counterValue = 0;
         std::string readCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_READ";
         if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, readCounterKey, telemOffset, counterValue)) {
@@ -210,15 +213,15 @@ ze_result_t getHBMBandwidth(std::map<std::string, uint64_t> keyOffsetMap, zes_me
     }
 
     constexpr uint64_t transactionSize = 32;
-    pBandwidth->readCounter = pBandwidth->readCounter * transactionSize;
-    pBandwidth->writeCounter = pBandwidth->writeCounter * transactionSize;
+    pBandwidth->readCounter *= transactionSize;
+    pBandwidth->writeCounter *= transactionSize;
     pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
 
     uint64_t hbmFrequency = 0;
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
     getHBMFrequency(pSysmanKmdInterface, pSysFsAccess, hbmFrequency, subdeviceId, stepping);
-    pBandwidth->maxBandwidth = memoryBusWidth * hbmFrequency * numHbmModules;
+    pBandwidth->maxBandwidth = memoryBusWidth * hbmFrequency * numActiveHbmModules;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -228,6 +231,7 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLi
     auto &hwInfo = pDevice->getHardwareInfo();
     auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
     auto stepping = productHelper.getSteppingFromHwRevId(hwInfo);
+    auto numActiveHbmModules = getActiveHbmModuleCount(hwInfo);
     std::string telemDir = "";
     std::string guid = "";
     uint64_t telemOffset = 0;
@@ -244,7 +248,7 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLi
     keyOffsetMap = keyOffsetMapEntry->second;
 
     if (guid != guid64BitMemoryCounters) {
-        return getHBMBandwidth(std::move(keyOffsetMap), pBandwidth, pLinuxSysmanImp, telemDir, telemOffset, subdeviceId, stepping);
+        return getHBMBandwidth(std::move(keyOffsetMap), pBandwidth, pLinuxSysmanImp, telemDir, telemOffset, subdeviceId, stepping, numActiveHbmModules);
     }
 
     pBandwidth->readCounter = 0;
@@ -303,7 +307,7 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLi
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
     getHBMFrequency(pSysmanKmdInterface, pSysFsAccess, hbmFrequency, subdeviceId, stepping);
-    pBandwidth->maxBandwidth = memoryBusWidth * hbmFrequency * numHbmModules;
+    pBandwidth->maxBandwidth = memoryBusWidth * hbmFrequency * numActiveHbmModules;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -472,6 +476,63 @@ SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getPackageCriticalPowerLimitNa
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return true;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
+    auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
+    auto &hwInfo = pLinuxSysmanImp->getHardwareInfo();
+    pProperties->location = ZES_MEM_LOC_DEVICE;
+    pProperties->type = ZES_MEM_TYPE_DDR;
+    pProperties->onSubdevice = isSubdevice;
+    pProperties->subdeviceId = subDeviceId;
+    pProperties->busWidth = -1;
+    pProperties->numChannels = -1;
+    pProperties->physicalSize = 0;
+    auto status = pDrm->querySystemInfo();
+    if (status) {
+        auto memSystemInfo = pDrm->getSystemInfo();
+        if (memSystemInfo != nullptr) {
+            auto memType = memSystemInfo->getMemoryType();
+            switch (memType) {
+            case NEO::DeviceBlobConstants::MemoryType::hbm2e:
+            case NEO::DeviceBlobConstants::MemoryType::hbm2:
+                pProperties->type = ZES_MEM_TYPE_HBM;
+                break;
+            case NEO::DeviceBlobConstants::MemoryType::lpddr4:
+                pProperties->type = ZES_MEM_TYPE_LPDDR4;
+                break;
+            case NEO::DeviceBlobConstants::MemoryType::lpddr5:
+                pProperties->type = ZES_MEM_TYPE_LPDDR5;
+                break;
+            default:
+                DEBUG_BREAK_IF(true);
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
+            if (pProperties->type == ZES_MEM_TYPE_HBM) {
+                uint32_t numActiveStacks = getActiveHbmModuleCount(hwInfo);
+                uint32_t numChannelsPerStack = memSystemInfo->getNumChannelsPerHbmStack();
+                pProperties->numChannels = numActiveStacks * numChannelsPerStack;
+            } else {
+                pProperties->numChannels = memSystemInfo->getMaxMemoryChannels();
+            }
+        }
+    }
+    pProperties->busWidth = memoryBusWidth;
+    if (pSysmanKmdInterface->isPhysicalMemorySizeSupported() == true) {
+        if (isSubdevice) {
+            std::string memval;
+            std::string physicalSizeFile = pSysmanKmdInterface->getSysfsFilePathForPhysicalMemorySize(subDeviceId);
+            ze_result_t result = pSysFsAccess->read(std::move(physicalSizeFile), memval);
+            uint64_t intval = strtoull(memval.c_str(), nullptr, 16);
+            if (ZE_RESULT_SUCCESS != result) {
+                pProperties->physicalSize = 0u;
+            } else {
+                pProperties->physicalSize = intval;
+            }
+        }
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

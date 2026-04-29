@@ -227,6 +227,10 @@ uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecon
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBusWidthInBits(const HardwareInfo &hwInfo) const {
+    return 64u;
+}
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const AllocationData &allocationData) const {
     return false;
 }

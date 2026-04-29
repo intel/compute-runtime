@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
@@ -250,6 +251,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     auto result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
+    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usDeviceID = NEO::pvcXlDeviceIds[0];
     zes_mem_bandwidth_t bandwidth = {};
     result = pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -279,6 +281,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     auto result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
+    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usDeviceID = NEO::pvcXlDeviceIds[0];
     zes_mem_bandwidth_t bandwidth = {};
     result = pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -305,6 +308,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subDeviceId = 0;
 
+    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usDeviceID = NEO::pvcXlDeviceIds[0];
     zes_mem_bandwidth_t bandwidth = {};
     ze_result_t result = pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -337,6 +341,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subDeviceId = 0;
 
+    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usDeviceID = NEO::pvcXlDeviceIds[0];
     zes_mem_bandwidth_t bandwidth = {};
     ze_result_t result = pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -995,7 +1000,9 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWithHbm
     EXPECT_FALSE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 0u);
     EXPECT_EQ(properties.physicalSize, 0u);
-    EXPECT_EQ(properties.numChannels, numMemoryChannels);
+    constexpr uint32_t mockNumChannelsPerHbmStack = 4;
+    constexpr uint32_t expectedActiveStacks = 3; // PVC XT default
+    EXPECT_EQ(properties.numChannels, static_cast<int32_t>(expectedActiveStacks * mockNumChannelsPerHbmStack));
     EXPECT_EQ(properties.busWidth, memoryBusWidth);
 }
 
@@ -1198,7 +1205,9 @@ HWTEST2_F(SysmanDeviceFixture, GivenValidMemoryHandleWhenCallingZesMemoryGetProp
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_EQ(properties.physicalSize, 0u);
-        EXPECT_EQ(properties.numChannels, numMemoryChannels);
+        constexpr uint32_t mockNumChannelsPerHbmStack = 4;
+        constexpr uint32_t expectedActiveStacks = 3; // PVC XT default
+        EXPECT_EQ(properties.numChannels, static_cast<int32_t>(expectedActiveStacks * mockNumChannelsPerHbmStack));
         EXPECT_EQ(properties.busWidth, memoryBusWidth);
     }
 }
@@ -1261,6 +1270,7 @@ HWTEST2_F(SysmanDeviceFixture, GivenValidMemoryHandleWhenCallingZesMemoryGetBand
         auto hwInfo = pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo();
         auto &productHelper = pSysmanDeviceImp->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+        hwInfo->platform.usDeviceID = NEO::pvcXlDeviceIds[0];
 
         ze_result_t result = zesMemoryGetBandwidth(handle, &bandwidth);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);

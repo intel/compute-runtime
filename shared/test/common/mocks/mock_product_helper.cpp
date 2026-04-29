@@ -92,6 +92,10 @@ uint64_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemoryMaxBandWidthInBytesPerSec
 }
 
 template <>
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemoryMaxBusWidthInBits(const HardwareInfo &hwInfo) const {
+    return 64;
+}
+template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
