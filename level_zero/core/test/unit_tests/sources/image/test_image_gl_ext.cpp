@@ -195,5 +195,131 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithNoCubeMapWhenCrea
     imageHW.reset(nullptr);
 }
 
+HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithMsaaSamplesWhenCreatingImageThenMultisampleFieldsAreSet) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+
+    ze_external_gl_texture_ext_desc_t glTextureExtDesc = {};
+    glTextureExtDesc.pNext = &importNTHandle;
+    glTextureExtDesc.numberOfSamples = 4;
+
+    desc.type = ZE_IMAGE_TYPE_2DARRAY;
+    desc.depth = 1;
+    desc.arraylevels = 6;
+    desc.pNext = &glTextureExtDesc;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(4u, imageHW->numSamples);
+    EXPECT_EQ(2u, imageHW->mcsMultisampleCount);
+    EXPECT_EQ(nullptr, imageHW->mcsAllocation);
+    EXPECT_FALSE(imageHW->isUnifiedMcsSurface);
+
+    auto expectedMultisamples = static_cast<typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES>(2u);
+    EXPECT_EQ(expectedMultisamples, imageHW->surfaceState.getNumberOfMultisamples());
+    EXPECT_EQ(expectedMultisamples, imageHW->redescribedSurfaceState.getNumberOfMultisamples());
+
+    EXPECT_EQ(RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS,
+              imageHW->surfaceState.getMultisampledSurfaceStorageFormat());
+    EXPECT_EQ(RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS,
+              imageHW->redescribedSurfaceState.getMultisampledSurfaceStorageFormat());
+
+    imageHW.reset(nullptr);
+}
+
+HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWith16xMsaaSamplesWhenCreatingImageThenMultisampleCountIsCorrect) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+
+    ze_external_gl_texture_ext_desc_t glTextureExtDesc = {};
+    glTextureExtDesc.pNext = &importNTHandle;
+    glTextureExtDesc.numberOfSamples = 16;
+
+    desc.type = ZE_IMAGE_TYPE_2DARRAY;
+    desc.depth = 1;
+    desc.arraylevels = 12;
+    desc.pNext = &glTextureExtDesc;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(16u, imageHW->numSamples);
+    EXPECT_EQ(4u, imageHW->mcsMultisampleCount);
+
+    auto expectedMultisamples = static_cast<typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES>(4u);
+    EXPECT_EQ(expectedMultisamples, imageHW->surfaceState.getNumberOfMultisamples());
+    EXPECT_EQ(expectedMultisamples, imageHW->redescribedSurfaceState.getNumberOfMultisamples());
+
+    imageHW.reset(nullptr);
+}
+
+HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithMsaaAndMcsHandleWhenCreatingImageThenMcsAllocationIsCreated) {
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+
+    uint64_t mcsHandle = 0x2;
+    ze_external_gl_texture_ext_desc_t glTextureExtDesc = {};
+    glTextureExtDesc.pNext = &importNTHandle;
+    glTextureExtDesc.numberOfSamples = 4;
+    glTextureExtDesc.mcsNtHandle = &mcsHandle;
+
+    desc.type = ZE_IMAGE_TYPE_2DARRAY;
+    desc.depth = 1;
+    desc.arraylevels = 6;
+    desc.pNext = &glTextureExtDesc;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(4u, imageHW->numSamples);
+    EXPECT_NE(nullptr, imageHW->mcsAllocation);
+    EXPECT_FALSE(imageHW->isUnifiedMcsSurface);
+
+    imageHW.reset(nullptr);
+}
+
+HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithNoMsaaWhenCreatingImageThenMultisampleFieldsAreDefault) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+
+    ze_external_gl_texture_ext_desc_t glTextureExtDesc = {};
+    glTextureExtDesc.pNext = &importNTHandle;
+    glTextureExtDesc.numberOfSamples = 0;
+
+    desc.pNext = &glTextureExtDesc;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(0u, imageHW->numSamples);
+    EXPECT_EQ(0u, imageHW->mcsMultisampleCount);
+    EXPECT_EQ(nullptr, imageHW->mcsAllocation);
+    EXPECT_FALSE(imageHW->isUnifiedMcsSurface);
+
+    EXPECT_EQ(RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1,
+              imageHW->surfaceState.getNumberOfMultisamples());
+
+    imageHW.reset(nullptr);
+}
+
 } // namespace ult
 } // namespace L0

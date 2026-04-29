@@ -38,6 +38,7 @@ struct Image : _ze_image_handle_t {
 
     virtual NEO::GraphicsAllocation *getAllocation() = 0;
     virtual NEO::GraphicsAllocation *getImplicitArgsAllocation() = 0;
+    virtual NEO::GraphicsAllocation *getMcsAllocation() { return nullptr; }
     virtual void copySurfaceStateToSSH(void *surfaceStateHeap,
                                        uint32_t surfaceStateOffset,
                                        uint32_t bindlessSlot,

@@ -77,6 +77,9 @@ ImageImp::~ImageImp() {
         if (implicitArgsAllocation) {
             this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->implicitArgsAllocation);
         }
+        if (mcsAllocation) {
+            this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->mcsAllocation);
+        }
     }
 }
 
@@ -346,7 +349,11 @@ void ImageImp::applyGlTextureExtOverrides(NEO::GraphicsAllocation *allocation,
                                           void *pGmmResInfo,
                                           uint64_t textureBufferOffset,
                                           uint32_t glHWFormat,
-                                          bool isAuxEnabled) {
+                                          bool isAuxEnabled,
+                                          uint32_t numberOfSamples,
+                                          void *mcsNtHandle,
+                                          void *pGmmResInfoMcs,
+                                          bool hasUnifiedMcsSurface) {
     if (allocation == nullptr) {
         return;
     }
@@ -380,6 +387,58 @@ void ImageImp::applyGlTextureExtOverrides(NEO::GraphicsAllocation *allocation,
                                       ? memoryManager->mapAuxGpuVA(allocation)
                                       : true;
         allocation->getDefaultGmm()->setCompressionEnabled(compressionEnabled);
+    }
+
+    if (numberOfSamples <= 1) {
+        return;
+    }
+    this->numSamples = numberOfSamples;
+
+    const bool gmmHasMcs = (allocation->getDefaultGmm() != nullptr) &&
+                           allocation->getDefaultGmm()->hasMultisampleControlSurface();
+    this->isUnifiedMcsSurface = hasUnifiedMcsSurface && gmmHasMcs;
+
+    auto toRenderMultisamplesCount = [](uint32_t n) -> uint32_t {
+        switch (n) {
+        case 2:
+            return 1;
+        case 4:
+            return 2;
+        case 8:
+            return 3;
+        case 16:
+            return 4;
+        default:
+            return 0;
+        }
+    };
+    this->mcsMultisampleCount = toRenderMultisamplesCount(numberOfSamples);
+
+    if (mcsNtHandle != nullptr) {
+        auto neoDevice = this->device->getNEODevice();
+        auto memoryManager = neoDevice->getMemoryManager();
+
+        NEO::AllocationProperties properties(neoDevice->getRootDeviceIndex(), 0u,
+                                             NEO::AllocationType::mcs,
+                                             neoDevice->getDeviceBitfield());
+        NEO::MemoryManager::OsHandleData osHandleData{mcsNtHandle};
+        this->mcsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+
+        if (this->mcsAllocation != nullptr && pGmmResInfoMcs != nullptr) {
+            auto mcsGmmResInfo = std::unique_ptr<NEO::GmmResourceInfo>(NEO::GmmResourceInfo::create(gmmHelper->getClientContext(), reinterpret_cast<GMM_RESOURCE_INFO *>(pGmmResInfoMcs)));
+            if (mcsGmmResInfo) {
+                this->mcsAllocation->setDefaultGmm(new NEO::Gmm(gmmHelper, mcsGmmResInfo.get()));
+            }
+        }
+
+        if (this->mcsAllocation != nullptr && this->mcsAllocation->getDefaultGmm() != nullptr) {
+            auto mcsGmm = this->mcsAllocation->getDefaultGmm();
+            this->mcsPitch = static_cast<uint32_t>(mcsGmm->gmmResourceInfo->getRenderPitch() / 128);
+            if (this->mcsPitch == 0u) {
+                this->mcsPitch = 1u;
+            }
+            this->mcsQPitch = mcsGmm->gmmResourceInfo->getQPitch();
+        }
     }
 }
 } // namespace L0

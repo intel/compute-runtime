@@ -31,6 +31,10 @@ struct WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>
     using BaseClass::surfaceState;
     using BaseClass::ImageImp::imageFromBuffer;
     using BaseClass::ImageImp::imgInfo;
+    using BaseClass::ImageImp::isUnifiedMcsSurface;
+    using BaseClass::ImageImp::mcsAllocation;
+    using BaseClass::ImageImp::mcsMultisampleCount;
+    using BaseClass::ImageImp::numSamples;
     using BaseClass::ImageImp::sampledImage;
     using BaseClass::ImageImp::samplerDesc;
     using BaseClass::ImageImp::srgbImage;

@@ -111,6 +111,10 @@ void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::st
     if (requiresAdditionalExtensions(options)) {
         extensionsList += "cl_khr_3d_image_writes ";
     }
+    if (hwInfo.capabilityTable.supportsImages) {
+        extensionsList += "cl_khr_gl_msaa_sharing ";
+        extensionsList += "cl_khr_gl_depth_images ";
+    }
     OpenClCFeaturesContainer openclCFeatures;
     if (requiresOpenClCFeatures(options)) {
         getOpenclCFeaturesList(hwInfo, openclCFeatures, *compilerProductHelper.get(), releaseHelper.get());
