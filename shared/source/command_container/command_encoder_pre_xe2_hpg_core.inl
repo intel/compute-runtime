@@ -23,7 +23,7 @@ uint32_t EncodeDispatchKernel<Family>::getThreadCountPerSubslice(const HardwareI
 
 template <typename Family>
 uint32_t EncodeDispatchKernel<Family>::alignPreferredSlmSize(uint32_t slmSize) {
-    return EncodeDispatchKernel<Family>::alignSlmSize(slmSize);
+    return EncodeDispatchKernel<Family>::alignSlmSize(slmSize, nullptr);
 }
 
 template <typename Family>

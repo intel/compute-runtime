@@ -646,7 +646,7 @@ void EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(Walk
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize) {
+uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
     if (slmSize == 0u) {
         return 0u;
     }

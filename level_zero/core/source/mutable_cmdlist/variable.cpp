@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -882,7 +883,8 @@ void Variable::processVariableDispatchForSlm() {
 }
 
 uint32_t Variable::getAlignedSlmSize(uint32_t slmSize) {
-    return cmdList->getBase()->getDevice()->getGfxCoreHelper().alignSlmSize(slmSize);
+    auto &neoDevice = *cmdList->getBase()->getDevice()->getNEODevice();
+    return neoDevice.getGfxCoreHelper().alignSlmSize(slmSize, neoDevice.getRootDeviceEnvironment().getReleaseHelper());
 }
 
 void Variable::addCommitVariableToBaseCmdList() {

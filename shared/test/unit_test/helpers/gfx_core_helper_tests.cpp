@@ -992,21 +992,22 @@ HWTEST_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperations
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(0u, gfxCoreHelper.alignSlmSize(0));
-    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1));
-    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1024));
-    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(1025));
-    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(2048));
-    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(2049));
-    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(4096));
-    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(4097));
-    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(8192));
-    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(8193));
-    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(16384));
-    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(16385));
-    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(32768));
-    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(32769));
-    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
+
+    EXPECT_EQ(0u, gfxCoreHelper.alignSlmSize(0, nullptr));
+    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1, nullptr));
+    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1024, nullptr));
+    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(1025, nullptr));
+    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(2048, nullptr));
+    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(2049, nullptr));
+    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(4096, nullptr));
+    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(4097, nullptr));
+    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(8192, nullptr));
+    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(8193, nullptr));
+    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(16384, nullptr));
+    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(16385, nullptr));
+    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(32768, nullptr));
+    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(32769, nullptr));
+    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536, nullptr));
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGettingPlanarYuvHeightThenHelperReturnsCorrectValue) {

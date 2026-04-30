@@ -387,7 +387,7 @@ const MutableIndirectData::Offsets &VariableDispatch::getIndirectDataOffsets() c
 void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &device, bool stageData) {
     this->slmTotalSize = slmArgTotalSize + kernelDispatch->slmInlineSize;
     if (this->isCooperative) {
-        this->alignedSlmSize = device.getGfxCoreHelper().alignSlmSize(this->slmTotalSize);
+        this->alignedSlmSize = device.getGfxCoreHelper().alignSlmSize(this->slmTotalSize, device.getRootDeviceEnvironment().getReleaseHelper());
     }
 
     if (this->isCooperative) {

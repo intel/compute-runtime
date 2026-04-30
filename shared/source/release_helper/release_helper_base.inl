@@ -167,6 +167,12 @@ template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::computeSlmValues(uint32_t slmSize) const {
     return 0u;
 }
+
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::alignSlmSize(uint32_t slmSize) const {
+    return 0u;
+}
+
 template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isBlitImageAllowedForDepthFormat() const {
     return true;

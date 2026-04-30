@@ -305,7 +305,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     template <typename WalkerType>
     static void forceComputeWalkerPostSyncFlushWithWrite(WalkerType &walkerCmd);
 
-    static uint32_t alignSlmSize(uint32_t slmSize);
+    static uint32_t alignSlmSize(uint32_t slmSize, ReleaseHelper *releaseHelper);
     static uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper);
 
     static bool singleTileExecImplicitScalingRequired(bool cooperativeKernel);
