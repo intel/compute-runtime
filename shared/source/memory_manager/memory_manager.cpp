@@ -1619,20 +1619,29 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
         }
 
         SvmAllocationData allocDataInternal(peerAllocRootDeviceIndex);
+        GraphicsAllocation *originalAlloc = alloc;
 
         if (numHandles > 1) {
             UNRECOVERABLE_IF(numHandles == 0);
             std::vector<osHandle> handles;
+            auto closeImportedHandles = [&]() {
+                for (uint32_t handleId = 0; handleId < handles.size(); handleId++) {
+                    uint64_t handle = handles[handleId];
+                    this->closeInternalHandle(handle, handleId, originalAlloc);
+                }
+            };
             for (uint32_t i = 0; i < numHandles; i++) {
                 uint64_t handle = 0;
                 int ret = alloc->peekInternalHandle(this, i, handle, nullptr);
                 if (ret < 0) {
+                    closeImportedHandles();
                     return nullptr;
                 }
                 handles.push_back(static_cast<osHandle>(handle));
             }
             auto neoDevice = device->getRootDevice();
             peerPtr = deps.importFds(neoDevice, handles, peerMapAddress, &alloc, allocDataInternal, false);
+            closeImportedHandles();
         } else {
             uint64_t handle = 0;
             int ret = alloc->peekInternalHandle(this, handle, nullptr);
@@ -1640,6 +1649,10 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
                 return nullptr;
             }
             peerPtr = deps.importFd(device, handle, AllocationType::buffer, peerMapAddress, &alloc, allocDataInternal, false);
+            if (alloc != originalAlloc) {
+                alloc->setSharedHandle(std::numeric_limits<osHandle>::max());
+            }
+            this->closeInternalHandle(handle, 0u, originalAlloc);
         }
 
         if (peerPtr == nullptr) {

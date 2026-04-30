@@ -29,6 +29,9 @@ class MockMultiHandleGraphicsAllocation : public MockGraphicsAllocation {
     int peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
         peekInternalHandleIndexedCalls++;
         lastRequestedHandleId = handleId;
+        if (peekInternalHandleIndexedCalls > peekFailAfterCalls) {
+            return -1;
+        }
         handle = 0x1000ull + handleId;
         return peekInternalHandleIndexedResult;
     }
@@ -37,6 +40,23 @@ class MockMultiHandleGraphicsAllocation : public MockGraphicsAllocation {
     uint32_t peekInternalHandleIndexedCalls = 0u;
     uint32_t lastRequestedHandleId = 0u;
     int peekInternalHandleIndexedResult = 0;
+    uint32_t peekFailAfterCalls = std::numeric_limits<uint32_t>::max();
+};
+
+class FdTrackingMemoryManager : public MockMemoryManager {
+  public:
+    using MockMemoryManager::MockMemoryManager;
+
+    void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override {
+        closeCalls.push_back({handle, handleId, graphicsAllocation});
+    }
+
+    struct CloseCall {
+        uint64_t handle;
+        uint32_t handleId;
+        GraphicsAllocation *alloc;
+    };
+    std::vector<CloseCall> closeCalls;
 };
 
 struct PeerAllocationTest : public ::testing::Test {
@@ -284,4 +304,171 @@ TEST_F(PeerAllocationTest, givenImportReturnsNullptrWhenGettingPeerAllocationThe
     EXPECT_EQ(nullptr, result);
     EXPECT_EQ(1u, importFdCalls);
     EXPECT_EQ(0u, storage.allocations.count(basePtr));
+}
+
+struct PeerAllocationFdTrackingTest : public ::testing::Test {
+    void SetUp() override {
+        executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, numRootDevices);
+        executionEnvironment->memoryManager.reset(new FdTrackingMemoryManager(*executionEnvironment));
+        memoryManager = static_cast<FdTrackingMemoryManager *>(executionEnvironment->memoryManager.get());
+        svmAllocsManager = std::make_unique<SVMAllocsManager>(memoryManager);
+        device0.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+        device1.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 1));
+    }
+
+    static constexpr uint32_t numRootDevices = 2u;
+    MockExecutionEnvironment *executionEnvironment = nullptr;
+    FdTrackingMemoryManager *memoryManager = nullptr;
+    std::unique_ptr<SVMAllocsManager> svmAllocsManager;
+    std::unique_ptr<MockDevice> device0;
+    std::unique_ptr<MockDevice> device1;
+};
+
+TEST_F(PeerAllocationFdTrackingTest, givenMultiHandleAllocationWhenImportSucceedsThenAllImportedHandlesAreClosed) {
+    SVMAllocsManager::MapBasedAllocationTracker storage;
+    MockMultiHandleGraphicsAllocation source;
+    source.numHandles = 3u;
+
+    SvmAllocationData sourceData(numRootDevices);
+    sourceData.gpuAllocations.addAllocation(&source);
+
+    PeerAllocationDeps deps{};
+    deps.importFd = [](Device *, uint64_t, AllocationType, void *, GraphicsAllocation **,
+                       SvmAllocationData &, bool) -> void * { return nullptr; };
+    deps.importFds = [](Device *, const std::vector<osHandle> &, void *,
+                        GraphicsAllocation **, SvmAllocationData &, bool) -> void * {
+        return reinterpret_cast<void *>(0xBADC0FFEULL);
+    };
+    deps.decompressP2P = [](GraphicsAllocation *) {};
+
+    void *basePtr = reinterpret_cast<void *>(0x10000);
+    uintptr_t peerGpuAddress = 0;
+    SvmAllocationData *peerData = nullptr;
+
+    auto result = memoryManager->getOrImportPeerAllocation(device1.get(), svmAllocsManager.get(),
+                                                           storage, &sourceData, basePtr,
+                                                           &peerGpuAddress, &peerData, false, deps);
+
+    EXPECT_NE(nullptr, result);
+    ASSERT_EQ(3u, memoryManager->closeCalls.size());
+    EXPECT_EQ(0u, memoryManager->closeCalls[0].handleId);
+    EXPECT_EQ(1u, memoryManager->closeCalls[1].handleId);
+    EXPECT_EQ(2u, memoryManager->closeCalls[2].handleId);
+    EXPECT_EQ(0x1000ull, memoryManager->closeCalls[0].handle);
+    EXPECT_EQ(0x1001ull, memoryManager->closeCalls[1].handle);
+    EXPECT_EQ(0x1002ull, memoryManager->closeCalls[2].handle);
+    EXPECT_EQ(&source, memoryManager->closeCalls[0].alloc);
+    EXPECT_EQ(&source, memoryManager->closeCalls[1].alloc);
+    EXPECT_EQ(&source, memoryManager->closeCalls[2].alloc);
+}
+
+TEST_F(PeerAllocationFdTrackingTest, givenMultiHandlePeekFailsMidWayWhenGettingPeerAllocationThenOnlySuccessfullyPeekedHandlesAreClosedAndImportNotCalled) {
+    SVMAllocsManager::MapBasedAllocationTracker storage;
+    MockMultiHandleGraphicsAllocation source;
+    source.numHandles = 4u;
+    source.peekFailAfterCalls = 2u;
+
+    SvmAllocationData sourceData(numRootDevices);
+    sourceData.gpuAllocations.addAllocation(&source);
+
+    bool importFdsCalled = false;
+    PeerAllocationDeps deps{};
+    deps.importFd = [](Device *, uint64_t, AllocationType, void *, GraphicsAllocation **,
+                       SvmAllocationData &, bool) -> void * { return nullptr; };
+    deps.importFds = [&](Device *, const std::vector<osHandle> &, void *,
+                         GraphicsAllocation **, SvmAllocationData &, bool) -> void * {
+        importFdsCalled = true;
+        return reinterpret_cast<void *>(0xBADC0FFEULL);
+    };
+    deps.decompressP2P = [](GraphicsAllocation *) {};
+
+    void *basePtr = reinterpret_cast<void *>(0x11000);
+    uintptr_t peerGpuAddress = 0;
+    SvmAllocationData *peerData = nullptr;
+
+    auto result = memoryManager->getOrImportPeerAllocation(device1.get(), svmAllocsManager.get(),
+                                                           storage, &sourceData, basePtr,
+                                                           &peerGpuAddress, &peerData, false, deps);
+
+    EXPECT_EQ(nullptr, result);
+    EXPECT_FALSE(importFdsCalled);
+    ASSERT_EQ(2u, memoryManager->closeCalls.size());
+    EXPECT_EQ(0u, memoryManager->closeCalls[0].handleId);
+    EXPECT_EQ(1u, memoryManager->closeCalls[1].handleId);
+    EXPECT_EQ(0x1000ull, memoryManager->closeCalls[0].handle);
+    EXPECT_EQ(0x1001ull, memoryManager->closeCalls[1].handle);
+}
+
+TEST_F(PeerAllocationFdTrackingTest, givenSingleHandleImportSucceedsWhenGettingPeerAllocationThenPeerSharedHandleIsClearedAndSourceFdIsClosed) {
+    SVMAllocsManager::MapBasedAllocationTracker storage;
+    MockMultiHandleGraphicsAllocation source;
+    source.numHandles = 0u;
+    source.internalHandle = 0xDEADBEEFull;
+
+    SvmAllocationData sourceData(numRootDevices);
+    sourceData.gpuAllocations.addAllocation(&source);
+
+    MockGraphicsAllocation peerAlloc;
+    peerAlloc.gpuAddress = 0xC0FFEE000ull;
+    peerAlloc.setSharedHandle(0x42u);
+
+    PeerAllocationDeps deps{};
+    deps.importFd = [&peerAlloc](Device *, uint64_t, AllocationType, void *, GraphicsAllocation **pAlloc,
+                                 SvmAllocationData &, bool) -> void * {
+        if (pAlloc) {
+            *pAlloc = &peerAlloc;
+        }
+        return reinterpret_cast<void *>(peerAlloc.gpuAddress);
+    };
+    deps.importFds = [](Device *, const std::vector<osHandle> &, void *, GraphicsAllocation **,
+                        SvmAllocationData &, bool) -> void * { return nullptr; };
+    deps.decompressP2P = [](GraphicsAllocation *) {};
+
+    void *basePtr = reinterpret_cast<void *>(0x12000);
+    uintptr_t peerGpuAddress = 0;
+    SvmAllocationData *peerData = nullptr;
+
+    auto result = memoryManager->getOrImportPeerAllocation(device1.get(), svmAllocsManager.get(),
+                                                           storage, &sourceData, basePtr,
+                                                           &peerGpuAddress, &peerData, false, deps);
+
+    EXPECT_EQ(&peerAlloc, result);
+    EXPECT_EQ(std::numeric_limits<osHandle>::max(), peerAlloc.peekSharedHandle());
+    ASSERT_EQ(1u, memoryManager->closeCalls.size());
+    EXPECT_EQ(0xDEADBEEFull, memoryManager->closeCalls[0].handle);
+    EXPECT_EQ(0u, memoryManager->closeCalls[0].handleId);
+    EXPECT_EQ(&source, memoryManager->closeCalls[0].alloc);
+}
+
+TEST_F(PeerAllocationFdTrackingTest, givenSingleHandleImportFailsWhenGettingPeerAllocationThenOriginalAllocSharedHandleIsNotMutated) {
+    SVMAllocsManager::MapBasedAllocationTracker storage;
+    MockMultiHandleGraphicsAllocation source;
+    source.numHandles = 0u;
+    source.internalHandle = 0xCAFEBABEull;
+    source.setSharedHandle(0x99u);
+
+    SvmAllocationData sourceData(numRootDevices);
+    sourceData.gpuAllocations.addAllocation(&source);
+
+    PeerAllocationDeps deps{};
+    deps.importFd = [](Device *, uint64_t, AllocationType, void *, GraphicsAllocation **,
+                       SvmAllocationData &, bool) -> void * {
+        return nullptr;
+    };
+    deps.importFds = [](Device *, const std::vector<osHandle> &, void *, GraphicsAllocation **,
+                        SvmAllocationData &, bool) -> void * { return nullptr; };
+    deps.decompressP2P = [](GraphicsAllocation *) {};
+
+    void *basePtr = reinterpret_cast<void *>(0x13000);
+    uintptr_t peerGpuAddress = 0;
+    SvmAllocationData *peerData = nullptr;
+
+    auto result = memoryManager->getOrImportPeerAllocation(device1.get(), svmAllocsManager.get(),
+                                                           storage, &sourceData, basePtr,
+                                                           &peerGpuAddress, &peerData, false, deps);
+
+    EXPECT_EQ(nullptr, result);
+    EXPECT_EQ(0x99u, source.peekSharedHandle());
+    ASSERT_EQ(1u, memoryManager->closeCalls.size());
+    EXPECT_EQ(0xCAFEBABEull, memoryManager->closeCalls[0].handle);
 }
