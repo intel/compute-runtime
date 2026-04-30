@@ -1280,3 +1280,105 @@ TEST(InOrderProgrammingHelpersTests, givenQwordInOrderCounterAndUseSemaphore64bC
     EXPECT_FALSE(InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(false, true));
     EXPECT_FALSE(InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(true, true));
 }
+
+HWTEST2_F(CommandEncoderTests, givenRenderSurfaceStateWhenSurfaceTypeAndFormatCompatibleThenSetEnableSamplerRouteToLscIsSetToTrue, IsAtLeastXe2HpgCore) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto allowedSurfaceTypes = {
+        RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D,
+        RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER};
+
+    auto allowedSurfaceFormats = {
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R11G11B10_FLOAT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16_FLOAT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16G16_FLOAT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16G16B16A16_FLOAT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R32_FLOAT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32_FLOAT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32B32A32_FLOAT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16_SINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16G16_SINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16G16B16A16_SINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R32_SINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32_SINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32B32A32_SINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R8_SINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8_SINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_SINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R10G10B10A2_UINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16_UINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16G16_UINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16G16B16A16_UINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R32_UINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32_UINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32B32A32_UINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R8_UINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8_UINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UINT,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R10G10B10A2_UNORM,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16_UNORM,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16G16_UNORM,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R16G16B16A16_UNORM,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R8_UNORM,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8_UNORM,
+        RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UNORM};
+
+    for (auto surfaceType : allowedSurfaceTypes) {
+        for (auto surfaceFormat : allowedSurfaceFormats) {
+            RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
+            surfaceState.setSurfaceType(surfaceType);
+            surfaceState.setSurfaceFormat(surfaceFormat);
+            surfaceState.setEnableSamplerRouteToLsc(false);
+
+            EncodeSurfaceState<FamilyType>::setEnableSamplerRouteToLsc(&surfaceState);
+            EXPECT_TRUE(surfaceState.getEnableSamplerRouteToLsc());
+        }
+    }
+}
+
+HWTEST2_F(CommandEncoderTests, givenRenderSurfaceStateWhenSurfaceTypeAndFormatNotCompatibleThenSetEnableSamplerRouteToLscIsNotChanged, IsAtLeastXe2HpgCore) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto allowedSurfaceTypes = {
+        RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D,
+        RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER};
+
+    auto disallowedSurfaceTypes = {
+        RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D,
+        RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D,
+        RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_CUBE,
+        RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL};
+
+    auto allowedFormat = RENDER_SURFACE_STATE::SURFACE_FORMAT_R8_UNORM;
+    auto disallowedFormat = RENDER_SURFACE_STATE::SURFACE_FORMAT_B8G8R8A8_UNORM;
+
+    for (auto surfaceType : allowedSurfaceTypes) {
+        RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
+        surfaceState.setSurfaceType(surfaceType);
+        surfaceState.setSurfaceFormat(disallowedFormat);
+        surfaceState.setEnableSamplerRouteToLsc(false);
+
+        EncodeSurfaceState<FamilyType>::setEnableSamplerRouteToLsc(&surfaceState);
+        EXPECT_FALSE(surfaceState.getEnableSamplerRouteToLsc());
+    }
+
+    for (auto surfaceType : disallowedSurfaceTypes) {
+        RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
+        surfaceState.setSurfaceType(surfaceType);
+        surfaceState.setSurfaceFormat(allowedFormat);
+        surfaceState.setEnableSamplerRouteToLsc(false);
+
+        EncodeSurfaceState<FamilyType>::setEnableSamplerRouteToLsc(&surfaceState);
+        EXPECT_FALSE(surfaceState.getEnableSamplerRouteToLsc());
+    }
+
+    for (auto surfaceType : disallowedSurfaceTypes) {
+        RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
+        surfaceState.setSurfaceType(surfaceType);
+        surfaceState.setSurfaceFormat(disallowedFormat);
+        surfaceState.setEnableSamplerRouteToLsc(false);
+
+        EncodeSurfaceState<FamilyType>::setEnableSamplerRouteToLsc(&surfaceState);
+        EXPECT_FALSE(surfaceState.getEnableSamplerRouteToLsc());
+    }
+}
