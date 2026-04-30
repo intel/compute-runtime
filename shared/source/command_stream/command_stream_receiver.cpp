@@ -383,26 +383,29 @@ void CommandStreamReceiver::preallocateInternalHeap() {
 }
 
 void CommandStreamReceiver::fillReusableAllocationsList() {
-    auto &productHelper = getProductHelper();
+    std::call_once(preallocateResourcesFlag, [&] {
+        auto lock = obtainUniqueOwnership();
+        auto &productHelper = getProductHelper();
 
-    if (!CommandBufferPoolAllocator::isEnabled(productHelper)) {
-        auto &gfxCoreHelper = getGfxCoreHelper();
-        auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
-        for (auto i = 0u; i < amountToFill; i++) {
-            preallocateCommandBuffer();
+        if (!CommandBufferPoolAllocator::isEnabled(productHelper)) {
+            auto &gfxCoreHelper = getGfxCoreHelper();
+            auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
+            for (auto i = 0u; i < amountToFill; i++) {
+                preallocateCommandBuffer();
+            }
         }
-    }
 
-    const bool isBcs = EngineHelpers::isBcs(this->osContext->getEngineType());
-    auto internalHeapsToFill = isBcs ? 0u : productHelper.getInternalHeapsPreallocated();
-    const auto internalHeapPreallocationSize = HeapSize::getDefaultHeapSize(IndirectHeapType::indirectObject);
-    const bool internalHeapPoolHandlesPreallocationSize = InternalHeapPoolAllocator::isEnabled(productHelper) &&
-                                                          (internalHeapPreallocationSize <= InternalHeapPoolTraits::maxAllocationSize);
-    if (!internalHeapPoolHandlesPreallocationSize) {
-        for (auto i = 0u; i < internalHeapsToFill; i++) {
-            preallocateInternalHeap();
+        const bool isBcs = EngineHelpers::isBcs(this->osContext->getEngineType());
+        auto internalHeapsToFill = isBcs ? 0u : productHelper.getInternalHeapsPreallocated();
+        const auto internalHeapPreallocationSize = HeapSize::getDefaultHeapSize(IndirectHeapType::indirectObject);
+        const bool internalHeapPoolHandlesPreallocationSize = InternalHeapPoolAllocator::isEnabled(productHelper) &&
+                                                              (internalHeapPreallocationSize <= InternalHeapPoolTraits::maxAllocationSize);
+        if (!internalHeapPoolHandlesPreallocationSize) {
+            for (auto i = 0u; i < internalHeapsToFill; i++) {
+                preallocateInternalHeap();
+            }
         }
-    }
+    });
 }
 
 void CommandStreamReceiver::requestPreallocation() {
@@ -459,7 +462,6 @@ bool CommandStreamReceiver::initializeResources(bool allocateInterrupt, const Pr
                 !this->getPreemptionAllocation()) {
                 this->createPreemptionAllocation();
             }
-            this->fillReusableAllocationsList();
             initializeEngine();
         }
     }
