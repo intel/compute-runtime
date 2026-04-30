@@ -25,14 +25,6 @@ void NetlinkRasUtil::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &e
     return;
 }
 
-uint32_t NetlinkRasUtil::rasGetCategoryCount() {
-    return 0;
-}
-
-std::vector<zes_ras_error_category_exp_t> NetlinkRasUtil::getSupportedErrorCategoriesExp() {
-    return std::vector<zes_ras_error_category_exp_t>{};
-}
-
 ze_result_t NetlinkRasUtil::rasGetState(zes_ras_state_t &state, ze_bool_t clear) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

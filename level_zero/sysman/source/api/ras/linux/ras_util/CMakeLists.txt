@@ -11,6 +11,7 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/sysman_ras_util.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_ras_util_pmu.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_ras_util_gsc.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_ras_util_netlink_categories.cpp
   )
 
   if(LIBGENL_FOUND)

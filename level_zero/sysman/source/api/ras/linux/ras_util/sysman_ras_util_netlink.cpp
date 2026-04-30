@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
+#include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util_netlink_category_map.h"
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_nl_api.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
@@ -15,14 +16,6 @@
 
 namespace L0 {
 namespace Sysman {
-
-static const std::map<zes_ras_error_category_exp_t, std::string_view> categoryToErrorNameMap = {
-    {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, "core-compute"},
-    {ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS, "device-memory"},
-    {ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS, "scale"},
-    {static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS), "fabric"},
-    {static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS), "pcie"},
-    {static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS), "soc-internal"}};
 
 std::vector<DrmRasNode> NetlinkRasUtil::rasNodes;
 std::map<uint32_t, std::vector<DrmErrorCounter>> NetlinkRasUtil::rasErrorList;
@@ -57,30 +50,6 @@ void NetlinkRasUtil::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &e
             }
         }
     }
-}
-
-uint32_t NetlinkRasUtil::rasGetCategoryCount() {
-    return static_cast<uint32_t>(categoryToErrorNameMap.size());
-}
-
-std::vector<zes_ras_error_category_exp_t> NetlinkRasUtil::getSupportedErrorCategoriesExp() {
-    auto it = rasErrorList.find(rasNodeId);
-    if (it == rasErrorList.end()) {
-        return {};
-    }
-    const auto &errorList = it->second;
-    std::vector<zes_ras_error_category_exp_t> categories;
-    for (const auto &entry : categoryToErrorNameMap) {
-        // Only include categories for which we have error counters from netlink
-        auto err = std::find_if(errorList.begin(), errorList.end(),
-                                [&](const DrmErrorCounter &counter) -> bool {
-                                    return (counter.errorName == entry.second);
-                                });
-        if (err != errorList.end()) {
-            categories.push_back(entry.first);
-        }
-    }
-    return categories;
 }
 
 ze_result_t NetlinkRasUtil::rasGetState(zes_ras_state_t &state, ze_bool_t clear) {
