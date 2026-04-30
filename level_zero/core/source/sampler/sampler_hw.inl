@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/utilities/numeric.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/source/sampler/sampler_hw.h"
 
 namespace L0 {
@@ -20,6 +21,7 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
     BaseClass::initialize(device, desc);
+    samplerState = GfxFamily::cmdInitSamplerState;
 
     samplerState.setNonNormalizedCoordinateEnable(!desc->isNormalized);
 
@@ -101,6 +103,21 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
     samplerState.setTcxAddressControlMode(addressControlModeX);
     samplerState.setTcyAddressControlMode(addressControlModeY);
     samplerState.setTczAddressControlMode(addressControlModeZ);
+
+    auto *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
+    while (extendedDesc) {
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_SAMPLER_LOD_EXT_DESC) {
+            auto *lodDesc = reinterpret_cast<const ze_sampler_lod_ext_desc_t *>(extendedDesc);
+            this->lodMin = lodDesc->lodMin;
+            this->lodMax = lodDesc->lodMax;
+            if (lodDesc->mipFilterLinear) {
+                mipMode = SAMPLER_STATE::MIP_MODE_FILTER_LINEAR;
+                samplerState.setMipModeFilter(mipMode);
+            }
+            break;
+        }
+        extendedDesc = reinterpret_cast<const ze_base_desc_t *>(extendedDesc->pNext);
+    }
 
     NEO::FixedU4D8 minLodValue =
         NEO::FixedU4D8(std::min(getGenSamplerMaxLod(), this->lodMin));

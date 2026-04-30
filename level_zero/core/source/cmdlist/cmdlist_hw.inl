@@ -60,6 +60,7 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/sw_tag_scope.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
@@ -896,7 +897,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), false, remoteCopy, false);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), false, remoteCopy, false, image->getImageInfo().imgDesc.numMipLevels);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
@@ -959,13 +960,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn, builtInMode);
 
     builtinSetArg(builtinKernel, 0, allocationStruct.alignedAllocationPtr, allocationStruct.alloc);
-    builtinKernel->setArgRedescribedImage(1u, image->toHandle(), false);
+    builtinKernel->setArgRedescribedImage(1u, image->toHandle(), false, getRegionMipLevel(pDstRegion, image->getImageInfo().imgDesc.numMipLevels));
     builtinKernel->setArgumentValue(2u, sizeof(size_t), &allocationStruct.offset);
 
     uint32_t origin[] = {pDstRegion->originX,
                          pDstRegion->originY,
                          pDstRegion->originZ,
-                         0};
+                         0u};
     builtinKernel->setArgumentValue(3u, sizeof(origin), &origin);
 
     if (!builtInMode.wideMode) {
@@ -1115,7 +1116,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, true, remoteCopy, false);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, true, remoteCopy, false, image->getImageInfo().imgDesc.numMipLevels);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
@@ -1188,12 +1189,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn, builtInMode);
 
-    builtinKernel->setArgRedescribedImage(0u, image->toHandle(), false);
+    builtinKernel->setArgRedescribedImage(0u, image->toHandle(), false, getRegionMipLevel(pSrcRegion, image->getImageInfo().imgDesc.numMipLevels));
     builtinSetArg(builtinKernel, 1, allocationStruct.alignedAllocationPtr, allocationStruct.alloc);
     uint32_t origin[] = {pSrcRegion->originX,
                          pSrcRegion->originY,
                          pSrcRegion->originZ,
-                         0};
+                         0u};
     builtinKernel->setArgumentValue(2u, sizeof(origin), &origin);
     builtinKernel->setArgumentValue(3u, sizeof(size_t), &allocationStruct.offset);
 
@@ -1341,7 +1342,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), false, remoteCopy, false);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), false, remoteCopy, false, srcImage->getImageInfo().imgDesc.numMipLevels);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->imageElementSizeInBytes);
@@ -1401,8 +1402,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
 
     const bool isPackedFormat = NEO::ImageHelper::areImagesCompatibleWithPackedFormat(device->getProductHelper(), srcImage->getImageInfo(), dstImage->getImageInfo(), srcImage->getAllocation(), dstImage->getAllocation(), srcRegion.width);
 
-    kernel->setArgRedescribedImage(0, srcImage->toHandle(), isPackedFormat);
-    kernel->setArgRedescribedImage(1, dstImage->toHandle(), isPackedFormat);
+    kernel->setArgRedescribedImage(0, srcImage->toHandle(), isPackedFormat, getRegionMipLevel(pSrcRegion, srcImage->getImageInfo().imgDesc.numMipLevels));
+    kernel->setArgRedescribedImage(1, dstImage->toHandle(), isPackedFormat, getRegionMipLevel(pDstRegion, dstImage->getImageInfo().imgDesc.numMipLevels));
 
     kernel->setArgumentValue(2, sizeof(srcOffset), &srcOffset);
     kernel->setArgumentValue(3, sizeof(dstOffset), &dstOffset);
@@ -1874,7 +1875,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool imageToBuffer, bool remoteCopy, bool localToLocalAllowed) const {
+bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool imageToBuffer, bool remoteCopy, bool localToLocalAllowed, uint32_t mipLevel) const {
+    if (mipLevel > 1) {
+        return false;
+    }
+
     bool preferred = device->getProductHelper().blitEnqueuePreferred(imageToBuffer);
     if (!NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(preferred)) {
         return false;
@@ -2096,7 +2101,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     emitMemAdviseForSystemCopy(srcAllocationStruct, size);
 
     if (!memoryCopyParams.copyOffloadAllowed) {
-        memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy, size <= BlitterConstants::maxD2DBcsCopySize);
+        memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy, size <= BlitterConstants::maxD2DBcsCopySize, 0);
     }
 
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
@@ -2353,7 +2358,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     emitMemAdviseForSystemCopy(dstAllocationStruct, dstSize);
     emitMemAdviseForSystemCopy(srcAllocationStruct, srcSize);
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy, std::max(srcSize, dstSize) <= BlitterConstants::maxD2DBcsCopySize);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy, std::max(srcSize, dstSize) <= BlitterConstants::maxD2DBcsCopySize, 0);
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 

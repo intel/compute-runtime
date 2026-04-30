@@ -25,7 +25,8 @@ struct ImageCoreFamily : public ImageImp {
     void copySurfaceStateToSSH(void *surfaceStateHeap,
                                uint32_t surfaceStateOffset,
                                uint32_t bindlessSlot,
-                               bool isMediaBlockArg) override;
+                               bool isMediaBlockArg,
+                               uint32_t mipLevel) override;
     bool isMediaFormat(const ze_image_format_layout_t layout) {
         if (layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_NV12 ||
             layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P010 ||

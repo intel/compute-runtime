@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,8 @@ struct SamplerCoreFamily : public SamplerImp {
 
   protected:
     SAMPLER_STATE samplerState;
-    float lodMin = 1.0f;
-    float lodMax = 1.0f;
+    float lodMin = 0.0f;
+    float lodMax = std::numeric_limits<float>::max();
 };
 
 template <uint32_t gfxProductFamily>

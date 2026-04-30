@@ -58,7 +58,7 @@ HWTEST_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreate
     zeDesc.depth = 1u;
     zeDesc.height = 1u;
     zeDesc.width = 1u;
-    zeDesc.miplevels = 1u;
+    zeDesc.miplevels = 0u;
     zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
     zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
 
@@ -938,7 +938,7 @@ HWTEST_F(ImageCreate, givenMediaBlockOptionWhenCopySurfaceStateThenSurfaceStateI
 
     RENDER_SURFACE_STATE rss = {};
 
-    imageHW->copySurfaceStateToSSH(&rss, 0u, NEO::BindlessImageSlot::image, true);
+    imageHW->copySurfaceStateToSSH(&rss, 0u, NEO::BindlessImageSlot::image, true, 0u);
 
     EXPECT_EQ(surfaceState->getWidth(), (static_cast<uint32_t>(imageHW->getImageInfo().surfaceFormat->imageElementSizeInBytes) * static_cast<uint32_t>(imageHW->getImageInfo().imgDesc.imageWidth)) / sizeof(uint32_t));
 }
@@ -1585,7 +1585,7 @@ HWTEST2_F(ImageCreate, givenImageSizeZeroThenDummyImageIsCreated, IsAtMostXeHpgC
     ASSERT_NE(nullptr, alloc);
 
     auto renderSurfaceState = FamilyType::cmdInitRenderSurfaceState;
-    image->copySurfaceStateToSSH(&renderSurfaceState, 0u, NEO::BindlessImageSlot::image, false);
+    image->copySurfaceStateToSSH(&renderSurfaceState, 0u, NEO::BindlessImageSlot::image, false, 0u);
 
     EXPECT_EQ(1u, renderSurfaceState.getWidth());
     EXPECT_EQ(1u, renderSurfaceState.getHeight());
@@ -1856,8 +1856,8 @@ HWTEST2_F(ImageCreate, WhenCopyingToSshThenSurfacePropertiesAreRetained, IsAtMos
     ret = imageB->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    imageA->copySurfaceStateToSSH(mockSSH, 0, NEO::BindlessImageSlot::image, false);
-    imageB->copySurfaceStateToSSH(mockSSH, sizeof(RENDER_SURFACE_STATE), NEO::BindlessImageSlot::image, false);
+    imageA->copySurfaceStateToSSH(mockSSH, 0, NEO::BindlessImageSlot::image, false, 0u);
+    imageB->copySurfaceStateToSSH(mockSSH, sizeof(RENDER_SURFACE_STATE), NEO::BindlessImageSlot::image, false, 0u);
 
     auto surfaceStateA = reinterpret_cast<RENDER_SURFACE_STATE *>(mockSSH);
     ASSERT_EQ(surfaceStateA->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D);
@@ -3181,6 +3181,121 @@ HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageWhenAllocateImplicitArg
     ret = imageHW->allocateImplicitArgsOnDemand();
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
     EXPECT_EQ(nullptr, imageHW->getImplicitArgsAllocation());
+}
+
+HWTEST_F(ImageCreate, givenMipmappedImageWhenCopySurfaceStateToSSHThenXOffsetAndYOffsetAreZero) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 135u;
+    desc.width = 28u;
+    desc.miplevels = 2u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_SINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    RENDER_SURFACE_STATE rss = {};
+
+    for (uint32_t mipLevel = 0; mipLevel < desc.miplevels; mipLevel++) {
+        memset(&rss, 0, sizeof(rss));
+        imageHW->copySurfaceStateToSSH(&rss, 0u, NEO::BindlessImageSlot::image, false, mipLevel);
+        EXPECT_EQ(rss.getXOffset(), 0u) << "mipLevel=" << mipLevel;
+        EXPECT_EQ(rss.getYOffset(), 0u) << "mipLevel=" << mipLevel;
+    }
+
+    for (uint32_t mipLevel = 0; mipLevel < desc.miplevels; mipLevel++) {
+        memset(&rss, 0, sizeof(rss));
+        imageHW->copySurfaceStateToSSH(&rss, 0u, NEO::BindlessImageSlot::redescribedImage, false, mipLevel);
+        EXPECT_EQ(rss.getXOffset(), 0u) << "mipLevel=" << mipLevel;
+        EXPECT_EQ(rss.getYOffset(), 0u) << "mipLevel=" << mipLevel;
+    }
+}
+
+HWTEST_F(ImageCreate, givenMipmappedImageWithMultipleMipLevelsWhenCopySurfaceStateToSSHThenMipFieldsAreCorrect) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 177u;
+    desc.width = 167u;
+    desc.miplevels = 6u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_SINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    RENDER_SURFACE_STATE rss = {};
+    const uint32_t expectedMipCountLod = desc.miplevels - 1u;
+
+    for (uint32_t mipLevel = 0; mipLevel < desc.miplevels; mipLevel++) {
+        memset(&rss, 0, sizeof(rss));
+        imageHW->copySurfaceStateToSSH(&rss, 0u, NEO::BindlessImageSlot::image, false, mipLevel);
+        EXPECT_EQ(rss.getSurfaceMinLOD(), mipLevel) << "mipLevel=" << mipLevel;
+        EXPECT_EQ(rss.getMIPCountLOD(), expectedMipCountLod) << "mipLevel=" << mipLevel;
+        EXPECT_EQ(rss.getXOffset(), 0u) << "mipLevel=" << mipLevel;
+        EXPECT_EQ(rss.getYOffset(), 0u) << "mipLevel=" << mipLevel;
+    }
+
+    for (uint32_t mipLevel = 0; mipLevel < desc.miplevels; mipLevel++) {
+        memset(&rss, 0, sizeof(rss));
+        imageHW->copySurfaceStateToSSH(&rss, 0u, NEO::BindlessImageSlot::redescribedImage, false, mipLevel);
+        EXPECT_EQ(rss.getSurfaceMinLOD(), mipLevel) << "mipLevel=" << mipLevel;
+        EXPECT_EQ(rss.getMIPCountLOD(), expectedMipCountLod) << "mipLevel=" << mipLevel;
+        EXPECT_EQ(rss.getXOffset(), 0u) << "mipLevel=" << mipLevel;
+        EXPECT_EQ(rss.getYOffset(), 0u) << "mipLevel=" << mipLevel;
+    }
+}
+
+HWTEST_F(ImageCreate, givenNonMipmappedImageWhenCopySurfaceStateToSSHThenXOffsetAndYOffsetArePreserved) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 64u;
+    desc.width = 64u;
+    desc.miplevels = 1u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto originalXOffset = imageHW->surfaceState.getXOffset();
+    auto originalYOffset = imageHW->surfaceState.getYOffset();
+
+    RENDER_SURFACE_STATE rss = {};
+    imageHW->copySurfaceStateToSSH(&rss, 0u, NEO::BindlessImageSlot::image, false, 0u);
+
+    EXPECT_EQ(rss.getXOffset(), originalXOffset);
+    EXPECT_EQ(rss.getYOffset(), originalYOffset);
 }
 } // namespace ult
 } // namespace L0

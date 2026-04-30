@@ -2974,7 +2974,8 @@ struct MyMockImage : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
     void copySurfaceStateToSSH(void *surfaceStateHeap,
                                uint32_t surfaceStateOffset,
                                uint32_t bindlessSlot,
-                               bool isMediaBlockArg) override {
+                               bool isMediaBlockArg,
+                               uint32_t mipLevel) override {
 
         switch (bindlessSlot) {
         case NEO::BindlessImageSlot::implicitArgs:
@@ -3145,7 +3146,7 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
     auto handle = imageHW->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    ret = kernel->setArgRedescribedImage(3, handle, false);
+    ret = kernel->setArgRedescribedImage(3, handle, false, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
@@ -3184,7 +3185,7 @@ HWTEST2_F(SetKernelArg, givenHeaplessWhenPatchingImageWithBindlessEnabledCorrect
         auto handle = imageHW->toHandle();
         ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-        ret = kernel->setArgRedescribedImage(3, handle, false);
+        ret = kernel->setArgRedescribedImage(3, handle, false, 0u);
         EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
         auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
@@ -3358,7 +3359,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCal
     auto handle = imageHW->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    ret = mockKernel.setArgRedescribedImage(0, handle, false);
+    ret = mockKernel.setArgRedescribedImage(0, handle, false, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     void *expectedSsInHeap = nullptr;
@@ -3405,7 +3406,7 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgRed
     mockMemManager->failAllocate32Bit = true;
     bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
 
-    ret = kernel->setArgRedescribedImage(3, handle, false);
+    ret = kernel->setArgRedescribedImage(3, handle, false, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
 
     auto &bindlessInfo = imageHW->getAllocation()->getBindlessInfo();
@@ -3520,7 +3521,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindfulKernelWhenSetArgImageThenCopySurface
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MyMockImageMediaBlock : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
-    void copySurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset, uint32_t bindlessSlot, bool isMediaBlockArg) override {
+    void copySurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset, uint32_t bindlessSlot, bool isMediaBlockArg, uint32_t mipLevel) override {
         isMediaBlockPassedValue = isMediaBlockArg;
     }
     bool isMediaBlockPassedValue = false;

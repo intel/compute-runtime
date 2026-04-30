@@ -54,6 +54,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
 
     imgInfo.imgDesc = lookupTable.imageProperties.imageDescriptor;
+    imgInfo.mipCount = imgInfo.imgDesc.numMipLevels;
 
     if (lookupTable.isSrgb) {
         if (desc->format.layout != ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8 || desc->format.type != ZE_IMAGE_FORMAT_TYPE_UNORM) {
@@ -223,6 +224,11 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             imgInfo.yOffset = 0;
             imgInfo.yOffsetForUVPlane = 0;
         }
+
+        if (imgInfo.plane == NEO::ImagePlane::noPlane) {
+            imgInfo.xOffset = 0;
+            imgInfo.yOffset = 0;
+        }
     }
 
     imgInfo.print();
@@ -275,7 +281,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     if (this->bindlessImage) {
         auto ssInHeap = getBindlessSlot();
-        copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, NEO::BindlessImageSlot::image, false);
+        copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, NEO::BindlessImageSlot::image, false, 0u);
 
         if (this->sampledImage) {
             auto productFamily = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
@@ -302,7 +308,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         this->encodeImplicitArgsSurfaceState();
         auto surfaceStateSize = this->device->getGfxCoreHelper().getRenderSurfaceStateSize();
         auto ssInHeap = getBindlessSlot();
-        copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false);
+        copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false, 0u);
     }
 
     {
@@ -373,7 +379,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHeap,
                                                            uint32_t surfaceStateOffset,
                                                            uint32_t bindlessSlot,
-                                                           bool isMediaBlockArg) {
+                                                           bool isMediaBlockArg,
+                                                           uint32_t mipLevel) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
@@ -398,6 +405,24 @@ void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHea
 
     auto dst = ptrOffset(surfaceStateHeap, surfaceStateOffset);
     memcpy_s(dst, sizeof(RENDER_SURFACE_STATE), src, sizeof(RENDER_SURFACE_STATE));
+
+    if (imgInfo.mipCount > 1u && (bindlessSlot == NEO::BindlessImageSlot::image ||
+                                  bindlessSlot == NEO::BindlessImageSlot::redescribedImage ||
+                                  bindlessSlot == NEO::BindlessImageSlot::packedImage)) {
+        auto *dstRss = static_cast<RENDER_SURFACE_STATE *>(dst);
+        const uint32_t mipCountLod = imgInfo.mipCount > 0u ? imgInfo.mipCount - 1u : 0u;
+        const uint32_t clampedMip = std::min(mipLevel, mipCountLod);
+
+        dstRss->setSurfaceMinLOD(clampedMip);
+        dstRss->setMIPCountLOD(mipCountLod);
+
+        if (this->allocation != nullptr) {
+            auto *gmm = this->allocation->getDefaultGmm();
+            if (gmm != nullptr) {
+                NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(dstRss, gmm);
+            }
+        }
+    }
 
     if (isMediaBlockArg) {
         RENDER_SURFACE_STATE *dstRss = static_cast<RENDER_SURFACE_STATE *>(dst);

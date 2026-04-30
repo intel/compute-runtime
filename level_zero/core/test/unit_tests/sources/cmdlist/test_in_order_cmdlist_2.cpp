@@ -64,7 +64,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenAskingForCopyOffloadThenR
                                 }
                             }
 
-                            EXPECT_EQ(expected, immCmdList->isCopyOffloadAllowed(srcAlloc, dstAlloc, imageToBuffer, remoteCopy, localToLocalAllowed));
+                            EXPECT_EQ(expected, immCmdList->isCopyOffloadAllowed(srcAlloc, dstAlloc, imageToBuffer, remoteCopy, localToLocalAllowed, 0));
                         }
                     }
                 }
@@ -82,7 +82,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenLocalToLocalAllowedWhenCheckingCopyOffloa
     MockGraphicsAllocation dstAlloc;
     dstAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
 
-    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, false, true));
+    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, false, true, 0));
 }
 
 HWTEST_F(CopyOffloadInOrderTests, givenLocalToLocalNotAllowedWhenCheckingCopyOffloadThenBcsBlocked) {
@@ -94,7 +94,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenLocalToLocalNotAllowedWhenCheckingCopyOff
     MockGraphicsAllocation dstAlloc;
     dstAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
 
-    EXPECT_FALSE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, false, false));
+    EXPECT_FALSE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, false, false, 0));
 }
 
 HWTEST_F(CopyOffloadInOrderTests, givenRemoteCopyWhenCheckingCopyOffloadThenLocalToLocalFlagIgnored) {
@@ -106,8 +106,8 @@ HWTEST_F(CopyOffloadInOrderTests, givenRemoteCopyWhenCheckingCopyOffloadThenLoca
     MockGraphicsAllocation dstAlloc;
     dstAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
 
-    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, true, false));
-    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, true, true));
+    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, true, false, 0));
+    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, true, true, 0));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenCmdsChainingWhenDispatchingCopyOffloadThenDontSkipImplictDependency) {
