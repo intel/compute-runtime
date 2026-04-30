@@ -34,7 +34,10 @@ const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(bool isDebu
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t L1CachePolicyHelper<gfxProduct>::getDefaultL1CachePolicy(bool isDebuggerActive) {
     using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
-    return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
+    if (isDebuggerActive) {
+        return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
+    }
+    return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

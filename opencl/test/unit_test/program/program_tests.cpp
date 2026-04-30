@@ -1907,12 +1907,12 @@ HWTEST2_F(ProgramTests, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBu
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=7 -cl-load-cache-default=4"));
 }
 
-HWTEST2_F(ProgramTests, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXe3pCore) {
+HWTEST2_F(ProgramTests, givenDebugFlagSetToWbpWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXe3pCore) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(0);
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=30 -cl-load-cache-default=25"));
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=18 -cl-load-cache-default=25"));
 }
 
 HWTEST2_F(ProgramTests, givenDebugFlagSetForceAllResourcesUncachedWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsWithinXeCoreAndXe3Core) {
@@ -1946,11 +1946,7 @@ HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBu
 HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXe3pCore) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
-    if (pClDevice->getProductHelper().getL1CachePolicy(false) == 0) {
-        EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=18 -cl-load-cache-default=25"));
-    } else {
-        EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=30 -cl-load-cache-default=25"));
-    }
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=30 -cl-load-cache-default=25"));
 }
 
 TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEnabled) {

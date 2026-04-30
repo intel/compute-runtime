@@ -259,9 +259,10 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolic
 
 HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsAtLeastXe3pCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    const char *expectedStr = "-cl-store-cache-default=18 -cl-load-cache-default=25";
+    const char *expectedStr = "-cl-store-cache-default=30 -cl-load-cache-default=25";
+    const char *dbgExpectedStr = "-cl-store-cache-default=18 -cl-load-cache-default=25";
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
-    EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
+    EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), dbgExpectedStr, strlen(dbgExpectedStr)));
 }
 
 HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteBackPolicyOption, IsWithinXeCoreAndXe3Core) {
