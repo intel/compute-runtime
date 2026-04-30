@@ -3213,6 +3213,90 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppendingT
     EXPECT_TRUE(verifyTokenCleanup());
 }
 
+HWTEST_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchAndOutOfOrderWhenAppendingThenProgramSemaphoreInCleanup) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createMultiTileImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->synchronizedDispatchMode = NEO::SynchronizedDispatchMode::full;
+    immCmdList->syncDispatchQueueId = 0x1234;
+    immCmdList->inOrderExecInfo.reset();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    size_t offset = cmdStream->getUsed();
+
+    uint64_t syncAllocGpuVa = device->getSyncDispatchTokenAllocation()->getGpuAddress();
+
+    auto verifyTokenCleanup = [&]() {
+        GenCmdList cmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        auto itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
+        EXPECT_NE(cmdList.end(), itor);
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        MI_ATOMIC *miAtomic = nullptr;
+        bool atomicFound = false;
+
+        while (itor != cmdList.end()) {
+            itor = find<MI_ATOMIC *>(itor, cmdList.end());
+            EXPECT_NE(cmdList.end(), itor);
+            if (::testing::Test::HasFailure()) {
+                return false;
+            }
+
+            miAtomic = genCmdCast<MI_ATOMIC *>(*itor);
+
+            if (syncAllocGpuVa == NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic)) {
+                atomicFound = true;
+                break;
+            }
+            itor++;
+        }
+
+        EXPECT_TRUE(atomicFound);
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        EXPECT_EQ(MI_ATOMIC::DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_0, miAtomic->getDwordLength());
+        EXPECT_EQ(0u, miAtomic->getInlineData());
+
+        EXPECT_EQ(0u, miAtomic->getOperand1DataDword0());
+        EXPECT_EQ(0u, miAtomic->getOperand1DataDword1());
+        EXPECT_EQ(0u, miAtomic->getOperand2DataDword0());
+        EXPECT_EQ(0u, miAtomic->getOperand2DataDword1());
+
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_DECREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
+
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        auto semaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(++miAtomic);
+        EXPECT_EQ(0u, semaphore->getSemaphoreDataDword());
+        EXPECT_EQ(syncAllocGpuVa, semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphore->getCompareOperation());
+
+        return !::testing::Test::HasFailure();
+    };
+
+    // first run without dependency
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_TRUE(verifyTokenCleanup());
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_TRUE(verifyTokenCleanup());
+}
+
 HWTEST_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendingThenDontProgramTokenCleanup) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 

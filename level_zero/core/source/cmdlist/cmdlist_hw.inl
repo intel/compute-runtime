@@ -5055,6 +5055,12 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchCleanupSect
 
     NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODES::ATOMIC_8B_DECREMENT, DATA_SIZE::DATA_SIZE_QWORD, 1, 1, 0, 0);
 
+    if (!isInOrderExecutionEnabled()) {
+        NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*cmdStream, syncAllocationGpuVa, 0u,
+                                                                   GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                                   false, false, false, true, this->device->getDeviceInfo().semaphore64bCmdSupport, nullptr);
+    }
+
     NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODES::ATOMIC_8B_CMP_WR, DATA_SIZE::DATA_SIZE_QWORD, 1, 1, queueIdToken, 0);
 }
 
