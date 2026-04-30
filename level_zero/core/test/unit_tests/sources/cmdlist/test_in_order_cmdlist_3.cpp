@@ -6,12 +6,16 @@
  */
 
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/driver_experimental/zex_api.h"
+
+#include <map>
+#include <vector>
 
 namespace L0 {
 namespace ult {
@@ -51,6 +55,37 @@ struct InOrderIpcTests : public InOrderCmdListFixture {
     }
 
     uint64_t internalHandleCounter = 0;
+};
+
+struct CounterBasedIpcImportTrackingContext : public Context {
+    using Context::Context;
+
+    struct ImportCall {
+        uint64_t handle = 0;
+        NEO::AllocationType allocationType = NEO::AllocationType::unknown;
+        bool isHostIpcAllocation = false;
+        unsigned int processId = 0;
+        uint64_t cacheId = 0;
+        bool isOpaqueHandle = false;
+    };
+
+    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheId, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle) override {
+        importCalls.push_back({handle, allocationType, isHostIpcAllocation, processId, cacheId, isOpaqueHandle});
+
+        if (!isOpaqueHandle) {
+            return {nullptr, nullptr};
+        }
+
+        auto allocationIt = allocations.find(handle);
+        if (allocationIt == allocations.end()) {
+            return {nullptr, nullptr};
+        }
+
+        return {allocationIt->second, allocationIt->second->getUnderlyingBuffer()};
+    }
+
+    std::vector<ImportCall> importCalls;
+    std::map<uint64_t, NEO::GraphicsAllocation *> allocations;
 };
 
 HWTEST_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError) {
@@ -489,6 +524,81 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
     zeEventCounterBasedCloseIpcHandle(newEvent);
 
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList2.get());
+}
+
+HWTEST_F(InOrderIpcTests, givenOpaqueIpcHandleWhenOpeningThenImportCommunicationAndCounterAllocationsAsOpaqueHandles) {
+    constexpr uint64_t communicationHandle = 0x1234;
+    constexpr uint64_t deviceCounterHandle = 0x2345;
+    constexpr uint64_t hostCounterHandle = 0x3456;
+    constexpr unsigned int exporterProcessId = 0x4567;
+
+    auto memoryManager = device->getNEODevice()->getMemoryManager();
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+
+    auto communicationAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::InOrderExecEventDataNodeType::getAllocationType()});
+    auto deviceCounterAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::DeviceAllocNodeType<true>::getAllocationType()});
+    auto hostCounterAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::DeviceAllocNodeType<false>::getAllocationType()});
+
+    ASSERT_NE(nullptr, communicationAllocation);
+    ASSERT_NE(nullptr, deviceCounterAllocation);
+    ASSERT_NE(nullptr, hostCounterAllocation);
+
+    auto eventData = reinterpret_cast<NEO::InOrderExecEventData *>(communicationAllocation->getUnderlyingBuffer());
+    eventData->deviceAllocIpcHandle = deviceCounterHandle;
+    eventData->hostAllocIpcHandle = hostCounterHandle;
+    eventData->counterValue = 1;
+    eventData->deviceIpcAllocOffset = 0;
+    eventData->hostIpcAllocOffset = 0;
+    eventData->counterOffset = 0;
+    eventData->devicePartitions = 1;
+    eventData->hostPartitions = 1;
+    eventData->exporterProcessId = exporterProcessId;
+
+    IpcCounterBasedEventData ipcData = {};
+    ipcData.communicationAllocHandle = communicationHandle;
+    ipcData.processId = exporterProcessId;
+    ipcData.counterBasedFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IPC;
+    ipcData.signalScopeFlags = ZE_EVENT_SCOPE_FLAG_HOST;
+    ipcData.waitScopeFlags = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    CounterBasedIpcImportTrackingContext trackingContext(driverHandle.get());
+    trackingContext.settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+    trackingContext.settings.handleType = IpcHandleType::fdHandle;
+    trackingContext.allocations[communicationHandle] = communicationAllocation;
+    trackingContext.allocations[deviceCounterHandle] = deviceCounterAllocation;
+    trackingContext.allocations[hostCounterHandle] = hostCounterAllocation;
+
+    VariableBackup<ze_context_handle_t> defaultContextBackup(&driverHandle->defaultContext, trackingContext.toHandle());
+
+    auto deviceHandle = device->toHandle();
+    ze_event_handle_t importedEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, Event::openCounterBasedIpcHandle(ipcData, &importedEventHandle, driverHandle.get(), &trackingContext, 1, &deviceHandle));
+    ASSERT_NE(nullptr, importedEventHandle);
+
+    ASSERT_EQ(3u, trackingContext.importCalls.size());
+    EXPECT_EQ(communicationHandle, trackingContext.importCalls[0].handle);
+    EXPECT_EQ(NEO::InOrderExecEventDataNodeType::getAllocationType(), trackingContext.importCalls[0].allocationType);
+    EXPECT_TRUE(trackingContext.importCalls[0].isHostIpcAllocation);
+    EXPECT_TRUE(trackingContext.importCalls[0].isOpaqueHandle);
+    EXPECT_NE(0u, trackingContext.importCalls[0].cacheId);
+
+    EXPECT_EQ(deviceCounterHandle, trackingContext.importCalls[1].handle);
+    EXPECT_EQ(NEO::DeviceAllocNodeType<true>::getAllocationType(), trackingContext.importCalls[1].allocationType);
+    EXPECT_FALSE(trackingContext.importCalls[1].isHostIpcAllocation);
+    EXPECT_TRUE(trackingContext.importCalls[1].isOpaqueHandle);
+    EXPECT_NE(0u, trackingContext.importCalls[1].cacheId);
+
+    EXPECT_EQ(hostCounterHandle, trackingContext.importCalls[2].handle);
+    EXPECT_EQ(NEO::DeviceAllocNodeType<false>::getAllocationType(), trackingContext.importCalls[2].allocationType);
+    EXPECT_TRUE(trackingContext.importCalls[2].isHostIpcAllocation);
+    EXPECT_TRUE(trackingContext.importCalls[2].isOpaqueHandle);
+    EXPECT_NE(0u, trackingContext.importCalls[2].cacheId);
+
+    for (const auto &importCall : trackingContext.importCalls) {
+        EXPECT_EQ(exporterProcessId, importCall.processId);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCloseIpcHandle(importedEventHandle));
 }
 
 HWTEST_F(InOrderIpcTests, givenInvalidInternalHandleWhenOpenCalledThenReturnError) {
