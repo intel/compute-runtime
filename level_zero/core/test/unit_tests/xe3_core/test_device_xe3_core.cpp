@@ -28,9 +28,7 @@ HWTEST2_F(DeviceXe3CoreTest, whenCallingGetMemoryPropertiesWithNonNullPtrThenPro
     EXPECT_EQ(1u, count);
 
     EXPECT_EQ(memProperties.maxClockRate, 0u);
-    auto &productHelper = device->getProductHelper();
-    auto hwInfo = *NEO::defaultHwInfo;
-    EXPECT_EQ(memProperties.maxBusWidth, productHelper.getDeviceMemoryMaxBusWidthInBits(hwInfo));
+    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
     EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
 }
 

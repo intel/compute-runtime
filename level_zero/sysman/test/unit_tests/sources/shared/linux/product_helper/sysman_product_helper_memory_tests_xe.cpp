@@ -86,13 +86,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
         EXPECT_EQ(properties.physicalSize, mockIntegratedDevicePhysicalSize);
     } else {
         EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
-        if (defaultHwInfo->platform.eRenderCoreFamily == IGFX_XE_HPC_CORE) {
-            constexpr uint32_t mockNumChannelsPerHbmStack = 4;
-            constexpr uint32_t expectedActiveStacks = 3; // PVC XT default
-            EXPECT_EQ(properties.numChannels, static_cast<int32_t>(expectedActiveStacks * mockNumChannelsPerHbmStack));
-        } else {
-            EXPECT_EQ(properties.numChannels, numMemoryChannels);
-        }
+        EXPECT_EQ(properties.numChannels, numMemoryChannels);
         EXPECT_EQ(properties.busWidth, memoryBusWidth);
         EXPECT_EQ(properties.type, ZES_MEM_TYPE_HBM);
         EXPECT_EQ(properties.subdeviceId, 0u);
