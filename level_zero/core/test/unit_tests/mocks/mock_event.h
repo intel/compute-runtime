@@ -203,6 +203,7 @@ class MockEvent : public ::L0::Event {
     ze_result_t hostEventSetValue(State eventState) override {
         return ZE_RESULT_SUCCESS;
     }
+    ::L0::Event *toBase() { return static_cast<::L0::Event *>(this); }
     void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) override {}
     uint32_t getPacketsUsedInLastKernel() override { return 1; }
     uint32_t getPacketsInUse() const override { return 1; }

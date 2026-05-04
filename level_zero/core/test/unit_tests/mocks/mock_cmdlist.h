@@ -647,7 +647,7 @@ struct Mock<CommandList> : public CommandList {
                       const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents));
     ADDMETHOD_NOBASE(appendSignalExternalSemaphores, ze_result_t, ZE_RESULT_SUCCESS,
-                     (size_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
+                     (uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                       const ze_external_semaphore_signal_params_ext_t *params, ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents));
 

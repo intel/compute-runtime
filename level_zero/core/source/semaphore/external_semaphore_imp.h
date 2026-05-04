@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,11 +29,12 @@ class ExternalSemaphoreImp : public ExternalSemaphore {
     ze_result_t initialize(ze_device_handle_t device, const ze_external_semaphore_ext_desc_t *semaphoreDesc);
     ze_result_t releaseExternalSemaphore() override;
 
+    ExternalSemaphore *toBase() { return static_cast<ExternalSemaphore *>(this); }
+
     std::unique_ptr<NEO::ExternalSemaphore> neoExternalSemaphore;
 
   protected:
     Device *device = nullptr;
-    const ze_external_semaphore_ext_desc_t *desc;
 };
 
 class ExternalSemaphoreController : NEO::NonCopyableAndNonMovableClass {
@@ -41,6 +42,13 @@ class ExternalSemaphoreController : NEO::NonCopyableAndNonMovableClass {
     enum SemaphoreOperation {
         Wait,
         Signal
+    };
+
+    struct ProxyEvent {
+        Event *event;
+        ExternalSemaphore *extSemaphore;
+        uint64_t fenceValue;
+        SemaphoreOperation operation;
     };
 
     static std::unique_ptr<ExternalSemaphoreController> create();
@@ -71,8 +79,7 @@ class ExternalSemaphoreController : NEO::NonCopyableAndNonMovableClass {
         joinThread();
 
         for (auto it = proxyEvents.begin(); it != proxyEvents.end(); ++it) {
-            Event *event = std::get<0>(*it);
-            event->destroy();
+            it->event->destroy();
         }
 
         for (auto event : processedProxyEvents) {
@@ -95,7 +102,7 @@ class ExternalSemaphoreController : NEO::NonCopyableAndNonMovableClass {
     std::unordered_map<ze_device_handle_t, std::vector<EventPool *>> eventPoolsMap;
     std::unordered_map<ze_device_handle_t, size_t> eventsCreatedFromLatestPoolMap;
     const size_t maxEventCountInPool = 20u;
-    std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t, SemaphoreOperation>> proxyEvents;
+    std::vector<ProxyEvent> proxyEvents;
     std::vector<Event *> processedProxyEvents;
     bool continueRunning = true;
 

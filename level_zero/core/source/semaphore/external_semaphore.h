@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,9 +32,6 @@ struct ExternalSemaphore : _ze_external_semaphore_ext_handle_t {
 
     static ExternalSemaphore *fromHandle(ze_external_semaphore_ext_handle_t handle) { return static_cast<ExternalSemaphore *>(handle); }
     inline ze_external_semaphore_ext_handle_t toHandle() { return this; }
-
-  protected:
-    ze_external_semaphore_ext_desc_t desc;
 };
 
 } // namespace L0

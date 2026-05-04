@@ -755,7 +755,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     if (NEO::debugManager.flags.OverrideEventSynchronizeTimeout.get() != -1) {
         timeout = NEO::debugManager.flags.OverrideEventSynchronizeTimeout.get();
     }
-    auto csrForCacheFlush = this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    auto neoDevice = this->device->getNEODevice();
+    auto csrForCacheFlush = neoDevice->getDefaultEngine().commandStreamReceiver;
     TaskCountType taskCountToWaitForL3Flush = 0;
     if (this->isCacheFlushRequiredForHostSync()) {
         taskCountToWaitForL3Flush = csrForCacheFlush->flushTagUpdateIfRequired();
@@ -766,6 +767,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
     const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInterruptFence());
 
+    auto *assertHndlr = neoDevice->getRootDeviceEnvironment().assertHandler.get();
     do {
         if (this->heapfullCbEventWithProfiling) {
             synchronizeTimestampCompletionWithTimeout();
@@ -791,8 +793,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                 this->resetKernelForPrintf();
                 this->resetKernelWithPrintfDeviceMutex();
             }
-            if (device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
-                device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
+            if (assertHndlr) {
+                assertHndlr->printAssertAndAbort();
             }
             if (NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.get() == 1) {
                 const bool hangDetected = csrForCacheFlush->isGpuHangDetected();
@@ -812,8 +814,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         if (elapsedTimeSinceGpuHangCheck.count() >= this->gpuHangCheckPeriod.count()) {
             lastHangCheckTime = currentTime;
             if (csrForCacheFlush->isGpuHangDetected()) {
-                if (device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
-                    device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
+                if (assertHndlr) {
+                    assertHndlr->printAssertAndAbort();
                 }
                 return ZE_RESULT_ERROR_DEVICE_LOST;
             }
@@ -829,8 +831,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
     } while (timeDiff < timeout);
 
-    if (device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
-        device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
+    if (assertHndlr) {
+        assertHndlr->printAssertAndAbort();
     }
     return ret;
 }

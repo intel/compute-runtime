@@ -228,7 +228,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                                                      const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                      uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
-    virtual ze_result_t appendSignalExternalSemaphores(size_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
+    virtual ze_result_t appendSignalExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                                                        const ze_external_semaphore_signal_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                        uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;

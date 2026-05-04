@@ -161,9 +161,8 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenEnqueueSignalFailsWhenExternalSemapho
 
     driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
     auto proxyEvent = std::make_unique<MockExternalSemaphoreEvent>();
-    auto hProxyEvent = proxyEvent->toHandle();
 
-    driverHandle->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphore)), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
+    driverHandle->externalSemaphoreController->proxyEvents.emplace_back(proxyEvent->toBase(), ExternalSemaphore::fromHandle(hSemaphore), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal);
     EXPECT_EQ(driverHandle->externalSemaphoreController->proxyEvents.size(), 1u);
 
     proxyEvent->hostSignal(false);
@@ -205,9 +204,8 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenSemaphoreSignalOperationEventWhenExte
 
     driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
     auto proxyEvent = std::make_unique<MockExternalSemaphoreEvent>();
-    auto hProxyEvent = proxyEvent->toHandle();
 
-    driverHandle->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphore)), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
+    driverHandle->externalSemaphoreController->proxyEvents.emplace_back(proxyEvent->toBase(), ExternalSemaphore::fromHandle(hSemaphore), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal);
     EXPECT_EQ(driverHandle->externalSemaphoreController->proxyEvents.size(), 1u);
 
     proxyEvent->hostSignal(false);

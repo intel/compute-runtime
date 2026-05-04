@@ -41,7 +41,6 @@ ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device, const ze_e
 
 ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze_external_semaphore_ext_desc_t *semaphoreDesc) {
     this->device = Device::fromHandle(device);
-    this->desc = semaphoreDesc;
     NEO::ExternalSemaphore::Type externalSemaphoreType;
     void *handle = nullptr;
     const char *name = nullptr;
@@ -153,31 +152,37 @@ ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_device_handle_t h
 }
 
 void ExternalSemaphoreController::processProxyEvents() {
-    for (auto it = proxyEvents.rbegin(); it != proxyEvents.rend();) {
-        Event *event = std::get<0>(*it);
-        ExternalSemaphoreImp *externalSemaphoreImp = static_cast<ExternalSemaphoreImp *>(std::get<1>(*it));
-        uint64_t fenceValue = std::get<2>(*it);
-        SemaphoreOperation operation = std::get<3>(*it);
+    for (auto it = proxyEvents.begin(); it != proxyEvents.end();) {
+        Event *event = it->event;
+        ExternalSemaphoreImp *extSemaphore = static_cast<ExternalSemaphoreImp *>(it->extSemaphore);
+        uint64_t fenceValue = it->fenceValue;
+        SemaphoreOperation operation = it->operation;
+
+        auto neoSemaphore = extSemaphore->neoExternalSemaphore.get();
 
         if (operation == SemaphoreOperation::Wait) {
-            if (externalSemaphoreImp->neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Initial) {
-                externalSemaphoreImp->neoExternalSemaphore->enqueueWait(&fenceValue);
+            if (neoSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Initial) {
+                neoSemaphore->enqueueWait(&fenceValue);
             }
-            if (externalSemaphoreImp->neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled) {
+            if (neoSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled) {
                 event->hostSignal(false);
-                it = std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t, SemaphoreOperation>>::reverse_iterator(this->proxyEvents.erase((++it).base()));
+                it = this->proxyEvents.erase(it);
                 this->processedProxyEvents.push_back(event);
             } else {
                 ++it;
             }
         } else {
-            ze_result_t ret = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+            // Timeout value doesn't matter here since the event should already
+            //   be signaled on the host side by the time it processes the
+            //   Signal operation for the proxy event.
+            ze_result_t ret = event->hostSynchronize(20);
             if (ret == ZE_RESULT_SUCCESS) {
-                externalSemaphoreImp->neoExternalSemaphore->enqueueSignal(&fenceValue);
+                neoSemaphore->enqueueSignal(&fenceValue);
+                event->destroy();
+                it = this->proxyEvents.erase(it);
+            } else {
+                ++it;
             }
-
-            event->destroy();
-            it = std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t, SemaphoreOperation>>::reverse_iterator(this->proxyEvents.erase((++it).base()));
         }
     }
 }
