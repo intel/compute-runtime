@@ -7,10 +7,13 @@
 
 #include "file_io.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/stdio.h"
 
 #include <cstring>
+#include <filesystem>
+#include <mutex>
 #include <new>
 
 namespace NEO {
@@ -52,8 +55,18 @@ size_t writeDataToFile(
     size_t nsize = 0;
 
     DEBUG_BREAK_IF(nullptr == filename);
+    static const std::string path = debugManager.flags.ForceLoggingDirectory.get() != "unk" ? debugManager.flags.ForceLoggingDirectory.get() : "";
+    std::string fullPath = path + filename;
+    static std::once_flag createDirectoryOnceFlag;
+    std::call_once(createDirectoryOnceFlag, [&]() {
+        if (!path.empty()) {
+            std::error_code ec;
+            std::filesystem::create_directories(std::filesystem::path(path).parent_path(), ec);
+            UNRECOVERABLE_IF(ec.value() != 0);
+        }
+    });
 
-    fopen_s(&fp, filename, append ? "ab" : "wb");
+    fopen_s(&fp, fullPath.c_str(), append ? "ab" : "wb");
     if (fp) {
         nsize = fwrite(data.data(), sizeof(unsigned char), data.size(), fp);
         fclose(fp);

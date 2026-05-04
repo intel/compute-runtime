@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/file_io.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/stdio.h"
 #include "shared/source/utilities/io_functions.h"
@@ -56,13 +57,15 @@ size_t writeDataToFile(
     bool append) {
 
     DEBUG_BREAK_IF(nullptr == filename);
+    std::string path = debugManager.flags.ForceLoggingDirectory.get() != "unk" ? debugManager.flags.ForceLoggingDirectory.get() : "";
+    std::string fullPath = path + filename;
 
     if (!append) {
-        NEO::virtualFileList[filename].str({});
+        NEO::virtualFileList[fullPath].str({});
     }
-    NEO::virtualFileList[filename] << data;
+    NEO::virtualFileList[fullPath] << data;
 
-    return NEO::virtualFileList[filename].str().size();
+    return NEO::virtualFileList[fullPath].str().size();
 }
 } // namespace NEO
 

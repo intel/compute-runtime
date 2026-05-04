@@ -350,6 +350,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, sipFifoValidNodeMaxTimeoutMs, -1, "-1: default 1
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideLatePreemptionStart, 0, "-1: default. >=0: override late preemption start mode")
 
 /*LOGGING FLAGS*/
+DECLARE_DEBUG_VARIABLE(std::string, ForceLoggingDirectory, std::string("unk"), "Force directory for debug logs")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
 DECLARE_DEBUG_VARIABLE(bool, PrintOsContextInitializations, false, "print initialized OsContexts to standard output")
 DECLARE_DEBUG_VARIABLE(bool, PrintDeviceAndEngineIdOnSubmission, false, "print submissions device and engine IDs to standard output")
