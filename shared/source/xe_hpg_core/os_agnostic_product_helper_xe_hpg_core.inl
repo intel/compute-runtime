@@ -20,4 +20,12 @@ uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const H
     return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
 }
 
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
+    if (debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
+        return debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
+    }
+    return 1u;
+}
+
 } // namespace NEO
