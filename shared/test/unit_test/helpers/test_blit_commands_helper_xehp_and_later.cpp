@@ -433,8 +433,8 @@ HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenRe
     EXPECT_TRUE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
 }
 
-HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnFalse, IsXe3Core) {
-    EXPECT_FALSE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
+HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnTrue, IsXe3Core) {
+    EXPECT_TRUE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
 }
 
 HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsCalledThenCmdDetailsArePrintedToStdOutput, IsXeHPOrAbove) {

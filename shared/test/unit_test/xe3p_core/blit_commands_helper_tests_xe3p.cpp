@@ -159,6 +159,6 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenSrcGraphicAlloctionAndStatelessFlagSetAndS
     EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
 }
 
-HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnFalse, IsXe3pCore) {
-    EXPECT_FALSE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
+HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnTrue, IsXe3pCore) {
+    EXPECT_TRUE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
 }

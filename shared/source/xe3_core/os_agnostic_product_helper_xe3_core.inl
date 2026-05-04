@@ -83,7 +83,7 @@ bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
-    return false;
+    return true;
 }
 
 template <>
