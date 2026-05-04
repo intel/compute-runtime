@@ -53,7 +53,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
         if (buffer && returnMockAllocationStruct) {
             auto alignedPtr = reinterpret_cast<uintptr_t>(alignDown(buffer, sizeof(uint32_t)));
             auto offset = reinterpret_cast<uintptr_t>(buffer) - alignedPtr;
-            return {nullptr, alignedPtr, offset, &alignedAlloc, true};
+            return {nullptr, alignedPtr, offset, &alignedAlloc, hostPointerNeedsFlush};
         }
         if (buffer && !failAlignedAlloc) {
             return {nullptr, 0, 0, &alignedAlloc, true};
@@ -219,6 +219,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     bool failAlignedAlloc = false;
     bool returnMockAllocationStruct = false;
     bool returnBaseAllocationStruct = false;
+    bool hostPointerNeedsFlush = true;
 };
 
 HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledWithNullDstPtrThenAppendMemoryCopyWithappendMemoryCopyReturnsError) {
@@ -692,6 +693,62 @@ HWTEST_F(CommandListAppend, givenCommandListWhenAppendMemoryFillCalledThenAppend
     int pattern = 1;
     cmdList.appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdList.appendBlitFillCalledTimes, 0u);
+}
+
+HWTEST_F(CommandListAppend, givenCommandListWhenMemoryFillWithNonUsmPtrThenDestinationAllocationInSystemMemoryIsAlwaysSet) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    cmdList.returnMockAllocationStruct = true;
+    cmdList.hostPointerNeedsFlush = false;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->importExternalPointer(dstPtr, MemoryConstants::pageSize));
+    int pattern = 0x1;
+
+    cmdList.appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 64u, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(cmdList.usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(cmdList.usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->releaseImportedPointer(dstPtr));
+}
+
+HWTEST_F(CommandListAppend, givenCommandListWhenMemoryFillWithUsmHostPtrThenDestinationAllocationInSystemMemoryIsSetFromAlignedAllocDataNeedsFlush) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    cmdList.returnBaseAllocationStruct = true;
+
+    constexpr size_t allocSize = 4096;
+    void *dstPtr = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, allocSize, allocSize, &dstPtr));
+    int pattern = 0x1;
+
+    cmdList.appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(cmdList.usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(cmdList.usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(CommandListAppend, givenCommandListWhenMemoryFillWithUsmDevicePtrThenDestinationAllocationInSystemMemoryIsNotSet) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    cmdList.returnBaseAllocationStruct = true;
+
+    constexpr size_t allocSize = 4096;
+    void *dstPtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, allocSize, allocSize, &dstPtr));
+    int pattern = 0x1;
+
+    cmdList.appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(cmdList.usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_FALSE(cmdList.usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstPtr);
 }
 
 HWTEST_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventsThenSemaphoreWaitAndPipeControlAreFound) {

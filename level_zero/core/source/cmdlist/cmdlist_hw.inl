@@ -2702,11 +2702,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     auto dstAllocation = this->getAlignedAllocationData(this->device, sharedSystemEnabled, ptr, size, false, false, nullptr);
-    if (!(dstAllocation.svmAllocData) && (sharedSystemEnabled == false) && (neoDevice->areSharedSystemAllocationsAllowed() == false) && (device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS)) {
-        // host pointer base address is invalid
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    bool hostPointerNeedsFlush = dstAllocation.needsFlush;
+    if (dstAllocation.svmAllocData == nullptr) {
+        if ((sharedSystemEnabled == false) && (neoDevice->areSharedSystemAllocationsAllowed() == false) && (device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS)) {
+            // host pointer base address is invalid
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        hostPointerNeedsFlush = true;
     }
-
     if ((dstAllocation.alloc == nullptr) && (sharedSystemEnabled == false)) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -2723,7 +2726,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin, builtInMode);
 
     launchParams.isBuiltInKernel = true;
-    launchParams.isDestinationAllocationInSystemMemory = dstAllocation.needsFlush;
+    launchParams.isDestinationAllocationInSystemMemory = hostPointerNeedsFlush;
     if (dstAllocation.alloc) {
         if constexpr (checkIfAllocationImportedRequired()) {
             launchParams.isDestinationAllocationImported = dstAllocation.alloc->getIsImported();
