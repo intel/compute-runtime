@@ -1005,7 +1005,7 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
         privateState.internalResidencyContainer.push_back(image->getMcsAllocation());
     }
 
-    auto imageInfo = image->getImageInfo();
+    const auto &imageInfo = image->getImageInfo();
     auto clChannelType = getClChannelDataType(image->getImageDesc().format);
     auto clChannelOrder = getClChannelOrder(image->getImageDesc().format, image->isSrgb());
 

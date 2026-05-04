@@ -44,7 +44,7 @@ struct Image : _ze_image_handle_t {
                                        uint32_t bindlessSlot,
                                        bool isMediaBlockArg,
                                        uint32_t mipLevel) = 0;
-    virtual NEO::ImageInfo getImageInfo() = 0;
+    virtual const NEO::ImageInfo &getImageInfo() = 0;
     virtual ze_image_desc_t getImageDesc() = 0;
     virtual ze_result_t getMemoryProperties(ze_image_memory_properties_exp_t *pMemoryProperties) = 0;
     virtual ze_result_t allocateBindlessSlot() = 0;

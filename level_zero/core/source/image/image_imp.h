@@ -34,7 +34,7 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
 
     NEO::GraphicsAllocation *getAllocation() override { return allocation; }
     NEO::GraphicsAllocation *getImplicitArgsAllocation() override { return implicitArgsAllocation; }
-    NEO::ImageInfo getImageInfo() override { return imgInfo; }
+    const NEO::ImageInfo &getImageInfo() override { return imgInfo; }
     ze_image_desc_t getImageDesc() override {
         return imageFormatDesc;
     }

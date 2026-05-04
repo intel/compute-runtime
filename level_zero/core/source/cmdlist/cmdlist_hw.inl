@@ -829,7 +829,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
     auto image = Image::fromHandle(hDstImage);
-    auto imgInfo = image->getImageInfo();
+    const auto &imgInfo = image->getImageInfo();
     auto bytesPerPixel = static_cast<uint32_t>(imgInfo.surfaceFormat->imageElementSizeInBytes);
     Vec3<size_t> imgSize = {image->getImageDesc().width,
                             image->getImageDesc().height,
@@ -897,14 +897,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), false, remoteCopy, false, image->getImageInfo().imgDesc.numMipLevels);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), false, remoteCopy, false, imgInfo.imgDesc.numMipLevels);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        size_t imgRowPitch = image->getImageInfo().rowPitch;
-        size_t imgSlicePitch = image->getImageInfo().slicePitch;
+        size_t imgRowPitch = imgInfo.rowPitch;
+        size_t imgSlicePitch = imgInfo.slicePitch;
         this->commandContainer.addToResidencyContainer(allocationStruct.alloc);
         auto ptr = ptrOffset(allocationStruct.alignedAllocationPtr, allocationStruct.offset);
         auto status = appendCopyImageBlit(ptr, nullptr, ptrOffset(image->getAllocation()->getGpuAddress(), imgInfo.offset), image->getAllocation(),
@@ -960,7 +960,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn, builtInMode);
 
     builtinSetArg(builtinKernel, 0, allocationStruct.alignedAllocationPtr, allocationStruct.alloc);
-    builtinKernel->setArgRedescribedImage(1u, image->toHandle(), false, getRegionMipLevel(pDstRegion, image->getImageInfo().imgDesc.numMipLevels));
+    builtinKernel->setArgRedescribedImage(1u, image->toHandle(), false, getRegionMipLevel(pDstRegion, imgInfo.imgDesc.numMipLevels));
     builtinKernel->setArgumentValue(2u, sizeof(size_t), &allocationStruct.offset);
 
     uint32_t origin[] = {pDstRegion->originX,
@@ -1048,7 +1048,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
     auto image = Image::fromHandle(hSrcImage);
-    auto imgInfo = image->getImageInfo();
+    const auto &imgInfo = image->getImageInfo();
     auto bytesPerPixel = static_cast<uint32_t>(imgInfo.surfaceFormat->imageElementSizeInBytes);
     Vec3<size_t> imgSize = {image->getImageDesc().width,
                             image->getImageDesc().height,
@@ -1116,7 +1116,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, true, remoteCopy, false, image->getImageInfo().imgDesc.numMipLevels);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, true, remoteCopy, false, imgInfo.imgDesc.numMipLevels);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
@@ -1189,7 +1189,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn, builtInMode);
 
-    builtinKernel->setArgRedescribedImage(0u, image->toHandle(), false, getRegionMipLevel(pSrcRegion, image->getImageInfo().imgDesc.numMipLevels));
+    builtinKernel->setArgRedescribedImage(0u, image->toHandle(), false, getRegionMipLevel(pSrcRegion, imgInfo.imgDesc.numMipLevels));
     builtinSetArg(builtinKernel, 1, allocationStruct.alignedAllocationPtr, allocationStruct.alloc);
     uint32_t origin[] = {pSrcRegion->originX,
                          pSrcRegion->originY,
@@ -1342,10 +1342,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), false, remoteCopy, false, srcImage->getImageInfo().imgDesc.numMipLevels);
+    const auto &srcImgInfo = srcImage->getImageInfo();
+    const auto &dstImgInfo = dstImage->getImageInfo();
+
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), false, remoteCopy, false, srcImgInfo.imgDesc.numMipLevels);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
-        auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+        auto bytesPerPixel = static_cast<uint32_t>(srcImgInfo.surfaceFormat->imageElementSizeInBytes);
 
         ze_image_region_t region = getRegionFromImageDesc(srcImage->getImageDesc());
         Vec3<size_t> srcImgSize = {region.width, region.height, region.depth};
@@ -1353,15 +1356,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         region = getRegionFromImageDesc(dstImage->getImageDesc());
         Vec3<size_t> dstImgSize = {region.width, region.height, region.depth};
 
-        auto srcRowPitch = srcImage->getImageInfo().rowPitch;
+        auto srcRowPitch = srcImgInfo.rowPitch;
         auto srcSlicePitch =
-            (srcImage->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : srcRegion.height) * srcRowPitch;
+            (srcImgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : srcRegion.height) * srcRowPitch;
 
-        auto dstRowPitch = dstImage->getImageInfo().rowPitch;
+        auto dstRowPitch = dstImgInfo.rowPitch;
         auto dstSlicePitch =
-            (dstImage->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : dstRegion.height) * dstRowPitch;
+            (dstImgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : dstRegion.height) * dstRowPitch;
 
-        auto status = appendCopyImageBlit(ptrOffset(srcImage->getAllocation()->getGpuAddress(), srcImage->getImageInfo().offset), srcImage->getAllocation(), ptrOffset(dstImage->getAllocation()->getGpuAddress(), dstImage->getImageInfo().offset), dstImage->getAllocation(),
+        auto status = appendCopyImageBlit(ptrOffset(srcImage->getAllocation()->getGpuAddress(), srcImgInfo.offset), srcImage->getAllocation(), ptrOffset(dstImage->getAllocation()->getGpuAddress(), dstImgInfo.offset), dstImage->getAllocation(),
                                           {srcRegion.originX, srcRegion.originY, srcRegion.originZ}, {dstRegion.originX, dstRegion.originY, dstRegion.originZ}, srcRowPitch, srcSlicePitch,
                                           dstRowPitch, dstSlicePitch, bytesPerPixel, {srcRegion.width, srcRegion.height, srcRegion.depth}, srcImgSize, dstImgSize,
                                           event, numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -1400,10 +1403,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     ze_group_count_t kernelArgs{srcRegion.width / groupSizeX, srcRegion.height / groupSizeY,
                                 srcRegion.depth / groupSizeZ};
 
-    const bool isPackedFormat = NEO::ImageHelper::areImagesCompatibleWithPackedFormat(device->getProductHelper(), srcImage->getImageInfo(), dstImage->getImageInfo(), srcImage->getAllocation(), dstImage->getAllocation(), srcRegion.width);
+    const bool isPackedFormat = NEO::ImageHelper::areImagesCompatibleWithPackedFormat(device->getProductHelper(), srcImgInfo, dstImgInfo, srcImage->getAllocation(), dstImage->getAllocation(), srcRegion.width);
 
-    kernel->setArgRedescribedImage(0, srcImage->toHandle(), isPackedFormat, getRegionMipLevel(pSrcRegion, srcImage->getImageInfo().imgDesc.numMipLevels));
-    kernel->setArgRedescribedImage(1, dstImage->toHandle(), isPackedFormat, getRegionMipLevel(pDstRegion, dstImage->getImageInfo().imgDesc.numMipLevels));
+    kernel->setArgRedescribedImage(0, srcImage->toHandle(), isPackedFormat, getRegionMipLevel(pSrcRegion, srcImgInfo.imgDesc.numMipLevels));
+    kernel->setArgRedescribedImage(1, dstImage->toHandle(), isPackedFormat, getRegionMipLevel(pDstRegion, dstImgInfo.imgDesc.numMipLevels));
 
     kernel->setArgumentValue(2, sizeof(srcOffset), &srcOffset);
     kernel->setArgumentValue(3, sizeof(dstOffset), &dstOffset);
