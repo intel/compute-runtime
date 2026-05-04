@@ -1551,6 +1551,100 @@ TEST_F(DebugApiLinuxTestXe, GivenVmBindOpEventWhenHandlingEventThenVmBindMapIsCo
     EXPECT_TRUE(0 == std::memcmp(&vmBindOp, &vmBindOpData.vmBindOp, sizeof(NEO::EuDebugEventVmBindOp)));
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenVmBindOnDifferentClientWhenHandlingVmBindOpAndUfenceAndMetadataEventsThenCorrectConnectionIsUsed) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+
+    // Create two clients with different handles
+    constexpr uint64_t clientHandle1 = 0xAABB;
+    constexpr uint64_t clientHandle2 = 0xCCDD;
+
+    session->clientHandleToConnection.clear();
+
+    NEO::EuDebugEventClient client1;
+    client1.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client1.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client1.clientHandle = clientHandle1;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
+
+    NEO::EuDebugEventClient client2;
+    client2.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client2.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client2.clientHandle = clientHandle2;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client2));
+
+    // Set session's clientHandle to client1, but create vmBind on client2
+    session->clientHandle = clientHandle1;
+
+    NEO::EuDebugEventVmBind vmBind{};
+    vmBind.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBind);
+    vmBind.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange)));
+    vmBind.base.len = sizeof(NEO::EuDebugEventVmBind);
+    vmBind.base.seqno = 1;
+    vmBind.clientHandle = clientHandle2; // vmBind belongs to client2
+    vmBind.flags = static_cast<uint64_t>(NEO::EuDebugParam::eventVmBindFlagUfence);
+    vmBind.numBinds = 1;
+
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBind.base));
+
+    // Verify vmBind was stored in client2's connection
+    EXPECT_EQ(session->clientHandleToConnection[clientHandle2]->vmBindMap.size(), 1u);
+    EXPECT_EQ(session->clientHandleToConnection[clientHandle1]->vmBindMap.size(), 0u);
+
+    // Handle vmBindOp - should find the vmBind in client2 despite session->clientHandle being client1
+    NEO::EuDebugEventVmBindOp vmBindOp{};
+    vmBindOp.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOp);
+    vmBindOp.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    vmBindOp.base.len = sizeof(NEO::EuDebugEventVmBindOp);
+    vmBindOp.base.seqno = 2;
+    vmBindOp.numExtensions = 1;
+    vmBindOp.addr = 0xffff1234;
+    vmBindOp.range = 65536;
+    vmBindOp.vmBindRefSeqno = vmBind.base.seqno;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOp.base));
+
+    // Verify vmBindOp was stored in client2's connection
+    auto &vmBindMap2 = session->clientHandleToConnection[clientHandle2]->vmBindMap;
+    EXPECT_EQ(vmBindMap2[vmBind.base.seqno].pendingNumBinds, 0ull);
+    EXPECT_EQ(session->clientHandleToConnection[clientHandle2]->vmBindIdentifierMap[vmBindOp.base.seqno], vmBindOp.vmBindRefSeqno);
+    // Verify client1's connection was NOT modified
+    EXPECT_EQ(session->clientHandleToConnection[clientHandle1]->vmBindIdentifierMap.size(), 0u);
+
+    // Handle vmBindOpMetadata - should find the vmBindOp in client2
+    NEO::EuDebugEventVmBindOpMetadata vmBindOpMetadata{};
+    vmBindOpMetadata.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOpMetadata);
+    vmBindOpMetadata.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    vmBindOpMetadata.base.len = sizeof(NEO::EuDebugEventVmBindOpMetadata);
+    vmBindOpMetadata.base.seqno = 3;
+    vmBindOpMetadata.vmBindOpRefSeqno = vmBindOp.base.seqno;
+    vmBindOpMetadata.metadataHandle = 42;
+    vmBindOpMetadata.metadataCookie = 0x3;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOpMetadata.base));
+
+    // Verify metadata was stored in client2's vmBindOp
+    auto &vmBindOpData = vmBindMap2[vmBind.base.seqno].vmBindOpMap[vmBindOp.base.seqno];
+    EXPECT_EQ(vmBindOpData.pendingNumExtensions, 0ull);
+    EXPECT_EQ(vmBindOpData.vmBindOpMetadataVec.size(), 1ull);
+
+    // Handle vmBindUfence - should find the vmBind in client2
+    NEO::EuDebugEventVmBindUfence vmBindUfence{};
+    vmBindUfence.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindUfence);
+    vmBindUfence.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate))) | static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitNeedAck)));
+    vmBindUfence.base.len = sizeof(NEO::EuDebugEventVmBindUfence);
+    vmBindUfence.base.seqno = 4;
+    vmBindUfence.vmBindRefSeqno = vmBind.base.seqno;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence.base));
+
+    // Verify ufence was stored in client2's vmBind
+    EXPECT_TRUE(vmBindMap2[vmBind.base.seqno].uFenceReceived);
+}
+
 class DebugApiLinuxTestXeMetadataOpEventTest : public DebugApiLinuxTestXe,
                                                public ::testing::WithParamInterface<uint64_t> {
   public:

@@ -449,8 +449,15 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: drm_xe_eudebug_event_vm_bind_op vm_bind_ref_seqno = %llu num_extensions = %llu addr = 0x%llx range = %llu\n",
                                 static_cast<uint64_t>(vmBindOp.vmBindRefSeqno), static_cast<uint64_t>(vmBindOp.numExtensions),
                                 static_cast<uint64_t>(vmBindOp.addr), static_cast<uint64_t>(vmBindOp.range));
-        auto &vmBindMap = clientHandleToConnection[clientHandle]->vmBindMap;
-        UNRECOVERABLE_IF(vmBindMap.find(vmBindOp.vmBindRefSeqno) == vmBindMap.end());
+        ClientConnectionXe *vmBindOpOwner = nullptr;
+        for (const auto &conn : clientHandleToConnection) {
+            if (conn.second->vmBindMap.find(vmBindOp.vmBindRefSeqno) != conn.second->vmBindMap.end()) {
+                vmBindOpOwner = conn.second.get();
+                break;
+            }
+        }
+        UNRECOVERABLE_IF(vmBindOpOwner == nullptr);
+        auto &vmBindMap = vmBindOpOwner->vmBindMap;
         auto &vmBindData = vmBindMap[vmBindOp.vmBindRefSeqno];
         UNRECOVERABLE_IF(!vmBindData.pendingNumBinds);
 
@@ -458,15 +465,22 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         vmBindOpData.pendingNumExtensions = vmBindOp.numExtensions;
         vmBindOpData.vmBindOp = vmBindOp;
         vmBindData.pendingNumBinds--;
-        clientHandleToConnection[clientHandle]->vmBindIdentifierMap[vmBindOp.base.seqno] = vmBindOp.vmBindRefSeqno;
+        vmBindOpOwner->vmBindIdentifierMap[vmBindOp.base.seqno] = vmBindOp.vmBindRefSeqno;
     } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindUfence)) {
         NEO::EuDebugEventVmBindUfence vmBindUfence = euDebugInterface->toEuDebugEventVmBindUfence(event);
 
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE vm_bind_ref_seqno = %llu\n",
                                 static_cast<uint64_t>(vmBindUfence.vmBindRefSeqno));
 
-        auto &vmBindMap = clientHandleToConnection[clientHandle]->vmBindMap;
-        UNRECOVERABLE_IF(vmBindMap.find(vmBindUfence.vmBindRefSeqno) == vmBindMap.end());
+        ClientConnectionXe *vmBindUfenceOwner = nullptr;
+        for (const auto &conn : clientHandleToConnection) {
+            if (conn.second->vmBindMap.find(vmBindUfence.vmBindRefSeqno) != conn.second->vmBindMap.end()) {
+                vmBindUfenceOwner = conn.second.get();
+                break;
+            }
+        }
+        UNRECOVERABLE_IF(vmBindUfenceOwner == nullptr);
+        auto &vmBindMap = vmBindUfenceOwner->vmBindMap;
         uint32_t uFenceRequired = vmBindMap[vmBindUfence.vmBindRefSeqno].vmBind.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventVmBindFlagUfence);
         UNRECOVERABLE_IF(!uFenceRequired);
         UNRECOVERABLE_IF(vmBindMap[vmBindUfence.vmBindRefSeqno].uFenceReceived); // Dont expect multiple UFENCE for same vm_bind
@@ -488,8 +502,16 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
                                 static_cast<uint64_t>(vmBindOpMetadata.vmBindOpRefSeqno), static_cast<uint64_t>(vmBindOpMetadata.metadataHandle),
                                 static_cast<uint64_t>(vmBindOpMetadata.metadataCookie));
 
-        auto &vmBindMap = clientHandleToConnection[clientHandle]->vmBindMap;
-        auto &vmBindIdentifierMap = clientHandleToConnection[clientHandle]->vmBindIdentifierMap;
+        ClientConnectionXe *vmBindOpMetadataOwner = nullptr;
+        for (const auto &conn : clientHandleToConnection) {
+            if (conn.second->vmBindIdentifierMap.find(vmBindOpMetadata.vmBindOpRefSeqno) != conn.second->vmBindIdentifierMap.end()) {
+                vmBindOpMetadataOwner = conn.second.get();
+                break;
+            }
+        }
+        UNRECOVERABLE_IF(vmBindOpMetadataOwner == nullptr);
+        auto &vmBindMap = vmBindOpMetadataOwner->vmBindMap;
+        auto &vmBindIdentifierMap = vmBindOpMetadataOwner->vmBindIdentifierMap;
         UNRECOVERABLE_IF(vmBindIdentifierMap.find(vmBindOpMetadata.vmBindOpRefSeqno) == vmBindIdentifierMap.end());
         VmBindSeqNo vmBindSeqNo = vmBindIdentifierMap[vmBindOpMetadata.vmBindOpRefSeqno];
         UNRECOVERABLE_IF(vmBindMap.find(vmBindSeqNo) == vmBindMap.end());
