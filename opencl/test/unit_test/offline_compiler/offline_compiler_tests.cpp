@@ -4792,29 +4792,6 @@ TEST_F(OfflineCompilerTests, givenFormatFlagWithKnownFormatPassedThenEnforceSpec
     EXPECT_TRUE(output.empty());
 }
 
-TEST_F(OfflineCompilerTests, givenPatchtokensFormatFlagThenInvalidFormatWarningIsProduced) {
-    MockOfflineCompiler ocloc;
-    ocloc.uniqueHelper->filesMap = filesMap;
-
-    std::vector<std::string> argvEnforcedFormatPatchtokens = {
-        "ocloc",
-        "-q",
-        "-file",
-        clCopybufferFilename.c_str(),
-        "-spv_only",
-        "--format",
-        "patchtokens"};
-
-    StreamCapture capture;
-    capture.captureStdout();
-    int retVal = ocloc.initialize(argvEnforcedFormatPatchtokens.size(), argvEnforcedFormatPatchtokens);
-    const auto output = capture.getCapturedStdout();
-    ASSERT_EQ(0, retVal);
-
-    const auto expectedOutput{"Invalid format passed: patchtokens. Ignoring.\n"};
-    EXPECT_EQ(expectedOutput, output);
-}
-
 TEST_F(OfflineCompilerTests, givenFormatFlagWithUnknownFormatPassedThenPrintWarning) {
     MockOfflineCompiler ocloc;
     ocloc.uniqueHelper->filesMap = filesMap;

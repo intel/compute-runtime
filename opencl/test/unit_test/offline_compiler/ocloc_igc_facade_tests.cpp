@@ -91,22 +91,6 @@ TEST_F(OclocIgcFacadeTest, GivenIncompatibleIgcInterfacesWhenPreparingIgcThenFai
     EXPECT_EQ(expectedErrorMessage, output);
 }
 
-TEST_F(OclocIgcFacadeTest, GivenMissingPatchtokenInterfaceWhenPreparingIgcThenFailureIsReported) {
-    MockOclocIgcFacade mockIgcFacade{&mockArgHelper};
-    mockIgcFacade.isPatchtokenInterfaceSupportedReturnValue = false;
-
-    StreamCapture capture;
-    capture.captureStdout();
-    const auto igcPreparationResult{mockIgcFacade.initialize(hwInfo)};
-    const auto output{capture.getCapturedStdout()};
-
-    EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, igcPreparationResult);
-    EXPECT_FALSE(mockIgcFacade.isInitialized());
-
-    const std::string expectedErrorMessage{"Error! Patchtoken interface is missing.\n"};
-    EXPECT_EQ(expectedErrorMessage, output);
-}
-
 TEST_F(OclocIgcFacadeTest, GivenFailingCreationOfIgcDeviceContextWhenPreparingIgcThenFailureIsReported) {
     MockOclocIgcFacade mockIgcFacade{&mockArgHelper};
     mockIgcFacade.shouldFailCreationOfIgcDeviceContext = true;

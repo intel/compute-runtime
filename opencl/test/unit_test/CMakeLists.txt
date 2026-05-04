@@ -121,12 +121,9 @@ target_include_directories(igdrcl_tests BEFORE PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
 )
 
-function(neo_gen_kernels platform_it_lower device revision_id forcePatchtokenFormat)
+function(neo_gen_kernels platform_it_lower device revision_id)
   set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
 
-  if(forcePatchtokenFormat)
-    set(formatArgument "--format" "patchtokens")
-  endif()
   set(addrmode "bindful")
 
   set(kernels_to_compile)
@@ -251,7 +248,7 @@ macro(macro_for_each_platform)
   if(WIN32 OR CMAKE_SIZEOF_VOID_P EQUAL 8)
     foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
       parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-      neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} FALSE ${PLATFORM_TEST_KERNELS})
+      neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${PLATFORM_TEST_KERNELS})
       neo_gen_kernels_with_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL} ${TEST_KERNEL_options})
     endforeach()
 
@@ -260,7 +257,7 @@ macro(macro_for_each_platform)
     if(NOT "${${CORE_TYPE_LOWER}_TEST_KERNELS}" STREQUAL "")
       foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
         parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} FALSE ${${CORE_TYPE_LOWER}_TEST_KERNELS})
+        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${${CORE_TYPE_LOWER}_TEST_KERNELS})
       endforeach()
     endif()
 
@@ -269,7 +266,7 @@ macro(macro_for_each_platform)
     if(NOT "${${PLATFORM_IT_LOWER}_TEST_KERNELS}" STREQUAL "")
       foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
         parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} FALSE ${${PLATFORM_IT_LOWER}_TEST_KERNELS})
+        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${${PLATFORM_IT_LOWER}_TEST_KERNELS})
       endforeach()
     endif()
 

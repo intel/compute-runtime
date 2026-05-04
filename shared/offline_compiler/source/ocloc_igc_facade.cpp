@@ -70,11 +70,6 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
-    if (!isPatchtokenInterfaceSupported()) {
-        argHelper->printf("Error! Patchtoken interface is missing.\n");
-        return OCLOC_OUT_OF_HOST_MEMORY;
-    }
-
     igcDeviceCtx = createIgcDeviceContext();
     if (!igcDeviceCtx) {
         argHelper->printf("Error! Cannot create IGC device context!\n");
@@ -116,11 +111,6 @@ bool OclocIgcFacade::isIgcInterfaceCompatible(const std::vector<CIF::InterfaceId
 
 std::string OclocIgcFacade::getIncompatibleInterface(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const {
     return CIF::InterfaceIdCoder::Dec(igcMain->FindIncompatible<IGC::IgcOclDeviceCtx>(&interfacesToIgnore));
-}
-
-bool OclocIgcFacade::isPatchtokenInterfaceSupported() const {
-    CIF::Version_t verMin = 0, verMax = 0;
-    return igcMain->FindSupportedVersions<IGC::IgcOclDeviceCtx>(IGC::OclGenBinaryBase::GetInterfaceId(), verMin, verMax);
 }
 
 CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> OclocIgcFacade::createIgcDeviceContext() const {

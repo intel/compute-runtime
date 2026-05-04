@@ -26,8 +26,6 @@ class MockOclocIgcFacade : public OclocIgcFacade {
     bool shouldFailCreationOfIgcDeviceContext{false};
     std::optional<bool> isIgcInterfaceCompatibleReturnValue{};
     std::optional<std::string> getIncompatibleInterfaceReturnValue{};
-    std::optional<bool> isPatchtokenInterfaceSupportedReturnValue{};
-
     MockOclocIgcFacade(OclocArgHelper *argHelper);
     ~MockOclocIgcFacade() override;
 
@@ -40,8 +38,6 @@ class MockOclocIgcFacade : public OclocIgcFacade {
     bool isIgcInterfaceCompatible(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const override;
 
     std::string getIncompatibleInterface(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const override;
-
-    bool isPatchtokenInterfaceSupported() const override;
 
     CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> createIgcDeviceContext() const override;
 };

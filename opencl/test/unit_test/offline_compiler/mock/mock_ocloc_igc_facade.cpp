@@ -56,14 +56,6 @@ std::string MockOclocIgcFacade::getIncompatibleInterface(const std::vector<CIF::
     }
 }
 
-bool MockOclocIgcFacade::isPatchtokenInterfaceSupported() const {
-    if (isPatchtokenInterfaceSupportedReturnValue.has_value()) {
-        return *isPatchtokenInterfaceSupportedReturnValue;
-    } else {
-        return OclocIgcFacade::isPatchtokenInterfaceSupported();
-    }
-}
-
 CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> MockOclocIgcFacade::createIgcDeviceContext() const {
     if (shouldFailCreationOfIgcDeviceContext) {
         return nullptr;

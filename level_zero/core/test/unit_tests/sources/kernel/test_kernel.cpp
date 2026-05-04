@@ -1241,7 +1241,7 @@ HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitializ
     }
 }
 
-TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndPatchTokenPointerSizeIsZeroThenRayTracingIsInitialized) {
+TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRtDispatchGlobalsPointerSizeIsZeroThenRayTracingIsInitialized) {
     static_cast<OsAgnosticMemoryManager *>(device->getNEODevice()->getMemoryManager())->turnOnFakingBigAllocations();
 
     KernelDescriptor mockDescriptor = {};

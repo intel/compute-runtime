@@ -1719,18 +1719,9 @@ TEST_F(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectE
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 }
 
-class PatchTokenFromBinaryTest : public ProgramSimpleFixture {
-  public:
-    void setUp() {
-        ProgramSimpleFixture::setUp();
-    }
-    void tearDown() {
-        ProgramSimpleFixture::tearDown();
-    }
-};
-using PatchTokenTests = Test<PatchTokenFromBinaryTest>;
+using ProgramBinaryTests = Test<ProgramSimpleFixture>;
 
-TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
+TEST_F(ProgramBinaryTests, WhenBuildingProgramThenGwsIsSet) {
     createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
@@ -1747,9 +1738,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[2]);
 }
 
-TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
-    // PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT
-
+TEST_F(ProgramBinaryTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
     createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
@@ -1782,17 +1771,6 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
 
     delete pKernel;
 }
-
-class ProgramPatchTokenFromBinaryTest : public ProgramSimpleFixture {
-  public:
-    void setUp() {
-        ProgramSimpleFixture::setUp();
-    }
-    void tearDown() {
-        ProgramSimpleFixture::tearDown();
-    }
-};
-typedef Test<ProgramPatchTokenFromBinaryTest> ProgramPatchTokenTests;
 
 TEST(ProgramFromBinaryTests, givenBinaryWithUnknownFormatThenErrorIsReturned) {
     cl_int retVal = CL_INVALID_BINARY;

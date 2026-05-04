@@ -4122,7 +4122,7 @@ TEST_F(KernelTests, GivenCorrectAllocationTypeThenFunctionCheckingSystemMemoryRe
     }
 }
 
-TEST(KernelTest, givenKernelWithNumThreadsRequiredPatchTokenWhenQueryingEuThreadCountThenEuThreadCountIsReturned) {
+TEST(KernelTest, givenKernelWithNumThreadsRequiredWhenQueryingEuThreadCountThenEuThreadCountIsReturned) {
     cl_int retVal = CL_SUCCESS;
     KernelInfo kernelInfo = {};
 
@@ -4140,7 +4140,7 @@ TEST(KernelTest, givenKernelWithNumThreadsRequiredPatchTokenWhenQueryingEuThread
     EXPECT_EQ(123U, euThreadCount);
 }
 
-TEST(KernelTest, givenKernelWithNumGRFRequiredPatchTokenWhenQueryingRegisterCountThenRegisterCountIsReturned) {
+TEST(KernelTest, givenKernelWithNumGRFRequiredWhenQueryingRegisterCountThenRegisterCountIsReturned) {
     cl_int retVal = CL_SUCCESS;
     KernelInfo kernelInfo = {};
 

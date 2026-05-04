@@ -417,7 +417,7 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalVariablesMemorySurfa
     EXPECT_EQ(nullptr, ssInHeap.heapAllocation);
 }
 
-TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantBufferPatchTokensAreReadThenConstantPointerOffsetIsPatchedWith32bitPointer) {
+TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantBufferIsReadThenConstantPointerOffsetIsPatchedWith32bitPointer) {
     MockProgram *prog = pProgram;
 
     // simulate case when constant surface was not allocated
@@ -462,7 +462,7 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
     prog->setConstantSurface(nullptr);
 }
 
-TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPointerPatchTokensAreReadThenGlobalPointerOffsetIsPatchedWith32bitPointer) {
+TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPointerIsReadThenGlobalPointerOffsetIsPatchedWith32bitPointer) {
     MockProgram *prog = pProgram;
 
     // simulate case when constant surface was not allocated
