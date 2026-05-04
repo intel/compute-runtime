@@ -131,3 +131,30 @@ NVLPTEST_F(NvlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_EQ(1u, featureTable.ftrBcsInfo.to_ulong());
     EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
 }
+
+NVLPTEST_F(NvlHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSetToTrue) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &directSubmissionEngines = hwInfo.capabilityTable.directSubmissionEngines;
+
+    for (uint32_t i = 0; i < aub_stream::NUM_ENGINES; i++) {
+        switch (i) {
+        case aub_stream::ENGINE_CCS:
+            EXPECT_TRUE(directSubmissionEngines.data[i].engineSupported);
+            EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
+            EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
+            EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
+            break;
+        case aub_stream::ENGINE_BCS:
+            EXPECT_TRUE(directSubmissionEngines.data[i].engineSupported);
+            EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
+            EXPECT_TRUE(directSubmissionEngines.data[i].useNonDefault);
+            EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
+            break;
+        default:
+            EXPECT_FALSE(directSubmissionEngines.data[i].engineSupported);
+            EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
+            EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
+            EXPECT_FALSE(directSubmissionEngines.data[i].useRootDevice);
+        }
+    }
+}
