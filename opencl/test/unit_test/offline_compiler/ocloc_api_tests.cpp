@@ -1750,7 +1750,7 @@ TEST_F(OclocFallbackTests, GivenNoFormerOclocNameWhenInvalidDeviceErrorIsReturne
     EXPECT_TRUE(capturedStderr.empty());
 }
 
-TEST(OclocApiTests, GivenCacheCommandWithDirArgThenSuccessIsReturned) {
+TEST(OclocApiTests, GivenCacheCommandWithDirArgButNoSubcommandThenErrorIsReturned) {
     const char *argv[] = {
         "ocloc",
         "cache",
@@ -1758,12 +1758,16 @@ TEST(OclocApiTests, GivenCacheCommandWithDirArgThenSuccessIsReturned) {
         "/tmp/test_cache_dir"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
+    StreamCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
 
-    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: No cache action provided."));
 }
 
 TEST(OclocApiTests, GivenCacheCommandWithoutArgumentsThenErrorIsReturned) {
@@ -1781,7 +1785,7 @@ TEST(OclocApiTests, GivenCacheCommandWithoutArgumentsThenErrorIsReturned) {
     std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
-    EXPECT_NE(std::string::npos, output.find("Error: Invalid command line. Expected ocloc cache [options]. See ocloc cache -help\n"));
+    EXPECT_NE(std::string::npos, output.find("Error: No cache action provided."));
 }
 
 TEST(OclocApiTests, GivenCacheCommandWithHelpParameterThenHelpMsgIsPrintedAndSuccessIsReturned) {
@@ -1800,7 +1804,7 @@ TEST(OclocApiTests, GivenCacheCommandWithHelpParameterThenHelpMsgIsPrintedAndSuc
     std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
-    EXPECT_NE(std::string::npos, output.find("Usage: ocloc cache [options]"));
+    EXPECT_NE(std::string::npos, output.find("Usage: ocloc cache [action] [options]"));
 }
 
 TEST(OclocApiTests, GivenCacheCommandWithUnknownArgumentThenErrorIsReturned) {
@@ -1819,7 +1823,7 @@ TEST(OclocApiTests, GivenCacheCommandWithUnknownArgumentThenErrorIsReturned) {
     std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
-    EXPECT_NE(std::string::npos, output.find("Error: Invalid command line. Unknown argument -unknown_arg"));
+    EXPECT_NE(std::string::npos, output.find("Unknown argument -unknown_arg"));
 }
 
 TEST(OclocApiTests, GivenCacheCommandWithDirButMissingValueThenErrorIsReturned) {
@@ -1841,7 +1845,7 @@ TEST(OclocApiTests, GivenCacheCommandWithDirButMissingValueThenErrorIsReturned) 
     EXPECT_NE(std::string::npos, output.find("Error: Invalid command line : -dir must be followed by path to directory"));
 }
 
-TEST(OclocApiTests, GivenCacheCommandWithVerboseArgThenSuccessIsReturned) {
+TEST(OclocApiTests, GivenCacheCommandWithOptionsButNoSubcommandThenErrorIsReturned) {
     const char *argv[] = {
         "ocloc",
         "cache",
@@ -1858,8 +1862,8 @@ TEST(OclocApiTests, GivenCacheCommandWithVerboseArgThenSuccessIsReturned) {
                              nullptr, nullptr, nullptr, nullptr);
     std::string output = capture.getCapturedStdout();
 
-    EXPECT_EQ(retVal, OCLOC_SUCCESS);
-    EXPECT_NE(std::string::npos, output.find("Ocloc cache directory changed to: /tmp/test_cache_dir"));
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: No cache action provided."));
 }
 
 TEST(OclocApiTests, GivenCacheCommandWithVersionArgThenSuccessIsReturned) {
@@ -1881,10 +1885,112 @@ TEST(OclocApiTests, GivenCacheCommandWithVersionArgThenSuccessIsReturned) {
     EXPECT_NE(std::string::npos, output.find("Ocloc cache version:"));
 }
 
-TEST(OclocApiTests, GivenCacheCommandWithShowStatsAndNoStatsFileThenSuccessIsReturned) {
+TEST(OclocApiTests, GivenCacheCommandWithVerboseButNoSubcommandsThenErrorIsReturned) {
     const char *argv[] = {
         "ocloc",
         "cache",
+        "-verbose"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: No cache action provided. Nothing to do. See ocloc cache -help"));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithMultipleCacheActionsThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-show-stats",
+        "-zero-stats"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: Multiple cache actions specified."));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithShowStatsAndVersionThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-show-stats",
+        "-version"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: Multiple cache actions specified."));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithZeroStatsAndVersionThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-zero-stats",
+        "-version"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: Multiple cache actions specified."));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithAllThreeActionsThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-show-stats",
+        "-zero-stats",
+        "-version"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: Multiple cache actions specified."));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithHelpAndCacheActionThenOnlyHelpIsPrinted) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-help",
+        "-zero-stats",
         "-show-stats"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
@@ -1897,15 +2003,59 @@ TEST(OclocApiTests, GivenCacheCommandWithShowStatsAndNoStatsFileThenSuccessIsRet
     std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
-    EXPECT_NE(std::string::npos, output.find("No stats found in cache directory."));
+    EXPECT_NE(std::string::npos, output.find("Usage: ocloc cache [action] [options]"));
 }
 
-TEST(OclocApiTests, GivenCacheCommandWithVerboseAndShowStatsAndNoStatsFileThenSuccessIsReturned) {
+TEST(OclocApiTests, GivenCacheCommandWithHelpAtEndThenOnlyHelpIsPrinted) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-show-stats",
+        "-help"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    EXPECT_NE(std::string::npos, output.find("Usage: ocloc cache [action] [options]"));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithMultipleActionsAndHelpThenOnlyHelpIsPrinted) {
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-show-stats",
+        "-zero-stats",
+        "-help"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    EXPECT_NE(std::string::npos, output.find("Usage: ocloc cache [action] [options]"));
+}
+
+TEST(OclocApiTests, GivenCacheCommandWithMultipleActionsAndVerboseAndDirThenErrorIsReturned) {
     const char *argv[] = {
         "ocloc",
         "cache",
         "-verbose",
-        "-show-stats"};
+        "-dir",
+        "/tmp/cache",
+        "-show-stats",
+        "-zero-stats"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
     StreamCapture capture;
@@ -1916,7 +2066,6 @@ TEST(OclocApiTests, GivenCacheCommandWithVerboseAndShowStatsAndNoStatsFileThenSu
                              nullptr, nullptr, nullptr, nullptr);
     std::string output = capture.getCapturedStdout();
 
-    EXPECT_EQ(retVal, OCLOC_SUCCESS);
-    EXPECT_NE(std::string::npos, output.find("Reading cache statistics from path:"));
-    EXPECT_NE(std::string::npos, output.find("No stats found in cache directories."));
+    EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
+    EXPECT_NE(std::string::npos, output.find("Error: Multiple cache actions specified."));
 }

@@ -483,14 +483,18 @@ int OfflineCompiler::querySupportedDevices(Ocloc::SupportedDevicesMode mode, Ocl
 }
 
 int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper) {
-    bool verbose = false;
-    bool showStats = false;
-    std::string cacheDir;
+    enum class CacheCommandOption {
+        none,
+        version,
+        showStats,
+        zeroStats,
+    };
 
-    if (numArgs < 3) {
-        helper->printf("Error: Invalid command line. Expected ocloc cache [options]. See ocloc cache -help\n");
-        return OCLOC_INVALID_COMMAND_LINE;
-    }
+    CacheCommandOption commandOption = CacheCommandOption::none;
+    bool helpRequested = false;
+    bool multipleActionsDetected = false;
+    bool verbose = false;
+    std::string cacheDir;
 
     for (size_t i = 2; i < numArgs; ++i) {
         if (allArgs[i] == "-dir") {
@@ -498,31 +502,65 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
                 helper->printf("Error: Invalid command line : -dir must be followed by path to directory\n");
                 return OCLOC_INVALID_COMMAND_LINE;
             }
-            cacheDir = std::move(allArgs[++i]);
+            cacheDir = allArgs[++i];
 
         } else if (allArgs[i] == "-verbose") {
             verbose = true;
 
         } else if (allArgs[i] == "-version") {
-            helper->printf("Ocloc cache version: %i\n", NEO::CompilerCache::cacheVersion);
+            if (commandOption != CacheCommandOption::none) {
+                multipleActionsDetected = true;
+            }
+            commandOption = CacheCommandOption::version;
 
         } else if (allArgs[i] == "-show-stats") {
-            showStats = true;
+            if (commandOption != CacheCommandOption::none) {
+                multipleActionsDetected = true;
+            }
+            commandOption = CacheCommandOption::showStats;
+
+        } else if (allArgs[i] == "-zero-stats") {
+            if (commandOption != CacheCommandOption::none) {
+                multipleActionsDetected = true;
+            }
+            commandOption = CacheCommandOption::zeroStats;
 
         } else if (allArgs[i] == "-help") {
-            helper->printf("Usage: ocloc cache [options]\n\n"
-                           "Options:\n"
-                           "  -version            Show the current compiler cache version.\n"
-                           "  -dir <path>         Set the compiler cache directory.\n"
-                           "  -verbose            Show verbose messages.\n"
-                           "  -show-stats         Show cache statistics. With -verbose, shows stats from all subdirectories.\n"
-                           "  -help               Print this help message.\n");
-            return OCLOC_SUCCESS;
+            helpRequested = true;
+            break;
 
         } else {
-            helper->printf("Error: Invalid command line. Unknown argument %s\n", allArgs[i].c_str());
+            helper->printf("Error: Invalid command line.\nUnknown argument %s.\nSee ocloc cache -help\n", allArgs[i].c_str());
             return OCLOC_INVALID_COMMAND_LINE;
         }
+    }
+
+    if (helpRequested) {
+        helper->printf("Usage: ocloc cache [action] [options]\n\n"
+                       "Actions:\n"
+                       "  -show-stats         Show cache statistics. With -verbose, it shows stats from all subdirectories.\n"
+                       "  -zero-stats         Reset cache statistics.\n"
+                       "  -version            Show the current compiler cache version.\n"
+                       "  -help               Print this help message.\n\n"
+                       "Options:\n"
+                       "  -dir <path>         Set the compiler cache directory.\n"
+                       "  -verbose            Show verbose messages.\n");
+        return OCLOC_SUCCESS;
+    }
+
+    if (multipleActionsDetected) {
+        helper->printf("Error: Multiple cache actions specified. Use exactly one of: -version, -show-stats, -zero-stats. See ocloc cache -help\n");
+        return OCLOC_INVALID_COMMAND_LINE;
+    }
+
+    if (commandOption == CacheCommandOption::none) {
+        helper->printf("Error: No cache action provided. Nothing to do. See ocloc cache -help\n");
+        return OCLOC_INVALID_COMMAND_LINE;
+    }
+
+    if (commandOption == CacheCommandOption::version) {
+        helper->printf("Ocloc cache version: %i\n", NEO::CompilerCache::cacheVersion);
+        return OCLOC_SUCCESS;
     }
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
@@ -535,7 +573,7 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
 
     auto compilerCache = std::make_unique<CompilerCache>(cacheConfig);
 
-    if (showStats) {
+    if (commandOption == CacheCommandOption::showStats) {
         if (verbose) {
             helper->printf("Reading cache statistics from path: %s\n", cacheConfig.cacheDir.c_str());
         }
@@ -545,6 +583,18 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
             return OCLOC_INVALID_COMMAND_LINE;
         }
         helper->printf("%s", statsOutput.c_str());
+
+    } else if (commandOption == CacheCommandOption::zeroStats) {
+        if (verbose) {
+            helper->printf("Resetting cache statistics in path: %s\n", cacheConfig.cacheDir.c_str());
+        }
+
+        auto zeroResult = compilerCache->zeroStats();
+        if (zeroResult == CompilerCache::StatsResult::error) {
+            return OCLOC_INVALID_COMMAND_LINE;
+        } else if (zeroResult == CompilerCache::StatsResult::notFound) {
+            helper->printf("No stats found to reset.\n");
+        }
     }
 
     return OCLOC_SUCCESS;

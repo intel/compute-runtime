@@ -118,21 +118,26 @@ if(WIN32)
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_thread_win.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/signal_utils.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/ocloc_supported_devices_helper_windows_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/ocloc_api_windows_tests.cpp
   )
   list(REMOVE_ITEM IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/utilities/windows/directory.cpp
+       ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
   )
 else()
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_helper.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_thread_linux.cpp
-       ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_linux_ult.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/ocloc_supported_devices_helper_linux_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/ocloc_api_linux_tests.cpp
   )
   list(REMOVE_ITEM IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/utilities/linux/directory.cpp
+       ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
   )
 endif()
 

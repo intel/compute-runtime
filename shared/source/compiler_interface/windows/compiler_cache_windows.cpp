@@ -533,7 +533,7 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     return true;
 }
 
-CompilerCache::ReadStatsResult CompilerCache::readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats) {
+CompilerCache::StatsResult CompilerCache::readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats) {
     auto handle = NEO::SysCalls::createFileA(statsPath.c_str(),
                                              GENERIC_READ,
                                              FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -544,10 +544,10 @@ CompilerCache::ReadStatsResult CompilerCache::readStatsFromFile(const std::strin
     if (handle == INVALID_HANDLE_VALUE) {
         auto lastError = SysCalls::getLastError();
         if (lastError == ERROR_FILE_NOT_FOUND || lastError == ERROR_PATH_NOT_FOUND) {
-            return ReadStatsResult::notFound;
+            return StatsResult::notFound;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening existing stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), lastError);
-        return ReadStatsResult::error;
+        return StatsResult::error;
     }
 
     OVERLAPPED overlapped = {0};
@@ -555,7 +555,7 @@ CompilerCache::ReadStatsResult CompilerCache::readStatsFromFile(const std::strin
     if (!lockResult) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Locking stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
         NEO::SysCalls::closeHandle(handle);
-        return ReadStatsResult::error;
+        return StatsResult::error;
     }
 
     DWORD bytesRead = 0;
@@ -563,10 +563,52 @@ CompilerCache::ReadStatsResult CompilerCache::readStatsFromFile(const std::strin
     if (!readResult || bytesRead != sizeof(cacheStats)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Reading stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
         unlockFileAndClose(handle);
-        return ReadStatsResult::error;
+        return StatsResult::error;
     }
 
     unlockFileAndClose(handle);
-    return ReadStatsResult::success;
+    return StatsResult::success;
 }
+
+bool CompilerCache::writeStatsToFile(const std::string &statsPath, const CacheStats &cacheStats) {
+    auto handle = NEO::SysCalls::createFileA(statsPath.c_str(),
+                                             GENERIC_WRITE,
+                                             FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                             NULL,
+                                             OPEN_EXISTING,
+                                             FILE_ATTRIBUTE_NORMAL,
+                                             NULL);
+    if (handle == INVALID_HANDLE_VALUE) {
+        auto lastError = SysCalls::getLastError();
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), lastError);
+        return false;
+    }
+
+    OVERLAPPED overlapped = {0};
+    auto lockResult = NEO::SysCalls::lockFileEx(handle, LOCKFILE_EXCLUSIVE_LOCK, 0, MAXDWORD, MAXDWORD, &overlapped);
+    if (!lockResult) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Locking stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
+        NEO::SysCalls::closeHandle(handle);
+        return false;
+    }
+
+    DWORD bytesWritten = 0;
+    DWORD filePointer = NEO::SysCalls::setFilePointer(handle, 0, NULL, FILE_BEGIN);
+    if (filePointer != 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: File pointer move failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
+        unlockFileAndClose(handle);
+        return false;
+    }
+
+    auto writeResult = NEO::SysCalls::writeFile(handle, &cacheStats, sizeof(cacheStats), &bytesWritten, NULL);
+    if (!writeResult || bytesWritten != sizeof(cacheStats)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing stats file failed! error code: %lu\n", NEO::SysCalls::getProcessId(), SysCalls::getLastError());
+        unlockFileAndClose(handle);
+        return false;
+    }
+
+    unlockFileAndClose(handle);
+    return true;
+}
+
 } // namespace NEO

@@ -819,14 +819,46 @@ TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenEnabledCacheAndNo
     }
 }
 
+class CompilerCacheIsStatsFile : public CompilerCache {
+  public:
+    using CompilerCache::isStatsFile;
+    CompilerCacheIsStatsFile(const CompilerCacheConfig &config) : CompilerCache(config) {}
+};
+
+TEST(CompilerCacheIsStatsFileTests, GivenPathEndingWithStatsThenReturnsTrue) {
+    std::string sep(1, PATH_SEPARATOR);
+    std::string path = sep + "home" + sep + "cl_cache" + sep + "stats";
+    EXPECT_TRUE(CompilerCacheIsStatsFile::isStatsFile(path));
+}
+
+TEST(CompilerCacheIsStatsFileTests, GivenBareStatsFilenameThenReturnsTrue) {
+    EXPECT_TRUE(CompilerCacheIsStatsFile::isStatsFile("stats"));
+}
+
+TEST(CompilerCacheIsStatsFileTests, GivenPathNotEndingWithStatsThenReturnsFalse) {
+    std::string sep(1, PATH_SEPARATOR);
+    std::string path = sep + "home" + sep + "cl_cache" + sep + "binary.cl_cache";
+    EXPECT_FALSE(CompilerCacheIsStatsFile::isStatsFile(path));
+}
+
+TEST(CompilerCacheIsStatsFileTests, GivenPathWithStatsInMiddleThenReturnsFalse) {
+    std::string sep(1, PATH_SEPARATOR);
+    std::string path = sep + "stats" + sep + "somefile";
+    EXPECT_FALSE(CompilerCacheIsStatsFile::isStatsFile(path));
+}
+
+TEST(CompilerCacheIsStatsFileTests, GivenEmptyPathThenReturnsFalse) {
+    EXPECT_FALSE(CompilerCacheIsStatsFile::isStatsFile(""));
+}
+
 class CompilerCacheMockShowStats : public CompilerCache {
   public:
     CompilerCacheMockShowStats(const CompilerCacheConfig &config) : CompilerCache(config) {}
 
-    ReadStatsResult readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats) override {
+    StatsResult readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats) override {
         readStatsFromFileCalled++;
         lastStatsPath = statsPath;
-        if (readStatsResult == ReadStatsResult::success) {
+        if (readStatsResult == StatsResult::success) {
             cacheStats = injectedStats;
         }
         return readStatsResult;
@@ -846,7 +878,7 @@ class CompilerCacheMockShowStats : public CompilerCache {
         return true;
     }
 
-    ReadStatsResult readStatsResult = ReadStatsResult::success;
+    StatsResult readStatsResult = StatsResult::success;
     CacheStats injectedStats{};
     std::vector<ElementsStruct> injectedStatsFiles;
     bool getFilesResult = true;
@@ -874,7 +906,7 @@ TEST(CompilerCacheShowStatsTests, GivenCompilerCacheWhenShowStatsNonVerboseThenP
 
 TEST(CompilerCacheShowStatsTests, GivenCompilerCacheWhenShowStatsNonVerboseAndNotFoundThenPrintsNoStatsFound) {
     CompilerCacheMockShowStats cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-    cache.readStatsResult = CompilerCache::ReadStatsResult::notFound;
+    cache.readStatsResult = CompilerCache::StatsResult::notFound;
 
     std::string output;
     auto result = cache.showStats(false, output);
@@ -885,7 +917,7 @@ TEST(CompilerCacheShowStatsTests, GivenCompilerCacheWhenShowStatsNonVerboseAndNo
 
 TEST(CompilerCacheShowStatsTests, GivenCompilerCacheWhenShowStatsNonVerboseAndErrorThenReturnsFalse) {
     CompilerCacheMockShowStats cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
-    cache.readStatsResult = CompilerCache::ReadStatsResult::error;
+    cache.readStatsResult = CompilerCache::StatsResult::error;
 
     std::string output;
     auto result = cache.showStats(false, output);
@@ -933,7 +965,7 @@ TEST(CompilerCacheShowStatsTests, GivenCompilerCacheWhenShowStatsVerboseAndReadS
     std::string sep(1, PATH_SEPARATOR);
     std::string cacheDir = sep + "home" + sep + "cl_cache";
     CompilerCacheMockShowStats cache({true, true, ".cl_cache", cacheDir, MemoryConstants::megaByte});
-    cache.readStatsResult = CompilerCache::ReadStatsResult::error;
+    cache.readStatsResult = CompilerCache::StatsResult::error;
 
     ElementsStruct statsFile{};
     statsFile.path = cacheDir + sep + "0" + sep + "0" + sep + "stats";
@@ -990,4 +1022,127 @@ TEST(CompilerCacheShowStatsTests, GivenCompilerCacheWhenShowStatsVerboseThenOnly
     EXPECT_TRUE(result);
     EXPECT_EQ(1u, cache.readStatsFromFileCalled);
     EXPECT_NE(std::string::npos, output.find("50.00%"));
+}
+
+class CompilerCacheMockZeroStats : public CompilerCache {
+  public:
+    CompilerCacheMockZeroStats(const CompilerCacheConfig &config) : CompilerCache(config) {}
+
+    StatsResult readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats) override {
+        readStatsFromFileCalled++;
+        cacheStats = currentStats;
+        return StatsResult::success;
+    }
+
+    bool writeStatsToFile(const std::string &statsPath, const CacheStats &cacheStats) override {
+        writeStatsToFileCalled++;
+        lastWrittenStats = cacheStats;
+        lastWrittenPath = statsPath;
+        currentStats = cacheStats;
+        return writeStatsToFileResult;
+    }
+
+    bool getFiles(const std::string &startPath, const std::function<bool(const std::string_view &)> &filter, std::vector<ElementsStruct> &foundFiles) override {
+        getFilesCalled++;
+        foundFiles.clear();
+        if (!getFilesResult) {
+            return false;
+        }
+        for (const auto &e : injectedStatsFiles) {
+            if (filter(e.path)) {
+                foundFiles.push_back(e);
+            }
+        }
+        return true;
+    }
+
+    CacheStats currentStats{};
+    bool writeStatsToFileResult = true;
+    bool getFilesResult = true;
+    std::vector<ElementsStruct> injectedStatsFiles;
+    size_t readStatsFromFileCalled = 0;
+    size_t writeStatsToFileCalled = 0;
+    size_t getFilesCalled = 0;
+    CacheStats lastWrittenStats{};
+    std::string lastWrittenPath;
+};
+
+TEST(CompilerCacheZeroStatsTests, GivenCompilerCacheWhenZeroStatsAndFilesFoundThenWritesZeroedStats) {
+    std::string sep(1, PATH_SEPARATOR);
+    std::string cacheDir = sep + "home" + sep + "cl_cache";
+    CompilerCacheMockZeroStats cache({true, true, ".cl_cache", cacheDir, MemoryConstants::megaByte});
+
+    ElementsStruct statsFile{};
+    statsFile.path = cacheDir + sep + "0" + sep + "0" + sep + "stats";
+    cache.injectedStatsFiles = {statsFile};
+
+    auto result = cache.zeroStats();
+
+    EXPECT_EQ(CompilerCache::StatsResult::success, result);
+    EXPECT_EQ(1u, cache.getFilesCalled);
+    EXPECT_EQ(1u, cache.writeStatsToFileCalled);
+    EXPECT_EQ(CompilerCache::cacheVersion, cache.lastWrittenStats.version);
+    EXPECT_EQ(0u, cache.lastWrittenStats.hits);
+    EXPECT_EQ(0u, cache.lastWrittenStats.misses);
+}
+
+TEST(CompilerCacheZeroStatsTests, GivenCompilerCacheWhenZeroStatsAndMultipleFilesFoundThenWritesAllZeroed) {
+    std::string sep(1, PATH_SEPARATOR);
+    std::string cacheDir = sep + "home" + sep + "cl_cache";
+    CompilerCacheMockZeroStats cache({true, true, ".cl_cache", cacheDir, MemoryConstants::megaByte});
+
+    ElementsStruct statsFile1{};
+    statsFile1.path = cacheDir + sep + "0" + sep + "0" + sep + "stats";
+    ElementsStruct statsFile2{};
+    statsFile2.path = cacheDir + sep + "1" + sep + "1" + sep + "stats";
+    cache.injectedStatsFiles = {statsFile1, statsFile2};
+
+    auto result = cache.zeroStats();
+
+    EXPECT_EQ(CompilerCache::StatsResult::success, result);
+    EXPECT_EQ(2u, cache.writeStatsToFileCalled);
+}
+
+TEST(CompilerCacheZeroStatsTests, GivenCompilerCacheWhenZeroStatsAndGetFilesFailsThenReturnsError) {
+    CompilerCacheMockZeroStats cache({true, true, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+    cache.getFilesResult = false;
+
+    auto result = cache.zeroStats();
+
+    EXPECT_EQ(CompilerCache::StatsResult::error, result);
+    EXPECT_EQ(0u, cache.writeStatsToFileCalled);
+}
+
+TEST(CompilerCacheZeroStatsTests, GivenCompilerCacheWhenZeroStatsAndWriteFailsThenReturnsError) {
+    std::string sep(1, PATH_SEPARATOR);
+    std::string cacheDir = sep + "home" + sep + "cl_cache";
+    CompilerCacheMockZeroStats cache({true, true, ".cl_cache", cacheDir, MemoryConstants::megaByte});
+    cache.writeStatsToFileResult = false;
+
+    ElementsStruct statsFile{};
+    statsFile.path = cacheDir + sep + "0" + sep + "0" + sep + "stats";
+    cache.injectedStatsFiles = {statsFile};
+
+    auto result = cache.zeroStats();
+
+    EXPECT_EQ(CompilerCache::StatsResult::error, result);
+}
+
+TEST(CompilerCacheZeroStatsTests, GivenCompilerCacheWhenZeroStatsAndNoFilesFoundThenReturnsNotFound) {
+    CompilerCacheMockZeroStats cache({true, true, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+
+    auto result = cache.zeroStats();
+
+    EXPECT_EQ(CompilerCache::StatsResult::notFound, result);
+    EXPECT_EQ(0u, cache.writeStatsToFileCalled);
+}
+
+TEST(CompilerCacheZeroStatsTests, GivenCompilerCacheWhenZeroStatsCalledAndCacheDirIsEmptyThenReturnsNotFound) {
+    CompilerCacheMockZeroStats cache({true, true, ".cl_cache", "", MemoryConstants::megaByte});
+
+    auto result = cache.zeroStats();
+
+    EXPECT_EQ(CompilerCache::StatsResult::notFound, result);
+    EXPECT_EQ(0u, cache.getFilesCalled);
+    EXPECT_EQ(0u, cache.writeStatsToFileCalled);
 }

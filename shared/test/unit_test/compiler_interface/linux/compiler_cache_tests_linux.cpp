@@ -34,6 +34,7 @@ class CompilerCacheMockLinux : public CompilerCache {
     using CompilerCache::renameTempFileBinaryToProperName;
     using CompilerCache::updateAllStats;
     using CompilerCache::updateStats;
+    using CompilerCache::writeStatsToFile;
 };
 
 TEST(CompilerCacheTests, GivenCompilerCacheWhenCreateCacheDirectoriesIsCalledThenReturnsTrue) {
@@ -2448,7 +2449,7 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileSucceedsThenRetu
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("/home/cl_cache/stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::success, result);
+    EXPECT_EQ(CompilerCache::StatsResult::success, result);
     EXPECT_EQ(CompilerCache::cacheVersion, cacheStats.version);
     EXPECT_EQ(10u, cacheStats.hits);
     EXPECT_EQ(5u, cacheStats.misses);
@@ -2465,7 +2466,7 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndOpenFailsWith
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("/home/cl_cache/stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::notFound, result);
+    EXPECT_EQ(CompilerCache::StatsResult::notFound, result);
 }
 
 TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndOpenFailsWithOtherErrorThenReturnsError) {
@@ -2479,7 +2480,7 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndOpenFailsWith
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("/home/cl_cache/stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
+    EXPECT_EQ(CompilerCache::StatsResult::error, result);
 }
 
 TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndFlockFailsThenReturnsError) {
@@ -2491,7 +2492,7 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndFlockFailsThe
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("/home/cl_cache/stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
+    EXPECT_EQ(CompilerCache::StatsResult::error, result);
 }
 
 TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndPreadFailsThenReturnsError) {
@@ -2506,5 +2507,152 @@ TEST(CompilerCacheTests, GivenCompilerCacheWhenReadStatsFromFileAndPreadFailsThe
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("/home/cl_cache/stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
+    EXPECT_EQ(CompilerCache::StatsResult::error, result);
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenWriteStatsToFileSucceedsThenReturnsTrue) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> pwriteBackup(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        return count;
+    });
+
+    CompilerCacheMockLinux cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    EXPECT_TRUE(cache.writeStatsToFile("/home/cl_cache/stats", cacheStats));
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenWriteStatsToFileAndOpenFailsThenReturnsFalse) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        errno = EACCES;
+        return -1;
+    });
+
+    CompilerCacheMockLinux cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    EXPECT_FALSE(cache.writeStatsToFile("/home/cl_cache/stats", cacheStats));
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenWriteStatsToFileAndFlockFailsThenReturnsFalse) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<int> flockRetValBackup(&NEO::SysCalls::flockRetVal, -1);
+
+    CompilerCacheMockLinux cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    EXPECT_FALSE(cache.writeStatsToFile("/home/cl_cache/stats", cacheStats));
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenWriteStatsToFileAndPwriteFailsThenReturnsFalse) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> pwriteBackup(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        errno = EIO;
+        return -1;
+    });
+
+    CompilerCacheMockLinux cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    EXPECT_FALSE(cache.writeStatsToFile("/home/cl_cache/stats", cacheStats));
+}
+
+namespace ZeroStatsTest {
+CacheStats currentStats{};
+
+decltype(NEO::SysCalls::sysCallsOpen) mockOpen = [](const char *pathname, int flags) -> int {
+    return 10;
+};
+
+decltype(NEO::SysCalls::sysCallsPread) mockPread = [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+    if (count == sizeof(CacheStats)) {
+        memcpy(buf, &currentStats, sizeof(CacheStats));
+        return sizeof(CacheStats);
+    }
+    return -1;
+};
+
+decltype(NEO::SysCalls::sysCallsPwrite) mockPwrite = [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+    if (count == sizeof(CacheStats)) {
+        memcpy(&currentStats, buf, sizeof(CacheStats));
+        return sizeof(CacheStats);
+    }
+    return -1;
+};
+
+int dirLevel = 0;
+bool returnedEntry = false;
+
+DIR *mockOpendir(const char *path) {
+    if (strcmp(path, "/home/cl_cache/") == 0) {
+        dirLevel = 0;
+        returnedEntry = false;
+        return reinterpret_cast<DIR *>(0x1);
+    }
+    return nullptr;
+}
+
+struct dirent *mockReaddir(DIR *dirp) {
+    static struct dirent entry;
+    memset(&entry, 0, sizeof(entry));
+
+    if (dirp == reinterpret_cast<DIR *>(0x1) && !returnedEntry) {
+        returnedEntry = true;
+        strncpy(entry.d_name, "stats", sizeof(entry.d_name) - 1);
+        entry.d_type = DT_REG;
+        return &entry;
+    }
+    return nullptr;
+}
+
+int mockClosedir(DIR *dirp) {
+    return 0;
+}
+
+int mockStat(const std::string &path, struct stat *buf) {
+    if (path == "/home/cl_cache/stats") {
+        buf->st_mode = S_IFREG;
+        buf->st_size = sizeof(CacheStats);
+        buf->st_atime = 1;
+        return 0;
+    }
+    errno = ENOENT;
+    return -1;
+}
+} // namespace ZeroStatsTest
+
+TEST(CompilerCacheTests, GivenNonZeroStatsWhenZeroStatsCalledThenShowStatsReturnsZeroedValues) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, ZeroStatsTest::mockOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> preadBackup(&NEO::SysCalls::sysCallsPread, ZeroStatsTest::mockPread);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> pwriteBackup(&NEO::SysCalls::sysCallsPwrite, ZeroStatsTest::mockPwrite);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> opendirBackup(&NEO::SysCalls::sysCallsOpendir, ZeroStatsTest::mockOpendir);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> readdirBackup(&NEO::SysCalls::sysCallsReaddir, ZeroStatsTest::mockReaddir);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> closedirBackup(&NEO::SysCalls::sysCallsClosedir, ZeroStatsTest::mockClosedir);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, ZeroStatsTest::mockStat);
+
+    ZeroStatsTest::currentStats = {42, 17, CompilerCache::cacheVersion};
+
+    CompilerCache cache({true, true, ".cl_cache", "/home/cl_cache/", MemoryConstants::megaByte});
+
+    std::string outputBefore;
+    EXPECT_TRUE(cache.showStats(false, outputBefore));
+    EXPECT_NE(std::string::npos, outputBefore.find("42"));
+    EXPECT_NE(std::string::npos, outputBefore.find("17"));
+
+    ZeroStatsTest::returnedEntry = false;
+    EXPECT_EQ(CompilerCache::StatsResult::success, cache.zeroStats());
+
+    std::string outputAfter;
+    EXPECT_TRUE(cache.showStats(false, outputAfter));
+    EXPECT_EQ(0u, ZeroStatsTest::currentStats.hits);
+    EXPECT_EQ(0u, ZeroStatsTest::currentStats.misses);
+    EXPECT_EQ(CompilerCache::cacheVersion, ZeroStatsTest::currentStats.version);
+    EXPECT_EQ(std::string::npos, outputAfter.find("42"));
+    EXPECT_EQ(std::string::npos, outputAfter.find("17"));
 }

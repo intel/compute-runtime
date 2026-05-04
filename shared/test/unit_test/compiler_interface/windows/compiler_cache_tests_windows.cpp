@@ -42,6 +42,7 @@ class CompilerCacheMockWindows : public CompilerCache {
     using CompilerCache::renameTempFileBinaryToProperName;
     using CompilerCache::updateAllStats;
     using CompilerCache::updateStats;
+    using CompilerCache::writeStatsToFile;
 
     bool createUniqueTempFileAndWriteData(char *tmpFilePath, const char *pBinary, size_t binarySize) override {
         createUniqueTempFileAndWriteDataCalled++;
@@ -2191,7 +2192,7 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileSucceeds
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::success, result);
+    EXPECT_EQ(CompilerCache::StatsResult::success, result);
     EXPECT_EQ(CompilerCache::cacheVersion, cacheStats.version);
     EXPECT_EQ(10u, cacheStats.hits);
     EXPECT_EQ(5u, cacheStats.misses);
@@ -2206,7 +2207,7 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndFileN
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::notFound, result);
+    EXPECT_EQ(CompilerCache::StatsResult::notFound, result);
 }
 
 TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndPathNotFoundThenReturnsNotFound) {
@@ -2218,7 +2219,7 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndPathN
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::notFound, result);
+    EXPECT_EQ(CompilerCache::StatsResult::notFound, result);
 }
 
 TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndOpenFailsWithOtherErrorThenReturnsError) {
@@ -2230,7 +2231,7 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndOpenF
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
+    EXPECT_EQ(CompilerCache::StatsResult::error, result);
 }
 
 TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndLockFailsThenReturnsError) {
@@ -2242,7 +2243,7 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndLockF
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
+    EXPECT_EQ(CompilerCache::StatsResult::error, result);
 }
 
 TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndReadFailsThenReturnsError) {
@@ -2257,7 +2258,7 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndReadF
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
+    EXPECT_EQ(CompilerCache::StatsResult::error, result);
 }
 
 TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndBytesReadWrongThenReturnsError) {
@@ -2272,7 +2273,77 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenReadStatsFromFileAndBytes
     CacheStats cacheStats{};
     auto result = cache.readStatsFromFile("somePath\\cl_cache\\stats", cacheStats);
 
-    EXPECT_EQ(CompilerCache::ReadStatsResult::error, result);
+    EXPECT_EQ(CompilerCache::StatsResult::error, result);
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenWriteStatsToFileSucceedsThenReturnsTrue) {
+    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::lockFileExResult = TRUE;
+    SysCalls::setFilePointerResult = 0;
+    SysCalls::writeFileResult = TRUE;
+    SysCalls::writeFileNumberOfBytesWritten = sizeof(CacheStats);
+
+    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    EXPECT_TRUE(cache.writeStatsToFile("somePath\\cl_cache\\stats", cacheStats));
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenWriteStatsToFileAndCreateFileFailsThenReturnsFalse) {
+    SysCalls::createFileAResults[0] = INVALID_HANDLE_VALUE;
+    SysCalls::getLastErrorResults[0] = ERROR_ACCESS_DENIED;
+
+    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    EXPECT_FALSE(cache.writeStatsToFile("somePath\\cl_cache\\stats", cacheStats));
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenWriteStatsToFileAndLockFailsThenReturnsFalse) {
+    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::lockFileExResult = FALSE;
+
+    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    EXPECT_FALSE(cache.writeStatsToFile("somePath\\cl_cache\\stats", cacheStats));
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenWriteStatsToFileAndSetFilePointerFailsThenReturnsFalse) {
+    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::lockFileExResult = TRUE;
+    SysCalls::setFilePointerResult = 1;
+
+    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    EXPECT_FALSE(cache.writeStatsToFile("somePath\\cl_cache\\stats", cacheStats));
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenWriteStatsToFileAndWriteFailsThenReturnsFalse) {
+    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::lockFileExResult = TRUE;
+    SysCalls::setFilePointerResult = 0;
+    SysCalls::writeFileResult = FALSE;
+    SysCalls::writeFileNumberOfBytesWritten = 0;
+
+    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    EXPECT_FALSE(cache.writeStatsToFile("somePath\\cl_cache\\stats", cacheStats));
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenWriteStatsToFileAndBytesWrittenWrongThenReturnsFalse) {
+    SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::lockFileExResult = TRUE;
+    SysCalls::setFilePointerResult = 0;
+    SysCalls::writeFileResult = TRUE;
+    SysCalls::writeFileNumberOfBytesWritten = 1;
+
+    CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    EXPECT_FALSE(cache.writeStatsToFile("somePath\\cl_cache\\stats", cacheStats));
 }
 
 } // namespace NEO

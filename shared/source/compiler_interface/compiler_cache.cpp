@@ -225,8 +225,8 @@ bool CompilerCache::showStats(bool verbose, std::string &output) {
 
         CacheStats cacheStats{};
         auto result = readStatsFromFile(statsPath, cacheStats);
-        if (result != ReadStatsResult::success) {
-            if (result == ReadStatsResult::notFound) {
+        if (result != StatsResult::success) {
+            if (result == StatsResult::notFound) {
                 ss << "No stats found in cache directory.\n";
                 output = ss.str();
                 return true;
@@ -240,10 +240,7 @@ bool CompilerCache::showStats(bool verbose, std::string &output) {
     }
 
     std::vector<ElementsStruct> statsFiles;
-    if (!getFiles(config.cacheDir, [](const std::string_view &path) {
-            auto lastSep = path.rfind(PATH_SEPARATOR);
-            auto basename = (lastSep != std::string_view::npos) ? path.substr(lastSep + 1) : path;
-            return basename == "stats"; }, statsFiles)) {
+    if (!getFiles(config.cacheDir, isStatsFile, statsFiles)) {
         return false;
     }
 
@@ -255,7 +252,7 @@ bool CompilerCache::showStats(bool verbose, std::string &output) {
 
     for (const auto &statsFile : statsFiles) {
         CacheStats cacheStats{};
-        if (readStatsFromFile(statsFile.path, cacheStats) != ReadStatsResult::success) {
+        if (readStatsFromFile(statsFile.path, cacheStats) != StatsResult::success) {
             return false;
         }
 
@@ -265,4 +262,35 @@ bool CompilerCache::showStats(bool verbose, std::string &output) {
     output = ss.str();
     return true;
 }
+
+bool CompilerCache::isStatsFile(const std::string_view &path) {
+    auto lastSep = path.rfind(PATH_SEPARATOR);
+    auto basename = (lastSep != std::string_view::npos) ? path.substr(lastSep + 1) : path;
+    return basename == "stats";
+}
+
+CompilerCache::StatsResult CompilerCache::zeroStats() {
+    if (config.cacheDir.empty()) {
+        return StatsResult::notFound;
+    }
+
+    std::vector<ElementsStruct> statsFiles;
+    if (!getFiles(config.cacheDir, isStatsFile, statsFiles)) {
+        return StatsResult::error;
+    }
+
+    if (statsFiles.empty()) {
+        return StatsResult::notFound;
+    }
+
+    CacheStats cacheStats{0, 0, CompilerCache::cacheVersion};
+    for (const auto &statsFile : statsFiles) {
+        if (!writeStatsToFile(statsFile.path, cacheStats)) {
+            return StatsResult::error;
+        }
+    }
+
+    return StatsResult::success;
+}
+
 } // namespace NEO

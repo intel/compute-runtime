@@ -289,15 +289,15 @@ bool CompilerCache::updateStats(const std::string &statsPath, bool hit) {
     return true;
 }
 
-CompilerCache::ReadStatsResult CompilerCache::readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats) {
+CompilerCache::StatsResult CompilerCache::readStatsFromFile(const std::string &statsPath, CacheStats &cacheStats) {
     auto fd = NEO::SysCalls::open(statsPath.c_str(), O_RDONLY);
     if (fd < 0) {
         int error = errno;
         if (error == ENOENT) {
-            return ReadStatsResult::notFound;
+            return StatsResult::notFound;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening existing stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
-        return ReadStatsResult::error;
+        return StatsResult::error;
     }
 
     const int lockErr = NEO::SysCalls::flock(fd, LOCK_SH);
@@ -305,7 +305,7 @@ CompilerCache::ReadStatsResult CompilerCache::readStatsFromFile(const std::strin
         int error = errno;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Locking stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
         NEO::SysCalls::close(fd);
-        return ReadStatsResult::error;
+        return StatsResult::error;
     }
 
     ssize_t readBytes = NEO::SysCalls::pread(fd, &cacheStats, sizeof(cacheStats), 0);
@@ -313,11 +313,39 @@ CompilerCache::ReadStatsResult CompilerCache::readStatsFromFile(const std::strin
         int error = errno;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Reading stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
         unlockFileAndClose(fd);
-        return ReadStatsResult::error;
+        return StatsResult::error;
     }
 
     unlockFileAndClose(fd);
-    return ReadStatsResult::success;
+    return StatsResult::success;
+}
+
+bool CompilerCache::writeStatsToFile(const std::string &statsPath, const CacheStats &cacheStats) {
+    int fd = NEO::SysCalls::open(statsPath.c_str(), O_WRONLY);
+    if (fd < 0) {
+        int error = errno;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        return false;
+    }
+
+    const int lockErr = NEO::SysCalls::flock(fd, LOCK_EX);
+    if (lockErr < 0) {
+        int error = errno;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Locking stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        NEO::SysCalls::close(fd);
+        return false;
+    }
+
+    ssize_t written = NEO::SysCalls::pwrite(fd, &cacheStats, sizeof(cacheStats), 0);
+    if (written != sizeof(cacheStats)) {
+        int error = errno;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing stats file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
+        unlockFileAndClose(fd);
+        return false;
+    }
+
+    unlockFileAndClose(fd);
+    return true;
 }
 
 void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath, UnifiedHandle &fd, size_t &directorySize) {
