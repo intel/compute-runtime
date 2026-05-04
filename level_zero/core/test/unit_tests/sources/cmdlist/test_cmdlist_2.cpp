@@ -2967,5 +2967,53 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromToMemoryExtThen
     context->freeMem(data);
 }
 
+HWTEST2_F(CommandListCreateTests, givenImmediateCopyCommandListWhenEstimatingImageCopyBlitSizeThenDepthIsAccountedFor, IsAtLeastXeCore) {
+    const ze_command_queue_desc_t queueDesc = {};
+
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
+                                                                              device,
+                                                                              &queueDesc,
+                                                                              false,
+                                                                              NEO::EngineGroupType::copy,
+                                                                              returnValue));
+    ASSERT_NE(nullptr, commandList);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto whiteBoxCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList.get());
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 329;
+    desc.height = 34;
+    desc.depth = 11;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHW->initialize(device, &desc);
+
+    auto &productHelper = neoDevice->getRootDeviceEnvironment().getProductHelper();
+    auto sizePerBlit = sizeof(typename FamilyType::XY_BLOCK_COPY_BLT) + NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(productHelper.isFlushBetweenBlitsRequired());
+
+    ze_image_region_t region = {0, 0, 0, 329, 34, 11};
+    auto estimatedSize = whiteBoxCmdList->estimateCommandSizeForImageCopyBlit(imageHW->toHandle(), &region);
+    EXPECT_GE(estimatedSize, commonImmediateCommandSize + desc.depth * sizePerBlit);
+
+    auto estimatedSizeNoRegion = whiteBoxCmdList->estimateCommandSizeForImageCopyBlit(imageHW->toHandle(), nullptr);
+    EXPECT_GE(estimatedSizeNoRegion, commonImmediateCommandSize + desc.depth * sizePerBlit);
+
+    ze_image_region_t smallRegion = {0, 0, 0, 10, 10, 1};
+    auto estimatedSizeSmall = whiteBoxCmdList->estimateCommandSizeForImageCopyBlit(imageHW->toHandle(), &smallRegion);
+    EXPECT_GE(estimatedSizeSmall, commonImmediateCommandSize + 1 * sizePerBlit);
+    EXPECT_LT(estimatedSizeSmall, estimatedSize);
+}
+
 } // namespace ult
 } // namespace L0

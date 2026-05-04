@@ -91,6 +91,21 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(uint32_t
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateCommandSizeForImageCopyBlit(ze_image_handle_t hImage, const ze_image_region_t *pRegion) const {
+    auto estimatedSize = commonImmediateCommandSize;
+    if (isCopyOnly(true)) {
+        auto image = L0::Image::fromHandle(hImage);
+        auto depth = pRegion ? std::max(pRegion->depth, 1u) : std::max(image->getImageDesc().depth, 1u);
+        auto nBlits = static_cast<size_t>(std::max(depth, 1u));
+        auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+        auto &productHelper = rootDeviceEnvironment.getProductHelper();
+        auto sizePerBlit = sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(productHelper.isFlushBetweenBlitsRequired());
+        estimatedSize += nBlits * sizePerBlit;
+    }
+    return estimatedSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags) {
     const auto &requiredFrontEndState = this->requiredStreamState.frontEndState;
     dispatchFlags.kernelExecutionType = (requiredFrontEndState.computeDispatchAllWalkerEnable.value == 1)
@@ -921,16 +936,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyRegion
                                                                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    auto estimatedSize = commonImmediateCommandSize;
-    if (isCopyOnly(false)) {
-        auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
-        auto &productHelper = rootDeviceEnvironment.getProductHelper();
-        auto imgSize = L0::Image::fromHandle(hSrcImage)->getImageInfo().size;
-        auto nBlits = static_cast<size_t>(std::ceil(imgSize / static_cast<double>(BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight)));
-        auto sizePerBlit = sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(productHelper.isFlushBetweenBlitsRequired());
-        estimatedSize += nBlits * sizePerBlit;
-    }
-    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
+    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hSrcImage, pSrcRegion), false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hSignalEvent,
                                                                            numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -949,7 +955,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, commonImmediateCommandSize, false);
+    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hDstImage, pDstRegion), false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(hDstImage, srcPtr, pDstRegion, hSignalEvent,
                                                                                numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -968,7 +974,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, commonImmediateCommandSize, false);
+    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hSrcImage, pSrcRegion), false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(dstPtr, hSrcImage, pSrcRegion, hSignalEvent,
                                                                              numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -989,7 +995,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, commonImmediateCommandSize, false);
+    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hDstImage, pDstRegion), false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(hDstImage, srcPtr, pDstRegion, srcRowPitch, srcSlicePitch,
                                                                                   hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -1010,7 +1016,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, commonImmediateCommandSize, false);
+    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hSrcImage, pSrcRegion), false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(dstPtr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch,
                                                                                 hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);

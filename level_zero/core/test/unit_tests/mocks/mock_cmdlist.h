@@ -237,6 +237,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::dummyBlitWa;
     using BaseClass::duplicatedInOrderCounterStorageEnabled;
     using BaseClass::engineGroupType;
+    using BaseClass::estimateCommandSizeForImageCopyBlit;
     using BaseClass::eventSignalPipeControl;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
