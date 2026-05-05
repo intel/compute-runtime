@@ -204,12 +204,16 @@ TEST_F(ReleaseHelper3510Tests, whenIsStateCacheInvalidationWaRequiredCalledThenC
             releaseHelper = ReleaseHelper::create(ipVersion);
             ASSERT_NE(nullptr, releaseHelper);
             if (revision == 0) {
-                EXPECT_TRUE(releaseHelper->isStateCacheInvalidationWaRequired());
+                EXPECT_TRUE(releaseHelper->isStateCacheInvalidationWaRequired(false, false));
             } else {
-                EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired());
+                EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired(false, false));
             }
         }
     }
+}
+
+TEST_F(ReleaseHelper3510Tests, whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned) {
+    whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned();
 }
 
 TEST_F(ReleaseHelper3510Tests, whenIsAvailableSemaphore64CalledThenCorrectValueReturned) {

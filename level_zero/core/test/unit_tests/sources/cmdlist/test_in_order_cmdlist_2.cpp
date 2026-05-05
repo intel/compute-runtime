@@ -3788,7 +3788,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
             ASSERT_NE(pcItors.size(), 0u);
             auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.back());
             auto releaseHelper = device->getNEODevice()->getReleaseHelper();
-            if (releaseHelper->isStateCacheInvalidationWaRequired() || (immCmdList->isImmediateType() && releaseHelper->isStateCacheInvalidationNoCsStallRequired())) {
+            if (releaseHelper->isStateCacheInvalidationWaRequired(immCmdList->isImmediateType(),
+                                                                  kernel->getKernelDescriptor().kernelAttributes.usesImageOrSamplerState())) {
                 pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.front());
             }
 
