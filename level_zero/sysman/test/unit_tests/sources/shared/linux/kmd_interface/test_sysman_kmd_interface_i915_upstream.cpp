@@ -193,9 +193,12 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheck
     EXPECT_TRUE(pSysmanKmdInterface->isTdpFrequencyAvailable());
 }
 
-TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheckingPhysicalMemorySizeAvailabilityThenFalseValueIsReturned) {
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheckingPhysicalMemorySizeThenUnsupportedErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    EXPECT_FALSE(pSysmanKmdInterface->isPhysicalMemorySizeSupported());
+    uint64_t physicalMemSize = 0;
+    bool isSubdevice = false;
+    uint32_t subDeviceId = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanKmdInterface->getPhysicalMemorySize(physicalMemSize, isSubdevice, subDeviceId, pLinuxSysmanImp));
 }
 
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCallingGetNativeUnitWithProperSysfsNameThenValidValuesAreReturned) {

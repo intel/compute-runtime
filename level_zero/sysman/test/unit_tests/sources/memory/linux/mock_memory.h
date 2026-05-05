@@ -96,6 +96,7 @@ const std::string mockPhysicalSize = "0x00000040000000";
 
 struct MockMemoryNeoDrm : public NEO::Drm {
     using Drm::ioctlHelper;
+    using Drm::memoryInfo;
     const int mockFd = 33;
     uint32_t mockMemoryType = NEO::DeviceBlobConstants::MemoryType::hbm2e;
     std::vector<bool> mockQuerySystemInfoReturnValue{};
@@ -113,6 +114,20 @@ struct MockMemoryNeoDrm : public NEO::Drm {
 
     void resetSystemInfo() {
         systemInfo.reset(nullptr);
+    }
+
+    void setMemoryInfoWithDefaultRegions() {
+        std::vector<MemoryRegion> regionInfo(3);
+        regionInfo[0].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem)), 0};
+        regionInfo[0].probedSize = NEO::probedSizeRegionZero;
+        regionInfo[0].unallocatedSize = NEO::unallocatedSizeRegionZero;
+        regionInfo[1].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice)), 0};
+        regionInfo[1].probedSize = NEO::probedSizeRegionOne;
+        regionInfo[1].unallocatedSize = NEO::unallocatedSizeRegionOne;
+        regionInfo[2].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice)), 1};
+        regionInfo[2].probedSize = NEO::probedSizeRegionFour;
+        regionInfo[2].unallocatedSize = NEO::unallocatedSizeRegionFour;
+        memoryInfo.reset(new MemoryInfo(regionInfo, *this));
     }
 
     bool querySystemInfo() override {

@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
+
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/linux/mock_memory.h"
@@ -17,6 +19,14 @@ namespace Sysman {
 namespace ult {
 
 using SysmanProductHelperMemoryXeTest = SysmanDeviceFixture;
+
+static MockMemoryNeoDrm *setUpMemoryDrmForXeProductHelperTest(SysmanDeviceImp *pSysmanDeviceImp) {
+    auto pDrm = new MockMemoryNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
+    auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
+    osInterface->setDriverModel(std::unique_ptr<MockMemoryNeoDrm>(pDrm));
+    pDrm->ioctlHelper = std::make_unique<NEO::MockIoctlHelper>(*pDrm);
+    return pDrm;
+}
 
 constexpr uint32_t mockOffsetMsuBitmask = 3688;
 
@@ -58,8 +68,9 @@ static int mockOpenSuccess(const char *pathname, int flags) {
 }
 
 HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryPropertiesThenVerifyCallSucceeds, IsWithinXeCoreAndXe2HpgCore) {
-    std::unique_ptr<MockMemoryNeoDrm> pDrm = std::make_unique<MockMemoryNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
+    auto pDrm = setUpMemoryDrmForXeProductHelperTest(pSysmanDeviceImp);
     pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
+    pDrm->setMemoryInfoWithDefaultRegions();
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_mem_properties_t properties = {};
     bool isSubdevice = true;
@@ -72,11 +83,8 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
     pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
     pLinuxSysmanImp->pFsAccess = pLinuxSysmanImp->pSysmanKmdInterface->getFsAccess();
-    pSysfsAccess->mockReadStringValue.push_back(mockPhysicalSize);
-    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
-    pSysfsAccess->isRepeated = true;
 
-    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
+    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm, pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
         EXPECT_EQ(properties.location, ZES_MEM_LOC_SYSTEM);
@@ -90,8 +98,70 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
         EXPECT_EQ(properties.busWidth, memoryBusWidth);
         EXPECT_EQ(properties.type, ZES_MEM_TYPE_HBM);
         EXPECT_EQ(properties.subdeviceId, 0u);
-        EXPECT_EQ(properties.physicalSize, strtoull(mockPhysicalSize.c_str(), nullptr, 16));
+        EXPECT_EQ(properties.physicalSize, NEO::probedSizeRegionOne);
     }
+}
+
+HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceAndNoMemoryInfoAvailableWhenCallingGetMemoryPropertiesThenPhysicalSizeIsZero, IsWithinXeCoreAndXe2HpgCore) {
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
+
+    auto pDrm = setUpMemoryDrmForXeProductHelperTest(pSysmanDeviceImp);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
+    pDrm->memoryInfo.reset(nullptr);
+    auto previousErrno = errno;
+    errno = ENODEV;
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_mem_properties_t properties = {};
+    bool isSubdevice = true;
+    uint32_t subDeviceId = 0;
+
+    auto pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
+    auto pSysfsAccess = new MockMemorySysFsAccessInterface();
+    auto pFsAccess = new MockMemoryFsAccessInterface();
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+    pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pLinuxSysmanImp->pSysmanKmdInterface->getFsAccess();
+
+    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm, pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(properties.physicalSize, 0u);
+    EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
+    errno = previousErrno;
+}
+
+HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceAndNoMemoryInfoAvailableWithNonEnodevWhenCallingGetMemoryPropertiesThenPhysicalSizeIsZero, IsWithinXeCoreAndXe2HpgCore) {
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
+
+    auto pDrm = setUpMemoryDrmForXeProductHelperTest(pSysmanDeviceImp);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
+    pDrm->memoryInfo.reset(nullptr);
+    auto previousErrno = errno;
+    errno = EINVAL;
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_mem_properties_t properties = {};
+    bool isSubdevice = true;
+    uint32_t subDeviceId = 0;
+
+    auto pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
+    auto pSysfsAccess = new MockMemorySysFsAccessInterface();
+    auto pFsAccess = new MockMemoryFsAccessInterface();
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+    pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pLinuxSysmanImp->pSysmanKmdInterface->getFsAccess();
+
+    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm, pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(properties.physicalSize, 0u);
+    EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
+    errno = previousErrno;
 }
 
 HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthAndNoTelemNodesAvailableThenFailureIsReturned, IsBMG) {
@@ -697,11 +767,20 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     bool isSubdevice = true;
     uint32_t subDeviceId = 1;
 
-    std::unique_ptr<MockMemoryNeoDrm> pDrm = std::make_unique<MockMemoryNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
+    auto pDrm = setUpMemoryDrmForXeProductHelperTest(pSysmanDeviceImp);
+    pDrm->setMemoryInfoWithDefaultRegions();
     const int32_t expectedNumChannels = static_cast<int32_t>(memoryMsuCount);
     const int32_t expectedBusWidth = expectedNumChannels * busWidthPerChannelInBits;
 
-    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
+    auto pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
+    auto pSysfsAccess = new MockMemorySysFsAccessInterface();
+    auto pFsAccess = new MockMemoryFsAccessInterface();
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+    pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pLinuxSysmanImp->pSysmanKmdInterface->getFsAccess();
+
+    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm, pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
     EXPECT_EQ(properties.type, static_cast<zes_mem_type_t>(ZES_INTEL_MEM_TYPE_LPDDR5X));
@@ -709,7 +788,7 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     EXPECT_EQ(properties.subdeviceId, subDeviceId);
     EXPECT_EQ(properties.numChannels, expectedNumChannels);
     EXPECT_EQ(properties.busWidth, expectedBusWidth);
-    EXPECT_EQ(properties.physicalSize, 0u);
+    EXPECT_EQ(properties.physicalSize, NEO::probedSizeRegionFour);
 }
 
 } // namespace ult

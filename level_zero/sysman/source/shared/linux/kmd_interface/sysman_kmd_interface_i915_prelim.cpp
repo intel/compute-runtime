@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,6 +106,22 @@ std::string SysmanKmdInterfaceI915Prelim::getSysfsFilePathForPhysicalMemorySize(
     std::string filePathPhysicalMemorySize = getBasePath(subDeviceId) +
                                              sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange].first;
     return filePathPhysicalMemorySize;
+}
+
+ze_result_t SysmanKmdInterfaceI915Prelim::getPhysicalMemorySize(uint64_t &physicalMemSize, bool isSubdevice, uint32_t subDeviceId, LinuxSysmanImp *pLinuxSysmanImp) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    if (isSubdevice) {
+        std::string memval;
+        std::string physicalSizeFile = getSysfsFilePathForPhysicalMemorySize(subDeviceId);
+        result = pSysfsAccess->read(std::move(physicalSizeFile), memval);
+        uint64_t intval = strtoull(memval.c_str(), nullptr, 16);
+        if (ZE_RESULT_SUCCESS != result) {
+            physicalMemSize = 0u;
+        } else {
+            physicalMemSize = intval;
+        }
+    }
+    return result;
 }
 
 std::string SysmanKmdInterfaceI915Prelim::getEnergyCounterNodeFile(zes_power_domain_t powerDomain) {

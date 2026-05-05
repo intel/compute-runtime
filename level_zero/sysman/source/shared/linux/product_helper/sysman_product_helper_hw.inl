@@ -45,7 +45,6 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSy
 
 template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
-    auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
     bool isIntegratedDevice = pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice;
     bool isNumChannelsFromTelemetry = false;
 
@@ -118,18 +117,13 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
         if (memInfoValues.find(memTotalKey) != memInfoValues.end()) {
             pProperties->physicalSize = memInfoValues[memTotalKey] * 1024;
         }
-    } else if (pSysmanKmdInterface->isPhysicalMemorySizeSupported() == true) {
-        if (isSubdevice) {
-            std::string memval;
-            std::string physicalSizeFile = pSysmanKmdInterface->getSysfsFilePathForPhysicalMemorySize(subDeviceId);
-            ze_result_t result = pSysFsAccess->read(std::move(physicalSizeFile), memval);
-            uint64_t intval = strtoull(memval.c_str(), nullptr, 16);
-            if (ZE_RESULT_SUCCESS != result) {
-                pProperties->physicalSize = 0u;
-            } else {
-                pProperties->physicalSize = intval;
-            }
+    } else {
+        uint64_t physicalMemSize = 0;
+        ze_result_t getPhysicalSizeStatus = pSysmanKmdInterface->getPhysicalMemorySize(physicalMemSize, isSubdevice, subDeviceId, pLinuxSysmanImp);
+        if (ZE_RESULT_SUCCESS != getPhysicalSizeStatus) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get physical memory size, returning error:0x%x\n", __FUNCTION__, getPhysicalSizeStatus);
         }
+        pProperties->physicalSize = physicalMemSize;
     }
 
     return ZE_RESULT_SUCCESS;

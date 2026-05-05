@@ -175,12 +175,12 @@ class SysmanKmdInterface {
     virtual bool isDefaultFrequencyAvailable() const = 0;
     virtual bool isBoostFrequencyAvailable() const = 0;
     virtual bool isTdpFrequencyAvailable() const = 0;
-    virtual bool isPhysicalMemorySizeSupported() const = 0;
     virtual void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) = 0;
     virtual bool isSettingTimeoutModeSupported() const = 0;
     virtual bool isSettingExclusiveModeSupported() const = 0;
     virtual void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual bool isVfEngineUtilizationSupported() const = 0;
+    virtual ze_result_t getPhysicalMemorySize(uint64_t &physicalMemSize, bool isSubdevice, uint32_t subDeviceId, LinuxSysmanImp *pLinuxSysmanImp) = 0;
     virtual ze_result_t getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
                                                          uint64_t fnNumber,
                                                          uint64_t engineInstance,
@@ -263,7 +263,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     bool isDefaultFrequencyAvailable() const override { return true; }
     bool isBoostFrequencyAvailable() const override { return true; }
     bool isTdpFrequencyAvailable() const override { return true; }
-    bool isPhysicalMemorySizeSupported() const override { return false; }
+    ze_result_t getPhysicalMemorySize(uint64_t &physicalMemSize, bool isSubdevice, uint32_t subDeviceId, LinuxSysmanImp *pLinuxSysmanImp) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override;
     bool isSettingTimeoutModeSupported() const override { return true; }
     bool isSettingExclusiveModeSupported() const override { return true; }
@@ -333,7 +333,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     bool isDefaultFrequencyAvailable() const override { return true; }
     bool isBoostFrequencyAvailable() const override { return true; }
     bool isTdpFrequencyAvailable() const override { return true; }
-    bool isPhysicalMemorySizeSupported() const override { return true; }
+    ze_result_t getPhysicalMemorySize(uint64_t &physicalMemSize, bool isSubdevice, uint32_t subDeviceId, LinuxSysmanImp *pLinuxSysmanImp) override;
     void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override;
     bool isSettingTimeoutModeSupported() const override { return true; }
     bool isSettingExclusiveModeSupported() const override { return true; }
@@ -403,7 +403,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isDefaultFrequencyAvailable() const override { return false; }
     bool isBoostFrequencyAvailable() const override { return false; }
     bool isTdpFrequencyAvailable() const override { return false; }
-    bool isPhysicalMemorySizeSupported() const override { return true; }
+    ze_result_t getPhysicalMemorySize(uint64_t &physicalMemSize, bool isSubdevice, uint32_t subDeviceId, LinuxSysmanImp *pLinuxSysmanImp) override;
     std::vector<zes_power_domain_t> getPowerDomains() const override;
 
     // Wedged state is not supported in XE.

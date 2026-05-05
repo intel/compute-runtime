@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/xe/xedrm.h"
 
 #include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
@@ -159,6 +161,26 @@ std::string SysmanKmdInterfaceXe::getSysfsFilePathForPhysicalMemorySize(uint32_t
     std::string filePathPhysicalMemorySize = "device/tile" + std::to_string(subDeviceId) + "/" +
                                              sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange].first;
     return filePathPhysicalMemorySize;
+}
+
+ze_result_t SysmanKmdInterfaceXe::getPhysicalMemorySize(uint64_t &physicalMemSize, bool isSubdevice, uint32_t subDeviceId, LinuxSysmanImp *pLinuxSysmanImp) {
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    auto pDrm = pLinuxSysmanImp->getDrm();
+    auto memoryInfo = pDrm->getMemoryInfo();
+    if (!memoryInfo) {
+        physicalMemSize = 0;
+        status = ZE_RESULT_ERROR_UNKNOWN;
+        if (errno == ENODEV) {
+            status = ZE_RESULT_ERROR_DEVICE_LOST;
+        }
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s():getMemoryInfo() failed errno:%d \n", __FUNCTION__, errno);
+        return status;
+    }
+
+    auto region = memoryInfo->getMemoryRegion(MemoryBanks::getBankForLocalMemory(subDeviceId));
+    physicalMemSize = region.probedSize;
+    return status;
 }
 
 std::string SysmanKmdInterfaceXe::getEnergyCounterNodeFile(zes_power_domain_t powerDomain) {

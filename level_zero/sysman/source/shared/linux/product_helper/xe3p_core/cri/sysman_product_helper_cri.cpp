@@ -921,13 +921,18 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
 
+    uint64_t physicalMemorySize = 0;
+    ze_result_t result = pSysmanKmdInterface->getPhysicalMemorySize(physicalMemorySize, isSubdevice, subDeviceId, pLinuxSysmanImp);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get physical memory size from KMD interface, returning error:0x%x \n", __FUNCTION__, result);
+    }
     pProperties->location = ZES_MEM_LOC_DEVICE;
     pProperties->type = static_cast<zes_mem_type_t>(ZES_INTEL_MEM_TYPE_LPDDR5X);
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subDeviceId;
     pProperties->numChannels = memoryMsuCount;
     pProperties->busWidth = pProperties->numChannels * busWidthPerChannelInBits;
-    pProperties->physicalSize = 0;
+    pProperties->physicalSize = physicalMemorySize;
     return ZE_RESULT_SUCCESS;
 }
 
