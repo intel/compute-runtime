@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/gmm_helper/gmm_resource_usage_type.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <functional>
 #include <memory>
@@ -20,7 +21,7 @@ class MapGpuVirtualAddressGmm;
 class FreeGpuVirtualAddressGmm;
 class DeallocateGmm;
 
-class GmmClientContext {
+class GmmClientContext : public NonCopyableClass {
   public:
     GmmClientContext();
     MOCKABLE_VIRTUAL ~GmmClientContext();
@@ -60,4 +61,6 @@ class GmmClientContext {
     std::unique_ptr<GmmHandleAllocator> handleAllocator;
     uint64_t deviceHandle = 0;
 };
+static_assert(NEO::NonCopyable<GmmClientContext>);
+
 } // namespace NEO
