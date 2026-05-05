@@ -105,5 +105,6 @@ namespace NEO {
 
 template struct EncodeDispatchKernelWithHeap<Family>;
 template void NEO::EncodeDispatchKernelWithHeap<Family>::adjustBindingTablePrefetch<Family::DefaultWalkerType::InterfaceDescriptorType>(Family::DefaultWalkerType::InterfaceDescriptorType &, unsigned int, unsigned int);
+template void EncodeCommandLevelMocs<Family>::apply<Family::RESOURCE_BARRIER>(Family::RESOURCE_BARRIER &cmd);
 
 } // namespace NEO

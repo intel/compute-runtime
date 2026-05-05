@@ -627,6 +627,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableL1FlushUavCoherencyMode, -1, "When enabled
 DECLARE_DEBUG_VARIABLE(int32_t, ResourceBarrierL1FlushMode, -1, "Invalidate or flush L1 cache in RESOURCE_BARRIER instruction. -1: default, 0: disabled, 1: invalidate L1, 2: flush L1, 3: both")
 DECLARE_DEBUG_VARIABLE(bool, EnableExtendedScratchSurfaceSize, true, "Enable support for increase per-thread scratch size HSD-14013581208")
 DECLARE_DEBUG_VARIABLE(int32_t, Enable64BitSemaphore, -1, "Enable 64-bit semaphore, -1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideCommandLevelMocsIndex, -1, "Set MOCS index programmed into per-command MOCS fields. -1: default, 0-15: MOCS index value.")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")

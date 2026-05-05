@@ -124,6 +124,10 @@ void EncodePostSync<Family>::setPostSyncData(PostSyncT &postSyncData, typename P
 }
 
 template <typename Family>
+template <typename CmdType>
+void EncodeCommandLevelMocs<Family>::apply([[maybe_unused]] CmdType &cmd) {}
+
+template <typename Family>
 template <typename CommandType>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, CommandType &cmd, const EncodeWalkerArgs &walkerArgs) {}
 

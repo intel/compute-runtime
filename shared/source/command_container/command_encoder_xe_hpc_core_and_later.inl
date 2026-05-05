@@ -32,6 +32,7 @@ template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate) {
     cmd.setIndirectAddressEnable(indirect);
     cmd.setPredicationEnable(predicate);
+    EncodeCommandLevelMocs<Family>::apply(cmd);
 }
 
 template <typename Family>

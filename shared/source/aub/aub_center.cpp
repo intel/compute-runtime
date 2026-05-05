@@ -59,6 +59,7 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
         options.localMemorySupported = localMemoryEnabled;
         options.mode = aubStreamMode;
         options.gpuAddressSpace = hwInfo->capabilityTable.gpuAddressSpace;
+        options.programAdditionalEngineMMIO = productHelper.isProgramAdditionalEngineMMIORequired();
 
         aubManager.reset(createAubManager(options));
         aubManager->setCCSMode(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);

@@ -321,6 +321,7 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
             localCmd.setSemaphoreDataDword(0);
         }
 
+        EncodeCommandLevelMocs<Family>::apply(localCmd);
         *cmd = localCmd;
     } else {
         using MI_SEMAPHORE_WAIT_LEGACY = typename Family::MI_SEMAPHORE_WAIT_LEGACY;
@@ -345,6 +346,7 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
             localCmd.setQueueSwitchMode(MI_SEMAPHORE_WAIT_LEGACY::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
         }
 
+        EncodeCommandLevelMocs<Family>::apply(localCmd);
         static_assert(sizeof(MI_SEMAPHORE_WAIT) == sizeof(typename Family::MI_SEMAPHORE_WAIT_LEGACY));
         static_assert(std::is_trivially_copyable_v<MI_SEMAPHORE_WAIT_LEGACY>);
         memcpy(cmd, &localCmd, sizeof(MI_SEMAPHORE_WAIT));
@@ -361,4 +363,6 @@ void EncodePostSync<Family>::setCommandLevelInterrupt(CommandType &cmd, bool int
 
 namespace NEO {
 template void NEO::EncodePostSync<Family>::setCommandLevelInterrupt<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, bool interrupt);
+template void EncodeCommandLevelMocs<Family>::apply<Family::RESOURCE_BARRIER>(Family::RESOURCE_BARRIER &cmd);
+template void EncodeCommandLevelMocs<Family>::apply<Family::PIPE_CONTROL>(Family::PIPE_CONTROL &cmd);
 } // namespace NEO

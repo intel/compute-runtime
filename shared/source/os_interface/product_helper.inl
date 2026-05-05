@@ -1154,6 +1154,11 @@ std::optional<uint8_t> ProductHelperHw<gfxProduct>::getBcsCompressionFormat() co
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isProgramAdditionalEngineMMIORequired() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAvailableSemaphore64(const ReleaseHelper *releaseHelper, const HardwareInfo &hwInfo) const {
     if (debugManager.flags.Enable64BitSemaphore.get() != -1) {
         return debugManager.flags.Enable64BitSemaphore.get() == 1;

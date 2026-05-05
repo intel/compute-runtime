@@ -907,6 +907,7 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cm
     }
     storeDataImmediate.setWorkloadPartitionIdOffsetEnable(workloadPartitionOffset);
     EncodeStoreMemory<Family>::encodeForceCompletionCheck(storeDataImmediate);
+    EncodeCommandLevelMocs<Family>::apply(storeDataImmediate);
     *cmdBuffer = storeDataImmediate;
 }
 
@@ -914,6 +915,7 @@ template <typename Family>
 inline void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bool workloadPartition) {
     storeRegMem->setMmioRemapEnable(true);
     storeRegMem->setWorkloadPartitionIdOffsetEnable(workloadPartition);
+    EncodeCommandLevelMocs<Family>::apply(*storeRegMem);
 }
 
 template <typename Family>

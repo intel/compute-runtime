@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ if(TESTS_XE3P_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_2_tests_xe3p_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests_xe3p.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_xe3p_core_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_xe3p_core_mocs_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xe3p_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds_xe3p_core_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xe3p_core_tests.cpp

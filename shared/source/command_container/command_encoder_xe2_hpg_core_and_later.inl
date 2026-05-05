@@ -170,6 +170,8 @@ inline void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const Pro
     if (productHelper.isDcFlushAllowed()) {
         miFlushDwCmd->setFlushCcs(1);
     }
+
+    EncodeCommandLevelMocs<Family>::apply(*miFlushDwCmd);
 }
 
 template <typename Family>

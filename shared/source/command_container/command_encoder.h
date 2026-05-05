@@ -806,4 +806,10 @@ struct EncodeUserInterrupt {
     static void encode(LinearStream &commandStream);
 };
 
+template <typename GfxFamily>
+struct EncodeCommandLevelMocs {
+    template <typename CmdType>
+    static void apply(CmdType &cmd);
+};
+
 } // namespace NEO

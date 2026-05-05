@@ -403,6 +403,7 @@ void EncodeSetMMIO<Family>::encodeMEM(LinearStream &cmdStream, uint32_t offset, 
         cmd.setRegisterAddress(offset + RegisterOffsets::bcs0Base);
     }
 
+    EncodeCommandLevelMocs<Family>::apply(cmd);
     auto buffer = cmdStream.getSpaceForCmd<MI_LOAD_REGISTER_MEM>();
     *buffer = cmd;
 }
@@ -920,6 +921,7 @@ void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic,
         cmd.setOperand2DataDword1(getHighPart(operand2Data));
     }
 
+    EncodeCommandLevelMocs<Family>::apply(cmd);
     *atomic = cmd;
 }
 

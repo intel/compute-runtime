@@ -272,6 +272,7 @@ void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args)
     }
     resourceBarrier.setL1DataportCacheInvalidate(invalidateL1Cache);
     resourceBarrier.setL1DataportUavFlush(flushL1Cache);
+    EncodeCommandLevelMocs<GfxFamily>::apply(resourceBarrier);
     *reinterpret_cast<RESOURCE_BARRIER *>(commandsBuffer) = resourceBarrier;
 }
 

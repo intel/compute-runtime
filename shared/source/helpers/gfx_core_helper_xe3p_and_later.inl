@@ -301,7 +301,7 @@ void MemorySynchronizationCommands<Family>::setBarrierWaFlags(void *barrierCmd) 
 }
 
 template <>
-inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
+void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
     pipeControl.setDataportFlush(args.hdcPipelineFlush);
     pipeControl.setUnTypedDataPortCacheFlush(args.unTypedDataPortCacheFlush);
     pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush);
@@ -330,6 +330,7 @@ inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties
     if (debugManager.flags.PcQueueDrainMode.get() != -1) {
         pipeControl.setQueueDrainMode(!!debugManager.flags.PcQueueDrainMode.get());
     }
+    EncodeCommandLevelMocs<Family>::apply(pipeControl);
 }
 
 template <>

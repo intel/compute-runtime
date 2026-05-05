@@ -255,4 +255,14 @@ void EncodeSurfaceState<Family>::setAdditionalCacheSettings(R_SURFACE_STATE *sur
     }
 }
 
+template <typename Family>
+template <typename CmdType>
+void EncodeCommandLevelMocs<Family>::apply(CmdType &cmd) {
+    if constexpr (requires { cmd.setMocsIndex(0); }) {
+        if (debugManager.flags.OverrideCommandLevelMocsIndex.get() >= 0) {
+            cmd.setMocsIndex(static_cast<uint32_t>(debugManager.flags.OverrideCommandLevelMocsIndex.get()));
+        }
+    }
+}
+
 } // namespace NEO

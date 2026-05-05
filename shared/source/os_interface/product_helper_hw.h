@@ -226,6 +226,7 @@ class ProductHelperHw : public ProductHelper {
     bool isMemSetExtendedPayloadSupported() const override;
     bool isAvailableSemaphore64(const ReleaseHelper *releaseHelper, const HardwareInfo &hwInfo) const override;
     std::optional<uint8_t> getBcsCompressionFormat() const override;
+    bool isProgramAdditionalEngineMMIORequired() const override;
 
     ~ProductHelperHw() override = default;
 
