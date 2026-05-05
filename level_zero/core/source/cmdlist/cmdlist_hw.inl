@@ -404,6 +404,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         this->minimalSizeForBcsSplit = NEO::debugManager.flags.SplitBcsSize.get() * MemoryConstants::kiloByte;
     }
 
+    if (isImmediateType() == false) {
+        if (NEO::debugManager.flags.ExperimentalFlatCommandListApiRecording.get()) {
+            this->flatCapture = std::make_unique<RecordedApiCommands>();
+        }
+    }
+
     return returnType;
 }
 template <GFXCORE_FAMILY gfxCoreFamily>

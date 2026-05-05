@@ -52,8 +52,8 @@ CommandList::~CommandList() {
     }
     removeMemoryPrefetchAllocations();
     printfKernelContainer.clear();
-    if (captureTarget && (false == captureTarget->wasPreallocated())) {
-        delete captureTarget;
+    if (graphCapture && (false == graphCapture->wasPreallocated())) {
+        delete graphCapture;
     }
 }
 

@@ -123,6 +123,36 @@ struct OrderedCommandsRegistry final {
     bool closed = false;
 };
 
+struct RecordedApiCommands {
+    RecordedApiCommands() {
+        commands.reserve(16);
+    }
+
+    bool empty() const {
+        return commands.empty();
+    }
+
+    size_t size() const {
+        return commands.size();
+    }
+
+    template <CaptureApi api, typename... TArgs>
+    bool capture(TArgs... apiArgs) {
+        using ApiArgsT = typename Closure<api>::ApiArgs;
+        if (false == Closure<api>::isSupported) {
+            brokenCapture = true;
+            return false;
+        }
+        auto capturedArgs = ApiArgsT{apiArgs...};
+        commands.push_back(CapturedCommand{Closure<api>(capturedArgs, externalStorage)});
+        return true;
+    }
+
+    std::vector<CapturedCommand> commands;
+    ClosureExternalStorage externalStorage;
+    bool brokenCapture = false;
+};
+
 struct Graph : _ze_graph_handle_t {
     Graph(L0::Context *ctx, bool preallocated, WeaklyShared<OrderedCommandsRegistry> &&orderedCommandsRegistry)
         : ctx(ctx), preallocated(preallocated),
@@ -130,7 +160,6 @@ struct Graph : _ze_graph_handle_t {
         if (orderedCommands.empty()) {
             orderedCommands = WeaklyShared<OrderedCommandsRegistry>(new OrderedCommandsRegistry);
         }
-        commands.reserve(16);
         enabledGraphs();
     }
 
@@ -160,20 +189,19 @@ struct Graph : _ze_graph_handle_t {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
 
-        using ApiArgsT = typename Closure<api>::ApiArgs;
-        auto capturedArgs = ApiArgsT{apiArgs...};
         auto graphCommandId = orderedCommands->acquireNextGraphCommandId();
         if (segments.empty() || (graphCommandId != segments.rbegin()->begin + segments.rbegin()->numCommands)) { // new segment
-            segments.push_back(OrderedCommandsSegment{.subgraph = this, .begin = graphCommandId, .subBegin = static_cast<uint32_t>(commands.size()), .numCommands = 1});
+            segments.push_back(OrderedCommandsSegment{.subgraph = this, .begin = graphCommandId, .subBegin = static_cast<uint32_t>(recordedApiCommands.size()), .numCommands = 1});
         } else {
             ++segments.rbegin()->numCommands;
         }
-        commands.push_back(CapturedCommand{Closure<api>(capturedArgs, externalStorage)});
+
+        recordedApiCommands.capture<api>(apiArgs...);
         return ZE_RESULT_SUCCESS;
     }
 
     const std::vector<CapturedCommand> &getCapturedCommands() const {
-        return commands;
+        return recordedApiCommands.commands;
     }
 
     const StackVec<Graph *, 16> &getSubgraphs() const {
@@ -214,7 +242,7 @@ struct Graph : _ze_graph_handle_t {
     }
 
     bool empty() const {
-        return commands.empty();
+        return recordedApiCommands.empty();
     }
 
     bool validForInstantiation() const {
@@ -245,15 +273,15 @@ struct Graph : _ze_graph_handle_t {
     void forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent);
     void registerSignallingEventFromPreviousCommand(L0::Event &ev);
     ClosureExternalStorage &getExternalStorage() {
-        return externalStorage;
+        return recordedApiCommands.externalStorage;
     }
 
     const ClosureExternalStorage &getExternalStorage() const {
-        return externalStorage;
+        return recordedApiCommands.externalStorage;
     }
 
     bool isLastCommand(CapturedCommandId commandId) const {
-        return commandId + 1 == commands.size();
+        return commandId + 1 == recordedApiCommands.size();
     }
 
     const OrderedCommandsRegistry &getOrderedCommands() const {
@@ -280,10 +308,9 @@ struct Graph : _ze_graph_handle_t {
   protected:
     void unregisterSignallingEvents();
 
-    ClosureExternalStorage externalStorage;
+    RecordedApiCommands recordedApiCommands;
     CaptureTargetDesc captureTargetDesc;
 
-    std::vector<CapturedCommand> commands;
     std::vector<OrderedCommandsSegment> segments;
     StackVec<Graph *, 16> subGraphs;
 
@@ -313,35 +340,39 @@ struct Graph : _ze_graph_handle_t {
 void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events);
 void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Graph &captureTarget, ze_event_handle_t event);
 
-bool isCapturingAllowed(const L0::CommandList &srcCmdList);
+bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList);
 bool usesForkEvents(std::span<ze_event_handle_t> events);
 
 template <CaptureApi api, typename... TArgs>
-ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, TArgs... apiArgs) {
+ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarget, RecordedApiCommands *flatCaptureTarget, TArgs... apiArgs) {
+    if (flatCaptureTarget) {
+        flatCaptureTarget->capture<api>(apiArgs...);
+    }
+
     if (false == areGraphsEnabled()) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     auto eventsWaitList = getCommandsWaitEventsList<api>(apiArgs...);
-    if (false == isCapturingAllowed(srcCmdList)) {
+    if (false == isGraphCapturingAllowed(srcCmdList)) {
         // it's an error to try and fork to a cmdlist that doesn't support capturing
         return usesForkEvents(eventsWaitList) ? ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE : ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
-    if ((false == eventsWaitList.empty()) && ((nullptr == captureTarget) || (captureTarget->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation
-        recordHandleWaitEventsFromNextCommand(srcCmdList, captureTarget, eventsWaitList);
+    if ((false == eventsWaitList.empty()) && ((nullptr == graphCaptureTarget) || (graphCaptureTarget->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation
+        recordHandleWaitEventsFromNextCommand(srcCmdList, graphCaptureTarget, eventsWaitList);
     }
 
-    if (nullptr == captureTarget) {
+    if (nullptr == graphCaptureTarget) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    auto ret = captureTarget->capture<api>(apiArgs...);
+    auto ret = graphCaptureTarget->capture<api>(apiArgs...);
     if (ZE_RESULT_SUCCESS != ret) {
         return ret;
     }
 
     if (getCommandsSignalEvent<api>(apiArgs...)) {
-        recordHandleSignalEventFromPreviousCommand(srcCmdList, *captureTarget, getCommandsSignalEvent<api>(apiArgs...));
+        recordHandleSignalEventFromPreviousCommand(srcCmdList, *graphCaptureTarget, getCommandsSignalEvent<api>(apiArgs...));
     }
     return ZE_RESULT_SUCCESS;
 }

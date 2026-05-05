@@ -48,7 +48,7 @@ Graph::~Graph() {
 
 void Graph::startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph) {
     this->captureSrc = &captureSrc;
-    this->captureSrc->setCaptureTarget(this);
+    this->captureSrc->setGraphCaptureTarget(this);
     captureSrc.getDeviceHandle(&this->captureTargetDesc.hDevice);
     this->captureTargetDesc.desc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
     this->captureTargetDesc.desc.pNext = nullptr;
@@ -67,7 +67,7 @@ void Graph::stopCapturing() {
         return;
     }
     this->unregisterSignallingEvents();
-    this->captureSrc->releaseCaptureTarget();
+    this->captureSrc->releaseGraphCaptureTarget();
     this->captureSrc = nullptr;
     StackVec<std::pair<L0::CommandList *, ForkInfo>, 1> neverJoinedForks; // should stay empty for valid graphs
     for (auto &unjFork : this->unjoinedForks) {
@@ -105,18 +105,18 @@ void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinE
     ForkJoinInfo forkJoinInfo = {};
     forkJoinInfo.forkCommandId = forkInfo->second.forkCommandId;
     forkJoinInfo.forkEvent = forkInfo->second.forkEvent;
-    forkJoinInfo.joinCommandId = static_cast<CapturedCommandId>(this->commands.size());
+    forkJoinInfo.joinCommandId = static_cast<CapturedCommandId>(this->recordedApiCommands.size());
     forkJoinInfo.joinEvent = &joinEvent;
-    forkJoinInfo.forkDestiny = childCmdList.getCaptureTarget();
+    forkJoinInfo.forkDestiny = childCmdList.getGraphCaptureTarget();
     this->potentialJoins[forkInfo->second.forkCommandId] = forkJoinInfo;
 }
 
 void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent) {
-    UNRECOVERABLE_IF(child || childCmdList.getCaptureTarget()); // should not be capturing already
+    UNRECOVERABLE_IF(child || childCmdList.getGraphCaptureTarget()); // should not be capturing already
     child = new Graph(this->ctx, false, this->orderedCommands.share());
     child->parentGraph = this;
     child->startCapturingFrom(childCmdList, true);
-    childCmdList.setCaptureTarget(child);
+    childCmdList.setGraphCaptureTarget(child);
     this->subGraphs.push_back(child);
 
     auto forkEventInfo = this->recordedSignals.find(&forkEvent);
@@ -127,7 +127,7 @@ void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &fork
 
 void Graph::registerSignallingEventFromPreviousCommand(L0::Event &ev) {
     ev.setRecordedSignalFrom(this->captureSrc);
-    this->recordedSignals[&ev] = static_cast<CapturedCommandId>(this->commands.size() - 1);
+    this->recordedSignals[&ev] = static_cast<CapturedCommandId>(this->recordedApiCommands.size() - 1);
 }
 
 void Graph::unregisterSignallingEvents() {
@@ -498,6 +498,7 @@ L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode() {
     ze_command_list_handle_t newCmdListHandle = nullptr;
     src->getContext()->createCommandList(src->getCaptureTargetDesc().hDevice, &src->getCaptureTargetDesc().desc, &newCmdListHandle);
     L0::CommandList *newCmdList = L0::CommandList::fromHandle(newCmdListHandle);
+    newCmdList->disableFlatCapture();
     UNRECOVERABLE_IF(nullptr == newCmdList);
     this->myCommandLists.emplace_back(newCmdList);
     return newCmdList;
@@ -672,7 +673,7 @@ void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&
                 continue;
             }
 
-            signalFromCmdList->getCaptureTarget()->forkTo(srcCmdList, captureTarget, *potentialForkEvent);
+            signalFromCmdList->getGraphCaptureTarget()->forkTo(srcCmdList, captureTarget, *potentialForkEvent);
         }
     }
 }
@@ -685,7 +686,7 @@ void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Gra
     captureTarget.registerSignallingEventFromPreviousCommand(*L0::Event::fromHandle(event));
 }
 
-bool isCapturingAllowed(const L0::CommandList &srcCmdList) {
+bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList) {
     return srcCmdList.isImmediateType() && (false == srcCmdList.isInSynchronousMode());
 }
 

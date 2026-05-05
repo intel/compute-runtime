@@ -1190,7 +1190,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout, bool handlePostWaitOperations) {
     ze_result_t status = ZE_RESULT_SUCCESS;
 
-    if (this->isCapturing()) {
+    if (this->isCapturingGraph()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

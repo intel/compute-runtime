@@ -497,25 +497,25 @@ struct CommandList : _ze_command_list_handle_t {
     ze_result_t obtainMemoryCopyParamsFromExtensions(const ze_base_desc_t *desc, CmdListMemoryCopyParams &memoryCopyParams, bool writesOnly) const;
     ze_result_t obtainCustomOperationParamsFromExtensions(const ze_base_desc_t *desc, CmdListCustomOperationParams &customOperationParams) const;
 
-    void setCaptureTarget(Graph *graph) {
-        this->captureTarget = graph;
+    void setGraphCaptureTarget(Graph *graph) {
+        this->graphCapture = graph;
     }
 
-    Graph *getCaptureTarget() const {
-        return this->captureTarget;
+    Graph *getGraphCaptureTarget() const {
+        return this->graphCapture;
     }
 
-    bool isCapturing() const {
-        return this->captureTarget != nullptr;
+    bool isCapturingGraph() const {
+        return this->graphCapture != nullptr;
     }
 
-    Graph *releaseCaptureTarget() {
-        return std::exchange(this->captureTarget, nullptr);
+    Graph *releaseGraphCaptureTarget() {
+        return std::exchange(this->graphCapture, nullptr);
     }
 
     template <CaptureApi api, typename... TArgs>
     ze_result_t capture(TArgs... apiArgs) {
-        return L0::captureCommand<api>(*this, this->captureTarget, apiArgs...);
+        return L0::captureCommand<api>(*this, this->graphCapture, this->flatCapture.get(), apiArgs...);
     }
 
     inline bool getIsWalkerWithProfilingEnqueued() {
@@ -609,6 +609,10 @@ struct CommandList : _ze_command_list_handle_t {
     BcsSplitParams::CmdListsForSplitContainer getRegularCmdListsForSplit(size_t totalTransferSize, size_t perEngineMaxSize, size_t splitQueuesCount);
     void dispatchRecordedBcsSplit();
 
+    void disableFlatCapture() {
+        flatCapture.reset();
+    }
+
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 
@@ -675,7 +679,8 @@ struct CommandList : _ze_command_list_handle_t {
     CommandQueue *cmdQImmediateCopyOffload = nullptr;
     Device *device = nullptr;
     NEO::ScratchSpaceController *usedScratchController = nullptr;
-    Graph *captureTarget = nullptr;
+    Graph *graphCapture = nullptr;                    // immediate cmdlist graph capturing
+    std::unique_ptr<RecordedApiCommands> flatCapture; // regular cmdlist capturing
 
     size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
     size_t cmdListCurrentStartOffset = 0;
