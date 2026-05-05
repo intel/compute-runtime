@@ -806,4 +806,10 @@ struct EncodeUserInterrupt {
     static void encode(LinearStream &commandStream);
 };
 
+template <typename GfxFamily>
+struct ContextTimestampRegister {
+    static uint32_t getRegisterOffsetLow();
+    static uint32_t getRegisterOffsetHigh();
+};
+
 } // namespace NEO

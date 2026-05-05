@@ -390,7 +390,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         validateTimestampRegisters<FamilyType>(cmdList,
                                                begin,
                                                RegisterOffsets::globalTimestampLdw, globalStartAddress,
-                                               RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
+                                               ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), contextStartAddress,
                                                true,
                                                true);
 
@@ -425,7 +425,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         validateTimestampRegisters<FamilyType>(cmdList,
                                                begin,
                                                RegisterOffsets::globalTimestampLdw, globalEndAddress,
-                                               RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
+                                               ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), contextEndAddress,
                                                true,
                                                true);
     }

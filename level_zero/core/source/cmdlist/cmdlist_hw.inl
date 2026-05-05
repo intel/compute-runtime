@@ -3638,7 +3638,7 @@ void CommandListCoreFamily<gfxCoreFamily>::writeKernelTimestamp(uint64_t baseAdd
     }
     uint64_t address = ptrOffset(baseAddr, offset);
 
-    uint32_t registerOffset = isGlobalTimestamp ? RegisterOffsets::globalTimestampLdw : RegisterOffsets::gpThreadTimeRegAddressOffsetLow;
+    uint32_t registerOffset = isGlobalTimestamp ? RegisterOffsets::globalTimestampLdw : NEO::ContextTimestampRegister<GfxFamily>::getRegisterOffsetLow();
     writeTimestamp(commandContainer, registerOffset, address, maskLsb, workloadPartition, postSyncCmdBuffer, copyOperation);
     pushTimestampPatch(outTimeStampSyncCmds, offset, postSyncCmd);
     adjustWriteKernelTimestamp(address, baseAddr, outTimeStampSyncCmds, workloadPartition, copyOperation, isGlobalTimestamp);

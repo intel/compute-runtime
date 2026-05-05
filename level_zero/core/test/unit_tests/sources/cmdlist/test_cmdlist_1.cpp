@@ -3481,11 +3481,11 @@ HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenProfilingBeforeCommand
     EXPECT_NE(cmdList.end(), ++itor);
 
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + ContextTimestampRegister<FamilyType>::getRegisterOffsetLow());
     EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, contextOffset));
     EXPECT_NE(cmdList.end(), ++itor);
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::gpThreadTimeRegAddressOffsetHigh);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh());
     EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr + sizeof(uint32_t), contextOffset));
 }
 
@@ -3595,11 +3595,11 @@ HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenProfilingAfterCommandF
     EXPECT_NE(cmdList.end(), ++itor);
 
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + ContextTimestampRegister<FamilyType>::getRegisterOffsetLow());
     EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, contextOffset));
     EXPECT_NE(cmdList.end(), ++itor);
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::gpThreadTimeRegAddressOffsetHigh);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh());
     EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr + sizeof(uint32_t), contextOffset));
 }
 

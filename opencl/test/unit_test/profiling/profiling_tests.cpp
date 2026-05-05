@@ -306,13 +306,13 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProflingWhen
     auto pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
     pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
     ASSERT_NE(nullptr, pBeforeMI);
-    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pBeforeMI->getRegisterAddress());
+    EXPECT_EQ(ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), pBeforeMI->getRegisterAddress());
 
     auto itorAfterMI = find<MI_STORE_REGISTER_MEM *>(itorGPGPUWalkerCmd, cmdList.end());
     ASSERT_NE(cmdList.end(), itorAfterMI);
     auto pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
     ASSERT_NE(nullptr, pAfterMI);
-    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pAfterMI->getRegisterAddress());
+    EXPECT_EQ(ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), pAfterMI->getRegisterAddress());
     ++itorAfterMI;
     pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
     EXPECT_EQ(nullptr, pAfterMI);
@@ -425,13 +425,13 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueBlockedWithProfi
     auto pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
     pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
     ASSERT_NE(nullptr, pBeforeMI);
-    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pBeforeMI->getRegisterAddress());
+    EXPECT_EQ(ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), pBeforeMI->getRegisterAddress());
 
     auto itorAfterMI = find<MI_STORE_REGISTER_MEM *>(itorGPGPUWalkerCmd, cmdList.end());
     ASSERT_NE(cmdList.end(), itorAfterMI);
     auto pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
     ASSERT_NE(nullptr, pAfterMI);
-    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pAfterMI->getRegisterAddress());
+    EXPECT_EQ(ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), pAfterMI->getRegisterAddress());
     ++itorAfterMI;
     EXPECT_EQ(itorAfterMI, cmdList.end());
     clReleaseEvent(event);

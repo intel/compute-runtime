@@ -762,7 +762,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryC
     itor++;
     EXPECT_NE(cmdList.end(), itor);
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + ContextTimestampRegister<FamilyType>::getRegisterOffsetLow());
 
     itor = find<MI_FLUSH_DW *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
@@ -774,7 +774,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryC
     itor++;
     EXPECT_NE(cmdList.end(), itor);
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + ContextTimestampRegister<FamilyType>::getRegisterOffsetLow());
     itor++;
     EXPECT_EQ(cmdList.end(), itor);
 }
@@ -1654,7 +1654,7 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndProfilingThen
     validateTimestampRegisters<FamilyType>(parsedCmdList,
                                            begin,
                                            RegisterOffsets::globalTimestampLdw, globalStartAddress,
-                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
+                                           ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), contextStartAddress,
                                            false,
                                            true);
 
@@ -1663,7 +1663,7 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndProfilingThen
     validateTimestampRegisters<FamilyType>(parsedCmdList,
                                            itorWalkers[1],
                                            RegisterOffsets::globalTimestampLdw, globalEndAddress,
-                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
+                                           ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), contextEndAddress,
                                            false,
                                            true);
 }

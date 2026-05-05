@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,9 @@ inline constexpr uint32_t semaWaitPoll = 0x0224c;
 
 inline constexpr uint32_t gpThreadTimeRegAddressOffsetLow = 0x23A8;
 inline constexpr uint32_t gpThreadTimeRegAddressOffsetHigh = 0x23AC;
+
+inline constexpr uint32_t queueTimestampRegAddressOffsetLow = 0x24c0;
+inline constexpr uint32_t queueTimestampRegAddressOffsetHigh = 0x24c4;
 
 inline constexpr uint32_t globalTimestampLdw = 0x2358;
 inline constexpr uint32_t globalTimestampUn = 0x235c;

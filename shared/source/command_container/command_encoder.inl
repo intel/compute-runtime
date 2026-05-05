@@ -1327,4 +1327,14 @@ void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container
                                                   container.getDevice()->getRootDeviceEnvironment());
 }
 
+template <typename Family>
+inline uint32_t ContextTimestampRegister<Family>::getRegisterOffsetLow() {
+    return RegisterOffsets::gpThreadTimeRegAddressOffsetLow;
+}
+
+template <typename Family>
+inline uint32_t ContextTimestampRegister<Family>::getRegisterOffsetHigh() {
+    return RegisterOffsets::gpThreadTimeRegAddressOffsetHigh;
+}
+
 } // namespace NEO

@@ -1171,3 +1171,8 @@ HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingBbStartThenEx
     EncodeDataMemory<FamilyType>::programBbStart(memoryPtr, dstGpuAddress, bbStartAddress, false, false, false);
     EXPECT_EQ(ptrOffset(baseMemoryPtr, offset), memoryPtr);
 }
+
+HWTEST2_F(CommandEncoderTest, WhenGettingContextTimestampRegisterOffsetsThenQueueTimestampRegisterIsReturned, IsAtMostXe3Core) {
+    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh());
+    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, ContextTimestampRegister<FamilyType>::getRegisterOffsetLow());
+}

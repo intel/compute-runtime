@@ -927,3 +927,8 @@ HWTEST2_F(CommandEncoderTestXe3pAndLater, GivenMiSemaphoreWaitLegacyWhenProgramm
                                                         useSemaphore64bCmd);
     EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::WAIT_MODE::WAIT_MODE_SIGNAL_MODE, miSemaphoreLegacy->getWaitMode());
 }
+
+HWTEST2_F(CommandEncoderTestXe3pAndLater, WhenGettingContextTimestampRegisterOffsetsThenQueueTimestampRegisterIsReturned, IsAtLeastXe3pCore) {
+    EXPECT_EQ(RegisterOffsets::queueTimestampRegAddressOffsetHigh, ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh());
+    EXPECT_EQ(RegisterOffsets::queueTimestampRegAddressOffsetLow, ContextTimestampRegister<FamilyType>::getRegisterOffsetLow());
+}

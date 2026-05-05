@@ -751,14 +751,14 @@ void CommandQueueHw<GfxFamily>::processDispatchForMarkerWithTimestampPacket(Comm
     auto timestampContextStartGpuAddress = TimestampPacketHelper::getContextStartGpuAddress(*currentTimestampPacketNode);
     auto timestampGlobalStartAddress = TimestampPacketHelper::getGlobalStartGpuAddress(*currentTimestampPacketNode);
     bool isBcs = NEO::EngineHelpers::isBcs(getGpgpuCommandStreamReceiver().getOsContext().getEngineType());
-    EncodeStoreMMIO<GfxFamily>::encode(*commandStream, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, timestampContextStartGpuAddress, false, nullptr, isBcs);
+    EncodeStoreMMIO<GfxFamily>::encode(*commandStream, ContextTimestampRegister<GfxFamily>::getRegisterOffsetLow(), timestampContextStartGpuAddress, false, nullptr, isBcs);
     EncodeStoreMMIO<GfxFamily>::encode(*commandStream, RegisterOffsets::globalTimestampLdw, timestampGlobalStartAddress, false, nullptr, isBcs);
     MemorySynchronizationCommands<GfxFamily>::encodeAdditionalTimestampOffsets(*commandStream, timestampContextStartGpuAddress, timestampGlobalStartAddress, isBcs);
 
     auto timestampContextEndGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*currentTimestampPacketNode);
     auto timestampGlobalEndAddress = TimestampPacketHelper::getGlobalEndGpuAddress(*currentTimestampPacketNode);
 
-    EncodeStoreMMIO<GfxFamily>::encode(*commandStream, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, timestampContextEndGpuAddress, false, nullptr, isBcs);
+    EncodeStoreMMIO<GfxFamily>::encode(*commandStream, ContextTimestampRegister<GfxFamily>::getRegisterOffsetLow(), timestampContextEndGpuAddress, false, nullptr, isBcs);
     EncodeStoreMMIO<GfxFamily>::encode(*commandStream, RegisterOffsets::globalTimestampLdw, timestampGlobalEndAddress, false, nullptr, isBcs);
     MemorySynchronizationCommands<GfxFamily>::encodeAdditionalTimestampOffsets(*commandStream, timestampContextEndGpuAddress, timestampGlobalEndAddress, isBcs);
 }
