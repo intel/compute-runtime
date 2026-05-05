@@ -328,6 +328,7 @@ using CommandListImmediateAppendRegularTest = Test<CommandListFixture>;
 HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndAppendRegularCommandlistWhenWaitFailsThenExecuteNotCalled, IsAtLeastXeHpcCore) {
     ze_command_queue_desc_t queueDesc = {};
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    mockCommandStreamReceiver.osContext = neoDevice->getDefaultEngine().osContext;
     MockCommandQueueExecute queue(device, &mockCommandStreamReceiver, &queueDesc);
 
     auto cmdList = new MockCommandListImmediateHwWithWaitEventFail<FamilyType::gfxCoreFamily>;
