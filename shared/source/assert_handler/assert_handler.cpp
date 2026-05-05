@@ -49,11 +49,13 @@ void AssertHandler::printMessage() const {
 }
 
 void AssertHandler::printAssertAndAbort() {
-    std::lock_guard<std::mutex> lock(this->mtx);
     if (checkAssert()) {
-        printMessage();
-        device->stopDirectSubmissionAndWaitForCompletion();
-        abortExecution();
+        std::call_once(abortOnce, [this]() {
+            printMessage();
+            device->stopDirectSubmissionAndWaitForCompletion();
+            abortExecution();
+        });
     }
 }
+
 } // namespace NEO
