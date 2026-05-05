@@ -2071,6 +2071,8 @@ bool DebugSessionImp::isValidGpuAddress(const zet_debug_memory_space_desc_t *des
         if (desc->address & (1 << slmAddressSpaceTag)) { // IGC sets bit 28 to identify SLM address
             return true;
         }
+    } else if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_BARRIER) {
+        return true;
     }
 
     return false;
@@ -2339,8 +2341,8 @@ std::optional<SipTransferAddr> DebugSessionImp::getSlmAddresses(EuThread::Thread
 }
 
 std::optional<SipTransferAddr> DebugSessionImp::getBarrierAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) {
-    static constexpr uint32_t barrierSize = sizeof(uint64_t);
-    const uint32_t barrierIndex = static_cast<uint32_t>((desc->address >> 3) & maxNBitValue(7));
+    static constexpr uint64_t barrierSize = sizeof(uint64_t);
+    const uint64_t barrierIndex = (desc->address >> 3) & maxNBitValue(7);
     const uint64_t memoryHandle = allThreads.at(threadId)->getMemoryHandle();
 
     uint32_t barrierStartOffset = 0;
@@ -2352,7 +2354,7 @@ std::optional<SipTransferAddr> DebugSessionImp::getBarrierAddresses(EuThread::Th
     const uint64_t gpuVaBase = getContextStateSaveAreaGpuVa(memoryHandle);
 
     return SipTransferAddr{
-        .sipOffset = barrierIndex,
+        .sipOffset = desc->address,
         .sipSize = static_cast<uint32_t>(size / barrierSize),
         .gpuMemOffset = gpuVaBase + barrierStartOffset + barrierIndex * barrierSize,
     };

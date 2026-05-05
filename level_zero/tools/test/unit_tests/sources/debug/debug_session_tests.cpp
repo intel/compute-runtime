@@ -5116,6 +5116,23 @@ TEST(DebugSessionTest, givenInvalidAddressWhenCheckingValidAddressThenFalseIsRet
     EXPECT_FALSE(sessionMock->isValidGpuAddress(&desc));
 }
 
+TEST(DebugSessionTest, givenBarrierAddressSpaceWhenCheckingAnyAddressThenTrueReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp mockDevice(neoDevice);
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0xffffffff12345678;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_BARRIER;
+
+    EXPECT_TRUE(sessionMock->isValidGpuAddress(&desc));
+}
+
 TEST(DebugSessionTest, givenDebugSessionWhenGettingTimeDiffThenDiffReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -6234,7 +6251,7 @@ TEST_F(DebugSessionBarrierMemTest, GivenGetBarrierStartOffsetSucceedsWhenGetBarr
     zet_debug_memory_space_desc_t memDesc = {.address = 0xbee504ae};
     const auto addrs = session.getBarrierAddresses(threadId, 17, &memDesc);
     EXPECT_NE(addrs, std::nullopt);
-    EXPECT_EQ(addrs->sipOffset, 21u);
+    EXPECT_EQ(addrs->sipOffset, 0xbee504ae);
     EXPECT_EQ(addrs->sipSize, 2u);
     EXPECT_EQ(addrs->gpuMemOffset, 0x203000a8u);
 }

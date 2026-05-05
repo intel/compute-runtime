@@ -923,6 +923,7 @@ uint64_t DebugSessionLinux::getContextStateSaveAreaGpuVa(uint64_t memoryHandle) 
     std::lock_guard<std::mutex> lock(asyncThreadMutex);
     auto bindInfo = getClientConnection(clientHandle)->vmToContextStateSaveAreaBindInfo.find(memoryHandle);
     if (bindInfo == getClientConnection(clientHandle)->vmToContextStateSaveAreaBindInfo.end()) {
+        PRINT_DEBUGGER_ERROR_LOG("Context State Save Area not found for memory handle: %llu\n", memoryHandle);
         return 0;
     }
 
