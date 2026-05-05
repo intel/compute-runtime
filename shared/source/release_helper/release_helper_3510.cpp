@@ -92,7 +92,7 @@ uint32_t ReleaseHelperHw<release>::adjustMaxThreadsPerEuCount(uint32_t maxThread
 }
 
 template <>
-bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired() const {
+bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const {
     auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
     if (enableStateCacheInvalidationWa != -1) {
         return enableStateCacheInvalidationWa;

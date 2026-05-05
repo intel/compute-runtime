@@ -1879,17 +1879,18 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     }
 
     auto releaseHelper = device->getNEODevice()->getReleaseHelper();
-    bool noCsStallRequired = commandList->isImmediateType() && releaseHelper->isStateCacheInvalidationNoCsStallRequired();
-    if (releaseHelper->isStateCacheInvalidationWaRequired() || noCsStallRequired) {
+    bool waRequired = releaseHelper->isStateCacheInvalidationWaRequired(commandList->isImmediateType(),
+                                                                        mockKernelImmData->kernelDescriptor->kernelAttributes.usesImageOrSamplerState());
+    if (waRequired) {
         ASSERT_NE(nullptr, stateCacheInvalidationPipeControl);
-        EXPECT_EQ(!noCsStallRequired, !!stateCacheInvalidationPipeControl->getCommandStreamerStallEnable());
+        EXPECT_FALSE(stateCacheInvalidationPipeControl->getCommandStreamerStallEnable());
     } else {
         EXPECT_EQ(nullptr, stateCacheInvalidationPipeControl);
     }
 }
 
 HWTEST2_F(CommandListAppendLaunchKernelMockModule,
-          givenStateCacheInvalidationNoCsStallIsRequiredWhenTwoKernelsWithStatefulAccessAndImageOrSamplerStateAreAppendedToImmediateCmdListThenPipeControlWithStateCacheInvalidationAndNoCsStallIsInsertedBetweenWalkers, IsAtLeastXeCore) {
+          givenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithStatefulAccessAndImageOrSamplerStateAreAppendedToImmediateCmdListThenPipeControlWithStateCacheInvalidationAndNoCsStallIsInsertedBetweenWalkers, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
 
@@ -1897,8 +1898,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     auto releaseHelperBackup = std::move(rootDeviceEnvironment.releaseHelper);
 
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isStateCacheInvalidationNoCsStallRequiredResult = true;
-    releaseHelper->isStateCacheInvalidationWaRequiredResult = false;
+    releaseHelper->isStateCacheInvalidationWaRequiredResult = true;
     rootDeviceEnvironment.releaseHelper = std::move(releaseHelper);
 
     static_cast<ModuleImp *>(module.get())->getTranslationUnit()->isGeneratedByIgc = true;
@@ -1950,7 +1950,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
 }
 
 HWTEST2_F(CommandListAppendLaunchKernelMockModule,
-          givenStateCacheInvalidationNoCsStallIsRequiredWhenTwoKernelsWithBufferOnlyStatefulAccessAreAppendedToImmediateCmdListThenPipeControlWithStateCacheInvalidationIsNotInsertedBetweenWalkers, IsAtLeastXeCore) {
+          givenStateCacheInvalidationWaIsNotRequiredWhenTwoKernelsWithStatefulAccessAreAppendedToImmediateCmdListThenPipeControlWithStateCacheInvalidationIsNotInsertedBetweenWalkers, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
 
@@ -1958,7 +1958,6 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     auto releaseHelperBackup = std::move(rootDeviceEnvironment.releaseHelper);
 
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isStateCacheInvalidationNoCsStallRequiredResult = true;
     releaseHelper->isStateCacheInvalidationWaRequiredResult = false;
     rootDeviceEnvironment.releaseHelper = std::move(releaseHelper);
 

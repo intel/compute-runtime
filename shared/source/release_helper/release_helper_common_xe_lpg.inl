@@ -32,11 +32,12 @@ bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isStateCacheInvalidationNoCsStallRequired() const {
-    if (debugManager.flags.EnableStateCacheInvalidationWa.get() != -1) {
-        return false;
+bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const {
+    auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
+    if (enableStateCacheInvalidationWa != -1) {
+        return enableStateCacheInvalidationWa;
     }
-    return true;
+    return isImmediateCmdList && kernelUsesImageOrSampler;
 }
 
 } // namespace NEO

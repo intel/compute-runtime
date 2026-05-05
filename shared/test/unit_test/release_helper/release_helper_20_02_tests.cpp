@@ -127,3 +127,7 @@ TEST_F(ReleaseHelper2002Tests, whenIsSingleDispatchRequiredForMultiCCSThenTrueRe
 TEST_F(ReleaseHelper2002Tests, whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned();
 }
+
+TEST_F(ReleaseHelper2002Tests, whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned) {
+    whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned();
+}

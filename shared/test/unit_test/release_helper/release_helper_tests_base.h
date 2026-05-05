@@ -44,8 +44,8 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned();
     void whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
     void whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned();
-    void whenIsStateCacheInvalidationNoCsStallRequiredCalledThenTrueReturned();
-    void whenIsStateCacheInvalidationNoCsStallRequiredCalledWithDebugFlagSetThenFalseReturned();
+    void whenIsStateCacheInvalidationWaRequiredCalledThenTrueOnlyForImmediateAndImageOrSampler();
+    void whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned();
     void whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities();
     void whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities();
     void whenGettingSupportedNumGrfsThenValuesUpTo512Returned();

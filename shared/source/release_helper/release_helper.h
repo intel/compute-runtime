@@ -71,8 +71,7 @@ class ReleaseHelper {
     virtual uint32_t adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const = 0;
     virtual bool shouldQueryPeerAccess() const = 0;
     virtual bool isSingleDispatchRequiredForMultiCCS() const = 0;
-    virtual bool isStateCacheInvalidationWaRequired() const = 0;
-    virtual bool isStateCacheInvalidationNoCsStallRequired() const = 0;
+    virtual bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const = 0;
     virtual bool isAvailableSemaphore64() const = 0;
     virtual bool isLatePreemptionStartSupportedHelper() const = 0;
 
@@ -123,8 +122,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     uint32_t adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const override;
     bool shouldQueryPeerAccess() const override;
     bool isSingleDispatchRequiredForMultiCCS() const override;
-    bool isStateCacheInvalidationWaRequired() const override;
-    bool isStateCacheInvalidationNoCsStallRequired() const override;
+    bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const override;
     bool isAvailableSemaphore64() const override;
     bool isLatePreemptionStartSupportedHelper() const override;
 

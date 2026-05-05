@@ -42,10 +42,11 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
     Kernel &kernel,
     const bool &enable) {
     bool containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(kernel.getDescriptor());
-    bool stateCacheInvalidationWaRequired = commandQueue.getDevice().getReleaseHelper()->isStateCacheInvalidationWaRequired() && containsStatefulAccess;
+    bool stateCacheInvalidationWaRequired = commandQueue.getDevice().getReleaseHelper()->isStateCacheInvalidationWaRequired(false, false) && containsStatefulAccess;
     if (!enable && stateCacheInvalidationWaRequired) {
         PipeControlArgs args{};
         args.stateCacheInvalidationEnable = true;
+        args.disableCsStall = true;
         MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);
     }
 }

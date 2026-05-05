@@ -192,16 +192,11 @@ bool ReleaseHelperHw<releaseType>::isSingleDispatchRequiredForMultiCCS() const {
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired() const {
+bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const {
     auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
     if (enableStateCacheInvalidationWa != -1) {
         return enableStateCacheInvalidationWa;
     }
-    return false;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationNoCsStallRequired() const {
     return false;
 }
 

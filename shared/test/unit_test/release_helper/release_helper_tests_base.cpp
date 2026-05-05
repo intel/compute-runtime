@@ -242,7 +242,11 @@ void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenFal
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired());
+        for (auto isImmediate : {false, true}) {
+            for (auto kernelUsesImageOrSampler : {false, true}) {
+                EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired(isImmediate, kernelUsesImageOrSampler));
+            }
+        }
     }
 }
 
@@ -253,22 +257,29 @@ void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenTru
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isStateCacheInvalidationWaRequired());
+        for (auto isImmediate : {false, true}) {
+            for (auto kernelUsesImageOrSampler : {false, true}) {
+                EXPECT_TRUE(releaseHelper->isStateCacheInvalidationWaRequired(isImmediate, kernelUsesImageOrSampler));
+            }
+        }
     }
 }
 
-void ReleaseHelperTestsBase::whenIsStateCacheInvalidationNoCsStallRequiredCalledThenTrueReturned() {
+void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenTrueOnlyForImmediateAndImageOrSampler() {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableStateCacheInvalidationWa.set(-1);
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isStateCacheInvalidationNoCsStallRequired());
+        EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired(false, false));
+        EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired(false, true));
+        EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired(true, false));
+        EXPECT_TRUE(releaseHelper->isStateCacheInvalidationWaRequired(true, true));
     }
 }
 
-void ReleaseHelperTestsBase::whenIsStateCacheInvalidationNoCsStallRequiredCalledWithDebugFlagSetThenFalseReturned() {
+void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned() {
     DebugManagerStateRestore restorer;
     for (auto enableStateCacheInvalidationWa : {0, 1}) {
         debugManager.flags.EnableStateCacheInvalidationWa.set(enableStateCacheInvalidationWa);
@@ -276,7 +287,12 @@ void ReleaseHelperTestsBase::whenIsStateCacheInvalidationNoCsStallRequiredCalled
             ipVersion.revision = revision;
             releaseHelper = ReleaseHelper::create(ipVersion);
             ASSERT_NE(nullptr, releaseHelper);
-            EXPECT_FALSE(releaseHelper->isStateCacheInvalidationNoCsStallRequired());
+            for (auto isImmediate : {false, true}) {
+                for (auto kernelUsesImageOrSampler : {false, true}) {
+                    EXPECT_EQ(static_cast<bool>(enableStateCacheInvalidationWa),
+                              releaseHelper->isStateCacheInvalidationWaRequired(isImmediate, kernelUsesImageOrSampler));
+                }
+            }
         }
     }
 }

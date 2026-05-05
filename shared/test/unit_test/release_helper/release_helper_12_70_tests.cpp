@@ -125,14 +125,10 @@ TEST_F(ReleaseHelper1270Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThen
     whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1270Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
-    whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
+TEST_F(ReleaseHelper1270Tests, whenIsStateCacheInvalidationWaRequiredCalledThenTrueOnlyForImmediateAndImageOrSampler) {
+    whenIsStateCacheInvalidationWaRequiredCalledThenTrueOnlyForImmediateAndImageOrSampler();
 }
 
-TEST_F(ReleaseHelper1270Tests, whenIsStateCacheInvalidationNoCsStallRequiredCalledThenTrueReturned) {
-    whenIsStateCacheInvalidationNoCsStallRequiredCalledThenTrueReturned();
-}
-
-TEST_F(ReleaseHelper1270Tests, whenIsStateCacheInvalidationNoCsStallRequiredCalledWithDebugFlagSetThenFalseReturned) {
-    whenIsStateCacheInvalidationNoCsStallRequiredCalledWithDebugFlagSetThenFalseReturned();
+TEST_F(ReleaseHelper1270Tests, whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned) {
+    whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned();
 }
