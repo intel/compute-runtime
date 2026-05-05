@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2025 Intel Corporation
+# Copyright (C) 2019-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -55,6 +55,14 @@ set(NEO_CORE_OS_INTERFACE
 
 if(SUPPORT_XE_HPC_CORE OR SUPPORT_XE_HPG_CORE OR SUPPORT_XE2_HPG_CORE OR SUPPORT_XE3_CORE)
   list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_from_xe_hpg_to_xe3.inl)
+endif()
+
+if(SUPPORT_XE2_HPG_CORE OR SUPPORT_XE3_CORE)
+  list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_xe3.inl)
+endif()
+
+if(SUPPORT_XE3P_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe3p_and_later.inl)
 endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE ${NEO_CORE_OS_INTERFACE})

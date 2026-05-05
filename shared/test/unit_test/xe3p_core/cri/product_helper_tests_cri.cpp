@@ -151,11 +151,11 @@ CRITEST_F(CriProductHelper, givenEnableExtendedScratchSurfaceSizeFlagWhenCallIsA
 }
 
 CRITEST_F(CriProductHelper, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue) {
-    std::array<uint64_t, 15> listOfCoherentPatIndexes = {1, 2, 4, 6, 7, 9, 10, 11, 22, 24, 25, 27, 28, 30, 31};
+    std::array<uint64_t, 16> listOfCoherentPatIndexes = {1, 2, 4, 6, 7, 9, 10, 11, 19, 22, 24, 25, 27, 28, 30, 31};
     for (auto patIndex : listOfCoherentPatIndexes) {
         EXPECT_TRUE(productHelper->isCoherentAllocation(patIndex).value());
     }
-    std::array<uint64_t, 7> listOfNonCoherentPatIndexes = {0, 3, 5, 8, 23, 26, 29};
+    std::array<uint64_t, 8> listOfNonCoherentPatIndexes = {0, 3, 5, 8, 18, 23, 26, 29};
     for (auto patIndex : listOfNonCoherentPatIndexes) {
         EXPECT_FALSE(productHelper->isCoherentAllocation(patIndex).value());
     }

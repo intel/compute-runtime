@@ -1358,7 +1358,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenScratchSpacePointerIsInGrfThen
     EXPECT_TRUE(productHelper->isScratchSpaceBasePointerInGrf());
 }
 
-HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue, IsAtLeastXe2HpgCore) {
+HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue, IsWithinXe2HpgCoreAndXe3Core) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     const auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     std::array<uint64_t, 11> listOfCoherentPatIndexes = {1, 2, 4, 5, 7, 22, 23, 26, 27, 30, 31};
@@ -1366,6 +1366,19 @@ HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenRetur
         EXPECT_TRUE(productHelper.isCoherentAllocation(patIndex).value());
     }
     std::array<uint64_t, 21> listOfNonCoherentPatIndexes = {0, 3, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25, 28, 29};
+    for (auto patIndex : listOfNonCoherentPatIndexes) {
+        EXPECT_FALSE(productHelper.isCoherentAllocation(patIndex).value());
+    }
+}
+
+HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue, IsAtLeastXe3pCore) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    const auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    std::array<uint64_t, 12> listOfCoherentPatIndexes = {1, 2, 4, 5, 7, 19, 22, 23, 26, 27, 30, 31};
+    for (auto patIndex : listOfCoherentPatIndexes) {
+        EXPECT_TRUE(productHelper.isCoherentAllocation(patIndex).value());
+    }
+    std::array<uint64_t, 20> listOfNonCoherentPatIndexes = {0, 3, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 24, 25, 28, 29};
     for (auto patIndex : listOfNonCoherentPatIndexes) {
         EXPECT_FALSE(productHelper.isCoherentAllocation(patIndex).value());
     }

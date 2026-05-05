@@ -30,15 +30,6 @@ bool ProductHelperHw<gfxProduct>::isCopyBufferRectSplitSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t patIndex) const {
-    std::array<uint64_t, 11> listOfCoherentPatIndexes = {1, 2, 4, 5, 7, 22, 23, 26, 27, 30, 31};
-    if (std::find(listOfCoherentPatIndexes.begin(), listOfCoherentPatIndexes.end(), patIndex) != listOfCoherentPatIndexes.end()) {
-        return true;
-    }
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::setRenderCompressedFlags(HardwareInfo &hwInfo) const {
     hwInfo.capabilityTable.ftrRenderCompressedImages = hwInfo.featureTable.flags.ftrXe2Compression;
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = hwInfo.featureTable.flags.ftrXe2Compression;

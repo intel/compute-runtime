@@ -64,7 +64,7 @@ void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const 
 
 template <>
 std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t patIndex) const {
-    std::array<uint64_t, 7> listOfNonCoherentPatIndexes = {0, 3, 5, 8, 23, 26, 29};
+    std::array<uint64_t, 8> listOfNonCoherentPatIndexes = {0, 3, 5, 8, 18, 23, 26, 29};
     if (std::find(listOfNonCoherentPatIndexes.begin(), listOfNonCoherentPatIndexes.end(), patIndex) != listOfNonCoherentPatIndexes.end()) {
         return false;
     }

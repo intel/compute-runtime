@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/product_helper.inl"
 #include "shared/source/os_interface/product_helper_xe2_and_later.inl"
+#include "shared/source/os_interface/product_helper_xe3p_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_hpc_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_hpg_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_lpg_and_later.inl"
