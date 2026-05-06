@@ -54,7 +54,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
 
     imgInfo.imgDesc = lookupTable.imageProperties.imageDescriptor;
-    imgInfo.mipCount = imgInfo.imgDesc.numMipLevels;
+    imgInfo.mipCount = imgInfo.imgDesc.numMipLevels > 1 ? imgInfo.imgDesc.numMipLevels : 0;
 
     if (lookupTable.isSrgb) {
         if (desc->format.layout != ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8 || desc->format.type != ZE_IMAGE_FORMAT_TYPE_UNORM) {

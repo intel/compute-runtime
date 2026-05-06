@@ -93,6 +93,99 @@ HWTEST_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreate
     EXPECT_EQ(imageInfo.useLocalMemory, false);
 }
 
+HWTEST_F(ImageCreate, givenMipLevelsGreaterThanOneWhenImageCreateThenMipCountEqualsNumMipLevels) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 1u;
+    zeDesc.width = 1u;
+    zeDesc.miplevels = 4u;
+    zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
+    zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_32,
+                     ZE_IMAGE_FORMAT_TYPE_UINT,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R,
+                     ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B,
+                     ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+    Image *imagePtr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    std::unique_ptr<L0::Image> image(imagePtr);
+
+    ASSERT_NE(image, nullptr);
+
+    auto imageInfo = image->getImageInfo();
+
+    EXPECT_EQ(imageInfo.imgDesc.numMipLevels, zeDesc.miplevels);
+    EXPECT_EQ(imageInfo.mipCount, zeDesc.miplevels);
+}
+
+HWTEST_F(ImageCreate, givenMipLevelsEqualToOneWhenImageCreateThenMipCountIsZero) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 1u;
+    zeDesc.width = 1u;
+    zeDesc.miplevels = 1u;
+    zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
+    zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_32,
+                     ZE_IMAGE_FORMAT_TYPE_UINT,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R,
+                     ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B,
+                     ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+    Image *imagePtr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    std::unique_ptr<L0::Image> image(imagePtr);
+
+    ASSERT_NE(image, nullptr);
+
+    auto imageInfo = image->getImageInfo();
+
+    EXPECT_EQ(imageInfo.imgDesc.numMipLevels, 1u);
+    EXPECT_EQ(imageInfo.mipCount, 0u);
+}
+
+HWTEST_F(ImageCreate, givenMipLevelsEqualToZeroWhenImageCreateThenMipCountIsZero) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 1u;
+    zeDesc.width = 1u;
+    zeDesc.miplevels = 0u;
+    zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
+    zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_32,
+                     ZE_IMAGE_FORMAT_TYPE_UINT,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R,
+                     ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B,
+                     ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+    Image *imagePtr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    std::unique_ptr<L0::Image> image(imagePtr);
+
+    ASSERT_NE(image, nullptr);
+
+    auto imageInfo = image->getImageInfo();
+
+    EXPECT_EQ(imageInfo.imgDesc.numMipLevels, 0u);
+    EXPECT_EQ(imageInfo.mipCount, 0u);
+}
+
 HWTEST_F(ImageCreate, givenBufferTypeWhenImageCreateThenNullPtrImageIsReturned) {
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
