@@ -130,3 +130,7 @@ TEST_F(ReleaseHelper2004Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThen
 TEST_F(ReleaseHelper2004Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
 }
+
+TEST_F(ReleaseHelper2004Tests, whenIsSlmLimitationTo96KNeededCalledThenFalseReturned) {
+    whenIsSlmLimitationTo96KNeededCalledThenFalseReturned();
+}

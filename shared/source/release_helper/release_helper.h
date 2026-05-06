@@ -74,6 +74,7 @@ class ReleaseHelper {
     virtual bool isStateCacheInvalidationWaRequired() const = 0;
     virtual bool isStateCacheInvalidationNoCsStallRequired() const = 0;
     virtual bool isAvailableSemaphore64() const = 0;
+    virtual bool isSlmLimitationTo96KNeeded() const = 0;
     virtual bool isLatePreemptionStartSupportedHelper() const = 0;
 
   protected:
@@ -126,6 +127,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isStateCacheInvalidationWaRequired() const override;
     bool isStateCacheInvalidationNoCsStallRequired() const override;
     bool isAvailableSemaphore64() const override;
+    bool isSlmLimitationTo96KNeeded() const override;
     bool isLatePreemptionStartSupportedHelper() const override;
 
   protected:

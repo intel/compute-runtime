@@ -211,6 +211,11 @@ bool ReleaseHelperHw<releaseType>::isAvailableSemaphore64() const {
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isSlmLimitationTo96KNeeded() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isLatePreemptionStartSupportedHelper() const {
     return false;
 }

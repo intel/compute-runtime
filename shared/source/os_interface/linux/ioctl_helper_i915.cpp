@@ -780,6 +780,13 @@ void IoctlHelperI915::fillExtSetparamLowLatency(GemContextCreateExtSetParam &ext
     return;
 }
 
+void IoctlHelperI915::setSlmLimitTo96KContextParam(GemContextCreateExtSetParam &extSetparam) {
+    extSetparam.base.name = getDrmParamValueBase(DrmParam::contextCreateExtSetparam);
+    extSetparam.param.param = I915_CONTEXT_PARAM_WA_22013059131;
+    extSetparam.param.value = 1;
+    return;
+}
+
 bool IoctlHelperI915::queryDeviceIdAndRevision(Drm &drm) {
 
     HardwareInfo *hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();

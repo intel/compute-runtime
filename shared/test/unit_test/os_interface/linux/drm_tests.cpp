@@ -33,6 +33,7 @@
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -2948,4 +2949,114 @@ TEST(DrmTest, givenSetupHardwareInfoWhenTopologyDataHasRegionCountThenFeatureTab
     drm.setupHardwareInfo(0, false);
 
     EXPECT_EQ(2u, hwInfo->featureTable.regionCount);
+}
+
+TEST(DrmTest, givenContextCreateFailsWhenSlmLimitExtensionIsPresentThenRetryWithoutIt) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    class DrmMockRetryContext : public DrmMock {
+      public:
+        using DrmMock::DrmMock;
+        int contextCreateCallCount = 0;
+        int failUntilCallCount = 0;
+
+        int ioctl(DrmIoctl request, void *arg) override {
+            if (request == DrmIoctl::gemContextCreateExt) {
+                contextCreateCallCount++;
+                if (contextCreateCallCount <= failUntilCallCount) {
+                    return -1;
+                }
+            }
+            return DrmMock::ioctl(request, arg);
+        }
+    };
+
+    auto mockReleaseHelper = std::make_unique<MockReleaseHelper>();
+    mockReleaseHelper->isSlmLimitationTo96KNeededResult = true;
+
+    DrmMockRetryContext drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->releaseHelper = std::move(mockReleaseHelper);
+
+    // First call fails with SlmLimit, retry without SlmLimit succeeds
+    drm.failUntilCallCount = 1;
+    auto result = drm.createDrmContext(1, false, false);
+    EXPECT_GE(result, 0);
+    EXPECT_EQ(2, drm.contextCreateCallCount);
+}
+
+TEST(DrmTest, givenContextCreateFailsWithAndWithoutSlmLimitThenReturnsError) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    class DrmMockAlwaysFail : public DrmMock {
+      public:
+        using DrmMock::DrmMock;
+        int contextCreateCallCount = 0;
+
+        int ioctl(DrmIoctl request, void *arg) override {
+            if (request == DrmIoctl::gemContextCreateExt) {
+                contextCreateCallCount++;
+                return -1;
+            }
+            return DrmMock::ioctl(request, arg);
+        }
+    };
+
+    auto mockReleaseHelper = std::make_unique<MockReleaseHelper>();
+    mockReleaseHelper->isSlmLimitationTo96KNeededResult = true;
+
+    DrmMockAlwaysFail drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->releaseHelper = std::move(mockReleaseHelper);
+
+    auto result = drm.createDrmContext(1, false, false);
+    EXPECT_EQ(-1, result);
+    EXPECT_EQ(2, drm.contextCreateCallCount); // initial + 1 retry without SlmLimit
+}
+
+TEST(DrmTest, givenContextCreateSucceedsOnFirstTryThenNoRetry) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto mockReleaseHelper = std::make_unique<MockReleaseHelper>();
+    mockReleaseHelper->isSlmLimitationTo96KNeededResult = true;
+    executionEnvironment->rootDeviceEnvironments[0]->releaseHelper = std::move(mockReleaseHelper);
+
+    drm.storedRetVal = 0;
+    auto result = drm.createDrmContext(1, false, false);
+    EXPECT_GE(result, 0);
+    EXPECT_EQ(1, drm.ioctlCount.contextCreate.load());
+}
+
+TEST(DrmTest, givenNoSlmLimitExtensionWhenContextCreateFailsThenNoRetryAndReturnError) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    class DrmMockAlwaysFail : public DrmMock {
+      public:
+        using DrmMock::DrmMock;
+
+        int ioctl(DrmIoctl request, void *arg) override {
+            if (request == DrmIoctl::gemContextCreateExt) {
+                ioctlCount.contextCreate++;
+                return -1;
+            }
+            return DrmMock::ioctl(request, arg);
+        }
+    };
+
+    DrmMockAlwaysFail drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    // no release helper -> no SLM limit extension -> no retry possible
+    auto result = drm.createDrmContext(1, false, false);
+    EXPECT_EQ(-1, result);
+    EXPECT_EQ(1, drm.ioctlCount.contextCreate.load());
+}
+
+TEST(DrmTest, givenSetSlmLimitTo96KContextParamThenCorrectValuesAreSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    GemContextCreateExtSetParam extSetparam = {};
+    drm.ioctlHelper->setSlmLimitTo96KContextParam(extSetparam);
+
+    EXPECT_EQ(static_cast<uint32_t>(I915_CONTEXT_CREATE_EXT_SETPARAM), extSetparam.base.name);
+    EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_WA_22013059131), extSetparam.param.param);
+    EXPECT_EQ(1u, extSetparam.param.value);
 }
