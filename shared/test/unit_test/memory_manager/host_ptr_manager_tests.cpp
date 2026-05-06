@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -953,21 +953,13 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWa
     EXPECT_EQ(2u, storage0->cleanAllocationsCalled);
     EXPECT_EQ(2u, storage0->lastCleanAllocationsTaskCount);
 
-    if (memoryManager->isSingleTemporaryAllocationsListEnabled()) {
-        EXPECT_EQ(1u, storage1->cleanAllocationsCalled);
-        EXPECT_EQ(1u, storage1->lastCleanAllocationsTaskCount);
-    } else {
-        EXPECT_EQ(2u, storage1->cleanAllocationsCalled);
-        EXPECT_EQ(2u, storage1->lastCleanAllocationsTaskCount);
-    }
+    EXPECT_EQ(1u, storage1->cleanAllocationsCalled);
+    EXPECT_EQ(1u, storage1->lastCleanAllocationsTaskCount);
 }
 
 HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsAndSingleTempAllocationsListWhenCheckIsCalledThenWaitAndCleanOnAllEngines) {
     TaskCountType taskCountReady = 2;
     TaskCountType taskCountNotReady = 1;
-
-    memoryManager->singleTemporaryAllocationsList = true;
-    memoryManager->temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
 
     auto &engines = memoryManager->getRegisteredEngines(mockRootDeviceIndex);
     EXPECT_EQ(1u, engines.size());
@@ -1029,8 +1021,6 @@ HWTEST_F(HostPtrAllocationTest, givenSingleTempAllocationsListWhenAddingToStorag
     TaskCountType taskCountReady = 2;
     TaskCountType taskCountNotReady = 1;
 
-    memoryManager->singleTemporaryAllocationsList = true;
-    memoryManager->temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
     memoryManager->callBaseAllocInUse = true;
 
     auto &engines = memoryManager->getRegisteredEngines(mockRootDeviceIndex);
@@ -1094,8 +1084,6 @@ HWTEST_F(HostPtrAllocationTest, givenSingleTempAllocationsListWhenAddingToStorag
     TaskCountType taskCountReady = 2;
     TaskCountType taskCountNotReady = 1;
 
-    memoryManager->singleTemporaryAllocationsList = true;
-    memoryManager->temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
     memoryManager->callBaseAllocInUse = true;
 
     auto &engines = memoryManager->getRegisteredEngines(mockRootDeviceIndex);
@@ -1126,21 +1114,9 @@ HWTEST_F(HostPtrAllocationTest, givenSingleTempAllocationsListWhenAddingToStorag
     csr->tagAddress = nullptr;
 }
 
-TEST_F(HostPtrAllocationTest, givenDebugFlagSetWhenCreatingMemoryManagerThenEnableSingleTempAllocationsList) {
-    DebugManagerStateRestore debugRestorer;
-
-    {
-        auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
-        EXPECT_TRUE(memoryManager->isSingleTemporaryAllocationsListEnabled());
-        EXPECT_NE(nullptr, memoryManager->temporaryAllocations.get());
-    }
-
-    debugManager.flags.UseSingleListForTemporaryAllocations.set(0);
-    {
-        auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
-        EXPECT_FALSE(memoryManager->isSingleTemporaryAllocationsListEnabled());
-        EXPECT_EQ(nullptr, memoryManager->temporaryAllocations.get());
-    }
+TEST_F(HostPtrAllocationTest, givenMemoryManagerWhenCreatedThenInitializeTemporaryAllocationsList) {
+    auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+    EXPECT_NE(nullptr, memoryManager->temporaryAllocations.get());
 }
 
 TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredFragmentCannotBeDestroyedThenCheckForOverlappingReturnsError) {

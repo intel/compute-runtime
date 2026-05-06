@@ -431,7 +431,6 @@ class MemoryManager {
     void cleanTemporaryAllocations(const CommandStreamReceiver &csr, TaskCountType waitTaskCount);
     std::unique_ptr<GraphicsAllocation> obtainTemporaryAllocationWithPtr(CommandStreamReceiver *csr, size_t requiredSize, const void *requiredPtr, AllocationType allocationType);
     std::unique_ptr<GraphicsAllocation> obtainTemporaryAllocationWithPtr(CommandStreamReceiver *csr, size_t requiredSize, const void *requiredPtr, AllocationType allocationType, bool *nonUsmHostPtrPartialOverlapFound);
-    bool isSingleTemporaryAllocationsListEnabled() const { return singleTemporaryAllocationsList; }
     AllocationsList &getTemporaryAllocationsList() const { return *temporaryAllocations; }
     void destroyPageFaultManager();
 
@@ -475,7 +474,6 @@ class MemoryManager {
 
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;
-    bool singleTemporaryAllocationsList = false;
     std::unique_ptr<DeferredDeleter> deferredDeleter;
     bool asyncDeleterEnabled = false;
     std::vector<bool> enable64kbpages;

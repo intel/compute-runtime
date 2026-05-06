@@ -30,7 +30,7 @@ void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<Gra
     auto memoryManager = commandStreamReceiver.getMemoryManager();
     auto osContextId = commandStreamReceiver.getOsContext().getContextId();
 
-    if (allocationUsage == TEMPORARY_ALLOCATION && memoryManager->isSingleTemporaryAllocationsListEnabled()) {
+    if (allocationUsage == TEMPORARY_ALLOCATION) {
         memoryManager->storeTemporaryAllocation(std::move(gfxAllocation), osContextId, taskCount);
         return;
     }
@@ -53,7 +53,7 @@ void InternalAllocationStorage::cleanAllocationList(TaskCountType waitTaskCount,
 void InternalAllocationStorage::freeAllocationsList(TaskCountType waitTaskCount, AllocationsList &allocationsList) {
     auto memoryManager = commandStreamReceiver.getMemoryManager();
 
-    if (&allocationsList == &allocationLists[TEMPORARY_ALLOCATION] && memoryManager->isSingleTemporaryAllocationsListEnabled()) {
+    if (&allocationsList == &allocationLists[TEMPORARY_ALLOCATION]) {
         memoryManager->cleanTemporaryAllocations(commandStreamReceiver, waitTaskCount);
         return;
     }
@@ -89,23 +89,12 @@ std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainTemporaryAl
 
 std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainTemporaryAllocationWithPtr(size_t requiredSize, const void *requiredPtr, AllocationType allocationType, bool *nonUsmHostPtrPartialOverlapFound) {
     auto memoryManager = commandStreamReceiver.getMemoryManager();
-
-    if (memoryManager->isSingleTemporaryAllocationsListEnabled()) {
-        return memoryManager->obtainTemporaryAllocationWithPtr(&commandStreamReceiver, requiredSize, requiredPtr, allocationType, nonUsmHostPtrPartialOverlapFound);
-    }
-
-    auto allocation = allocationLists[TEMPORARY_ALLOCATION].detachAllocation(requiredSize, requiredPtr, &commandStreamReceiver, allocationType, nonUsmHostPtrPartialOverlapFound);
-    return allocation;
+    return memoryManager->obtainTemporaryAllocationWithPtr(&commandStreamReceiver, requiredSize, requiredPtr, allocationType, nonUsmHostPtrPartialOverlapFound);
 }
 
 AllocationsList &InternalAllocationStorage::getTemporaryAllocations() {
     auto memoryManager = commandStreamReceiver.getMemoryManager();
-
-    if (memoryManager->isSingleTemporaryAllocationsListEnabled()) {
-        return memoryManager->getTemporaryAllocationsList();
-    }
-
-    return allocationLists[TEMPORARY_ALLOCATION];
+    return memoryManager->getTemporaryAllocationsList();
 }
 
 DeviceBitfield InternalAllocationStorage::getDeviceBitfield() const {

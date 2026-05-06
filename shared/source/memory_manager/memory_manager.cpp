@@ -96,10 +96,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         supportsMultiStorageResources = !!debugManager.flags.EnableMultiStorageResources.get();
     }
 
-    if (debugManager.flags.UseSingleListForTemporaryAllocations.get() != 0) {
-        singleTemporaryAllocationsList = true;
-        temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
-    }
+    temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
 }
 
 void MemoryManager::storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t osContextId, TaskCountType taskCount) {
@@ -1157,7 +1154,7 @@ void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForComplet
             }
             csr->getInternalAllocationStorage()->cleanAllocationList(*csr->getTagAddress(), AllocationUsage::TEMPORARY_ALLOCATION);
 
-            if (isSingleTemporaryAllocationsListEnabled() && (temporaryAllocations->peekIsEmpty() || !waitForCompletion)) {
+            if (temporaryAllocations->peekIsEmpty() || !waitForCompletion) {
                 return;
             }
         }

@@ -50,7 +50,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::overrideAllocationData;
     using MemoryManager::pageFaultManager;
     using MemoryManager::prefetchManager;
-    using MemoryManager::singleTemporaryAllocationsList;
     using MemoryManager::supportsMultiStorageResources;
     using MemoryManager::temporaryAllocations;
     using MemoryManager::useNonSvmHostPtrAlloc;
