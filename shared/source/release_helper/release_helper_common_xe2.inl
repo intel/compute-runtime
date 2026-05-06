@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,15 @@ const std::string ReleaseHelperHw<release>::getDeviceConfigString(uint32_t tileC
 
 template <>
 bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
+    return true;
+}
+
+template <>
+bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const {
+    auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
+    if (enableStateCacheInvalidationWa != -1) {
+        return enableStateCacheInvalidationWa;
+    }
     return true;
 }
 

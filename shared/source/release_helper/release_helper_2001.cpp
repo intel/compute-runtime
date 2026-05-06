@@ -44,15 +44,6 @@ bool ReleaseHelperHw<release>::isSingleDispatchRequiredForMultiCCS() const {
     return true;
 }
 
-template <>
-bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const {
-    auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
-    if (enableStateCacheInvalidationWa != -1) {
-        return enableStateCacheInvalidationWa;
-    }
-    return true;
-}
-
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe2.inl"
