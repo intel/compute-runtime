@@ -1080,6 +1080,81 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithReser
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithHandleInCacheAndReservedHandleDataIsPassedTwoTimesThenObtainingDataIsSuccessFullyReturnedBothTimes) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+    mock->outputFd = 1337;
+    memoryManager->mockObtainReservedHandleData = true;
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+
+    uint8_t reservedHandleData[32] = {0};
+    uint64_t handle = 0;
+    int ret = allocation->peekInternalHandle(this->memoryManager, handle, reservedHandleData);
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(handle, static_cast<uint64_t>(1337));
+
+    memoryManager->mockObtainReservedHandleDataResult = 0;
+
+    uint64_t handle2 = 0;
+    ret = allocation->peekInternalHandle(this->memoryManager, handle2, reservedHandleData);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(handle2, static_cast<uint64_t>(1337));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithHandleInCacheAndReservedHandleDataNotYetReadThenReservedHandleDataIsReturned) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+    mock->outputFd = 1337;
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+
+    uint64_t handle = 0;
+    int ret = allocation->peekInternalHandle(this->memoryManager, handle, nullptr);
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(handle, static_cast<uint64_t>(1337));
+
+    memoryManager->mockObtainReservedHandleData = true;
+    memoryManager->mockObtainReservedHandleDataResult = 0;
+    uint8_t reservedHandleData[32] = {0};
+    uint64_t handle2 = 0;
+    ret = allocation->peekInternalHandle(this->memoryManager, handle2, reservedHandleData);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(handle2, static_cast<uint64_t>(1337));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithHandleInCacheAndReservedHandleDataNotYetReadAndObtainFailsThenErrorIsReturned) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+    mock->outputFd = 1337;
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+
+    uint64_t handle = 0;
+    int ret = allocation->peekInternalHandle(this->memoryManager, handle, nullptr);
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(handle, static_cast<uint64_t>(1337));
+
+    memoryManager->mockObtainReservedHandleData = true;
+    memoryManager->mockObtainReservedHandleDataResult = -1;
+    uint8_t reservedHandleData[32] = {0};
+    uint64_t handle2 = 0;
+    ret = allocation->peekInternalHandle(this->memoryManager, handle2, reservedHandleData);
+    EXPECT_EQ(ret, -1);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingPeekInternalHandleSeveralTimesThenSameHandleIsReturned) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemWait = 1;

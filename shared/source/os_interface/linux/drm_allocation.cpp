@@ -121,6 +121,12 @@ int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t han
 
     if (handles[handleId] != std::numeric_limits<uint64_t>::max()) {
         handle = handles[handleId];
+        if (reservedHandleData) {
+            int reservedHandleRet = static_cast<DrmMemoryManager *>(memoryManager)->obtainReservedHandleData(static_cast<int>(handle), this->getRootDeviceIndex(), reservedHandleData);
+            if (reservedHandleRet != 0) {
+                return -1;
+            }
+        }
         return 0;
     }
 
