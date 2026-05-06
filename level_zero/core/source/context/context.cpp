@@ -347,6 +347,10 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
         unifiedMemoryProperties.allocationFlags.allocFlags.rtAllocation = 1;
     }
 
+    if (lookupTable.writeCombinedMemory) {
+        unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined = 1;
+    }
+
     if (false == lookupTable.exportMemory) {
         if (size <= NEO::PoolInfo::getMaxPoolableSize(neoDevice->getGfxCoreHelper())) {
             this->driverHandle->initDeviceUsmAllocPoolOnce();

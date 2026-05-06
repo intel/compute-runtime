@@ -11,6 +11,7 @@
 #include "shared/source/helpers/surface_format_info.h"
 
 #include "level_zero/core/source/image/internal_core_image_ext.h"
+#include "level_zero/core/source/memory/internal_mem_alloc_ext.h"
 #include "level_zero/driver_experimental/zex_common.h"
 #include "level_zero/include/level_zero/ze_intel_gpu.h"
 #include "level_zero/include/level_zero/ze_stypes.h"
@@ -101,6 +102,7 @@ struct StructuresLookupTable {
     bool compressedHint;
     bool uncompressedHint;
     bool rayTracingMemory;
+    bool writeCombinedMemory;
     bool bindlessImage;
     bool sampledImage;
     bool isExternalMemmapSystem;
@@ -196,6 +198,8 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             }
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC) {
             lookupTable.rayTracingMemory = true;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_WRITE_COMBINED_MEM_ALLOC_EXT_DESC) {
+            lookupTable.writeCombinedMemory = true;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC) {
             auto sysMemDesc = reinterpret_cast<const ze_external_memmap_sysmem_ext_desc_t *>(extendedDesc);
             lookupTable.externalMemmapSystem.systemMemory = sysMemDesc->pSystemMemory;
