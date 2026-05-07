@@ -35,7 +35,7 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenInvalidInputWhenCallingGetKe
     pKernel->isPatchedOverride = false;
     retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, workDim,
                                                     globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
-    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
     pKernel->isPatchedOverride = true;
 
     retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, workDim,

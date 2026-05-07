@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -53,6 +54,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <limits>
 
 using namespace NEO;
 
@@ -4632,22 +4634,48 @@ cl_int getKernelSuggestedLocalWorkSizeImpl(const char *apiFunctionName,
         return retVal;
     }
 
-    if ((workDim == 0) || (workDim > 3)) {
+    if (&pCommandQueue->getContext() != &pMultiDeviceKernel->getContext()) {
+        retVal = CL_INVALID_CONTEXT;
+        return retVal;
+    }
+
+    const auto rootDeviceIndex = pCommandQueue->getDevice().getRootDeviceIndex();
+    Kernel *pKernel = nullptr;
+    if (rootDeviceIndex < pMultiDeviceKernel->getKernelInfos().size()) {
+        pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+    }
+    if (pKernel == nullptr) {
+        retVal = CL_INVALID_PROGRAM_EXECUTABLE;
+        return retVal;
+    }
+
+    const auto maxWorkDim = std::min(pCommandQueue->getClDevice().getDeviceInfo().maxWorkItemDimensions, 3u);
+    if ((workDim == 0) || (workDim > maxWorkDim)) {
         retVal = CL_INVALID_WORK_DIMENSION;
         return retVal;
     }
 
-    if (globalWorkSize == nullptr ||
-        globalWorkSize[0] == 0 ||
-        (workDim > 1 && globalWorkSize[1] == 0) ||
-        (workDim > 2 && globalWorkSize[2] == 0)) {
+    if (globalWorkSize == nullptr) {
         retVal = CL_INVALID_GLOBAL_WORK_SIZE;
         return retVal;
     }
 
-    auto pKernel = pMultiDeviceKernel->getKernel(pCommandQueue->getDevice().getRootDeviceIndex());
+    const auto deviceAddressBits = pCommandQueue->getDevice().getDeviceInfo().addressBits;
+    const auto deviceSizeTMax = static_cast<size_t>(maxNBitValue(std::min<uint64_t>(deviceAddressBits, std::numeric_limits<size_t>::digits)));
+
+    for (cl_uint i = 0; i < workDim; ++i) {
+        if ((globalWorkSize[i] == 0) || (globalWorkSize[i] > deviceSizeTMax)) {
+            retVal = CL_INVALID_GLOBAL_WORK_SIZE;
+            return retVal;
+        }
+        if ((globalWorkOffset != nullptr) && (globalWorkOffset[i] > deviceSizeTMax - globalWorkSize[i])) {
+            retVal = CL_INVALID_GLOBAL_OFFSET;
+            return retVal;
+        }
+    }
+
     if (!pKernel->isPatched()) {
-        retVal = CL_INVALID_KERNEL;
+        retVal = CL_INVALID_KERNEL_ARGS;
         return retVal;
     }
 

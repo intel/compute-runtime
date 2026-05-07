@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_device.h"
+
 #include "opencl/source/api/api.h"
 #include "opencl/source/api/dispatch.h"
 #include "opencl/source/command_queue/cl_local_work_size.h"
@@ -13,6 +15,9 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
+
+#include <limits>
+#include <utility>
 
 using namespace NEO;
 
@@ -44,7 +49,7 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeCoreTests, GivenInvalidInputWhenCallingG
     pKernel->isPatchedOverride = false;
     retVal = clGetKernelSuggestedLocalWorkSize(pCommandQueue, pMultiDeviceKernel, workDim,
                                                globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
-    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
     pKernel->isPatchedOverride = true;
 
     retVal = clGetKernelSuggestedLocalWorkSize(pCommandQueue, pMultiDeviceKernel, workDim,
@@ -70,6 +75,77 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeCoreTests, GivenInvalidInputWhenCallingG
         EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, retVal);
         globalWorkSize[i] = 1;
     }
+}
+
+TEST_F(clGetKernelSuggestedLocalWorkSizeCoreTests, GivenKernelFromDifferentContextWhenGettingSuggestedLocalWorkSizeThenInvalidContextIsReturned) {
+    size_t globalWorkOffset[3] = {};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t suggestedLocalWorkSize[3];
+    cl_int kernelContextRetVal = CL_SUCCESS;
+
+    auto kernelContext = Context::create<MockContext>(nullptr, ClDeviceVector(&testedClDevice, 1), nullptr, nullptr, kernelContextRetVal);
+    ASSERT_EQ(CL_SUCCESS, kernelContextRetVal);
+    ASSERT_NE(nullptr, kernelContext);
+
+    {
+        MockKernelWithInternals kernelFromDifferentContext(*kernelContext);
+        retVal = clGetKernelSuggestedLocalWorkSize(pCommandQueue, kernelFromDifferentContext.mockMultiDeviceKernel, 1, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+        EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+    }
+
+    kernelContext->release();
+}
+
+TEST_F(clGetKernelSuggestedLocalWorkSizeCoreTests, GivenKernelWithoutExecutableForQueueDeviceWhenGettingSuggestedLocalWorkSizeThenInvalidProgramExecutableIsReturned) {
+    auto kernelForRootDeviceZero = MockKernel::create(pCommandQueue->getDevice(), pProgram);
+    KernelVectorType kernels;
+    kernels.resize(testedRootDeviceIndex + 1);
+    kernels[0] = kernelForRootDeviceZero;
+    auto kernelInfos = MockKernel::toKernelInfoContainer(kernelForRootDeviceZero->getKernelInfo(), 0u);
+    MockMultiDeviceKernel kernelMissingQueueDeviceExecutable(std::move(kernels), kernelInfos);
+
+    size_t globalWorkOffset[3] = {};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t suggestedLocalWorkSize[3];
+
+    retVal = clGetKernelSuggestedLocalWorkSize(pCommandQueue, &kernelMissingQueueDeviceExecutable, 1, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    EXPECT_EQ(CL_INVALID_PROGRAM_EXECUTABLE, retVal);
+}
+
+TEST_F(clGetKernelSuggestedLocalWorkSizeCoreTests, GivenWorkDimGreaterThanDeviceLimitWhenGettingSuggestedLocalWorkSizeThenInvalidWorkDimensionIsReturned) {
+    size_t globalWorkOffset[3] = {};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t suggestedLocalWorkSize[3];
+    auto originalMaxWorkItemDimensions = pDevice->deviceInfo.maxWorkItemDimensions;
+    pDevice->deviceInfo.maxWorkItemDimensions = 2u;
+
+    retVal = clGetKernelSuggestedLocalWorkSize(pCommandQueue, pMultiDeviceKernel, 3, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    EXPECT_EQ(CL_INVALID_WORK_DIMENSION, retVal);
+
+    pDevice->deviceInfo.maxWorkItemDimensions = originalMaxWorkItemDimensions;
+}
+
+TEST_F(clGetKernelSuggestedLocalWorkSizeCoreTests, GivenGlobalWorkSizeExceedingDeviceSizeTWhenGettingSuggestedLocalWorkSizeThenInvalidGlobalWorkSizeIsReturned) {
+    size_t globalWorkOffset[3] = {};
+    size_t globalWorkSize[3] = {2, 1, 1};
+    size_t suggestedLocalWorkSize[3];
+    auto &rootDeviceInfo = static_cast<MockDevice *>(&pDevice->getDevice())->deviceInfo;
+    auto originalAddressBits = rootDeviceInfo.addressBits;
+    rootDeviceInfo.addressBits = 1u;
+
+    retVal = clGetKernelSuggestedLocalWorkSize(pCommandQueue, pMultiDeviceKernel, 1, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, retVal);
+
+    rootDeviceInfo.addressBits = originalAddressBits;
+}
+
+TEST_F(clGetKernelSuggestedLocalWorkSizeCoreTests, GivenGlobalWorkOffsetPlusSizeOverflowWhenGettingSuggestedLocalWorkSizeThenInvalidGlobalOffsetIsReturned) {
+    size_t globalWorkOffset[3] = {std::numeric_limits<size_t>::max(), 0, 0};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t suggestedLocalWorkSize[3];
+
+    retVal = clGetKernelSuggestedLocalWorkSize(pCommandQueue, pMultiDeviceKernel, 1, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    EXPECT_EQ(CL_INVALID_GLOBAL_OFFSET, retVal);
 }
 
 TEST_F(clGetKernelSuggestedLocalWorkSizeCoreTests, GivenVariousInputWhenGettingSuggestedLocalWorkSizeThenCorrectValuesAreReturned) {
