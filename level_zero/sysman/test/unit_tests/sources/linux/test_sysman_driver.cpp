@@ -395,6 +395,27 @@ TEST_F(SysmanDriverHandleTest,
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceMemoryGetPageOfflineStateExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetSupportedCategoriesExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetConfigExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasSetConfigExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetStateExp2", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelPowerGetLimitsExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelPowerSetLimitsExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceGetPowerUsageExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportUnKnownPointer", &funPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }

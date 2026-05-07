@@ -999,11 +999,11 @@ zesIntelRasGetConfigExp_pfn zesIntelRasGetConfigExpPtr = nullptr;
 zesIntelRasSetConfigExp_pfn zesIntelRasSetConfigExpPtr = nullptr;
 zesIntelRasGetStateExp2_pfn zesIntelRasGetStateExp2Ptr = nullptr;
 
-void getRasExpFunctionPointers(ze_driver_handle_t driverHandle) {
-    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetSupportedCategoriesExp", reinterpret_cast<void **>(&zesIntelRasGetSupportedCategoriesExpPtr)));
-    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetConfigExp", reinterpret_cast<void **>(&zesIntelRasGetConfigExpPtr)));
-    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasSetConfigExp", reinterpret_cast<void **>(&zesIntelRasSetConfigExpPtr)));
-    VALIDATECALL(zeDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetStateExp2", reinterpret_cast<void **>(&zesIntelRasGetStateExp2Ptr)));
+void getRasExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetSupportedCategoriesExp", reinterpret_cast<void **>(&zesIntelRasGetSupportedCategoriesExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetConfigExp", reinterpret_cast<void **>(&zesIntelRasGetConfigExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasSetConfigExp", reinterpret_cast<void **>(&zesIntelRasSetConfigExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelRasGetStateExp2", reinterpret_cast<void **>(&zesIntelRasGetStateExp2Ptr)));
 }
 
 void testSysmanRasExp(ze_device_handle_t &device, bool doSet = false, uint64_t setThreshold = 0) {

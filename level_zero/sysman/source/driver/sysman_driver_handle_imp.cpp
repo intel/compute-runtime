@@ -36,6 +36,13 @@ void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
 
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDevicePciLinkSpeedUpdateExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceMemoryGetPageOfflineStateExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelRasGetSupportedCategoriesExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelRasGetConfigExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelRasSetConfigExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelRasGetStateExp2);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelPowerGetLimitsExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelPowerSetLimitsExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceGetPowerUsageExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
 

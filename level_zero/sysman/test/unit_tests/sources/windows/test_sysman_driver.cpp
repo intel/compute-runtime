@@ -142,6 +142,27 @@ TEST_F(SysmanDriverHandleTest,
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDeviceMemoryGetPageOfflineStateExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelRasGetSupportedCategoriesExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelRasGetConfigExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelRasSetConfigExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelRasGetStateExp2", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelPowerGetLimitsExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelPowerSetLimitsExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDeviceGetPowerUsageExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult
