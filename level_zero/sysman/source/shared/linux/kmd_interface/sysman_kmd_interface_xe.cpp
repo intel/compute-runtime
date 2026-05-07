@@ -504,7 +504,7 @@ bool SysmanKmdInterfaceXe::isLateBindingVersionAvailable(std::string fwType, std
 }
 
 bool SysmanKmdInterfaceXe::isDeviceInFdoMode() {
-    std::string survivabilitySysFsNodeName = "survivability_info/fdo_mode";
+    const std::string survivabilitySysFsNodeName = "survivability_info/fdo_mode";
     std::string survivabilityFdoNodeVal = {};
     ze_result_t result = pSysfsAccess->read(survivabilitySysFsNodeName, survivabilityFdoNodeVal);
     if (result != ZE_RESULT_SUCCESS) {
@@ -512,6 +512,17 @@ bool SysmanKmdInterfaceXe::isDeviceInFdoMode() {
         return false;
     }
     return survivabilityFdoNodeVal == "enabled";
+}
+
+bool SysmanKmdInterfaceXe::isDeviceInSurvivabilityMode() {
+    const std::string survivabilityModeSysFsNodeName = "survivability_mode";
+    std::string survivabilityModeVal = {};
+    ze_result_t result = pSysfsAccess->read(survivabilityModeSysFsNodeName, survivabilityModeVal);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, survivabilityModeSysFsNodeName.c_str(), result);
+        return false;
+    }
+    return (survivabilityModeVal == "Boot" || survivabilityModeVal == "Runtime");
 }
 
 } // namespace Sysman

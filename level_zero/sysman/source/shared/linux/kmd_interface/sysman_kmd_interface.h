@@ -199,6 +199,7 @@ class SysmanKmdInterface {
     virtual void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) {}
     virtual bool isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) { return false; }
     virtual bool isDeviceInFdoMode() { return false; }
+    virtual bool isDeviceInSurvivabilityMode() { return false; }
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -427,6 +428,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) override;
     bool isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) override;
     bool isDeviceInFdoMode() override;
+    bool isDeviceInSurvivabilityMode() override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

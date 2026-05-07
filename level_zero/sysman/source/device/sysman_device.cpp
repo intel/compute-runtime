@@ -198,9 +198,6 @@ ze_result_t SysmanDevice::deviceGetState(zes_device_handle_t hDevice, zes_device
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
-        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
-    }
     return pSysmanDevice->deviceGetState(pState);
 }
 ze_result_t SysmanDevice::deviceGetSubDeviceProperties(zes_device_handle_t hDevice,

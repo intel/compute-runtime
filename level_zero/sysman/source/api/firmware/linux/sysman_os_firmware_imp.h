@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableAndNonMovableClass {
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     FirmwareUtil *pFwInterface = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
     std::string osFwType;

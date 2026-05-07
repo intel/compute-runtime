@@ -774,6 +774,30 @@ ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState)
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, pState);
     getRepairStatus(pState);
+
+    // Fill extension structures if provided in pNext chain
+    void *pNext = const_cast<void *>(pState->pNext);
+    while (pNext) {
+        auto *pBase = static_cast<zes_base_state_t *>(pNext);
+        if (pBase->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP) {
+            auto *pExt = reinterpret_cast<zes_intel_device_state_exp_t *>(pBase);
+            pExt->flags = 0; // Initialize flags to 0
+
+            if (pSysmanKmdInterface->isDeviceInFdoMode()) {
+                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED;
+                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY;
+                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE;
+            } else if (pSysmanKmdInterface->isDeviceInSurvivabilityMode()) {
+                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED;
+                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY;
+            } else if (pLinuxSysmanImp->isDeviceInWedgedState) {
+                pExt->flags |= ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED;
+            }
+            break;
+        }
+        pNext = const_cast<void *>(pBase->pNext);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

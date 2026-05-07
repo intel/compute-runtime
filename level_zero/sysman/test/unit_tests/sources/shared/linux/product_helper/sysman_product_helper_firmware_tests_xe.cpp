@@ -73,7 +73,7 @@ class ZesSysmanProductHelperFirmwareFixtureXe : public SysmanDeviceFixture {
 };
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenComponentCountZeroAndLateBindingIsSupportedThenWhenCallingZesFirmwareGetProperCountIsReturned, IsBMG) {
-    constexpr uint32_t mockFwHandlesCount = 5;
+    constexpr uint32_t mockFwHandlesCount = 6;
     std::vector<zes_firmware_handle_t> firmwareHandle{};
     uint32_t count = 0;
 
@@ -98,7 +98,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenComponentCountZeroAndLat
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenLateBindingFirmwareIsNotSupportedThenValidCountIsReturned, IsBMG) {
 
-    constexpr uint32_t mockFwHandlesCount = 3;
+    constexpr uint32_t mockFwHandlesCount = 4;
     pSysfsAccess->canReadResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     std::vector<zes_firmware_handle_t> firmwareHandle{};
     uint32_t count = 0;
@@ -110,7 +110,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenLateBindingFirmwareIsNot
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenValidLateBindingFirmwareHandleWhenFlashingFirmwareThenSuccessIsReturned, IsBMG) {
-    constexpr uint32_t mockFwHandlesCount = 5;
+    constexpr uint32_t mockFwHandlesCount = 6; // 3 standard + 2 late binding + 1 Flash_Override
     initFirmware();
 
     auto handles = getFirmwareHandles(mockFwHandlesCount);

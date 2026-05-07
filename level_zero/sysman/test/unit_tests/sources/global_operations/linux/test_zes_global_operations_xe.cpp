@@ -104,6 +104,151 @@ TEST_F(SysmanGlobalOperationsFixtureXe,
     EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
 }
 
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInFdoModeWhenCallingDeviceGetStateWithExtensionThenAllFlagsAreSet) {
+    // Set device in FDO mode via sysfs mock - this is sufficient to set all three flags
+    pSysfsAccess->mockFdoModeValue = "enabled";
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_intel_device_state_exp_t extState = {};
+    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    extState.pNext = nullptr;
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED | ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY | ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE;
+    EXPECT_EQ(expectedFlags, extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInSurvivabilityModeButNotFdoWhenCallingDeviceGetStateWithExtensionThenWedgedAndSurvivabilityFlagsAreSet) {
+    pSysfsAccess->mockFdoModeValue = "disabled";
+    pSysfsAccess->mockSurvivabilityModeValue = "Runtime";
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_intel_device_state_exp_t extState = {};
+    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    extState.pNext = nullptr;
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // In survivability mode (not FDO), wedged and survivability flags should be set
+    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED | ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY;
+    EXPECT_EQ(expectedFlags, extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceOnlyWedgedWhenCallingDeviceGetStateWithExtensionThenOnlyWedgedFlagIsSet) {
+    pSysfsAccess->mockFdoModeValue = "disabled";
+    pSysfsAccess->mockSurvivabilityModeValue = "";
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_intel_device_state_exp_t extState = {};
+    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    extState.pNext = nullptr;
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Only wedged flag should be set
+    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED;
+    EXPECT_EQ(expectedFlags, extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInNormalStateWhenCallingDeviceGetStateWithExtensionThenNoFlagsAreSet) {
+    pSysfsAccess->mockFdoModeValue = "disabled";
+    pSysfsAccess->mockSurvivabilityModeValue = "";
+    pLinuxSysmanImp->isDeviceInWedgedState = false;
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_intel_device_state_exp_t extState = {};
+    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    extState.pNext = nullptr;
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // No flags should be set in normal state
+    EXPECT_EQ(0u, extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenNullExtensionPointerWhenCallingDeviceGetStateThenSuccessIsReturned) {
+    pSysfsAccess->mockFdoModeValue = "disabled";
+    pSysfsAccess->mockSurvivabilityModeValue = "";
+    pLinuxSysmanImp->isDeviceInWedgedState = false;
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    deviceState.pNext = nullptr;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenExtensionInPNextChainWhenCallingDeviceGetStateThenExtensionIsPopulated) {
+    pSysfsAccess->mockFdoModeValue = "enabled";
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_intel_device_state_exp_t extState = {};
+    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    extState.pNext = nullptr;
+    extState.flags = 0xFFFFFFFF; // Set to non-zero to verify it gets initialized
+
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Verify flags were initialized and then set correctly
+    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED | ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY | ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE;
+    EXPECT_EQ(expectedFlags, extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenNonMatchingExtensionInPNextChainWhenCallingDeviceGetStateThenExtensionIsSkipped) {
+    pSysfsAccess->mockFdoModeValue = "enabled";
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+
+    zes_intel_device_state_exp_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
+    extState.pNext = nullptr;
+    extState.flags = 0xFFFFFFFF; // Set to verify it doesn't get modified
+
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0xFFFFFFFFu, extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenSurvivabilityModeStringIsBootWhenCallingIsDeviceInSurvivabilityModeThenTrueIsReturned) {
+    pSysfsAccess->mockSurvivabilityModeValue = "Boot";
+    bool result = pSysmanKmdInterface->isDeviceInSurvivabilityMode();
+    EXPECT_TRUE(result);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenSurvivabilityModeStringIsEmptyWhenCallingIsDeviceInSurvivabilityModeThenFalseIsReturned) {
+    pSysfsAccess->mockSurvivabilityModeValue = "";
+    bool result = pSysmanKmdInterface->isDeviceInSurvivabilityMode();
+    EXPECT_FALSE(result);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenSysfsReadFailsWhenCallingIsDeviceInSurvivabilityModeThenFalseIsReturned) {
+    pSysfsAccess->mockReadError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    bool result = pSysmanKmdInterface->isDeviceInSurvivabilityMode();
+    EXPECT_FALSE(result);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

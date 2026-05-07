@@ -122,6 +122,8 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
     bool mockFileWithInvalidStatus = false;
     bool mockFileWithInvalidMaxPageEntry = false;
     bool mockFileWithMaxPagesNoValue = false;
+    std::string mockFdoModeValue = "disabled";
+    std::string mockSurvivabilityModeValue = "";
 
     ze_result_t getRealPath(const std::string &file, std::string &val) override {
         if (file.compare(deviceDir) == 0) {
@@ -154,6 +156,10 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
             val = mockReadVal[static_cast<int>(Index::mockVendor)];
         } else if (file.compare("clients/8/pid") == 0) {
             val = bPid4;
+        } else if (file.compare("survivability_info/fdo_mode") == 0) {
+            val = mockFdoModeValue;
+        } else if (file.compare("survivability_mode") == 0) {
+            val = mockSurvivabilityModeValue;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }

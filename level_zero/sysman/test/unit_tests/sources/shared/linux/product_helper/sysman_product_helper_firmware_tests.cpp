@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,7 +181,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFai
     delete ptestFirmwareImp;
 }
 
-HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenFwVersionsUnsupportedWhenInitializingFirmwareContextThenExpectZeroHandles, IsXeCore) {
+HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenFwVersionsUnsupportedWhenInitializingFirmwareContextThenExpectOnlyFlashOverrideHandle, IsXeCore) {
     for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
         delete handle;
     }
@@ -190,7 +190,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenFwVersionsUnsupportedWhenI
 
     pSysmanDeviceImp->pFirmwareHandleContext->init();
 
-    EXPECT_EQ(0u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
+    EXPECT_EQ(1u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareThenSuccessIsReturned, IsXeCore) {
@@ -204,6 +204,12 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFla
     memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
+        zes_firmware_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handle, &properties));
+        // Skip Flash_Override as it requires special /proc/mtd setup
+        if (std::string(properties.name) == "Flash_Override") {
+            continue;
+        }
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareFlash(handle, (void *)testImage, ZES_STRING_PROPERTY_SIZE));
     }
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
@@ -221,6 +227,12 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFla
     memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
+        zes_firmware_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handle, &properties));
+        // Skip Flash_Override as it requires special /proc/mtd setup
+        if (std::string(properties.name) == "Flash_Override") {
+            continue;
+        }
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareFlash(handle, (void *)testImage, ZES_STRING_PROPERTY_SIZE));
     }
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
@@ -271,7 +283,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenNewFirmwareContextWithHand
     EXPECT_EQ(0u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
     ze_result_t result = zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(3u, count);
+    EXPECT_EQ(mockFwHandlesCount, count);
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareFlashProgressThenSuccessIsReturned, IsXeCore) {

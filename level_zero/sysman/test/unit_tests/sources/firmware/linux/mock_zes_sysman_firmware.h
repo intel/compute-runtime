@@ -14,11 +14,10 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint32_t mockFwHandlesCount = 3;
+constexpr uint32_t mockFwHandlesCount = 4;
 const std::string mockFwVersion("DG01->0->2026");
 const std::string mockOpromVersion("OPROM CODE VERSION:123_OPROM DATA VERSION:456");
 const std::string mockPscVersion("version 1 : 2021/09/15 00:43:12");
-const std::string mockFdoValue("enabled");
 const std::string mockLateBindingVersion("1.2.3.4");
 const std::string mockUnknownVersion("unknown");
 const std::vector<std::string> mockSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
@@ -42,6 +41,8 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t canReadResult = ZE_RESULT_SUCCESS;
     ze_result_t scanDirEntriesResult = ZE_RESULT_SUCCESS;
     ze_bool_t isNullDirEntries = false;
+    std::string mockFdoModeValue = "disabled";
+    std::string mockSurvivabilityModeValue = "";
 
     ze_result_t read(const std::string file, std::string &val) override {
 
@@ -57,7 +58,10 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         }
 
         if (!file.compare("survivability_info/fdo_mode")) {
-            val = mockFdoValue;
+            val = mockFdoModeValue;
+        }
+        if (!file.compare("survivability_mode")) {
+            val = mockSurvivabilityModeValue;
         }
         return ZE_RESULT_SUCCESS;
     }
