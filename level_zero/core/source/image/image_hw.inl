@@ -102,7 +102,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     this->bindlessImage = lookupTable.bindlessImage;
 
     if (lookupTable.imageProperties.pitchedPtr) {
-        if (isImageView() || (!this->bindlessImage && desc->type != ZE_IMAGE_TYPE_BUFFER)) {
+        if (isImageView() || (!this->bindlessImage && desc->type != ZE_IMAGE_TYPE_BUFFER && desc->type != ZE_IMAGE_TYPE_2D)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         this->imageFromBuffer = true;
