@@ -186,7 +186,8 @@ HWTEST_F(ImageCreate, givenMipLevelsEqualToZeroWhenImageCreateThenMipCountIsZero
     EXPECT_EQ(imageInfo.mipCount, 0u);
 }
 
-HWTEST_F(ImageCreate, givenBufferTypeWhenImageCreateThenNullPtrImageIsReturned) {
+HWTEST_F(ImageCreate, givenBufferTypeWithoutPitchedPtrWhenImageCreateThenInvalidArgumentReturned) {
+
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     zeDesc.arraylevels = 1u;
@@ -202,10 +203,62 @@ HWTEST_F(ImageCreate, givenBufferTypeWhenImageCreateThenNullPtrImageIsReturned) 
     Image *imagePtr;
     auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
 
-    ASSERT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    ASSERT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
     ASSERT_EQ(imagePtr, nullptr);
 }
 
+HWTEST2_P(ImageCreateUsmPool, GivenBufferTypeWithPitchedPtrWhenImageCreatedThenImageFromBufferIsCreated, ImageSupport) {
+    const size_t width = 256;
+    const size_t depth = 1;
+
+    const size_t size = width * sizeof(uint32_t);
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto ret = context->allocDeviceMem(device,
+                                       &deviceDesc,
+                                       size,
+                                       0,
+                                       &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &pitchedDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_BUFFER,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_32, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  1,
+                                  depth,
+                                  0,
+                                  0};
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_FALSE(imageHW->bindlessImage);
+    EXPECT_TRUE(imageHW->imageFromBuffer);
+    EXPECT_TRUE(imageHW->imgInfo.linearStorage);
+
+    auto expectedRowPitch = width * imageHW->imgInfo.surfaceFormat->imageElementSizeInBytes;
+    EXPECT_EQ(expectedRowPitch, imageHW->imgInfo.rowPitch);
+    EXPECT_EQ(imageHW->imgInfo.rowPitch, imageHW->imgInfo.slicePitch);
+
+    EXPECT_EQ(allocData->gpuAllocations.getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()), imageHW->getAllocation());
+
+    imageHW.reset(nullptr);
+
+    ret = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
 HWTEST_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedImageThenNullPtrImageIsReturned) {
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;

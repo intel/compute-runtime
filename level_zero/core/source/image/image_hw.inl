@@ -76,6 +76,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     typename RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType;
     switch (desc->type) {
+    case ZE_IMAGE_TYPE_BUFFER:
     case ZE_IMAGE_TYPE_1D:
     case ZE_IMAGE_TYPE_1DARRAY:
         surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D;
@@ -87,8 +88,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     case ZE_IMAGE_TYPE_3D:
         surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D;
         break;
-    case ZE_IMAGE_TYPE_BUFFER:
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     default:
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -103,10 +102,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     this->bindlessImage = lookupTable.bindlessImage;
 
     if (lookupTable.imageProperties.pitchedPtr) {
-        if (!this->bindlessImage || isImageView()) {
+        if (isImageView() || (!this->bindlessImage && desc->type != ZE_IMAGE_TYPE_BUFFER)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         this->imageFromBuffer = true;
+    } else if (desc->type == ZE_IMAGE_TYPE_BUFFER) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     if (lookupTable.sampledImage) {
@@ -184,12 +185,15 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     if (this->imageFromBuffer) {
         imgInfo.linearStorage = true;
-        imgInfo.imgDesc.imageRowPitch = getRowPitchFor2dImage(device, imgInfo);
-
-        if (imgInfo.imgDesc.imageRowPitch > 0) {
-            imgInfo.rowPitch = imgInfo.imgDesc.imageRowPitch;
-        } else {
+        if (desc->type == ZE_IMAGE_TYPE_BUFFER) {
             imgInfo.rowPitch = imgInfo.imgDesc.imageWidth * imgInfo.surfaceFormat->imageElementSizeInBytes;
+        } else {
+            imgInfo.imgDesc.imageRowPitch = getRowPitchFor2dImage(device, imgInfo);
+            if (imgInfo.imgDesc.imageRowPitch > 0) {
+                imgInfo.rowPitch = imgInfo.imgDesc.imageRowPitch;
+            } else {
+                imgInfo.rowPitch = imgInfo.imgDesc.imageWidth * imgInfo.surfaceFormat->imageElementSizeInBytes;
+            }
         }
         imgInfo.slicePitch = imgInfo.rowPitch * imgInfo.imgDesc.imageHeight;
         imgInfo.qPitch = 0;
