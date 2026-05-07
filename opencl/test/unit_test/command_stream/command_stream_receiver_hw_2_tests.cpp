@@ -63,6 +63,11 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredComman
         expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }
 
+    if (!pDevice->getRootDeviceEnvironment().getProductHelper().isFlushBetweenBlitsRequired()) {
+        expectedAlignedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+        expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    }
+
     auto alignedCopySize = Vec3<size_t>{alignedBltSize, 1, 1};
     auto notAlignedCopySize = Vec3<size_t>{notAlignedBltSize, 1, 1};
 
@@ -105,6 +110,10 @@ HWTEST_F(BcsTests, givenDebugCapabilityWhenEstimatingCommandSizeThenAddAllRequir
     auto &rootDeviceEnvironment = pClDevice->getRootDeviceEnvironment();
     auto expectedSize = (cmdsSizePerBlit * numberOfBlts) + debugCommandsSize + (2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment)) +
                         EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+    if (!pDevice->getRootDeviceEnvironment().getProductHelper().isFlushBetweenBlitsRequired()) {
+        EncodeDummyBlitWaArgs postBlitFlushWaArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
+        expectedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(postBlitFlushWaArgs);
+    }
 
     bool deviceToHostPostSyncFenceRequired = rootDeviceEnvironment.getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
                                              !hostMockAllocation.isAllocatedInLocalMemoryPool() &&
@@ -178,6 +187,11 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeForReadBufferRectThenAdd
         expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }
 
+    if (!pDevice->getRootDeviceEnvironment().getProductHelper().isFlushBetweenBlitsRequired()) {
+        expectedAlignedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+        expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    }
+
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
         alignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false, true);
     auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
@@ -213,6 +227,11 @@ HWTEST_F(BcsTests, givenBltWithBigCopySizeWhenEstimatingCommandSizeForReadBuffer
     auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
 
     if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedAlignedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+        expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    }
+
+    if (!pDevice->getRootDeviceEnvironment().getProductHelper().isFlushBetweenBlitsRequired()) {
         expectedAlignedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
         expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }

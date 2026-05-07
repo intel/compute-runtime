@@ -77,7 +77,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePreBlitCommandSize() {
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties) {
+void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties, bool isLastCmd) {
     EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
     MiFlushArgs args{waArgs};
     if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::defaultMode) {
@@ -93,7 +93,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
         }
     }
 
-    if (rootDeviceEnvironment.getProductHelper().isFlushBetweenBlitsRequired() && !hasAdditionalBlitProperties) {
+    if ((rootDeviceEnvironment.getProductHelper().isFlushBetweenBlitsRequired() || isLastCmd) && !hasAdditionalBlitProperties) {
         EncodeMiFlushDW<GfxFamily>::programWithWa(linearStream, 0, 0, args);
     }
 
@@ -123,6 +123,13 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(bool withFlush
 }
 
 template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(size_t nBlitsWithFlushes, size_t nBlitsWithoutFlushes) {
+    const auto sizePerBlitWithFlush = NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(true);
+    const auto sizePerBlitWithoutFlush = NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(false);
+    return sizePerBlitWithFlush * nBlitsWithFlushes + sizePerBlitWithoutFlush * nBlitsWithoutFlushes;
+}
+
+template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket, bool profilingEnabled,
                                                               bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool relaxedOrderingEnabled, bool validPitches) {
     size_t timestampCmdSize = 0;
@@ -149,11 +156,12 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t>
         }
         sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
     }
-
-    sizePerBlit += estimatePostBlitCommandSize(rootDeviceEnvironment.getProductHelper().isFlushBetweenBlitsRequired());
+    auto nBlitsWithFlush = rootDeviceEnvironment.getProductHelper().isFlushBetweenBlitsRequired() ? nBlits : 1u;
+    auto postBlitsCmdsSize = nBlits ? NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush) : 0u;
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies, relaxedOrderingEnabled) +
            TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(csrDependencies) +
            (sizePerBlit * nBlits) +
+           postBlitsCmdsSize +
            timestampCmdSize +
            estimatePreBlitCommandSize();
 }
@@ -286,7 +294,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
                 if (lastCommand) {
                     result.lastBlitCommand = bltStream;
                 }
-                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties);
+                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand);
 
                 sizeToBlit -= blitSize;
                 offset += blitSize;
@@ -344,7 +352,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRe
         if (lastCommand) {
             result.lastBlitCommand = cmd;
         }
-        dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties);
+        dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand);
     }
     return result;
 }
@@ -481,7 +489,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferR
                 if (lastCommand) {
                     result.lastBlitCommand = cmd;
                 }
-                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties);
+                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand);
 
                 srcAddress += width;
                 dstAddress += width;

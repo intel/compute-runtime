@@ -99,8 +99,9 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateCommandSizeForImag
         auto nBlits = static_cast<size_t>(std::max(depth, 1u));
         auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
         auto &productHelper = rootDeviceEnvironment.getProductHelper();
-        auto sizePerBlit = sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(productHelper.isFlushBetweenBlitsRequired());
-        estimatedSize += nBlits * sizePerBlit;
+        auto sizePerBlit = sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT);
+        auto nBlitsWithFlush = productHelper.isFlushBetweenBlitsRequired() ? nBlits : 1u;
+        estimatedSize += sizePerBlit * nBlits + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush);
     }
     return estimatedSize;
 }
@@ -679,8 +680,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         auto &productHelper = rootDeviceEnvironment.getProductHelper();
         auto nBlits = size / (NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitWidth(rootDeviceEnvironment) *
                               NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(rootDeviceEnvironment, true));
-        auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(productHelper.isFlushBetweenBlitsRequired());
-        estimatedSize += nBlits * sizePerBlit;
+        auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
+        auto nBlitsWithFlush = productHelper.isFlushBetweenBlitsRequired() ? nBlits : 1u;
+        auto postBlitsCmdsSize = nBlits ? NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush) : 0u;
+        estimatedSize += sizePerBlit * nBlits + postBlitsCmdsSize;
     }
     checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
 
@@ -744,8 +747,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
         auto xBlits = static_cast<size_t>(std::ceil(srcRegion->width / static_cast<double>(BlitterConstants::maxBlitWidth)));
         auto yBlits = static_cast<size_t>(std::ceil(srcRegion->height / static_cast<double>(BlitterConstants::maxBlitHeight)));
         auto zBlits = static_cast<size_t>(std::max(srcRegion->depth, 1u));
-        auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(productHelper.isFlushBetweenBlitsRequired());
-        estimatedSize += xBlits * yBlits * zBlits * sizePerBlit;
+        auto nBlits = xBlits * yBlits * zBlits;
+        auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
+        auto nBlitsWithFlush = productHelper.isFlushBetweenBlitsRequired() ? nBlits : 1u;
+        estimatedSize += sizePerBlit * nBlits + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush);
     }
     checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
 

@@ -296,7 +296,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         }
 
         // -1: default
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false);
 
         EXPECT_EQ(expectedDefaultSize, linearStream.getUsed());
         CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
@@ -320,7 +320,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         commands.clear();
         debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miArbCheck);
         waArgs.isWaRequired = true;
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false);
 
         CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
         arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
@@ -332,7 +332,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         commands.clear();
         debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miFlush);
         waArgs.isWaRequired = true;
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false);
 
         CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
         auto miFlush = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
@@ -344,7 +344,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         commands.clear();
         debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::none);
         waArgs.isWaRequired = true;
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false);
 
         EXPECT_EQ(0u, linearStream.getUsed());
     }
@@ -365,7 +365,7 @@ HWTEST_F(BlitTests, givenFlushBetweenBlitsRequiredWhenDispatchPostBlitCommandWit
         uint32_t streamBuffer[100] = {};
         LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
 
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false);
 
         HardwareParse hwParserWithoutAdditionalProps;
         hwParserWithoutAdditionalProps.parseCommands<FamilyType>(linearStream, 0);
@@ -380,7 +380,7 @@ HWTEST_F(BlitTests, givenFlushBetweenBlitsRequiredWhenDispatchPostBlitCommandWit
         uint32_t streamBuffer[100] = {};
         LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
 
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, true);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, true, false);
 
         HardwareParse hwParserWithAdditionalProps;
         hwParserWithAdditionalProps.parseCommands<FamilyType>(linearStream, 0);
@@ -392,6 +392,56 @@ HWTEST_F(BlitTests, givenFlushBetweenBlitsRequiredWhenDispatchPostBlitCommandWit
     }
 }
 
+HWTEST_F(BlitTests, givenIsLastCmdTrueWhenDispatchPostBlitCommandThenFlushEmittedUnlessHasAdditionalBlitProperties) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PostBlitCommand.set(-1);
+
+    RAIIProductHelperFactory<MockProductHelper> raii(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    raii.mockProductHelper->isFlushBetweenBlitsRequiredResult = false;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+
+    // isLastCmd=true, hasAdditionalBlitProperties=false -> flush should be emitted (last command requires flush)
+    {
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
+
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, true);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(linearStream, 0);
+        EXPECT_GT(hwParser.getCommandCount<MI_FLUSH_DW>(), 0u);
+        EXPECT_GT(hwParser.getCommandCount<MI_ARB_CHECK>(), 0u);
+    }
+
+    // isLastCmd=true, hasAdditionalBlitProperties=true -> flush suppressed by additional blit properties
+    {
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
+
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, true, true);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(linearStream, 0);
+        EXPECT_EQ(0u, hwParser.getCommandCount<MI_FLUSH_DW>());
+        EXPECT_GT(hwParser.getCommandCount<MI_ARB_CHECK>(), 0u);
+    }
+
+    // isLastCmd=false, hasAdditionalBlitProperties=false, isFlushBetweenBlitsRequired=false -> no flush
+    {
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
+
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(linearStream, 0);
+        EXPECT_EQ(0u, hwParser.getCommandCount<MI_FLUSH_DW>());
+        EXPECT_GT(hwParser.getCommandCount<MI_ARB_CHECK>(), 0u);
+    }
+}
 HWTEST2_F(BlitTests, givenSmallPatternWhenDispatchBlitCommandsThenMemSetCommandIsProgrammed, IsAtLeastXeHpcCore) {
     using MEM_SET = typename FamilyType::MEM_SET;
     uint32_t pattern[4] = {1, 0, 0, 0};
@@ -1273,6 +1323,10 @@ HWTEST_F(BlitTests, givenBlitPropertiesContainerWithNullSrcOrDstAllocationWhenEs
         expectedBlitInstructionsSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }
 
+    if (!this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired()) {
+        expectedBlitInstructionsSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    }
+
     waArgs.isWaRequired = true;
     auto baseSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     auto syncSize = 2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment());
@@ -1607,7 +1661,6 @@ HWTEST2_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWithAndWitho
 }
 
 HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlitCommandSizeThenBlockCopySizeIsReturned) {
-    const bool isFlushBetweenBlitsRequired = this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired();
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
     Vec3<size_t> copySize{maxBlitWidth - 1, 1, 1};
     NEO::CsrDependencies csrDependencies{};
@@ -1615,7 +1668,7 @@ HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlit
     size_t totalSize = NEO::BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(copySize, csrDependencies, false, false, true, pDevice->getRootDeviceEnvironmentRef(), false, false, false);
 
     size_t expectedSize = sizeof(typename FamilyType::XY_BLOCK_COPY_BLT);
-    expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired);
+    expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(true);
     expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize();
     EXPECT_EQ(expectedSize, totalSize);
 }
