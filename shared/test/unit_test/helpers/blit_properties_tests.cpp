@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,22 @@
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
+
+TEST(BlitSyncPropertiesTest, givenTimestampSyncModesWhenIsTimestampModeCalledThenReturnsTrue) {
+    BlitSyncProperties props{};
+    for (auto mode : {BlitSyncMode::timestamp, BlitSyncMode::timestampAndImmediate}) {
+        props.syncMode = mode;
+        EXPECT_TRUE(props.isTimestampMode());
+    }
+}
+
+TEST(BlitSyncPropertiesTest, givenNonTimestampSyncModesWhenIsTimestampModeCalledThenReturnsFalse) {
+    BlitSyncProperties props{};
+    for (auto mode : {BlitSyncMode::none, BlitSyncMode::immediate}) {
+        props.syncMode = mode;
+        EXPECT_FALSE(props.isTimestampMode());
+    }
+}
 
 TEST(BlitPropertiesTest, givenBlitParamsToConstructWhenSrcAndDstPtrPassedThenAllocationBaseAddressNotUsed) {
     NEO::MockGraphicsAllocation mockSrcGa;
