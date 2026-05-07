@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2457,6 +2457,77 @@ class ClGetKernelSuggestedLocalWorkSizeKHRTracer : NEO::NonCopyableAndNonMovable
 
   private:
     cl_params_clGetKernelSuggestedLocalWorkSizeKHR params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClGetKernelSuggestedLocalWorkSizeTracer : NEO::NonCopyableAndNonMovableClass {
+  public:
+    ClGetKernelSuggestedLocalWorkSizeTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               cl_kernel *kernel,
+               cl_uint *workDim,
+               const size_t **globalWorkOffset,
+               const size_t **globalWorkSize,
+               size_t **suggestedLocalWorkSize) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.kernel = kernel;
+        params.workDim = workDim;
+        params.globalWorkOffset = globalWorkOffset;
+        params.globalWorkSize = globalWorkSize;
+        params.suggestedLocalWorkSize = suggestedLocalWorkSize;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetKernelSuggestedLocalWorkSize";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSuggestedLocalWorkSize)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetKernelSuggestedLocalWorkSize, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSuggestedLocalWorkSize)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetKernelSuggestedLocalWorkSize, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetKernelSuggestedLocalWorkSizeTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetKernelSuggestedLocalWorkSize params{};
     cl_callback_data data{};
     uint64_t correlationData[tracingMaxHandleCount];
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
@@ -11051,6 +11122,7 @@ static_assert(NEO::NonCopyableAndNonMovable<ClGetAcceleratorInfoINTELTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClReleaseAcceleratorINTELTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClCreateProgramWithILKHRTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelSuggestedLocalWorkSizeKHRTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelSuggestedLocalWorkSizeTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelSubGroupInfoKHRTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueVerifyMemoryINTELTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClAddCommentINTELTracer>);

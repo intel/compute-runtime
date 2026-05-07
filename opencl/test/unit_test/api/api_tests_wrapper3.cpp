@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/api/cl_get_kernel_max_concurrent_work_group_count_intel_tests.inl"
 #include "opencl/test/unit_test/api/cl_get_kernel_suggested_local_work_size_intel_tests.inl"
 #include "opencl/test/unit_test/api/cl_get_kernel_suggested_local_work_size_khr_tests.inl"
+#include "opencl/test/unit_test/api/cl_get_kernel_suggested_local_work_size_tests.inl"
 #include "opencl/test/unit_test/api/cl_get_kernel_work_group_info_tests.inl"
 #include "opencl/test/unit_test/api/cl_get_mem_object_info_tests.inl"
 #include "opencl/test/unit_test/api/cl_get_platform_ids_tests.inl"

@@ -4607,6 +4607,78 @@ cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
     return program;
 }
 
+namespace {
+cl_int getKernelSuggestedLocalWorkSizeImpl(const char *apiFunctionName,
+                                           cl_command_queue commandQueue,
+                                           cl_kernel kernel,
+                                           cl_uint workDim,
+                                           const size_t *globalWorkOffset,
+                                           const size_t *globalWorkSize,
+                                           size_t *suggestedLocalWorkSize) {
+    cl_int retVal = CL_SUCCESS;
+    LoggerApiEnterWrapper<NEO::FileLogger<globalDebugFunctionalityLevel>::enabled()> apiWrapperForSingleCall(apiFunctionName, &retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "cl_kernel", kernel,
+                   "globalWorkOffset[0]", NEO::fileLoggerInstance().getInput(globalWorkOffset, 0),
+                   "globalWorkOffset[1]", NEO::fileLoggerInstance().getInput(globalWorkOffset, 1),
+                   "globalWorkOffset[2]", NEO::fileLoggerInstance().getInput(globalWorkOffset, 2),
+                   "globalWorkSize", NEO::fileLoggerInstance().getSizes(globalWorkSize, workDim, true),
+                   "suggestedLocalWorkSize", suggestedLocalWorkSize);
+
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
+    CommandQueue *pCommandQueue = nullptr;
+    retVal = validateObjects(withCastToInternal(commandQueue, &pCommandQueue), withCastToInternal(kernel, &pMultiDeviceKernel));
+
+    if (CL_SUCCESS != retVal) {
+        return retVal;
+    }
+
+    if ((workDim == 0) || (workDim > 3)) {
+        retVal = CL_INVALID_WORK_DIMENSION;
+        return retVal;
+    }
+
+    if (globalWorkSize == nullptr ||
+        globalWorkSize[0] == 0 ||
+        (workDim > 1 && globalWorkSize[1] == 0) ||
+        (workDim > 2 && globalWorkSize[2] == 0)) {
+        retVal = CL_INVALID_GLOBAL_WORK_SIZE;
+        return retVal;
+    }
+
+    auto pKernel = pMultiDeviceKernel->getKernel(pCommandQueue->getDevice().getRootDeviceIndex());
+    if (!pKernel->isPatched()) {
+        retVal = CL_INVALID_KERNEL;
+        return retVal;
+    }
+
+    if (suggestedLocalWorkSize == nullptr) {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
+    }
+
+    pKernel->getSuggestedLocalWorkSize(workDim, globalWorkSize, globalWorkOffset, suggestedLocalWorkSize);
+    return retVal;
+}
+} // namespace
+
+cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSize(cl_command_queue commandQueue,
+                                                     cl_kernel kernel,
+                                                     cl_uint workDim,
+                                                     const size_t *globalWorkOffset,
+                                                     const size_t *globalWorkSize,
+                                                     size_t *suggestedLocalWorkSize) {
+    TRACING_ENTER(ClGetKernelSuggestedLocalWorkSize, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
+    auto retVal = getKernelSuggestedLocalWorkSizeImpl(__FUNCTION__,
+                                                      commandQueue,
+                                                      kernel,
+                                                      workDim,
+                                                      globalWorkOffset,
+                                                      globalWorkSize,
+                                                      suggestedLocalWorkSize);
+    TRACING_EXIT(ClGetKernelSuggestedLocalWorkSize, &retVal);
+    return retVal;
+}
+
 cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue commandQueue,
                                                         cl_kernel kernel,
                                                         cl_uint workDim,
@@ -4615,12 +4687,13 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command
                                                         size_t *suggestedLocalWorkSize) {
 
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSizeKHR, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
-    auto retVal = clGetKernelSuggestedLocalWorkSizeINTEL(commandQueue,
-                                                         kernel,
-                                                         workDim,
-                                                         globalWorkOffset,
-                                                         globalWorkSize,
-                                                         suggestedLocalWorkSize);
+    auto retVal = getKernelSuggestedLocalWorkSizeImpl(__FUNCTION__,
+                                                      commandQueue,
+                                                      kernel,
+                                                      workDim,
+                                                      globalWorkOffset,
+                                                      globalWorkSize,
+                                                      suggestedLocalWorkSize);
     TRACING_EXIT(ClGetKernelSuggestedLocalWorkSizeKHR, &retVal);
     return retVal;
 }
@@ -4693,6 +4766,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
 
     RETURN_FUNC_PTR_IF_EXIST(clSetProgramSpecializationConstant);
 
+    RETURN_FUNC_PTR_IF_EXIST(clGetKernelSuggestedLocalWorkSize);
     RETURN_FUNC_PTR_IF_EXIST(clGetKernelSuggestedLocalWorkSizeKHR);
 
     ret = getAdditionalExtensionFunctionAddress(funcName);
@@ -6054,53 +6128,13 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
                                                           size_t *suggestedLocalWorkSize) {
 
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSizeINTEL, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
-    cl_int retVal = CL_SUCCESS;
-    API_ENTER(&retVal);
-    DBG_LOG_INPUTS("commandQueue", commandQueue, "cl_kernel", kernel,
-                   "globalWorkOffset[0]", NEO::fileLoggerInstance().getInput(globalWorkOffset, 0),
-                   "globalWorkOffset[1]", NEO::fileLoggerInstance().getInput(globalWorkOffset, 1),
-                   "globalWorkOffset[2]", NEO::fileLoggerInstance().getInput(globalWorkOffset, 2),
-                   "globalWorkSize", NEO::fileLoggerInstance().getSizes(globalWorkSize, workDim, true),
-                   "suggestedLocalWorkSize", suggestedLocalWorkSize);
-
-    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
-    CommandQueue *pCommandQueue = nullptr;
-    retVal = validateObjects(withCastToInternal(commandQueue, &pCommandQueue), withCastToInternal(kernel, &pMultiDeviceKernel));
-
-    if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(ClGetKernelSuggestedLocalWorkSizeINTEL, &retVal);
-        return retVal;
-    }
-
-    if ((workDim == 0) || (workDim > 3)) {
-        retVal = CL_INVALID_WORK_DIMENSION;
-        TRACING_EXIT(ClGetKernelSuggestedLocalWorkSizeINTEL, &retVal);
-        return retVal;
-    }
-
-    if (globalWorkSize == nullptr ||
-        globalWorkSize[0] == 0 ||
-        (workDim > 1 && globalWorkSize[1] == 0) ||
-        (workDim > 2 && globalWorkSize[2] == 0)) {
-        retVal = CL_INVALID_GLOBAL_WORK_SIZE;
-        TRACING_EXIT(ClGetKernelSuggestedLocalWorkSizeINTEL, &retVal);
-        return retVal;
-    }
-
-    auto pKernel = pMultiDeviceKernel->getKernel(pCommandQueue->getDevice().getRootDeviceIndex());
-    if (!pKernel->isPatched()) {
-        retVal = CL_INVALID_KERNEL;
-        TRACING_EXIT(ClGetKernelSuggestedLocalWorkSizeINTEL, &retVal);
-        return retVal;
-    }
-
-    if (suggestedLocalWorkSize == nullptr) {
-        retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClGetKernelSuggestedLocalWorkSizeINTEL, &retVal);
-        return retVal;
-    }
-
-    pKernel->getSuggestedLocalWorkSize(workDim, globalWorkSize, globalWorkOffset, suggestedLocalWorkSize);
+    auto retVal = getKernelSuggestedLocalWorkSizeImpl(__FUNCTION__,
+                                                      commandQueue,
+                                                      kernel,
+                                                      workDim,
+                                                      globalWorkOffset,
+                                                      globalWorkSize,
+                                                      suggestedLocalWorkSize);
 
     TRACING_EXIT(ClGetKernelSuggestedLocalWorkSizeINTEL, &retVal);
     return retVal;

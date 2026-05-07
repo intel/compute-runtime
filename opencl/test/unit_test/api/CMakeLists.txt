@@ -84,6 +84,7 @@ set(IGDRCL_SRCS_tests_api
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_kernel_max_concurrent_work_group_count_intel_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_kernel_sub_group_info_khr_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_kernel_sub_group_info_tests.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_kernel_suggested_local_work_size_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_kernel_suggested_local_work_size_intel_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_kernel_suggested_local_work_size_khr_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_kernel_work_group_info_tests.inl

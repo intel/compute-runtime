@@ -205,7 +205,8 @@ enum ClFunctionId {
     CL_FUNCTION_clEnqueueExternalMemObjectsKHR = 155,
     CL_FUNCTION_clEnqueueAcquireExternalMemObjectsKHR = 156,
     CL_FUNCTION_clEnqueueReleaseExternalMemObjectsKHR = 157,
-    CL_FUNCTION_COUNT = 158
+    CL_FUNCTION_clGetKernelSuggestedLocalWorkSize = 158,
+    CL_FUNCTION_COUNT = 159
 };
 
 /*!
@@ -485,6 +486,15 @@ typedef struct _cl_params_clGetKernelSuggestedLocalWorkSizeKHR {
     const size_t **globalWorkSize;
     size_t **suggestedLocalWorkSize;
 } cl_params_clGetKernelSuggestedLocalWorkSizeKHR;
+
+typedef struct _cl_params_clGetKernelSuggestedLocalWorkSize {
+    cl_command_queue *commandQueue;
+    cl_kernel *kernel;
+    cl_uint *workDim;
+    const size_t **globalWorkOffset;
+    const size_t **globalWorkSize;
+    size_t **suggestedLocalWorkSize;
+} cl_params_clGetKernelSuggestedLocalWorkSize;
 
 typedef struct _cl_params_clGetKernelSubGroupInfoKHR {
     cl_kernel *kernel;

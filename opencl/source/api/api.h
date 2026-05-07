@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "opencl/extensions/public/cl_next.h"
+
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
 #include "CL/cl_gl.h"
@@ -1101,6 +1103,16 @@ cl_int CL_API_CALL clSetContextDestructorCallback(
     cl_context context,
     void(CL_CALLBACK *pfnNotify)(cl_context /* context */, void * /* user_data */),
     void *userData);
+
+// OpenCL 3.1
+
+cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSize(
+    cl_command_queue commandQueue,
+    cl_kernel kernel,
+    cl_uint workDim,
+    const size_t *globalWorkOffset,
+    const size_t *globalWorkSize,
+    size_t *suggestedLocalWorkSize) CL_API_SUFFIX__VERSION_3_1;
 
 cl_int CL_API_CALL clEnqueueExternalMemObjectsKHR(
     cl_command_queue commandQueue,

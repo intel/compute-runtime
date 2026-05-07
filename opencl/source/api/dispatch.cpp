@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -187,7 +187,10 @@ SDispatchTable icdGlobalDispatchTable =
         /* OpenCL 3.0 */
         clCreateBufferWithProperties,
         clCreateImageWithProperties,
-        clSetContextDestructorCallback};
+        clSetContextDestructorCallback,
+
+        /* OpenCL 3.1 */
+        clGetKernelSuggestedLocalWorkSize};
 
 SCRTDispatchTable crtGlobalDispatchTable = {
     clGetKernelArgInfo,

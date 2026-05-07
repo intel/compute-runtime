@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -157,3 +157,8 @@ OPENCL_3.0 {
       clCreateImageWithProperties;
       clSetContextDestructorCallback;
 } OPENCL_2.2;
+
+OPENCL_3.1 {
+    global:
+      clGetKernelSuggestedLocalWorkSize;
+} OPENCL_3.0;
