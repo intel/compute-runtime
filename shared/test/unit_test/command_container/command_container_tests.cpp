@@ -1449,8 +1449,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThe
 
     EXPECT_EQ(cmdContainer->immediateReusableAllocationList, nullptr);
     EXPECT_TRUE(heapHelper->storageForReuse->getAllocationsForReuse().peekIsEmpty());
-    auto memoryOperationsInterface = reinterpret_cast<MockMemoryOperations *>(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->memoryOperationsInterface.get());
-    auto makeResidentCalledCountBefore = memoryOperationsInterface->makeResidentCalledCount.load();
+    auto actualResidencyContainerSize = cmdContainer->getResidencyContainer().size();
     cmdContainer->fillReusableAllocationLists();
     ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
     EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
@@ -1464,8 +1463,8 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThe
             numHeaps++;
         }
     }
-    auto numHeapAllocsCreated = amountToFill * numHeaps;
-    EXPECT_EQ(memoryOperationsInterface->makeResidentCalledCount.load(), makeResidentCalledCountBefore + static_cast<int>(numHeapAllocsCreated));
+    auto numAllocsAddedToResidencyContainer = amountToFill * numHeaps;
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + numAllocsAddedToResidencyContainer);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1484,8 +1483,7 @@ TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusa
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, true);
     cmdContainer->setImmediateCmdListCsr(csr);
 
-    auto memoryOperationsInterface = reinterpret_cast<MockMemoryOperations *>(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->memoryOperationsInterface.get());
-    auto makeResidentCalledCountBefore = memoryOperationsInterface->makeResidentCalledCount.load();
+    auto actualResidencyContainerSize = cmdContainer->getResidencyContainer().size();
     EXPECT_EQ(cmdContainer->immediateReusableAllocationList, nullptr);
 
     cmdContainer->fillReusableAllocationLists();
@@ -1500,8 +1498,8 @@ TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusa
             numHeaps++;
         }
     }
-    auto numHeapAllocsCreated = amountToFill * numHeaps;
-    EXPECT_EQ(memoryOperationsInterface->makeResidentCalledCount.load(), makeResidentCalledCountBefore + static_cast<int>(numHeapAllocsCreated));
+    auto numAllocsAddedToResidencyContainer = amountToFill * numHeaps;
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + numAllocsAddedToResidencyContainer);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1759,14 +1757,13 @@ TEST_F(CommandContainerTest, givenInternalHeapPoolAllocatorEnabledWhenFillReusab
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     cmdContainer->setImmediateCmdListCsr(csr);
 
-    auto memoryOperationsInterface = reinterpret_cast<MockMemoryOperations *>(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->memoryOperationsInterface.get());
-    auto makeResidentCalledCountBefore = memoryOperationsInterface->makeResidentCalledCount.load();
+    auto actualResidencyContainerSize = cmdContainer->getResidencyContainer().size();
 
     cmdContainer->fillReusableAllocationLists();
 
     // when InternalHeap pool allocator is enabled, only indirectObject heap should be skipped (not dynamicState, surfaceState)
     auto expectedHeapCount = pDevice->getHardwareInfo().capabilityTable.supportsImages ? 2u : 1u;
-    EXPECT_EQ(memoryOperationsInterface->makeResidentCalledCount.load(), makeResidentCalledCountBefore + static_cast<int>(expectedHeapCount));
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + expectedHeapCount);
     EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
 
     cmdContainer.reset();
@@ -1785,12 +1782,11 @@ TEST_F(CommandContainerTest, givenLinearStreamPoolAllocatorEnabledWhenFillReusab
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     cmdContainer->setImmediateCmdListCsr(csr);
 
-    auto memoryOperationsInterface = reinterpret_cast<MockMemoryOperations *>(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->memoryOperationsInterface.get());
-    auto makeResidentCalledCountBefore = memoryOperationsInterface->makeResidentCalledCount.load();
+    auto actualResidencyContainerSize = cmdContainer->getResidencyContainer().size();
 
     cmdContainer->fillReusableAllocationLists();
 
-    EXPECT_EQ(memoryOperationsInterface->makeResidentCalledCount.load(), makeResidentCalledCountBefore + 1);
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + 1u);
     EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
 
     cmdContainer.reset();

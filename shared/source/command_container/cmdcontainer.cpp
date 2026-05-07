@@ -25,7 +25,6 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
@@ -603,7 +602,9 @@ void CommandContainer::fillReusableAllocationLists() {
                                                              heapSize,
                                                              defaultHeapAllocationAlignment,
                                                              device->getRootDeviceIndex());
-            rootDeviceEnvironment.memoryOperationsInterface->makeResidentWithinOsContext(&this->immediateCmdListCsr->getOsContext(), ArrayRef<GraphicsAllocation *>(&heapToReuse, 1u), false, false, true);
+            if (heapToReuse != nullptr) {
+                addToResidencyContainer(heapToReuse);
+            }
             this->heapHelper->storeHeapAllocation(heapToReuse);
         }
     }
