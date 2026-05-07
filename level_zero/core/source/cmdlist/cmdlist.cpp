@@ -643,6 +643,11 @@ void CommandList::enableCopyOperationOffload() {
     device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, immediateQueuePriority, std::nullopt, false);
     UNRECOVERABLE_IF(!copyCsr);
 
+    if (immediateQueuePriority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !copyCsr->getOsContext().isLowPriority()) {
+        this->copyOffloadMode = CopyOffloadModes::disabled;
+        return;
+    }
+
     ze_command_queue_desc_t copyQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     copyQueueDesc.ordinal = ordinal;
     copyQueueDesc.mode = immediateQueueMode;

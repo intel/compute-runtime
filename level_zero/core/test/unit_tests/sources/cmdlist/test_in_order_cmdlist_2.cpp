@@ -541,6 +541,37 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
     }
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenLowPriorityQueueWhenCopyEngineDoesNotSupportLowPriorityThenCopyOffloadIsDisabled, IsAtLeastXeCore) {
+    NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+
+    ze_command_list_handle_t cmdListHandle;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+    cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+    auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+
+    auto computeCsr = cmdList->getCsr(false);
+    bool computeIsLowPriority = computeCsr->getOsContext().isLowPriority();
+
+    if (!computeIsLowPriority) {
+        zeCommandListDestroy(cmdListHandle);
+        GTEST_SKIP();
+    }
+
+    if (cmdList->cmdQImmediateCopyOffload != nullptr) {
+        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+        EXPECT_TRUE(copyQueue->getCsr()->getOsContext().isLowPriority());
+    } else if (cmdList->copyOffloadMode == CopyOffloadModes::disabled) {
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+    }
+
+    zeCommandListDestroy(cmdListHandle);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeCore) {
     NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(-1);
 
