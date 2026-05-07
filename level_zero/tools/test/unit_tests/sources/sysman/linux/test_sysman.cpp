@@ -37,11 +37,11 @@ extern bool allowFakeDevicePath;
 namespace L0 {
 namespace ult {
 
-inline static int mockAccessFailure(const char *pathname, int mode) {
+inline static int mockAccessFailure(const std::string &pathname, int mode) {
     return -1;
 }
 
-inline static int mockAccessSuccess(const char *pathname, int mode) {
+inline static int mockAccessSuccess(const std::string &pathname, int mode) {
     return 0;
 }
 

@@ -319,7 +319,7 @@ bool Wddm::queryAdapterInfo() {
         memcpy_s(&adapterBDF, sizeof(adapterBDF), &adapterInfo.stAdapterBDF, sizeof(ADAPTER_BDF));
         memcpy_s(segmentId, sizeof(segmentId), adapterInfo.SegmentId, sizeof(adapterInfo.SegmentId));
 
-        deviceRegistryPath = std::string(adapterInfo.DeviceRegistryPath, sizeof(adapterInfo.DeviceRegistryPath)).c_str();
+        deviceRegistryPath = std::string(adapterInfo.DeviceRegistryPath, strnlen(adapterInfo.DeviceRegistryPath, sizeof(adapterInfo.DeviceRegistryPath)));
 
         systemSharedMemory = adapterInfo.SystemSharedMemory;
         dedicatedVideoMemory = adapterInfo.DedicatedVideoMemory;

@@ -82,7 +82,7 @@ bool CompilerCache::getFiles(const std::string &startPath, const std::function<b
 
             std::string fullPath = joinPath(currentDir.path, entry->d_name);
             struct stat statBuf = {};
-            if (NEO::SysCalls::stat(fullPath.c_str(), &statBuf) != 0) {
+            if (NEO::SysCalls::stat(fullPath, &statBuf) != 0) {
                 int error = errno;
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Reading file failed! errno: %d\n", NEO::SysCalls::getProcessId(), error);
                 NEO::SysCalls::closedir(dir);

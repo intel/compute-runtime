@@ -97,8 +97,8 @@ int dlinfo(void *handle, int request, void *info) {
     return ::dlinfo(handle, request, info);
 }
 
-int access(const char *pathName, int mode) {
-    return ::access(pathName, mode);
+int access(const std::string &pathName, int mode) {
+    return ::access(pathName.c_str(), mode);
 }
 
 int readlink(const char *path, char *buf, size_t bufsize) {

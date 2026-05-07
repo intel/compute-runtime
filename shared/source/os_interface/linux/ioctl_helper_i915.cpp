@@ -469,7 +469,7 @@ void IoctlHelperI915::configureCcsMode(std::vector<std::string> &files, const st
         }
 
         std::string gtPath = file + "/gt";
-        auto gtFiles = Directory::getFiles(gtPath.c_str());
+        auto gtFiles = Directory::getFiles(gtPath);
         auto expectedGtFilePrefix = gtPath + "/gt";
         for (const auto &gtFile : gtFiles) {
             if (gtFile.find(expectedGtFilePrefix.c_str()) == std::string::npos) {

@@ -1941,10 +1941,10 @@ void IoctlHelperXe::configureCcsMode(std::vector<std::string> &files, const std:
         }
 
         std::string tilePath = file + "/device/tile";
-        auto tileFiles = Directory::getFiles(tilePath.c_str());
+        auto tileFiles = Directory::getFiles(tilePath);
         for (const auto &tileFile : tileFiles) {
             std::string gtPath = tileFile + "/gt";
-            auto gtFiles = Directory::getFiles(gtPath.c_str());
+            auto gtFiles = Directory::getFiles(gtPath);
             for (const auto &gtFile : gtFiles) {
                 writeCcsMode(gtFile, ccsMode, deviceCcsModeVec);
             }

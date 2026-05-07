@@ -278,7 +278,7 @@ unsigned long getNumThreads() {
     return 1;
 }
 
-int access(const char *pathName, int mode) {
+int access(const std::string &pathName, int mode) {
     accessFuncCalled++;
     if (failAccess) {
         return -1;
@@ -291,7 +291,7 @@ int access(const char *pathName, int mode) {
             return 0;
         }
     }
-    if (allowFakeDevicePath || strcmp(pathName, "/sys/dev/char/226:128") == 0) {
+    if (allowFakeDevicePath || pathName == "/sys/dev/char/226:128") {
         return 0;
     }
     return -1;

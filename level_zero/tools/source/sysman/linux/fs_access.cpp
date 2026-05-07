@@ -245,7 +245,7 @@ ze_result_t FsAccess::canWrite(const std::string file) {
 }
 
 bool FsAccess::fileExists(const std::string file) {
-    if (NEO::SysCalls::access(file.c_str(), F_OK)) {
+    if (NEO::SysCalls::access(file, F_OK)) {
         return false;
     }
     return true;

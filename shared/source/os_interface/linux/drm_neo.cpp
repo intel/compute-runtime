@@ -207,7 +207,7 @@ std::string Drm::getSysFsPciPathBaseName() {
 std::string Drm::getSysFsPciPath() {
     std::string path = std::string(Os::sysFsPciPathPrefix) + hwDeviceId->getPciPath() + "/drm";
     std::string expectedFilePrefix = path + "/card";
-    auto files = Directory::getFiles(path.c_str());
+    auto files = Directory::getFiles(path);
     for (auto &file : files) {
         if (file.find(expectedFilePrefix.c_str()) != std::string::npos) {
             return file;

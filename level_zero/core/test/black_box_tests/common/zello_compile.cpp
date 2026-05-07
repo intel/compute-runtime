@@ -72,7 +72,7 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
     }
 
     if (logLen != 0) {
-        outCompilerLog = std::string(log, logLen).c_str();
+        outCompilerLog = std::string(log, logLen);
     }
 
     ret.assign(spirV, spirV + spirVlen);
@@ -139,7 +139,7 @@ std::vector<uint8_t> compileToNative(const std::string &src, const std::string &
     }
 
     if (logLen != 0) {
-        outCompilerLog = std::string(log, logLen).c_str();
+        outCompilerLog = std::string(log, logLen);
     }
 
     ret.assign(binary, binary + binaryLen);

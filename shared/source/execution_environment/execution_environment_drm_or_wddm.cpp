@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ void ExecutionEnvironment::configureCcsMode() {
 
     auto drm = rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<NEO::Drm>();
     auto ioctlHelper = drm->getIoctlHelper();
-    auto files = Directory::getFiles(drmPath.c_str());
+    auto files = Directory::getFiles(drmPath);
     ioctlHelper->configureCcsMode(files, expectedFilePrefix, ccsMode, deviceCcsModeVec);
 }
 

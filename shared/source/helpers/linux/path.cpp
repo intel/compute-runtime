@@ -15,7 +15,7 @@ namespace NEO {
 bool pathExists(const std::string &path) {
     struct stat statbuf = {};
 
-    if (NEO::SysCalls::stat(path.c_str(), &statbuf) == -1) {
+    if (NEO::SysCalls::stat(path, &statbuf) == -1) {
         return false;
     }
 
