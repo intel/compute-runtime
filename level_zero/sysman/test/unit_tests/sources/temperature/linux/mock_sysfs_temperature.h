@@ -147,7 +147,7 @@ struct MockTemperatureProcfsAccess : public L0::Sysman::ProcFsAccessInterface {
 
 class PublicLinuxTemperatureImp : public L0::Sysman::LinuxTemperatureImp {
   public:
-    PublicLinuxTemperatureImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, uint32_t sensorIndex) : LinuxTemperatureImp(pOsSysman, onSubdevice, subdeviceId, sensorIndex) {}
+    PublicLinuxTemperatureImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxTemperatureImp(pOsSysman, onSubdevice, subdeviceId) {}
 };
 
 } // namespace ult

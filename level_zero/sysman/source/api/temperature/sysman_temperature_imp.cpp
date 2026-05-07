@@ -34,8 +34,8 @@ void TemperatureImp::init() {
     }
 }
 
-TemperatureImp::TemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t type, uint32_t sensorIndex) {
-    pOsTemperature = OsTemperature::create(pOsSysman, onSubdevice, subdeviceId, type, sensorIndex);
+TemperatureImp::TemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t type) {
+    pOsTemperature = OsTemperature::create(pOsSysman, onSubdevice, subdeviceId, type);
     init();
 }
 

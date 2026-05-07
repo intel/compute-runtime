@@ -104,7 +104,7 @@ WddmTemperatureImp::WddmTemperatureImp(OsSysman *pOsSysman) {
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
-std::unique_ptr<OsTemperature> OsTemperature::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t sensorType, uint32_t sensorIndex) {
+std::unique_ptr<OsTemperature> OsTemperature::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t sensorType) {
     std::unique_ptr<WddmTemperatureImp> pWddmTemperatureImp = std::make_unique<WddmTemperatureImp>(pOsSysman);
     pWddmTemperatureImp->setSensorType(sensorType);
     return std::move(pWddmTemperatureImp);

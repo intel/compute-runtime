@@ -51,7 +51,7 @@ struct TemperatureHandleContext {
     }
 
   private:
-    void createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type, uint32_t sensorIndex);
+    void createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type);
     std::once_flag initTemperatureOnce;
     bool tempInitDone = false;
 };
