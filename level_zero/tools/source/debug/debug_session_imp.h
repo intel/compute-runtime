@@ -326,7 +326,7 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
         remainingSlmSendUnits++;
     }
 
-    std::unique_ptr<char[]> tmpBuffer(new char[remainingSlmSendUnits * slmSendBytesSize]);
+    auto tmpBuffer = std::make_unique<char[]>(remainingSlmSendUnits * slmSendBytesSize);
 
     if constexpr (write) {
         size_t tailPadding = (size % slmSendBytesSize) ? slmSendBytesSize - (size % slmSendBytesSize) : 0;

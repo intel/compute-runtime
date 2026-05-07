@@ -125,8 +125,8 @@ BuiltIn::Resource BuiltIn::EmbeddedStorage::loadImpl(const std::string &fullReso
 }
 
 BuiltIn::ResourceLoader::ResourceLoader() {
-    allStorages.push_back(std::unique_ptr<BuiltIn::Storage>(new BuiltIn::EmbeddedStorage("")));
-    allStorages.push_back(std::unique_ptr<BuiltIn::Storage>(new BuiltIn::FileStorage(getDriverInstallationPath())));
+    allStorages.push_back(std::make_unique<BuiltIn::EmbeddedStorage>(""));
+    allStorages.push_back(std::make_unique<BuiltIn::FileStorage>(getDriverInstallationPath()));
 }
 
 BuiltIn::Code BuiltIn::ResourceLoader::getBuiltinCode(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, BuiltIn::CodeType requestedCodeType, Device &device) {

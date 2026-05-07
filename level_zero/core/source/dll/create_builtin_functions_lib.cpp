@@ -16,7 +16,7 @@ namespace L0 {
 
 std::unique_ptr<BuiltInKernelLib> BuiltInKernelLib::create(Device *device,
                                                            NEO::BuiltIns *builtins) {
-    return std::unique_ptr<BuiltInKernelLib>(new BuiltInKernelLibImpl(device, builtins));
+    return std::make_unique<BuiltInKernelLibImpl>(device, builtins);
 }
 
 bool BuiltInKernelLibImpl::initBuiltinsAsyncEnabled(Device *device) {

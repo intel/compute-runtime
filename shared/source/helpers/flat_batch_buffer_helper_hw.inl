@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -158,7 +158,7 @@ char *FlatBatchBufferHelperHw<GfxFamily>::getIndirectPatchCommands(size_t &indir
 
     uint64_t stiCommandOffset = 0;
     std::vector<PatchInfoData> patchInfoCopy = patchInfoCollection;
-    std::unique_ptr<char[]> buffer(new char[indirectPatchCommandsSize]);
+    auto buffer = std::make_unique<char[]>(indirectPatchCommandsSize);
     LinearStream indirectPatchCommandStream(buffer.get(), indirectPatchCommandsSize);
     patchInfoCollection.clear();
 

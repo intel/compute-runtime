@@ -100,7 +100,7 @@ FsAccess::FsAccess() {
     pFdCache = std::make_unique<FdCache>();
 }
 
-FsAccess::FsAccess(const FsAccess &fsAccess) : pFdCache(std::unique_ptr<FdCache>(new FdCache())) {}
+FsAccess::FsAccess(const FsAccess &fsAccess) : pFdCache(std::make_unique<FdCache>()) {}
 
 FsAccess *FsAccess::create() {
     return new FsAccess();

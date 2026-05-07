@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ bool OSTime::getCpuTimeHost(uint64_t *timeStamp) {
 };
 
 std::unique_ptr<OSTime> OSTimeWin::create(OSInterface &osInterface) {
-    return std::unique_ptr<OSTime>(new OSTimeWin(osInterface));
+    return std::make_unique<OSTimeWin>(osInterface);
 }
 
 OSTimeWin::OSTimeWin(OSInterface &osInterface) {

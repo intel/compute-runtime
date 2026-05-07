@@ -15,8 +15,8 @@
 #include <thread>
 #include <unordered_map>
 
-#define CREATE_DEBUG_STRING(buffer, format, ...)                            \
-    std::unique_ptr<char[]> buffer(new char[NEO::maxErrorDescriptionSize]); \
+#define CREATE_DEBUG_STRING(buffer, format, ...)                          \
+    auto buffer = std::make_unique<char[]>(NEO::maxErrorDescriptionSize); \
     snprintf(buffer.get(), NEO::maxErrorDescriptionSize, format, __VA_ARGS__)
 
 namespace NEO {

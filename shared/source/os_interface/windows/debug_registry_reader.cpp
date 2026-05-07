@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -169,7 +169,7 @@ bool RegistryReader::getSettingStringCommon(const char *settingName, std::string
 
                 if (ERROR_SUCCESS == success) {
 
-                    std::unique_ptr<char[]> convertedData(new char[charCount + 1]);
+                    auto convertedData = std::make_unique<char[]>(charCount + 1);
                     std::wcstombs(convertedData.get(), regData.get(), charCount);
                     convertedData.get()[charCount] = 0;
 

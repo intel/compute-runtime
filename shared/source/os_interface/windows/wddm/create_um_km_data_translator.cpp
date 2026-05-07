@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -232,7 +232,7 @@ WslComputeHelperGmmHandleAllocator::WslComputeHelperGmmHandleAllocator(WslComput
 
 void *WslComputeHelperGmmHandleAllocator::createHandle(const GMM_RESOURCE_INFO *gmmResourceInfo) {
     size_t sizeU64 = (translator->getSizeForGmmResourceInfoInternalRepresentation() + sizeof(uint64_t) - 1) / sizeof(uint64_t);
-    std::unique_ptr<uint64_t[]> ret{new uint64_t[sizeU64]};
+    auto ret = std::make_unique<uint64_t[]>(sizeU64);
     memset(ret.get(), 0, sizeU64 * sizeof(uint64_t));
     translator->translateGmmResourceInfoToInternalRepresentation(ret.get(), sizeU64 * sizeof(uint64_t), *gmmResourceInfo);
 

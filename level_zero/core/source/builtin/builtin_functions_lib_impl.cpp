@@ -142,7 +142,7 @@ std::unique_ptr<BuiltInKernelLibImpl::BuiltInKernelData> BuiltInKernelLibImpl::l
     UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
 
     kernel.reset(Kernel::fromHandle(kernelHandle));
-    return std::unique_ptr<BuiltInKernelData>(new BuiltInKernelData{modules[compositeIndex].get(), std::move(kernel)});
+    return std::make_unique<BuiltInKernelData>(modules[compositeIndex].get(), std::move(kernel));
 }
 
 void BuiltInKernelLibImpl::ensureInitCompletion() {
