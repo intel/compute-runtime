@@ -338,6 +338,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SerializeWalkerPostSyncOps, -1, "-1 : default. 0
 DECLARE_DEBUG_VARIABLE(int32_t, SingleTileExecutionForCooperativeKernels, -1, "-1 : default. 0: disabled. 1: enable single tile execution for cooperative kernels")
 DECLARE_DEBUG_VARIABLE(int32_t, Force48bResourcesForCmdBuffer, -1, "1: Force 48b resources for cmd buffer")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideComputeWalker2ThreadArbitrationPolicy, -1, "-1: default. When set, programs required value to CW2")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideComputeWalker2ThreadDispatchPolicy, -1, "-1: default. 0: breadth-wise, 1: depth-wise. When set, programs required value to CW2")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDynamicPrefSlmIncrease, -1, "-1: default. >=0: override IDD->DynamicPrefSlmIncrease to given value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDispatchAllModValue, -1, "-1: default. >=0: override CW2->DispatchAllModValue to given value")
 DECLARE_DEBUG_VARIABLE(int32_t, PcQueueDrainMode, -1, "Control QueueDrainMode in PipeControl. -1: default (controlled by driver), >=0: override to given value")

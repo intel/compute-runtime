@@ -513,6 +513,31 @@ XE3P_CORETEST_F(Walker2DispatchTestsXe3pCore, givenDebugFlagSetWhenProgrammingAd
     EXPECT_EQ(expectedValue, walkerCmd.getThreadArbitrationPolicy());
 }
 
+XE3P_CORETEST_F(Walker2DispatchTestsXe3pCore, givenDebugFlagSetWhenProgrammingAdditionalWalkerFieldsThenSetThreadDispatchPolicy) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
+    using THREAD_DISPATCH_POLICY = typename WalkerType::THREAD_DISPATCH_POLICY;
+
+    DebugManagerStateRestore restore;
+
+    auto walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+    auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA_2>();
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+
+    EXPECT_EQ(THREAD_DISPATCH_POLICY::THREAD_DISPATCH_POLICY_BREADTH_WISE, walkerCmd.getThreadDispatchPolicy());
+
+    debugManager.flags.OverrideComputeWalker2ThreadDispatchPolicy.set(static_cast<int32_t>(THREAD_DISPATCH_POLICY::THREAD_DISPATCH_POLICY_DEPTH_WISE));
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+    EXPECT_EQ(THREAD_DISPATCH_POLICY::THREAD_DISPATCH_POLICY_DEPTH_WISE, walkerCmd.getThreadDispatchPolicy());
+
+    debugManager.flags.OverrideComputeWalker2ThreadDispatchPolicy.set(static_cast<int32_t>(THREAD_DISPATCH_POLICY::THREAD_DISPATCH_POLICY_BREADTH_WISE));
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+    EXPECT_EQ(THREAD_DISPATCH_POLICY::THREAD_DISPATCH_POLICY_BREADTH_WISE, walkerCmd.getThreadDispatchPolicy());
+}
+
 XE3P_CORETEST_F(Walker2DispatchTestsXe3pCore, givenOverDispatchControlDebugFlagWhenProgrammingAdditionalWalkerFieldsThenOverDispatchControlIsSetCorrectly) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;

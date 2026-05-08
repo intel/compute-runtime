@@ -199,6 +199,11 @@ void EncodeDispatchKernel<Family>::overrideDefaultValues(WalkerType &walkerCmd, 
         using THREAD_ARBITRATION_POLICY = typename Family::COMPUTE_WALKER_2::THREAD_ARBITRATION_POLICY;
         walkerCmd.setThreadArbitrationPolicy(static_cast<THREAD_ARBITRATION_POLICY>(debugManager.flags.OverrideComputeWalker2ThreadArbitrationPolicy.get()));
     }
+
+    if (debugManager.flags.OverrideComputeWalker2ThreadDispatchPolicy.get() != -1) {
+        using THREAD_DISPATCH_POLICY = typename Family::COMPUTE_WALKER_2::THREAD_DISPATCH_POLICY;
+        walkerCmd.setThreadDispatchPolicy(static_cast<THREAD_DISPATCH_POLICY>(debugManager.flags.OverrideComputeWalker2ThreadDispatchPolicy.get()));
+    }
 }
 
 template <typename Family>
