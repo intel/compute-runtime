@@ -10,6 +10,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -362,7 +363,8 @@ void ImageImp::applyGlTextureExtOverrides(NEO::GraphicsAllocation *allocation,
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
     if (pGmmResInfo) {
-        auto importedGmmResInfo = std::unique_ptr<NEO::GmmResourceInfo>(NEO::GmmResourceInfo::create(gmmHelper->getClientContext(), reinterpret_cast<GMM_RESOURCE_INFO *>(pGmmResInfo)));
+        auto gmmResInfo = gmmHelper->getClientContext()->getGmmResInfoFromExternalResourceHandle(pGmmResInfo);
+        auto importedGmmResInfo = std::unique_ptr<NEO::GmmResourceInfo>(NEO::GmmResourceInfo::create(gmmHelper->getClientContext(), gmmResInfo));
         if (importedGmmResInfo) {
             allocation->setDefaultGmm(new NEO::Gmm(gmmHelper, importedGmmResInfo.get()));
         }
@@ -425,7 +427,8 @@ void ImageImp::applyGlTextureExtOverrides(NEO::GraphicsAllocation *allocation,
         this->mcsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
 
         if (this->mcsAllocation != nullptr && pGmmResInfoMcs != nullptr) {
-            auto mcsGmmResInfo = std::unique_ptr<NEO::GmmResourceInfo>(NEO::GmmResourceInfo::create(gmmHelper->getClientContext(), reinterpret_cast<GMM_RESOURCE_INFO *>(pGmmResInfoMcs)));
+            auto gmmResInfoMcs = gmmHelper->getClientContext()->getGmmResInfoFromExternalResourceHandle(pGmmResInfoMcs);
+            auto mcsGmmResInfo = std::unique_ptr<NEO::GmmResourceInfo>(NEO::GmmResourceInfo::create(gmmHelper->getClientContext(), gmmResInfoMcs));
             if (mcsGmmResInfo) {
                 this->mcsAllocation->setDefaultGmm(new NEO::Gmm(gmmHelper, mcsGmmResInfo.get()));
             }

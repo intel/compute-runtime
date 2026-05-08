@@ -69,6 +69,10 @@ void GmmClientContext::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {
     clientContext->DestroyResInfoObject(pResInfo);
 }
 
+GMM_RESOURCE_INFO *GmmClientContext::getGmmResInfoFromExternalResourceHandle(const void *externalResourceHandle) {
+    return static_cast<GMM_RESOURCE_INFO *>(const_cast<void *>(externalResourceHandle));
+}
+
 MEMORY_OBJECT_CONTROL_STATE GmmClientContext::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage) {
     return clientContext->CachePolicyGetMemoryObject(pResInfo, static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(usage));
 }

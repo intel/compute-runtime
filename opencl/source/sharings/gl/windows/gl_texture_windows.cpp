@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -69,7 +70,8 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     if (texInfo.pGmmResInfo) {
         DEBUG_BREAK_IF(alloc->getDefaultGmm() != nullptr);
 
-        auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(gmmHelper->getClientContext(), texInfo.pGmmResInfo));
+        auto gmmResInfo = gmmHelper->getClientContext()->getGmmResInfoFromExternalResourceHandle(texInfo.pGmmResInfo);
+        auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(gmmHelper->getClientContext(), gmmResInfo));
         alloc->setDefaultGmm(new Gmm(gmmHelper, gmmResourceInfo.get()));
     }
 
@@ -136,7 +138,8 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         mcsAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, allocProperties, false, false, true, nullptr);
         if (texInfo.pGmmResInfoMCS) {
             DEBUG_BREAK_IF(mcsAlloc->getDefaultGmm() != nullptr);
-            auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(gmmHelper->getClientContext(), texInfo.pGmmResInfoMCS));
+            auto gmmResInfoMcs = gmmHelper->getClientContext()->getGmmResInfoFromExternalResourceHandle(texInfo.pGmmResInfoMCS);
+            auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(gmmHelper->getClientContext(), gmmResInfoMcs));
             mcsAlloc->setDefaultGmm(new Gmm(gmmHelper, gmmResourceInfo.get()));
         }
         mcsSurfaceInfo.pitch = getValidParam(static_cast<uint32_t>(mcsAlloc->getDefaultGmm()->gmmResourceInfo->getRenderPitch() / 128));

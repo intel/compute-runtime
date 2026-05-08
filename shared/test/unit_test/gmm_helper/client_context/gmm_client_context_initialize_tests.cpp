@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,23 @@ extern WA_TABLE passedWaTable;
 extern bool copyInputArgs;
 
 } // namespace NEO
+
+TEST(GmmClientContextTest, givenNullHandleWhenGetGmmResInfoFromExternalResourceHandleIsCalledThenNullIsReturned) {
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get()};
+    GmmClientContext clientContext{};
+    clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
+
+    EXPECT_EQ(nullptr, clientContext.getGmmResInfoFromExternalResourceHandle(nullptr));
+}
+
+TEST(GmmClientContextTest, givenExternalResourceHandleWhenGetGmmResInfoFromExternalResourceHandleIsCalledThenSamePointerIsReturned) {
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get()};
+    GmmClientContext clientContext{};
+    clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
+
+    auto *handle = reinterpret_cast<void *>(0x1230);
+    EXPECT_EQ(reinterpret_cast<GMM_RESOURCE_INFO *>(handle), clientContext.getGmmResInfoFromExternalResourceHandle(handle));
+}
 
 TEST(GmmClientContextTest, whenInitializeIsCalledThenClientContextHandleIsSet) {
     auto hwInfo = defaultHwInfo.get();
