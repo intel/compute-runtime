@@ -383,11 +383,11 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkCopyThenEarlyR
     constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies + remainder;
     constexpr int expectedErrorCode = 1;
     auto usmBuffer = allocateDeviceBuffer(totalCopySize);
-    auto nonUsmBuffer = new unsigned char[totalCopySize];
+    auto nonUsmBuffer = std::make_unique<unsigned char[]>(totalCopySize);
 
     size_t chunkCounter = 0;
     memset(usmBuffer, 0, totalCopySize);
-    memset(nonUsmBuffer, 0xFF, totalCopySize);
+    memset(nonUsmBuffer.get(), 0xFF, totalCopySize);
 
     ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) {
         chunkCounter++;
@@ -395,16 +395,15 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkCopyThenEarlyR
         return expectedErrorCode;
     };
     auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer.get(), totalCopySize, chunkCopy, csr, false);
     auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
-    EXPECT_NE(0, memcmp(usmBuffer, nonUsmBuffer, totalCopySize));
+    EXPECT_NE(0, memcmp(usmBuffer, nonUsmBuffer.get(), totalCopySize));
     EXPECT_EQ(1u, chunkCounter);
     EXPECT_EQ(1u, newUsmAllocations);
     svmAllocsManager->freeSVMAlloc(usmBuffer);
-    delete[] nonUsmBuffer;
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedRemainderCopyThenReturnWithFailure) {
@@ -480,6 +479,34 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenDirectSubmissionEnabled
     EXPECT_EQ(flushTagsCalled, numOfChunkCopies);
     svmAllocsManager->freeSVMAlloc(usmBuffer);
     delete[] nonUsmBuffer;
+}
+
+HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenUpdateTagFromWaitEnabledAndDirectSubmissionDisabledThenFlushTagCalled) {
+    constexpr size_t totalCopySize = stagingBufferSize;
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    VariableBackup<bool> directSubmissionAvailable{&ultCsr->directSubmissionAvailable, false};
+    VariableBackup<bool> blitterDirectSubmissionAvailable{&ultCsr->blitterDirectSubmissionAvailable, false};
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    ultCsr->flushTagUpdateCalled = false;
+    ultCsr->callFlushTagUpdate = false;
+
+    auto usmBuffer = allocateDeviceBuffer(totalCopySize);
+    auto nonUsmBuffer = std::make_unique<unsigned char[]>(totalCopySize);
+
+    ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) {
+        memcpy(chunkDst, chunkSrc, chunkSize);
+        reinterpret_cast<MockCommandStreamReceiver *>(csr)->taskCount++;
+        return 0;
+    };
+
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer.get(), totalCopySize, chunkCopy, csr, false);
+
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
+
+    svmAllocsManager->freeSVMAlloc(usmBuffer);
 }
 
 HWTEST_F(StagingBufferManagerTest, givenFailedAllocationWhenRequestStagingBufferCalledThenReturnNullptr) {

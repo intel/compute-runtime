@@ -91,6 +91,8 @@ StagingTransferStatus StagingBufferManager::performChunkTransfer(size_t chunkTra
 
     if (csr->isAnyDirectSubmissionEnabled()) {
         csr->flushTagUpdate();
+    } else if (csr->isUpdateTagFromWaitEnabled()) {
+        csr->flushTagUpdateIfRequired(tracker.taskCountToWait);
     }
     return result;
 }
