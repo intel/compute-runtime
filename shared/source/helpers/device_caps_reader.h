@@ -30,8 +30,9 @@ class DeviceCapsReader {
 
 class DeviceCapsReaderTbx : public DeviceCapsReader {
   public:
+    DeviceCapsReaderTbx(aub_stream::AubManager &aubManager, uint32_t offset, uint32_t stride) : DeviceCapsReader(offset, stride), aubManager(aubManager) {}
     static std::unique_ptr<DeviceCapsReaderTbx> create(aub_stream::AubManager &aubManager, uint32_t offset, uint32_t stride) {
-        return std::unique_ptr<DeviceCapsReaderTbx>(new DeviceCapsReaderTbx(aubManager, offset, stride));
+        return std::make_unique<DeviceCapsReaderTbx>(aubManager, offset, stride);
     }
 
     uint32_t operator[](size_t offsetDw) const override {
@@ -39,7 +40,6 @@ class DeviceCapsReaderTbx : public DeviceCapsReader {
     }
 
   protected:
-    DeviceCapsReaderTbx(aub_stream::AubManager &aubManager, uint32_t offset, uint32_t stride) : DeviceCapsReader(offset, stride), aubManager(aubManager) {}
     aub_stream::AubManager &aubManager;
 };
 

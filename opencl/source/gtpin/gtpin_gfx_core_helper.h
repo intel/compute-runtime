@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,8 +39,7 @@ template <typename GfxFamily>
 class GTPinGfxCoreHelperHw : public GTPinGfxCoreHelper {
   public:
     static std::unique_ptr<GTPinGfxCoreHelper> create() {
-        auto gtpinHelper = std::unique_ptr<GTPinGfxCoreHelper>(new GTPinGfxCoreHelperHw<GfxFamily>());
-        return gtpinHelper;
+        return std::make_unique<GTPinGfxCoreHelperHw<GfxFamily>>();
     }
     uint32_t getGenVersion() const override;
     void addSurfaceState(Kernel *pKernel) const override;
@@ -48,8 +47,5 @@ class GTPinGfxCoreHelperHw : public GTPinGfxCoreHelper {
     bool canUseSharedAllocation(const HardwareInfo &hwInfo) const override;
 
     ~GTPinGfxCoreHelperHw() override = default;
-
-  protected:
-    GTPinGfxCoreHelperHw() = default;
 };
 } // namespace NEO

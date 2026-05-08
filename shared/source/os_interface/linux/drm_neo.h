@@ -72,6 +72,8 @@ class Drm : public DriverModel {
     friend DeviceFactory;
 
   public:
+    Drm() = delete;
+    Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
     static constexpr DriverModelType driverModelType = DriverModelType::drm;
 
     static SubmissionStatus getSubmissionStatusFromReturnCode(int32_t retCode);
@@ -288,9 +290,6 @@ class Drm : public DriverModel {
     std::unordered_map<uint32_t, IsaDebugData> isaDebugDataMap;
 
   protected:
-    Drm() = delete;
-    Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
-
     int waitOnUserFencesImpl(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
                              uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait);
 

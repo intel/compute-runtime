@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,7 @@ class OfflineLinker {
     };
 
   public:
+    explicit OfflineLinker(OclocArgHelper *argHelper, std::unique_ptr<OclocIgcFacade> igcFacade);
     static std::unique_ptr<OfflineLinker> create(size_t argsCount, const std::vector<std::string> &args, int &errorCode, OclocArgHelper *argHelper);
     MOCKABLE_VIRTUAL ~OfflineLinker();
 
@@ -50,7 +51,6 @@ class OfflineLinker {
     std::string getBuildLog() const;
 
   protected:
-    explicit OfflineLinker(OclocArgHelper *argHelper, std::unique_ptr<OclocIgcFacade> igcFacade);
     int initialize(size_t argsCount, const std::vector<std::string> &args);
     int parseCommand(size_t argsCount, const std::vector<std::string> &args);
     IGC::CodeType::CodeType_t parseOutputFormat(const std::string &outputFormatName);

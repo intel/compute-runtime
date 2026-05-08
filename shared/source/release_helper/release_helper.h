@@ -83,8 +83,9 @@ class ReleaseHelper {
 template <ReleaseType releaseType>
 class ReleaseHelperHw : public ReleaseHelper {
   public:
+    ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}
     static std::unique_ptr<ReleaseHelper> create(HardwareIpVersion hardwareIpVersion) {
-        return std::unique_ptr<ReleaseHelper>(new ReleaseHelperHw<releaseType>{hardwareIpVersion});
+        return std::make_unique<ReleaseHelperHw<releaseType>>(hardwareIpVersion);
     }
 
     bool isAdjustWalkOrderAvailable() const override;
@@ -125,9 +126,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const override;
     bool isAvailableSemaphore64() const override;
     bool isLatePreemptionStartSupportedHelper() const override;
-
-  protected:
-    ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}
 };
 
 template <uint32_t architecture>

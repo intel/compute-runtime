@@ -230,8 +230,7 @@ template <typename GfxFamily>
 class GfxCoreHelperHw : public GfxCoreHelper {
   public:
     static std::unique_ptr<GfxCoreHelper> create() {
-        auto gfxCoreHelper = std::unique_ptr<GfxCoreHelper>(new GfxCoreHelperHw<GfxFamily>());
-        return gfxCoreHelper;
+        return std::make_unique<GfxCoreHelperHw<GfxFamily>>();
     }
 
     size_t getRenderSurfaceStateSize() const override {
@@ -493,7 +492,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool secondaryContextsEnabled = false;
 
     static const AuxTranslationMode defaultAuxTranslationMode;
-    GfxCoreHelperHw() = default;
 };
 
 template <typename GfxFamily>

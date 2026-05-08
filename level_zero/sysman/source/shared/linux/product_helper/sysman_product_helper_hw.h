@@ -18,8 +18,7 @@ template <PRODUCT_FAMILY gfxProduct>
 class SysmanProductHelperHw : public SysmanProductHelper {
   public:
     static std::unique_ptr<SysmanProductHelper> create() {
-        auto pSysmanProductHelper = std::unique_ptr<SysmanProductHelper>(new SysmanProductHelperHw());
-        return pSysmanProductHelper;
+        return std::make_unique<SysmanProductHelperHw<gfxProduct>>();
     }
 
     // Frequency
@@ -100,9 +99,6 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     ~SysmanProductHelperHw() override = default;
 
     const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override;
-
-  protected:
-    SysmanProductHelperHw() = default;
 };
 
 template <PRODUCT_FAMILY gfxProduct>

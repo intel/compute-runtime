@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
   public:
     ~ClGfxCoreHelperHw() override = default;
     static std::unique_ptr<ClGfxCoreHelper> create() {
-        return std::unique_ptr<ClGfxCoreHelper>(new ClGfxCoreHelperHw<GfxFamily>());
+        return std::make_unique<ClGfxCoreHelperHw<GfxFamily>>();
     }
 
     bool requiresNonAuxMode(const ArgDescPointer &argAsPtr) const override;
@@ -77,7 +77,6 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
 
   protected:
     bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const override;
-    ClGfxCoreHelperHw() = default;
 };
 
 extern createClGfxCoreHelperFunctionType clGfxCoreHelperFactory[NEO::maxCoreEnumValue];

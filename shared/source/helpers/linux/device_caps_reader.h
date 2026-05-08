@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ namespace NEO {
 
 class DeviceCapsReaderDrm : public DeviceCapsReader {
   public:
+    DeviceCapsReaderDrm(std::vector<uint32_t> &&caps) : caps(std::move(caps)) {}
     static std::unique_ptr<DeviceCapsReaderDrm> create(const Drm &drm) {
         auto ioctlHelper = drm.getIoctlHelper();
         auto caps = ioctlHelper->queryDeviceCaps();
@@ -24,7 +25,7 @@ class DeviceCapsReaderDrm : public DeviceCapsReader {
             return nullptr;
         }
 
-        return std::unique_ptr<DeviceCapsReaderDrm>(new DeviceCapsReaderDrm(std::move(*caps)));
+        return std::make_unique<DeviceCapsReaderDrm>(std::move(*caps));
     }
 
     uint32_t operator[](size_t offsetDw) const override {
@@ -37,7 +38,6 @@ class DeviceCapsReaderDrm : public DeviceCapsReader {
     }
 
   protected:
-    DeviceCapsReaderDrm(std::vector<uint32_t> &&caps) : caps(std::move(caps)) {}
     std::vector<uint32_t> caps;
 };
 

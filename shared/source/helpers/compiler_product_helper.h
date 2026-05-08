@@ -103,9 +103,9 @@ class CompilerProductHelper {
 template <PRODUCT_FAMILY gfxProduct>
 class CompilerProductHelperHw : public CompilerProductHelper {
   public:
+    CompilerProductHelperHw();
     static std::unique_ptr<CompilerProductHelper> create() {
-        auto compilerProductHelper = std::unique_ptr<CompilerProductHelper>(new CompilerProductHelperHw());
-        return compilerProductHelper;
+        return std::make_unique<CompilerProductHelperHw<gfxProduct>>();
     }
 
     bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const override;
@@ -149,7 +149,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
 
   protected:
     uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const override;
-    CompilerProductHelperHw();
 };
 
 template <PRODUCT_FAMILY gfxProduct>

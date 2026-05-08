@@ -141,7 +141,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
   public:
     ~L0GfxCoreHelperHw() override = default;
     static std::unique_ptr<L0GfxCoreHelper> create() {
-        return std::unique_ptr<L0GfxCoreHelper>(new L0GfxCoreHelperHw<GfxFamily>());
+        return std::make_unique<L0GfxCoreHelperHw<GfxFamily>>();
     }
 
     L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device, ze_result_t &result) const override;
@@ -197,9 +197,6 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     uint64_t getSupportedCustomOperations2() const override;
     void p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, L0::DriverHandle *driverHandle) const override;
     void adjustBuiltInImageModeToBindful(NEO::BuiltIn::AddressingMode &mode) const override;
-
-  protected:
-    L0GfxCoreHelperHw() = default;
 };
 
 } // namespace L0

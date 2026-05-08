@@ -30,7 +30,7 @@ namespace NEO {
 CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 
 std::unique_ptr<OfflineLinker> OfflineLinker::create(size_t argsCount, const std::vector<std::string> &args, int &errorCode, OclocArgHelper *argHelper) {
-    std::unique_ptr<OfflineLinker> linker{new OfflineLinker{argHelper, std::make_unique<OclocIgcFacade>(argHelper)}};
+    auto linker = std::make_unique<OfflineLinker>(argHelper, std::make_unique<OclocIgcFacade>(argHelper));
     errorCode = linker->initialize(argsCount, args);
 
     return linker;

@@ -15,8 +15,7 @@ template <PRODUCT_FAMILY gfxProduct>
 class SysmanProductHelperHw : public SysmanProductHelper {
   public:
     static std::unique_ptr<SysmanProductHelper> create() {
-        auto pSysmanProductHelper = std::unique_ptr<SysmanProductHelper>(new SysmanProductHelperHw());
-        return pSysmanProductHelper;
+        return std::make_unique<SysmanProductHelperHw<gfxProduct>>();
     }
 
     ~SysmanProductHelperHw() override = default;
@@ -46,9 +45,6 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // init
     bool isZesInitSupported() override;
-
-  protected:
-    SysmanProductHelperHw() = default;
 };
 
 template <PRODUCT_FAMILY gfxProduct>

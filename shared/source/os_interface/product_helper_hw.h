@@ -14,9 +14,7 @@ template <PRODUCT_FAMILY gfxProduct>
 class ProductHelperHw : public ProductHelper {
   public:
     static std::unique_ptr<ProductHelper> create() {
-        auto productHelper = std::unique_ptr<ProductHelper>(new ProductHelperHw());
-
-        return productHelper;
+        return std::make_unique<ProductHelperHw<gfxProduct>>();
     }
 
     std::unique_ptr<DeviceCapsReader> getDeviceCapsReader(const DriverModel &driverModel) const override;
@@ -231,8 +229,6 @@ class ProductHelperHw : public ProductHelper {
     ~ProductHelperHw() override = default;
 
   protected:
-    ProductHelperHw() = default;
-
     void enableBlitterOperationsSupport(HardwareInfo *hwInfo) const;
     bool getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability) const;
     uint64_t getHostMemCapabilitiesValue() const;

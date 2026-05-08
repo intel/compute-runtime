@@ -24,7 +24,7 @@
 
 namespace NEO {
 Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
-    std::unique_ptr<Drm> drm{new Drm(std::move(hwDeviceId), rootDeviceEnvironment)};
+    auto drm = std::make_unique<Drm>(std::move(hwDeviceId), rootDeviceEnvironment);
 
     if (!drm->queryDeviceIdAndRevision()) {
         return nullptr;
