@@ -3057,7 +3057,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         }
 
         if (isInOrderExecutionEnabled() && isCopyOnlySignaling) {
-            appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
+            appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
         }
         handleInOrderDependencyCounter(signalEvent, false, memoryCopyParams.copyOffloadAllowed);
     }

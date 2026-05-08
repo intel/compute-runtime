@@ -1095,6 +1095,30 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenFillCalledThenSk
     context->freeMem(data);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadAllowedWhenAppendBlitFillCalledThenProgramMiFlush, IsAtLeastXeCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = false;
+    ASSERT_TRUE(immCmdList->isCopyOffloadEnabled());
+
+    auto alloc = allocDeviceMem(64);
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    copyParams.copyOffloadAllowed = true;
+    immCmdList->appendBlitFill(alloc, &copyData1, 1, 16, nullptr, 0, nullptr, copyParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto it = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), it);
+
+    context->freeMem(alloc);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndSmallD2DAllocWhenProgrammingHwCmdsThenUseCopyCommands, IsAtLeastXeCore) {
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
 
