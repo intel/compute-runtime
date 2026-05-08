@@ -124,7 +124,11 @@ target_include_directories(igdrcl_tests BEFORE PRIVATE
 function(neo_gen_kernels platform_it_lower device revision_id)
   set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
 
-  set(addrmode "bindful")
+  if("${CORE_TYPE}" IN_LIST XE3P_AND_LATER_CORE_TYPES)
+    set(addrmode "default")
+  else()
+    set(addrmode "bindful")
+  endif()
 
   set(kernels_to_compile)
   foreach(filepath ${ARGN})
@@ -180,7 +184,11 @@ function(neo_gen_kernels_with_options platform_it_lower device revision_id filep
 
     set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
     set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
-    set(addrmode "bindful")
+    if("${CORE_TYPE}" IN_LIST XE3P_AND_LATER_CORE_TYPES)
+      set(addrmode "default")
+    else()
+      set(addrmode "bindful")
+    endif()
 
     foreach(arg ${ARGN})
       string(REPLACE " " "_" argwospaces ${arg})

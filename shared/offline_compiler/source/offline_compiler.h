@@ -189,7 +189,7 @@ All supported acronyms: %s.
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);
     int parseCommandLineExt(size_t numArgs, const std::vector<std::string> &allArgs, uint32_t &argIndex);
     void setStatelessToStatefulBufferOffsetFlag();
-    void appendExtraInternalOptions(std::string &internalOptions);
+    int appendExtraInternalOptions(std::string &internalOptions);
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
     MOCKABLE_VIRTUAL int buildSourceCode();

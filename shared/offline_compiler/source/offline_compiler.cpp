@@ -1138,7 +1138,10 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
     } else {
         appendExtensionsToInternalOptions(hwInfo, options, internalOptions);
-        appendExtraInternalOptions(internalOptions);
+        retVal = appendExtraInternalOptions(internalOptions);
+        if (retVal != OCLOC_SUCCESS) {
+            return retVal;
+        }
     }
     NEO::EnvironmentVariableReader envReader;
 
@@ -1479,7 +1482,11 @@ void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
     }
 }
 
-void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
+int OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
+    if (addressingMode == "bindful" && compilerProductHelper->isForceBindlessRequired(hwInfo)) {
+        argHelper->printf("Error: bindful addressing mode is not supported on this device (heapless platform). Use bindless or default mode.\n");
+        return OCLOC_INVALID_COMMAND_LINE;
+    }
     if (compilerProductHelper->isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
@@ -1487,12 +1494,14 @@ void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
     if ((!compilerProductHelper->isBindlessAddressingDisabled(releaseHelper.get()) && addressingMode != "bindful") ||
-        addressingMode == "bindless") {
+        addressingMode == "bindless" ||
+        compilerProductHelper->isForceBindlessRequired(hwInfo)) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
     }
 
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper->getCachingPolicyOptions(false));
     CompilerOptions::applyExtraInternalOptions(internalOptions, hwInfo, *compilerProductHelper, this->heaplessMode);
+    return OCLOC_SUCCESS;
 }
 
 void OfflineCompiler::parseDebugSettings() {
