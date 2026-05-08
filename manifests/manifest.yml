@@ -36,7 +36,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 4116-6439
+    revision: 4117-6440
   level_zero:
     asset_name: level_zero
     dest_dir: level_zero
@@ -74,13 +74,13 @@ components:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: e7470d744ccd66ab0356f497b829dbca3108e5e2-4056
+    revision: 4f710630aa77f502ab61c9d343d77b62b7bf1a51-4117
   wsl:
     branch: wsl
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-4116
+converter: M-4117
 include:
 - aub_configs.yml
 - infra.yml
