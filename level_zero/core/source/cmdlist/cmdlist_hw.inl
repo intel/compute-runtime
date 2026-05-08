@@ -2707,15 +2707,26 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto dstAllocation = this->getAlignedAllocationData(this->device, sharedSystemEnabled, ptr, size, false, false, nullptr);
-    bool hostPointerNeedsFlush = dstAllocation.needsFlush;
-    if (dstAllocation.svmAllocData == nullptr) {
+    bool hostPointerNeedsFlush = false;
+
+    NEO::SvmAllocationData *allocData = nullptr;
+    bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, allocData);
+    if (dstAllocFound) {
+        if (allocData->memoryType == InternalMemoryType::hostUnifiedMemory ||
+            allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
+            hostPointerNeedsFlush = true;
+        }
+
+    } else {
         if ((sharedSystemEnabled == false) && (neoDevice->areSharedSystemAllocationsAllowed() == false) && (device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS)) {
-            // host pointer base address is invalid
+            // first two conditions, above are default, and each may be turned true only with debug variables
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         hostPointerNeedsFlush = true;
     }
+
+    MemAllocInfo dstMemAllocInfo{allocData, nullptr, nullptr};
+    auto dstAllocation = this->getAlignedAllocationData(this->device, sharedSystemEnabled, ptr, size, false, false, &dstMemAllocInfo);
     if ((dstAllocation.alloc == nullptr) && (sharedSystemEnabled == false)) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }

@@ -713,7 +713,7 @@ HWTEST_F(CommandListAppend, givenCommandListWhenMemoryFillWithNonUsmPtrThenDesti
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->releaseImportedPointer(dstPtr));
 }
 
-HWTEST_F(CommandListAppend, givenCommandListWhenMemoryFillWithUsmHostPtrThenDestinationAllocationInSystemMemoryIsSetFromAlignedAllocDataNeedsFlush) {
+HWTEST_F(CommandListAppend, givenCommandListWhenMemoryFillWithUsmHostPtrThenDestinationAllocationInSystemMemoryIsSet) {
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -749,6 +749,22 @@ HWTEST_F(CommandListAppend, givenCommandListWhenMemoryFillWithUsmDevicePtrThenDe
     EXPECT_FALSE(cmdList.usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
     context->freeMem(dstPtr);
+}
+
+HWTEST_F(CommandListAppend, givenCommandListWhenMemoryFillWithUnregisteredHostPtrThenErrorIsReturnedAndGetAlignedAllocationDataIsNotCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.returnBaseAllocationStruct = true;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    int pattern = 0x1;
+
+    auto ret = cmdList.appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 64u, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+    EXPECT_EQ(0u, cmdList.getAlignedAllocationCalledTimes);
 }
 
 HWTEST_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventsThenSemaphoreWaitAndPipeControlAreFound) {
