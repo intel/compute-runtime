@@ -602,8 +602,9 @@ void CommandContainer::fillReusableAllocationLists() {
                                                              heapSize,
                                                              defaultHeapAllocationAlignment,
                                                              device->getRootDeviceIndex());
-            if (heapToReuse != nullptr) {
-                addToResidencyContainer(heapToReuse);
+            {
+                auto lock = this->immediateCmdListCsr->obtainUniqueOwnership();
+                this->immediateCmdListCsr->makeResident(*heapToReuse);
             }
             this->heapHelper->storeHeapAllocation(heapToReuse);
         }

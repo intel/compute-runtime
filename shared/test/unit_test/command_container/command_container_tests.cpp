@@ -1454,17 +1454,14 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThe
     ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
     EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
     EXPECT_FALSE(heapHelper->storageForReuse->getAllocationsForReuse().peekIsEmpty());
-    EXPECT_EQ(heapHelper->storageForReuse->getAllocationsForReuse().peekHead()->getResidencyTaskCount(csr->getOsContext().getContextId()), GraphicsAllocation::objectNotResident);
-    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
-    uint32_t numHeaps = 0;
-    for (int heapType = 0; heapType < IndirectHeap::Type::numTypes; heapType++) {
-        if (!cmdContainer->skipHeapAllocationCreation(static_cast<HeapType>(heapType))) {
-            numHeaps++;
-        }
+    EXPECT_NE(heapHelper->storageForReuse->getAllocationsForReuse().peekHead()->getResidencyTaskCount(csr->getOsContext().getContextId()), GraphicsAllocation::objectNotResident);
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize);
+    auto *heapNode = heapHelper->storageForReuse->getAllocationsForReuse().peekHead();
+    const auto &csrResidency = csr->getResidencyAllocations();
+    while (heapNode) {
+        EXPECT_NE(std::find(csrResidency.begin(), csrResidency.end(), heapNode), csrResidency.end());
+        heapNode = heapNode->next;
     }
-    auto numAllocsAddedToResidencyContainer = amountToFill * numHeaps;
-    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + numAllocsAddedToResidencyContainer);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1490,16 +1487,7 @@ TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusa
 
     ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
     EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
-    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
-    uint32_t numHeaps = 0;
-    for (int heapType = 0; heapType < IndirectHeap::Type::numTypes; heapType++) {
-        if (!cmdContainer->skipHeapAllocationCreation(static_cast<HeapType>(heapType))) {
-            numHeaps++;
-        }
-    }
-    auto numAllocsAddedToResidencyContainer = amountToFill * numHeaps;
-    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + numAllocsAddedToResidencyContainer);
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1762,8 +1750,7 @@ TEST_F(CommandContainerTest, givenInternalHeapPoolAllocatorEnabledWhenFillReusab
     cmdContainer->fillReusableAllocationLists();
 
     // when InternalHeap pool allocator is enabled, only indirectObject heap should be skipped (not dynamicState, surfaceState)
-    auto expectedHeapCount = pDevice->getHardwareInfo().capabilityTable.supportsImages ? 2u : 1u;
-    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + expectedHeapCount);
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize);
     EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
 
     cmdContainer.reset();
@@ -1786,7 +1773,7 @@ TEST_F(CommandContainerTest, givenLinearStreamPoolAllocatorEnabledWhenFillReusab
 
     cmdContainer->fillReusableAllocationLists();
 
-    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + 1u);
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize);
     EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
 
     cmdContainer.reset();

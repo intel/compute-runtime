@@ -1332,6 +1332,7 @@ HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
 }
 
 HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularThenImmediateStreamIsSelected) {
+    debugManager.flags.SetAmountOfReusableAllocations.set(0);
     commandList->close();
     auto cmdListHandle = commandList->toHandle();
 

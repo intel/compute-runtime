@@ -1629,6 +1629,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenKernelWhenItIsEnqueuedT
 
     MockKernelWithInternals mockKernel(*context);
     size_t gws[3] = {1, 0, 0};
+    auto initialTaskCount = mockCsr->peekTaskCount();
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
@@ -1638,7 +1639,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenKernelWhenItIsEnqueuedT
     auto &reusableAllocations = mockCsr->getInternalAllocationStorage()->getAllocationsForReuse();
     for (auto &allocation : passedAllocationPack) {
         if (reusableAllocations.peekContains(*allocation)) {
-            EXPECT_EQ(0u, allocation->getTaskCount(mockCsr->getOsContext().getContextId()));
+            EXPECT_EQ(initialTaskCount, allocation->getTaskCount(mockCsr->getOsContext().getContextId()));
         } else {
             EXPECT_EQ(csrTaskCount, allocation->getTaskCount(mockCsr->getOsContext().getContextId()));
         }
