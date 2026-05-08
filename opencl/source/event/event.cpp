@@ -466,20 +466,16 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
 void Event::getBoundaryTimestampValues(TimestampPacketContainer *timestampContainer, uint64_t &globalStartTS, uint64_t &globalEndTS) {
     const auto &timestamps = timestampContainer->peekNodes();
 
-    globalStartTS = timestamps[0]->getGlobalStartValue(0);
-    globalEndTS = timestamps[0]->getGlobalEndValue(0);
+    globalStartTS = std::numeric_limits<uint64_t>::max();
+    globalEndTS = std::numeric_limits<uint64_t>::min();
 
     for (const auto &timestamp : timestamps) {
         if (!timestamp->isProfilingCapable()) {
             continue;
         }
         for (auto i = 0u; i < timestamp->getPacketsUsed(); ++i) {
-            if (globalStartTS > timestamp->getGlobalStartValue(i)) {
-                globalStartTS = timestamp->getGlobalStartValue(i);
-            }
-            if (globalEndTS < timestamp->getGlobalEndValue(i)) {
-                globalEndTS = timestamp->getGlobalEndValue(i);
-            }
+            globalStartTS = std::min(globalStartTS, timestamp->getGlobalStartValue(i));
+            globalEndTS = std::max(globalEndTS, timestamp->getGlobalEndValue(i));
         }
     }
 }
