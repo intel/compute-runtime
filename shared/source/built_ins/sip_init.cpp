@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
@@ -27,7 +28,8 @@ void SipKernel::freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, Mem
 }
 
 const SipKernel &SipKernel::getSipKernel(Device &device, OsContext *context) {
-    if (context && device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::offline) {
+    if (context && device.getExecutionEnvironment()->getDebuggingMode() != NEO::DebuggingMode::disabled &&
+        device.getGfxCoreHelper().isPerContextDebugSipRequired()) {
         return SipKernel::getDebugSipKernel(device, context);
     } else {
         return SipKernel::getSipKernelImpl(device);

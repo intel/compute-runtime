@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -266,7 +266,8 @@ const SipKernel &SipKernel::getSipKernel(Device &device, OsContext *context) {
         }
         return *MockSipData::mockSipKernel.get();
     } else {
-        if (context && device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::offline) {
+        if (context && device.getExecutionEnvironment()->getDebuggingMode() != NEO::DebuggingMode::disabled &&
+            device.getGfxCoreHelper().isPerContextDebugSipRequired()) {
             return SipKernel::getDebugSipKernel(device, context);
         }
         auto sipType = SipKernel::getSipKernelType(device);

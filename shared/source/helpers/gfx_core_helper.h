@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -204,6 +204,8 @@ class GfxCoreHelper {
     virtual uint32_t getImplicitArgsVersion() const = 0;
 
     virtual bool isCacheFlushPriorImageReadRequired() const = 0;
+
+    virtual bool isPerContextDebugSipRequired() const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -453,6 +455,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool getSipBinaryFromExternalLib() const override;
 
     bool isCacheFlushPriorImageReadRequired() const override;
+
+    bool isPerContextDebugSipRequired() const override;
 
     ~GfxCoreHelperHw() override = default;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,10 +51,12 @@ class OsContextLinux : public OsContext {
   protected:
     bool initializeContext(bool allocateInterrupt) override;
     void isOpenVinoLoaded();
+    void initializeOfflineDumpContextIds();
 
     unsigned int engineFlag = 0;
     std::vector<uint32_t> drmContextIds;
     std::vector<uint32_t> drmVmIds;
+    std::array<uint64_t, EngineLimits::maxHandleCount> offlineDumpCtxIds;
 
     std::array<uint64_t, EngineLimits::maxHandleCount> pagingFence;
     std::array<uint64_t, EngineLimits::maxHandleCount> fenceVal;

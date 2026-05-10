@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,11 @@ class MockGfxCoreHelperHw : public GfxCoreHelperHw<GfxFamily> {
     void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const override {
         alignThreadGroupCountToDssSizeCalledTimes++;
     }
+    bool isPerContextDebugSipRequired() const override {
+        return perContextSipRequired;
+    }
     mutable uint32_t alignThreadGroupCountToDssSizeCalledTimes = 0;
     bool setIsLockable = true;
+    bool perContextSipRequired = false;
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -850,6 +850,11 @@ uint32_t GfxCoreHelperHw<Family>::getImplicitArgsVersion() const {
 
 template <typename Family>
 bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
+    return false;
+}
+
+template <typename Family>
+bool GfxCoreHelperHw<Family>::isPerContextDebugSipRequired() const {
     return false;
 }
 

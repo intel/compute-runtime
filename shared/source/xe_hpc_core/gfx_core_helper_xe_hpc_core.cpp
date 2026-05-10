@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -302,6 +302,11 @@ template <>
 DeviceHierarchyMode GfxCoreHelperHw<Family>::getDefaultDeviceHierarchy() const {
     return DeviceHierarchyMode::flat;
 }
+
+template <>
+bool GfxCoreHelperHw<Family>::isPerContextDebugSipRequired() const {
+    return true;
+};
 
 } // namespace NEO
 
