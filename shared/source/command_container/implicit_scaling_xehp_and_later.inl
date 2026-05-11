@@ -190,6 +190,37 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
                                                                  uint64_t immediateData,
                                                                  bool apiSelfCleanup,
                                                                  bool useSecondaryBatchBuffer) {
+    size_t totalProgrammedSize = 0u;
+
+    auto barrierCommandsSize = getBarrierSize(rootDeviceEnvironment, apiSelfCleanup, gpuAddress > 0);
+    void *commandBufferBefore = commandStream.getSpace(barrierCommandsSize);
+    void *commandBuffer = commandBufferBefore;
+
+    uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed() - barrierCommandsSize;
+
+    ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(commandBuffer,
+                                                                devices,
+                                                                flushArgs,
+                                                                rootDeviceEnvironment,
+                                                                gpuAddress,
+                                                                immediateData,
+                                                                cmdBufferGpuAddress,
+                                                                apiSelfCleanup,
+                                                                useSecondaryBatchBuffer);
+    totalProgrammedSize = ptrDiff(commandBuffer, commandBufferBefore);
+    UNRECOVERABLE_IF(totalProgrammedSize != barrierCommandsSize);
+}
+
+template <typename GfxFamily>
+void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(void *&commandBuffer,
+                                                                 const DeviceBitfield &devices,
+                                                                 PipeControlArgs &flushArgs,
+                                                                 const RootDeviceEnvironment &rootDeviceEnvironment,
+                                                                 uint64_t gpuAddress,
+                                                                 uint64_t immediateData,
+                                                                 uint64_t cmdBufferGpuAddress,
+                                                                 bool apiSelfCleanup,
+                                                                 bool useSecondaryBatchBuffer) {
     uint32_t totalProgrammedSize = 0u;
 
     bool semaphore64bCmdSupported = rootDeviceEnvironment.getProductHelper().isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper(), *rootDeviceEnvironment.getHardwareInfo());
@@ -199,17 +230,13 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
     args.postSyncGpuAddress = gpuAddress;
     args.postSyncImmediateValue = immediateData;
 
-    auto barrierCommandsSize = getBarrierSize(rootDeviceEnvironment, args.emitSelfCleanup, args.usePostSync);
-    void *commandBuffer = commandStream.getSpace(barrierCommandsSize);
-    uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed() - barrierCommandsSize;
-
     WalkerPartition::constructBarrierCommandBuffer<GfxFamily>(commandBuffer,
                                                               cmdBufferGpuAddress,
                                                               totalProgrammedSize,
                                                               args,
                                                               flushArgs,
                                                               rootDeviceEnvironment);
-    UNRECOVERABLE_IF(totalProgrammedSize != barrierCommandsSize);
+    commandBuffer = ptrOffset(commandBuffer, totalProgrammedSize);
 }
 
 template <typename GfxFamily>

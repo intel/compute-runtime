@@ -87,6 +87,16 @@ struct ImplicitScalingDispatch {
                                         bool apiSelfCleanup,
                                         bool useSecondaryBatchBuffer);
 
+    static void dispatchBarrierCommands(void *&commandBuffer,
+                                        const DeviceBitfield &devices,
+                                        PipeControlArgs &flushArgs,
+                                        const RootDeviceEnvironment &rootDeviceEnvironment,
+                                        uint64_t gpuAddress,
+                                        uint64_t immediateData,
+                                        uint64_t cmdBufferGpuAddress,
+                                        bool apiSelfCleanup,
+                                        bool useSecondaryBatchBuffer);
+
     static size_t getRegisterConfigurationSize();
     static void dispatchRegisterConfiguration(LinearStream &commandStream,
                                               uint64_t workPartitionSurfaceAddress,
