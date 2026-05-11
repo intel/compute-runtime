@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ ze_result_t LinuxVfImp::getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the real path and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
-    std::size_t loc = vfRealPath.find_last_of("/");
+    std::size_t loc = vfRealPath.find_last_of('/');
     if (loc == std::string::npos) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the last occurrence of '/' and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;

@@ -626,8 +626,8 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromSysfs(std::map<uint64_t,
             std::string bPidString;
             result = pSysfsAccess->read(std::move(realClientPidPath), bPidString);
             if (result == ZE_RESULT_SUCCESS) {
-                size_t start = bPidString.find("<");
-                size_t end = bPidString.find(">");
+                size_t start = bPidString.find('<');
+                size_t end = bPidString.find('>');
                 std::string bPid = bPidString.substr(start + 1, end - start - 1);
                 pid = std::stoull(bPid, nullptr, 10);
             }

@@ -227,7 +227,7 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
 
         if (false == debugVars.fileName.empty()) {
             auto fileBaseName = debugVars.fileName;
-            auto pos = debugVars.fileName.rfind(".");
+            auto pos = debugVars.fileName.rfind('.');
             auto extension = debugVars.fileName.substr(pos, debugVars.fileName.length());
             if (false == debugVars.fileNameSuffix.empty()) {
                 pos = debugVars.fileName.rfind(debugVars.fileNameSuffix);

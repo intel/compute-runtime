@@ -89,7 +89,7 @@ std::string prepareTwoDevices(MockOclocArgHelper *argHelper) {
 void appendAcronymWithoutDashes(std::vector<std::string> &out, ConstStringRef acronym) {
     if (acronym.contains("-")) {
         auto acronymCopy = acronym.str();
-        auto findDash = acronymCopy.find("-");
+        auto findDash = acronymCopy.find('-');
         if (findDash == std::string::npos) {
             acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
         }

@@ -26,12 +26,12 @@ static ze_result_t getShiftValue(std::string_view readFile, FsAccessInterface *p
         return result;
     }
 
-    size_t pos = readVal.rfind(":");
+    size_t pos = readVal.rfind(':');
     if (pos == std::string::npos) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
     readVal = readVal.substr(pos + 1, std::string::npos);
-    pos = readVal.rfind("-");
+    pos = readVal.rfind('-');
     if (pos == std::string::npos) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -54,7 +54,7 @@ int32_t PmuInterfaceImp::getConfigFromEventFile(std::string_view eventFile, uint
         return -1;
     }
 
-    size_t pos = readVal.rfind("=");
+    size_t pos = readVal.rfind('=');
     if (pos == std::string::npos) {
         return -1;
     }

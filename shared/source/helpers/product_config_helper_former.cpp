@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ std::vector<NEO::ConstStringRef> FormerProductConfigHelper::getProductAcronymsFr
 AOT::PRODUCT_CONFIG FormerProductConfigHelper::getProductConfigFromDeviceName(const std::string &device) {
     uint32_t config = AOT::UNKNOWN_ISA;
     char hexPrefixLength = 2;
-    if (device.find(".") != std::string::npos) {
+    if (device.find('.') != std::string::npos) {
         config = ProductConfigHelper::getProductConfigFromVersionValue(device);
     } else if (std::all_of(device.begin(), device.end(), (::isdigit))) {
         config = static_cast<uint32_t>(std::stoul(device));

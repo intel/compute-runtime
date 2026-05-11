@@ -314,7 +314,7 @@ ze_result_t FsAccess::listDirectory(const std::string path, std::vector<std::str
 }
 
 std::string FsAccess::getBaseName(const std::string path) {
-    size_t pos = path.rfind("/");
+    size_t pos = path.rfind('/');
     if (std::string::npos == pos) {
         return path;
     }
@@ -322,7 +322,7 @@ std::string FsAccess::getBaseName(const std::string path) {
 }
 
 std::string FsAccess::getDirName(const std::string path) {
-    size_t pos = path.rfind("/");
+    size_t pos = path.rfind('/');
     if (std::string::npos == pos) {
         return std::string("");
     }

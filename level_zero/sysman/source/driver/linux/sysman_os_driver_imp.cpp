@@ -55,7 +55,7 @@ std::vector<std::unique_ptr<NEO::HwDeviceId>> LinuxDriverImp::discoverDevicesWit
 
     for (std::vector<std::string>::iterator file = files.begin(); file != files.end(); ++file) {
         std::string devicePathView(file->c_str(), file->size());
-        std::size_t loc = devicePathView.find_last_of("/");
+        std::size_t loc = devicePathView.find_last_of('/');
         std::string bdfString = devicePathView.substr(loc + 1); // omits / character too
 
         constexpr int bdfTokensNum = 4;

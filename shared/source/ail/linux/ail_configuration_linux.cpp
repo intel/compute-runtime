@@ -25,7 +25,7 @@ bool AILConfiguration::initProcessExecutableName() {
     path[result] = '\0';
     std::string_view pathView(path);
 
-    auto lastPosition = pathView.find_last_of("/");
+    auto lastPosition = pathView.find_last_of('/');
     UNRECOVERABLE_IF(lastPosition == std::string_view::npos);
 
     pathView.remove_prefix(lastPosition + 1u);
