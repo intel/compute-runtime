@@ -902,8 +902,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
 
     commandStreamReceiver.streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
-    auto l3Config = PreambleHelper<FamilyType>::getL3Config(pDevice->getHardwareInfo(), false);
-    commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
     size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*mockDevice);
@@ -941,9 +939,6 @@ SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreamb
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
 
-    auto l3Config = PreambleHelper<FamilyType>::getL3Config(mockDevice->getHardwareInfo(), false);
-    commandStreamReceiver.lastSentL3Config = l3Config;
-
     auto &csrCS = commandStreamReceiver.getCS();
     size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*mockDevice);
     size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
@@ -979,9 +974,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
 
     commandStreamReceiver.streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
-
-    auto l3Config = PreambleHelper<FamilyType>::getL3Config(mockDevice->getHardwareInfo(), false);
-    commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
     size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSizeAligned(flushTaskFlags, *mockDevice);

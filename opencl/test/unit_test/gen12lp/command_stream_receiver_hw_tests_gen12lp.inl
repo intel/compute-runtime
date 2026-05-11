@@ -29,7 +29,7 @@ using namespace NEO;
 
 using CommandStreamReceiverHwTestGen12lp = CommandStreamReceiverHwTest<Gen12LpFamily>;
 
-GEN12LPTEST_F(CommandStreamReceiverHwTestGen12lp, givenPreambleSentWhenL3ConfigRequestChangedThenDontProgramL3Register) {
+GEN12LPTEST_F(CommandStreamReceiverHwTestGen12lp, givenPreambleSentWhenEnqueueingKernelThenDontProgramL3Register) {
     size_t gws = 1;
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(ctx);
@@ -39,7 +39,6 @@ GEN12LPTEST_F(CommandStreamReceiverHwTestGen12lp, givenPreambleSentWhenL3ConfigR
     auto &commandStreamCSR = commandStreamReceiver->getCS();
 
     commandStreamReceiver->isPreambleSent = true;
-    commandStreamReceiver->lastSentL3Config = 0;
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
 

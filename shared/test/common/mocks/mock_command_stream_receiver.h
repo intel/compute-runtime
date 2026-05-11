@@ -389,7 +389,6 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::getCmdsSizeForHardwareContext;
     using CommandStreamReceiverHw<GfxFamily>::isPerQueuePrologueEnabled;
     using CommandStreamReceiverHw<GfxFamily>::postInitFlagsSetup;
-    using CommandStreamReceiverHw<GfxFamily>::programL3;
     using CommandStreamReceiverHw<GfxFamily>::programVFEState;
     using CommandStreamReceiverHw<GfxFamily>::directSubmission;
     using CommandStreamReceiver::activePartitions;

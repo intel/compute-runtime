@@ -99,7 +99,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForPreemption(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForEpilogue(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForEpilogueCommands(const DispatchFlags &dispatchFlags) const;
-    size_t getCmdSizeForL3Config() const;
     size_t getCmdSizeForPipelineSelect() const;
     size_t getCmdSizeForEngineMode(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo);
@@ -219,7 +218,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
-    void programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs);
     void programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs);
     void programEpilogue(LinearStream &csr, Device &device, void **batchBufferEndLocation, DispatchFlags &dispatchFlags);

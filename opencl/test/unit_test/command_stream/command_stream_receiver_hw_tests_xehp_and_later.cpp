@@ -98,7 +98,7 @@ struct CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrT
 using CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw = CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrT<MockCsrHw>;
 using CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw2 = CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrT<MockCsrHw2>;
 
-HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenPreambleSentWhenL3ConfigRequestChangedThenDontProgramL3Register) {
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenPreambleSentWhenEnqueueingKernelThenDontProgramL3Register) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     size_t gws = 1;
@@ -113,7 +113,6 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
     PreemptionMode devicePreemptionMode = pDevice->getPreemptionMode();
 
     commandStreamReceiver->isPreambleSent = true;
-    commandStreamReceiver->lastSentL3Config = 0;
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
 

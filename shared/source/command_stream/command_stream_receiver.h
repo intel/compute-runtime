@@ -737,7 +737,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
 
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
-    uint32_t lastSentL3Config = 0;
     uint32_t latestSentStatelessMocsConfig;
     uint64_t lastSentSliceCount;
     HostFunctionWorkerMode hostFunctionWorkerMode = HostFunctionWorkerMode::countingSemaphore;

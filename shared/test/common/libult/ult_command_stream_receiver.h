@@ -159,7 +159,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::lastKernelExecutionType;
     using BaseClass::CommandStreamReceiver::lastMemoryCompressionState;
     using BaseClass::CommandStreamReceiver::lastPreemptionMode;
-    using BaseClass::CommandStreamReceiver::lastSentL3Config;
     using BaseClass::CommandStreamReceiver::lastSystolicPipelineSelectMode;
     using BaseClass::CommandStreamReceiver::lastVmeSubslicesConfig;
     using BaseClass::CommandStreamReceiver::latestFlushedTaskCount;

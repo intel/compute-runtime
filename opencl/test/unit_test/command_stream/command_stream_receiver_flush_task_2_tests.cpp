@@ -465,11 +465,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, GivenKernel
 
     auto &commandStreamCSR = commandStreamReceiver->getCS();
 
-    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
-
-    // Mark Pramble as sent, override L3Config to SLM config
     commandStreamReceiver->isPreambleSent = true;
-    commandStreamReceiver->lastSentL3Config = l3Config;
 
     ((MockKernel *)kernel)->setTotalSLMSize(1024);
 
@@ -901,71 +897,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenEnabled
 
     cmd = hwParser.getCommand<typename FamilyType::MEDIA_VFE_STATE>();
     EXPECT_EQ(nullptr, cmd);
-}
-
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndL3ConfigChangedWhenFlushingTaskThenPipeControlIsAdded) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    CsrSizeRequestFlags csrSizeRequest = {};
-
-    commandStream.getSpace(sizeof(PIPE_CONTROL));
-    flushTaskFlags.useSLM = true;
-    flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    // Force a PIPE_CONTROL through a taskLevel transition
-    taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
-    commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
-    commandStreamReceiver.streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
-    csrSizeRequest.l3ConfigChanged = true;
-    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-
-    auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
-
-    auto expectedUsed = csrCS.getUsed() + sizeNeeded;
-    expectedUsed = alignUp(expectedUsed, MemoryConstants::cacheLineSize);
-
-    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(false, flushTaskFlags.numGrfRequired,
-                                                                             flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, false);
-    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
-
-    // Verify that we didn't grab a new CS buffer
-    EXPECT_EQ(expectedUsed, csrCS.getUsed());
-}
-
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequiredCsrSizeDependsOnL3ConfigChanged) {
-    UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getGpgpuCommandStreamReceiver();
-    CsrSizeRequestFlags csrSizeRequest = {};
-    commandStreamReceiver.isPreambleSent = true;
-
-    csrSizeRequest.l3ConfigChanged = true;
-    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto l3ConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
-    auto expectedDifference = commandStreamReceiver.getCmdSizeForL3Config();
-
-    csrSizeRequest.l3ConfigChanged = false;
-    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
-
-    auto difference = l3ConfigChangedSize - l3ConfigNotChangedSize;
-    EXPECT_EQ(expectedDifference, difference);
-}
-
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleNotSentThenRequiredCsrSizeDoesntDependOnL3ConfigChanged) {
-    UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getGpgpuCommandStreamReceiver();
-    CsrSizeRequestFlags csrSizeRequest = {};
-    commandStreamReceiver.isPreambleSent = false;
-
-    csrSizeRequest.l3ConfigChanged = true;
-    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto l3ConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
-
-    csrSizeRequest.l3ConfigChanged = false;
-    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
-
-    EXPECT_EQ(l3ConfigNotChangedSize, l3ConfigChangedSize);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenSamplerCacheFlushSentThenRequiredCsrSizeContainsPipecontrolSize) {

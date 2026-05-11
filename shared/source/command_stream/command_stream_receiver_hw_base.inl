@@ -482,7 +482,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     this->streamProperties.stateComputeMode.setPropertiesAll(false, dispatchFlags.numGrfRequired,
                                                              dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), device.hasAnyPeerAccess());
 
-    csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
 
     csrSizeRequestFlags.activePartitionsChanged = isProgramActivePartitionConfigRequired();
@@ -543,7 +542,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     programHardwareContext(commandStreamCSR);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
     programComputeMode(commandStreamCSR, dispatchFlags, hwInfo);
-    programL3(commandStreamCSR, newL3Config, EngineHelpers::isBcs(this->osContext->getEngineType()));
     programPreamble(commandStreamCSR, device, newL3Config);
     addPipeControlBefore3dState(commandStreamCSR, dispatchFlags);
     programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
@@ -817,7 +815,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
-    size += getCmdSizeForL3Config();
     if (this->streamProperties.stateComputeMode.isDirty()) {
         size += getCmdSizeForComputeMode();
     }
@@ -919,7 +916,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &cs
     if (!this->isPreambleSent) {
         PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, getPreemptionAllocation(), EngineHelpers::isBcs(osContext->getEngineType()));
         this->isPreambleSent = true;
-        this->lastSentL3Config = newL3Config;
     }
 }
 
@@ -2567,11 +2563,5 @@ template <typename GfxFamily>
 GraphicsAllocation *CommandStreamReceiverHw<GfxFamily>::getClearColorAllocation() {
     return nullptr;
 }
-
-template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs) {}
-
-template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const { return 0; }
 
 } // namespace NEO

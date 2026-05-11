@@ -750,7 +750,6 @@ void CommandStreamReceiver::initProgrammingFlags() {
     lastVmeSubslicesConfig = false;
     stateComputeModeDirty = true;
 
-    lastSentL3Config = 0;
     lastPreemptionMode = PreemptionMode::Initial;
 
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;

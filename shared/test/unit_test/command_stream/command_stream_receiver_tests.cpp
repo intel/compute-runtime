@@ -465,7 +465,6 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     EXPECT_TRUE(csr.mediaVfeStateDirty);
     EXPECT_TRUE(csr.stateComputeModeDirty);
     EXPECT_FALSE(csr.lastVmeSubslicesConfig);
-    EXPECT_EQ(0u, csr.lastSentL3Config);
     EXPECT_EQ(PreemptionMode::Initial, csr.lastPreemptionMode);
     EXPECT_EQ(static_cast<uint32_t>(-1), csr.latestSentStatelessMocsConfig);
 }
@@ -6046,8 +6045,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenPreambleSentWhenEstimatingFlushTaskSi
 
     commandStreamReceiver.isPreambleSent = false;
     auto expectedDifferenceForPreamble = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice);
-    auto expectedDifferenceForFlush = expectedDifferenceForPreamble + commandStreamReceiver.getCmdSizeForL3Config() +
-                                      PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(pDevice->getRootDeviceEnvironment());
+    auto expectedDifferenceForFlush = expectedDifferenceForPreamble + PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(pDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedDifferenceForPreamble, actualDifferenceForPreamble);
     EXPECT_EQ(expectedDifferenceForFlush, actualDifferenceForFlush);
