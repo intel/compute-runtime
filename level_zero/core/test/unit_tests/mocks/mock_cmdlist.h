@@ -56,6 +56,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendVfeStateCmdToPatch;
     using BaseClass::appendWriteKernelTimestamp;
     using BaseClass::applyMemoryRangesBarrier;
+    using BaseClass::arePostBlitWACmdsRequired;
     using BaseClass::bcsSplitMode;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::closedCmdList;

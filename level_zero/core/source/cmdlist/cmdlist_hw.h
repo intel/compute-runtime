@@ -399,6 +399,7 @@ struct CommandListCoreFamily : public CommandList {
     void handlePostSubmissionState();
 
     MOCKABLE_VIRTUAL void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint64_t forceAggregatedEventIncValue, bool useAdditionalTimestamp);
+    bool arePostBlitWACmdsRequired() const;
 
     void setupFillKernelArguments(size_t baseOffset,
                                   size_t patternSize,

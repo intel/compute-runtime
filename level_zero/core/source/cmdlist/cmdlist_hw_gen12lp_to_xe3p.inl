@@ -14,6 +14,11 @@ void CommandListCoreFamily<gfxCoreFamily>::setAdditionalBlitProperties(NEO::Blit
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::arePostBlitWACmdsRequired() const {
+    return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::kernelMemoryPrefetchEnabled() const { return NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1; }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -1684,6 +1684,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
 
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *this->dummyBlitWa.rootDeviceEnvironment);
 
+    if (arePostBlitWACmdsRequired()) {
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchPostBlitWaCommands(*commandContainer.getCommandStream(), *this->dummyBlitWa.rootDeviceEnvironment);
+    }
     dummyBlitWa.isWaRequired = true;
     return ZE_RESULT_SUCCESS;
 }
@@ -1756,7 +1759,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     } else {
         NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), rootDeviceEnvironment);
     }
-
+    if (arePostBlitWACmdsRequired()) {
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchPostBlitWaCommands(*commandContainer.getCommandStream(), rootDeviceEnvironment);
+    }
     dummyBlitWa.isWaRequired = true;
 
     if (!useAdditionalBlitProperties || (copySize.x == 0)) {
@@ -1812,7 +1817,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
     blitProperties.transform1DArrayTo2DArrayIfNeeded();
 
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
-
+    if (arePostBlitWACmdsRequired()) {
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchPostBlitWaCommands(*commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
+    }
     dummyBlitWa.isWaRequired = true;
 
     if (!useAdditionalBlitProperties) {

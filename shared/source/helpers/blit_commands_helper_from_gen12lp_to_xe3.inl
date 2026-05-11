@@ -17,6 +17,15 @@ void BlitCommandsHelper<GfxFamily>::applyAdditionalBlitProperties(const BlitProp
 }
 
 template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::dispatchPostBlitWaCommands(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitWaCommandsSize() {
+    return 0;
+}
+
+template <typename GfxFamily>
 BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     auto blitCmd = GfxFamily::cmdInitXyColorBlt;

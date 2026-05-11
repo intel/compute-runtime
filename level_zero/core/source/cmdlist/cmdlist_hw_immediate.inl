@@ -102,6 +102,9 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateCommandSizeForImag
         auto sizePerBlit = sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT);
         auto nBlitsWithFlush = productHelper.isFlushBetweenBlitsRequired() ? nBlits : 1u;
         estimatedSize += sizePerBlit * nBlits + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush);
+        if (this->arePostBlitWACmdsRequired()) {
+            estimatedSize += NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitWaCommandsSize();
+        }
     }
     return estimatedSize;
 }
@@ -685,6 +688,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         auto postBlitsCmdsSize = nBlits ? NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush) : 0u;
         estimatedSize += sizePerBlit * nBlits + postBlitsCmdsSize;
     }
+    if (this->arePostBlitWACmdsRequired()) {
+        estimatedSize += NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitWaCommandsSize();
+    }
     checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
 
     bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
@@ -751,6 +757,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
         auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
         auto nBlitsWithFlush = productHelper.isFlushBetweenBlitsRequired() ? nBlits : 1u;
         estimatedSize += sizePerBlit * nBlits + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush);
+        if (this->arePostBlitWACmdsRequired()) {
+            estimatedSize += NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitWaCommandsSize();
+        }
     }
     checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
 
