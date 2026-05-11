@@ -118,12 +118,24 @@ void ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(RENDER_S
         imageCount = __GMM_MAX_CUBE_FACE - cubeFaceIndex;
     }
 
-    depth = static_cast<uint32_t>(imageCount);
-    surfaceState->setWidth(static_cast<uint32_t>(imageWidth));
-    surfaceState->setHeight(static_cast<uint32_t>(imageHeight));
-    surfaceState->setDepth(depth);
-    surfaceState->setSurfacePitch(static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));
-    surfaceState->setSurfaceType(surfaceType);
+    if (imageInfo.imgDesc.imageType == ImageType::image1DBuffer) {
+        SurfaceStateBufferLength length = {0};
+        length.length = static_cast<uint32_t>(imageWidth - 1);
+
+        depth = static_cast<uint32_t>(length.surfaceState.depth + 1);
+        surfaceState->setWidth(static_cast<uint32_t>(length.surfaceState.width + 1));
+        surfaceState->setHeight(static_cast<uint32_t>(length.surfaceState.height + 1));
+        surfaceState->setDepth(depth);
+        surfaceState->setSurfacePitch(static_cast<uint32_t>(imageInfo.surfaceFormat->imageElementSizeInBytes));
+        surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
+    } else {
+        depth = static_cast<uint32_t>(imageCount);
+        surfaceState->setWidth(static_cast<uint32_t>(imageWidth));
+        surfaceState->setHeight(static_cast<uint32_t>(imageHeight));
+        surfaceState->setDepth(depth);
+        surfaceState->setSurfacePitch(static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));
+        surfaceState->setSurfaceType(surfaceType);
+    }
     EncodeSurfaceState<GfxFamily>::setEnableSamplerRouteToLsc(surfaceState);
 }
 

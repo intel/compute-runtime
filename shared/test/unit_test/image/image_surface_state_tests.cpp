@@ -391,3 +391,39 @@ HWTEST2_F(ImageSurfaceStateTests, givenCompatibleSurfaceFormatWhenSetImageSurfac
 
     EXPECT_FALSE(surfaceState.getEnableSamplerRouteToLsc());
 }
+
+HWTEST2_F(ImageSurfaceStateTests, givenImage1dBufferWithLargeWidthWhenSetImageSurfaceStateDimensionsThenSurfTypeBufferIsUsedWithCorrectEncoding, MatchAny) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+
+    const size_t largeWidth = 15001150u;
+    SurfaceFormatInfo surfaceFormatInfo = {};
+    surfaceFormatInfo.imageElementSizeInBytes = 8u;
+    imageInfo.surfaceFormat = &surfaceFormatInfo;
+    imageInfo.imgDesc.imageWidth = largeWidth;
+    imageInfo.imgDesc.imageHeight = 1u;
+    imageInfo.imgDesc.imageDepth = 1u;
+    imageInfo.imgDesc.imageType = ImageType::image1DBuffer;
+
+    uint32_t depth;
+    ImageSurfaceStateHelper<FamilyType>::setImageSurfaceStateDimensions(
+        &surfaceState, imageInfo, __GMM_NO_CUBE_MAP,
+        RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, depth);
+
+    EXPECT_EQ(surfaceState.getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
+    EXPECT_EQ(surfaceState.getSurfacePitch(), surfaceFormatInfo.imageElementSizeInBytes);
+
+    SurfaceStateBufferLength length = {0};
+    length.length = static_cast<uint32_t>(largeWidth - 1);
+
+    EXPECT_EQ(surfaceState.getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
+    EXPECT_EQ(surfaceState.getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+    EXPECT_EQ(surfaceState.getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+    EXPECT_EQ(depth, static_cast<uint32_t>(length.surfaceState.depth + 1));
+
+    uint32_t reconstructedWidth = (surfaceState.getWidth() - 1) |
+                                  ((surfaceState.getHeight() - 1) << 7) |
+                                  ((surfaceState.getDepth() - 1) << 21);
+    EXPECT_EQ(reconstructedWidth + 1, static_cast<uint32_t>(largeWidth));
+}
