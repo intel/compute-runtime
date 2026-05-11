@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,8 @@ class OclocFclFacadeBase : NEO::NonCopyableAndNonMovableClass {
                                                                       CIF::Builtins::BufferSimple *options,
                                                                       CIF::Builtins::BufferSimple *internalOptions,
                                                                       CIF::Builtins::BufferSimple *tracingOptions,
-                                                                      uint32_t tracingOptionsCount) = 0;
+                                                                      uint32_t tracingOptionsCount,
+                                                                      uint64_t srcHash) = 0;
 };
 static_assert(NEO::NonCopyableAndNonMovable<OclocFclFacadeBase>);
 
@@ -62,7 +63,8 @@ class OclocFclFacade : public OclocFclFacadeBase {
                                                               CIF::Builtins::BufferSimple *options,
                                                               CIF::Builtins::BufferSimple *internalOptions,
                                                               CIF::Builtins::BufferSimple *tracingOptions,
-                                                              uint32_t tracingOptionsCount) override;
+                                                              uint32_t tracingOptionsCount,
+                                                              uint64_t srcHash) override;
 
   protected:
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error);

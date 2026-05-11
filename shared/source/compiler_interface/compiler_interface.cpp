@@ -69,15 +69,22 @@ TranslationErrorCode CompilerInterface::build(
 
     CachingMode cachingMode = CompilerCacheHelper::getCachingMode(cache.get(), srcCodeType, input.src);
 
-    std::string kernelFileHash;
+    const uint64_t srcHashValue = CompilerCache::getHashValue(device.getHardwareInfo(),
+                                                              input.src,
+                                                              input.apiOptions,
+                                                              input.internalOptions,
+                                                              {},
+                                                              {});
+
+    std::string srcHash;
     const auto &igc = *getIgc(&device);
     if (cachingMode == CachingMode::direct) {
-        kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(),
-                                                  input.src,
-                                                  input.apiOptions,
-                                                  input.internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igc.revision, igc.libSize, igc.libMTime);
+        srcHash = cache->getCachedFileName(device.getHardwareInfo(),
+                                           input.src,
+                                           input.apiOptions,
+                                           input.internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igc.revision, igc.libSize, igc.libMTime);
 
-        bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output);
+        bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, srcHash, output);
         if (success) {
             return TranslationErrorCode::success;
         }
@@ -106,11 +113,11 @@ TranslationErrorCode CompilerInterface::build(
         if (this->useIgcAsFcl(&device)) {
             auto igcTranslationCtx = createIgcTranslationCtx(device, srcCodeType, intermediateCodeType);
             fclOutput = translate(igcTranslationCtx.get(), inSrc.get(),
-                                  fclOptions.get(), fclInternalOptions.get());
+                                  fclOptions.get(), fclInternalOptions.get(), nullptr, srcHashValue);
         } else {
             auto fclTranslationCtx = createFclTranslationCtx(device, srcCodeType, intermediateCodeType);
             fclOutput = translate(fclTranslationCtx.get(), inSrc.get(),
-                                  fclOptions.get(), fclInternalOptions.get());
+                                  fclOptions.get(), fclInternalOptions.get(), srcHashValue);
         }
 
         if (fclOutput == nullptr) {
@@ -139,11 +146,11 @@ TranslationErrorCode CompilerInterface::build(
         const ArrayRef<const char> specIdsRef(idsBuffer->GetMemory<char>(), idsBuffer->GetSize<char>());
         const ArrayRef<const char> specValuesRef(valuesBuffer->GetMemory<char>(), valuesBuffer->GetSize<char>());
         const auto &igc = *getIgc(&device);
-        kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), irRef,
-                                                  input.apiOptions,
-                                                  input.internalOptions, specIdsRef, specValuesRef, igc.revision, igc.libSize, igc.libMTime);
+        srcHash = cache->getCachedFileName(device.getHardwareInfo(), irRef,
+                                           input.apiOptions,
+                                           input.internalOptions, specIdsRef, specValuesRef, igc.revision, igc.libSize, igc.libMTime);
 
-        bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output);
+        bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, srcHash, output);
         if (success) {
             return TranslationErrorCode::success;
         }
@@ -157,7 +164,7 @@ TranslationErrorCode CompilerInterface::build(
     auto igcTranslationCtx = createIgcTranslationCtx(device, intermediateCodeType, igcOutputType);
 
     auto buildOutput = translate(igcTranslationCtx.get(), intermediateRepresentation.get(), idsBuffer.get(), valuesBuffer.get(),
-                                 fclOptions.get(), fclInternalOptions.get(), input.gtPinInput);
+                                 fclOptions.get(), fclInternalOptions.get(), input.gtPinInput, srcHashValue);
 
     if (buildOutput == nullptr) {
         return TranslationErrorCode::unknownError;
@@ -175,7 +182,7 @@ TranslationErrorCode CompilerInterface::build(
         auto finalizerTranslationCtx = createFinalizerTranslationCtx(device, this->finalizerInputType, IGC::CodeType::oclGenBin);
 
         auto finalizerOutput = translate(finalizerTranslationCtx.get(), buildOutput->GetOutput(),
-                                         fclOptions.get(), fclInternalOptions.get(), nullptr);
+                                         fclOptions.get(), fclInternalOptions.get(), nullptr, srcHashValue);
         buildOutput = std::move(finalizerOutput);
 
         TranslationOutput::append(output.backendCompilerLog, buildOutput->GetBuildLog(), "\n", 0);
@@ -188,7 +195,7 @@ TranslationErrorCode CompilerInterface::build(
     TranslationOutput::makeCopy(output.debugData, buildOutput->GetDebugData());
 
     if (cache != nullptr && cache->getConfig().enabled) {
-        CompilerCacheHelper::packAndCacheBinary(*cache, kernelFileHash, NEO::getTargetDevice(device.getRootDeviceEnvironment()), output);
+        CompilerCacheHelper::packAndCacheBinary(*cache, srcHash, NEO::getTargetDevice(device.getRootDeviceEnvironment()), output);
     }
 
     return TranslationErrorCode::success;
@@ -226,15 +233,22 @@ TranslationErrorCode CompilerInterface::compile(
     auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain, input.apiOptions.begin(), input.apiOptions.size());
     auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain, input.internalOptions.begin(), input.internalOptions.size());
 
+    const uint64_t srcHashValue = CompilerCache::getHashValue(device.getHardwareInfo(),
+                                                              input.src,
+                                                              input.apiOptions,
+                                                              input.internalOptions,
+                                                              {},
+                                                              {});
+
     CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> fclOutput;
     if (this->useIgcAsFcl(&device)) {
         auto igcTranslationCtx = createIgcTranslationCtx(device, input.srcType, outType);
         fclOutput = translate(igcTranslationCtx.get(), fclSrc.get(),
-                              fclOptions.get(), fclInternalOptions.get());
+                              fclOptions.get(), fclInternalOptions.get(), nullptr, srcHashValue);
     } else {
         auto fclTranslationCtx = createFclTranslationCtx(device, input.srcType, outType);
         fclOutput = translate(fclTranslationCtx.get(), fclSrc.get(),
-                              fclOptions.get(), fclInternalOptions.get());
+                              fclOptions.get(), fclInternalOptions.get(), srcHashValue);
     }
 
     if (fclOutput == nullptr) {
@@ -270,6 +284,13 @@ TranslationErrorCode CompilerInterface::link(
         return TranslationErrorCode::unknownError;
     }
 
+    const uint64_t srcHashValue = CompilerCache::getHashValue(device.getHardwareInfo(),
+                                                              input.src,
+                                                              input.apiOptions,
+                                                              input.internalOptions,
+                                                              {},
+                                                              {});
+
     CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> currOut;
     inSrc->Retain(); // shared with currSrc
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> currSrc(inSrc.get());
@@ -281,7 +302,7 @@ TranslationErrorCode CompilerInterface::link(
 
         auto igcTranslationCtx = createIgcTranslationCtx(device, inType, outType);
         currOut = translate(igcTranslationCtx.get(), currSrc.get(),
-                            igcOptions.get(), igcInternalOptions.get(), input.gtPinInput);
+                            igcOptions.get(), igcInternalOptions.get(), input.gtPinInput, srcHashValue);
 
         if (currOut == nullptr) {
             return TranslationErrorCode::unknownError;
@@ -337,11 +358,18 @@ TranslationErrorCode CompilerInterface::createLibrary(
     auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain, input.apiOptions.begin(), input.apiOptions.size());
     auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain, input.internalOptions.begin(), input.internalOptions.size());
 
+    const uint64_t srcHashValue = CompilerCache::getHashValue(device.getHardwareInfo(),
+                                                              input.src,
+                                                              input.apiOptions,
+                                                              input.internalOptions,
+                                                              {},
+                                                              {});
+
     auto intermediateRepresentation = IGC::CodeType::llvmBc;
     auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::elf, intermediateRepresentation);
 
     auto igcOutput = translate(igcTranslationCtx.get(), igcSrc.get(),
-                               igcOptions.get(), igcInternalOptions.get());
+                               igcOptions.get(), igcInternalOptions.get(), nullptr, srcHashValue);
 
     if (igcOutput == nullptr) {
         return TranslationErrorCode::unknownError;
@@ -667,7 +695,7 @@ const CompilerInterface::CompilerLibraryEntry *CompilerInterface::getCustomCompi
     return customCompilerLibraries[libName].get();
 }
 
-void CompilerCacheHelper::packAndCacheBinary(CompilerCache &compilerCache, const std::string &kernelFileHash, const NEO::TargetDevice &targetDevice, const NEO::TranslationOutput &translationOutput) {
+void CompilerCacheHelper::packAndCacheBinary(CompilerCache &compilerCache, const std::string &srcHash, const NEO::TargetDevice &targetDevice, const NEO::TranslationOutput &translationOutput) {
     NEO::SingleDeviceBinary singleDeviceBinary = {};
     singleDeviceBinary.targetDevice = targetDevice;
     singleDeviceBinary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationOutput.deviceBinary.mem.get()), translationOutput.deviceBinary.size);
@@ -675,7 +703,7 @@ void CompilerCacheHelper::packAndCacheBinary(CompilerCache &compilerCache, const
     singleDeviceBinary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationOutput.intermediateRepresentation.mem.get()), translationOutput.intermediateRepresentation.size);
 
     if (NEO::isAnyPackedDeviceBinaryFormat(singleDeviceBinary.deviceBinary)) {
-        compilerCache.cacheBinary(kernelFileHash, translationOutput.deviceBinary.mem.get(), translationOutput.deviceBinary.size);
+        compilerCache.cacheBinary(srcHash, translationOutput.deviceBinary.mem.get(), translationOutput.deviceBinary.size);
         return;
     }
 
@@ -684,13 +712,13 @@ void CompilerCacheHelper::packAndCacheBinary(CompilerCache &compilerCache, const
     auto packedBinary = packDeviceBinary<DeviceBinaryFormat::oclElf>(singleDeviceBinary, packErrors, packWarnings);
 
     if (false == packedBinary.empty()) {
-        compilerCache.cacheBinary(kernelFileHash, reinterpret_cast<const char *>(packedBinary.data()), packedBinary.size());
+        compilerCache.cacheBinary(srcHash, reinterpret_cast<const char *>(packedBinary.data()), packedBinary.size());
     }
 }
 
-bool CompilerCacheHelper::loadCacheAndSetOutput(CompilerCache &compilerCache, const std::string &kernelFileHash, NEO::TranslationOutput &output) {
+bool CompilerCacheHelper::loadCacheAndSetOutput(CompilerCache &compilerCache, const std::string &srcHash, NEO::TranslationOutput &output) {
     size_t cacheBinarySize = 0u;
-    auto cacheBinary = compilerCache.loadCachedBinary(kernelFileHash, cacheBinarySize);
+    auto cacheBinary = compilerCache.loadCachedBinary(srcHash, cacheBinarySize);
 
     if (cacheBinary) {
         output.deviceBinary.mem = std::move(cacheBinary);

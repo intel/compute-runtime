@@ -46,6 +46,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::getStringWithinDelimiters;
     using OfflineCompiler::hwInfo;
     using OfflineCompiler::hwInfoConfig;
+    using OfflineCompiler::igcDumpsHash;
     using OfflineCompiler::igcFacade;
     using OfflineCompiler::initHardwareInfo;
     using OfflineCompiler::initHardwareInfoForProductConfig;

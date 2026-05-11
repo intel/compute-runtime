@@ -58,12 +58,12 @@ class CompilerCacheMockWindows : public CompilerCache {
     bool createUniqueTempFileAndWriteDataResult = true;
     std::string createUniqueTempFileAndWriteDataTmpFilePath = "";
 
-    bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash) override {
+    bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &srcHash) override {
         renameTempFileBinaryToProperNameCalled++;
         if (callBaseRenameTempFileBinaryToProperName) {
-            CompilerCache::renameTempFileBinaryToProperName(oldName, kernelFileHash);
+            CompilerCache::renameTempFileBinaryToProperName(oldName, srcHash);
         }
-        renameTempFileBinaryToProperNameCacheFilePath = kernelFileHash;
+        renameTempFileBinaryToProperNameCacheFilePath = srcHash;
         return renameTempFileBinaryToProperNameResult;
     }
 
@@ -1640,14 +1640,14 @@ TEST_F(CompilerCacheWindowsTest, givenEmptyBinaryAndOrBinarySizeWhenCacheBinaryT
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
     CompilerCacheMockWindows cache({true, true, ".cl_cache", "somePath\\cl_cache", cacheSize});
 
-    const std::string kernelFileHash = "7e3291364d8df42";
-    auto result = cache.cacheBinary(kernelFileHash, nullptr, 10);
+    const std::string srcHash = "7e3291364d8df42";
+    auto result = cache.cacheBinary(srcHash, nullptr, 10);
     EXPECT_FALSE(result);
 
-    result = cache.cacheBinary(kernelFileHash, "123456", 0);
+    result = cache.cacheBinary(srcHash, "123456", 0);
     EXPECT_FALSE(result);
 
-    result = cache.cacheBinary(kernelFileHash, nullptr, 0);
+    result = cache.cacheBinary(srcHash, nullptr, 0);
     EXPECT_FALSE(result);
 }
 
@@ -1679,11 +1679,11 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenAllStepsSuccessThenReturnTr
 
     cache.callBaseCreateCacheDirectories = false;
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
     SysCalls::writeFileNumberOfBytesWritten = static_cast<DWORD>(sizeof(size_t));
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
 
     EXPECT_TRUE(result);
     EXPECT_EQ(1u, cache.lockConfigFileAndReadSizeCalled);
@@ -1706,10 +1706,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCacheAlreadyExistsThenDoNot
     cache.callBaseLockConfigFileAndReadSize = false;
     cache.lockConfigFileAndReadSizeHandle = reinterpret_cast<HANDLE>(0x1234);
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
 
     EXPECT_TRUE(result);
     EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
@@ -1747,14 +1747,14 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteToConfigFileFailsThenE
     cache.callBaseCreateCacheDirectories = false;
     cache.createCacheDirectoriesResult = true;
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
     SysCalls::writeFileNumberOfBytesWritten = static_cast<DWORD>(sizeof(size_t));
 
     StreamCapture capture;
     capture.captureStderr();
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
     auto capturedStderr = capture.getCapturedStderr();
 
     std::string expectedStderrSubstr("[Cache failure]: Writing to config file failed! error code:");
@@ -1793,14 +1793,14 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteFileBytesWrittenMismat
     cache.callBaseCreateCacheDirectories = false;
     cache.createCacheDirectoriesResult = true;
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
     SysCalls::writeFileNumberOfBytesWritten = static_cast<DWORD>(sizeof(size_t)) - 1;
 
     StreamCapture capture;
     capture.captureStderr();
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
     auto capturedStderr = capture.getCapturedStderr();
 
     std::stringstream expectedStderrSubstr;
@@ -1824,10 +1824,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenLockConfigFileAndReadSizeFa
     cache.callBaseLockConfigFileAndReadSize = false;
     cache.lockConfigFileAndReadSizeHandle = INVALID_HANDLE_VALUE;
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
 
     EXPECT_FALSE(result);
 }
@@ -1855,11 +1855,11 @@ TEST_F(CompilerCacheWindowsTest, givenCacheDirectoryFilledToTheLimitWhenNewBinar
     cache.callBaseCreateCacheDirectories = false;
     cache.createCacheDirectoriesResult = true;
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
     SysCalls::writeFileNumberOfBytesWritten = static_cast<DWORD>(sizeof(size_t));
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
 
     EXPECT_TRUE(result);
     EXPECT_EQ(1u, cache.lockConfigFileAndReadSizeCalled);
@@ -1885,10 +1885,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenEvictCacheFailsThenReturnFa
     cache.callBaseEvictCache = false;
     cache.evictCacheResult = false;
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
@@ -1915,10 +1915,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenBinaryDoesntFitAfterEvictio
     cache.evictCacheResult = true;
     cache.evictCacheBytesEvicted = cacheSize / 3;
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
@@ -1946,10 +1946,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheDirectoryFilledToTheLimitWhenNoBytesH
     cache.evictCacheResult = true;
     cache.evictCacheBytesEvicted = 0;
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
@@ -1978,10 +1978,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCreateUniqueTempFileAndWrit
     cache.callBaseCreateUniqueTempFileAndWriteData = false;
     cache.createUniqueTempFileAndWriteDataResult = false;
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(1u, SysCalls::unlockFileExCalled);
@@ -2015,10 +2015,10 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenRenameTempFileBinaryToPrope
     cache.callBaseCreateCacheDirectories = false;
     cache.createCacheDirectoriesResult = true;
 
-    const std::string kernelFileHash = "7e3291364d8df42";
+    const std::string srcHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
+    auto result = cache.cacheBinary(srcHash, binary, binarySize);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(1u, SysCalls::unlockFileExCalled);

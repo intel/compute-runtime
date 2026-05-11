@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,21 +19,21 @@ class CompilerCacheMock : public CompilerCache {
     CompilerCacheMock() : CompilerCache(CompilerCacheConfig{}) {
     }
 
-    bool cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize) override {
+    bool cacheBinary(const std::string &srcHash, const char *pBinary, size_t binarySize) override {
         cacheInvoked++;
-        hashToBinaryMap[kernelFileHash] = std::string(pBinary, binarySize);
-        cacheBinaryKernelFileHashes.push_back(kernelFileHash);
+        hashToBinaryMap[srcHash] = std::string(pBinary, binarySize);
+        cacheBinarySrcHashes.push_back(srcHash);
         return cacheResult;
     }
 
-    std::unique_ptr<char[]> loadCachedBinary(const std::string &kernelFileHash, size_t &cachedBinarySize) override {
+    std::unique_ptr<char[]> loadCachedBinary(const std::string &srcHash, size_t &cachedBinarySize) override {
         if (loadResult || numberOfLoadResult > 0) {
             numberOfLoadResult--;
             cachedBinarySize = sizeof(char);
             return std::unique_ptr<char[]>{new char[1]};
         }
 
-        auto it = hashToBinaryMap.find(kernelFileHash);
+        auto it = hashToBinaryMap.find(srcHash);
         if (it != hashToBinaryMap.end()) {
             cachedBinarySize = it->second.size();
             auto binaryCopy = std::make_unique<char[]>(cachedBinarySize);
@@ -45,7 +45,7 @@ class CompilerCacheMock : public CompilerCache {
         }
     }
 
-    std::vector<std::string> cacheBinaryKernelFileHashes{};
+    std::vector<std::string> cacheBinarySrcHashes{};
     bool cacheResult = false;
     uint32_t cacheInvoked = 0u;
     bool loadResult = false;

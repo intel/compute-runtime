@@ -10,6 +10,7 @@
 #include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_igc_facade.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
@@ -317,7 +318,13 @@ std::pair<int, std::vector<uint8_t>> OfflineLinker::translateToOutputFormat(cons
 
     const auto tracingOptions{nullptr};
     const auto tracingOptionsSize{0};
-    const auto igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), tracingOptions, tracingOptionsSize);
+
+    ArrayRef<const char> optionsRef(igcOptions->GetMemory<char>(), igcOptions->GetSizeRaw());
+    ArrayRef<const char> internalOptionsRef(igcInternalOptions->GetMemory<char>(), igcInternalOptions->GetSizeRaw());
+    ArrayRef<const char> elfInputRef(reinterpret_cast<const char *>(elfInput.data()), elfInput.size());
+
+    uint64_t srcHash = CompilerCache::getHashValue(hwInfo, elfInputRef, optionsRef, internalOptionsRef, {}, {});
+    const auto igcOutput = igcTranslationCtx->Translate(igcSrc.get(), nullptr, nullptr, igcOptions.get(), igcInternalOptions.get(), tracingOptions, tracingOptionsSize, nullptr, srcHash);
 
     std::vector<uint8_t> outputFileContent{};
     if (!igcOutput) {

@@ -38,6 +38,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -60,6 +61,7 @@
 
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -1214,6 +1216,110 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsOption));
     EXPECT_TRUE(hasSubstr(cip->buildInternalOptions, extensionsWithFeaturesOption));
     EXPECT_EQ(1, MockProgram::getInternalOptionsCalled);
+}
+
+namespace {
+
+struct CapturingFclTranslationCtxForHashTest : MockFclOclTranslationCtx {
+    uint64_t capturedSrcHash = 0u;
+
+    IGC::OclTranslationOutputBase *TranslateImpl(
+        CIF::Version_t outVersion,
+        CIF::Builtins::BufferSimple *src,
+        CIF::Builtins::BufferSimple *options,
+        CIF::Builtins::BufferSimple *internalOptions,
+        CIF::Builtins::BufferSimple *tracingOptions,
+        uint32_t tracingOptionsCount,
+        uint64_t srcHash) override {
+        capturedSrcHash = srcHash;
+        return MockFclOclTranslationCtx::TranslateImpl(
+            outVersion, src, options, internalOptions, tracingOptions, tracingOptionsCount, srcHash);
+    };
+};
+
+struct CapturingIgcTranslationCtxForHashTest : MockIgcOclTranslationCtx {
+    uint64_t capturedSrcHash = 0u;
+
+    IGC::OclTranslationOutputBase *TranslateImpl(
+        CIF::Version_t outVersion,
+        CIF::Builtins::BufferSimple *src,
+        CIF::Builtins::BufferSimple *specConstantsIds,
+        CIF::Builtins::BufferSimple *specConstantsValues,
+        CIF::Builtins::BufferSimple *options,
+        CIF::Builtins::BufferSimple *internalOptions,
+        CIF::Builtins::BufferSimple *tracingOptions,
+        uint32_t tracingOptionsCount,
+        void *gtPinInput,
+        uint64_t srcHash) override {
+        capturedSrcHash = srcHash;
+        return MockIgcOclTranslationCtx::TranslateImpl(
+            outVersion, src, specConstantsIds, specConstantsValues,
+            options, internalOptions, tracingOptions, tracingOptionsCount, gtPinInput, srcHash);
+    }
+};
+
+struct CapturingCompilerInterfaceForHashTest : MockCompilerInterface {
+    CapturingIgcTranslationCtxForHashTest *igcCaptCtx = nullptr;
+    CapturingFclTranslationCtxForHashTest *fclCaptCtx = nullptr;
+
+    CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> createIgcTranslationCtx(
+        const Device &device,
+        IGC::CodeType::CodeType_t inType,
+        IGC::CodeType::CodeType_t outType) override {
+        requestedTranslationCtxs.emplace_back(inType, outType);
+        igcCaptCtx->Retain();
+        return CIF::RAII::Pack<NEO::IgcOclTranslationCtxTag>(igcCaptCtx);
+    }
+
+    CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> createFclTranslationCtx(
+        const Device &device,
+        IGC::CodeType::CodeType_t inType,
+        IGC::CodeType::CodeType_t outType) override {
+        requestedTranslationCtxs.emplace_back(inType, outType);
+        fclCaptCtx->Retain();
+        return CIF::RAII::Pack<NEO::FclOclTranslationCtxTag>(fclCaptCtx);
+    }
+};
+
+} // namespace
+
+static std::pair<CapturingIgcTranslationCtxForHashTest *, CapturingFclTranslationCtxForHashTest *> buildProgramWithCapturingCompilerInterface(
+    MockContext *pContext, MockZebinWrapper<> &zebinWrapper, cl_int &retVal) {
+
+    zebinWrapper.setAsMockCompilerReturnedBinary();
+
+    auto igcCaptCtx = new CapturingIgcTranslationCtxForHashTest();
+    auto fclCaptCtx = new CapturingFclTranslationCtxForHashTest();
+    auto cip = new CapturingCompilerInterfaceForHashTest();
+    cip->igcCaptCtx = igcCaptCtx;
+    cip->fclCaptCtx = fclCaptCtx;
+
+    auto compilerMain = new MockCIFMain();
+    compilerMain->setDefaultCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
+    compilerMain->setDefaultCreatorFunc<NEO::MockFclOclDeviceCtx>(NEO::MockFclOclDeviceCtx::Create);
+    compilerMain->Retain();
+    cip->setIgcMain(compilerMain);
+    cip->setFclMain(compilerMain);
+
+    auto pClDevice = pContext->getDevice(0);
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
+    pProgram->sourceCode = "__kernel void mock() {}";
+    pProgram->createdFrom = Program::CreatedFrom::source;
+
+    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0");
+    return std::make_pair(igcCaptCtx, fclCaptCtx);
+}
+
+TEST_F(ProgramFromSourceTest, givenProgramWhenBuildingProgramWithOpenClCTheHashIsPersistent) {
+    auto captCtx = buildProgramWithCapturingCompilerInterface(pContext, *zebinPtr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(0u, captCtx.first->capturedSrcHash);
+    EXPECT_NE(0u, captCtx.second->capturedSrcHash);
+    EXPECT_EQ(captCtx.first->capturedSrcHash, captCtx.second->capturedSrcHash);
+    captCtx.first->Release();
+    captCtx.second->Release();
 }
 
 TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAddedOnlyOnce) {

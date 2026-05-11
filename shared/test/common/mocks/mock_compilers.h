@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -155,23 +155,6 @@ struct MockIgcOclTranslationCtx : MockCIF<NEO::IgcOclTranslationCtxTag> {
     MockIgcOclTranslationCtx();
     ~MockIgcOclTranslationCtx() override;
 
-    IGC::OclTranslationOutputBase *TranslateImpl(
-        CIF::Version_t outVersion,
-        CIF::Builtins::BufferSimple *src,
-        CIF::Builtins::BufferSimple *options,
-        CIF::Builtins::BufferSimple *internalOptions,
-        CIF::Builtins::BufferSimple *tracingOptions,
-        uint32_t tracingOptionsCount) override;
-
-    IGC::OclTranslationOutputBase *TranslateImpl(
-        CIF::Version_t outVersion,
-        CIF::Builtins::BufferSimple *src,
-        CIF::Builtins::BufferSimple *options,
-        CIF::Builtins::BufferSimple *internalOptions,
-        CIF::Builtins::BufferSimple *tracingOptions,
-        uint32_t tracingOptionsCount,
-        void *gtpinInput) override;
-
     bool GetSpecConstantsInfoImpl(
         CIF::Builtins::BufferSimple *src,
         CIF::Builtins::BufferSimple *outSpecConstantsIds,
@@ -186,7 +169,8 @@ struct MockIgcOclTranslationCtx : MockCIF<NEO::IgcOclTranslationCtxTag> {
         CIF::Builtins::BufferSimple *internalOptions,
         CIF::Builtins::BufferSimple *tracingOptions,
         uint32_t tracingOptionsCount,
-        void *gtPinInput) override;
+        void *gtPinInput,
+        uint64_t srcHash) override;
 };
 
 struct MockOclTranslationOutput : MockCIF<NEO::OclTranslationOutputTag> {
@@ -274,7 +258,8 @@ struct MockFclOclTranslationCtx : MockCIF<NEO::FclOclTranslationCtxTag> {
         CIF::Builtins::BufferSimple *options,
         CIF::Builtins::BufferSimple *internalOptions,
         CIF::Builtins::BufferSimple *tracingOptions,
-        uint32_t tracingOptionsCount) override;
+        uint32_t tracingOptionsCount,
+        uint64_t srcHash) override;
 };
 
 struct MockFclOclDeviceCtx : MockCIF<NEO::FclOclDeviceCtxTag> {

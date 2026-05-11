@@ -166,6 +166,20 @@ OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 3)::Tran
     return nullptr;
 }
 
+OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 4)::TranslateImpl(
+    CIF::Version_t outVersion,
+    CIF::Builtins::BufferSimple *src,
+    CIF::Builtins::BufferSimple *specConstantsIds,
+    CIF::Builtins::BufferSimple *specConstantsValues,
+    CIF::Builtins::BufferSimple *options,
+    CIF::Builtins::BufferSimple *internalOptions,
+    CIF::Builtins::BufferSimple *tracingOptions,
+    uint32_t tracingOptionsCount,
+    void *gtPinInput,
+    uint64_t srcHash) {
+    return nullptr;
+}
+
 bool CIF_GET_INTERFACE_CLASS(OclTranslationOutput, 1)::Successful() const {
     return true;
 }
@@ -197,6 +211,17 @@ IGC::OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(FclOclTranslationCtx, 1):
     CIF::Builtins::BufferSimple *internalOptions,
     CIF::Builtins::BufferSimple *tracingOptions,
     uint32_t tracingOptionsCount) {
+    return nullptr;
+}
+
+IGC::OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(FclOclTranslationCtx, 3)::TranslateImpl(
+    CIF::Version_t outVersion,
+    CIF::Builtins::BufferSimple *src,
+    CIF::Builtins::BufferSimple *options,
+    CIF::Builtins::BufferSimple *internalOptions,
+    CIF::Builtins::BufferSimple *tracingOptions,
+    uint32_t tracingOptionsCount,
+    uint64_t srcHash) {
     return nullptr;
 }
 

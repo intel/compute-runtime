@@ -2192,6 +2192,27 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
     delete pOfflineCompiler;
 }
 
+TEST_F(OfflineCompilerTests, WhenBuildingTheHashIsPersistent) {
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.filesMap["copybuffer.cl"] = "__kernel void k(){}";
+
+    std::vector<std::string> commandLineArguments = {
+        "ocloc",
+        "-file",
+        "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    retVal = mockOfflineCompiler.initialize(commandLineArguments.size(), commandLineArguments);
+
+    ASSERT_EQ(OCLOC_SUCCESS, retVal);
+
+    mockOfflineCompiler.build();
+
+    ASSERT_NE(0u, mockOfflineCompiler.igcDumpsHash)
+        << "igcDumpsHash must be non-zero after build";
+}
+
 TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuildSucceeds) {
     auto &allEnabledDeviceConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
@@ -2867,7 +2888,7 @@ TEST_F(OfflineCompilerTests, givenAllowCachingWhenBuildSourceCodeThenGenBinaryIs
     // 0 - buildToIrBinary > irBinary
     // 1 - buildSourceCode > genBinary
     // 2 - buildSourceCode > debugDataBinary
-    const auto givenCacheBinaryGenHash = cacheMock->cacheBinaryKernelFileHashes[1];
+    const auto givenCacheBinaryGenHash = cacheMock->cacheBinarySrcHashes[1];
     const auto expectedCacheBinaryGenHash = cacheMock->getCachedFileName(mockOfflineCompiler->getHardwareInfo(),
                                                                          ArrayRef<const char>(mockOfflineCompiler->irBinary, mockOfflineCompiler->irBinarySize),
                                                                          mockOfflineCompiler->options,

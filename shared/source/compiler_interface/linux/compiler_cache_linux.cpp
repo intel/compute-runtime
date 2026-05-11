@@ -158,8 +158,8 @@ bool CompilerCache::createUniqueTempFileAndWriteData(char *tmpFilePathTemplate, 
     return NEO::SysCalls::close(fd) == 0;
 }
 
-bool CompilerCache::renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash) {
-    int err = NEO::SysCalls::rename(oldName.c_str(), kernelFileHash.c_str());
+bool CompilerCache::renameTempFileBinaryToProperName(const std::string &oldName, const std::string &srcHash) {
+    int err = NEO::SysCalls::rename(oldName.c_str(), srcHash.c_str());
 
     if (err < 0) {
         int error = errno;
@@ -420,7 +420,7 @@ class HandleGuard : NonCopyableAndNonMovableClass {
 
 static_assert(NonCopyableAndNonMovable<HandleGuard>);
 
-bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize) {
+bool CompilerCache::cacheBinary(const std::string &srcHash, const char *pBinary, size_t binarySize) {
     if (pBinary == nullptr || binarySize == 0 || binarySize > config.cacheSize) {
         return false;
     }
@@ -429,7 +429,7 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     constexpr std::string_view configFileName = "config.file";
 
     std::string configFilePath = joinPath(config.cacheDir, configFileName.data());
-    std::string cacheFileName = kernelFileHash + config.cacheFileExtension;
+    std::string cacheFileName = srcHash + config.cacheFileExtension;
     std::string cacheFilePath = getCachedFilePath(cacheFileName);
 
     if (cacheFileName.length() < maxCacheDepth + config.cacheFileExtension.length()) {

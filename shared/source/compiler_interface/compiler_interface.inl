@@ -16,14 +16,15 @@
 namespace NEO {
 using CIFBuffer = CIF::Builtins::BufferSimple;
 class OsLibrary;
-template <typename TranslationCtx>
-inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
-                                                                 CIFBuffer *internalOptions) {
+
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(FclOclTranslationCtxTag *tCtx, CIFBuffer *src, CIFBuffer *options,
+                                                                 CIFBuffer *internalOptions, uint64_t srcHash) {
     if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }
 
-    auto ret = tCtx->Translate(src, options, internalOptions, nullptr, 0);
+    auto ret = tCtx->Translate(src, options, internalOptions, nullptr, 0, srcHash);
+
     if (ret == nullptr) {
         return nullptr; // assume OOM or internal error
     }
@@ -34,14 +35,15 @@ inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx 
 
     return ret;
 }
-template <typename TranslationCtx>
-inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
-                                                                 CIFBuffer *internalOptions, void *gtpinInit) {
+
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(IgcOclTranslationCtxTag *tCtx, CIFBuffer *src, CIFBuffer *options,
+                                                                 CIFBuffer *internalOptions, void *gtpinInit, uint64_t srcHash) {
     if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }
 
-    auto ret = tCtx->Translate(src, options, internalOptions, nullptr, 0, gtpinInit);
+    auto ret = tCtx->Translate(src, nullptr, nullptr, options, internalOptions, nullptr, 0, gtpinInit, srcHash);
+
     if (ret == nullptr) {
         return nullptr; // assume OOM or internal error
     }
@@ -64,14 +66,12 @@ inline bool getSpecConstantsInfoImpl(TranslationCtx *tCtx,
     return tCtx->GetSpecConstantsInfoImpl(src, outSpecConstantsIds, outSpecConstantsSizes);
 }
 
-template <typename TranslationCtx>
-inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *specConstantsIds, CIFBuffer *specConstantsValues, CIFBuffer *options,
-                                                                 CIFBuffer *internalOptions, void *gtpinInit) {
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(IgcOclTranslationCtxTag *tCtx, CIFBuffer *src, CIFBuffer *specConstantsIds, CIFBuffer *specConstantsValues, CIFBuffer *options, CIFBuffer *internalOptions, void *gtpinInit, uint64_t srcHash) {
     if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }
 
-    auto ret = tCtx->Translate(src, specConstantsIds, specConstantsValues, options, internalOptions, nullptr, 0, gtpinInit);
+    auto ret = tCtx->Translate(src, specConstantsIds, specConstantsValues, options, internalOptions, nullptr, 0, gtpinInit, srcHash);
     if (ret == nullptr) {
         return nullptr; // assume OOM or internal error
     }
@@ -80,6 +80,51 @@ inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx 
         return nullptr; // assume OOM or internal error
     }
 
+    return ret;
+}
+
+template <typename TranslationCtx>
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options, CIFBuffer *internalOptions, uint64_t srcHash) {
+    if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
+        return nullptr;
+    }
+    auto ret = tCtx->Translate(src, options, internalOptions, nullptr, 0, srcHash);
+    if (ret == nullptr) {
+        return nullptr;
+    }
+    if ((ret->GetOutput() == nullptr) || (ret->GetBuildLog() == nullptr) || (ret->GetDebugData() == nullptr)) {
+        return nullptr;
+    }
+    return ret;
+}
+
+template <typename TranslationCtx>
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options, CIFBuffer *internalOptions, void *gtpinInit, uint64_t srcHash) {
+    if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
+        return nullptr;
+    }
+    auto ret = tCtx->Translate(src, options, internalOptions, nullptr, 0, gtpinInit, srcHash);
+    if (ret == nullptr) {
+        return nullptr;
+    }
+    if ((ret->GetOutput() == nullptr) || (ret->GetBuildLog() == nullptr) || (ret->GetDebugData() == nullptr)) {
+        return nullptr;
+    }
+    return ret;
+}
+
+template <typename TranslationCtx>
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *specConstantsIds, CIFBuffer *specConstantsValues, CIFBuffer *options, CIFBuffer *internalOptions, void *gtpinInit, uint64_t srcHash) {
+    if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
+        return nullptr;
+    }
+    auto ret = tCtx->Translate(src, specConstantsIds, specConstantsValues, options, internalOptions, nullptr, 0, gtpinInit, srcHash);
+    if (ret == nullptr) {
+        return nullptr;
+    }
+    if (!NEO::areNotNullptr(ret->GetOutput(), ret->GetBuildLog(), ret->GetDebugData())) {
+        return nullptr;
+    }
     return ret;
 }
 

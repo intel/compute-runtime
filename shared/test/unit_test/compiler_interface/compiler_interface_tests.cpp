@@ -606,16 +606,19 @@ struct TranslationCtxMock {
     CIF::Builtins::BufferSimple *receivedOpt = nullptr;
     CIF::Builtins::BufferSimple *receivedIntOpt = nullptr;
     CIF::Builtins::BufferSimple *receivedTracingOpt = nullptr;
+    uint64_t receivedSrcHash = 0u;
 
     CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
                                                               CIF::Builtins::BufferSimple *options,
                                                               CIF::Builtins::BufferSimple *internalOptions,
                                                               CIF::Builtins::BufferSimple *tracingOptions,
-                                                              uint32_t tracingOptionsCount) {
+                                                              uint32_t tracingOptionsCount,
+                                                              uint64_t srcHash) {
         this->receivedSrc = src;
         this->receivedOpt = options;
         this->receivedIntOpt = internalOptions;
         this->receivedTracingOpt = tracingOptions;
+        this->receivedSrcHash = srcHash;
 
         if (returnNullptr) {
             return CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag>(nullptr);
@@ -644,8 +647,9 @@ struct TranslationCtxMock {
                                                               CIF::Builtins::BufferSimple *internalOptions,
                                                               CIF::Builtins::BufferSimple *tracingOptions,
                                                               uint32_t tracingOptionsCount,
-                                                              void *gtpinInit) {
-        return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
+                                                              void *gtpinInit,
+                                                              uint64_t srcHash) {
+        return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount, srcHash);
     }
     CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
                                                               CIF::Builtins::BufferSimple *specConstantsIds,
@@ -654,8 +658,9 @@ struct TranslationCtxMock {
                                                               CIF::Builtins::BufferSimple *internalOptions,
                                                               CIF::Builtins::BufferSimple *tracingOptions,
                                                               uint32_t tracingOptionsCount,
-                                                              void *gtPinInput) {
-        return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
+                                                              void *gtPinInput,
+                                                              uint64_t srcHash) {
+        return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount, srcHash);
     }
 };
 
@@ -664,13 +669,15 @@ TEST(TranslateTest, whenArgsAreValidAndTranslatorReturnsValidOutputThenValidOutp
     auto mockSrc = std::make_unique<MockCIFBuffer>();
     auto mockOpt = std::make_unique<MockCIFBuffer>();
     auto mockIntOpt = std::make_unique<MockCIFBuffer>();
+    uint64_t expectedSrcHash = 0x123456789abcdef0;
 
-    auto ret = NEO::translate(&mockTranslationCtx, mockSrc.get(), mockOpt.get(), mockIntOpt.get());
+    auto ret = NEO::translate(&mockTranslationCtx, mockSrc.get(), mockOpt.get(), mockIntOpt.get(), expectedSrcHash);
     EXPECT_NE(nullptr, ret);
 
     EXPECT_EQ(mockSrc.get(), mockTranslationCtx.receivedSrc);
     EXPECT_EQ(mockOpt.get(), mockTranslationCtx.receivedOpt);
     EXPECT_EQ(mockIntOpt.get(), mockTranslationCtx.receivedIntOpt);
+    EXPECT_EQ(expectedSrcHash, mockTranslationCtx.receivedSrcHash);
 }
 
 TEST(TranslateTest, givenGtPinInputWhenArgsAreValidAndTranslatorReturnsValidOutputThenValidOutputIsReturned) {
@@ -678,13 +685,33 @@ TEST(TranslateTest, givenGtPinInputWhenArgsAreValidAndTranslatorReturnsValidOutp
     auto mockSrc = std::make_unique<MockCIFBuffer>();
     auto mockOpt = std::make_unique<MockCIFBuffer>();
     auto mockIntOpt = std::make_unique<MockCIFBuffer>();
+    uint64_t expectedSrcHash = 0x123456789abcdef0;
 
-    auto ret = NEO::translate(&mockTranslationCtx, mockSrc.get(), mockOpt.get(), mockIntOpt.get(), nullptr);
+    auto ret = NEO::translate(&mockTranslationCtx, mockSrc.get(), mockOpt.get(), mockIntOpt.get(), nullptr, expectedSrcHash);
     EXPECT_NE(nullptr, ret);
 
     EXPECT_EQ(mockSrc.get(), mockTranslationCtx.receivedSrc);
     EXPECT_EQ(mockOpt.get(), mockTranslationCtx.receivedOpt);
     EXPECT_EQ(mockIntOpt.get(), mockTranslationCtx.receivedIntOpt);
+    EXPECT_EQ(expectedSrcHash, mockTranslationCtx.receivedSrcHash);
+}
+
+TEST(TranslateTest, givenSpecConstantsBuffersAndGtPinInputWhenArgsAreValidAndTranslatorReturnsValidOutputThenValidOutputIsReturned) {
+    TranslationCtxMock mockTranslationCtx;
+    auto mockSrc = std::make_unique<MockCIFBuffer>();
+    auto mockSpecConstantsIds = std::make_unique<MockCIFBuffer>();
+    auto mockSpecConstantsValues = std::make_unique<MockCIFBuffer>();
+    auto mockOpt = std::make_unique<MockCIFBuffer>();
+    auto mockIntOpt = std::make_unique<MockCIFBuffer>();
+    uint64_t expectedSrcHash = 0x123456789abcdef0;
+
+    auto ret = NEO::translate(&mockTranslationCtx, mockSrc.get(), mockSpecConstantsIds.get(), mockSpecConstantsValues.get(), mockOpt.get(), mockIntOpt.get(), nullptr, expectedSrcHash);
+    EXPECT_NE(nullptr, ret);
+
+    EXPECT_EQ(mockSrc.get(), mockTranslationCtx.receivedSrc);
+    EXPECT_EQ(mockOpt.get(), mockTranslationCtx.receivedOpt);
+    EXPECT_EQ(mockIntOpt.get(), mockTranslationCtx.receivedIntOpt);
+    EXPECT_EQ(expectedSrcHash, mockTranslationCtx.receivedSrcHash);
 }
 
 TEST(TranslateTest, whenArgsAreInvalidThenNullptrIsReturned) {
@@ -692,7 +719,7 @@ TEST(TranslateTest, whenArgsAreInvalidThenNullptrIsReturned) {
     auto mockOpt = std::make_unique<MockCIFBuffer>();
     auto mockIntOpt = std::make_unique<MockCIFBuffer>();
 
-    auto ret = NEO::translate<TranslationCtxMock>(nullptr, mockSrc.get(), mockOpt.get(), mockIntOpt.get());
+    auto ret = NEO::translate<TranslationCtxMock>(nullptr, mockSrc.get(), mockOpt.get(), mockIntOpt.get(), 0u);
 
     EXPECT_EQ(nullptr, ret);
 }
@@ -702,7 +729,7 @@ TEST(TranslateTest, givenGtPinInputWhenArgsAreInvalidThenNullptrIsReturned) {
     auto mockOpt = std::make_unique<MockCIFBuffer>();
     auto mockIntOpt = std::make_unique<MockCIFBuffer>();
 
-    auto ret = NEO::translate<TranslationCtxMock>(nullptr, mockSrc.get(), mockOpt.get(), mockIntOpt.get(), nullptr);
+    auto ret = NEO::translate<TranslationCtxMock>(nullptr, mockSrc.get(), mockOpt.get(), mockIntOpt.get(), nullptr, 0u);
 
     EXPECT_EQ(nullptr, ret);
 }
@@ -712,7 +739,7 @@ TEST(TranslateTest, whenTranslatorReturnsNullptrThenNullptrIsReturned) {
     mockTranslationCtx.returnNullptr = true;
     auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
 
-    auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get());
+    auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), 0u);
     EXPECT_EQ(nullptr, ret);
 }
 
@@ -721,7 +748,7 @@ TEST(TranslateTest, givenSpecConstantsBuffersWhenTranslatorReturnsNullptrThenNul
     mockTranslationCtx.returnNullptr = true;
     auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
 
-    auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
+    auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u);
     EXPECT_EQ(nullptr, ret);
 }
 
@@ -730,9 +757,92 @@ TEST(TranslateTest, givenNullPtrAsGtPinInputWhenTranslatorReturnsNullptrThenNull
     mockTranslationCtx.returnNullptr = true;
     auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
 
-    auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
+    auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u);
     EXPECT_EQ(nullptr, ret);
 }
+
+struct FclTranslationCtxMock : MockCIF<NEO::FclOclTranslationCtxTag> {
+    bool returnNullptr = false;
+    bool returnNullptrOutput = false;
+    bool returnNullptrLog = false;
+    bool returnNullptrDebugData = false;
+
+    IGC::OclTranslationOutputBase *TranslateImpl(
+        CIF::Version_t outVersion,
+        CIF::Builtins::BufferSimple *src,
+        CIF::Builtins::BufferSimple *options,
+        CIF::Builtins::BufferSimple *internalOptions,
+        CIF::Builtins::BufferSimple *tracingOptions,
+        uint32_t tracingOptionsCount,
+        uint64_t srcHash) override {
+        if (returnNullptr) {
+            return nullptr;
+        }
+        auto ret = new MockOclTranslationOutput();
+        if (returnNullptrOutput) {
+            if (ret->output) {
+                ret->output->Release();
+                ret->output = nullptr;
+            }
+        }
+        if (returnNullptrLog) {
+            if (ret->log) {
+                ret->log->Release();
+                ret->log = nullptr;
+            }
+        }
+        if (returnNullptrDebugData) {
+            if (ret->debugData) {
+                ret->debugData->Release();
+                ret->debugData = nullptr;
+            }
+        }
+        return ret;
+    }
+};
+
+struct IgcTranslationCtxMock : MockCIF<NEO::IgcOclTranslationCtxTag> {
+    bool returnNullptr = false;
+    bool returnNullptrOutput = false;
+    bool returnNullptrLog = false;
+    bool returnNullptrDebugData = false;
+
+    IGC::OclTranslationOutputBase *TranslateImpl(
+        CIF::Version_t outVersion,
+        CIF::Builtins::BufferSimple *src,
+        CIF::Builtins::BufferSimple *specConstantsIds,
+        CIF::Builtins::BufferSimple *specConstantsValues,
+        CIF::Builtins::BufferSimple *options,
+        CIF::Builtins::BufferSimple *internalOptions,
+        CIF::Builtins::BufferSimple *tracingOptions,
+        uint32_t tracingOptionsCount,
+        void *gtPinInput,
+        uint64_t srcHash) override {
+        if (returnNullptr) {
+            return nullptr;
+        }
+        auto ret = new MockOclTranslationOutput();
+        if (returnNullptrOutput) {
+            if (ret->output) {
+                ret->output->Release();
+                ret->output = nullptr;
+            }
+        }
+        if (returnNullptrLog) {
+            if (ret->log) {
+                ret->log->Release();
+                ret->log = nullptr;
+            }
+        }
+        if (returnNullptrDebugData) {
+            if (ret->debugData) {
+                ret->debugData->Release();
+                ret->debugData = nullptr;
+            }
+        }
+        return ret;
+    }
+};
 
 TEST(TranslateTest, whenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
     TranslationCtxMock mockTranslationCtx;
@@ -741,7 +851,7 @@ TEST(TranslateTest, whenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
         mockTranslationCtx.returnNullptrDebugData = (i & 1) != 0;
         mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
         mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
-        auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get());
+        auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), 0u);
         EXPECT_EQ(nullptr, ret);
     }
 }
@@ -753,7 +863,7 @@ TEST(TranslateTest, givenNullPtrAsGtPinInputWhenTranslatorReturnsInvalidOutputTh
         mockTranslationCtx.returnNullptrDebugData = (i & 1) != 0;
         mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
         mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
-        auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
+        auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u);
         EXPECT_EQ(nullptr, ret);
     }
 }
@@ -765,9 +875,48 @@ TEST(TranslateTest, givenSpecConstantsBuffersAndNullPtrAsGtPinInputWhenTranslato
         mockTranslationCtx.returnNullptrDebugData = (i & 1) != 0;
         mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
         mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
-        auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
+        auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u);
         EXPECT_EQ(nullptr, ret);
     }
+}
+
+TEST(TranslateTest, givenFclCtxWhenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
+    auto mockTranslationCtx = new FclTranslationCtxMock();
+    auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
+    for (uint32_t i = 1; i <= maxNBitValue(3); ++i) {
+        mockTranslationCtx->returnNullptrDebugData = (i & 1) != 0;
+        mockTranslationCtx->returnNullptrLog = (i & (1 << 1)) != 0;
+        mockTranslationCtx->returnNullptrOutput = (i & (1 << 2)) != 0;
+        auto ret = NEO::translate(static_cast<NEO::FclOclTranslationCtxTag *>(mockTranslationCtx), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), 0u);
+        EXPECT_EQ(nullptr, ret);
+    }
+    mockTranslationCtx->Release();
+}
+
+TEST(TranslateTest, givenIgcCtxWhenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
+    auto mockTranslationCtx = new IgcTranslationCtxMock();
+    auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
+    for (uint32_t i = 1; i <= maxNBitValue(3); ++i) {
+        mockTranslationCtx->returnNullptrDebugData = (i & 1) != 0;
+        mockTranslationCtx->returnNullptrLog = (i & (1 << 1)) != 0;
+        mockTranslationCtx->returnNullptrOutput = (i & (1 << 2)) != 0;
+        auto ret = NEO::translate(static_cast<NEO::IgcOclTranslationCtxTag *>(mockTranslationCtx), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u);
+        EXPECT_EQ(nullptr, ret);
+    }
+    mockTranslationCtx->Release();
+}
+
+TEST(TranslateTest, givenIgcCtxWithSpecConstantsWhenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
+    auto mockTranslationCtx = new IgcTranslationCtxMock();
+    auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
+    for (uint32_t i = 1; i <= maxNBitValue(3); ++i) {
+        mockTranslationCtx->returnNullptrDebugData = (i & 1) != 0;
+        mockTranslationCtx->returnNullptrLog = (i & (1 << 1)) != 0;
+        mockTranslationCtx->returnNullptrOutput = (i & (1 << 2)) != 0;
+        auto ret = NEO::translate(static_cast<NEO::IgcOclTranslationCtxTag *>(mockTranslationCtx), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u);
+        EXPECT_EQ(nullptr, ret);
+    }
+    mockTranslationCtx->Release();
 }
 
 TEST(TranslateTest, whenAnyArgIsNullThenNullptrIsReturnedAndTranslatorIsNotInvoked) {
@@ -778,7 +927,7 @@ TEST(TranslateTest, whenAnyArgIsNullThenNullptrIsReturnedAndTranslatorIsNotInvok
         auto opts = (i & (1 << 1)) ? mockCifBuffer.get() : nullptr;
         auto intOpts = (i & (1 << 2)) ? mockCifBuffer.get() : nullptr;
 
-        auto ret = NEO::translate(&mockTranslationCtx, src, opts, intOpts);
+        auto ret = NEO::translate(&mockTranslationCtx, src, opts, intOpts, 0u);
         EXPECT_EQ(nullptr, ret);
     }
 
@@ -892,7 +1041,8 @@ TEST_F(CompilerInterfaceMockedBinaryFilesTest, givenUpdatedSpecConstValuesWhenBu
             CIF::Builtins::BufferSimple *internalOptions,
             CIF::Builtins::BufferSimple *tracingOptions,
             uint32_t tracingOptionsCount,
-            void *gtPinInput) override {
+            void *gtPinInput,
+            uint64_t srcHash) override {
             EXPECT_EQ(10u, specConstantsIds->GetMemory<uint32_t>()[0]);
             EXPECT_EQ(100u, specConstantsValues->GetMemory<uint64_t>()[0]);
             return new MockOclTranslationOutput();
@@ -1610,4 +1760,110 @@ TEST(getOclCExtensionVersion, whenCheckingVersionOfUntrackedExtensionThenReturns
     cl_version defaultVer = CL_MAKE_VERSION(7, 2, 5);
     cl_version ver = NEO::getOclCExtensionVersion("other", defaultVer);
     EXPECT_EQ(defaultVer, ver);
+}
+
+TEST(TranslateTest, givenFclCtxWhenTranslatorReturnsNullptrThenNullptrIsReturned) {
+    auto mockTranslationCtx = new FclTranslationCtxMock();
+    auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
+    mockTranslationCtx->returnNullptr = true;
+    auto ret = NEO::translate(static_cast<NEO::FclOclTranslationCtxTag *>(mockTranslationCtx), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), 0u);
+    EXPECT_EQ(nullptr, ret);
+    mockTranslationCtx->Release();
+}
+
+TEST(TranslateTest, givenIgcCtxWhenTranslatorReturnsNullptrThenNullptrIsReturned) {
+    auto mockTranslationCtx = new IgcTranslationCtxMock();
+    auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
+    mockTranslationCtx->returnNullptr = true;
+    auto ret = NEO::translate(static_cast<NEO::IgcOclTranslationCtxTag *>(mockTranslationCtx), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u);
+    EXPECT_EQ(nullptr, ret);
+    mockTranslationCtx->Release();
+}
+
+TEST(TranslateTest, givenIgcCtxWithSpecConstantsWhenTranslatorReturnsNullptrThenNullptrIsReturned) {
+    auto mockTranslationCtx = new IgcTranslationCtxMock();
+    auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
+    mockTranslationCtx->returnNullptr = true;
+    auto ret = NEO::translate(static_cast<NEO::IgcOclTranslationCtxTag *>(mockTranslationCtx), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u);
+    EXPECT_EQ(nullptr, ret);
+    mockTranslationCtx->Release();
+}
+
+TEST(TranslateTest, givenTemplateCtxWithSpecConstantsWhenAnyArgIsNullThenNullptrIsReturned) {
+    auto mockSrc = std::make_unique<MockCIFBuffer>();
+    auto mockOpt = std::make_unique<MockCIFBuffer>();
+    auto mockIntOpt = std::make_unique<MockCIFBuffer>();
+    auto mockSpecIds = std::make_unique<MockCIFBuffer>();
+    auto mockSpecValues = std::make_unique<MockCIFBuffer>();
+
+    auto ret = NEO::translate<TranslationCtxMock>(nullptr, mockSrc.get(), mockSpecIds.get(), mockSpecValues.get(), mockOpt.get(), mockIntOpt.get(), nullptr, 0u);
+    EXPECT_EQ(nullptr, ret);
+
+    TranslationCtxMock mockTranslationCtx;
+    auto ret2 = NEO::translate<TranslationCtxMock>(&mockTranslationCtx, nullptr, mockSpecIds.get(), mockSpecValues.get(), mockOpt.get(), mockIntOpt.get(), nullptr, 0u);
+    EXPECT_EQ(nullptr, ret2);
+}
+
+TEST(TranslateTest, givenFclCtxWhenAnyArgIsNullThenNullptrIsReturned) {
+    auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
+    auto mockTranslationCtx = new FclTranslationCtxMock();
+    auto ctx = static_cast<NEO::FclOclTranslationCtxTag *>(mockTranslationCtx);
+
+    EXPECT_EQ(nullptr, NEO::translate(ctx, nullptr, mockCifBuffer.get(), mockCifBuffer.get(), 0u));
+    EXPECT_EQ(nullptr, NEO::translate(ctx, mockCifBuffer.get(), nullptr, mockCifBuffer.get(), 0u));
+    EXPECT_EQ(nullptr, NEO::translate(ctx, mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u));
+    EXPECT_EQ(nullptr, NEO::translate((NEO::FclOclTranslationCtxTag *)nullptr, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), 0u));
+
+    mockTranslationCtx->Release();
+}
+
+TEST(TranslateTest, givenIgcCtxWhenAnyArgIsNullThenNullptrIsReturned) {
+    auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
+    auto mockTranslationCtx = new IgcTranslationCtxMock();
+    auto ctx = static_cast<NEO::IgcOclTranslationCtxTag *>(mockTranslationCtx);
+
+    EXPECT_EQ(nullptr, NEO::translate(ctx, nullptr, mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u));
+    EXPECT_EQ(nullptr, NEO::translate(ctx, mockCifBuffer.get(), nullptr, mockCifBuffer.get(), nullptr, 0u));
+    EXPECT_EQ(nullptr, NEO::translate(ctx, mockCifBuffer.get(), mockCifBuffer.get(), nullptr, nullptr, 0u));
+    EXPECT_EQ(nullptr, NEO::translate((NEO::IgcOclTranslationCtxTag *)nullptr, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u));
+
+    mockTranslationCtx->Release();
+}
+
+TEST(TranslateTest, givenIgcCtxWithSpecConstantsWhenAnyArgIsNullThenNullptrIsReturned) {
+    auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
+    auto mockTranslationCtx = new IgcTranslationCtxMock();
+    auto ctx = static_cast<NEO::IgcOclTranslationCtxTag *>(mockTranslationCtx);
+
+    EXPECT_EQ(nullptr, NEO::translate(ctx, nullptr, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u));
+    EXPECT_EQ(nullptr, NEO::translate(ctx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, mockCifBuffer.get(), nullptr, 0u));
+    EXPECT_EQ(nullptr, NEO::translate(ctx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, nullptr, 0u));
+    EXPECT_EQ(nullptr, NEO::translate((NEO::IgcOclTranslationCtxTag *)nullptr, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr, 0u));
+
+    mockTranslationCtx->Release();
+}
+TEST(TranslateTest, givenTemplateCtxWhenArgsAreInvalidThenNullptrIsReturned) {
+    auto mockSrc = std::make_unique<MockCIFBuffer>();
+    auto mockOpt = std::make_unique<MockCIFBuffer>();
+    auto mockIntOpt = std::make_unique<MockCIFBuffer>();
+
+    auto ret = NEO::translate<TranslationCtxMock>(nullptr, mockSrc.get(), mockOpt.get(), mockIntOpt.get(), 0u);
+    EXPECT_EQ(nullptr, ret);
+
+    TranslationCtxMock mockTranslationCtx;
+    ret = NEO::translate<TranslationCtxMock>(&mockTranslationCtx, nullptr, mockOpt.get(), mockIntOpt.get(), 0u);
+    EXPECT_EQ(nullptr, ret);
+}
+
+TEST(TranslateTest, givenTemplateCtxWithGtPinWhenArgsAreInvalidThenNullptrIsReturned) {
+    auto mockSrc = std::make_unique<MockCIFBuffer>();
+    auto mockOpt = std::make_unique<MockCIFBuffer>();
+    auto mockIntOpt = std::make_unique<MockCIFBuffer>();
+
+    auto ret = NEO::translate<TranslationCtxMock>(nullptr, mockSrc.get(), mockOpt.get(), mockIntOpt.get(), nullptr, 0u);
+    EXPECT_EQ(nullptr, ret);
+
+    TranslationCtxMock mockTranslationCtx;
+    ret = NEO::translate<TranslationCtxMock>(&mockTranslationCtx, nullptr, mockOpt.get(), mockIntOpt.get(), nullptr, 0u);
+    EXPECT_EQ(nullptr, ret);
 }
