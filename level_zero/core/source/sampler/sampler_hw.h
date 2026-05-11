@@ -11,6 +11,8 @@
 
 #include "level_zero/core/source/sampler/sampler_imp.h"
 
+#include <limits>
+
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>

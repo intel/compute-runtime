@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 

@@ -13,23 +13,7 @@
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
-
-#if __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wignored-pragma-intrinsic"
-#pragma clang diagnostic ignored "-Wpragma-pack"
-#pragma clang diagnostic ignored "-Wignored-attributes"
-#pragma clang diagnostic ignored "-Wmacro-redefined"
-#pragma clang diagnostic ignored "-Wnonportable-include-path"
-#endif
-
-#include "GL/gl.h"
-
-#if __clang__
-#pragma clang diagnostic pop
-
-#endif
-#include "GL/glext.h"
+#include "gl_types.h"
 
 #include <functional>
 #include <mutex>

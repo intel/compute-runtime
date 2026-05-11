@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,7 @@
 
 #pragma once
 #include "opencl/source/event/event.h"
-
-#include <GL/gl.h>
+#include "opencl/source/sharings/gl/gl_sharing.h"
 
 struct _tagGLCLSyncInfo;
 typedef _tagGLCLSyncInfo GL_CL_SYNC_INFO;

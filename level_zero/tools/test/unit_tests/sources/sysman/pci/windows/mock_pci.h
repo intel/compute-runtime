@@ -1,12 +1,15 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/execution_environment/execution_environment.h"
+
 #include "level_zero/core/test/unit_tests/mock.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
 #include "level_zero/tools/source/sysman/pci/windows/os_pci_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_kmd_sys_manager.h"

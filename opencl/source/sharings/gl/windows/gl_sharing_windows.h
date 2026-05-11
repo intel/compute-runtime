@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,6 @@
 #pragma once
 
 #include "opencl/source/sharings/gl/gl_sharing.h"
-
-#include "gl_types.h"
-#include <GL/gl.h>
 
 namespace NEO {
 // OpenGL API names

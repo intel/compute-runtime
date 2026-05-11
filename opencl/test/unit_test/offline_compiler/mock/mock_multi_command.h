@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/offline_compiler/source/multi_command.h"
+#include "shared/offline_compiler/source/ocloc_api.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 

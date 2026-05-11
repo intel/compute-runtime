@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,3 +12,6 @@ typedef void *GLDisplay;
 typedef void *GLContext;
 using GLType = uint32_t;
 using GLFunctionType = decltype(&eglGetProcAddress);
+
+#include "GL/gl.h"
+#include "GL/glext.h"

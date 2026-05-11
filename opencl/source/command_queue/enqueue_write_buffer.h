@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"

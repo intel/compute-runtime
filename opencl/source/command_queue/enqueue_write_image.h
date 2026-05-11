@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 

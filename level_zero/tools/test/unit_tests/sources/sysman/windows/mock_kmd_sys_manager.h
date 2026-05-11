@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
+#include <level_zero/zes_api.h>
 
 namespace L0 {
 namespace ult {
