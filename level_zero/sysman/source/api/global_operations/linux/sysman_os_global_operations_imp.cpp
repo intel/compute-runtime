@@ -815,8 +815,6 @@ LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pProcfsAccess = &pLinuxSysmanImp->getProcfsAccess();
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-    devicePciBdf = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
-    rootDeviceIndex = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceIndex();
 }
 
 OsGlobalOperations *OsGlobalOperations::create(OsSysman *pOsSysman) {

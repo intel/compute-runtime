@@ -99,9 +99,7 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     static const std::string functionLevelReset;
     static const std::string clientsDir;
     static const std::string ueventWedgedFile;
-    std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
-    uint32_t rootDeviceIndex = 0u;
     ze_result_t getListOfEnginesUsedByProcess(std::vector<std::string> &fdFileContents, uint32_t &activeEngines);
     ze_result_t getMemoryStatsUsedByProcess(std::vector<std::string> &fdFileContents, uint64_t &memSize, uint64_t &sharedSize);
     ze_result_t resetImpl(ze_bool_t force, zes_reset_type_t resetType);
