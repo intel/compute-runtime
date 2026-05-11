@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/linux/external_semaphore_linux.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
@@ -408,10 +409,14 @@ TEST_F(DrmExternalSemaphoreTest, givenPrintExternalSemaphoreTimelineEnabledWhenT
     uint64_t fenceValue = 42u;
 
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineWait, 0);
+    StreamCapture streamCapture;
+    streamCapture.captureStdout();
     auto result = externalSemaphore->enqueueWait(&fenceValue);
+    std::string output = streamCapture.getCapturedStdout();
 
     EXPECT_EQ(result, true);
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineWait, 1);
+    EXPECT_EQ("ExternalSemaphore timeline wait: handle=0x1, value=42\n", output);
 }
 
 TEST_F(DrmExternalSemaphoreTest, givenPrintExternalSemaphoreTimelineDisabledWhenTimelineSemaphoreEnqueueWaitIsCalledThenDebugMessageIsNotPrinted) {
@@ -430,10 +435,14 @@ TEST_F(DrmExternalSemaphoreTest, givenPrintExternalSemaphoreTimelineDisabledWhen
     uint64_t fenceValue = 42u;
 
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineWait, 0);
+    StreamCapture streamCapture;
+    streamCapture.captureStdout();
     auto result = externalSemaphore->enqueueWait(&fenceValue);
+    std::string output = streamCapture.getCapturedStdout();
 
     EXPECT_EQ(result, true);
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineWait, 1);
+    EXPECT_EQ("", output);
 }
 
 TEST_F(DrmExternalSemaphoreTest, givenPrintExternalSemaphoreTimelineEnabledWhenTimelineSemaphoreEnqueueSignalIsCalledThenDebugMessageIsPrinted) {
@@ -452,10 +461,14 @@ TEST_F(DrmExternalSemaphoreTest, givenPrintExternalSemaphoreTimelineEnabledWhenT
     uint64_t fenceValue = 42u;
 
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineSignal, 0);
+    StreamCapture streamCapture;
+    streamCapture.captureStdout();
     auto result = externalSemaphore->enqueueSignal(&fenceValue);
+    std::string output = streamCapture.getCapturedStdout();
 
     EXPECT_EQ(result, true);
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineSignal, 1);
+    EXPECT_EQ("ExternalSemaphore timeline signal: handle=0x1, value=42\n", output);
 }
 
 TEST_F(DrmExternalSemaphoreTest, givenPrintExternalSemaphoreTimelineDisabledWhenTimelineSemaphoreEnqueueSignalIsCalledThenDebugMessageIsNotPrinted) {
@@ -474,10 +487,14 @@ TEST_F(DrmExternalSemaphoreTest, givenPrintExternalSemaphoreTimelineDisabledWhen
     uint64_t fenceValue = 42u;
 
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineSignal, 0);
+    StreamCapture streamCapture;
+    streamCapture.captureStdout();
     auto result = externalSemaphore->enqueueSignal(&fenceValue);
+    std::string output = streamCapture.getCapturedStdout();
 
     EXPECT_EQ(result, true);
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineSignal, 1);
+    EXPECT_EQ("", output);
 }
 
 TEST_F(DrmExternalSemaphoreTest, givenPrintExternalSemaphoreTimelineDefaultWhenTimelineSemaphoreOperationsCalledThenDebugMessageIsNotPrinted) {
@@ -494,13 +511,17 @@ TEST_F(DrmExternalSemaphoreTest, givenPrintExternalSemaphoreTimelineDefaultWhenT
 
     uint64_t fenceValue = 42u;
 
+    StreamCapture streamCapture;
+    streamCapture.captureStdout();
     auto waitResult = externalSemaphore->enqueueWait(&fenceValue);
     auto signalResult = externalSemaphore->enqueueSignal(&fenceValue);
+    std::string output = streamCapture.getCapturedStdout();
 
     EXPECT_EQ(waitResult, true);
     EXPECT_EQ(signalResult, true);
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineWait, 1);
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineSignal, 1);
+    EXPECT_EQ("", output);
 }
 
 } // namespace NEO
