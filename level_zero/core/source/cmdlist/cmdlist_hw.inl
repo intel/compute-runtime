@@ -4340,6 +4340,10 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
 
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
+    if (this->latestOperationHasHeapfullCbEventWithProfiling) {
+        return false;
+    }
+
     if (signalEvent) {
         const bool dcFLushEvent = getDcFlushRequired(signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
         return !(dcFLushEvent || signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased() || this->isPostSyncSkippedOnLatestInOrderOperation || Event::isAggregatedEvent(signalEvent));

@@ -4850,11 +4850,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     EXPECT_FALSE(events[1]->heapfullCbEventWithProfiling);
     immCmdList->appendBarrier(eventHandle, 0, nullptr, false);
     EXPECT_EQ(immCmdList->cmdQImmediate, events[1]->getLatestUsedCmdQueue());
-    EXPECT_TRUE(events[1]->heapfullCbEventWithProfiling);
+    EXPECT_FALSE(events[1]->heapfullCbEventWithProfiling);
 
-    EXPECT_EQ(offset, cmdStream->getUsed());
+    EXPECT_LT(offset, cmdStream->getUsed());
 
-    EXPECT_EQ(1u, events[1]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(2u, events[1]->getInOrderExecBaseSignalValue());
+
+    offset = cmdStream->getUsed();
 
     events[1]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
@@ -4863,10 +4865,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     if (immCmdList->dcFlushSupport) {
         EXPECT_NE(offset, cmdStream->getUsed());
-        EXPECT_EQ(2u, events[1]->getInOrderExecBaseSignalValue());
+        EXPECT_EQ(3u, events[1]->getInOrderExecBaseSignalValue());
     } else {
         EXPECT_EQ(offset, cmdStream->getUsed());
-        EXPECT_EQ(1u, events[1]->getInOrderExecBaseSignalValue());
+        EXPECT_EQ(2u, events[1]->getInOrderExecBaseSignalValue());
     }
 }
 
@@ -4923,11 +4925,13 @@ HWTEST_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWit
     EXPECT_FALSE(events[1]->heapfullCbEventWithProfiling);
     cmdList->appendBarrier(eventHandle, 0, nullptr, false);
     EXPECT_EQ(reinterpret_cast<void *>(0x1234), events[1]->getLatestUsedCmdQueue());
-    EXPECT_TRUE(events[1]->heapfullCbEventWithProfiling);
+    EXPECT_FALSE(events[1]->heapfullCbEventWithProfiling);
 
-    EXPECT_EQ(offset, cmdStream->getUsed());
+    EXPECT_LT(offset, cmdStream->getUsed());
 
-    EXPECT_EQ(1u, events[1]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(2u, events[1]->getInOrderExecBaseSignalValue());
+
+    offset = cmdStream->getUsed();
 
     events[1]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
@@ -4936,10 +4940,10 @@ HWTEST_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWit
 
     if (cmdList->dcFlushSupport) {
         EXPECT_NE(offset, cmdStream->getUsed());
-        EXPECT_EQ(2u, events[1]->getInOrderExecBaseSignalValue());
+        EXPECT_EQ(3u, events[1]->getInOrderExecBaseSignalValue());
     } else {
         EXPECT_EQ(offset, cmdStream->getUsed());
-        EXPECT_EQ(1u, events[1]->getInOrderExecBaseSignalValue());
+        EXPECT_EQ(2u, events[1]->getInOrderExecBaseSignalValue());
     }
 }
 
