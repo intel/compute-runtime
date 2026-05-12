@@ -54,13 +54,6 @@ DecodeError validateZeInfoVersion(const Types::Version &receivedZeInfoVersion, s
 }
 
 void encounterUnknownZeInfoAttribute(const std::string &entryDescriptor, std::string &outErrReason, std::string &outWarning, DecodeError &errCode) {
-    auto formattedMessage = "DeviceBinaryFormat::zebin::.ze_info : Unknown entry " + entryDescriptor + "\n";
-    if (debugManager.flags.IgnoreZebinUnknownAttributes.get()) {
-        outWarning.append(formattedMessage);
-    } else {
-        outErrReason.append(formattedMessage);
-        errCode = DecodeError::unkownZeinfoAttribute;
-    }
 }
 
 DecodeError extractZeInfoSections(const Yaml::YamlParser &parser, ZeInfoSections &outZeInfoSections, std::string &outErrReason, std::string &outWarning) {
