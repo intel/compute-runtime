@@ -62,6 +62,13 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
         imgInfo.surfaceFormat = &ImageFormats::srgbFormatRGBA8;
         this->srgbImage = true;
+    } else if (lookupTable.isDepthStencilFormat) {
+        if (lookupTable.depthStencilFormat == ZE_DEPTH_STENCIL_FORMAT_D32_FLOAT_S8X24_UINT) {
+            imgInfo.surfaceFormat = &ImageFormats::depthStencilFormatD32FS8;
+        } else {
+            imgInfo.surfaceFormat = &ImageFormats::depthStencilFormatD24S8;
+        }
+        this->depthStencilImage = true;
     } else {
         imgInfo.surfaceFormat = &ImageFormats::formats[desc->format.layout][desc->format.type];
     }
@@ -272,7 +279,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             NEO::ImageSurfaceStateHelper<GfxFamily>::setUnifiedAuxBaseAddress(surfaceState, mcsGmm);
         } else {
             using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
-            const bool isDepthResource = gmm && gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+            const bool isDepthResource = this->depthStencilImage || (gmm && gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth);
             if (isDepthResource && surfaceState->getSurfaceFormat() != SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS) {
                 surfaceState->setMultisampledSurfaceStorageFormat(
                     RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
@@ -323,7 +330,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
 
         if (gmm) {
-            const bool isDepthResource = gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+            const bool isDepthResource = this->depthStencilImage || gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
             surfaceState.setDepthStencilResource(isDepthResource);
         }
     }

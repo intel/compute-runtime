@@ -67,6 +67,19 @@ struct ze_sampler_lod_ext_desc_t {
     bool mipFilterLinear = false;
 };
 
+constexpr ze_structure_type_t ZE_STRUCTURE_TYPE_DEPTH_STENCIL_FORMAT_EXT_DESC = static_cast<ze_structure_type_t>(0x00050005);
+
+enum ze_depth_stencil_format_t : uint32_t {
+    ZE_DEPTH_STENCIL_FORMAT_D24_UNORM_S8_UINT = 0,
+    ZE_DEPTH_STENCIL_FORMAT_D32_FLOAT_S8X24_UINT = 1,
+};
+
+struct ze_depth_stencil_format_ext_desc_t {
+    ze_structure_type_t stype = ZE_STRUCTURE_TYPE_DEPTH_STENCIL_FORMAT_EXT_DESC;
+    const void *pNext = nullptr;
+    ze_depth_stencil_format_t format = ZE_DEPTH_STENCIL_FORMAT_D24_UNORM_S8_UINT;
+};
+
 // NOLINTEND(readability-identifier-naming)
 
 } // namespace L0

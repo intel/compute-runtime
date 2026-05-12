@@ -58,12 +58,15 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     }
 
     bool isSrgb() const override { return srgbImage; }
+    bool isDepthStencil() const override { return depthStencilImage; }
 
     void setMimickedImage(bool value) {
         this->mimickedImagefor3Ch = value;
     }
 
     void populateImageImplicitArgs(NEO::ImageImplicitArgs &imageImplicitArgs);
+    static cl_channel_type overrideChannelTypeForDepthInt24Image(cl_channel_type clChannelType, bool isDepthStencil,
+                                                                 NEO::GraphicsAllocation *allocation);
     ze_result_t allocateBindlessSlot() override;
     NEO::SurfaceStateInHeapInfo *getBindlessSlot() override;
     ze_result_t getDeviceOffset(uint64_t *deviceOffset) override;
@@ -110,6 +113,7 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     bool sampledImage = false;
     bool mimickedImagefor3Ch = false;
     bool srgbImage = false;
+    bool depthStencilImage = false;
     NEO::SurfaceFormatInfo overriddenSurfaceFormat = {};
     bool hasOverriddenSurfaceFormat = false;
 };

@@ -95,6 +95,9 @@ struct StructuresLookupTable {
         bool hasUnifiedMcsSurface;
     } glTextureExt;
 
+    bool isDepthStencilFormat;
+    ze_depth_stencil_format_t depthStencilFormat;
+
     bool areImageProperties;
     bool exportMemory;
     bool isSharedHandle;
@@ -226,6 +229,10 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             lookupTable.glTextureExt.pGmmResInfoMcs = glDesc->pGmmResInfoMcs;
             lookupTable.glTextureExt.hasUnifiedMcsSurface = glDesc->hasUnifiedMcsSurface;
             lookupTable.glTextureExt.present = true;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_DEPTH_STENCIL_FORMAT_EXT_DESC) {
+            const ze_depth_stencil_format_ext_desc_t *dsDesc = reinterpret_cast<const ze_depth_stencil_format_ext_desc_t *>(extendedDesc);
+            lookupTable.isDepthStencilFormat = true;
+            lookupTable.depthStencilFormat = dsDesc->format;
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }

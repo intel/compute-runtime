@@ -36,6 +36,14 @@ void MockGmmResourceInfo::setSurfaceFormat() {
         surfaceFormatInfo = &L0::ImageFormats::srgbFormatRGBA8;
     }
 
+    if (!surfaceFormatInfo && mockResourceCreateParams.Format == L0::ImageFormats::depthStencilFormatD24S8.gmmSurfaceFormat) {
+        surfaceFormatInfo = &L0::ImageFormats::depthStencilFormatD24S8;
+    }
+
+    if (!surfaceFormatInfo && mockResourceCreateParams.Format == L0::ImageFormats::depthStencilFormatD32FS8.gmmSurfaceFormat) {
+        surfaceFormatInfo = &L0::ImageFormats::depthStencilFormatD32FS8;
+    }
+
     if (mockResourceCreateParams.Format == GMM_FORMAT_GENERIC_8BIT) {
         static const NEO::SurfaceFormatInfo surfaceFormatGMM8BIT = {GMM_FORMAT_GENERIC_8BIT, GFX3DSTATE_SURFACEFORMAT_R8_UNORM, 0, 1, 1, 1};
         surfaceFormatInfo = &surfaceFormatGMM8BIT;

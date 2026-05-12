@@ -27,6 +27,7 @@
 #include "level_zero/core/source/image/image_formats.h"
 
 #include "neo_igfxfmid.h"
+#include "third_party/opencl_headers/CL/cl_gl.h"
 
 #include <mutex>
 
@@ -326,6 +327,15 @@ ze_result_t ImageImp::allocateImplicitArgsOnDemand() {
     return ZE_RESULT_SUCCESS;
 }
 
+cl_channel_type ImageImp::overrideChannelTypeForDepthInt24Image(cl_channel_type clChannelType, bool isDepthStencil,
+                                                                NEO::GraphicsAllocation *allocation) {
+    bool isDepthResource = isDepthStencil || (allocation && allocation->getDefaultGmm() && allocation->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Gpu.Depth && static_cast<int>(clChannelType) == CL_INVALID_VALUE);
+    if (isDepthResource && static_cast<int>(clChannelType) != CL_FLOAT) {
+        return CL_UNORM_INT24;
+    }
+    return clChannelType;
+}
+
 void ImageImp::populateImageImplicitArgs(NEO::ImageImplicitArgs &imageImplicitArgs) {
     imageImplicitArgs.structVersion = 0;
     imageImplicitArgs.imageWidth = imgInfo.imgDesc.imageWidth;
@@ -337,6 +347,9 @@ void ImageImp::populateImageImplicitArgs(NEO::ImageImplicitArgs &imageImplicitAr
 
     imageImplicitArgs.channelType = getClChannelDataType(imageFormatDesc.format);
     imageImplicitArgs.channelOrder = getClChannelOrder(imageFormatDesc.format, this->isSrgb());
+    imageImplicitArgs.channelType = overrideChannelTypeForDepthInt24Image(imageImplicitArgs.channelType,
+                                                                          this->isDepthStencil(),
+                                                                          this->allocation);
 
     auto pixelSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
     imageImplicitArgs.flatBaseOffset = implicitArgsAllocation->getGpuAddress();

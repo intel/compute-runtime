@@ -259,6 +259,10 @@ inline constexpr FormatTypes layoutBGRP = {{{GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SU
 
 inline constexpr NEO::SurfaceFormatInfo srgbFormatRGBA8 = {GMM_FORMAT_R8G8B8A8_UNORM_SRGB_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM_SRGB, 0, 4, 1, 4};
 
+inline constexpr NEO::SurfaceFormatInfo depthStencilFormatD24S8 = {GMM_FORMAT_GENERIC_32BIT, NEO::GFX3DSTATE_SURFACEFORMAT_R24_UNORM_X8_TYPELESS, 0, 1, 4, 4};
+
+inline constexpr NEO::SurfaceFormatInfo depthStencilFormatD32FS8 = {GMM_FORMAT_R32G32_FLOAT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R32_FLOAT_X8X24_TYPELESS, 0, 2, 4, 8};
+
 inline constexpr std::array<FormatTypes, maxLayoutCount> formats = {layout8, layout16, layout32, layout88, layout8888, layout1616, layout16161616, layout3232, layout32323232, layout1010102,
                                                                     layout111110, layout565, layout5551, layout4444, layoutY8, layoutNV12, layoutYUYV, layoutVYUY, layoutYVYU, layoutUYVY,
                                                                     layoutAYUV, layoutP010, layoutY410, layoutP012, layoutY16, layoutP016, layoutY216, layoutP216, layoutP8, layoutYUY2,

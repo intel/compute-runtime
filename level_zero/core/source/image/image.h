@@ -54,6 +54,7 @@ struct Image : _ze_image_handle_t {
     virtual ze_result_t allocateImplicitArgsOnDemand() = 0;
     virtual void encodeImplicitArgsSurfaceState() = 0;
     virtual bool isSrgb() const = 0;
+    virtual bool isDepthStencil() const = 0;
 
     static ze_result_t getPitchFor2dImage(
         ze_device_handle_t hDevice,

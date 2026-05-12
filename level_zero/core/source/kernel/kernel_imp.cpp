@@ -13,7 +13,9 @@
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
@@ -53,6 +55,7 @@
 
 #include "encode_surface_state_args.h"
 #include "implicit_args.h"
+#include "third_party/opencl_headers/CL/cl_gl.h"
 
 #include <memory>
 
@@ -1008,6 +1011,7 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
     const auto &imageInfo = image->getImageInfo();
     auto clChannelType = getClChannelDataType(image->getImageDesc().format);
     auto clChannelOrder = getClChannelOrder(image->getImageDesc().format, image->isSrgb());
+    clChannelType = ImageImp::overrideChannelTypeForDepthInt24Image(clChannelType, image->isDepthStencil(), image->getAllocation());
 
     // If the Module was built from a SPIRv, then the supported channel data type must be in the CL types otherwise it is unsupported.
     ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);

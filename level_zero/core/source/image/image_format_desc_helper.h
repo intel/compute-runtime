@@ -38,6 +38,6 @@ struct Swizzles {
 };
 
 cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription);
-cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription, bool srgb);
+cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription, bool srgb = false);
 
 } // namespace L0
