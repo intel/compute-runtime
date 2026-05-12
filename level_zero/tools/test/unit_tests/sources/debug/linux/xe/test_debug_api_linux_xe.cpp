@@ -3532,7 +3532,7 @@ HWTEST_F(DebugApiLinuxTestXe, GivenStateSaveHeaderV5AndSomeStoppedThreadsWhenMul
         using MockDebugSessionLinuxXe::MockDebugSessionLinuxXe;
 
       public:
-        bool getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter) override {
+        bool getThreadSipCounterWithMemHandle(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter, uint64_t memoryHandle) override {
             if (thread->getThreadId().thread < 2) {
                 *sipThreadCounter = 1;
             } else {

@@ -295,7 +295,7 @@ void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<E
         bool checkIfStopped = true;
         if (stateSaveAreaHeader->versionHeader.version.major >= 5) {
             uint64_t sipCounter = 0;
-            getThreadSipCounter(nullptr, allThreads[threadId].get(), stateSaveAreaHeader, &sipCounter);
+            getThreadSipCounterWithMemHandle(nullptr, allThreads[threadId].get(), stateSaveAreaHeader, &sipCounter, memoryHandle);
             counter = static_cast<uint8_t>(sipCounter & 0xFF);
 
         } else {
