@@ -941,21 +941,38 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
     if (!settings.enableIpcHandleSharing) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+    NEO::UsmMemAllocPool *usmPool = nullptr;
+    InternalMemoryType type = InternalMemoryType::notSpecified;
+    NEO::GraphicsAllocation *alloc = nullptr;
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    bool fabricAccessibleHandle = false;
     if (!allocData) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        auto lock = this->driverHandle->getMemoryManager()->lockPhysicalMemoryAllocationMap();
+        auto it = this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(const_cast<void *>(ptr));
+        if (it == this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().end()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        NEO::PhysicalMemoryAllocation *allocationNode = it->second;
+        alloc = allocationNode->allocation;
+        if (allocationNode->allocation->getAllocationType() == NEO::AllocationType::buffer) {
+            type = InternalMemoryType::reservedDeviceMemory;
+        } else {
+            type = InternalMemoryType::reservedHostMemory;
+        }
+        fabricAccessibleHandle = allocationNode->fabricAccessibleIpcHandleRequested;
+    } else {
+        type = allocData->memoryType;
+
+        usmPool = getUsmPoolOwningPtr(ptr, allocData);
+
+        if (usmPool && nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
+            // ptr is within usm pool address space but is not allocated
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+        fabricAccessibleHandle = allocData->fabricAccessibleIpcHandleRequested;
     }
-    auto type = allocData->memoryType;
-
-    auto *usmPool = getUsmPoolOwningPtr(ptr, allocData);
-
-    if (usmPool && nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
-        // ptr is within usm pool address space but is not allocated
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
     auto memoryManager = this->driverHandle->getMemoryManager();
-    auto alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
 
     auto rootDeviceEnv = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[alloc->getRootDeviceIndex()].get();
     auto &l0GfxCoreHelper = rootDeviceEnv->getHelper<L0GfxCoreHelper>();
@@ -976,7 +993,6 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
     if (type == InternalMemoryType::hostUnifiedMemory) {
         ipcType = static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory);
     }
-    bool fabricAccessibleHandle = false;
 
     if (pNext) {
         ze_base_properties_t *extendedProperties =
@@ -986,10 +1002,6 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
         }
         ze_ipc_mem_handle_type_ext_desc_t *ipcHandleTypeDesc = reinterpret_cast<ze_ipc_mem_handle_type_ext_desc_t *>(pNext);
         if (ipcHandleTypeDesc->typeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE) {
-            fabricAccessibleHandle = true;
-        }
-    } else {
-        if (allocData->fabricAccessibleIpcHandleRequested) {
             fabricAccessibleHandle = true;
         }
     }

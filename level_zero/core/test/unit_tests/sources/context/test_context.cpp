@@ -6318,5 +6318,119 @@ TEST_F(ContextTest, givenFabricAccessibleIpcHandleTypeInPhysicalMemDescWhenMappe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(ContextTest, whenCallingGetIpcMemHandleWithDevicePhysicalMemoryHandleThenSuccessIsReturnedAndAllocationIsUsed) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    contextImp->settings.enableIpcHandleSharing = true;
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto reserveMemoryManager = std::make_unique<ReserveMemoryManagerMock>(*neoDevice->executionEnvironment);
+    reserveMemoryManager->failAllocatePhysicalGraphicsMemory = false;
+    reserveMemoryManager->size = pagesize;
+    VariableBackup<NEO::MemoryManager *> memoryManagerBackup(&driverHandle->memoryManager, reserveMemoryManager.get());
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto *mockAlloc = static_cast<NEO::MockGraphicsAllocation *>(reserveMemoryManager->mockAllocation.get());
+    mockAlloc->setAllocationType(NEO::AllocationType::buffer);
+    const uint64_t expectedHandle = 54321u;
+    mockAlloc->internalHandle = expectedHandle;
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    res = contextImp->getIpcMemHandle(reinterpret_cast<const void *>(mem), nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::IpcMemoryData *ipcData = reinterpret_cast<L0::IpcMemoryData *>(ipcHandle.data);
+    EXPECT_EQ(expectedHandle, ipcData->handle);
+    EXPECT_EQ(static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory), ipcData->type);
+
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+        auto it = ipcHandleMap.find(expectedHandle);
+        if (it != ipcHandleMap.end()) {
+            delete it->second;
+        }
+        ipcHandleMap.clear();
+    }
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingGetIpcMemHandleWithHostPhysicalMemoryHandleThenSuccessIsReturnedAndAllocationIsUsed) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    contextImp->settings.enableIpcHandleSharing = true;
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto reserveMemoryManager = std::make_unique<ReserveMemoryManagerMock>(*neoDevice->executionEnvironment);
+    reserveMemoryManager->failAllocatePhysicalGraphicsMemory = false;
+    reserveMemoryManager->size = pagesize;
+    VariableBackup<NEO::MemoryManager *> memoryManagerBackup(&driverHandle->memoryManager, reserveMemoryManager.get());
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_HOST, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto *mockAlloc = static_cast<NEO::MockGraphicsAllocation *>(reserveMemoryManager->mockAllocation.get());
+    mockAlloc->setAllocationType(NEO::AllocationType::bufferHostMemory);
+    const uint64_t expectedHandle = 67890u;
+    mockAlloc->internalHandle = expectedHandle;
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    res = contextImp->getIpcMemHandle(reinterpret_cast<const void *>(mem), nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::IpcMemoryData *ipcData = reinterpret_cast<L0::IpcMemoryData *>(ipcHandle.data);
+    EXPECT_EQ(expectedHandle, ipcData->handle);
+    EXPECT_EQ(static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory), ipcData->type);
+
+    {
+        auto lock = driverHandle->lockIPCHandleMap();
+        auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+        auto it = ipcHandleMap.find(expectedHandle);
+        if (it != ipcHandleMap.end()) {
+            delete it->second;
+        }
+        ipcHandleMap.clear();
+    }
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 } // namespace ult
 } // namespace L0
