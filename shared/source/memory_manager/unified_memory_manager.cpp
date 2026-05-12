@@ -39,7 +39,7 @@ uint32_t UnifiedMemoryProperties::getRootDeviceIndex() const {
 }
 
 void SVMAllocsManager::MapBasedAllocationTracker::insert(const SvmAllocationData &allocationsPair) {
-    allocations.insert(std::make_pair(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), allocationsPair));
+    allocations.emplace(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), allocationsPair);
 }
 
 void SVMAllocsManager::MapBasedAllocationTracker::remove(const SvmAllocationData &allocationsPair) {
@@ -358,7 +358,7 @@ SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *
 }
 
 void SVMAllocsManager::MapOperationsTracker::insert(SvmMapOperation mapOperation) {
-    operations.insert(std::make_pair(mapOperation.regionSvmPtr, mapOperation));
+    operations.emplace(mapOperation.regionSvmPtr, mapOperation);
 }
 
 void SVMAllocsManager::MapOperationsTracker::remove(const void *regionPtr) {
@@ -687,7 +687,7 @@ void SVMAllocsManager::reinsertToAllocsForIndirectAccess(SvmAllocationData &svmD
     ContainerReadWriteLockType lock(mtx);
     for (auto alloc : svmData.gpuAllocations.getGraphicsAllocations()) {
         OPTIONAL_UNRECOVERABLE_IF(nullptr == alloc);
-        internalAllocationsMap.insert({svmData.getAllocId(), alloc});
+        internalAllocationsMap.emplace(svmData.getAllocId(), alloc);
     }
 }
 
@@ -1057,7 +1057,7 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
         tracker.latestResidentObjectId = this->allocationsCounter;
         tracker.latestSentTaskCount = taskCount;
 
-        this->indirectAllocationsResidency.insert(std::make_pair(&commandStreamReceiver, tracker));
+        this->indirectAllocationsResidency.emplace(&commandStreamReceiver, tracker);
     } else {
         if (this->allocationsCounter > entry->second.latestResidentObjectId) {
             parseAllAllocations = true;
@@ -1236,7 +1236,7 @@ void SVMAllocsManager::insertSVMAlloc(void *svmPtr, const SvmAllocationData &all
     UNRECOVERABLE_IF(internalAllocationsMap.count(allocData.getAllocId()) > 0);
     for (auto alloc : allocData.gpuAllocations.getGraphicsAllocations()) {
         if (alloc != nullptr) {
-            internalAllocationsMap.insert({allocData.getAllocId(), alloc});
+            internalAllocationsMap.emplace(allocData.getAllocId(), alloc);
         }
     }
 }

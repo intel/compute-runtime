@@ -178,7 +178,7 @@ bool ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::u
                 return false;
             }
 
-            rootDeviceNumCcsMap.insert({rootDeviceIndex, maxCcsCount});
+            rootDeviceNumCcsMap.emplace(rootDeviceIndex, maxCcsCount);
         }
     }
 

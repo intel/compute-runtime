@@ -704,7 +704,7 @@ ze_result_t Context::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, s
         if (allocData && allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
             auto driverHandle = device->getDriverHandle();
             std::lock_guard<std::mutex> lock(driverHandle->sharedMakeResidentAllocationsLock);
-            driverHandle->sharedMakeResidentAllocations.insert({ptr, allocation});
+            driverHandle->sharedMakeResidentAllocations.emplace(ptr, allocation);
         }
     }
 
@@ -1559,7 +1559,7 @@ ze_result_t Context::reserveVirtualMem(const void *pStart,
     virtualMemoryReservation->reservationBase = reservationBase;
     virtualMemoryReservation->reservationTotalSize = reservationTotalSize;
     auto lock = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
-    this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().insert(std::pair<void *, NEO::VirtualMemoryReservation *>(reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address), virtualMemoryReservation));
+    this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().emplace(reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address), virtualMemoryReservation);
     *pptr = reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address);
     return ZE_RESULT_SUCCESS;
 }
@@ -1708,7 +1708,7 @@ ze_result_t Context::createPhysicalMem(ze_device_handle_t hDevice,
     physicalMemoryAllocation->allocation = allocation;
     physicalMemoryAllocation->device = neoDevice;
     auto lock = this->driverHandle->getMemoryManager()->lockPhysicalMemoryAllocationMap();
-    this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().insert(std::pair<void *, NEO::PhysicalMemoryAllocation *>(reinterpret_cast<void *>(allocation), physicalMemoryAllocation));
+    this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().emplace(reinterpret_cast<void *>(allocation), physicalMemoryAllocation);
     *phPhysicalMemory = reinterpret_cast<ze_physical_mem_handle_t>(allocation);
     return ZE_RESULT_SUCCESS;
 }
@@ -1828,7 +1828,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         mappedRange->ptr = ptr;
         mappedRange->size = size;
         mappedRange->mappedAllocation = *allocationNode;
-        virtualMemoryReservation->mappedAllocations.insert(std::pair<void *, NEO::MemoryMappedRange *>(const_cast<void *>(ptr), mappedRange));
+        virtualMemoryReservation->mappedAllocations.emplace(const_cast<void *>(ptr), mappedRange);
         this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
         NEO::MemoryOperationsHandler *memoryOperationsIface = allocationNode->device->getRootDeviceEnvironment().memoryOperationsInterface.get();
         auto success = memoryOperationsIface->makeResident(allocationNode->device, ArrayRef<NEO::GraphicsAllocation *>(&allocationNode->allocation, 1), false, true);
@@ -1853,7 +1853,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         mappedRange->size = size;
         mappedRange->mappedAllocation = *allocationNode;
         mappedRange->mappedAllocation.allocation = allocData.gpuAllocations.getGraphicsAllocation(allocationNode->allocation->getRootDeviceIndex());
-        virtualMemoryReservation->mappedAllocations.insert(std::pair<void *, NEO::MemoryMappedRange *>(const_cast<void *>(ptr), mappedRange));
+        virtualMemoryReservation->mappedAllocations.emplace(const_cast<void *>(ptr), mappedRange);
         this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
         return ZE_RESULT_SUCCESS;
     }
@@ -2065,7 +2065,7 @@ void Context::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint
         } else {
             handleTracking->opaqueData = ipcData;
         }
-        this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
+        this->driverHandle->getIPCHandleMap().emplace(handle, handleTracking);
 
         if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
             registerIpcHandleWithServer(handle);

@@ -205,7 +205,7 @@ std::vector<EuThread::ThreadId> DebugSession::getSingleThreadsForDevice(uint32_t
                     if (thread != UINT32_MAX) {
                         threadID = thread;
                     }
-                    threads.push_back({deviceIndex, sliceID, subsliceID, euID, threadID});
+                    threads.emplace_back(deviceIndex, sliceID, subsliceID, euID, threadID);
 
                     if (thread != UINT32_MAX) {
                         break;

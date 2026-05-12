@@ -17,7 +17,7 @@
 namespace L0 {
 
 void HostPointerManager::MapBasedAllocationTracker::insert(const HostPointerData &allocationsData) {
-    allocations.insert(std::make_pair(reinterpret_cast<void *>(allocationsData.basePtr), allocationsData));
+    allocations.emplace(reinterpret_cast<void *>(allocationsData.basePtr), allocationsData);
 }
 
 void HostPointerManager::MapBasedAllocationTracker::remove(const void *ptr) {

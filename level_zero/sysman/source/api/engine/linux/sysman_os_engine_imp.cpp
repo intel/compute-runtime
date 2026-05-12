@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,7 +94,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInf
                 auto engineGroup = LinuxEngineImp::getGroupFromEngineType(l0EngineType);
                 auto itrEngineGroupInfo = mapEngineInfo.find(engineGroup);
                 if (itrEngineGroupInfo != mapEngineInfo.end()) {
-                    itrEngineGroupInfo->second.insert({0u, tileId});
+                    itrEngineGroupInfo->second.emplace(0u, tileId);
                 } else {
                     SetOfEngineInstanceAndTileId engineInstancesAndTileIds = {{0u, tileId}};
                     mapEngineInfo[engineGroup] = engineInstancesAndTileIds;
@@ -102,7 +102,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInf
 
                 itrEngineGroupInfo = mapEngineInfo.find(ZES_ENGINE_GROUP_ALL);
                 if (itrEngineGroupInfo != mapEngineInfo.end()) {
-                    itrEngineGroupInfo->second.insert({0u, tileId});
+                    itrEngineGroupInfo->second.emplace(0u, tileId);
                 } else {
                     SetOfEngineInstanceAndTileId engineInstancesAndTileIds = {{0u, tileId}};
                     mapEngineInfo[ZES_ENGINE_GROUP_ALL] = engineInstancesAndTileIds;

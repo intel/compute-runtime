@@ -632,7 +632,7 @@ bool OaMetricQueryPoolImp::createMetricQueryPool() {
     // Pool initialization.
     pool.reserve(description.count);
     for (uint32_t i = 0; i < description.count; ++i) {
-        pool.push_back({metricSource, *this, i});
+        pool.emplace_back(metricSource, *this, i);
     }
 
     // Metrics library query object initialization.
@@ -643,7 +643,7 @@ bool OaMetricQueryPoolImp::createSkipExecutionQueryPool() {
 
     pool.reserve(description.count);
     for (uint32_t i = 0; i < description.count; ++i) {
-        pool.push_back({metricSource, *this, i});
+        pool.emplace_back(metricSource, *this, i);
     }
 
     return true;

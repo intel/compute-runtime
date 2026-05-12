@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,7 +135,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInf
             uint32_t instanceCount = 0;
             memcpy_s(&instanceCount, sizeof(uint32_t), vResponses[index].dataBuffer, sizeof(uint32_t));
             for (uint32_t instance = 0; instance < instanceCount; instance++) {
-                engineInstancesAndTileIds.insert({instance, 0});
+                engineInstancesAndTileIds.emplace(instance, 0);
             }
         }
         mapEngineInfo[engineGroup.first] = engineInstancesAndTileIds;

@@ -181,7 +181,7 @@ std::vector<NameVersionPair> OfflineCompiler::getOpenCLCFeatures(ConstStringRef 
 
     std::vector<NameVersionPair> allSupportedFeatures;
     for (auto &feature : availableFeatures) {
-        allSupportedFeatures.push_back({feature.name, feature.version});
+        allSupportedFeatures.emplace_back(feature.name, feature.version);
     }
     return allSupportedFeatures;
 }
@@ -2026,7 +2026,7 @@ int OfflineCompiler::loadSpecializationConstants(const std::string &filename) {
             return OCLOC_INVALID_COMMAND_LINE;
         }
 
-        auto [iter, inserted] = tempSpecConstants.insert({id, value});
+        auto [iter, inserted] = tempSpecConstants.emplace(id, value);
         if (!inserted) {
             argHelper->printf("Error: Duplicate ID %u found in line %zu\n", id, i + 1);
             return OCLOC_INVALID_COMMAND_LINE;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ void LinuxVfImp::vfGetInstancesFromEngineInfo(NEO::EngineInfo *engineInfo, std::
         auto i915ToEngineMapRange = i915ToEngineMap.equal_range(static_cast<__u16>(itr->second.engineClass));
         for (auto l0EngineEntryInMap = i915ToEngineMapRange.first; l0EngineEntryInMap != i915ToEngineMapRange.second; l0EngineEntryInMap++) {
             auto l0EngineType = l0EngineEntryInMap->second;
-            engineGroupAndInstance.insert({l0EngineType, static_cast<uint32_t>(itr->second.engineInstance)});
+            engineGroupAndInstance.emplace(l0EngineType, static_cast<uint32_t>(itr->second.engineInstance));
         }
     }
 }

@@ -542,7 +542,7 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromFdInfo(std::map<uint64_t
             std::vector<int> fds;
             pLinuxSysmanImp->getPidFdsForOpenDevice(pid, fds);
             if (!fds.empty()) {
-                gpuClientProcessMap.insert({pid, fds});
+                gpuClientProcessMap.emplace(pid, fds);
             }
         }
     }
@@ -586,7 +586,7 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromFdInfo(std::map<uint64_t
         }
         DeviceMemStruct totalDeviceMem = {memSize, sharedSize};
         EngineMemoryPairType engineMemoryPair = {static_cast<int64_t>(activeEngines), totalDeviceMem};
-        pidClientMap.insert(std::make_pair(pid, engineMemoryPair));
+        pidClientMap.emplace(pid, engineMemoryPair);
     }
     return result;
 }
@@ -707,7 +707,7 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromSysfs(std::map<uint64_t,
         }
         DeviceMemStruct totalDeviceMem = {memSize, sharedMemSize};
         EngineMemoryPairType engineMemoryPair = {engineType, totalDeviceMem};
-        auto ret = pidClientMap.insert(std::make_pair(pid, engineMemoryPair));
+        auto ret = pidClientMap.emplace(pid, engineMemoryPair);
         if (ret.second == false) {
             // insertion failed as entry with same pid already exists in map
             // Now update the EngineMemoryPairType field for the existing pid entry

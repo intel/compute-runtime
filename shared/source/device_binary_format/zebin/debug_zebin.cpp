@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ Segments::Segments(const SharedPoolAllocation *globalVarAlloc, const SharedPoolA
         stringData = {reinterpret_cast<uintptr_t>(globalStrings.begin()), globalStrings.size()};
     }
     for (auto &[kernelName, isaSegment] : kernels) {
-        nameToSegMap.insert(std::pair(kernelName, isaSegment));
+        nameToSegMap.emplace(kernelName, isaSegment);
     }
 }
 

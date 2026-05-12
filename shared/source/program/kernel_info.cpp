@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,7 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
                                                                     static_cast<size_t>(kernelIsaSize));
         } else {
             kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-            storedAllocations.insert(std::make_pair(kernelName, MemoryManager::KernelAllocationInfo(kernelAllocation, 1u)));
+            storedAllocations.emplace(kernelName, MemoryManager::KernelAllocationInfo(kernelAllocation, 1u));
         }
     } else {
         kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);

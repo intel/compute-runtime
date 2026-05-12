@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ aub_stream::MMIOList AubHelper::splitMMIORegisters(const std::string &registers,
                 }
                 token.clear();
                 if (!firstElementInPair) {
-                    result.push_back(std::pair<uint32_t, uint32_t>(registerOffset, registerValue));
+                    result.emplace_back(registerOffset, registerValue);
                     registerValue = 0;
                     registerOffset = 0;
                 }

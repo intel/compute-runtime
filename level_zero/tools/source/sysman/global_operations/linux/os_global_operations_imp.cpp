@@ -447,7 +447,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         }
         DeviceMemStruct totalDeviceMem = {memSize, sharedMemSize};
         EngineMemoryPairType engineMemoryPair = {engineType, totalDeviceMem};
-        auto ret = pidClientMap.insert(std::make_pair(pid, engineMemoryPair));
+        auto ret = pidClientMap.emplace(pid, engineMemoryPair);
         if (ret.second == false) {
             // insertion failed as entry with same pid already exists in map
             // Now update the EngineMemoryPairType field for the existing pid entry

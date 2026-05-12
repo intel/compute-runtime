@@ -336,7 +336,7 @@ void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t
             }
 
             bdf = bdf.substr(loc);
-            mapOfDevIndexToDevPath.insert({devIndex, bdf});
+            mapOfDevIndexToDevPath.emplace(devIndex, bdf);
             pFsAccess = &osInterface->getFsAccess();
         } else {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,

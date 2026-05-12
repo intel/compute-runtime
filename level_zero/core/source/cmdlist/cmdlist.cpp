@@ -159,7 +159,7 @@ NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64
         auto csr = getCsr(copyOffload);
         csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, csr->peekTaskCount());
     } else if (alloc->getAllocationType() == NEO::AllocationType::externalHostPtr) {
-        hostPtrMap.insert(std::make_pair(buffer, alloc));
+        hostPtrMap.emplace(buffer, alloc);
     } else {
         commandContainer.getDeallocationContainer().push_back(alloc);
     }

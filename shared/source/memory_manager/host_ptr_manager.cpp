@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,7 +129,7 @@ void HostPtrManager::storeFragment(uint32_t rootDeviceIndex, FragmentStorage &fr
         element->second.refCount++;
     } else {
         fragment.refCount++;
-        partialAllocations.insert(std::pair<HostPtrEntryKey, FragmentStorage>(key, fragment));
+        partialAllocations.emplace(key, fragment);
     }
 }
 

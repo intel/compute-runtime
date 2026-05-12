@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -261,13 +261,13 @@ bool LinkerInput::addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentId
 
             traits.exportsFunctions = true;
             exportedFunctionsSegmentId = static_cast<int32_t>(symbolInfo.instructionSegmentId);
-            extFuncSymbols.push_back({symbolName, symbolInfo});
+            extFuncSymbols.emplace_back(symbolName, symbolInfo);
         }
     } else {
         return false;
     }
 
-    symbols.insert({symbolName, symbolInfo});
+    symbols.emplace(symbolName, symbolInfo);
     return true;
 }
 

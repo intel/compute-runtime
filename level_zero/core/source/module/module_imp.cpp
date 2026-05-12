@@ -600,7 +600,7 @@ NEO::Zebin::Debug::Segments ModuleImp::getZebinSegments() {
             segment.address += data->getIsaOffsetInParentAllocation();
             segment.size = data->getIsaSubAllocationSize();
         }
-        kernels.push_back({data->getDescriptor().kernelMetadata.kernelName, segment});
+        kernels.emplace_back(data->getDescriptor().kernelMetadata.kernelName, segment);
     }
 
     ArrayRef<const uint8_t> strings = {reinterpret_cast<const uint8_t *>(translationUnit->programInfo.globalStrings.initData),
@@ -1231,7 +1231,7 @@ bool ModuleImp::linkBinary() {
             auto kernelInfo = this->translationUnit->programInfo.kernelInfos.at(i);
             auto &kernHeapInfo = kernelInfo->heapInfo;
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
-            patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize));
+            patchedIsaTempStorage.emplace_back(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize);
             uintptr_t isaAddressToPatch = 0;
             if (useFullAddress) {
                 isaAddressToPatch = static_cast<uintptr_t>(kernelImmData.at(i)->getIsaGraphicsAllocation()->getGpuAddress() +
@@ -1593,7 +1593,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                     const auto kernelInfo = this->translationUnit->programInfo.kernelInfos.at(i);
                     auto &kernHeapInfo = kernelInfo->heapInfo;
                     const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
-                    patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize));
+                    patchedIsaTempStorage.emplace_back(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize);
 
                     uintptr_t isaAddressToPatch = 0;
                     if (compilerProductHelper.isHeaplessModeEnabled(this->device->getHwInfo())) {

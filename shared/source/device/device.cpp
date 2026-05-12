@@ -1437,8 +1437,8 @@ std::vector<DeviceVector> Device::groupDevices(DeviceVector devices) {
             auto productFamily = device->getHardwareInfo().platform.eProductFamily;
             auto result = productsMap.find(productFamily);
             if (result == productsMap.end()) {
-                productsMap.insert({productFamily, productsMap.size()});
-                outDevices.push_back(DeviceVector{});
+                productsMap.emplace(productFamily, productsMap.size());
+                outDevices.emplace_back();
             }
             auto productId = productsMap[productFamily];
             outDevices[productId].push_back(std::move(device));

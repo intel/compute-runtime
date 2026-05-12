@@ -658,7 +658,7 @@ void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &conta
         }
         void **storeCmd = nullptr;
         if (outArgs && outArgs->storeGroupCountInInlineData[i]) {
-            outArgs->commandsToPatch.push_back({});
+            outArgs->commandsToPatch.emplace_back();
             auto &commandArgs = outArgs->commandsToPatch.back();
             storeCmd = &commandArgs.command;
             commandArgs.address = offsets[i];
@@ -767,7 +767,7 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
         }
         void **storeCmd = nullptr;
         if (outArgs && outArgs->storeWorkDimInInlineData) {
-            outArgs->commandsToPatch.push_back({});
+            outArgs->commandsToPatch.emplace_back();
             auto &commandArgs = outArgs->commandsToPatch.back();
             storeCmd = &commandArgs.command;
             commandArgs.address = workDimOffset;
@@ -853,7 +853,7 @@ void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &c
 
         auto patchLocation = ptrOffset(crossThreadAddress, offsets[i]);
         if (outArgs && outArgs->storeGlobalWorkSizeInInlineData[i]) {
-            outArgs->commandsToPatch.push_back({});
+            outArgs->commandsToPatch.emplace_back();
             storeParams = &outArgs->commandsToPatch.back();
             patchLocation = offsets[i];
         }

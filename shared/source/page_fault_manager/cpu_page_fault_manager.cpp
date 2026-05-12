@@ -27,7 +27,7 @@ void CpuPageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsMana
     faultData.unifiedMemoryManager = unifiedMemoryManager;
     faultData.cmdQ = cmdQ;
     faultData.domain = domain;
-    this->memoryData.insert(std::make_pair(ptr, faultData));
+    this->memoryData.emplace(ptr, faultData);
     unifiedMemoryManager->nonGpuDomainAllocs.push_back(ptr);
     if (initialPlacement != GraphicsAllocation::UsmInitialPlacement::CPU) {
         this->protectCPUMemoryAccess(ptr, size);

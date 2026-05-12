@@ -890,7 +890,7 @@ void Kernel::markArgPatchedAndResolveArgs(uint32_t argIndex) {
         auto migrateRequiredForArg = memObj->getMultiGraphicsAllocation().requiresMigrations();
 
         if (migratableArgsMap.find(argIndex) == migratableArgsMap.end() && migrateRequiredForArg) {
-            migratableArgsMap.insert({argIndex, memObj});
+            migratableArgsMap.emplace(argIndex, memObj);
         } else if (migrateRequiredForArg) {
             migratableArgsMap[argIndex] = memObj;
         } else {
@@ -1944,7 +1944,7 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
         if (BUFFER_OBJ == kernelArguments.at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
             auto buffer = castToObject<Buffer>(getKernelArg(i));
             if (buffer && buffer->getMultiGraphicsAllocation().getDefaultGraphicsAllocation()->isCompressionEnabled()) {
-                kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer});
+                kernelObjsForAuxTranslation->emplace(KernelObjForAuxTranslation::Type::memObj, buffer);
                 auto &context = this->program->getContext();
                 if (context.isProvidingPerformanceHints()) {
                     const auto &argExtMeta = kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata[i];
@@ -1956,7 +1956,7 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
         if (SVM_ALLOC_OBJ == getKernelArguments().at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
             auto svmAlloc = reinterpret_cast<GraphicsAllocation *>(const_cast<void *>(getKernelArg(i)));
             if (svmAlloc && svmAlloc->isCompressionEnabled()) {
-                kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, svmAlloc});
+                kernelObjsForAuxTranslation->emplace(KernelObjForAuxTranslation::Type::gfxAlloc, svmAlloc);
                 auto &context = this->program->getContext();
                 if (context.isProvidingPerformanceHints()) {
                     const auto &argExtMeta = kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata[i];

@@ -1138,7 +1138,7 @@ ze_result_t Device::getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, 
         rootDeviceIndices.pushUnique(this->getNEODevice()->getRootDeviceIndex());
 
         std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
-        deviceBitfields.insert({this->getNEODevice()->getRootDeviceIndex(), this->getNEODevice()->getDeviceBitfield()});
+        deviceBitfields.emplace(this->getNEODevice()->getRootDeviceIndex(), this->getNEODevice()->getDeviceBitfield());
 
         NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
                                                              sizeof(uint64_t),

@@ -48,7 +48,7 @@ DirectSubmissionController::~DirectSubmissionController() {
 
 void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver *csr) {
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
-    directSubmissions.insert(std::make_pair(csr, DirectSubmissionState()));
+    directSubmissions.emplace(csr, DirectSubmissionState());
     this->overrideDirectSubmissionTimeouts(csr->getProductHelper());
 }
 

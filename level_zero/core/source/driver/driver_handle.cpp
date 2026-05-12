@@ -76,19 +76,19 @@ ze_result_t DriverHandle::createContext(const ze_context_desc_t *desc,
     if (numDevices == 0) {
         for (auto device : this->devices) {
             auto neoDevice = device->getNEODevice();
-            context->getDevices().insert(std::make_pair(neoDevice->getRootDeviceIndex(), device->toHandle()));
+            context->getDevices().emplace(neoDevice->getRootDeviceIndex(), device->toHandle());
             context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
-            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(),
-                                             neoDevice->getDeviceBitfield()});
+            context->deviceBitfields.emplace(neoDevice->getRootDeviceIndex(),
+                                             neoDevice->getDeviceBitfield());
             context->addDeviceHandle(device->toHandle());
         }
     } else {
         for (uint32_t i = 0; i < numDevices; i++) {
             auto neoDevice = Device::fromHandle(phDevices[i])->getNEODevice();
-            context->getDevices().insert(std::make_pair(neoDevice->getRootDeviceIndex(), phDevices[i]));
+            context->getDevices().emplace(neoDevice->getRootDeviceIndex(), phDevices[i]);
             context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
-            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(),
-                                             neoDevice->getDeviceBitfield()});
+            context->deviceBitfields.emplace(neoDevice->getRootDeviceIndex(),
+                                             neoDevice->getDeviceBitfield());
         }
     }
 
@@ -313,7 +313,7 @@ ze_result_t DriverHandle::initialize(std::vector<std::unique_ptr<NEO::Device>> n
 
         this->rootDeviceIndices.pushUnique(rootDeviceIndex);
 
-        this->deviceBitfields.insert({rootDeviceIndex, neoDevice->getDeviceBitfield()});
+        this->deviceBitfields.emplace(rootDeviceIndex, neoDevice->getDeviceBitfield());
 
         auto pNeoDevice = neoDevice.release();
 
@@ -777,7 +777,7 @@ ze_result_t DriverHandle::getPeerImage(Device *device, Image *image, Image **pee
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
-        device->peerImageAllocations.insert(std::make_pair(imageAllocPtr, *peerImage));
+        device->peerImageAllocations.emplace(imageAllocPtr, *peerImage);
     }
 
     return ZE_RESULT_SUCCESS;

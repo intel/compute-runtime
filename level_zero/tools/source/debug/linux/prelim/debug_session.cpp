@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1192,7 +1192,7 @@ void TileDebugSessionLinuxi915::readStateSaveAreaHeader() {
 
 bool TileDebugSessionLinuxi915::insertModule(zet_debug_event_info_module_t module) {
     std::lock_guard<std::mutex> lock(asyncThreadMutex);
-    modules.insert({module.load, module});
+    modules.emplace(module.load, module);
     return isAttached;
 }
 

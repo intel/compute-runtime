@@ -168,7 +168,7 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
                 deviceBitfield |= pDevice->getDeviceBitfield();
             }
         }
-        deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
+        deviceBitfields.emplace(rootDeviceIndex, deviceBitfield);
     }
 
     this->svmAllocsManager = new SVMAllocsManager(this->clDevices[0]->getMemoryManager());
@@ -335,7 +335,7 @@ void Platform::initializeHostUsmAllocationPool() {
                     deviceBitfield |= pDevice->getDeviceBitfield();
                 }
             }
-            deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
+            deviceBitfields.emplace(rootDeviceIndex, deviceBitfield);
         }
 
         UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,

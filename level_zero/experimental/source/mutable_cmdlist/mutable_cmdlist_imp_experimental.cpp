@@ -36,7 +36,7 @@ ze_result_t MutableCommandListImp::getVariable(const InterfaceVariableDescriptor
 
     auto var = std::unique_ptr<Variable>(Variable::create(this->base, varDesc));
     if (false == varName.empty()) {
-        variableMap.insert(std::make_pair(varName, var.get()));
+        variableMap.emplace(varName, var.get());
     }
 
     if (var->getDesc().isTemporary) {
@@ -78,7 +78,7 @@ ze_result_t MutableCommandListImp::getLabel(const InterfaceLabelDescriptor *labe
 
     auto label = std::unique_ptr<Label>(Label::create(this->base, labelDesc));
     if (false == labelName.empty()) {
-        labelMap.insert(std::make_pair(labelName, label.get()));
+        labelMap.emplace(labelName, label.get());
     }
 
     *outLabel = label.get();

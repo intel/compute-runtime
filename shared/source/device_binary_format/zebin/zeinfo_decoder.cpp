@@ -834,7 +834,7 @@ DecodeError readZeInfoAttributes(const Yaml::YamlParser &parser, const Yaml::Nod
             outAttributes.intelReqdThreadgroupDispatchSize = AttributeTypes::Defaults::intelReqdThreadgroupDispatchSize;
             validAttributes &= readZeInfoValueChecked(parser, attributesMetadataNd, *outAttributes.intelReqdThreadgroupDispatchSize, context, outErrReason);
         } else if (key.contains(Tags::Kernel::Attributes::hintSuffix.data())) {
-            outAttributes.otherHints.push_back({key, parser.readValue(attributesMetadataNd)});
+            outAttributes.otherHints.emplace_back(key, parser.readValue(attributesMetadataNd));
         } else {
             std::ostringstream entry;
             entry << "\"" << key.str() << "\" in context of " << context.str();

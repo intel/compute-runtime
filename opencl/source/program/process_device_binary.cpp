@@ -130,7 +130,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
         for (const auto &kernelInfo : kernelInfoArray) {
             auto &kernHeapInfo = kernelInfo->heapInfo;
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
-            patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize));
+            patchedIsaTempStorage.emplace_back(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize);
             DEBUG_BREAK_IF(nullptr == kernelInfo->getIsaGraphicsAllocation());
             isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), static_cast<uintptr_t>(kernelInfo->getIsaGraphicsAllocation()->getGpuAddressToPatch() + kernelInfo->getIsaOffsetInParentAllocation()), kernHeapInfo.kernelHeapSize});
             kernelDescriptors.push_back(&kernelInfo->kernelDescriptor);
@@ -380,7 +380,7 @@ Zebin::Debug::Segments Program::getZebinSegments(uint32_t rootDeviceIndex) {
             segment.size = kernelInfo->getIsaGraphicsAllocation()->getUnderlyingBufferSize();
         }
 
-        kernels.push_back({kernelInfo->kernelDescriptor.kernelMetadata.kernelName, segment});
+        kernels.emplace_back(kernelInfo->kernelDescriptor.kernelMetadata.kernelName, segment);
     }
     return Zebin::Debug::Segments(getGlobalSurface(rootDeviceIndex), getConstantSurface(rootDeviceIndex), strings, kernels);
 }

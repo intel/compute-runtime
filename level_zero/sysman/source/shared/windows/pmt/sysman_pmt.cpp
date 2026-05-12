@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -143,7 +143,7 @@ ze_result_t PlatformMonitoringTech::getKeyOffsetMap(std::map<std::string, std::p
             indexCount++;
             std::map<std::string, uint32_t> tempKeyOffsetMap = keyOffsetMapEntry->second;
             for (it = tempKeyOffsetMap.begin(); it != tempKeyOffsetMap.end(); it++) {
-                keyOffsetMap.insert(std::make_pair(it->first, std::make_pair(it->second, index)));
+                keyOffsetMap.emplace(it->first, std::make_pair(it->second, index));
             }
         }
     }

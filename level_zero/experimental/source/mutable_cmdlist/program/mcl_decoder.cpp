@@ -39,7 +39,7 @@ void MclDecoder::decode(const MclDecoderArgs &args) {
         if (varInfo.tmp) {
             args.tempVariables->push_back(var);
         } else {
-            args.variableMap->insert({varInfo.name, var});
+            args.variableMap->emplace(varInfo.name, var);
         }
     }
 
