@@ -61,7 +61,7 @@ struct DispatchFlags {
                   KernelExecutionType kernelExecutionTypeP, MemoryCompressionState memoryCompressionStateP,
                   uint64_t sliceCountP, bool blockingP, bool dcFlushP, bool useSLMP, bool guardCommandBufferWithPipeControlP, bool gsba32BitRequiredP,
                   bool lowPriorityP, bool implicitFlushP, bool outOfOrderExecutionAllowedP, bool epilogueRequiredP,
-                  bool usePerDSSbackedBufferP, bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush,
+                  bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush,
                   bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool stateCacheInvalidation, bool isStallingCommandsOnNextFlushRequired, bool isDcFlushRequiredOnStallingCommandsOnNextFlush) : barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
                                                                                                                                                                                                              pipelineSelectArgs(pipelineSelectArgsP),
                                                                                                                                                                                                              flushStampReference(flushStampReferenceP),
@@ -83,7 +83,6 @@ struct DispatchFlags {
                                                                                                                                                                                                              implicitFlush(implicitFlushP),
                                                                                                                                                                                                              outOfOrderExecutionAllowed(outOfOrderExecutionAllowedP),
                                                                                                                                                                                                              epilogueRequired(epilogueRequiredP),
-                                                                                                                                                                                                             usePerDssBackedBuffer(usePerDSSbackedBufferP),
                                                                                                                                                                                                              areMultipleSubDevicesInContext(areMultipleSubDevicesInContextP),
                                                                                                                                                                                                              memoryMigrationRequired(memoryMigrationRequiredP),
                                                                                                                                                                                                              textureCacheFlush(textureCacheFlush),
@@ -117,7 +116,6 @@ struct DispatchFlags {
     bool implicitFlush = false;
     bool outOfOrderExecutionAllowed = false;
     bool epilogueRequired = false;
-    bool usePerDssBackedBuffer = false;
     bool areMultipleSubDevicesInContext = false;
     bool memoryMigrationRequired = false;
     bool textureCacheFlush = false;

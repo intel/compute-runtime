@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,6 @@ struct DispatchFlagsHelper {
             false,                                   // implicitFlush
             false,                                   // outOfOrderExecutionAllowed
             false,                                   // epilogueRequired
-            false,                                   // usePerDssBackedBuffer
             false,                                   // areMultipleSubDevicesInContext
             false,                                   // memoryMigrationRequired
             false,                                   // textureCacheFlush

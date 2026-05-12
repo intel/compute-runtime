@@ -1965,54 +1965,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsFalseWhenCal
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, whenPerDssBackBufferIsAllocatedThenItIsClearedInCleanupResources) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    ASSERT_NE(nullptr, pDevice);
-    commandStreamReceiver.createPerDssBackedBuffer(*pDevice);
-    EXPECT_NE(nullptr, commandStreamReceiver.perDssBackedBuffer);
-    commandStreamReceiver.cleanupResources();
-    EXPECT_EQ(nullptr, commandStreamReceiver.perDssBackedBuffer);
-}
-
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, whenPerDssBackBufferProgrammingEnabledThenAllocationIsCreated, IsAtMostXe3Core) {
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    dispatchFlags.usePerDssBackedBuffer = true;
-
-    commandStreamReceiver.flushTask(commandStream,
-                                    0,
-                                    &dsh,
-                                    &ioh,
-                                    &ssh,
-                                    taskLevel,
-                                    dispatchFlags,
-                                    *pDevice);
-
-    EXPECT_EQ(1u, commandStreamReceiver.createPerDssBackedBufferCalled);
-    EXPECT_NE(nullptr, commandStreamReceiver.perDssBackedBuffer);
-}
-
-HWTEST_F(CommandStreamReceiverFlushTaskTests, whenPerDssBackBufferProgrammingEnabledAndPerDssBackedBufferAlreadyPresentThenNewAllocationIsNotCreated) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto memoryManager = pDevice->getMemoryManager();
-    commandStreamReceiver.perDssBackedBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    dispatchFlags.usePerDssBackedBuffer = true;
-
-    commandStreamReceiver.flushTask(commandStream,
-                                    0,
-                                    &dsh,
-                                    &ioh,
-                                    &ssh,
-                                    taskLevel,
-                                    dispatchFlags,
-                                    *pDevice);
-
-    EXPECT_EQ(0u, commandStreamReceiver.createPerDssBackedBufferCalled);
-}
-
 template <typename GfxFamily>
 class MockCsrWithFailingFlush : public CommandStreamReceiverHw<GfxFamily> {
   public:

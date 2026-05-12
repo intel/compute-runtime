@@ -222,7 +222,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs);
     void programEpilogue(LinearStream &csr, Device &device, void **batchBufferEndLocation, DispatchFlags &dispatchFlags);
     void programEpliogueCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
-    void programPerDssBackedBuffer(LinearStream &scr, Device &device, DispatchFlags &dispatchFlags);
     void programStateSip(LinearStream &cmdStream, Device &device);
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads);
     void programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream);
@@ -241,7 +240,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void handleAllocationsResidencyForHeaplessProlog(LinearStream &linearStream, Device &device);
 
     void addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device);
-    void addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags);
     bool are4GbHeapsAvailable() const;
 
     void createScratchSpaceController();

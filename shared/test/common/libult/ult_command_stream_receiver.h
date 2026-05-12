@@ -61,7 +61,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass = CommandStreamReceiverHw<GfxFamily>;
 
   public:
-    using BaseClass::addPipeControlBefore3dState;
     using BaseClass::bcsRelaxedOrderingAllowed;
     using BaseClass::blitterDirectSubmission;
     using BaseClass::checkPlatformSupportsGpuIdleImplicitFlush;
@@ -94,14 +93,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::isWalkerWithProfilingEnqueued;
     using BaseClass::makeResident;
     using BaseClass::pageTableManagerInitialized;
-    using BaseClass::perDssBackedBuffer;
     using BaseClass::pollForCompletion;
     using BaseClass::postInitFlagsSetup;
     using BaseClass::primaryCsr;
     using BaseClass::programActivePartitionConfig;
     using BaseClass::programEnginePrologue;
     using BaseClass::programExceptions;
-    using BaseClass::programPerDssBackedBuffer;
     using BaseClass::programPreamble;
     using BaseClass::programStallingCommandsForBarrier;
     using BaseClass::programStallingNoPostSyncCommandsForBarrier;
@@ -469,11 +466,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return CommandStreamReceiverHw<GfxFamily>::getAndClearIsWalkerWithProfilingEnqueued();
     }
 
-    bool createPerDssBackedBuffer(Device &device) override {
-        createPerDssBackedBufferCalled++;
-        return BaseClass::createPerDssBackedBuffer(device);
-    }
-
     bool isMultiOsContextCapable() const override {
         if (callBaseIsMultiOsContextCapable) {
             return BaseClass::isMultiOsContextCapable();
@@ -684,7 +676,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t makeResidentCalledTimes = 0;
     uint32_t makeSurfacePackNonResidentCalled = false;
     uint32_t blitBufferCalled = 0;
-    uint32_t createPerDssBackedBufferCalled = 0;
     uint32_t initDirectSubmissionCalled = 0;
     uint32_t fillReusableAllocationsListCalled = 0;
     uint32_t pollForCompletionCalled = 0;

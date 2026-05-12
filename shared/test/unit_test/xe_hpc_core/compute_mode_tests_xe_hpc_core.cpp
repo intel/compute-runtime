@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -400,39 +400,6 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenProgramExtendedPipeControlPriorToNo
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase());
     expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
-}
-
-HWTEST2_F(XeHpcComputeModeRequirements, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledWhenaddPipeControlBefore3dStateIsCalledThenCorrectCommandsAreAdded, IsXeHpcCore) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-
-    setUpImpl<FamilyType>(&hwInfo);
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    char buff[1024] = {0};
-    LinearStream stream(buff, 1024);
-    flags.usePerDssBackedBuffer = true;
-    getCsrHw<FamilyType>()->addPipeControlBefore3dState(stream, flags);
-
-    auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
-
-    HardwareParse hwParser;
-
-    hwParser.parseCommands<FamilyType>(stream, startOffset);
-
-    auto pipeControlIterator = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
-
-    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
-    EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
-    EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-    EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
-    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
-    EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommandsAreAdded, IsXeHpcCore) {

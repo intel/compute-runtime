@@ -362,7 +362,6 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         true,                                                             // implicitFlush
         csr->isNTo1SubmissionModelEnabled(),                              // outOfOrderExecutionAllowed
         false,                                                            // epilogueRequired
-        false,                                                            // usePerDssBackedBuffer
         this->device->getNEODevice()->getNumGenericSubDevices() > 1,      // areMultipleSubDevicesInContext
         false,                                                            // memoryMigrationRequired
         false,                                                            // textureCacheFlush

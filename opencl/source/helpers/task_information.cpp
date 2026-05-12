@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,6 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
         false,                                                                       // implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), // outOfOrderExecutionAllowed
         false,                                                                       // epilogueRequired
-        false,                                                                       // usePerDssBackedBuffer
         false,                                                                       // areMultipleSubDevicesInContext
         false,                                                                       // memoryMigrationRequired
         false,                                                                       // textureCacheFlush
@@ -211,7 +210,6 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         false,                                                                       // implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), // outOfOrderExecutionAllowed
         false,                                                                       // epilogueRequired
-        false,                                                                       // usePerDssBackedBuffer
         kernel->areMultipleSubDevicesInContext(),                                    // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                           // memoryMigrationRequired
         commandQueue.isTextureCacheFlushNeeded(this->commandType),                   // textureCacheFlush
@@ -394,7 +392,6 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         false,                                                                 // implicitFlush
         commandStreamReceiver.isNTo1SubmissionModelEnabled(),                  // outOfOrderExecutionAllowed
         false,                                                                 // epilogueRequired
-        false,                                                                 // usePerDssBackedBuffer
         commandQueue.getContext().containsMultipleSubDevices(rootDeviceIndex), // areMultipleSubDevicesInContext
         false,                                                                 // memoryMigrationRequired
         false,                                                                 // textureCacheFlush

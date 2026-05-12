@@ -509,14 +509,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
         }
     }
 
-    if (dispatchFlags.usePerDssBackedBuffer) {
-        if (!perDssBackedBuffer) {
-            auto success = createPerDssBackedBuffer(device);
-            UNRECOVERABLE_IF(!success);
-        }
-        makeResident(*perDssBackedBuffer);
-    }
-
     handleFrontEndStateTransition(dispatchFlags);
 
     auto estimatedSize = getRequiredCmdStreamSizeAligned(dispatchFlags, device);
@@ -543,8 +535,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
     programComputeMode(commandStreamCSR, dispatchFlags, hwInfo);
     programPreamble(commandStreamCSR, device, newL3Config);
-    addPipeControlBefore3dState(commandStreamCSR, dispatchFlags);
-    programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
     if (isRayTracingStateProgramingNeeded(device)) {
         dispatchRayTracingStateCommand(commandStreamCSR, device);
     }
@@ -820,7 +810,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     }
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
-    if ((dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) || isRayTracingStateProgramingNeeded(device)) {
+    if (isRayTracingStateProgramingNeeded(device)) {
         size += getCmdSizeForPerDssBackedBuffer(device.getHardwareInfo());
     }
     size += getCmdSizeForEpilogue(dispatchFlags);

@@ -930,7 +930,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         implicitFlush,                                                          // implicitFlush
         !eventBuilder.getEvent() || csr.isNTo1SubmissionModelEnabled(),         // outOfOrderExecutionAllowed
         false,                                                                  // epilogueRequired
-        false,                                                                  // usePerDssBackedBuffer
         kernel->areMultipleSubDevicesInContext(),                               // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                      // memoryMigrationRequired
         textureCacheFlush,                                                      // textureCacheFlush
@@ -1190,7 +1189,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             (enqueueProperties.operation == EnqueueProperties::Operation::blit), // implicitFlush
             getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      // outOfOrderExecutionAllowed
             false,                                                               // epilogueRequired
-            false,                                                               // usePerDssBackedBuffer
             context->containsMultipleSubDevices(rootDeviceIndex),                // areMultipleSubDevicesInContext
             false,                                                               // memoryMigrationRequired
             false,                                                               // textureCacheFlush

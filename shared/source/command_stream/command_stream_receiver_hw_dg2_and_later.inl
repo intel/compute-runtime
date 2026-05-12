@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,15 +20,6 @@ using _3DSTATE_BTD = typename Family::_3DSTATE_BTD;
 using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
 template <>
-void CommandStreamReceiverHw<Family>::programPerDssBackedBuffer(LinearStream &commandStream, Device &device, DispatchFlags &dispatchFlags) {
-    if (dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
-        DEBUG_BREAK_IF(perDssBackedBuffer == nullptr);
-        EncodeEnableRayTracing<Family>::programEnableRayTracing(commandStream, perDssBackedBuffer->getGpuAddress());
-        isPerDssBackedBufferSent = true;
-    }
-}
-
-template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
     size_t size = sizeof(_3DSTATE_BTD);
     auto *releaseHelper = getReleaseHelper();
@@ -41,31 +32,6 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const Ha
     }
 
     return size;
-}
-
-template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags) {
-    if (!dispatchFlags.usePerDssBackedBuffer) {
-        return;
-    }
-
-    if (isPerDssBackedBufferSent) {
-        return;
-    }
-
-    auto &hwInfo = peekHwInfo();
-    auto &productHelper = getProductHelper();
-    auto *releaseHelper = getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs(), releaseHelper);
-    std::ignore = isBasicWARequired;
-
-    PipeControlArgs args;
-    args.dcFlushEnable = this->dcFlushSupport;
-
-    if (isExtendedWARequired) {
-        DEBUG_BREAK_IF(perDssBackedBuffer == nullptr);
-        NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, this->peekRootDeviceEnvironment(), isRcs());
-    }
 }
 
 template <>

@@ -568,11 +568,6 @@ void CommandStreamReceiver::cleanupResources() {
         preemptionAllocation = nullptr;
     }
 
-    if (perDssBackedBuffer) {
-        getMemoryManager()->freeGraphicsMemory(perDssBackedBuffer);
-        perDssBackedBuffer = nullptr;
-    }
-
     if (clearColorAllocation) {
         getMemoryManager()->freeGraphicsMemory(clearColorAllocation);
         clearColorAllocation = nullptr;
@@ -1449,15 +1444,6 @@ TaskCountType CommandStreamReceiver::getCompletionValue(const GraphicsAllocation
     }
     auto osContextId = osContext->getContextId();
     return gfxAllocation.getTaskCount(osContextId);
-}
-
-bool CommandStreamReceiver::createPerDssBackedBuffer(Device &device) {
-    UNRECOVERABLE_IF(perDssBackedBuffer != nullptr);
-    auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(device);
-
-    perDssBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, size, AllocationType::buffer, device.getDeviceBitfield()});
-
-    return perDssBackedBuffer != nullptr;
 }
 
 void CommandStreamReceiver::printTagAddressContent(TaskCountType taskCountToWait, int64_t waitTimeout, bool start) {
