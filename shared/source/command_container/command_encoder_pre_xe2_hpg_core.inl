@@ -98,8 +98,4 @@ bool EncodeSurfaceState<Family>::shouldProgramAuxForMcs(bool isAuxCapable, bool 
     return isAuxCapable && hasMcsSurface;
 }
 
-template <typename Family>
-void EncodeSurfaceState<Family>::setEnableSamplerRouteToLsc(R_SURFACE_STATE *surfaceState) {
-}
-
 } // namespace NEO

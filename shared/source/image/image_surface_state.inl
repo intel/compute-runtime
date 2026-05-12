@@ -136,7 +136,6 @@ void ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(RENDER_S
         surfaceState->setSurfacePitch(static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));
         surfaceState->setSurfaceType(surfaceType);
     }
-    EncodeSurfaceState<GfxFamily>::setEnableSamplerRouteToLsc(surfaceState);
 }
 
 template <typename GfxFamily>

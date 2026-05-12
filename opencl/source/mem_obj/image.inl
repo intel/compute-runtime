@@ -59,7 +59,6 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         surfaceState->setDepth(depth);
         surfaceState->setSurfacePitch(static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes));
         surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
-        EncodeSurfaceState<GfxFamily>::setEnableSamplerRouteToLsc(surfaceState);
     } else {
         ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(surfaceState, imgInfo, cubeFaceIndex, surfaceType, depth);
         if (setAsMediaBlockImage) {

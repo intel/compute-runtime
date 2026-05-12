@@ -366,32 +366,6 @@ TEST_F(ImageSurfaceStateTests, givenPrintImgInfoDebugFlagDisabledWhenPrintCalled
     EXPECT_EQ(0u, output.size());
 }
 
-HWTEST2_F(ImageSurfaceStateTests, givenCompatibleSurfaceFormatWhenSetImageSurfaceStateDimensionsWith2dTypeThenEnableSamplerRouteToLscIsSet, IsAtLeastXe2HpgCore) {
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    surfaceState.setSurfaceFormat(FamilyType::RENDER_SURFACE_STATE::SURFACE_FORMAT_R32_FLOAT);
-    surfaceState.setEnableSamplerRouteToLsc(false);
-
-    uint32_t depth;
-    ImageSurfaceStateHelper<FamilyType>::setImageSurfaceStateDimensions(
-        &surfaceState, imageInfo, __GMM_NO_CUBE_MAP,
-        FamilyType::RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D, depth);
-
-    EXPECT_TRUE(surfaceState.getEnableSamplerRouteToLsc());
-}
-
-HWTEST2_F(ImageSurfaceStateTests, givenCompatibleSurfaceFormatWhenSetImageSurfaceStateDimensionsWithIncompatibleTypeThenEnableSamplerRouteToLscIsNotSet, IsAtLeastXe2HpgCore) {
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    surfaceState.setSurfaceFormat(FamilyType::RENDER_SURFACE_STATE::SURFACE_FORMAT_R32_FLOAT);
-    surfaceState.setEnableSamplerRouteToLsc(false);
-
-    uint32_t depth;
-    ImageSurfaceStateHelper<FamilyType>::setImageSurfaceStateDimensions(
-        &surfaceState, imageInfo, __GMM_NO_CUBE_MAP,
-        FamilyType::RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, depth);
-
-    EXPECT_FALSE(surfaceState.getEnableSamplerRouteToLsc());
-}
-
 HWTEST2_F(ImageSurfaceStateTests, givenImage1dBufferWithLargeWidthWhenSetImageSurfaceStateDimensionsThenSurfTypeBufferIsUsedWithCorrectEncoding, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 

@@ -77,7 +77,6 @@ struct EncodeSurfaceState {
     static bool shouldProgramAuxForMcs(bool isAuxCapable, bool hasMcsSurface);
     static void convertSurfaceStateToPacked(R_SURFACE_STATE *surfaceState, ImageInfo &imgInfo);
     static void setAdditionalCacheSettings(R_SURFACE_STATE *surfaceState);
-    static void setEnableSamplerRouteToLsc(R_SURFACE_STATE *surfaceState);
 };
 
 } // namespace NEO

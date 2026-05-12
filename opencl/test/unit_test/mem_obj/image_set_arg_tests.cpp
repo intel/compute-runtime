@@ -835,48 +835,6 @@ HWTEST_F(ImageSetArgTest, GivenImageFrom1dBufferWhenSettingKernelArgThenProperti
     clReleaseMemObject(buffer);
 }
 
-HWTEST2_F(ImageSetArgTest, givenImage1dBufferWhenSetImageArgIsCalledThenEnableSamplerRouteToLscIsSet, IsAtLeastXe2HpgCore) {
-    auto buffer = clCreateBuffer(context, 0, 4096, nullptr, nullptr);
-    ASSERT_NE(nullptr, buffer);
-
-    cl_image_desc imageDesc = {};
-    imageDesc.buffer = buffer;
-    imageDesc.image_width = 64;
-    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
-
-    cl_image_format imageFormat = {};
-    imageFormat.image_channel_data_type = CL_FLOAT;
-    imageFormat.image_channel_order = CL_R;
-
-    cl_int ret;
-    auto imageFromBuffer = Image::validateAndCreateImage(context, nullptr, 0, 0, &imageFormat, &imageDesc, nullptr, ret);
-    ASSERT_EQ(CL_SUCCESS, ret);
-    ASSERT_NE(nullptr, imageFromBuffer);
-
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    surfaceState.setEnableSamplerRouteToLsc(false);
-    auto image = castToObject<Image>(imageFromBuffer);
-    image->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
-
-    EXPECT_TRUE(surfaceState.getEnableSamplerRouteToLsc());
-
-    clReleaseMemObject(imageFromBuffer);
-    clReleaseMemObject(buffer);
-}
-
-HWTEST2_F(ImageSetArgTest, givenNon1dBufferImageWhenSetImageArgIsCalledThenEnableSamplerRouteToLscIsSet, IsAtLeastXe2HpgCore) {
-    std::unique_ptr<Image> image2d(Image2dHelperUlt<>::create(context));
-    auto surfaceState2d = FamilyType::cmdInitRenderSurfaceState;
-    surfaceState2d.setEnableSamplerRouteToLsc(false);
-    image2d->setImageArg(&surfaceState2d, false, 0, pClDevice->getRootDeviceIndex());
-    EXPECT_TRUE(surfaceState2d.getEnableSamplerRouteToLsc());
-
-    auto surfaceState3d = FamilyType::cmdInitRenderSurfaceState;
-    surfaceState3d.setEnableSamplerRouteToLsc(false);
-    srcImage->setImageArg(&surfaceState3d, false, 0, pClDevice->getRootDeviceIndex());
-    EXPECT_FALSE(surfaceState3d.getEnableSamplerRouteToLsc());
-}
-
 HWTEST_F(ImageSetArgTest, GivenImageWithClLuminanceFormatWhenSettingKernelArgThenPropertiesAreSetCorrectly) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
