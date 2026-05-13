@@ -21,15 +21,28 @@ std::vector<DrmRasNode> NetlinkRasUtil::rasNodes;
 std::map<uint32_t, std::vector<DrmErrorCounter>> NetlinkRasUtil::rasErrorList;
 std::unique_ptr<DrmNlApi> (*NetlinkRasUtil::createDrmNlApi)() = []() { return std::make_unique<DrmNlApi>(); };
 
-void NetlinkRasUtil::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId) {
-    // Query available RAS nodes from netlink interface
+ze_result_t NetlinkRasUtil::initializeRasNodes(DrmNlApi *pDrmNl) {
     if (rasNodes.empty()) {
-        auto pDrmNlApi = createDrmNlApi();
-        ze_result_t result = pDrmNlApi->listNodes(rasNodes);
+        ze_result_t result = pDrmNl->listNodes(rasNodes);
         if (result != ZE_RESULT_SUCCESS) {
-            return;
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Failed to list netlink RAS nodes: 0x%x\n", result);
+            return result;
         }
-        // Cache the error list for each discovered node
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+void NetlinkRasUtil::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId) {
+    auto pDrmNlApi = createDrmNlApi();
+
+    // Populate rasNodes via initializeRasNodes if not already done.
+    if (initializeRasNodes(pDrmNlApi.get()) != ZE_RESULT_SUCCESS) {
+        return;
+    }
+
+    // Cache the error list for each discovered node if not already populated.
+    if (rasErrorList.empty()) {
         for (const auto &node : rasNodes) {
             std::vector<DrmErrorCounter> errorList;
             pDrmNlApi->getErrorsList(node.nodeId, errorList);

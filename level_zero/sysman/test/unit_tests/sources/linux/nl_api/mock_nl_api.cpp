@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 #include "third_party/uapi/drm-next/drm/drm_ras.h"
 
+#include <cstdint>
 #include <cstring>
 #include <errno.h>
 #include <linux/netlink.h>
@@ -414,13 +415,56 @@ int MockNlApi::nlRecvmsgsDefault(struct nl_sock *sock) {
         return returnValue;
     }
 
-    // Only call callbacks once
-    if (!callbackInvoked) {
+    // For event socket with no data, don't invoke callback (simulating no message received)
+    bool shouldCallCallback = !callbackInvoked;
+    bool isEventSocket = (sock == eventSocketPtr);
+
+    // Set flag to indicate we're processing event socket
+    processingEventSocket = isEventSocket;
+
+    if (isEventSocket && myValidCallback != nullptr && !receiveEventData) {
+        // Event socket polling with no event data - don't invoke callback
+        shouldCallCallback = false;
+    }
+
+    // Reset callbackInvoked to allow callback to be called again
+    // For event sockets, always reset to allow multiple polls
+    // For regular operations, reset is handled by nlSendAuto
+    if (isEventSocket) {
+        callbackInvoked = false;
+    }
+
+    // Only call callbacks once per message
+    if (shouldCallCallback) {
         // Set error in mock header if clearErrorCounter/setThreshold and isErrorDataInvalid
         if ((clearErrorCounter || setThreshold) && isErrorDataInvalid) {
             mockNlmsghdr.hdr.nlmsg_type = NLMSG_ERROR;
             mockNlmsghdr.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct nlmsgerr));
             mockNlmsghdr.err.error = -EINVAL;
+        }
+
+        // For receiveEventData on event socket, prepare event attribute chain
+        if (isEventSocket && receiveEventData) {
+            // Clean up old event attribute chain if it exists
+            if (eventAttrChain != nullptr) {
+                delete eventAttrChain;
+            }
+
+            eventAttrChain = new MyNlattr;
+            MyNlattr *next = eventAttrChain;
+
+            next->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_NODE_ID;
+            next->content = eventNodeId;
+            next = next->addNext();
+
+            next->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID;
+            next->content = eventErrorId;
+        } else if (isEventSocket && !receiveEventData) {
+            // Clear event attribute chain for event socket when not receiving event data
+            if (eventAttrChain != nullptr) {
+                delete eventAttrChain;
+                eventAttrChain = nullptr;
+            }
         }
 
         // Call the appropriate callback
@@ -445,10 +489,16 @@ int MockNlApi::nlRecvmsgsDefault(struct nl_sock *sock) {
         }
     }
 
+    // Reset the processing flag before returning
+    processingEventSocket = false;
+
     return returnValue;
 }
 
 void *MockNlApi::nlaData(const struct nlattr *attr) {
+    if (!MyNlattr::isValid(attr)) {
+        return nullptr; // Not a real MyNlattr
+    }
     const MyNlattr *pAttr = reinterpret_cast<const MyNlattr *>(attr);
     return pAttr->nested;
 }
@@ -459,21 +509,33 @@ char *MockNlApi::nlaGetString(const struct nlattr *attr) {
 }
 
 uint32_t MockNlApi::nlaGetU32(const struct nlattr *attr) {
+    if (!MyNlattr::isValid(attr)) {
+        return 0; // Not a real MyNlattr
+    }
     const MyNlattr *pAttr = reinterpret_cast<const MyNlattr *>(attr);
     return pAttr->content & 0xFFFFFFFFUL;
 }
 
 uint64_t MockNlApi::nlaGetU64(const struct nlattr *attr) {
+    if (!MyNlattr::isValid(attr)) {
+        return 0; // Not a real MyNlattr
+    }
     const MyNlattr *pAttr = reinterpret_cast<const MyNlattr *>(attr);
     return pAttr->content;
 }
 
 uint8_t MockNlApi::nlaGetU8(const struct nlattr *attr) {
+    if (!MyNlattr::isValid(attr)) {
+        return 0; // Not a real MyNlattr
+    }
     const MyNlattr *pAttr = reinterpret_cast<const MyNlattr *>(attr);
     return pAttr->content & 0xFFUL;
 }
 
 int MockNlApi::nlaIsNested(const struct nlattr *attr) {
+    if (!MyNlattr::isValid(attr)) {
+        return 0; // Not a real MyNlattr
+    }
     const MyNlattr *pAttr = reinterpret_cast<const MyNlattr *>(attr);
     return nullptr != pAttr->nested;
 }
@@ -482,11 +544,24 @@ int MockNlApi::nlaLen(const struct nlattr *attr) {
     if (nullptr == attr) {
         return 0;
     }
+
+    // Check if this is actually a MyNlattr or just a cast from nlmsghdr
+    // Use magic number to reliably identify real MyNlattr objects
+    if (!MyNlattr::isValid(attr)) {
+        // Not a real MyNlattr (likely nlmsghdr cast for IAF operations)
+        return 0;
+    }
+
+    // Safe to access as MyNlattr since magic number is valid
     const MyNlattr *pAttr = reinterpret_cast<const MyNlattr *>(attr);
     return sizeof(MyNlattr) + nlaLen(reinterpret_cast<const struct nlattr *>(pAttr->next)) + nlaLen(reinterpret_cast<const struct nlattr *>(pAttr->nested));
 }
 
 struct nlattr *MockNlApi::nlaNext(const struct nlattr *attr, int *remaining) {
+    if (!MyNlattr::isValid(attr)) {
+        *remaining = 0;
+        return nullptr; // Not a real MyNlattr
+    }
     const MyNlattr *pAttr = reinterpret_cast<const MyNlattr *>(attr);
     *remaining = nlaLen(reinterpret_cast<const nlattr *>(pAttr->next));
     return reinterpret_cast<nlattr *>(pAttr->next);
@@ -533,6 +608,9 @@ int MockNlApi::nlaPutU8(struct nl_msg *msg, int id, uint8_t data) {
 }
 
 int MockNlApi::nlaType(const struct nlattr *attr) {
+    if (!MyNlattr::isValid(attr)) {
+        return NLA_UNSPEC; // Not a real MyNlattr
+    }
     const MyNlattr *pAttr = reinterpret_cast<const MyNlattr *>(attr);
     return pAttr->type;
 }
@@ -552,6 +630,27 @@ struct nl_msg *MockNlApi::nlmsgAlloc() {
 }
 
 struct nlattr *MockNlApi::nlmsgAttrdata(const struct nlmsghdr *hdr, int attr) {
+    // For event socket operations, create and return event attribute chain
+    if (processingEventSocket && receiveEventData) {
+        if (eventAttrChain == nullptr) {
+            // Create a chain of two attributes: nodeId and errorId
+            auto *nodeAttr = new MyNlattr();
+            nodeAttr->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_NODE_ID;
+            nodeAttr->content = eventNodeId;
+
+            auto *errorAttr = new MyNlattr();
+            errorAttr->type = DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID;
+            errorAttr->content = eventErrorId;
+
+            nodeAttr->next = errorAttr;
+            errorAttr->next = nullptr;
+
+            eventAttrChain = nodeAttr;
+        }
+        return reinterpret_cast<nlattr *>(eventAttrChain);
+    }
+
+    // For all non-event operations (DRM, IAF, etc.), return the header cast as before
     return reinterpret_cast<nlattr *>(const_cast<struct nlmsghdr *>(hdr));
 }
 
@@ -669,6 +768,61 @@ struct nlmsghdr *MockNlApi::nlmsgHdr(struct nl_msg *msg) {
     mockNlmsghdr.hdr.nlmsg_type = NLMSG_ERROR;
     mockNlmsghdr.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct nlmsgerr));
     return nlmsgHdrResult;
+}
+
+int MockNlApi::genlCtrlResolveGrp(struct nl_sock *sock, const char *family, const char *group) {
+    int returnValue = 100; // Default mock group ID
+    if (!mockGenlCtrlResolveGrpReturnValue.empty()) {
+        returnValue = mockGenlCtrlResolveGrpReturnValue.front();
+        if (isRepeated != true) {
+            mockGenlCtrlResolveGrpReturnValue.erase(mockGenlCtrlResolveGrpReturnValue.begin());
+        }
+    }
+    return returnValue;
+}
+
+int MockNlApi::nlSocketAddMembership(struct nl_sock *sock, int group) {
+    int returnValue = 0;
+    if (!mockNlSocketAddMembershipReturnValue.empty()) {
+        returnValue = mockNlSocketAddMembershipReturnValue.front();
+        if (isRepeated != true) {
+            mockNlSocketAddMembershipReturnValue.erase(mockNlSocketAddMembershipReturnValue.begin());
+        }
+    }
+    return returnValue;
+}
+
+int MockNlApi::nlSocketDropMembership(struct nl_sock *sock, int group) {
+    int returnValue = 0;
+    if (!mockNlSocketDropMembershipReturnValue.empty()) {
+        returnValue = mockNlSocketDropMembershipReturnValue.front();
+        if (isRepeated != true) {
+            mockNlSocketDropMembershipReturnValue.erase(mockNlSocketDropMembershipReturnValue.begin());
+        }
+    }
+    return returnValue;
+}
+
+int MockNlApi::nlSocketSetNonblocking(struct nl_sock *sock) {
+    int returnValue = 0;
+    if (!mockNlSocketSetNonblockingReturnValue.empty()) {
+        returnValue = mockNlSocketSetNonblockingReturnValue.front();
+        if (isRepeated != true) {
+            mockNlSocketSetNonblockingReturnValue.erase(mockNlSocketSetNonblockingReturnValue.begin());
+        }
+    }
+    return returnValue;
+}
+
+int MockNlApi::nlSocketGetFd(const struct nl_sock *sock) {
+    int returnValue = 42; // Default mock FD
+    if (!mockNlSocketGetFdReturnValue.empty()) {
+        returnValue = mockNlSocketGetFdReturnValue.front();
+        if (isRepeated != true) {
+            mockNlSocketGetFdReturnValue.erase(mockNlSocketGetFdReturnValue.begin());
+        }
+    }
+    return returnValue;
 }
 
 } // namespace ult

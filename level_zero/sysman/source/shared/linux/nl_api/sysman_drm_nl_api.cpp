@@ -9,6 +9,8 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
+
 #include <errno.h>
 #include <linux/netlink.h>
 
@@ -25,6 +27,11 @@ static int globalDrmHandleMsg(struct nl_msg *msg, void *arg) {
 static int globalDrmHandleAck(struct nl_msg *msg, void *arg) {
     DrmNlApi *pDrmNlApi = reinterpret_cast<DrmNlApi *>(arg);
     return pDrmNlApi->handleAck(msg);
+}
+
+static int globalDrmHandleEventMsg(struct nl_msg *msg, void *arg) {
+    DrmNlApi *pDrmNlApi = reinterpret_cast<DrmNlApi *>(arg);
+    return pDrmNlApi->handleEventMsg(msg);
 }
 
 static int drmNlOperationReadAll(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info, void *arg) {
@@ -54,6 +61,9 @@ DrmNlApi::DrmNlApi() {
 }
 
 DrmNlApi::~DrmNlApi() {
+    if (eventSubscribed) {
+        cleanupEventSocket();
+    }
     if (nullptr != nlSock) {
         pNlApi->nlSocketFree(nlSock);
         nlSock = nullptr;
@@ -291,28 +301,46 @@ ze_result_t DrmNlApi::getErrorThresholdRsp(struct nl_cache_ops *ops, struct genl
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t DrmNlApi::initSocketBase(struct nl_sock *&sock, int &resolvedFamilyId) {
+    sock = pNlApi->nlSocketAlloc();
+    if (nullptr == sock) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    int retval = pNlApi->genlConnect(sock);
+    if (retval < 0) {
+        pNlApi->nlSocketFree(sock);
+        sock = nullptr;
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    resolvedFamilyId = pNlApi->genlCtrlResolve(sock, DRM_RAS_FAMILY_NAME);
+    if (resolvedFamilyId < 0) {
+        pNlApi->nlSocketFree(sock);
+        sock = nullptr;
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t DrmNlApi::initConnection() {
 
-    if (!initted) {
+    if (!isInitDone) {
         if (!pNlApi->loadEntryPoints()) {
             return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         }
-        initted = true;
+        isInitDone = true;
     }
 
-    nlSock = pNlApi->nlSocketAlloc();
-    if (nullptr == nlSock) {
+    int resolvedFamilyId = 0;
+    ze_result_t result = initSocketBase(nlSock, resolvedFamilyId);
+    if (ZE_RESULT_SUCCESS != result) {
         cleanupConnection(false);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return result;
     }
 
-    int retval = pNlApi->genlConnect(nlSock);
-    if (retval < 0) {
-        cleanupConnection(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    retval = pNlApi->genlRegisterFamily(&ops);
+    int retval = pNlApi->genlRegisterFamily(&ops);
     if (retval != 0) {
         pNlApi->nlSocketFree(nlSock);
         nlSock = nullptr;
@@ -328,11 +356,7 @@ ze_result_t DrmNlApi::initConnection() {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    familyId = pNlApi->genlCtrlResolve(nlSock, std::string(ops.o_name).c_str());
-    if (0 > familyId) {
-        cleanupConnection(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
+    familyId = resolvedFamilyId;
 
     retval = pNlApi->nlSocketModifyCb(nlSock, NL_CB_VALID, NL_CB_CUSTOM,
                                       globalDrmHandleMsg, reinterpret_cast<void *>(this));
@@ -549,11 +573,172 @@ void DrmNlApi::setupNlOperations() {
     newCmds[4].c_attr_policy = thresholdPolicy;
     newCmds[4].c_msg_parser = &drmNlOperationGetThreshold;
 
+    newCmds[5].c_id = DRM_RAS_CMD_ERROR_EVENT;
+    newCmds[5].c_name = const_cast<char *>("ERROR_EVENT");
+    newCmds[5].c_maxattr = DRM_RAS_A_ERROR_COUNTER_ATTRS_MAX;
+    newCmds[5].c_attr_policy = errorPolicy;
+    newCmds[5].c_msg_parser = nullptr; // Events parsed in handleEventMsg
+
     // Use fixed family name
     ops.o_name = const_cast<char *>(DRM_RAS_FAMILY_NAME); // "drm-ras"
     ops.o_hdrsize = 0U;
     ops.o_cmds = newCmds;
     ops.o_ncmds = NEO_DRM_RAS_CMD_MAX;
+}
+
+ze_result_t DrmNlApi::subscribeToEvents() {
+    if (!isInitDone) {
+        if (!pNlApi->loadEntryPoints()) {
+            return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        }
+        isInitDone = true;
+    }
+
+    return initEventSocket();
+}
+
+ze_result_t DrmNlApi::unsubscribeFromEvents() {
+    if (!eventSubscribed) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    cleanupEventSocket();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DrmNlApi::pollEvent(DrmRasEvent &event) {
+    if (!eventSubscribed) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    eventReady = false;
+
+    int res = pNlApi->nlRecvmsgsDefault(nlEventSock);
+    if (res < 0) {
+        return (res == -NLE_PERM) ? ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS : ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    // eventReady is set to true by handleEventMsg when a RAS multicast event
+    // is received and parsed successfully during nlRecvmsgsDefault above.
+    if (eventReady) {
+        event = pendingEvent;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    // This is returned when nlRecvmsgsDefault succeeds but no RAS event was parsed
+    // e.g. a non-event netlink message (ACK, NOOP) was received on the event socket.
+    return ZE_RESULT_NOT_READY;
+}
+
+int DrmNlApi::getEventSocketFd() const {
+    if (!eventSubscribed || nlEventSock == nullptr) {
+        return -1;
+    }
+    return pNlApi->nlSocketGetFd(nlEventSock);
+}
+
+int DrmNlApi::handleEventMsg(struct nl_msg *msg) {
+    struct nlmsghdr *nlh = pNlApi->nlmsgHdr(msg);
+    if (!nlh) {
+        return NL_STOP;
+    }
+
+    parseEventMessage(msg, pendingEvent);
+    eventReady = true;
+
+    return NL_OK;
+}
+
+ze_result_t DrmNlApi::initEventSocket() {
+    int famId = 0;
+    ze_result_t result = initSocketBase(nlEventSock, famId);
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    int retval = pNlApi->nlSocketSetNonblocking(nlEventSock);
+    if (retval < 0) {
+        cleanupEventSocket();
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    eventGroupId = pNlApi->genlCtrlResolveGrp(nlEventSock, DRM_RAS_FAMILY_NAME, "error-notify");
+    if (eventGroupId < 0) {
+        cleanupEventSocket();
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    retval = pNlApi->nlSocketAddMembership(nlEventSock, eventGroupId);
+    if (retval < 0) {
+        cleanupEventSocket();
+        if (retval == -NLE_PERM) {
+            return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+        }
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    retval = pNlApi->nlSocketModifyCb(nlEventSock, NL_CB_VALID, NL_CB_CUSTOM,
+                                      globalDrmHandleEventMsg, reinterpret_cast<void *>(this));
+    if (retval < 0) {
+        cleanupEventSocket();
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    // Disable sequence number checking for multicast events
+    // Multicast messages don't have matching sequence numbers with requests
+    pNlApi->nlSocketDisableSeqCheck(nlEventSock);
+
+    eventSubscribed = true;
+    return ZE_RESULT_SUCCESS;
+}
+
+void DrmNlApi::cleanupEventSocket() {
+    if (nlEventSock != nullptr) {
+        if (eventGroupId >= 0) {
+            pNlApi->nlSocketDropMembership(nlEventSock, eventGroupId);
+        }
+        pNlApi->nlSocketFree(nlEventSock);
+        nlEventSock = nullptr;
+    }
+    eventGroupId = -1;
+    eventSubscribed = false;
+    eventReady = false;
+}
+
+ze_result_t DrmNlApi::parseEventMessage(struct nl_msg *msg, DrmRasEvent &event) {
+    struct nlmsghdr *nlh = pNlApi->nlmsgHdr(msg);
+    if (!nlh) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    auto nla = pNlApi->nlmsgAttrdata(nlh, GENL_HDRLEN);
+    auto rem = pNlApi->nlmsgAttrlen(nlh, GENL_HDRLEN);
+
+    event = {};
+    while (pNlApi->nlaOk(nla, rem)) {
+        switch (pNlApi->nlaType(nla)) {
+        case DRM_RAS_A_ERROR_COUNTER_ATTRS_NODE_ID:
+            event.nodeId = pNlApi->nlaGetU32(nla);
+            break;
+        case DRM_RAS_A_ERROR_COUNTER_ATTRS_ERROR_ID:
+            event.errorId = pNlApi->nlaGetU32(nla);
+            break;
+        }
+        nla = pNlApi->nlaNext(nla, &rem);
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+DrmNlApi *LinuxSysmanDriverImp::createDrmNlApi() {
+    return new DrmNlApi();
+}
+
+void LinuxSysmanDriverImp::destroyDrmNlApi(DrmNlApi *pDrmNl) {
+    if (pDrmNl != nullptr && pDrmNl->isSubscribedToEvents()) {
+        pDrmNl->unsubscribeFromEvents();
+    }
+    delete pDrmNl;
 }
 
 } // namespace Sysman

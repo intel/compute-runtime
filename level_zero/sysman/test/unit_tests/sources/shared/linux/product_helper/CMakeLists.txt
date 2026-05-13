@@ -29,5 +29,12 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_firmware_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_firmware_tests_xe.cpp
   )
+
+  if(LIBGENL_FOUND)
+    target_sources(${TARGET_NAME}
+                   PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_events_tests.cpp
+    )
+  endif()
 endif()
 add_subdirectories()

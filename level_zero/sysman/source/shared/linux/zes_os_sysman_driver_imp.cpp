@@ -50,6 +50,9 @@ LinuxSysmanDriverImp::LinuxSysmanDriverImp() {
 }
 
 LinuxSysmanDriverImp::~LinuxSysmanDriverImp() {
+    // Clean up netlink resources (eventSocket) if initialized
+    netlinkCleanup();
+
     if (nullptr != pUdevLib) {
         delete pUdevLib;
         pUdevLib = nullptr;
@@ -65,6 +68,18 @@ OsSysmanDriver *OsSysmanDriver::create() {
     LinuxSysmanDriverImp *pLinuxSysmanDriverImp = new LinuxSysmanDriverImp();
     DEBUG_BREAK_IF(nullptr == pLinuxSysmanDriverImp);
     return static_cast<OsSysmanDriver *>(pLinuxSysmanDriverImp);
+}
+
+DrmNlApi *LinuxSysmanDriverImp::getDrmNlApiHandle() {
+    if (pDrmNl == nullptr) {
+        pDrmNl = LinuxSysmanDriverImp::createDrmNlApi();
+    }
+    return pDrmNl;
+}
+
+void LinuxSysmanDriverImp::netlinkCleanup() {
+    LinuxSysmanDriverImp::destroyDrmNlApi(pDrmNl);
+    pDrmNl = nullptr;
 }
 
 } // namespace Sysman

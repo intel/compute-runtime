@@ -9,7 +9,9 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/sysman/source/api/events/linux/sysman_os_events_netlink.h"
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations.h"
+#include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
@@ -106,42 +108,55 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
         prevRegisteredEvents = deviceEventsMap[pSysmanDevice];
     }
 
-    eventsMutex.lock();
-    if (!events) {
-        // If user is trying to register events with empty events argument, then clear all the registered events
-        if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
-            deviceEventsMap[pSysmanDevice] = events;
+    {
+        std::unique_lock<std::mutex> lock(eventsMutex);
+        if (!events) {
+            // If user is trying to register events with empty events argument, then clear all the registered events
+            if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
+                deviceEventsMap[pSysmanDevice] = events;
+            } else {
+                deviceEventsMap.emplace(pSysmanDevice, events);
+            }
         } else {
-            deviceEventsMap.emplace(pSysmanDevice, events);
+            zes_event_type_flags_t registeredEvents = 0;
+            // supportedEventMask --> this mask checks for events that supported currently
+            zes_event_type_flags_t supportedEventMask = ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
+                                                        ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED |
+                                                        ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
+                                                        ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS |
+                                                        ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
+            if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
+                registeredEvents = deviceEventsMap[pSysmanDevice];
+            }
+            registeredEvents |= (events & supportedEventMask);
+            deviceEventsMap[pSysmanDevice] = registeredEvents;
         }
-    } else {
-        zes_event_type_flags_t registeredEvents = 0;
-        // supportedEventMask --> this mask checks for events that supported currently
-        zes_event_type_flags_t supportedEventMask = ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
-                                                    ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED |
-                                                    ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS |
-                                                    ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
-        if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
-            registeredEvents = deviceEventsMap[pSysmanDevice];
-        }
-        registeredEvents |= (events & supportedEventMask);
-        deviceEventsMap[pSysmanDevice] = registeredEvents;
-    }
 
-    // Write to Pipe only if eventregister() is called during listen and previously registered events are modified.
-    if ((pipeFd[1] != -1) && (prevRegisteredEvents != deviceEventsMap[pSysmanDevice])) {
-        uint8_t value = 0x00;
-        if (NEO::SysCalls::write(pipeFd[1], &value, 1) < 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "%s", "Write to Pipe failed\n");
+        // Write to Pipe only if eventregister() is called during listen and previously registered events are modified.
+        if ((pipeFd[1] != -1) && (prevRegisteredEvents != deviceEventsMap[pSysmanDevice])) {
+            uint8_t value = 0x00;
+            if (NEO::SysCalls::write(pipeFd[1], &value, 1) < 0) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "%s", "Write to Pipe failed\n");
+            }
         }
     }
-    eventsMutex.unlock();
 }
 
 void LinuxEventsUtil::init() {
     pUdevLib = pLinuxSysmanDriverImp->getUdevLibHandle();
+}
+
+void LinuxEventsUtil::initNetlink() {
+    // Iterate all known sysman devices to find one that supports netlink events. This handles heterogeneous multi-device systems
+    // where only some devices support netlink, regardless of which device triggered init.
+    for (auto *sysmanDevice : globalSysmanDriver->sysmanDevices) {
+        auto *dev = static_cast<SysmanDeviceImp *>(sysmanDevice);
+        if (netlinkInitialize(pLinuxSysmanDriverImp, pDrmNl, dev) == ZE_RESULT_SUCCESS) {
+            return;
+        }
+    }
+    pDrmNl = nullptr;
 }
 
 ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
@@ -153,11 +168,12 @@ ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_
         if (device == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        eventsMutex.lock();
-        if (deviceEventsMap.find(device) != deviceEventsMap.end()) {
-            registeredEvents[devIndex] = deviceEventsMap[device];
+        {
+            std::unique_lock<std::mutex> lock(eventsMutex);
+            if (deviceEventsMap.find(device) != deviceEventsMap.end()) {
+                registeredEvents[devIndex] = deviceEventsMap[device];
+            }
         }
-        eventsMutex.unlock();
         if (registeredEvents[devIndex]) {
             if ((registeredEvents[devIndex] & ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS) || (registeredEvents[devIndex] & ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS)) {
                 if (checkRasEvent(pEvents[devIndex], device, registeredEvents[devIndex])) {
@@ -305,6 +321,14 @@ bool LinuxEventsUtil::checkDeviceWedgedEvent(void *dev, zes_event_type_flags_t &
     return false;
 }
 
+bool LinuxEventsUtil::handleNetlinkEvents(zes_event_type_flags_t *pEvents, uint32_t count, zes_device_handle_t *phDevices, const std::vector<zes_event_type_flags_t> &registeredEvents) {
+    return netlinkHandleEvents(pDrmNl, pEvents, count, phDevices, registeredEvents);
+}
+
+bool LinuxEventsUtil::processNetlinkRasEvent(const DrmRasEvent &netlinkEvent, zes_event_type_flags_t *pEvents, uint32_t count, zes_device_handle_t *phDevices, const std::vector<zes_event_type_flags_t> &registeredEvents) {
+    return netlinkProcessRasEvent(netlinkEvent, pEvents, count, phDevices, registeredEvents);
+}
+
 void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *&pFsAccess) {
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]));
@@ -405,8 +429,11 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
         this->init();
     });
 
+    std::call_once(initNetlinkOnce, [this]() {
+        this->initNetlink();
+    });
+
     bool retval = false;
-    struct pollfd pfd[2];
     std::vector<std::string> subsystemList;
     std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {};
     FsAccessInterface *pFsAccess = nullptr;
@@ -419,82 +446,99 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
 
     subsystemList.push_back("drm");
     subsystemList.push_back("auxiliary");
-    pfd[0].fd = pUdevLib->registerEventsFromSubsystemAndGetFd(subsystemList);
-    pfd[0].events = POLLIN;
-    pfd[0].revents = 0;
 
-    eventsMutex.lock();
-    if (NEO::SysCalls::pipe(pipeFd) < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "%s", "Creation of pipe failed\n");
-    }
-
-    pfd[1].fd = pipeFd[0];
-    pfd[1].events = POLLIN;
-    pfd[1].revents = 0;
+    std::vector<PollDescriptor> pollSources;
+    pollSources.push_back({{pUdevLib->registerEventsFromSubsystemAndGetFd(subsystemList), POLLIN, 0}, PollSourceType::udev});
 
     auto start = L0::Sysman::SteadyClock::now();
     std::chrono::duration<double, std::milli> timeElapsed;
-    getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
-    eventsMutex.unlock();
-    while (NEO::SysCalls::poll(pfd, 2, static_cast<int>(timeout)) > 0) {
-        bool eventReceived = false;
-        for (auto i = 0; i < 2; i++) {
-            if (pfd[i].revents != 0) {
-                if (pfd[i].fd == pipeFd[0]) {
-                    eventsMutex.lock();
-                    uint8_t dummy;
-                    ssize_t pipeReadRet = NEO::SysCalls::read(pipeFd[0], &dummy, 1);
-                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (pipeReadRet < 0),
-                                 stderr, "read() on event pipe fd=%d failed errno=%d\n", pipeFd[0], errno);
-                    mapOfDevIndexToDevPath.clear();
-                    pFsAccess = nullptr;
-                    getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
-                    eventsMutex.unlock();
+    {
+        std::unique_lock<std::mutex> lock(eventsMutex);
+        if (NEO::SysCalls::pipe(pipeFd) < 0) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "%s", "Creation of pipe failed\n");
+        }
+        pollSources.push_back({{pipeFd[0], POLLIN, 0}, PollSourceType::pipe});
+
+        if (isNetlinkSubscribed(pDrmNl)) {
+            pollSources.push_back({{netlinkGetSocketFd(pDrmNl), POLLIN, 0}, PollSourceType::netlink});
+        }
+
+        getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
+    }
+
+    std::vector<struct pollfd> pfds(pollSources.size());
+    auto syncPfds = [&]() {
+        for (size_t i = 0; i < pollSources.size(); i++) {
+            pfds[i] = pollSources[i].pfd;
+        }
+    };
+    auto syncRevents = [&]() {
+        for (size_t i = 0; i < pollSources.size(); i++) {
+            pollSources[i].pfd.revents = pfds[i].revents;
+        }
+    };
+
+    syncPfds();
+    while (NEO::SysCalls::poll(pfds.data(), static_cast<nfds_t>(pfds.size()), static_cast<int>(timeout)) > 0) {
+        syncRevents();
+
+        bool pipeTriggered = false;
+        bool netlinkReady = false;
+        bool udevReady = false;
+
+        for (auto &src : pollSources) {
+            if (src.pfd.revents & POLLIN) {
+                if (src.type == PollSourceType::udev) {
+                    udevReady = true;
+                } else if (src.type == PollSourceType::pipe) {
+                    pipeTriggered = true;
                 } else {
-                    eventReceived = true;
+                    netlinkReady = true;
                 }
             }
+        }
+
+        if (pipeTriggered) {
+            std::unique_lock<std::mutex> lock(eventsMutex);
+            uint8_t dummy;
+            ssize_t pipeReadRet = NEO::SysCalls::read(pipeFd[0], &dummy, 1);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (pipeReadRet < 0),
+                         stderr, "read() on event pipe fd=%d failed errno=%d\n", pipeFd[0], errno);
+            mapOfDevIndexToDevPath.clear();
+            pFsAccess = nullptr;
+            getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
         }
 
         if (mapOfDevIndexToDevPath.empty()) {
             break;
         }
 
-        if (!eventReceived) {
-            timeElapsed = L0::Sysman::SteadyClock::now() - start;
-            if (timeout > timeElapsed.count()) {
-                timeout = timeout - timeElapsed.count();
-                continue;
-            } else {
-                break;
+        if (udevReady) {
+            void *dev = nullptr;
+            dev = pUdevLib->allocateDeviceToReceiveData();
+            if (dev != nullptr) {
+                auto eventTypePtr = pUdevLib->getEventType(dev);
+                if (eventTypePtr != nullptr) {
+                    action = std::string(eventTypePtr);
+                    if (checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess, pEvents, dev, phDevices)) {
+                        retval = true;
+                    }
+                }
+                pUdevLib->dropDeviceReference(dev);
             }
         }
 
-        void *dev = nullptr;
-        dev = pUdevLib->allocateDeviceToReceiveData();
-        if (dev == nullptr) {
-            timeElapsed = L0::Sysman::SteadyClock::now() - start;
-            if (timeout > timeElapsed.count()) {
-                timeout = timeout - timeElapsed.count();
-                continue;
-            } else {
-                break;
+        if (netlinkReady) {
+            if (handleNetlinkEvents(pEvents, count, phDevices, registeredEvents)) {
+                retval = true;
             }
         }
 
-        auto eventTypePtr = pUdevLib->getEventType(dev);
-        if (eventTypePtr != nullptr) {
-            action = std::string(eventTypePtr);
-        } else {
-            break;
-        }
-
-        retval = checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess, pEvents, dev, phDevices);
-        pUdevLib->dropDeviceReference(dev);
         if (retval) {
             break;
         }
+
         timeElapsed = L0::Sysman::SteadyClock::now() - start;
         if (timeout > timeElapsed.count()) {
             timeout = timeout - timeElapsed.count();
@@ -504,14 +548,17 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
         }
     }
 
-    eventsMutex.lock();
-    for (uint8_t i = 0; i < 2; i++) {
-        if (pipeFd[i] != -1) {
-            NEO::SysCalls::close(pipeFd[i]);
-            pipeFd[i] = -1;
+    {
+        std::unique_lock<std::mutex> lock(eventsMutex);
+        for (uint8_t i = 0; i < 2; i++) {
+            if (pipeFd[i] != -1) {
+                NEO::SysCalls::close(pipeFd[i]);
+                pipeFd[i] = -1;
+            }
         }
     }
-    eventsMutex.unlock();
+    // Note: We do NOT unsubscribe from netlink here. It is unsubscribed in the destructor of LinuxEventsUtil, which is called when Sysman driver is closed.
+    // This is to ensure that we can receive netlink events for the entire duration when Sysman driver is open.
     return retval;
 }
 

@@ -319,9 +319,14 @@ class PublicLinuxEventsUtil : public L0::Sysman::LinuxEventsUtil {
     using LinuxEventsUtil::checkDeviceWedgedEvent;
     using LinuxEventsUtil::deviceEventsMap;
     using LinuxEventsUtil::getDevIndexToDevPathMap;
+    using LinuxEventsUtil::handleNetlinkEvents;
+    using LinuxEventsUtil::init;
+    using LinuxEventsUtil::initNetlink;
     using LinuxEventsUtil::isSurvivabilityModeAsExpected;
     using LinuxEventsUtil::listenSystemEvents;
+    using LinuxEventsUtil::pDrmNl;
     using LinuxEventsUtil::pipeFd;
+    using LinuxEventsUtil::processNetlinkRasEvent;
     using LinuxEventsUtil::pUdevLib;
 };
 

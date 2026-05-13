@@ -138,6 +138,8 @@ class NetlinkRasUtil : public RasUtil {
     NetlinkRasUtil(zes_ras_error_type_t type, L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId);
     ~NetlinkRasUtil() override;
     static std::unique_ptr<DrmNlApi> (*createDrmNlApi)();
+    static const std::vector<DrmRasNode> &getRasNodes() { return rasNodes; }
+    static ze_result_t initializeRasNodes(DrmNlApi *pDrmNl);
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;

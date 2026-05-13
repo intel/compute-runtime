@@ -289,6 +289,16 @@ HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWithHbmSourceWhenCallingOs
     EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS));
 }
 
+HWTEST2_F(SysmanProductHelperRasTest, GivenSysmanProductHelperInstanceWhenCallingIsNetlinkEventSupportedThenTrueValueIsReturned, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(NEO::defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->isNetlinkEventSupported());
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenSysmanProductHelperInstanceWhenCallingIsNetlinkEventSupportedThenFalseValueIsReturned, IsPVC) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(NEO::defaultHwInfo->platform.eProductFamily);
+    EXPECT_FALSE(pSysmanProductHelper->isNetlinkEventSupported());
+}
+
 HWTEST2_F(SysmanProductHelperRasTest, GivenPmuRasUtilWhenGroupFdIsInvalidAndCallingRasGetStateExp2ThenDependencyUnavailableIsReturned, IsGtRasSupportedProduct) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -688,14 +698,6 @@ HWTEST2_F(SysmanProductHelperRasTest, GivenValidRasHandleWhenCallingRasGetAndSet
     zes_intel_ras_config_exp_t config = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetConfigExp(count, &config));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasSetConfigExp(count, &config));
-}
-
-HWTEST2_F(SysmanProductHelperRasTest, GivenValidRasHandleWhenCallingRasGetAndSetConfigExpThenDependencyUnavailableIsReturned, IsCRI) {
-    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
-    const uint32_t count = 0u;
-    zes_intel_ras_config_exp_t config = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pRasImp->rasGetConfigExp(count, &config));
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pRasImp->rasSetConfigExp(count, &config));
 }
 
 } // namespace ult

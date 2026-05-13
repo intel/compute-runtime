@@ -125,6 +125,9 @@ class SysmanProductHelper {
     virtual bool isVfMemoryUtilizationSupported() = 0;
     virtual ze_result_t getVfLocalMemoryQuota(SysFsAccessInterface *pSysfsAccess, uint64_t &lMemQuota, const uint32_t &vfId) = 0;
 
+    // Netlink
+    virtual bool isNetlinkEventSupported() = 0;
+
     virtual ~SysmanProductHelper() = default;
     virtual const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() = 0;
 

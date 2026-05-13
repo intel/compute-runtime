@@ -31,8 +31,15 @@ class DrmNlApi {
     MOCKABLE_VIRTUAL ze_result_t getErrorThreshold(const uint32_t &nodeId, const uint32_t &errorId, DrmErrorThreshold &threshold);
     MOCKABLE_VIRTUAL ze_result_t clearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId);
 
+    MOCKABLE_VIRTUAL ze_result_t subscribeToEvents();
+    MOCKABLE_VIRTUAL ze_result_t unsubscribeFromEvents();
+    MOCKABLE_VIRTUAL ze_result_t pollEvent(DrmRasEvent &event);
+    MOCKABLE_VIRTUAL int getEventSocketFd() const;
+    MOCKABLE_VIRTUAL bool isSubscribedToEvents() const { return eventSubscribed; }
+
     int handleMsg(struct nl_msg *msg);
     int handleAck(struct nl_msg *msg);
+    int handleEventMsg(struct nl_msg *msg);
     ze_result_t listNodesRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info);
     ze_result_t getErrorListRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info);
     ze_result_t getSingleErrorCounterRsp(struct nl_cache_ops *ops, struct genl_cmd *cmd, struct genl_info *info);
@@ -50,10 +57,15 @@ class DrmNlApi {
 
     std::unique_ptr<NlApi> pNlApi;
     std::unique_ptr<Operation> currentOperation = nullptr;
+    struct nl_sock *nlEventSock = nullptr;
+    bool eventReady = false;
+    bool isInitDone = false;
     ze_result_t initConnection();
-    void cleanupConnection(bool freeSocket);
+    ze_result_t parseEventMessage(struct nl_msg *msg, DrmRasEvent &event);
 
   private:
+    ze_result_t initSocketBase(struct nl_sock *&sock, int &resolvedFamilyId);
+    void cleanupConnection(bool freeSocket);
     ze_result_t allocMsg(const uint16_t &cmdOp, const bool useDumpFlags, struct nl_msg *&msg);
     ze_result_t issueRequestReadOne(const uint16_t cmdOp, const uint32_t &nodeId, const uint32_t &errorId, void *pOutput);
     ze_result_t issueRequestQueryErrors(const uint16_t &cmdOp, const uint32_t &nodeId, void *pOutput);
@@ -64,9 +76,15 @@ class DrmNlApi {
     ze_result_t issueRequestClearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId);
     void setupNlOperations();
 
-    bool initted = false;
+    ze_result_t initEventSocket();
+    void cleanupEventSocket();
+
     struct nl_sock *nlSock = nullptr;
     int familyId = 0;
+
+    int eventGroupId = -1;
+    bool eventSubscribed = false;
+    DrmRasEvent pendingEvent = {};
 
     struct genl_ops ops = {};
 

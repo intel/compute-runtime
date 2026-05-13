@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,4 +15,11 @@ if(UNIX)
                  PRIVATE
                  ${L0_TESTS_SYSMAN_EVENTS_LINUX}
   )
+
+  if(LIBGENL_FOUND)
+    target_sources(${TARGET_NAME}
+                   PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_events_netlink.cpp
+    )
+  endif()
 endif()

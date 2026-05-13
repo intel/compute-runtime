@@ -13,6 +13,11 @@ if(UNIX)
                    ${CMAKE_CURRENT_SOURCE_DIR}/sysman_iaf_nl_api.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/sysman_drm_nl_api.cpp
     )
+  else()
+    target_sources(${L0_STATIC_LIB_NAME}
+                   PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/sysman_drm_nl_api_stub.cpp
+    )
   endif()
 endif()
 

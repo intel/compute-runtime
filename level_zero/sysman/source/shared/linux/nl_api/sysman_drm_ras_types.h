@@ -27,6 +27,11 @@ struct DrmErrorCounter {
     uint32_t errorId = 0;
 };
 
+struct DrmRasEvent {
+    uint32_t nodeId = 0;
+    uint32_t errorId = 0;
+};
+
 struct DrmErrorThreshold {
     uint32_t errorId = 0;
     std::string errorName = {};

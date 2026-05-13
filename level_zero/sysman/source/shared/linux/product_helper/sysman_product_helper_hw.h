@@ -96,6 +96,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     bool isVfMemoryUtilizationSupported() override;
     ze_result_t getVfLocalMemoryQuota(SysFsAccessInterface *pSysfsAccess, uint64_t &lMemQuota, const uint32_t &vfId) override;
 
+    // Netlink
+    bool isNetlinkEventSupported() override;
+
     ~SysmanProductHelperHw() override = default;
 
     const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override;

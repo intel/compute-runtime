@@ -23,6 +23,7 @@ enum {
 #define DRM_RAS_CMD_CLEAR_ERROR_COUNTER 3
 #define DRM_RAS_CMD_GET_ERROR_THRESHOLD 4
 #define DRM_RAS_CMD_SET_ERROR_THRESHOLD 5
+#define DRM_RAS_CMD_ERROR_EVENT 6
 
 /* Total number of RAS commands including all extensions */
-#define NEO_DRM_RAS_CMD_MAX 5
+#define NEO_DRM_RAS_CMD_MAX 6

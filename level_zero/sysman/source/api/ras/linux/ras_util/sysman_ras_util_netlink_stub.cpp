@@ -21,6 +21,10 @@ std::vector<DrmRasNode> NetlinkRasUtil::rasNodes;
 std::map<uint32_t, std::vector<DrmErrorCounter>> NetlinkRasUtil::rasErrorList;
 std::unique_ptr<DrmNlApi> (*NetlinkRasUtil::createDrmNlApi)() = nullptr;
 
+ze_result_t NetlinkRasUtil::initializeRasNodes(DrmNlApi *pDrmNl) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 void NetlinkRasUtil::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t isSubDevice, uint32_t subDeviceId) {
     return;
 }

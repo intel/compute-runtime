@@ -16,9 +16,13 @@ namespace ult {
 class MockDrmNlApi : public L0::Sysman::DrmNlApi {
   public:
     using DrmNlApi::currentOperation;
+    using DrmNlApi::eventReady;
     using DrmNlApi::handleAck;
     using DrmNlApi::initConnection;
+    using DrmNlApi::isInitDone;
+    using DrmNlApi::nlEventSock;
     using DrmNlApi::Operation;
+    using DrmNlApi::parseEventMessage;
     using DrmNlApi::pNlApi;
     MockDrmNlApi(std::string devId) : L0::Sysman::DrmNlApi() {}
     ~MockDrmNlApi() override = default;

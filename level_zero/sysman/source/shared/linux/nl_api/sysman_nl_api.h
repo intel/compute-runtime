@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,11 @@ typedef void (*pNlmsgFree)(struct nl_msg *);
 typedef struct nlmsghdr *(*pNlmsgHdr)(struct nl_msg *);
 typedef struct nlattr *(*pNlaNestStart)(struct nl_msg *, int);
 typedef int (*pNlaNestEnd)(struct nl_msg *, struct nlattr *);
+typedef int (*pGenlCtrlResolveGrp)(struct nl_sock *, const char *, const char *);
+typedef int (*pNlSocketAddMembership)(struct nl_sock *, int);
+typedef int (*pNlSocketDropMembership)(struct nl_sock *, int);
+typedef int (*pNlSocketSetNonblocking)(struct nl_sock *);
+typedef int (*pNlSocketGetFd)(const struct nl_sock *);
 
 class NlApi : public NEO::NonCopyableAndNonMovableClass {
   public:
@@ -95,6 +100,11 @@ class NlApi : public NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL struct nlmsghdr *nlmsgHdr(struct nl_msg *msg);
     MOCKABLE_VIRTUAL struct nlattr *nlaNestStart(struct nl_msg *msg, int id);
     MOCKABLE_VIRTUAL int nlaNestEnd(struct nl_msg *msg, struct nlattr *attr);
+    MOCKABLE_VIRTUAL int genlCtrlResolveGrp(struct nl_sock *sock, const char *family, const char *group);
+    MOCKABLE_VIRTUAL int nlSocketAddMembership(struct nl_sock *sock, int group);
+    MOCKABLE_VIRTUAL int nlSocketDropMembership(struct nl_sock *sock, int group);
+    MOCKABLE_VIRTUAL int nlSocketSetNonblocking(struct nl_sock *sock);
+    MOCKABLE_VIRTUAL int nlSocketGetFd(const struct nl_sock *sock);
 
     bool isAvailable() { return nullptr != genlLibraryHandle.get(); }
 
@@ -143,6 +153,11 @@ class NlApi : public NEO::NonCopyableAndNonMovableClass {
     pNlmsgHdr nlmsgHdrEntry = nullptr;
     pNlaNestStart nlaNestStartEntry = nullptr;
     pNlaNestEnd nlaNestEndEntry = nullptr;
+    pGenlCtrlResolveGrp genlCtrlResolveGrpEntry = nullptr;
+    pNlSocketAddMembership nlSocketAddMembershipEntry = nullptr;
+    pNlSocketDropMembership nlSocketDropMembershipEntry = nullptr;
+    pNlSocketSetNonblocking nlSocketSetNonblockingEntry = nullptr;
+    pNlSocketGetFd nlSocketGetFdEntry = nullptr;
 };
 
 } // namespace Sysman

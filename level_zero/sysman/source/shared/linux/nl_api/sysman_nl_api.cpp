@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,6 +48,11 @@ static constexpr std::string_view nlmsgFreeRoutine = "nlmsg_free";
 static constexpr std::string_view nlmsgHdrRoutine = "nlmsg_hdr";
 static constexpr std::string_view nlaNestStartRoutine = "nla_nest_start";
 static constexpr std::string_view nlaNestEndRoutine = "nla_nest_end";
+static constexpr std::string_view genlCtrlResolveGrpRoutine = "genl_ctrl_resolve_grp";
+static constexpr std::string_view nlSocketAddMembershipRoutine = "nl_socket_add_membership";
+static constexpr std::string_view nlSocketDropMembershipRoutine = "nl_socket_drop_membership";
+static constexpr std::string_view nlSocketSetNonblockingRoutine = "nl_socket_set_nonblocking";
+static constexpr std::string_view nlSocketGetFdRoutine = "nl_socket_get_fd";
 
 template <class T>
 bool NlApi::getSymbolAddr(std::string_view name, T &sym) {
@@ -95,6 +100,11 @@ bool NlApi::loadEntryPoints() {
     ok = ok && getSymbolAddr(nlmsgHdrRoutine, nlmsgHdrEntry);
     ok = ok && getSymbolAddr(nlaNestStartRoutine, nlaNestStartEntry);
     ok = ok && getSymbolAddr(nlaNestEndRoutine, nlaNestEndEntry);
+    ok = ok && getSymbolAddr(genlCtrlResolveGrpRoutine, genlCtrlResolveGrpEntry);
+    ok = ok && getSymbolAddr(nlSocketAddMembershipRoutine, nlSocketAddMembershipEntry);
+    ok = ok && getSymbolAddr(nlSocketDropMembershipRoutine, nlSocketDropMembershipEntry);
+    ok = ok && getSymbolAddr(nlSocketSetNonblockingRoutine, nlSocketSetNonblockingEntry);
+    ok = ok && getSymbolAddr(nlSocketGetFdRoutine, nlSocketGetFdEntry);
 
     return ok;
 }
@@ -270,6 +280,31 @@ struct nlattr *NlApi::nlaNestStart(struct nl_msg *msg, int id) {
 int NlApi::nlaNestEnd(struct nl_msg *msg, struct nlattr *attr) {
     UNRECOVERABLE_IF(nullptr == nlaNestEndEntry);
     return (*nlaNestEndEntry)(msg, attr);
+}
+
+int NlApi::genlCtrlResolveGrp(struct nl_sock *sock, const char *family, const char *group) {
+    UNRECOVERABLE_IF(nullptr == genlCtrlResolveGrpEntry);
+    return (*genlCtrlResolveGrpEntry)(sock, family, group);
+}
+
+int NlApi::nlSocketAddMembership(struct nl_sock *sock, int group) {
+    UNRECOVERABLE_IF(nullptr == nlSocketAddMembershipEntry);
+    return (*nlSocketAddMembershipEntry)(sock, group);
+}
+
+int NlApi::nlSocketDropMembership(struct nl_sock *sock, int group) {
+    UNRECOVERABLE_IF(nullptr == nlSocketDropMembershipEntry);
+    return (*nlSocketDropMembershipEntry)(sock, group);
+}
+
+int NlApi::nlSocketSetNonblocking(struct nl_sock *sock) {
+    UNRECOVERABLE_IF(nullptr == nlSocketSetNonblockingEntry);
+    return (*nlSocketSetNonblockingEntry)(sock);
+}
+
+int NlApi::nlSocketGetFd(const struct nl_sock *sock) {
+    UNRECOVERABLE_IF(nullptr == nlSocketGetFdEntry);
+    return (*nlSocketGetFdEntry)(sock);
 }
 
 NlApi::NlApi() {

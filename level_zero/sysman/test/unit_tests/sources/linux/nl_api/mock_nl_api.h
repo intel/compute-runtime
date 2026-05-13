@@ -18,17 +18,23 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-class MyNlattr {
+class alignas(8) MyNlattr {
   public:
-    uint16_t type = NLA_UNSPEC;
-    uint64_t content;
+    static constexpr uint32_t refNlattrSignature = 0x4E4C4154; // "NLAT" in ASCII
+    uint32_t signature = refNlattrSignature;                   // Type signature to identify real MyNlattr objects
+    uint16_t type = NLA_UNSPEC;                                // Attribute type
+    uint16_t padding = 0;                                      // Explicit padding to make size 8-byte multiple
+    uint64_t content = 0;
     MyNlattr *next = nullptr;
     MyNlattr *nested = nullptr;
+
     MyNlattr *addNext() {
         next = new MyNlattr;
         return next;
     }
+
     MyNlattr() = default;
+
     ~MyNlattr() {
         if (nested) {
             delete nested;
@@ -36,6 +42,17 @@ class MyNlattr {
         if (next) {
             delete next;
         }
+    }
+
+    static bool isValid(const void *ptr) {
+        if (!ptr) {
+            return false;
+        }
+        if (reinterpret_cast<uintptr_t>(ptr) % alignof(MyNlattr) != 0) {
+            return false;
+        }
+        const MyNlattr *attr = static_cast<const MyNlattr *>(ptr);
+        return attr->signature == refNlattrSignature;
     }
 };
 
@@ -55,6 +72,11 @@ class MockNlApi : public L0::Sysman::NlApi {
     std::vector<int> mockNlSendAutoReturnValue{};
     std::vector<bool> mockLoadEntryPointsReturnValue{};
     std::vector<bool> isMockGenlRegisterFamilyRepeatedCall{};
+    std::vector<int> mockGenlCtrlResolveGrpReturnValue{};
+    std::vector<int> mockNlSocketAddMembershipReturnValue{};
+    std::vector<int> mockNlSocketDropMembershipReturnValue{};
+    std::vector<int> mockNlSocketSetNonblockingReturnValue{};
+    std::vector<int> mockNlSocketGetFdReturnValue{};
     bool isRepeated = false;
     bool readSingleError = false;
     bool isErrorCounterAvailable = false;
@@ -66,6 +88,12 @@ class MockNlApi : public L0::Sysman::NlApi {
     bool getThreshold = false;
     bool isErrorDataInvalid = false;
     bool callbackInvoked = false;
+    bool receiveEventData = false;
+    uint32_t eventNodeId = 0;
+    uint32_t eventErrorId = 0;
+    MyNlattr *eventAttrChain = nullptr;
+    struct nl_sock *eventSocketPtr = nullptr; // Track the event socket for proper identification
+    bool processingEventSocket = false;       // Flag to indicate we're currently processing event socket operation
 
     int genlUnregisterFamily(struct genl_ops *ops) override;
     int genlHandleMsg(struct nl_msg *msg, void *arg) override;
@@ -101,6 +129,11 @@ class MockNlApi : public L0::Sysman::NlApi {
     int nlaNestEnd(struct nl_msg *msg, struct nlattr *attr) override;
 
     struct nlmsghdr *nlmsgHdr(struct nl_msg *msg) override;
+    int genlCtrlResolveGrp(struct nl_sock *sock, const char *family, const char *group) override;
+    int nlSocketAddMembership(struct nl_sock *sock, int group) override;
+    int nlSocketDropMembership(struct nl_sock *sock, int group) override;
+    int nlSocketSetNonblocking(struct nl_sock *sock) override;
+    int nlSocketGetFd(const struct nl_sock *sock) override;
     ADDMETHOD_NOBASE_VOIDRETURN(nlSocketDisableSeqCheck, (struct nl_sock * sock));
     ADDMETHOD_NOBASE_VOIDRETURN(nlSocketFree, (struct nl_sock * sock));
 
@@ -121,7 +154,12 @@ class MockNlApi : public L0::Sysman::NlApi {
     }
 
     MockNlApi() = default;
-    ~MockNlApi() override = default;
+    ~MockNlApi() override {
+        if (eventAttrChain != nullptr) {
+            delete eventAttrChain;
+            eventAttrChain = nullptr;
+        }
+    }
 
     nl_recvmsg_msg_cb_t myValidCallback = nullptr;
     nl_recvmsg_msg_cb_t myAckCallback = nullptr;

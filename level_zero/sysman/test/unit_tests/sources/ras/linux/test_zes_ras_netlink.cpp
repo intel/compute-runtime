@@ -530,6 +530,33 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndGetThresholdFails
     rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
 }
 
+TEST_F(SysmanRasNetlinkFixture, GivenRasErrorListAlreadyPopulatedWhenCallingGetSupportedRasErrorTypesThenValidValuesAreReturned) {
+    std::set<zes_ras_error_type_t> errorType = {};
+    bool isSubDevice = false;
+    uint32_t subDeviceId = 0;
+
+    std::string devicePciBdf = pLinuxSysmanImp->getDevicePciBdf();
+    MockRasNetlinkUtil::rasNodes = {{0, devicePciBdf, "correctable-errors", 1},
+                                    {1, devicePciBdf, "uncorrectable-errors", 1}};
+
+    std::vector<DrmErrorCounter> prePopulatedList = {{0, "core-compute", 99, 0}};
+    MockRasNetlinkUtil::rasErrorList[0] = prePopulatedList;
+    MockRasNetlinkUtil::rasErrorList[1] = prePopulatedList;
+
+    MockRasNetlinkUtil::getSupportedRasErrorTypes(errorType, pLinuxSysmanImp, isSubDevice, subDeviceId);
+
+    EXPECT_EQ(errorType.size(), 2u);
+    EXPECT_TRUE(errorType.contains(ZES_RAS_ERROR_TYPE_CORRECTABLE));
+    EXPECT_TRUE(errorType.contains(ZES_RAS_ERROR_TYPE_UNCORRECTABLE));
+
+    EXPECT_EQ(MockRasNetlinkUtil::rasErrorList.count(0), 1u);
+    EXPECT_EQ(MockRasNetlinkUtil::rasErrorList.at(0).size(), 1u);
+    EXPECT_EQ(MockRasNetlinkUtil::rasErrorList.at(0).at(0).errorName, "core-compute");
+    EXPECT_EQ(MockRasNetlinkUtil::rasErrorList.count(1), 1u);
+    EXPECT_EQ(MockRasNetlinkUtil::rasErrorList.at(1).size(), 1u);
+    EXPECT_EQ(MockRasNetlinkUtil::rasErrorList.at(1).at(0).errorName, "core-compute");
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

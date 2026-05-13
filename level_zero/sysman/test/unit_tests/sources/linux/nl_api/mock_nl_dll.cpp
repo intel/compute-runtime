@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -227,6 +227,35 @@ int mockNlaNestEnd(struct nl_msg *msg, struct nlattr *attr) {
     EXPECT_EQ(&MockNlDll::mockNlattr, attr);
     return 0;
 }
+
+int mockGenlCtrlResolveGrp(struct nl_sock *sock, const char *family, const char *group) {
+    EXPECT_EQ(&MockNlDll::mockNlSock, sock);
+    EXPECT_FALSE(strcmp(MockNlDll::mockFamilyName, family));
+    EXPECT_FALSE(strcmp(MockNlDll::mockGroupName, group));
+    return MockNlDll::mockGroupId;
+}
+
+int mockNlSocketAddMembership(struct nl_sock *sock, int group) {
+    EXPECT_EQ(&MockNlDll::mockNlSock, sock);
+    EXPECT_EQ(MockNlDll::mockGroupId, group);
+    return 0;
+}
+
+int mockNlSocketDropMembership(struct nl_sock *sock, int group) {
+    EXPECT_EQ(&MockNlDll::mockNlSock, sock);
+    EXPECT_EQ(MockNlDll::mockGroupId, group);
+    return 0;
+}
+
+int mockNlSocketSetNonblocking(struct nl_sock *sock) {
+    EXPECT_EQ(&MockNlDll::mockNlSock, sock);
+    return 0;
+}
+
+int mockNlSocketGetFd(const struct nl_sock *sock) {
+    EXPECT_EQ(&MockNlDll::mockNlSock, sock);
+    return MockNlDll::mockFd;
+}
 }
 
 MockNlDll::MockNlDll() {
@@ -264,6 +293,11 @@ MockNlDll::MockNlDll() {
     funcMap["nlmsg_hdr"] = reinterpret_cast<void *>(&mockNlmsgHdr);
     funcMap["nla_nest_start"] = reinterpret_cast<void *>(&mockNlaNestStart);
     funcMap["nla_nest_end"] = reinterpret_cast<void *>(&mockNlaNestEnd);
+    funcMap["genl_ctrl_resolve_grp"] = reinterpret_cast<void *>(&mockGenlCtrlResolveGrp);
+    funcMap["nl_socket_add_membership"] = reinterpret_cast<void *>(&mockNlSocketAddMembership);
+    funcMap["nl_socket_drop_membership"] = reinterpret_cast<void *>(&mockNlSocketDropMembership);
+    funcMap["nl_socket_set_nonblocking"] = reinterpret_cast<void *>(&mockNlSocketSetNonblocking);
+    funcMap["nl_socket_get_fd"] = reinterpret_cast<void *>(&mockNlSocketGetFd);
 }
 
 void *MockNlDll::getProcAddress(const std::string &procName) {

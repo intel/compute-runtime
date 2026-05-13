@@ -14,17 +14,30 @@
 
 #include <map>
 #include <mutex>
+#include <poll.h>
+#include <vector>
 
 namespace L0 {
 namespace Sysman {
 
+class DrmNlApi;
 class LinuxSysmanDriverImp;
 class LinuxSysmanImp;
 class Ras;
 class UdevLib;
 class FsAccessInterface;
+struct DrmRasEvent;
 struct OsSysman;
 struct SysmanDeviceImp;
+
+enum class PollSourceType { udev,
+                            pipe,
+                            netlink };
+
+struct PollDescriptor {
+    struct pollfd pfd;
+    PollSourceType type;
+};
 
 class LinuxEventsImp : public OsEvents, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -50,6 +63,7 @@ class LinuxEventsUtil {
 
   protected:
     UdevLib *pUdevLib = nullptr;
+    DrmNlApi *pDrmNl = nullptr;
     LinuxSysmanDriverImp *pLinuxSysmanDriverImp = nullptr;
     int pipeFd[2] = {-1, -1};
     std::map<SysmanDeviceImp *, zes_event_type_flags_t> deviceEventsMap;
@@ -63,6 +77,8 @@ class LinuxEventsUtil {
     bool listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout);
     bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev, zes_device_handle_t *phDevices);
     void getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *&pFsAccess);
+    bool handleNetlinkEvents(zes_event_type_flags_t *pEvents, uint32_t count, zes_device_handle_t *phDevices, const std::vector<zes_event_type_flags_t> &registeredEvents);
+    bool processNetlinkRasEvent(const DrmRasEvent &netlinkEvent, zes_event_type_flags_t *pEvents, uint32_t count, zes_device_handle_t *phDevices, const std::vector<zes_event_type_flags_t> &registeredEvents);
     static bool isSurvivabilityModeAsExpected(FsAccessInterface *pFsAccess, const std::string &devPath, const std::string &mode);
     std::string action;
 
@@ -74,8 +90,12 @@ class LinuxEventsUtil {
     static const std::string bind;
     static bool checkRasEventOccured(Ras *rasHandle);
     std::once_flag initEventsOnce;
+    std::once_flag initNetlinkOnce;
     std::mutex eventsMutex;
+
+  protected:
     void init();
+    void initNetlink();
 };
 
 } // namespace Sysman

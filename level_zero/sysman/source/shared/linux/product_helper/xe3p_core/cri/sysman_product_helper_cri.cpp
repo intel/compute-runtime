@@ -1157,6 +1157,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMaxMemoryOfflinePages(SysFsAcc
     return ZE_RESULT_ERROR_NOT_AVAILABLE;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isNetlinkEventSupported() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

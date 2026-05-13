@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,6 +63,9 @@ class MockNlDll : public NEO::OsLibrary {
     constexpr static int mockRemainAfter = 16;
     constexpr static enum nl_cb_type mockCbType = NL_CB_VALID;
     constexpr static enum nl_cb_kind mockCbKind = NL_CB_CUSTOM;
+    constexpr static int mockGroupId = 100;
+    constexpr static int mockFd = 42;
+    constexpr static char mockGroupName[] = "error-notify";
 
   private:
     std::map<std::string, void *> funcMap;
