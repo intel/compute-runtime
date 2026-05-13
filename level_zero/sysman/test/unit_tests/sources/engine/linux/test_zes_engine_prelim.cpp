@@ -23,6 +23,8 @@ class ZesEngineFixturePrelim : public SysmanDeviceFixture {
     std::unique_ptr<MockEnginePmuInterfaceImpPrelim> pPmuInterface;
     Drm *pOriginalDrm = nullptr;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
+    MockEnginePrelimFsAccess mockFsAccess;
+    L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
 
     L0::Sysman::SysmanDevice *device = nullptr;
 
@@ -42,6 +44,9 @@ class ZesEngineFixturePrelim : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getSysmanProductHelper()));
         pLinuxSysmanImp->pSysmanKmdInterface->initAllAccessInterfaces(*pDrm);
 
+        pOriginalFsAccess = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = &mockFsAccess;
+
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImpPrelim>(pLinuxSysmanImp);
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pPmuInterface->pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
@@ -56,6 +61,7 @@ class ZesEngineFixturePrelim : public SysmanDeviceFixture {
 
     void TearDown() override {
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
+        pLinuxSysmanImp->pFsAccess = pOriginalFsAccess;
         SysmanDeviceFixture::TearDown();
     }
 
@@ -84,11 +90,18 @@ TEST_F(SysmanDeviceFixture, GivenComponentCountZeroAndOpenCallFailsWhenCallingZe
     auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
     osInterface->setDriverModel(std::unique_ptr<MockEngineNeoDrmPrelim>(pDrm));
 
-    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    MockEnginePrelimFsAccess mockFsAccess;
+    auto *pOriginalFsAccess = pLinuxSysmanImp->pFsAccess;
+    pLinuxSysmanImp->pFsAccess = &mockFsAccess;
+
+    delete pSysmanDeviceImp->pEngineHandleContext;
+    pSysmanDeviceImp->pEngineHandleContext = new EngineHandleContext(pOsSysman);
     L0::Sysman::SysmanDevice *device = pSysmanDevice;
 
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
+
+    pLinuxSysmanImp->pFsAccess = pOriginalFsAccess;
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenComponentCountZeroWhenCallingZesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {

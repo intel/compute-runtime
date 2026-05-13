@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,19 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+struct MockEngineXeFsAccess : public L0::Sysman::FsAccessInterface {
+    bool mockIsRootUser = true;
+    bool isRootUser() override {
+        return mockIsRootUser;
+    }
+};
 
 struct MockNeoDrm : public NEO::Drm {
 

@@ -1353,6 +1353,8 @@ std::string getEngineType(zes_engine_group_t engineGroup) {
 void testSysmanEngine(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Engine tests ---- " << std::endl;
+    bool iamroot = (geteuid() == 0);
+
     zes_device_properties_t deviceProperties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     VALIDATECALL(zesDeviceGetProperties(device, &deviceProperties));
     if (verbose) {
@@ -1361,6 +1363,11 @@ void testSysmanEngine(ze_device_handle_t &device) {
             std::cout << static_cast<uint32_t>(deviceProperties.core.uuid.id[i]) << " ";
         }
         std::cout << std::endl;
+    }
+
+    if (!iamroot) {
+        std::cout << "Not running as Root. Skipping Engine test." << std::endl;
+        return;
     }
 
     uint32_t count = 0;

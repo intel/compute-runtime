@@ -14,6 +14,7 @@
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_hw_device_id_linux.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
@@ -51,6 +52,12 @@ zes_engine_group_t LinuxEngineImp::getGroupFromEngineType(zes_engine_group_t typ
 
 ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInfo, OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+
+    if (!pLinuxSysmanImp->getFsAccess().isRootUser()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Not running as root user, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    }
+
     NEO::Drm *pDrm = pLinuxSysmanImp->getDrm();
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();

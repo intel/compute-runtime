@@ -26,6 +26,8 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockPmuInterfaceImp> pPmuInterface;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
     MockSysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
+    MockEngineXeFsAccess mockFsAccess;
+    L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -44,6 +46,9 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
         pLinuxSysmanImp->pSysmanKmdInterface->initAllAccessInterfaces(*pDrm);
 
+        pOriginalFsAccess = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = &mockFsAccess;
+
         pPmuInterface = std::make_unique<MockPmuInterfaceImp>(pLinuxSysmanImp);
         pPmuInterface->mockPmuFd = 10;
         pPmuInterface->mockActiveTime = 98765432;
@@ -59,6 +64,7 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
 
     void TearDown() override {
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
+        pLinuxSysmanImp->pFsAccess = pOriginalFsAccess;
         SysmanDeviceFixture::TearDown();
     }
 

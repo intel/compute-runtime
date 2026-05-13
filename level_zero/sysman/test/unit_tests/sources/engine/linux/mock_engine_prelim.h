@@ -23,6 +23,13 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
+struct MockEnginePrelimFsAccess : public L0::Sysman::FsAccessInterface {
+    bool mockIsRootUser = true;
+    bool isRootUser() override {
+        return mockIsRootUser;
+    }
+};
+
 constexpr uint64_t mockActiveTime = 987654321;
 const uint32_t microSecondsToNanoSeconds = 1000u;
 constexpr uint16_t invalidEngineClass = UINT16_MAX;

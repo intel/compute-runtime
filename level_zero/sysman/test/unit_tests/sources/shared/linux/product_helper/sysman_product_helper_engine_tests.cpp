@@ -20,6 +20,8 @@ class SysmanProductHelperEngineTestsFixture : public SysmanMultiDeviceFixture {
   protected:
     std::unique_ptr<MockEnginePmuInterfaceImpPrelim> pPmuInterface;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
+    MockEnginePrelimFsAccess mockFsAccess;
+    L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
 
     void SetUp() override {
@@ -38,6 +40,9 @@ class SysmanProductHelperEngineTestsFixture : public SysmanMultiDeviceFixture {
         pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getSysmanProductHelper()));
         pLinuxSysmanImp->pSysmanKmdInterface->initAllAccessInterfaces(*pDrm);
 
+        pOriginalFsAccess = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = &mockFsAccess;
+
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImpPrelim>(pLinuxSysmanImp);
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pPmuInterface->pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
@@ -53,8 +58,9 @@ class SysmanProductHelperEngineTestsFixture : public SysmanMultiDeviceFixture {
     }
 
     void TearDown() override {
-        SysmanMultiDeviceFixture::TearDown();
+        pLinuxSysmanImp->pFsAccess = pOriginalFsAccess;
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
+        SysmanMultiDeviceFixture::TearDown();
     }
 
     std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {

@@ -27,6 +27,8 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
   protected:
     std::unique_ptr<MockEnginePmuInterfaceImp> pPmuInterface;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
+    MockEngineFsAccess mockFsAccess;
+    L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -42,6 +44,9 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
 
         pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Upstream(pLinuxSysmanImp->getSysmanProductHelper()));
         pLinuxSysmanImp->pSysmanKmdInterface->initAllAccessInterfaces(*pDrm);
+
+        pOriginalFsAccess = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = &mockFsAccess;
 
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImp>(pLinuxSysmanImp);
         pPmuInterface->mockPmuFd = 10;
@@ -60,6 +65,7 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
 
     void TearDown() override {
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
+        pLinuxSysmanImp->pFsAccess = pOriginalFsAccess;
         SysmanDeviceFixture::TearDown();
     }
 
@@ -140,6 +146,28 @@ TEST_F(ZesEngineFixtureI915, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAn
     pDrm->mockSysmanQueryEngineInfoReturnFalse = false;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(mapEngineInfo, pOsSysman));
+}
+
+TEST_F(ZesEngineFixtureI915, GivenNonRootUserWhenCallingZesDeviceEnumEngineGroupsThenErrorIsReturned) {
+    mockFsAccess.mockIsRootUser = false;
+
+    delete pSysmanDeviceImp->pEngineHandleContext;
+    pSysmanDeviceImp->pEngineHandleContext = new EngineHandleContext(pOsSysman);
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(0u, count);
+
+    mockFsAccess.mockIsRootUser = true;
+}
+
+TEST_F(ZesEngineFixtureI915, GivenNonRootUserWhenCallingGetNumEngineTypeAndInstancesThenErrorIsReturned) {
+    mockFsAccess.mockIsRootUser = false;
+
+    MapOfEngineInfo mapEngineInfo = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(mapEngineInfo, pOsSysman));
+
+    mockFsAccess.mockIsRootUser = true;
 }
 
 TEST_F(ZesEngineFixtureI915, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {
