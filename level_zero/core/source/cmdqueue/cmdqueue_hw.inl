@@ -872,7 +872,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSync(C
         ctx.patchPreambleWaitSyncNeeded = (tagGpuAddress != 0) && (getCsr()->getTagAllocation()->getGpuAddress() != tagGpuAddress);
         if (ctx.patchPreambleWaitSyncNeeded) {
             bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
-            waitSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
+            waitSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * this->partitionCount;
             if (!useSemaphore64bCmd) {
                 waitSize += (2 * sizeof(MI_LOAD_REGISTER_IMM));
             }
@@ -1033,7 +1033,9 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCommandListWaitSync(Com
             constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
             constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
 
+            uint64_t waitAddress = commandList->getLatestTagGpuAddress();
             auto waitValue = commandList->getLatestTaskCount();
+
             bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
             if (!useSemaphore64bCmd) {
                 NEO::LriHelper<GfxFamily>::program(reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ctx.currentPatchPreambleBuffer),
@@ -1050,18 +1052,21 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCommandListWaitSync(Com
                                                    this->isCopyOnlyCommandQueue);
                 ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, sizeof(MI_LOAD_REGISTER_IMM));
             }
-            NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(ctx.currentPatchPreambleBuffer),
-                                                                    commandList->getLatestTagGpuAddress(),
-                                                                    commandList->getLatestTaskCount(),
-                                                                    COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                    false,
-                                                                    true,
-                                                                    GfxFamily::isQwordInOrderCounter,
-                                                                    GfxFamily::isQwordInOrderCounter && !useSemaphore64bCmd,
-                                                                    false,
-                                                                    useSemaphore64bCmd);
-            ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
+            for (uint32_t i = 0; i < this->partitionCount; i++) {
+                NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(ctx.currentPatchPreambleBuffer),
+                                                                        waitAddress,
+                                                                        waitValue,
+                                                                        COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
+                                                                        false,
+                                                                        true,
+                                                                        GfxFamily::isQwordInOrderCounter,
+                                                                        GfxFamily::isQwordInOrderCounter && !useSemaphore64bCmd,
+                                                                        false,
+                                                                        useSemaphore64bCmd);
+                ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
 
+                waitAddress += this->csr->getImmWritePostSyncWriteOffset();
+            }
             this->csr->makeResident(*commandList->getLatestTagGpuAllocation());
         }
     }

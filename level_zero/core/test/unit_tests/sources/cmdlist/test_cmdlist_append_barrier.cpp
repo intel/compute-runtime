@@ -764,5 +764,72 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     EXPECT_EQ(expectedAtomicCounterAddress, cmdSemaphore->getSemaphoreGraphicsAddress());
 }
 
+HWTEST2_F(MultiTilePatchPreambleTest,
+          givenMultiTileQueueWithPatchPreambleWhenAppendingCommandListRequiresWaitThenExpectSemaphoreWaitingForAllTiles,
+          IsAtLeastXeCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+    auto postSyncOffset = commandQueue->csr->getImmWritePostSyncWriteOffset();
+    size_t partitionCount = commandQueue->partitionCount;
+
+    constexpr uint64_t dummyTagGpuAddress = 0x12345000;
+    constexpr uint32_t dummyTagTaskCount = 0x3;
+    MockGraphicsAllocation dummyTagAllocation(nullptr, dummyTagGpuAddress, 0x1000);
+
+    commandQueue->saveWaitForPreamble = true;
+    commandQueue->setPatchingPreamble(true);
+    commandList->close();
+    commandList->saveLatestTagAndTaskCount(&dummyTagAllocation, dummyTagTaskCount);
+
+    auto cmdListHandle = commandList->toHandle();
+
+    auto queueStream = &commandQueue->commandStream;
+
+    auto sizeBefore = queueStream->getUsed();
+    auto result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto sizeAfter = queueStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(queueStream->getCpuBase(), sizeBefore),
+        (sizeAfter - sizeBefore)));
+
+    auto semaphoreList = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_TRUE((partitionCount <= semaphoreList.size()));
+
+    auto semAddress = dummyTagGpuAddress;
+    for (uint32_t i = 0; i < partitionCount; i++) {
+        auto cmdSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreList[i]);
+        EXPECT_EQ(semAddress, cmdSemaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(dummyTagTaskCount, cmdSemaphore->getSemaphoreDataDword());
+        semAddress += postSyncOffset;
+    }
+
+    if (!useSemaphore64bCmd) {
+        bool foundLriForSemaphore = false;
+        auto lriList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), semaphoreList[0]);
+        ASSERT_TRUE((2u <= lriList.size()));
+        MI_LOAD_REGISTER_IMM *cmdLoadImm = nullptr;
+        uint32_t i = 0;
+        for (; i < lriList.size(); i++) {
+            cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lriList[i]);
+            if (cmdLoadImm->getRegisterOffset() == 0x2600) {
+                EXPECT_EQ(dummyTagTaskCount, cmdLoadImm->getDataDword());
+                foundLriForSemaphore = true;
+                break;
+            }
+        }
+        ASSERT_TRUE(foundLriForSemaphore);
+        ASSERT_TRUE(((i + 1) < lriList.size()));
+        cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lriList[i + 1]);
+        EXPECT_EQ(0x2604u, cmdLoadImm->getRegisterOffset());
+        EXPECT_EQ(0u, cmdLoadImm->getDataDword());
+    }
+}
+
 } // namespace ult
 } // namespace L0
