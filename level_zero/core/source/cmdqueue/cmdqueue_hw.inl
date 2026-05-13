@@ -9,6 +9,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
@@ -919,7 +920,14 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalCommandListPatchPreamb
             NEO::EncodeDummyBlitWaArgs waArgs{false, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
             encodeSize += NEO::EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
         } else {
-            encodeSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+            if (this->partitionCount > 1) {
+                encodeSize += NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(
+                    this->device->getNEODevice()->getRootDeviceEnvironmentRef(),
+                    false,
+                    false);
+            } else {
+                encodeSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+            }
         }
         encodeSize += 2 * NEO::EncodeMiArbCheck<GfxFamily>::getCommandSize();
 
@@ -954,6 +962,7 @@ void CommandQueueHw<gfxCoreFamily>::retrivePatchPreambleSpace(CommandListExecuti
     if (ctx.patchPreambleEnabled) {
         ctx.currentPatchPreambleBuffer = commandStream.getSpace(ctx.bufferSpaceForPatchPreamble);
         ctx.basePatchPreambleAddress = reinterpret_cast<uintptr_t>(ctx.currentPatchPreambleBuffer);
+        ctx.basePatchPreambleGpuAddress = commandStream.getGpuBase() + ptrDiff(ctx.basePatchPreambleAddress, reinterpret_cast<uint64_t>(commandStream.getCpuBase()));
 
         NEO::EncodeMiArbCheck<GfxFamily>::program(ctx.currentPatchPreambleBuffer, true);
         ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::EncodeMiArbCheck<GfxFamily>::getCommandSize());
@@ -963,17 +972,29 @@ void CommandQueueHw<gfxCoreFamily>::retrivePatchPreambleSpace(CommandListExecuti
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecutionContext &ctx) {
     if (ctx.patchPreambleEnabled) {
-
+        auto neoDevice = this->device->getNEODevice();
         if (this->isCopyOnlyCommandQueue) {
-            NEO::EncodeDummyBlitWaArgs waArgs{false, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
+            NEO::EncodeDummyBlitWaArgs waArgs{false, &(neoDevice->getRootDeviceEnvironmentRef())};
             NEO::MiFlushArgs args{waArgs};
 
             NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(ctx.currentPatchPreambleBuffer, 0, 0, args);
         } else {
             NEO::PipeControlArgs args;
-
-            NEO::MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(ctx.currentPatchPreambleBuffer, args);
-            ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier());
+            if (this->partitionCount > 1) {
+                uint64_t commandBufferCurrentGpuAddress = ctx.basePatchPreambleGpuAddress + ptrDiff(ctx.currentPatchPreambleBuffer, ctx.basePatchPreambleAddress);
+                NEO::ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(
+                    ctx.currentPatchPreambleBuffer,
+                    neoDevice->getDeviceBitfield(),
+                    args,
+                    neoDevice->getRootDeviceEnvironmentRef(),
+                    0, 0,
+                    commandBufferCurrentGpuAddress,
+                    false,
+                    false);
+            } else {
+                NEO::MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(ctx.currentPatchPreambleBuffer, args);
+                ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier());
+            }
         }
 
         NEO::EncodeMiArbCheck<GfxFamily>::program(ctx.currentPatchPreambleBuffer, false);

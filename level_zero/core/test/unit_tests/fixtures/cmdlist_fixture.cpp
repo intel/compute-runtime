@@ -83,7 +83,22 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
 
     ze_result_t returnValue;
 
-    NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::copy : NEO::EngineGroupType::renderCompute;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                     device,
+                                                     neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                     &queueDesc,
+                                                     createCopy,
+                                                     createInternal,
+                                                     false,
+                                                     returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute;
 
     if (!createImmediate) {
         commandList.reset(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, cmdListEngineType, 0u, returnValue, false)));
@@ -104,6 +119,11 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
 
     eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
     event = std::unique_ptr<Event>(static_cast<Event *>(device->getL0GfxCoreHelper().createEvent(eventPool.get(), &eventDesc, device, returnValue)));
+}
+
+void MultiTileCommandListFixtureInit::tearDown() {
+    commandQueue->destroy();
+    SingleRootMultiSubDeviceFixture::tearDown();
 }
 
 void ModuleMutableCommandListFixture::setUpImpl() {

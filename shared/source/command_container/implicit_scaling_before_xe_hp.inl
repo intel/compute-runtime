@@ -33,12 +33,12 @@ size_t ImplicitScalingDispatch<GfxFamily>::getBarrierSize(const RootDeviceEnviro
 
 template <typename GfxFamily>
 void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &commandStream, const DeviceBitfield &devices, PipeControlArgs &flushArgs, const RootDeviceEnvironment &rootDeviceEnvironment,
-                                                                 uint64_t gpuAddress, uint64_t immediateData, bool apiSelfCleanup, bool useSecondaryBatchBuffer) {
+                                                                 uint64_t postSyncGpuAddress, uint64_t postSyncImmediateData, bool apiSelfCleanup, bool useSecondaryBatchBuffer) {
 }
 
 template <typename GfxFamily>
 void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(void *&commandBuffer, const DeviceBitfield &devices, PipeControlArgs &flushArgs, const RootDeviceEnvironment &rootDeviceEnvironment,
-                                                                 uint64_t gpuAddress, uint64_t immediateData, uint64_t cmdBufferGpuAddress, bool apiSelfCleanup, bool useSecondaryBatchBuffer) {
+                                                                 uint64_t postSyncGpuAddress, uint64_t postSyncImmediateData, uint64_t cmdBufferGpuAddress, bool apiSelfCleanup, bool useSecondaryBatchBuffer) {
 }
 
 template <typename GfxFamily>

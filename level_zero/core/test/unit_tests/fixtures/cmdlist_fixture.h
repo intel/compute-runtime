@@ -44,15 +44,14 @@ class DirectSubmissionCommandListFixture : public CommandListFixture {
 struct MultiTileCommandListFixtureInit : public SingleRootMultiSubDeviceFixture {
     void setUp();
     void setUpParams(bool createImmediate, bool createInternal, bool createCopy, int32_t primaryBuffer);
-    inline void tearDown() {
-        SingleRootMultiSubDeviceFixture::tearDown();
-    }
+    void tearDown();
 
     std::unique_ptr<WhiteBox<L0::CommandList>> commandList;
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<Event> event;
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
     std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
+    WhiteBox<L0::CommandQueue> *commandQueue;
 };
 
 template <bool createImmediate, bool createInternal, bool createCopy, int32_t primaryBuffer>

@@ -186,13 +186,13 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
                                                                  const DeviceBitfield &devices,
                                                                  PipeControlArgs &flushArgs,
                                                                  const RootDeviceEnvironment &rootDeviceEnvironment,
-                                                                 uint64_t gpuAddress,
-                                                                 uint64_t immediateData,
+                                                                 uint64_t postSyncGpuAddress,
+                                                                 uint64_t postSyncImmediateData,
                                                                  bool apiSelfCleanup,
                                                                  bool useSecondaryBatchBuffer) {
     size_t totalProgrammedSize = 0u;
 
-    auto barrierCommandsSize = getBarrierSize(rootDeviceEnvironment, apiSelfCleanup, gpuAddress > 0);
+    auto barrierCommandsSize = getBarrierSize(rootDeviceEnvironment, apiSelfCleanup, postSyncGpuAddress > 0);
     void *commandBufferBefore = commandStream.getSpace(barrierCommandsSize);
     void *commandBuffer = commandBufferBefore;
 
@@ -202,8 +202,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
                                                                 devices,
                                                                 flushArgs,
                                                                 rootDeviceEnvironment,
-                                                                gpuAddress,
-                                                                immediateData,
+                                                                postSyncGpuAddress,
+                                                                postSyncImmediateData,
                                                                 cmdBufferGpuAddress,
                                                                 apiSelfCleanup,
                                                                 useSecondaryBatchBuffer);
@@ -216,19 +216,19 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(void *&commandB
                                                                  const DeviceBitfield &devices,
                                                                  PipeControlArgs &flushArgs,
                                                                  const RootDeviceEnvironment &rootDeviceEnvironment,
-                                                                 uint64_t gpuAddress,
-                                                                 uint64_t immediateData,
+                                                                 uint64_t postSyncGpuAddress,
+                                                                 uint64_t postSyncImmediateData,
                                                                  uint64_t cmdBufferGpuAddress,
                                                                  bool apiSelfCleanup,
                                                                  bool useSecondaryBatchBuffer) {
     uint32_t totalProgrammedSize = 0u;
 
     bool semaphore64bCmdSupported = rootDeviceEnvironment.getProductHelper().isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper(), *rootDeviceEnvironment.getHardwareInfo());
-    WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, gpuAddress > 0, semaphore64bCmdSupported);
+    WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, postSyncGpuAddress > 0, semaphore64bCmdSupported);
     args.tileCount = static_cast<uint32_t>(devices.count());
     args.secondaryBatchBuffer = useSecondaryBatchBuffer;
-    args.postSyncGpuAddress = gpuAddress;
-    args.postSyncImmediateValue = immediateData;
+    args.postSyncGpuAddress = postSyncGpuAddress;
+    args.postSyncImmediateValue = postSyncImmediateData;
 
     WalkerPartition::constructBarrierCommandBuffer<GfxFamily>(commandBuffer,
                                                               cmdBufferGpuAddress,

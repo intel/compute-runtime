@@ -82,8 +82,8 @@ struct ImplicitScalingDispatch {
                                         const DeviceBitfield &devices,
                                         PipeControlArgs &flushArgs,
                                         const RootDeviceEnvironment &rootDeviceEnvironment,
-                                        uint64_t gpuAddress,
-                                        uint64_t immediateData,
+                                        uint64_t postSyncGpuAddress,
+                                        uint64_t postSyncImmediateData,
                                         bool apiSelfCleanup,
                                         bool useSecondaryBatchBuffer);
 
@@ -91,8 +91,8 @@ struct ImplicitScalingDispatch {
                                         const DeviceBitfield &devices,
                                         PipeControlArgs &flushArgs,
                                         const RootDeviceEnvironment &rootDeviceEnvironment,
-                                        uint64_t gpuAddress,
-                                        uint64_t immediateData,
+                                        uint64_t postSyncGpuAddress,
+                                        uint64_t postSyncImmediateData,
                                         uint64_t cmdBufferGpuAddress,
                                         bool apiSelfCleanup,
                                         bool useSecondaryBatchBuffer);

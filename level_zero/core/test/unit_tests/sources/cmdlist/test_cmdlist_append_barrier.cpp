@@ -705,5 +705,64 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     EXPECT_NE(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, cmdBbStart->getSecondLevelBatchBuffer());
 }
 
+using MultiTilePatchPreambleTest = Test<MultiTileCommandListFixture<false, false, false, 1>>;
+
+HWTEST2_F(MultiTilePatchPreambleTest,
+          givenMultiTileQueueWithPatchPreambleWhenAppendingCommandListThenExpectMultiTileBarrier, IsAtLeastXeCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    commandQueue->setPatchingPreamble(true);
+    commandList->close();
+    auto cmdListHandle = commandList->toHandle();
+
+    auto queueStream = &commandQueue->commandStream;
+    auto queueStreamGpuBaseAddress = queueStream->getGpuBase();
+    auto queueStreamCpuBaseAddress = queueStream->getCpuBase();
+
+    auto sizeBefore = queueStream->getUsed();
+    auto result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto sizeAfter = queueStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(queueStream->getCpuBase(), sizeBefore),
+        (sizeAfter - sizeBefore)));
+
+    auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBbStart);
+
+    // size of x-tile atomic counters is 2 * sizeof(uint32_t) and they are programmed right after BB_START
+    constexpr size_t xTileJumpOffset = 2 * sizeof(uint32_t);
+
+    // first BB_START is to jump over the x-tile atomic counters
+    auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*itorBbStart);
+    size_t bbStartOffset = reinterpret_cast<uintptr_t>(cmdBbStart) - reinterpret_cast<uintptr_t>(queueStreamCpuBaseAddress);
+    // right after BB_START command
+    uint64_t expectedAtomicCounterAddress = queueStreamGpuBaseAddress + bbStartOffset + sizeof(MI_BATCH_BUFFER_START);
+    uint64_t expectedBbStartAddress = expectedAtomicCounterAddress + xTileJumpOffset;
+
+    EXPECT_EQ(expectedBbStartAddress, cmdBbStart->getBatchBufferStartAddress());
+
+    // verify x-tile sync: PIPE_CONTROL, MI_ATOMIC, MI_SEMAPHORE_WAIT
+    auto itorPipeControl = find<PIPE_CONTROL *>(cmdList.begin(), itorBbStart);
+    ASSERT_NE(itorBbStart, itorPipeControl);
+
+    auto itorAtomic = find<MI_ATOMIC *>(itorPipeControl, itorBbStart);
+    ASSERT_NE(itorBbStart, itorAtomic);
+    auto cmdAtomic = genCmdCast<MI_ATOMIC *>(*itorAtomic);
+    auto miAtomicProgrammedAddress = NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*cmdAtomic);
+    EXPECT_EQ(expectedAtomicCounterAddress, miAtomicProgrammedAddress);
+
+    auto itorSemaphore = find<MI_SEMAPHORE_WAIT *>(itorAtomic, itorBbStart);
+    ASSERT_NE(itorBbStart, itorSemaphore);
+    auto cmdSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*itorSemaphore);
+    EXPECT_EQ(expectedAtomicCounterAddress, cmdSemaphore->getSemaphoreGraphicsAddress());
+}
+
 } // namespace ult
 } // namespace L0
