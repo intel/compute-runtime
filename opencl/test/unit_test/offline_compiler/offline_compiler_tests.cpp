@@ -4325,9 +4325,13 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindful
     static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
 
     std::string &internalOptions = mockOfflineCompiler->internalOptions;
+    StreamCapture capture;
+    capture.captureStdout();
     auto result = mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
+    auto output = capture.getCapturedStdout();
 
     EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, result);
+    EXPECT_NE(std::string::npos, output.find("Error"));
     EXPECT_EQ(std::string::npos, internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
 
     mockOfflineCompiler->compilerProductHelper.swap(backup);
@@ -4347,6 +4351,29 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndDefault
 
     EXPECT_EQ(OCLOC_SUCCESS, result);
     EXPECT_NE(std::string::npos, internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
+
+    mockOfflineCompiler->compilerProductHelper.swap(backup);
+}
+
+TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindlessAlreadyInInternalOptionsWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotDuplicated) {
+    releaseHelper->isBindlessAddressingDisabledResult = true;
+    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+
+    std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
+    mockOfflineCompiler->compilerProductHelper.swap(backup);
+    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isBindlessAddressingDisabledResult = true;
+    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
+
+    std::string &internalOptions = mockOfflineCompiler->internalOptions;
+    internalOptions = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-legacy-mode";
+    StreamCapture capture;
+    capture.captureStdout();
+    auto result = mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
+    capture.getCapturedStdout();
+
+    EXPECT_EQ(OCLOC_SUCCESS, result);
+    EXPECT_NE(std::string::npos, internalOptions.find("-cl-intel-use-bindless-legacy-mode"));
+    EXPECT_EQ(std::string::npos, internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
 
     mockOfflineCompiler->compilerProductHelper.swap(backup);
 }

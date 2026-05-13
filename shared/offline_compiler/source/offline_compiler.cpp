@@ -1496,7 +1496,9 @@ int OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     if ((!compilerProductHelper->isBindlessAddressingDisabled(releaseHelper.get()) && addressingMode != "bindful") ||
         addressingMode == "bindless" ||
         compilerProductHelper->isForceBindlessRequired(hwInfo)) {
-        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
+        if (internalOptions.find("-cl-intel-use-bindless") == std::string::npos) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
+        }
     }
 
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper->getCachingPolicyOptions(false));
