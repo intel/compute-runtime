@@ -840,6 +840,15 @@ void SVMAllocsManager::cleanupUSMAllocCaches() {
     }
 }
 
+void SVMAllocsManager::trimUSMAllocCaches() {
+    if (this->usmDeviceAllocationsCache) {
+        this->usmDeviceAllocationsCache->trim();
+    }
+    if (this->usmHostAllocationsCache) {
+        this->usmHostAllocationsCache->trim();
+    }
+}
+
 void SVMAllocsManager::trimUSMDeviceAllocCache() {
     this->usmDeviceAllocationsCache->trim();
 }

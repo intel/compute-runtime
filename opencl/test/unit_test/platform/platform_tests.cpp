@@ -21,12 +21,14 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/mocks/mock_svm_manager.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform_info.h"
 #include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -406,4 +408,56 @@ TEST(PlatformInitTest, GivenPreferredPlatformNameWhenPlatformIsInitializedThenOv
     EXPECT_TRUE(status);
     EXPECT_STREQ("Overridden Platform Name", platform(executionEnvironment)->getPlatformInfo().name.c_str());
     cleanupPlatform(executionEnvironment);
+}
+
+TEST_F(PlatformTest, GivenContextCreatedFromPlatformWhenContextIsDestroyedThenActiveContextCountIsUpdated) {
+    pPlatform->initializeWithNewDevices();
+    EXPECT_EQ(0, pPlatform->activeContextCount);
+
+    auto clDevice = pPlatform->getClDevice(0);
+    cl_device_id deviceId = clDevice;
+    {
+        MockContext context(ClDeviceVector(&deviceId, 1));
+        EXPECT_EQ(1, pPlatform->activeContextCount);
+    }
+    EXPECT_EQ(0, pPlatform->activeContextCount);
+}
+
+TEST_F(PlatformTest, GivenLastContextDestroyedThenTrimUSMAllocCachesIsCalled) {
+    pPlatform->initializeWithNewDevices();
+
+    auto originalSvmManager = pPlatform->svmAllocsManager;
+    MockSVMAllocsManager mockSvmManager(pPlatform->getClDevice(0)->getMemoryManager());
+    pPlatform->svmAllocsManager = &mockSvmManager;
+
+    auto clDevice = pPlatform->getClDevice(0);
+    cl_device_id deviceId = clDevice;
+    {
+        MockContext context(ClDeviceVector(&deviceId, 1));
+        EXPECT_EQ(0u, mockSvmManager.trimUSMAllocCachesCalled);
+    }
+    EXPECT_EQ(1u, mockSvmManager.trimUSMAllocCachesCalled);
+    EXPECT_EQ(0, pPlatform->activeContextCount);
+
+    pPlatform->svmAllocsManager = originalSvmManager;
+}
+
+TEST_F(PlatformTest, GivenMultipleContextsWhenNotLastIsDestroyedThenTrimUSMAllocCachesIsNotCalled) {
+    pPlatform->initializeWithNewDevices();
+
+    auto originalSvmManager = pPlatform->svmAllocsManager;
+    MockSVMAllocsManager mockSvmManager(pPlatform->getClDevice(0)->getMemoryManager());
+    pPlatform->svmAllocsManager = &mockSvmManager;
+
+    auto clDevice = pPlatform->getClDevice(0);
+    cl_device_id deviceId = clDevice;
+    MockContext context1(ClDeviceVector(&deviceId, 1));
+    {
+        MockContext context2(ClDeviceVector(&deviceId, 1));
+        EXPECT_EQ(2, pPlatform->activeContextCount);
+    }
+    EXPECT_EQ(1, pPlatform->activeContextCount);
+    EXPECT_EQ(0u, mockSvmManager.trimUSMAllocCachesCalled);
+
+    pPlatform->svmAllocsManager = originalSvmManager;
 }

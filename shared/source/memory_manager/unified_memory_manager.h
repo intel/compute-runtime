@@ -268,6 +268,7 @@ class SVMAllocsManager {
     void freeSVMAllocDeferImplBlocking() { this->freeSVMAllocDeferImpl(FreePolicyType::blocking); }
     bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }
     void cleanupUSMAllocCaches();
+    MOCKABLE_VIRTUAL void trimUSMAllocCaches();
     void trimUSMDeviceAllocCache();
     void trimUSMHostAllocCache();
     void insertSVMAlloc(const SvmAllocationData &svmData);

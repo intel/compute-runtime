@@ -301,6 +301,7 @@ void Platform::decActiveContextCount() {
     DEBUG_BREAK_IF(this->activeContextCount < 0);
     if (this->activeContextCount == 0) {
         this->stagingBufferManager->freeAllocations();
+        this->svmAllocsManager->trimUSMAllocCaches();
     }
 }
 

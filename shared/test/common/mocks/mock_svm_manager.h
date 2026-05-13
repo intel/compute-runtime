@@ -55,6 +55,12 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
     bool freeSVMAllocImplCallBase = true;
     void *freeSVMAllocImplLastPtr = nullptr;
     FreePolicyType freeSVMAllocImplLastFreePolicy = FreePolicyType::none;
+
+    void trimUSMAllocCaches() override {
+        trimUSMAllocCachesCalled++;
+        SVMAllocsManager::trimUSMAllocCaches();
+    }
+    uint32_t trimUSMAllocCachesCalled = 0u;
 };
 
 template <bool enableLocalMemory, uint32_t rootDevicesCount>
