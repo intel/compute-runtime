@@ -13,6 +13,7 @@
 #include <dirent.h>
 #include <iostream>
 #include <poll.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -73,6 +74,7 @@ extern ssize_t (*sysCallsRecvmsg)(int sockfd, struct msghdr *msg, int flags);
 extern int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 extern int (*sysCallsDup)(int oldfd);
 extern pid_t (*sysCallsGetpid)();
+extern int (*sysCallsGetrlimit)(int resource, struct rlimit *rlim);
 
 extern bool allowFakeDevicePath;
 extern int flockRetVal;
@@ -123,6 +125,7 @@ extern int recvmsgCalled;
 extern int setsockoptCalled;
 extern int dupCalled;
 extern int getpidCalled;
+extern int getrlimitCalled;
 
 extern std::vector<void *> mmapVector;
 extern std::vector<void *> mmapCapturedExtendedPointers;

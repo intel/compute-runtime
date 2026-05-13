@@ -2073,7 +2073,14 @@ void Context::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint
     }
 }
 
+std::once_flag Context::opaqueHandleResourcesOnceFlag;
+
+void Context::initOpaqueHandleResources() {
+    std::call_once(Context::opaqueHandleResourcesOnceFlag, [this]() {
+        initOpaqueHandleResourcesImpl();
+    });
+}
+
 template void Context::setIPCHandleData<IpcMemoryData>(NEO::GraphicsAllocation *, uint64_t, IpcMemoryData &, uint64_t, uint8_t, NEO::UsmMemAllocPool *, IpcHandleType, void *);
 template void Context::setIPCHandleData<IpcOpaqueMemoryData>(NEO::GraphicsAllocation *, uint64_t, IpcOpaqueMemoryData &, uint64_t, uint8_t, NEO::UsmMemAllocPool *, IpcHandleType, void *);
-
 } // namespace L0

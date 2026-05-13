@@ -15,4 +15,16 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/context_ext.cpp
 )
 
+if(UNIX)
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/linux/context_linux.cpp
+  )
+else()
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/windows/context_windows.cpp
+  )
+endif()
+
 add_subdirectories()

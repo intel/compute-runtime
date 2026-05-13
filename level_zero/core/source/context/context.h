@@ -299,6 +299,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void closeExternalHandle(uint64_t handle);
     MOCKABLE_VIRTUAL void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle);
     MOCKABLE_VIRTUAL uint8_t isOpaqueHandleSupported(IpcHandleType *handleType);
+    MOCKABLE_VIRTUAL void initOpaqueHandleResources();
     static bool isIPCHandleSharingSupported();
 
     MOCKABLE_VIRTUAL ContextExt *getContextExt() {
@@ -368,6 +369,8 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     size_t getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired) {
         return getPageAlignedSizeRequired(nullptr, size, heapRequired, pageSizeRequired);
     }
+    void initOpaqueHandleResourcesImpl();
+    static std::once_flag opaqueHandleResourcesOnceFlag;
 
     size_t getPageAlignedSizeRequired(const void *pStart, size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
     bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, bool blocking);

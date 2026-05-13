@@ -28,6 +28,7 @@
 
 #include <sys/mman.h>
 #include <sys/prctl.h>
+#include <sys/resource.h>
 
 namespace L0 {
 
@@ -74,6 +75,7 @@ uint8_t Context::isOpaqueHandleSupported(IpcHandleType *handleType) {
             }
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                          "pidfd approach for IPC handles is supported\n");
+            initOpaqueHandleResources();
             return OpaqueHandlingType::pidfd;
         }
     }

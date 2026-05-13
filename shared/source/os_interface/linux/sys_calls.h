@@ -14,6 +14,7 @@
 #include <poll.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
@@ -77,6 +78,7 @@ int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t
 int dup(int oldfd);
 pid_t getpid();
 char **getEnviron();
+int getrlimit(int resource, struct rlimit *rlim);
 
 } // namespace SysCalls
 } // namespace NEO

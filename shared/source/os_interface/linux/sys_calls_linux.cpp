@@ -16,6 +16,7 @@
 #include <string>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -274,6 +275,10 @@ int dup(int oldfd) {
 
 pid_t getpid() {
     return ::getpid();
+}
+
+int getrlimit(int resource, struct rlimit *rlim) {
+    return ::getrlimit(resource, rlim);
 }
 
 } // namespace SysCalls

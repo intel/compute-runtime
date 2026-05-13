@@ -25,6 +25,7 @@
 #include <poll.h>
 #include <string_view>
 #include <sys/ioctl.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <system_error>
 
@@ -79,6 +80,7 @@ int recvmsgCalled = 0;
 int setsockoptCalled = 0;
 int dupCalled = 0;
 int getpidCalled = 0;
+int getrlimitCalled = 0;
 int fsyncCalled = 0;
 int fsyncArgPassed = 0;
 int fsyncRetVal = 0;
@@ -142,6 +144,7 @@ ssize_t (*sysCallsRecvmsg)(int sockfd, struct msghdr *msg, int flags) = nullptr;
 int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void *optval, socklen_t optlen) = nullptr;
 int (*sysCallsDup)(int oldfd) = nullptr;
 int (*sysCallsGetpid)() = nullptr;
+int (*sysCallsGetrlimit)(int resource, struct rlimit *rlim) = nullptr;
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
 long sysconfReturn = 1ull << 30;
@@ -694,6 +697,19 @@ pid_t getpid() {
     getpidCalled++;
     if (sysCallsGetpid != nullptr) {
         return sysCallsGetpid();
+    }
+    return 0;
+}
+
+int getrlimit(int resource, struct rlimit *rlim) {
+    getrlimitCalled++;
+    if (sysCallsGetrlimit != nullptr) {
+        return sysCallsGetrlimit(resource, rlim);
+    }
+    // Default: succeed with a reasonable limit
+    if (rlim != nullptr) {
+        rlim->rlim_cur = 1024;
+        rlim->rlim_max = 4096;
     }
     return 0;
 }
