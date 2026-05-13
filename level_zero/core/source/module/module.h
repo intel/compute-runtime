@@ -46,6 +46,7 @@ struct Module : _ze_module_handle_t, NEO::NonCopyableAndNonMovableClass {
                                      ze_kernel_handle_t *kernelHandle) = 0;
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) = 0;
+    virtual ze_result_t getIrBinary(size_t *pSize, uint8_t *pModuleIrBinary) = 0;
     virtual ze_result_t getFunctionPointer(const char *pKernelName, void **pfnFunction) = 0;
     virtual ze_result_t getGlobalPointer(const char *pGlobalName, size_t *pSize, void **pPtr) = 0;
     virtual ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) = 0;

@@ -54,6 +54,13 @@ extern NEO::ConstStringRef registerFileSize;
 } // namespace BuildOptions
 
 struct ModuleTranslationUnit {
+    enum class CompilationMode {
+        build,
+        staticLink,
+        createLibrary,
+        compile,
+    };
+
     ModuleTranslationUnit(L0::Device *device);
     virtual ~ModuleTranslationUnit();
     MOCKABLE_VIRTUAL ze_result_t buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
@@ -63,22 +70,39 @@ struct ModuleTranslationUnit {
 
     MOCKABLE_VIRTUAL ze_result_t buildFromSource(ze_module_format_t inputFormat, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions);
     MOCKABLE_VIRTUAL ze_result_t buildExt(ze_module_format_t inputFormat, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions);
+    MOCKABLE_VIRTUAL ze_result_t buildFromSourceWithHeaders(ze_module_format_t inputFormat, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions, std::span<const char *> headers, std::span<const size_t> headerSizes, std::span<const char *> headerNames);
 
     MOCKABLE_VIRTUAL ze_result_t buildFromIntermediate(IGC::CodeType::CodeType_t intermediateType, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
                                                        const ze_module_constants_t *pConstants);
-    MOCKABLE_VIRTUAL ze_result_t staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
-                                                 std::vector<const ze_module_constants_t *> specConstants);
+    ze_result_t staticLinkSpirV(const std::vector<const char *> &inputSpirVs,
+                                const std::vector<uint32_t> &inputModuleSizes,
+                                const char *buildOptions,
+                                const char *internalBuildOptions,
+                                const std::vector<const ze_module_constants_t *> &specConstants);
+    ze_result_t staticLinkSpirVAndLlvmBc(const std::vector<const char *> &inputSpirVs,
+                                         const std::vector<uint32_t> &inputModuleSizes,
+                                         const char *buildOptions,
+                                         const char *internalBuildOptions,
+                                         const std::vector<const ze_module_constants_t *> &specConstants,
+                                         const std::vector<const char *> &inputLlvmBcs,
+                                         const std::vector<uint32_t> &inputLlvmBcSizes);
     MOCKABLE_VIRTUAL ze_result_t createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions);
     MOCKABLE_VIRTUAL ze_result_t processUnpackedBinary();
-    std::vector<uint8_t> generateElfFromSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes);
+    std::vector<uint8_t> generateElfFromSpirV(const std::vector<const char *> &inputSpirVs,
+                                              const std::vector<uint32_t> &inputModuleSizes);
+    std::vector<uint8_t> generateElfFromSpirVAndLlvmBc(const std::vector<const char *> &inputSpirVs,
+                                                       const std::vector<uint32_t> &inputModuleSizes,
+                                                       const std::vector<const char *> &inputLlvmBcs,
+                                                       const std::vector<uint32_t> &inputLlvmBcSizes);
     bool processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize);
     std::string generateCompilerOptions(const char *buildOptions, const char *internalBuildOptions);
-    MOCKABLE_VIRTUAL ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink);
+    MOCKABLE_VIRTUAL ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, CompilationMode compilationMode);
     void updateBuildLog(const std::string &newLogEntry);
     void processDebugData();
     void freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocation> &buffer);
     NEO::GraphicsAllocation *getGlobalConstBufferGA() const;
     NEO::GraphicsAllocation *getGlobalVarBufferGA() const;
+    bool hasCreateLibraryOption() const;
 
     L0::Device *device = nullptr;
 
@@ -121,6 +145,8 @@ struct ModuleImp : public Module {
     ze_result_t createKernel(const ze_kernel_desc_t *desc,
                              ze_kernel_handle_t *kernelHandle) override;
 
+    ze_result_t getIrBinary(size_t *pSize, uint8_t *pModuleIrBinary) override;
+
     ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) override;
 
     ze_result_t getFunctionPointer(const char *pFunctionName, void **pfnFunction) override;
@@ -162,6 +188,8 @@ struct ModuleImp : public Module {
     ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) override;
 
     bool isSPIRv() { return builtFromSpirv; }
+
+    bool isLlvmBc() { return isLlvmBitcode; }
 
     bool isPrecompiled() { return precompiled; }
 
@@ -230,6 +258,7 @@ struct ModuleImp : public Module {
     std::unordered_map<std::string, HostGlobalSymbol> hostGlobalSymbolsMap;
 
     bool builtFromSpirv = false;
+    bool isLlvmBitcode = false;
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
     bool isZebinBinary = false;
@@ -312,6 +341,8 @@ struct ModulesPackage : public Module {
     const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override {
         return anyModuleThat<ReturnsNotNull>([&](Module &mod) { return mod.getKernelImmutableData(kernelName); });
     }
+
+    ze_result_t getIrBinary(size_t *pSize, uint8_t *pModuleIrBinary) override;
 
     ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) override;
 

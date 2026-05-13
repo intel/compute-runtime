@@ -1035,6 +1035,14 @@ TEST_F(ModulesPackageGetNativeBinary, GivenValidArgumentsThenReturnsNativeBinary
     EXPECT_EQ(7, outBinary[3]);
 }
 
+using ModulesPackageGetIrBinary = Test<L0::ult::DeviceFixture>;
+TEST_F(ModulesPackageGetIrBinary, givenModulesPackageWhenGettingIrBinaryThenReturnNotSupportedError) {
+    MockModulesPackage<> mp{this->device};
+    size_t size = {};
+    uint8_t outBinary = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getIrBinary(&size, &outBinary));
+}
+
 using ModulesPackageDynamicLink = Test<L0::ult::DeviceFixture>;
 
 TEST_F(ModulesPackageDynamicLink, GivenEmptyModulesListTheReturnsSuccess) {
