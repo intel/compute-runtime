@@ -172,7 +172,15 @@ void MockKernelInfo::setSamplerTable(DynamicStateHeapOffset borderColor, uint8_t
 }
 
 void MockKernelInfo::setLocalIds(const std::array<uint8_t, 3> &localIds) {
-    kernelDescriptor.kernelAttributes.numLocalIdChannels = localIds[0] + localIds[1] + localIds[2];
+    if (localIds[2] > 0) {
+        kernelDescriptor.kernelAttributes.numLocalIdChannels = 3;
+    } else if (localIds[1] > 0) {
+        kernelDescriptor.kernelAttributes.numLocalIdChannels = 2;
+    } else if (localIds[0] > 0) {
+        kernelDescriptor.kernelAttributes.numLocalIdChannels = 1;
+    } else {
+        kernelDescriptor.kernelAttributes.numLocalIdChannels = 0;
+    }
     kernelDescriptor.kernelAttributes.localId[0] = localIds[0];
     kernelDescriptor.kernelAttributes.localId[1] = localIds[1];
     kernelDescriptor.kernelAttributes.localId[2] = localIds[2];

@@ -188,12 +188,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOn
     EXPECT_EQ(4u, computeWalker->getWalkOrder());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTwoWhenOnlyYIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTwoWhenXAndYIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
     *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
-    kernel->kernelInfo.setLocalIds({0, 1, 0});
+    kernel->kernelInfo.setLocalIds({1, 1, 0});
     localWorkSizesIn[1] = 16;
     localWorkSizesIn[0] = localWorkSizesIn[2] = 1;
 
@@ -207,18 +207,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTw
     EXPECT_EQ(localWorkSizesIn[1], localY);
     EXPECT_EQ(localWorkSizesIn[2], localZ);
 
-    constexpr uint32_t expectedEmit = (1 << 1);
+    constexpr uint32_t expectedEmit = (1 << 0) | (1 << 1);
     EXPECT_EQ(expectedEmit, computeWalker->getEmitLocalId());
     EXPECT_EQ(1u, computeWalker->getGenerateLocalId());
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkThreeTwoWhenOnlyZIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkThreeTwoWhenXYZIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
     *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
-    kernel->kernelInfo.setLocalIds({0, 0, 1});
+    kernel->kernelInfo.setLocalIds({1, 1, 1});
     localWorkSizesIn[2] = 16;
     localWorkSizesIn[0] = localWorkSizesIn[1] = 1;
 
@@ -232,7 +232,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkThree
     EXPECT_EQ(localWorkSizesIn[1], localY);
     EXPECT_EQ(localWorkSizesIn[2], localZ);
 
-    constexpr uint32_t expectedEmit = (1 << 2);
+    constexpr uint32_t expectedEmit = (1 << 0) | (1 << 1) | (1 << 2);
     EXPECT_EQ(expectedEmit, computeWalker->getEmitLocalId());
     EXPECT_EQ(1u, computeWalker->getGenerateLocalId());
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
@@ -304,6 +304,32 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTw
     EXPECT_EQ(localWorkSizesIn[0], localX);
     EXPECT_EQ(localWorkSizesIn[1], localY);
     EXPECT_EQ(localWorkSizesIn[2], localZ);
+
+    constexpr uint32_t expectedEmit = (1 << 0) | (1 << 1);
+    EXPECT_EQ(expectedEmit, computeWalker->getEmitLocalId());
+    EXPECT_EQ(1u, computeWalker->getGenerateLocalId());
+    EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTwoLocalIdChannelsWithNonTrivialZWorkSizeThenOnlyXandYMaximumsAreSet) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
+
+    kernel->kernelInfo.setLocalIds({1, 1, 0});
+    localWorkSizesIn[0] = 4;
+    localWorkSizesIn[1] = 8;
+    localWorkSizesIn[2] = 4;
+
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
+                                                            localWorkSizesIn, simd, 3, false, false, 0u);
+
+    auto localX = static_cast<size_t>(computeWalker->getLocalXMaximum() + 1);
+    auto localY = static_cast<size_t>(computeWalker->getLocalYMaximum() + 1);
+    auto localZ = static_cast<size_t>(computeWalker->getLocalZMaximum() + 1);
+    EXPECT_EQ(localWorkSizesIn[0], localX);
+    EXPECT_EQ(localWorkSizesIn[1], localY);
+    EXPECT_EQ(1u, localZ);
 
     constexpr uint32_t expectedEmit = (1 << 0) | (1 << 1);
     EXPECT_EQ(expectedEmit, computeWalker->getEmitLocalId());
@@ -1736,6 +1762,25 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
     lws[1] = 15;
     lws[2] = 15;
     EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, false, requiredWalkOrder, simd));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenOneActiveChannelWithInactiveDimGreaterThan1WhenHwGenerationLocalIdsIsEnabledThenReturnFalse) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    uint32_t workDim = 1;
+    uint32_t simd = 8;
+    size_t lws[3] = {16, 7, 1};
+    std::array<uint8_t, 3> walkOrder = {{0, 1, 2}};
+    uint32_t requiredWalkOrder = 77u;
+
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, false, requiredWalkOrder, simd));
+
+    lws[0] = 15;
+    lws[1] = 7;
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws, walkOrder, false, requiredWalkOrder, simd));
 }
 
