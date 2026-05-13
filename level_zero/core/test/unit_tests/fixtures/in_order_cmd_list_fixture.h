@@ -75,7 +75,9 @@ class WhiteboxSharableEventDataHelper : public SharableEventDataHelper {
   public:
     using SharableEventDataHelper::allocation;
     using SharableEventDataHelper::allocationOffset;
+    using SharableEventDataHelper::eventDataNode;
     using SharableEventDataHelper::eventDataPtr;
+    using SharableEventDataHelper::localTempStorage;
 };
 
 class WhiteboxInOrderExecEventHelper : public InOrderExecEventHelper {

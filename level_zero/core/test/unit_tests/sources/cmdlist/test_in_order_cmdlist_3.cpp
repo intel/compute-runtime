@@ -37,12 +37,25 @@ struct InOrderIpcTests : public InOrderCmdListFixture {
     void enableEventSharing(InOrderFixtureMockEvent &event) {
         event.isSharableCounterBased = true;
 
+        auto &inOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(event.inOrderExecHelper);
+        auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(inOrderEventHelper.sharableEventDataHelper);
+
+        if (!sharableEventDataHelper.allocation && sharableEventDataHelper.eventDataPtr) {
+            // Standalone non-IPC events use local temp storage by default. Switch to a sharable
+            // tag node so IPC export paths can be exercised in tests.
+            auto savedData = *sharableEventDataHelper.eventDataPtr;
+            sharableEventDataHelper.localTempStorage.reset();
+            sharableEventDataHelper.eventDataPtr = nullptr;
+
+            auto node = device->getInOrderSharableEventDataAllocator()->getTag();
+            node->initialize();
+            sharableEventDataHelper.initializeFromTagNode(*node, device->getRootDeviceIndex());
+            *sharableEventDataHelper.eventDataPtr = savedData;
+        }
+
         if (event.getInOrderExecEventHelper().isDataAssigned()) {
             assignInternalHandle(event.getInOrderExecEventHelper().getDeviceCounterAllocation());
             assignInternalHandle(event.getInOrderExecEventHelper().getHostCounterAllocation());
-
-            auto &inOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(event.inOrderExecHelper);
-            auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(inOrderEventHelper.sharableEventDataHelper);
             assignInternalHandle(sharableEventDataHelper.allocation);
         }
     }
@@ -161,6 +174,32 @@ HWTEST_F(InOrderIpcTests, givenCbEventWhenCreatingFromApiThenOpenIpcHandle) {
     zeEventDestroy(nonIpcEvent);
 }
 
+HWTEST_F(InOrderIpcTests, givenCounterBasedEventWhenCreatingThenSharableTagNodeIsUsedOnlyForIpcEvents) {
+    zex_counter_based_event_desc_t desc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    desc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    ze_event_handle_t nonIpcHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &desc, &nonIpcHandle));
+
+    auto nonIpcEvent = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(nonIpcHandle));
+    auto &nonIpcSharableHelper = static_cast<WhiteboxSharableEventDataHelper &>(static_cast<WhiteboxInOrderExecEventHelper &>(nonIpcEvent->inOrderExecHelper).sharableEventDataHelper);
+
+    EXPECT_EQ(nullptr, nonIpcSharableHelper.allocation);
+    EXPECT_NE(nullptr, nonIpcSharableHelper.eventDataPtr);
+
+    desc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IPC;
+    ze_event_handle_t ipcHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &desc, &ipcHandle));
+
+    auto ipcEvent = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(ipcHandle));
+    auto &ipcSharableHelper = static_cast<WhiteboxSharableEventDataHelper &>(static_cast<WhiteboxInOrderExecEventHelper &>(ipcEvent->inOrderExecHelper).sharableEventDataHelper);
+
+    EXPECT_NE(nullptr, ipcSharableHelper.allocation);
+    EXPECT_NE(nullptr, ipcSharableHelper.eventDataPtr);
+
+    zeEventDestroy(nonIpcHandle);
+    zeEventDestroy(ipcHandle);
+}
+
 HWTEST_F(InOrderIpcTests, givenIncorrectInternalHandleWhenGetIsCalledThenReturnError) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -191,6 +230,8 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData)
 
     immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
 
+    // Enable sharing on events[0] first to consume tag #0, so events[1] gets a non-zero allocationOffset.
+    enableEventSharing(*events[0]);
     enableEventSharing(*events[1]);
     auto &inOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[1]->inOrderExecHelper);
     auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(inOrderEventHelper.sharableEventDataHelper);
@@ -348,6 +389,8 @@ HWTEST_F(InOrderIpcTests, givenNonOpaqueHandleAndCounterOffsetWhenOpenIsCalledTh
 
     immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
 
+    // Enable sharing on events[0] first to consume tag #0, so events[1] gets a non-zero allocationOffset.
+    enableEventSharing(*events[0]);
     enableEventSharing(*events[1]);
     auto &inOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[1]->inOrderExecHelper);
     auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(inOrderEventHelper.sharableEventDataHelper);
@@ -398,6 +441,8 @@ HWTEST_F(InOrderIpcTests, givenNonOpaqueIpcHandleWhenCreatingNewEventThenSetCorr
     auto pool = createEvents<FamilyType>(2, false);
 
     immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
+    // Enable sharing on events[0] first to consume tag #0, so events[1] gets a non-zero allocationOffset.
+    enableEventSharing(*events[0]);
     enableEventSharing(*events[1]);
 
     auto &inOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[1]->getInOrderExecEventHelper());
@@ -462,6 +507,8 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
     auto pool = createEvents<FamilyType>(2, false);
 
     immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
+    // Enable sharing on events[0] first to consume tag #0, so events[1] gets a non-zero allocationOffset.
+    enableEventSharing(*events[0]);
     enableEventSharing(*events[1]);
 
     auto &inOrderEventHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[1]->getInOrderExecEventHelper());
@@ -1173,12 +1220,10 @@ HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenExporterSignalsThenImpor
     auto pool = createEvents<FamilyType>(1, false);
 
     auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
-    auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(exporterHelper.sharableEventDataHelper);
 
-    events[0]->isSharableCounterBased = true;
+    enableEventSharing(*events[0]);
     assignInternalHandle(immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
     assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation());
-    assignInternalHandle(sharableEventDataHelper.allocation);
 
     // get IPC handle - exports allocs normally
     ze_ipc_event_counter_based_handle_t zeIpcData = {};
@@ -1238,13 +1283,13 @@ HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenImporterSignalsThenExpor
     auto pool = createEvents<FamilyType>(1, false);
 
     auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
-    auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(exporterHelper.sharableEventDataHelper);
-    auto exporterEventDataPtr = exporterHelper.getInOrderExecEventDataPtr();
 
-    events[0]->isSharableCounterBased = true;
+    enableEventSharing(*events[0]);
     assignInternalHandle(immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
     assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation());
-    assignInternalHandle(sharableEventDataHelper.allocation);
+
+    // capture eventDataPtr after migration to tag node (before migration it points to released local temp storage)
+    auto exporterEventDataPtr = exporterHelper.getInOrderExecEventDataPtr();
 
     // get IPC handle - exports allocs normally
     ze_ipc_event_counter_based_handle_t zeIpcData = {};
@@ -1380,14 +1425,12 @@ HWTEST_F(InOrderIpcTests, givenOpaqueHandleWhenOpenIpcHandleThenCacheIdsAreStore
     auto pool = createEvents<FamilyType>(1, false);
 
     auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
-    auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(exporterHelper.sharableEventDataHelper);
-
-    events[0]->isSharableCounterBased = true;
-    assignInternalHandle(immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
-    assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation());
-    assignInternalHandle(sharableEventDataHelper.allocation);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    enableEventSharing(*events[0]);
+
+    static_cast<WhiteboxInOrderExecInfo *>(exporterHelper.inOrderExecInfo.get())->initializeAllocationsFromHost();
 
     ze_ipc_event_counter_based_handle_t zeIpcData = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
@@ -1444,14 +1487,10 @@ HWTEST_F(InOrderIpcTests, givenValidEventDataWhenImportCbAllocationsCalledThenRe
     auto pool = createEvents<FamilyType>(1, false);
 
     auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
-    auto &sharableEventDataHelper = static_cast<WhiteboxSharableEventDataHelper &>(exporterHelper.sharableEventDataHelper);
-
-    events[0]->isSharableCounterBased = true;
-    assignInternalHandle(immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
-    assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation());
-    assignInternalHandle(sharableEventDataHelper.allocation);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    enableEventSharing(*events[0]);
 
     ze_ipc_event_counter_based_handle_t zeIpcData = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
