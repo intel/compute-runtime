@@ -493,4 +493,60 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
 
     return true;
 }
+
+bool CompilerCache::clearDirectoryContents(const std::string &dirPath) {
+    DIR *dir = NEO::SysCalls::opendir(dirPath.c_str());
+    if (!dir) {
+        int error = errno;
+        if (error == ENOENT) {
+            return true;
+        }
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Opening directory %s failed! errno: %d\n", NEO::SysCalls::getProcessId(), dirPath.c_str(), error);
+        return false;
+    }
+
+    struct dirent *entry;
+    while ((entry = NEO::SysCalls::readdir(dir)) != nullptr) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        std::string fullPath = joinPath(dirPath, entry->d_name);
+        struct stat statBuf = {};
+        if (NEO::SysCalls::stat(fullPath.c_str(), &statBuf) != 0) {
+            int error = errno;
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Stat on %s failed! errno: %d\n", NEO::SysCalls::getProcessId(), fullPath.c_str(), error);
+            NEO::SysCalls::closedir(dir);
+            return false;
+        }
+
+        if (S_ISDIR(statBuf.st_mode)) {
+            if (!clearDirectoryContents(fullPath)) {
+                NEO::SysCalls::closedir(dir);
+                return false;
+            }
+            if (NEO::SysCalls::rmdir(fullPath) != 0) {
+                int error = errno;
+                if (error != ENOENT) {
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Removing directory %s failed! errno: %d\n", NEO::SysCalls::getProcessId(), fullPath.c_str(), error);
+                    NEO::SysCalls::closedir(dir);
+                    return false;
+                }
+            }
+        } else {
+            if (NEO::SysCalls::unlink(fullPath) != 0) {
+                int error = errno;
+                if (error != ENOENT) {
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Unlinking file %s failed! errno: %d\n", NEO::SysCalls::getProcessId(), fullPath.c_str(), error);
+                    NEO::SysCalls::closedir(dir);
+                    return false;
+                }
+            }
+        }
+    }
+
+    NEO::SysCalls::closedir(dir);
+    return true;
+}
+
 } // namespace NEO

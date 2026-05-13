@@ -236,3 +236,48 @@ TEST(OclocApiTestsLinux, GivenNonZeroStatsWhenCacheCommandZeroStatsThenShowStats
         EXPECT_NE(std::string::npos, output.find("0.00%"));
     }
 }
+
+TEST(OclocApiTestsLinux, GivenCacheCommandWithClearAndFilesExistThenCacheIsClearedSuccessfully) {
+    static bool returnedFileEntry;
+    returnedFileEntry = false;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> opendirBackup(&NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        returnedFileEntry = false;
+        return reinterpret_cast<DIR *>(0x1);
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> readdirBackup(&NEO::SysCalls::sysCallsReaddir, [](DIR *dirp) -> struct dirent * {
+        static struct dirent entry;
+        memset(&entry, 0, sizeof(entry));
+        if (!returnedFileEntry) {
+            returnedFileEntry = true;
+            strncpy(entry.d_name, "file1.cl_cache", sizeof(entry.d_name) - 1);
+            return &entry;
+        }
+        return nullptr;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> closedirBackup(&NEO::SysCalls::sysCallsClosedir, [](DIR *dirp) -> int {
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, [](const std::string &path, struct stat *buf) -> int {
+        memset(buf, 0, sizeof(struct stat));
+        buf->st_mode = S_IFREG;
+        return 0;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsUnlink)> unlinkBackup(&NEO::SysCalls::sysCallsUnlink, [](const std::string &pathname) -> int {
+        return 0;
+    });
+
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-dir", "/test/cache",
+        "-clear"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+}

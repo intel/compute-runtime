@@ -60,6 +60,9 @@ extern size_t getLastErrorCalled;
 extern const size_t getLastErrorResultCount;
 extern DWORD getLastErrorResults[];
 extern BOOL getLastErrorConstantResult;
+
+extern size_t deleteFileACalled;
+extern BOOL deleteFileAResult;
 } // namespace SysCalls
 } // namespace NEO
 
@@ -85,7 +88,9 @@ struct OclocApiWindowsCacheTest : public ::testing::Test {
           setFilePointerCalledBackup(&NEO::SysCalls::setFilePointerCalled),
           setFilePointerResultBackup(&NEO::SysCalls::setFilePointerResult),
           getLastErrorCalledBackup(&NEO::SysCalls::getLastErrorCalled),
-          getLastErrorConstantResultBackup(&NEO::SysCalls::getLastErrorConstantResult) {}
+          getLastErrorConstantResultBackup(&NEO::SysCalls::getLastErrorConstantResult),
+          deleteFileACalledBackup(&NEO::SysCalls::deleteFileACalled),
+          deleteFileAResultBackup(&NEO::SysCalls::deleteFileAResult) {}
 
     void SetUp() override {
         for (size_t i = 0; i < NEO::SysCalls::createFileAResultsCount; i++) {
@@ -145,6 +150,8 @@ struct OclocApiWindowsCacheTest : public ::testing::Test {
     VariableBackup<DWORD> setFilePointerResultBackup;
     VariableBackup<size_t> getLastErrorCalledBackup;
     VariableBackup<BOOL> getLastErrorConstantResultBackup;
+    VariableBackup<size_t> deleteFileACalledBackup;
+    VariableBackup<BOOL> deleteFileAResultBackup;
 
     HANDLE createFileAResultsBackup[4]{};
     DWORD getLastErrorResultsBackup[4]{};
@@ -350,4 +357,33 @@ TEST_F(OclocApiWindowsCacheTest, GivenNonZeroStatsWhenCacheCommandZeroStatsThenS
         EXPECT_EQ(std::string::npos, output.find("17"));
         EXPECT_NE(std::string::npos, output.find("0.00%"));
     }
+}
+
+TEST_F(OclocApiWindowsCacheTest, GivenCacheCommandWithClearAndFilesExistThenCacheIsClearedSuccessfully) {
+    NEO::SysCalls::findFirstFileACalled = 0;
+    NEO::SysCalls::findNextFileACalled = 0;
+
+    memset(&NEO::SysCalls::findFirstFileAFfd[0], 0, sizeof(WIN32_FIND_DATAA));
+    strncpy(NEO::SysCalls::findFirstFileAFfd[0].cFileName, "file1.cl_cache", MAX_PATH - 1);
+    NEO::SysCalls::findFirstFileAFfd[0].dwFileAttributes = 0;
+    NEO::SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1);
+
+    NEO::SysCalls::findNextFileAResult = FALSE;
+    NEO::SysCalls::deleteFileAResult = TRUE;
+
+    const char *argv[] = {
+        "ocloc",
+        "cache",
+        "-dir", "C:\\test\\cache",
+        "-clear"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    EXPECT_EQ(1u, NEO::SysCalls::deleteFileACalled);
+    EXPECT_EQ(1u, NEO::SysCalls::findCloseCalled);
 }

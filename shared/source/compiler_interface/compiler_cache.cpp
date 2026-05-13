@@ -25,6 +25,7 @@
 #include <string>
 
 namespace NEO {
+
 std::mutex CompilerCache::cacheAccessMtx;
 
 const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
@@ -291,6 +292,10 @@ CompilerCache::StatsResult CompilerCache::zeroStats() {
     }
 
     return StatsResult::success;
+}
+
+bool CompilerCache::clear() {
+    return clearDirectoryContents(config.cacheDir);
 }
 
 } // namespace NEO

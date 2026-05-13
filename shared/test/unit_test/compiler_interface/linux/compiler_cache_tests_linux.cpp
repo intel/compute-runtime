@@ -17,6 +17,8 @@
 
 #include "elements_struct.h"
 
+#include <map>
+
 using namespace NEO;
 
 class CompilerCacheMockLinux : public CompilerCache {
@@ -2655,4 +2657,304 @@ TEST(CompilerCacheTests, GivenNonZeroStatsWhenZeroStatsCalledThenShowStatsReturn
     EXPECT_EQ(CompilerCache::cacheVersion, ZeroStatsTest::currentStats.version);
     EXPECT_EQ(std::string::npos, outputAfter.find("42"));
     EXPECT_EQ(std::string::npos, outputAfter.find("17"));
+}
+
+namespace ClearCachePass {
+struct MockFile {
+    std::string path;
+    bool isDir;
+};
+
+std::vector<MockFile> mockFiles;
+size_t unlinkCalled;
+size_t rmdirCalled;
+std::vector<std::string> unlinkedFiles;
+std::vector<std::string> removedDirs;
+
+std::map<std::string, size_t> dirReadIndex;
+
+DIR *mockOpendir(const char *path) {
+    std::string p(path);
+    for (const auto &f : mockFiles) {
+        if (f.isDir && f.path == p) {
+            dirReadIndex[p] = 0;
+            return reinterpret_cast<DIR *>(new std::string(p));
+        }
+    }
+    if (p == "/home/cl_cache") {
+        dirReadIndex[p] = 0;
+        return reinterpret_cast<DIR *>(new std::string(p));
+    }
+    errno = ENOENT;
+    return nullptr;
+}
+
+struct dirent *mockReaddir(DIR *dirp) {
+    static struct dirent entry;
+    memset(&entry, 0, sizeof(entry));
+
+    auto *dirPath = reinterpret_cast<std::string *>(dirp);
+    auto &idx = dirReadIndex[*dirPath];
+
+    if (idx == 0) {
+        strncpy(entry.d_name, ".", sizeof(entry.d_name) - 1);
+        idx++;
+        return &entry;
+    }
+    if (idx == 1) {
+        strncpy(entry.d_name, "..", sizeof(entry.d_name) - 1);
+        idx++;
+        return &entry;
+    }
+
+    size_t fileIdx = idx - 2;
+    while (fileIdx < mockFiles.size()) {
+        const auto &f = mockFiles[fileIdx];
+        auto lastSep = f.path.rfind('/');
+        std::string parent = (lastSep != std::string::npos) ? f.path.substr(0, lastSep) : "";
+        if (parent == *dirPath) {
+            std::string name = f.path.substr(lastSep + 1);
+            strncpy(entry.d_name, name.c_str(), sizeof(entry.d_name) - 1);
+            idx = fileIdx + 3;
+            return &entry;
+        }
+        fileIdx++;
+    }
+    idx = mockFiles.size() + 2;
+    return nullptr;
+}
+
+int mockClosedir(DIR *dirp) {
+    delete reinterpret_cast<std::string *>(dirp);
+    return 0;
+}
+
+int mockStat(const std::string &path, struct stat *buf) {
+    for (const auto &f : mockFiles) {
+        if (f.path == path) {
+            buf->st_mode = f.isDir ? S_IFDIR : S_IFREG;
+            return 0;
+        }
+    }
+    errno = ENOENT;
+    return -1;
+}
+
+int mockUnlink(const std::string &pathname) {
+    unlinkCalled++;
+    unlinkedFiles.push_back(pathname);
+    return 0;
+}
+
+int mockRmdir(const std::string &path) {
+    rmdirCalled++;
+    removedDirs.push_back(path);
+    return 0;
+}
+
+void reset() {
+    decltype(mockFiles)().swap(mockFiles);
+    unlinkCalled = 0;
+    rmdirCalled = 0;
+    decltype(unlinkedFiles)().swap(unlinkedFiles);
+    decltype(removedDirs)().swap(removedDirs);
+    dirReadIndex.clear();
+}
+} // namespace ClearCachePass
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenClearAndFilesExistThenAllFilesAndDirsAreRemoved) {
+    ClearCachePass::reset();
+    ClearCachePass::mockFiles = {
+        {"/home/cl_cache/0", true},
+        {"/home/cl_cache/0/0", true},
+        {"/home/cl_cache/0/0/file1.cl_cache", false},
+        {"/home/cl_cache/0/0/file2.cl_cache", false},
+        {"/home/cl_cache/0/0/stats", false},
+        {"/home/cl_cache/stats", false},
+        {"/home/cl_cache/config.file", false},
+    };
+
+    VariableBackup<decltype(SysCalls::sysCallsOpendir)> opendirBackup(&SysCalls::sysCallsOpendir, ClearCachePass::mockOpendir);
+    VariableBackup<decltype(SysCalls::sysCallsReaddir)> readdirBackup(&SysCalls::sysCallsReaddir, ClearCachePass::mockReaddir);
+    VariableBackup<decltype(SysCalls::sysCallsClosedir)> closedirBackup(&SysCalls::sysCallsClosedir, ClearCachePass::mockClosedir);
+    VariableBackup<decltype(SysCalls::sysCallsStat)> statBackup(&SysCalls::sysCallsStat, ClearCachePass::mockStat);
+    VariableBackup<decltype(SysCalls::sysCallsUnlink)> unlinkBackup(&SysCalls::sysCallsUnlink, ClearCachePass::mockUnlink);
+    VariableBackup<decltype(SysCalls::sysCallsRmdir)> rmdirBackup(&SysCalls::sysCallsRmdir, ClearCachePass::mockRmdir);
+
+    CompilerCacheMockLinuxCreateStats cache({true, true, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+
+    EXPECT_TRUE(cache.clear());
+    EXPECT_EQ(5u, ClearCachePass::unlinkCalled);
+    EXPECT_EQ(2u, ClearCachePass::rmdirCalled);
+
+    EXPECT_EQ("/home/cl_cache/0/0", ClearCachePass::removedDirs[0]);
+    EXPECT_EQ("/home/cl_cache/0", ClearCachePass::removedDirs[1]);
+
+    ClearCachePass::reset();
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenClearAndOpendirFailsThenReturnsFalse) {
+    ClearCachePass::reset();
+
+    VariableBackup<decltype(SysCalls::sysCallsOpendir)> opendirBackup(&SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        errno = EACCES;
+        return nullptr;
+    });
+
+    CompilerCacheMockLinuxCreateStats cache({true, false, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+
+    EXPECT_FALSE(cache.clear());
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenClearAndDirectoryDoesNotExistThenReturnsTrue) {
+    ClearCachePass::reset();
+
+    VariableBackup<decltype(SysCalls::sysCallsOpendir)> opendirBackup(&SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        errno = ENOENT;
+        return nullptr;
+    });
+
+    CompilerCacheMockLinuxCreateStats cache({true, false, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+
+    EXPECT_TRUE(cache.clear());
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenClearAndUnlinkFailsThenReturnsFalse) {
+    ClearCachePass::reset();
+    ClearCachePass::mockFiles = {
+        {"/home/cl_cache/file1.cl_cache", false},
+    };
+
+    VariableBackup<decltype(SysCalls::sysCallsOpendir)> opendirBackup(&SysCalls::sysCallsOpendir, ClearCachePass::mockOpendir);
+    VariableBackup<decltype(SysCalls::sysCallsReaddir)> readdirBackup(&SysCalls::sysCallsReaddir, ClearCachePass::mockReaddir);
+    VariableBackup<decltype(SysCalls::sysCallsClosedir)> closedirBackup(&SysCalls::sysCallsClosedir, ClearCachePass::mockClosedir);
+    VariableBackup<decltype(SysCalls::sysCallsStat)> statBackup(&SysCalls::sysCallsStat, ClearCachePass::mockStat);
+    VariableBackup<decltype(SysCalls::sysCallsUnlink)> unlinkBackup(&SysCalls::sysCallsUnlink, [](const std::string &pathname) -> int {
+        errno = EACCES;
+        return -1;
+    });
+
+    CompilerCacheMockLinuxCreateStats cache({true, false, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+
+    EXPECT_FALSE(cache.clear());
+
+    ClearCachePass::reset();
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenClearAndRmdirFailsThenReturnsFalse) {
+    ClearCachePass::reset();
+    ClearCachePass::mockFiles = {
+        {"/home/cl_cache/0", true},
+    };
+
+    VariableBackup<decltype(SysCalls::sysCallsOpendir)> opendirBackup(&SysCalls::sysCallsOpendir, ClearCachePass::mockOpendir);
+    VariableBackup<decltype(SysCalls::sysCallsReaddir)> readdirBackup(&SysCalls::sysCallsReaddir, ClearCachePass::mockReaddir);
+    VariableBackup<decltype(SysCalls::sysCallsClosedir)> closedirBackup(&SysCalls::sysCallsClosedir, ClearCachePass::mockClosedir);
+    VariableBackup<decltype(SysCalls::sysCallsStat)> statBackup(&SysCalls::sysCallsStat, ClearCachePass::mockStat);
+    VariableBackup<decltype(SysCalls::sysCallsUnlink)> unlinkBackup(&SysCalls::sysCallsUnlink, ClearCachePass::mockUnlink);
+    VariableBackup<decltype(SysCalls::sysCallsRmdir)> rmdirBackup(&SysCalls::sysCallsRmdir, [](const std::string &path) -> int {
+        errno = EACCES;
+        return -1;
+    });
+
+    CompilerCacheMockLinuxCreateStats cache({true, false, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+
+    EXPECT_FALSE(cache.clear());
+
+    ClearCachePass::reset();
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenClearAndStatFailsThenReturnsFalse) {
+    ClearCachePass::reset();
+    ClearCachePass::mockFiles = {
+        {"/home/cl_cache/file1.cl_cache", false},
+    };
+
+    VariableBackup<decltype(SysCalls::sysCallsOpendir)> opendirBackup(&SysCalls::sysCallsOpendir, ClearCachePass::mockOpendir);
+    VariableBackup<decltype(SysCalls::sysCallsReaddir)> readdirBackup(&SysCalls::sysCallsReaddir, ClearCachePass::mockReaddir);
+    VariableBackup<decltype(SysCalls::sysCallsClosedir)> closedirBackup(&SysCalls::sysCallsClosedir, ClearCachePass::mockClosedir);
+    VariableBackup<decltype(SysCalls::sysCallsStat)> statBackup(&SysCalls::sysCallsStat, [](const std::string &path, struct stat *buf) -> int {
+        errno = EACCES;
+        return -1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsUnlink)> unlinkBackup(&SysCalls::sysCallsUnlink, ClearCachePass::mockUnlink);
+
+    CompilerCacheMockLinuxCreateStats cache({true, false, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+
+    EXPECT_FALSE(cache.clear());
+
+    ClearCachePass::reset();
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenClearAndRecursiveOpendirFailsThenReturnsFalse) {
+    ClearCachePass::reset();
+    ClearCachePass::mockFiles = {
+        {"/home/cl_cache/subdir", true},
+    };
+
+    static int opendirCallCount;
+    opendirCallCount = 0;
+    VariableBackup<decltype(SysCalls::sysCallsOpendir)> opendirBackup(&SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        opendirCallCount++;
+        if (opendirCallCount == 1) {
+            return ClearCachePass::mockOpendir(name);
+        }
+        errno = EACCES;
+        return nullptr;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsReaddir)> readdirBackup(&SysCalls::sysCallsReaddir, ClearCachePass::mockReaddir);
+    VariableBackup<decltype(SysCalls::sysCallsClosedir)> closedirBackup(&SysCalls::sysCallsClosedir, ClearCachePass::mockClosedir);
+    VariableBackup<decltype(SysCalls::sysCallsStat)> statBackup(&SysCalls::sysCallsStat, ClearCachePass::mockStat);
+    VariableBackup<decltype(SysCalls::sysCallsRmdir)> rmdirBackup(&SysCalls::sysCallsRmdir, ClearCachePass::mockRmdir);
+
+    CompilerCacheMockLinuxCreateStats cache({true, false, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+
+    EXPECT_FALSE(cache.clear());
+
+    ClearCachePass::reset();
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenClearAndUnlinkReturnsENOENTThenIsIgnoredAndReturnsTrue) {
+    ClearCachePass::reset();
+    ClearCachePass::mockFiles = {
+        {"/home/cl_cache/file1.cl_cache", false},
+    };
+
+    VariableBackup<decltype(SysCalls::sysCallsOpendir)> opendirBackup(&SysCalls::sysCallsOpendir, ClearCachePass::mockOpendir);
+    VariableBackup<decltype(SysCalls::sysCallsReaddir)> readdirBackup(&SysCalls::sysCallsReaddir, ClearCachePass::mockReaddir);
+    VariableBackup<decltype(SysCalls::sysCallsClosedir)> closedirBackup(&SysCalls::sysCallsClosedir, ClearCachePass::mockClosedir);
+    VariableBackup<decltype(SysCalls::sysCallsStat)> statBackup(&SysCalls::sysCallsStat, ClearCachePass::mockStat);
+    VariableBackup<decltype(SysCalls::sysCallsUnlink)> unlinkBackup(&SysCalls::sysCallsUnlink, [](const std::string &pathname) -> int {
+        errno = ENOENT;
+        return -1;
+    });
+
+    CompilerCacheMockLinuxCreateStats cache({true, false, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+
+    EXPECT_TRUE(cache.clear());
+
+    ClearCachePass::reset();
+}
+
+TEST(CompilerCacheTests, GivenCompilerCacheWhenClearAndRmdirReturnsENOENTThenIsIgnoredAndReturnsTrue) {
+    ClearCachePass::reset();
+    ClearCachePass::mockFiles = {
+        {"/home/cl_cache/0", true},
+    };
+
+    VariableBackup<decltype(SysCalls::sysCallsOpendir)> opendirBackup(&SysCalls::sysCallsOpendir, ClearCachePass::mockOpendir);
+    VariableBackup<decltype(SysCalls::sysCallsReaddir)> readdirBackup(&SysCalls::sysCallsReaddir, ClearCachePass::mockReaddir);
+    VariableBackup<decltype(SysCalls::sysCallsClosedir)> closedirBackup(&SysCalls::sysCallsClosedir, ClearCachePass::mockClosedir);
+    VariableBackup<decltype(SysCalls::sysCallsStat)> statBackup(&SysCalls::sysCallsStat, ClearCachePass::mockStat);
+    VariableBackup<decltype(SysCalls::sysCallsUnlink)> unlinkBackup(&SysCalls::sysCallsUnlink, ClearCachePass::mockUnlink);
+    VariableBackup<decltype(SysCalls::sysCallsRmdir)> rmdirBackup(&SysCalls::sysCallsRmdir, [](const std::string &path) -> int {
+        errno = ENOENT;
+        return -1;
+    });
+
+    CompilerCacheMockLinuxCreateStats cache({true, false, ".cl_cache", "/home/cl_cache", MemoryConstants::megaByte});
+
+    EXPECT_TRUE(cache.clear());
+
+    ClearCachePass::reset();
 }

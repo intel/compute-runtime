@@ -2346,4 +2346,166 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenWriteStatsToFileAndBytesW
     EXPECT_FALSE(cache.writeStatsToFile("somePath\\cl_cache\\stats", cacheStats));
 }
 
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClearAndFileExistsThenFileIsDeleted) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    strncpy(SysCalls::findFirstFileAFfd[0].cFileName, "file1.cl_cache", MAX_PATH);
+    SysCalls::findFirstFileAFfd[0].dwFileAttributes = 0;
+    SysCalls::findNextFileAResult = FALSE;
+
+    CompilerCacheMockWindows cache({true, false, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    cache.callBaseCreateStats = false;
+
+    EXPECT_TRUE(cache.clear());
+    EXPECT_EQ(1u, SysCalls::deleteFileACalled);
+    EXPECT_EQ(0u, SysCalls::removeDirectoryACalled);
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClearAndSubdirExistsThenSubdirIsRemoved) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    strncpy(SysCalls::findFirstFileAFfd[0].cFileName, "subdir", MAX_PATH);
+    SysCalls::findFirstFileAFfd[0].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+    SysCalls::findFirstFileAResults[1] = INVALID_HANDLE_VALUE;
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND;
+    SysCalls::findNextFileAResult = FALSE;
+
+    CompilerCacheMockWindows cache({true, false, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    cache.callBaseCreateStats = false;
+
+    EXPECT_TRUE(cache.clear());
+    EXPECT_EQ(0u, SysCalls::deleteFileACalled);
+    EXPECT_EQ(1u, SysCalls::removeDirectoryACalled);
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClearAndCacheDirIsEmptyThenReturnsTrue) {
+    SysCalls::findFirstFileAResults[0] = INVALID_HANDLE_VALUE;
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND;
+
+    CompilerCacheMockWindows cache({true, false, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    cache.callBaseCreateStats = false;
+
+    EXPECT_TRUE(cache.clear());
+    EXPECT_EQ(0u, SysCalls::deleteFileACalled);
+    EXPECT_EQ(0u, SysCalls::removeDirectoryACalled);
+    EXPECT_EQ(0u, SysCalls::findCloseCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClearAndFindFirstFileAFailsThenReturnsFalse) {
+    SysCalls::findFirstFileAResults[0] = INVALID_HANDLE_VALUE;
+    SysCalls::getLastErrorResults[0] = ERROR_INVALID_FUNCTION;
+
+    CompilerCacheMockWindows cache({true, false, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    cache.callBaseCreateStats = false;
+
+    EXPECT_FALSE(cache.clear());
+    EXPECT_EQ(0u, SysCalls::findCloseCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClearAndDeleteFileAFailsThenReturnsFalse) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    strncpy(SysCalls::findFirstFileAFfd[0].cFileName, "file1.cl_cache", MAX_PATH);
+    SysCalls::findFirstFileAFfd[0].dwFileAttributes = 0;
+    SysCalls::deleteFileAResult = FALSE;
+    SysCalls::findNextFileAResult = FALSE;
+
+    CompilerCacheMockWindows cache({true, false, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    cache.callBaseCreateStats = false;
+
+    EXPECT_FALSE(cache.clear());
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClearAndRemoveDirectoryAFailsThenReturnsFalse) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    strncpy(SysCalls::findFirstFileAFfd[0].cFileName, "subdir", MAX_PATH);
+    SysCalls::findFirstFileAFfd[0].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+    SysCalls::findFirstFileAResults[1] = INVALID_HANDLE_VALUE;
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND;
+    SysCalls::removeDirectoryAResult = FALSE;
+    SysCalls::findNextFileAResult = FALSE;
+
+    CompilerCacheMockWindows cache({true, false, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    cache.callBaseCreateStats = false;
+
+    EXPECT_FALSE(cache.clear());
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClearAndDotEntriesExistThenTheyAreSkipped) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    strncpy(SysCalls::findFirstFileAFfd[0].cFileName, ".", MAX_PATH);
+    SysCalls::findFirstFileAFfd[0].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+
+    memset(&SysCalls::findNextFileAFileData[0], 0, sizeof(WIN32_FIND_DATAA));
+    strncpy(SysCalls::findNextFileAFileData[0].cFileName, "..", MAX_PATH);
+    SysCalls::findNextFileAFileData[0].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+
+    memset(&SysCalls::findNextFileAFileData[1], 0, sizeof(WIN32_FIND_DATAA));
+    strncpy(SysCalls::findNextFileAFileData[1].cFileName, "file1.cl_cache", MAX_PATH);
+    SysCalls::findNextFileAFileData[1].dwFileAttributes = 0;
+
+    memset(&SysCalls::findNextFileAFileData[2], 0, sizeof(WIN32_FIND_DATAA));
+    strncpy(SysCalls::findNextFileAFileData[2].cFileName, ".", MAX_PATH);
+
+    memset(&SysCalls::findNextFileAFileData[3], 0, sizeof(WIN32_FIND_DATAA));
+    strncpy(SysCalls::findNextFileAFileData[3].cFileName, ".", MAX_PATH);
+
+    SysCalls::findNextFileAResult = TRUE;
+
+    CompilerCacheMockWindows cache({true, false, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    cache.callBaseCreateStats = false;
+
+    EXPECT_TRUE(cache.clear());
+    EXPECT_EQ(1u, SysCalls::deleteFileACalled);
+    EXPECT_EQ(0u, SysCalls::removeDirectoryACalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClearAndRecursiveClearFailsThenReturnsFalse) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    strncpy(SysCalls::findFirstFileAFfd[0].cFileName, "subdir", MAX_PATH);
+    SysCalls::findFirstFileAFfd[0].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+    SysCalls::findFirstFileAResults[1] = INVALID_HANDLE_VALUE;
+    SysCalls::getLastErrorResults[0] = ERROR_ACCESS_DENIED;
+    SysCalls::findNextFileAResult = FALSE;
+
+    CompilerCacheMockWindows cache({true, false, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    cache.callBaseCreateStats = false;
+
+    EXPECT_FALSE(cache.clear());
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClearAndDeleteFileAReturnsFileNotFoundThenIsIgnoredAndReturnsTrue) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    strncpy(SysCalls::findFirstFileAFfd[0].cFileName, "file1.cl_cache", MAX_PATH);
+    SysCalls::findFirstFileAFfd[0].dwFileAttributes = 0;
+    SysCalls::deleteFileAResult = FALSE;
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND;
+    SysCalls::findNextFileAResult = FALSE;
+
+    CompilerCacheMockWindows cache({true, false, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    cache.callBaseCreateStats = false;
+
+    EXPECT_TRUE(cache.clear());
+    EXPECT_EQ(1u, SysCalls::deleteFileACalled);
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWhenClearAndRemoveDirectoryAReturnsFileNotFoundThenIsIgnoredAndReturnsTrue) {
+    SysCalls::findFirstFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
+    strncpy(SysCalls::findFirstFileAFfd[0].cFileName, "subdir", MAX_PATH);
+    SysCalls::findFirstFileAFfd[0].dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+    SysCalls::findFirstFileAResults[1] = INVALID_HANDLE_VALUE;
+    SysCalls::getLastErrorResults[0] = ERROR_FILE_NOT_FOUND;
+    SysCalls::getLastErrorResults[1] = ERROR_FILE_NOT_FOUND;
+    SysCalls::removeDirectoryAResult = FALSE;
+    SysCalls::findNextFileAResult = FALSE;
+
+    CompilerCacheMockWindows cache({true, false, ".cl_cache", "somePath\\cl_cache", MemoryConstants::megaByte});
+    cache.callBaseCreateStats = false;
+
+    EXPECT_TRUE(cache.clear());
+    EXPECT_EQ(0u, SysCalls::deleteFileACalled);
+    EXPECT_EQ(1u, SysCalls::removeDirectoryACalled);
+    EXPECT_EQ(1u, SysCalls::findCloseCalled);
+}
+
 } // namespace NEO

@@ -488,6 +488,7 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
         version,
         showStats,
         zeroStats,
+        clearCache,
     };
 
     CacheCommandOption commandOption = CacheCommandOption::none;
@@ -525,6 +526,12 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
             }
             commandOption = CacheCommandOption::zeroStats;
 
+        } else if (allArgs[i] == "-clear") {
+            if (commandOption != CacheCommandOption::none) {
+                multipleActionsDetected = true;
+            }
+            commandOption = CacheCommandOption::clearCache;
+
         } else if (allArgs[i] == "-help") {
             helpRequested = true;
             break;
@@ -540,6 +547,7 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
                        "Actions:\n"
                        "  -show-stats         Show cache statistics. With -verbose, it shows stats from all subdirectories.\n"
                        "  -zero-stats         Reset cache statistics.\n"
+                       "  -clear              Clear all cached files from the cache directory.\n"
                        "  -version            Show the current compiler cache version.\n"
                        "  -help               Print this help message.\n\n"
                        "Options:\n"
@@ -549,7 +557,7 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
     }
 
     if (multipleActionsDetected) {
-        helper->printf("Error: Multiple cache actions specified. Use exactly one of: -version, -show-stats, -zero-stats. See ocloc cache -help\n");
+        helper->printf("Error: Multiple cache actions specified. Use exactly one of: -version, -show-stats, -zero-stats, -clear. See ocloc cache -help\n");
         return OCLOC_INVALID_COMMAND_LINE;
     }
 
@@ -594,6 +602,15 @@ int OfflineCompiler::cacheCommand(size_t numArgs, const std::vector<std::string>
             return OCLOC_INVALID_COMMAND_LINE;
         } else if (zeroResult == CompilerCache::StatsResult::notFound) {
             helper->printf("No stats found to reset.\n");
+        }
+
+    } else if (commandOption == CacheCommandOption::clearCache) {
+        if (verbose) {
+            helper->printf("Clearing cache in path: %s\n", cacheConfig.cacheDir.c_str());
+        }
+
+        if (!compilerCache->clear()) {
+            return OCLOC_INVALID_COMMAND_LINE;
         }
     }
 

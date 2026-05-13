@@ -611,4 +611,54 @@ bool CompilerCache::writeStatsToFile(const std::string &statsPath, const CacheSt
     return true;
 }
 
+bool CompilerCache::clearDirectoryContents(const std::string &dirPath) {
+    WIN32_FIND_DATAA ffd{0};
+    std::string searchPath = joinPath(dirPath, "*");
+    HANDLE hFind = NEO::SysCalls::findFirstFileA(searchPath.c_str(), &ffd);
+
+    if (hFind == INVALID_HANDLE_VALUE) {
+        DWORD error = NEO::SysCalls::getLastError();
+        if (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND) {
+            return true;
+        }
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: File search failed! error code: %lu\n", NEO::SysCalls::getProcessId(), error);
+        return false;
+    }
+
+    do {
+        if (strcmp(ffd.cFileName, ".") == 0 || strcmp(ffd.cFileName, "..") == 0) {
+            continue;
+        }
+
+        std::string fullPath = joinPath(dirPath, ffd.cFileName);
+
+        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            if (!clearDirectoryContents(fullPath)) {
+                NEO::SysCalls::findClose(hFind);
+                return false;
+            }
+            if (!NEO::SysCalls::removeDirectoryA(fullPath.c_str())) {
+                DWORD error = NEO::SysCalls::getLastError();
+                if (error != ERROR_FILE_NOT_FOUND) {
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Removing directory %s failed! error code: %lu\n", NEO::SysCalls::getProcessId(), fullPath.c_str(), error);
+                    NEO::SysCalls::findClose(hFind);
+                    return false;
+                }
+            }
+        } else {
+            if (!NEO::SysCalls::deleteFileA(fullPath.c_str())) {
+                DWORD error = NEO::SysCalls::getLastError();
+                if (error != ERROR_FILE_NOT_FOUND) {
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Deleting file %s failed! error code: %lu\n", NEO::SysCalls::getProcessId(), fullPath.c_str(), error);
+                    NEO::SysCalls::findClose(hFind);
+                    return false;
+                }
+            }
+        }
+    } while (NEO::SysCalls::findNextFileA(hFind, &ffd) != 0);
+
+    NEO::SysCalls::findClose(hFind);
+    return true;
+}
+
 } // namespace NEO

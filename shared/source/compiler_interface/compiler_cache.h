@@ -59,6 +59,7 @@ class CompilerCache : NEO::NonCopyableAndNonMovableClass {
 
     bool showStats(bool verbose, std::string &output);
     StatsResult zeroStats();
+    bool clear();
 
     MOCKABLE_VIRTUAL bool cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize);
     MOCKABLE_VIRTUAL std::unique_ptr<char[]> loadCachedBinary(const std::string &kernelFileHash, size_t &cachedBinarySize);
@@ -81,6 +82,7 @@ class CompilerCache : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool createCacheDirectories(const std::string &cacheFile);
     MOCKABLE_VIRTUAL bool compareByLastAccessTime(const ElementsStruct &a, const ElementsStruct &b);
     MOCKABLE_VIRTUAL bool getCachedFiles(std::vector<ElementsStruct> &cacheFiles);
+    bool clearDirectoryContents(const std::string &dirPath);
 
     constexpr static int maxCacheDepth = 2;
     static std::mutex cacheAccessMtx;
