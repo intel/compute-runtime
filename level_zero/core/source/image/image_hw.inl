@@ -249,6 +249,17 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
     }
 
+    if (lookupTable.imageProperties.customRowPitch > 0) {
+        imgInfo.rowPitch = lookupTable.imageProperties.customRowPitch;
+        imgInfo.imgDesc.imageRowPitch = lookupTable.imageProperties.customRowPitch;
+        this->customRowPitch = lookupTable.imageProperties.customRowPitch;
+    }
+    if (lookupTable.imageProperties.customSlicePitch > 0) {
+        imgInfo.slicePitch = lookupTable.imageProperties.customSlicePitch;
+        imgInfo.imgDesc.imageSlicePitch = lookupTable.imageProperties.customSlicePitch;
+        this->customSlicePitch = lookupTable.imageProperties.customSlicePitch;
+    }
+
     imgInfo.print();
 
     NEO::SurfaceOffsets surfaceOffsets = {imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane};

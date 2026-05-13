@@ -3498,5 +3498,108 @@ HWTEST_F(ImageCreate, givenNonMipmappedImageWhenCopySurfaceStateToSSHThenXOffset
     EXPECT_EQ(rss.getXOffset(), originalXOffset);
     EXPECT_EQ(rss.getYOffset(), originalYOffset);
 }
+
+HWTEST_F(ImageCreate, givenCustomPitchDescWhenImageCreateThenCustomPitchesAreUsed) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 32u;
+    zeDesc.width = 64u;
+    zeDesc.miplevels = 1u;
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.flags = ZE_IMAGE_FLAG_KERNEL_WRITE;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+    ze_custom_pitch_exp_desc_t customPitchDesc = {};
+    customPitchDesc.stype = ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC;
+    customPitchDesc.pNext = nullptr;
+    customPitchDesc.rowPitch = 512;
+    customPitchDesc.slicePitch = 512 * 32;
+
+    zeDesc.pNext = &customPitchDesc;
+
+    Image *imagePtr = nullptr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    ASSERT_NE(imagePtr, nullptr);
+
+    auto imageImp = static_cast<ImageImp *>(imagePtr);
+    EXPECT_TRUE(imageImp->hasCustomPitch());
+    EXPECT_EQ(512u, imageImp->getCustomRowPitch());
+    EXPECT_EQ(512u * 32u, imageImp->getCustomSlicePitch());
+    EXPECT_EQ(512u, imageImp->getImageInfo().rowPitch);
+    EXPECT_EQ(512u * 32u, imageImp->getImageInfo().slicePitch);
+
+    imagePtr->destroy();
+}
+
+HWTEST_F(ImageCreate, givenCustomPitchDescWithOnlyRowPitchWhenImageCreateThenOnlyRowPitchIsCustom) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 32u;
+    zeDesc.width = 64u;
+    zeDesc.miplevels = 1u;
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.flags = ZE_IMAGE_FLAG_KERNEL_WRITE;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+    ze_custom_pitch_exp_desc_t customPitchDesc = {};
+    customPitchDesc.stype = ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC;
+    customPitchDesc.pNext = nullptr;
+    customPitchDesc.rowPitch = 1024;
+    customPitchDesc.slicePitch = 0;
+
+    zeDesc.pNext = &customPitchDesc;
+
+    Image *imagePtr = nullptr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    ASSERT_NE(imagePtr, nullptr);
+
+    auto imageImp = static_cast<ImageImp *>(imagePtr);
+    EXPECT_TRUE(imageImp->hasCustomPitch());
+    EXPECT_EQ(1024u, imageImp->getCustomRowPitch());
+    EXPECT_EQ(0u, imageImp->getCustomSlicePitch());
+    EXPECT_EQ(1024u, imageImp->getImageInfo().rowPitch);
+
+    imagePtr->destroy();
+}
+
+HWTEST_F(ImageCreate, givenNoCustomPitchDescWhenImageCreateThenHasCustomPitchReturnsFalse) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 32u;
+    zeDesc.width = 64u;
+    zeDesc.miplevels = 1u;
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.flags = ZE_IMAGE_FLAG_KERNEL_WRITE;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+    Image *imagePtr = nullptr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    ASSERT_NE(imagePtr, nullptr);
+
+    auto imageImp = static_cast<ImageImp *>(imagePtr);
+    EXPECT_FALSE(imageImp->hasCustomPitch());
+    EXPECT_EQ(0u, imageImp->getCustomRowPitch());
+    EXPECT_EQ(0u, imageImp->getCustomSlicePitch());
+
+    imagePtr->destroy();
+}
 } // namespace ult
 } // namespace L0

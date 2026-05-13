@@ -64,6 +64,8 @@ struct StructuresLookupTable {
         bool isPlanarExtension;
         void *pitchedPtr;
         const ze_sampler_desc_t *samplerDesc;
+        size_t customRowPitch;
+        size_t customSlicePitch;
     } imageProperties;
 
     struct SharedHandleType {
@@ -210,6 +212,11 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             lookupTable.isExternalMemmapSystem = true;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC) {
             lookupTable.exportMemory = true;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC) {
+            const ze_custom_pitch_exp_desc_t *customPitchDesc = reinterpret_cast<const ze_custom_pitch_exp_desc_t *>(extendedDesc);
+            lookupTable.areImageProperties = true;
+            lookupTable.imageProperties.customRowPitch = customPitchDesc->rowPitch;
+            lookupTable.imageProperties.customSlicePitch = customPitchDesc->slicePitch;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_SRGB_EXT_DESC) {
             const ze_srgb_ext_desc_t *srgbDesc = reinterpret_cast<const ze_srgb_ext_desc_t *>(extendedDesc);
             lookupTable.isSrgb = srgbDesc->sRGB;

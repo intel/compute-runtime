@@ -859,7 +859,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     }
 
     if (srcRowPitch == 0) {
-        if (image->isMimickedImage()) {
+        if (image->getCustomRowPitch() > 0) {
+            srcRowPitch = static_cast<uint32_t>(image->getCustomRowPitch());
+        } else if (image->isMimickedImage()) {
             uint32_t srcBytesPerPixel = bytesPerPixel;
             if (bytesPerPixel == 8) {
                 srcBytesPerPixel = 6;
@@ -874,8 +876,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     }
     uint64_t srcSlicePitchCalculated = srcSlicePitch;
     if (srcSlicePitch == 0) {
-        uint64_t height = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height);
-        srcSlicePitchCalculated = height * srcRowPitch;
+        if (image->getCustomSlicePitch() > 0) {
+            srcSlicePitchCalculated = image->getCustomSlicePitch();
+        } else {
+            uint64_t height = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height);
+            srcSlicePitchCalculated = height * srcRowPitch;
+        }
     }
 
     uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, srcRowPitch, srcSlicePitchCalculated, pDstRegion, bytesPerPixel);
@@ -1078,7 +1084,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     }
 
     if (destRowPitch == 0) {
-        if (image->isMimickedImage()) {
+        if (image->getCustomRowPitch() > 0) {
+            destRowPitch = static_cast<uint32_t>(image->getCustomRowPitch());
+        } else if (image->isMimickedImage()) {
             uint32_t destBytesPerPixel = bytesPerPixel;
             if (bytesPerPixel == 8) {
                 destBytesPerPixel = 6;
@@ -1093,8 +1101,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     }
     uint64_t destSlicePitchCalculated = destSlicePitch;
     if (destSlicePitch == 0) {
-        uint64_t height = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height);
-        destSlicePitchCalculated = height * destRowPitch;
+        if (image->getCustomSlicePitch() > 0) {
+            destSlicePitchCalculated = image->getCustomSlicePitch();
+        } else {
+            uint64_t height = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height);
+            destSlicePitchCalculated = height * destRowPitch;
+        }
     }
 
     uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, destRowPitch, destSlicePitchCalculated, pSrcRegion, bytesPerPixel);

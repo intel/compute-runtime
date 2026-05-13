@@ -57,6 +57,10 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
         return mimickedImagefor3Ch;
     }
 
+    bool hasCustomPitch() const override { return customRowPitch > 0 || customSlicePitch > 0; }
+    size_t getCustomRowPitch() const override { return customRowPitch; }
+    size_t getCustomSlicePitch() const override { return customSlicePitch; }
+
     bool isSrgb() const override { return srgbImage; }
     bool isDepthStencil() const override { return depthStencilImage; }
 
@@ -113,6 +117,8 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     bool sampledImage = false;
     bool mimickedImagefor3Ch = false;
     bool srgbImage = false;
+    size_t customRowPitch = 0;
+    size_t customSlicePitch = 0;
     bool depthStencilImage = false;
     NEO::SurfaceFormatInfo overriddenSurfaceFormat = {};
     bool hasOverriddenSurfaceFormat = false;

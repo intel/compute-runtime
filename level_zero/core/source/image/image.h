@@ -51,6 +51,9 @@ struct Image : _ze_image_handle_t {
     virtual NEO::SurfaceStateInHeapInfo *getBindlessSlot() = 0;
     virtual ze_result_t getDeviceOffset(uint64_t *deviceOffset) = 0;
     virtual bool isMimickedImage() = 0;
+    virtual bool hasCustomPitch() const = 0;
+    virtual size_t getCustomRowPitch() const = 0;
+    virtual size_t getCustomSlicePitch() const = 0;
     virtual ze_result_t allocateImplicitArgsOnDemand() = 0;
     virtual void encodeImplicitArgsSurfaceState() = 0;
     virtual bool isSrgb() const = 0;
