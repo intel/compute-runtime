@@ -30,7 +30,7 @@
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/pool_allocator_traits.h"
 #include "shared/source/utilities/pool_allocators.h"
-
+#include "shared/source/utilities/thread_data_map.h"
 namespace NEO {
 
 namespace {
@@ -56,7 +56,8 @@ CommandContainer::~CommandContainer() {
     }
 
     this->handleCmdBufferAllocations(0u);
-
+    this->threadDataTracker.reset();
+    this->threadDataMap.reset();
     if (heapHelper) {
         for (auto allocationIndirectHeap : allocationIndirectHeaps) {
             heapHelper->storeHeapAllocation(allocationIndirectHeap);
@@ -98,6 +99,10 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
     this->defaultSshSize = gfxCoreHelper.getDefaultSshSize(productHelper);
     if (this->stateBaseAddressTracking) {
         this->defaultSshSize = defaultSshSize;
+    }
+    this->isIOHCacheEnabled = false;
+    if (debugManager.flags.CacheThreadDataForIOH.get() != -1) {
+        this->isIOHCacheEnabled = static_cast<bool>(debugManager.flags.CacheThreadDataForIOH.get());
     }
 
     globalBindlessHeapsEnabled = this->device->getExecutionEnvironment()->rootDeviceEnvironments[this->device->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr;
@@ -179,6 +184,12 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
         iddBlock = nullptr;
         nextIddInBlock = this->getNumIddPerBlock();
+        auto heapAlignment = productHelper.getCacheLineSize();
+        if (indirectHeapInLocalMemory) {
+            heapAlignment = MemoryConstants::cacheLineSize;
+        }
+        this->threadDataTracker = std::make_unique<ThreadDataTracker>();
+        this->threadDataMap = std::make_unique<ThreadDataMap>(heapHelper.get(), device->getRootDeviceIndex(), heapAlignment);
     }
     return ErrorCode::success;
 }
@@ -588,6 +599,7 @@ void CommandContainer::fillReusableAllocationLists() {
         return;
     }
 
+    this->threadDataMap->reallocateMap();
     for (auto i = 0u; i < amountToFill; i++) {
         for (auto heapType = 0u; heapType < IndirectHeap::Type::numTypes; heapType++) {
             auto currentHeapType = static_cast<HeapType>(heapType);
@@ -634,6 +646,8 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
             this->immediateReusableAllocationList->pushTailOne(*allocation);
         }
     } else {
+        extractCommonThreadData();
+
         const auto parent = allocation->getParentAllocation();
         const bool isPoolView = allocation->isView() && parent &&
                                 (this->device->getLinearStreamPoolAllocator().isPoolBuffer(parent) ||
@@ -690,6 +704,36 @@ void *CommandContainer::findCpuBaseForCmdBufferAddress(void *cmdBufferAddress) {
         }
     }
     return nullptr;
+}
+
+void CommandContainer::extractCommonThreadData() {
+    if (this->isIOHCacheEnabled && !this->threadDataTracker->isEmpty()) {
+        auto [hash, threadData] = this->threadDataTracker->getCommonThreadData();
+        this->threadDataMap->insert(hash, threadData);
+    }
+}
+
+void CommandContainer::registerThreadData(uint64_t hash, std::span<const uint8_t> threadData) {
+    this->threadDataTracker->registerThreadData(hash, threadData);
+}
+
+std::optional<uint64_t> CommandContainer::getCachedIohOffset(uint64_t threadDataHash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const {
+    return threadDataMap->find(threadDataHash, crossThreadData, perThreadData);
+}
+
+std::optional<uint64_t> CommandContainer::getCachedIohOffset(std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const {
+    return threadDataMap->find(crossThreadData, perThreadData);
+}
+
+void CommandContainer::makeThreadDataMapResident() {
+    auto alloc = this->getThreadDataMapStorage()->getGraphicsAllocation();
+    if (alloc) {
+        this->immediateCmdListCsr->makeResident(*alloc);
+    }
+}
+
+IndirectHeap *CommandContainer::getThreadDataMapStorage() const {
+    return threadDataMap->getStorage();
 }
 
 } // namespace NEO

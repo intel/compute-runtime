@@ -488,6 +488,26 @@ uint32_t CommandListCoreFamily<gfxCoreFamily>::getIohSizeForPrefetch(const Kerne
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+std::pair<NEO::GraphicsAllocation *, size_t> CommandListCoreFamily<gfxCoreFamily>::getIohAllocationAndOffsetForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace, bool isThreadDataMapAllowed) {
+    if (isThreadDataMapAllowed) {
+        uint32_t inlineDataProgrammingOffset = 0u;
+        if (NEO::EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelDescriptor())) {
+            constexpr uint32_t inlineDataSize = GfxFamily::DefaultWalkerType::getInlineDataSize();
+            inlineDataProgrammingOffset = std::min(inlineDataSize, kernel.getCrossThreadDataSize());
+        }
+        const std::span<const uint8_t> crossThreadSpan(kernel.getCrossThreadData() + inlineDataProgrammingOffset, kernel.getCrossThreadDataSize() - inlineDataProgrammingOffset);
+        const std::span<const uint8_t> perThreadSpan(kernel.getPerThreadData(), kernel.getPerThreadDataSizeForWholeThreadGroup());
+        auto cachedIohOffset = commandContainer.getCachedIohOffset(crossThreadSpan, perThreadSpan);
+        if (cachedIohOffset) {
+            auto cacheStorage = commandContainer.getThreadDataMapStorage();
+            return {cacheStorage->getGraphicsAllocation(), static_cast<size_t>(*cachedIohOffset - cacheStorage->getHeapGpuStartOffset())};
+        }
+    }
+    auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(kernel, reserveExtraSpace), GfxFamily::indirectDataAlignment);
+    return {ioh->getGraphicsAllocation(), ioh->getUsed()};
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_handle_t kernelHandle,
                                                                      const ze_group_count_t &threadGroupDimensions,
                                                                      ze_event_handle_t hEvent,
@@ -503,11 +523,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-
-    auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(*kernel, launchParams.reserveExtraPayloadSpace), GfxFamily::indirectDataAlignment);
-
-    auto estimateSizeForPrefetch = ensureCmdBufferSpaceForPrefetch();
-    prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, ioh->getGraphicsAllocation(), ioh->getUsed(), launchParams.outListCommands, getPrefetchCmdId(), estimateSizeForPrefetch);
+    {
+        const bool isThreadDataMapAllowed = commandContainer.getIOHCacheEnabled() && (kernel->getImplicitArgs() == nullptr);
+        if (isThreadDataMapAllowed) {
+            this->patchKernelProperties(launchParams, *kernel, threadGroupDimensions);
+        }
+        auto [iohAllocation, iohOffset] = getIohAllocationAndOffsetForPrefetch(*kernel, launchParams.reserveExtraPayloadSpace, isThreadDataMapAllowed);
+        auto estimateSizeForPrefetch = ensureCmdBufferSpaceForPrefetch();
+        prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, iohAllocation, iohOffset, launchParams.outListCommands, getPrefetchCmdId(), estimateSizeForPrefetch);
+    }
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, launchParams.outListCommands, launchParams.relaxedOrderingDispatch, true, true, launchParams.omitAddingWaitEventsResidency, false);
     if (ret) {
@@ -635,7 +659,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
 
     for (uint32_t i = 0; i < numKernels; i++) {
         NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer, alloc->getGpuAddress(), i, isCopyOnly(false));
-
+        launchParams.isKernelPatched = false;
         ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandles[i]),
                                            pLaunchArgumentsBuffer[i],
                                            nullptr, launchParams);
@@ -5204,6 +5228,24 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFlagsForBcsSplit(CmdListMemoryCo
     memoryCopyParams.bcsSplitBaseSrcPtr = srcPtr;
     memoryCopyParams.bcsSplitTotalDstSize = dstSize;
     memoryCopyParams.bcsSplitTotalSrcSize = srcSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::patchKernelProperties(CmdListKernelLaunchParams &launchParams, Kernel &kernel, const ze_group_count_t &threadGroupDimensions) {
+    if (!launchParams.isKernelPatched) {
+        kernel.patchGlobalOffset();
+        kernel.patchRegionParams(launchParams, threadGroupDimensions);
+        this->allocateOrReuseKernelPrivateMemoryIfNeeded(&kernel, kernel.getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
+
+        if (launchParams.isIndirect) {
+            prepareIndirectParams(&threadGroupDimensions);
+        } else {
+            kernel.setGroupCount(threadGroupDimensions.groupCountX,
+                                 threadGroupDimensions.groupCountY,
+                                 threadGroupDimensions.groupCountZ);
+        }
+        launchParams.isKernelPatched = true;
+    }
 }
 
 } // namespace L0

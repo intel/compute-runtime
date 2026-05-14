@@ -100,6 +100,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::getInOrderIncrementValue;
+    using BaseClass::getIohAllocationAndOffsetForPrefetch;
     using BaseClass::heaplessModeEnabled;
     using BaseClass::hostPtrMap;
     using BaseClass::immediateCmdListHeapSharing;

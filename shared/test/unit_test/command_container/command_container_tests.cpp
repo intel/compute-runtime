@@ -14,6 +14,8 @@
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/pool_allocator_traits.h"
+#include "shared/source/utilities/thread_data_hash.h"
+#include "shared/source/utilities/thread_data_map.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -2453,5 +2455,279 @@ TEST_F(CommandContainerTest, givenPooledAllocationWhenReleasingHeapThenAllocatio
     cmdContainer.reset();
     EXPECT_EQ(1, memoryOperationsInterface->freeCalledCount);
     EXPECT_EQ(0u, memoryOperationsInterface->gfxAllocationsForMakeResident.size());
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+struct MockContainerIOHCache : public CommandContainer {
+    using CommandContainer::allocationIndirectHeaps;
+    using CommandContainer::extractCommonThreadData;
+    using CommandContainer::heapHelper;
+    using CommandContainer::indirectHeaps;
+    using CommandContainer::threadDataMap;
+};
+
+TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenNoDataCachedThenTryGetCachedIohOffsetReturnsNullopt) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CacheThreadDataForIOH.set(1);
+
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    const uint8_t ctd[] = {1, 2, 3, 4};
+    const uint8_t ptd[] = {5, 6, 7, 8};
+
+    auto result = cmdContainer->getCachedIohOffset(12345u, {ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
+    EXPECT_FALSE(result.has_value());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenThreadDataRegisteredAndExtractedThenTryGetCachedIohOffsetReturnsOffset) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CacheThreadDataForIOH.set(1);
+
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    const uint8_t ctd[] = {1, 2, 3, 4};
+    const uint8_t ptd[] = {5, 6, 7, 8};
+    const uint8_t combined[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    auto hash = ThreadDataHash::computeThreadDataHash({ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
+
+    cmdContainer->registerThreadData(hash, {combined, sizeof(combined)});
+    cmdContainer->extractCommonThreadData();
+
+    auto result = cmdContainer->getCachedIohOffset(hash, {ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
+    EXPECT_TRUE(result.has_value());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTwoDifferentThreadDataShareSameHashThenGetCachedIohOffsetReturnsCorrectOffset) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CacheThreadDataForIOH.set(1);
+
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    // Simulate a hash collision: two different data items sharing the same hash
+    constexpr uint64_t collisionHash = 42u;
+
+    const uint8_t combinedA[] = {1, 2, 3, 4};
+    const uint8_t combinedB[] = {5, 6, 7, 8};
+
+    cmdContainer->registerThreadData(collisionHash, {combinedA, sizeof(combinedA)});
+    cmdContainer->extractCommonThreadData();
+
+    cmdContainer->registerThreadData(collisionHash, {combinedB, sizeof(combinedB)});
+    cmdContainer->extractCommonThreadData();
+
+    const uint8_t ctdA[] = {1, 2};
+    const uint8_t ptdA[] = {3, 4};
+    const uint8_t ctdB[] = {5, 6};
+    const uint8_t ptdB[] = {7, 8};
+
+    auto resultA = cmdContainer->getCachedIohOffset(collisionHash, {ctdA, sizeof(ctdA)}, {ptdA, sizeof(ptdA)});
+    auto resultB = cmdContainer->getCachedIohOffset(collisionHash, {ctdB, sizeof(ctdB)}, {ptdB, sizeof(ptdB)});
+
+    EXPECT_TRUE(resultA.has_value());
+    EXPECT_TRUE(resultB.has_value());
+    EXPECT_NE(*resultA, *resultB);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+HWTEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResidentThenAllocationMadeResident) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CacheThreadDataForIOH.set(1);
+
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(&csr);
+
+    const uint8_t data[] = {1, 2, 3, 4};
+    cmdContainer->registerThreadData(42u, {data, sizeof(data)});
+    cmdContainer->extractCommonThreadData();
+
+    auto makeResidentBefore = csr.makeResidentCalledTimes;
+    cmdContainer->makeThreadDataMapResident();
+    EXPECT_GT(csr.makeResidentCalledTimes, makeResidentBefore);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+HWTEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResidentWithEmptyStorageThenMakeResidentNotCalled) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CacheThreadDataForIOH.set(1);
+
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(&csr);
+
+    auto makeResidentBefore = csr.makeResidentCalledTimes;
+
+    // No data inserted, storage has no allocation
+    cmdContainer->makeThreadDataMapResident();
+    EXPECT_EQ(makeResidentBefore, csr.makeResidentCalledTimes);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenIndirectHeapInLocalMemoryWhenThreadDataInsertedThenOffsetsAreCacheLineAligned) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CacheThreadDataForIOH.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
+
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    AllocationsList allocList;
+    cmdContainer->initialize(device.get(), &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    const uint8_t data1[] = {1, 2, 3};
+    auto hash1 = ThreadDataHash::computeThreadDataHash({data1, sizeof(data1)}, {});
+    cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)});
+    cmdContainer->extractCommonThreadData();
+
+    auto offset1 = cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {});
+    ASSERT_TRUE(offset1.has_value());
+
+    // Insert 5-byte data; align() pads from 3 to MemoryConstants::cacheLineSize before writing
+    const uint8_t data2[] = {4, 5, 6, 7, 8};
+    auto hash2 = ThreadDataHash::computeThreadDataHash({data2, sizeof(data2)}, {});
+    cmdContainer->registerThreadData(hash2, {data2, sizeof(data2)});
+    cmdContainer->extractCommonThreadData();
+
+    auto offset2 = cmdContainer->getCachedIohOffset(hash2, {data2, sizeof(data2)}, {});
+    ASSERT_TRUE(offset2.has_value());
+    EXPECT_EQ(static_cast<size_t>(MemoryConstants::cacheLineSize), offset2.value() - offset1.value());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(device.get());
+}
+
+TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageHasSpaceThenPreviousEntriesRetainedAfterInsert) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CacheThreadDataForIOH.set(1);
+
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->threadDataMap = std::make_unique<ThreadDataMap>(
+        cmdContainer->heapHelper.get(), pDevice->getRootDeviceIndex(), MemoryConstants::cacheLineSize);
+
+    const uint8_t data1[] = {1, 2, 3};
+    auto hash1 = ThreadDataHash::computeThreadDataHash({data1, sizeof(data1)}, {});
+    cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)});
+    cmdContainer->extractCommonThreadData();
+    ASSERT_TRUE(cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {}).has_value());
+
+    const uint8_t data2[] = {4, 5, 6, 7};
+    auto hash2 = ThreadDataHash::computeThreadDataHash({data2, sizeof(data2)}, {});
+    cmdContainer->registerThreadData(hash2, {data2, sizeof(data2)});
+    cmdContainer->extractCommonThreadData();
+
+    EXPECT_TRUE(cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {}).has_value());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTrackerIsEmptyThenExtractCommonThreadDataDoesNotStoreAnyData) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CacheThreadDataForIOH.set(1);
+
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    cmdContainer->extractCommonThreadData();
+
+    const uint8_t data[] = {1, 2, 3, 4};
+    auto hash = ThreadDataHash::computeThreadDataHash({data, sizeof(data)}, {});
+    EXPECT_FALSE(cmdContainer->getCachedIohOffset(hash, {data, sizeof(data)}, {}).has_value());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageExhaustedThenReallocateCalledAndMapCleared) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CacheThreadDataForIOH.set(1);
+
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->threadDataMap = std::make_unique<ThreadDataMap>(
+        cmdContainer->heapHelper.get(), pDevice->getRootDeviceIndex(), MemoryConstants::cacheLineSize);
+
+    const uint8_t data1[] = {1, 2, 3};
+    auto hash1 = ThreadDataHash::computeThreadDataHash({data1, sizeof(data1)}, {});
+    cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)});
+    cmdContainer->extractCommonThreadData();
+    ASSERT_TRUE(cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {}).has_value());
+
+    alignas(MemoryConstants::cacheLineSize) uint8_t tinyBuf[1]{};
+    cmdContainer->getThreadDataMapStorage()->replaceBuffer(tinyBuf, sizeof(tinyBuf));
+
+    const uint8_t data2[] = {4, 5, 6, 7, 8, 9, 10, 11};
+    auto hash2 = ThreadDataHash::computeThreadDataHash({data2, sizeof(data2)}, {});
+    cmdContainer->registerThreadData(hash2, {data2, sizeof(data2)});
+    cmdContainer->extractCommonThreadData();
+
+    EXPECT_FALSE(cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {}).has_value());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenCachedThreadDataWhenFindCalledWithMismatchedDataThenNulloptReturned) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CacheThreadDataForIOH.set(1);
+
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->threadDataMap = std::make_unique<ThreadDataMap>(
+        cmdContainer->heapHelper.get(), pDevice->getRootDeviceIndex(), MemoryConstants::cacheLineSize);
+
+    const uint8_t ctd[] = {1, 2, 3, 4};
+    const uint8_t ptd[] = {5, 6, 7, 8};
+    const uint8_t combined[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    auto hash = ThreadDataHash::computeThreadDataHash({ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
+
+    cmdContainer->registerThreadData(hash, {combined, sizeof(combined)});
+    cmdContainer->extractCommonThreadData();
+
+    EXPECT_TRUE(cmdContainer->getCachedIohOffset(hash, {ctd, sizeof(ctd)}, {ptd, sizeof(ptd)}).has_value());
+
+    EXPECT_FALSE(cmdContainer->getCachedIohOffset(hash, {ctd, 3}, {ptd, sizeof(ptd)}).has_value());
+
+    const uint8_t wrongCtd[] = {9, 2, 3, 4};
+    EXPECT_FALSE(cmdContainer->getCachedIohOffset(hash, {wrongCtd, sizeof(wrongCtd)}, {ptd, sizeof(ptd)}).has_value());
+
+    const uint8_t wrongPtd[] = {5, 6, 7, 9};
+    EXPECT_FALSE(cmdContainer->getCachedIohOffset(hash, {ctd, sizeof(ctd)}, {wrongPtd, sizeof(wrongPtd)}).has_value());
+
+    cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
 }

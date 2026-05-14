@@ -495,6 +495,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceSwitchQueueOnUnsuccessful, -1, "Force queue
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCommandControlledInhibitContextSwitch, -1, "Override MI_SEMAPHORE_WAIT_64 command controlled inhibit context switch bit. -1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSemaphoreInterrupt, -1, "Override MMI_SEMAPHORE_WAIT_64 semaphore interrupt bit. -1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePreferredWorkgroupCountPerSubslice, -1, "Override preferred workgroup count per subslice. -1: default, >=0: override value")
+DECLARE_DEBUG_VARIABLE(int32_t, CacheThreadDataForIOH, -1, "When enabled, cache thread data for IOH programming. -1: default, 0: disabled, 1: enabled")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")

@@ -38,12 +38,14 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/utilities/thread_data_hash.h"
 
 #include "encode_dispatch_kernel_args_ext.h"
 #include "encode_surface_state_args.h"
 #include "implicit_args.h"
 
 #include <algorithm>
+#include <span>
 #include <type_traits>
 
 namespace NEO {
@@ -250,53 +252,73 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     IndirectParamsInInlineDataArgs encodeIndirectParamsArgs{};
     {
         void *ptr = nullptr;
+        auto perThreadDataPtr = args.dispatchInterface->getPerThreadData();
+        std::optional<uint64_t> cachedThreadDataOffset = std::nullopt;
+
         if (!args.makeCommandView) {
             auto heap = container.getIndirectHeap(HeapType::indirectObject);
             UNRECOVERABLE_IF(!heap);
-            if (container.isIndirectHeapInLocalMemory()) {
-                heap->align(MemoryConstants::cacheLineSize);
-            } else {
-                heap->align(Family::cacheLineSize);
-            }
-
-            if (args.isKernelDispatchedFromImmediateCmdList) {
-                ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, Family::indirectDataAlignment)->getSpace(iohRequiredSize);
-            } else {
-                ptr = container.getHeapSpaceAllowGrow(HeapType::indirectObject, iohRequiredSize);
-            }
-
-            offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - args.reserveExtraPayloadSpace);
-            if (pImplicitArgs) {
-                offsetThreadData -= sizeForImplicitArgsStruct;
-                pImplicitArgs->setLocalIdTablePtr(heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize);
-                EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs(*pImplicitArgs, scratchAddressForImmediatePatching, args.immediateScratchAddressPatching);
-
-                ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, std::make_pair(!localIdsGenerationByRuntime, requiredWorkgroupOrder), rootDeviceEnvironment, &args.outImplicitArgsPtr);
-                args.outImplicitArgsGpuVa = heap->getGraphicsAllocation()->getGpuAddress() + ptrDiff(args.outImplicitArgsPtr, heap->getCpuBase());
-            }
-
-            if (args.isIndirect) {
-                auto gpuPtr = heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset);
-                uint64_t implicitArgsGpuPtr = 0u;
-                if (pImplicitArgs) {
-                    implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - sizeForImplicitArgsStruct;
+            uint64_t threadDataHash = 0ull;
+            const bool isThreadDataMapAllowed = container.getIOHCacheEnabled() && !args.isIndirect && (pImplicitArgs == nullptr);
+            if (isThreadDataMapAllowed) {
+                const std::span<const uint8_t> crossThreadSpan(crossThreadData, sizeCrossThreadData);
+                const std::span<const uint8_t> perThreadSpan(perThreadDataPtr, sizePerThreadDataForWholeGroup);
+                threadDataHash = ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
+                cachedThreadDataOffset = container.getCachedIohOffset(threadDataHash, crossThreadSpan, perThreadSpan);
+                if (cachedThreadDataOffset) {
+                    offsetThreadData = *cachedThreadDataOffset;
                 }
-                EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr, &encodeIndirectParamsArgs);
+            }
+            if (!cachedThreadDataOffset) {
+                if (container.isIndirectHeapInLocalMemory()) {
+                    heap->align(MemoryConstants::cacheLineSize);
+                } else {
+                    heap->align(Family::cacheLineSize);
+                }
+
+                if (args.isKernelDispatchedFromImmediateCmdList) {
+                    ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, Family::indirectDataAlignment)->getSpace(iohRequiredSize);
+                } else {
+                    ptr = container.getHeapSpaceAllowGrow(HeapType::indirectObject, iohRequiredSize);
+                }
+
+                offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - args.reserveExtraPayloadSpace);
+                if (pImplicitArgs) {
+                    offsetThreadData -= sizeForImplicitArgsStruct;
+                    pImplicitArgs->setLocalIdTablePtr(heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize);
+                    EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs(*pImplicitArgs, scratchAddressForImmediatePatching, args.immediateScratchAddressPatching);
+
+                    ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, std::make_pair(!localIdsGenerationByRuntime, requiredWorkgroupOrder), rootDeviceEnvironment, &args.outImplicitArgsPtr);
+                    args.outImplicitArgsGpuVa = heap->getGraphicsAllocation()->getGpuAddress() + ptrDiff(args.outImplicitArgsPtr, heap->getCpuBase());
+                }
+
+                if (args.isIndirect) {
+                    auto gpuPtr = heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset);
+                    uint64_t implicitArgsGpuPtr = 0u;
+                    if (pImplicitArgs) {
+                        implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - sizeForImplicitArgsStruct;
+                    }
+                    EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr, &encodeIndirectParamsArgs);
+                }
+                if (isThreadDataMapAllowed) {
+                    container.registerThreadData(threadDataHash, std::span<const uint8_t>{reinterpret_cast<const uint8_t *>(ptr), sizeThreadData});
+                }
             }
         } else {
             ptr = args.cpuPayloadBuffer;
         }
 
-        if (sizeCrossThreadData > 0) {
-            memcpy_s(ptr, sizeCrossThreadData,
-                     crossThreadData, sizeCrossThreadData);
-        }
+        if (!cachedThreadDataOffset) {
+            if (sizeCrossThreadData > 0) {
+                memcpy_s(ptr, sizeCrossThreadData,
+                         crossThreadData, sizeCrossThreadData);
+            }
 
-        auto perThreadDataPtr = args.dispatchInterface->getPerThreadData();
-        if (perThreadDataPtr != nullptr) {
-            ptr = ptrOffset(ptr, sizeCrossThreadData);
-            memcpy_s(ptr, sizePerThreadDataForWholeGroup,
-                     perThreadDataPtr, sizePerThreadDataForWholeGroup);
+            if (perThreadDataPtr != nullptr) {
+                ptr = ptrOffset(ptr, sizeCrossThreadData);
+                memcpy_s(ptr, sizePerThreadDataForWholeGroup,
+                         perThreadDataPtr, sizePerThreadDataForWholeGroup);
+            }
         }
     }
 

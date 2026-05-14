@@ -158,18 +158,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
 
-    kernel->patchGlobalOffset();
-    kernel->patchRegionParams(launchParams, threadGroupDimensions);
-    this->allocateOrReuseKernelPrivateMemoryIfNeeded(kernel, kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
-
-    if (launchParams.isIndirect) {
-        prepareIndirectParams(&threadGroupDimensions);
-    }
-    if (!launchParams.isIndirect) {
-        kernel->setGroupCount(threadGroupDimensions.groupCountX,
-                              threadGroupDimensions.groupCountY,
-                              threadGroupDimensions.groupCountZ);
-    }
+    this->patchKernelProperties(launchParams, *kernel, threadGroupDimensions);
 
     uint64_t eventAddress = 0;
     bool isTimestampEvent = false;

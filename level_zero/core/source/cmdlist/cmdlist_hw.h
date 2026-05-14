@@ -469,7 +469,9 @@ struct CommandListCoreFamily : public CommandList {
                               uint64_t cmdId, size_t estimateSizeForPrefetch);
     virtual uint64_t getPrefetchCmdId() const { return std::numeric_limits<uint64_t>::max(); }
     virtual uint32_t getIohSizeForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace) const;
+    std::pair<NEO::GraphicsAllocation *, size_t> getIohAllocationAndOffsetForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace, bool isThreadDataMapAllowed);
     virtual size_t ensureCmdBufferSpaceForPrefetch() { return 0; }
+    void patchKernelProperties(CmdListKernelLaunchParams &launchParams, Kernel &kernel, const ze_group_count_t &threadGroupDimensions);
     bool transferDirectionRequiresBcsSplit(NEO::TransferDirection direction) const;
     std::optional<SWTagScope<GfxFamily>> emplaceSWTagScope(const char *callName);
     size_t getDefaultMinBcsSplitSize() const;

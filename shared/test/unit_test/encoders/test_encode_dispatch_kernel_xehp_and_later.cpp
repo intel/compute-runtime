@@ -15,6 +15,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/simd_helper.h"
+#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -1799,4 +1800,120 @@ HWTEST2_F(MultiTileCommandEncodeStatesTest, givenEncodeDispatchKernelInImplicitS
 
     EXPECT_EQ(payloadHeapUsed, payloadHeap->getUsed());
     EXPECT_EQ(cmdBufferUsed, cmdBuffer->getUsed());
+}
+
+struct IOHCacheCommandEncodeStatesFixture : public DeviceFixture {
+    class IOHCacheMockCommandContainer : public CommandContainer {
+      public:
+        using CommandContainer::allocationIndirectHeaps;
+        using CommandContainer::dirtyHeaps;
+        using CommandContainer::extractCommonThreadData;
+        using CommandContainer::indirectHeaps;
+
+        IndirectHeap *getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment) override {
+            getHeapWithRequiredSizeAndAlignmentCalled++;
+            return CommandContainer::getHeapWithRequiredSizeAndAlignment(heapType, sizeRequired, alignment);
+        }
+        uint32_t getHeapWithRequiredSizeAndAlignmentCalled = 0u;
+    };
+
+    void setUp() {
+        debugManager.flags.CacheThreadDataForIOH.set(1);
+        DeviceFixture::setUp();
+        iohCmdContainer = std::make_unique<IOHCacheMockCommandContainer>();
+        iohCmdContainer->initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+        iohCmdContainer->setDirtyStateForAllHeaps(false);
+        const auto &hwInfo = pDevice->getHardwareInfo();
+        auto &productHelper = pDevice->getProductHelper();
+        iohCmdContainer->systolicModeSupportRef() = productHelper.isSystolicModeConfigurable(hwInfo);
+        iohCmdContainer->doubleSbaWaRef() = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
+        l1CachePolicyData.init(productHelper);
+        iohCmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
+    }
+
+    void tearDown() {
+        iohCmdContainer.reset();
+        DeviceFixture::tearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<IOHCacheMockCommandContainer> iohCmdContainer;
+    NEO::L1CachePolicy l1CachePolicyData;
+};
+
+using IOHCacheCommandEncodeStatesTest = Test<IOHCacheCommandEncodeStatesFixture>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, IOHCacheCommandEncodeStatesTest, givenIOHCacheEnabledWhenCachedOffsetFoundThenGetHeapWithRequiredSizeNotCalledOnSecondDispatch) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    EncodeDispatchKernelArgs dispatchArgs{
+        .device = pDevice,
+        .dispatchInterface = dispatchInterface.get(),
+        .surfaceStateHeap = nullptr,
+        .dynamicStateHeap = nullptr,
+        .threadGroupDimensions = dims,
+        .outWalkerPtr = nullptr,
+        .outWalkerGpuVa = 0,
+        .cpuWalkerBuffer = nullptr,
+        .cpuPayloadBuffer = nullptr,
+        .outImplicitArgsPtr = nullptr,
+        .outImplicitArgsGpuVa = 0,
+        .additionalCommands = nullptr,
+        .extendedArgs = nullptr,
+        .postSyncArgs = {
+            .eventPacketSize = 32,
+            .eventPacketsCount = 1,
+            .eventAddress = 0,
+            .postSyncImmValue = 0,
+            .inOrderCounterValue = 0,
+            .inOrderIncrementGpuAddress = 0,
+            .inOrderIncrementValue = 0,
+            .device = pDevice,
+            .inOrderExecInfo = nullptr,
+            .tsNode = nullptr,
+            .dcFlushEnable = false,
+            .interruptEvent = false,
+            .isCounterBasedEvent = false,
+            .isFlushL3ForExternalAllocationRequired = false,
+            .isFlushL3ForHostUsmRequired = false,
+            .isHostScopeSignalEvent = false,
+            .isTimestampEvent = false,
+            .isUsingSystemAllocation = false,
+        },
+        .preemptionMode = PreemptionMode::Disabled,
+        .requiredPartitionDim = NEO::RequiredPartitionDim::none,
+        .requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none,
+        .partitionCount = 1,
+        .reserveExtraPayloadSpace = 0,
+        .defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent,
+        .isIndirect = false,
+        .isPredicate = false,
+        .requiresUncachedMocs = false,
+        .isInternal = false,
+        .isCooperative = false,
+        .isKernelDispatchedFromImmediateCmdList = true,
+        .isRcs = false,
+        .isHeaplessModeEnabled = false,
+        .immediateScratchAddressPatching = false,
+        .makeCommandView = false,
+    };
+
+    auto ioh = iohCmdContainer->getIndirectHeap(HeapType::indirectObject);
+    ASSERT_NE(nullptr, ioh);
+
+    // First dispatch: no cache hit, IOH space is allocated
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*iohCmdContainer.get(), dispatchArgs);
+    EXPECT_EQ(1u, iohCmdContainer->getHeapWithRequiredSizeAndAlignmentCalled);
+
+    auto iohUsedAfterFirstDispatch = ioh->getUsed();
+
+    // Simulate cmd buffer return: extracts common thread data from tracker into the cache map
+    iohCmdContainer->extractCommonThreadData();
+
+    // Second dispatch with same data: cache hit, IOH space must not be allocated again
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*iohCmdContainer.get(), dispatchArgs);
+    EXPECT_EQ(1u, iohCmdContainer->getHeapWithRequiredSizeAndAlignmentCalled);
+    EXPECT_EQ(iohUsedAfterFirstDispatch, ioh->getUsed());
 }

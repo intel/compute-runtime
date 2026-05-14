@@ -49,5 +49,6 @@ struct CmdListKernelLaunchParams {
     bool omitAddingWaitEventsResidency = false;
     bool makeKernelCommandView = false;
     bool relaxedOrderingDispatch = false;
+    bool isKernelPatched = false;
 };
 } // namespace L0

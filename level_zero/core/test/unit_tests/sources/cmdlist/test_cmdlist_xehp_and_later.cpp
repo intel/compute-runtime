@@ -14,6 +14,7 @@
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/thread_data_hash.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -3131,6 +3132,224 @@ HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForE
 
     NEO::ResidencyContainer containerWithImported{&localAllocation, nullptr, &importedAllocation};
     EXPECT_TRUE(CommandListType::containsExternalAllocation(containerWithImported));
+}
+
+struct IOHCacheCommandListFixture : public Test<ModuleFixture> {
+    struct MockContainerIOHCacheAccessor : public NEO::CommandContainer {
+        using NEO::CommandContainer::extractCommonThreadData;
+    };
+
+    void SetUp() override {
+        debugManager.flags.CacheThreadDataForIOH.set(1);
+        ModuleFixture::setUp();
+    }
+
+    void TearDown() override {
+        ModuleFixture::tearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using IOHCacheCommandListTest = IOHCacheCommandListFixture;
+
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheDisabledWhenGetIohAllocationAndOffsetForPrefetchCalledThenRegularIOHAllocationReturned,
+          IsAtLeastXeCore) {
+    debugManager.flags.CacheThreadDataForIOH.set(0);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    EXPECT_FALSE(commandList->commandContainer.getIOHCacheEnabled());
+
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, false);
+
+    auto regularIoh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+    ASSERT_NE(nullptr, regularIoh);
+    EXPECT_EQ(regularIoh->getGraphicsAllocation(), iohAllocation);
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheEnabledWhenNoCacheHitThenGetIohAllocationAndOffsetForPrefetchReturnsRegularIOHAllocation,
+          IsAtLeastXeCore) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true);
+
+    auto regularIoh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+    ASSERT_NE(nullptr, regularIoh);
+    EXPECT_EQ(regularIoh->getGraphicsAllocation(), iohAllocation);
+    EXPECT_EQ(regularIoh->getUsed(), iohOffset);
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheEnabledWhenCacheHitThenGetIohAllocationAndOffsetForPrefetchReturnsThreadDataMapStorageAllocation,
+          IsAtLeastXeCore) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    const std::span<const uint8_t> crossThreadSpan(kernel.getCrossThreadData(), kernel.getCrossThreadDataSize());
+    const std::span<const uint8_t> perThreadSpan(kernel.getPerThreadData(), kernel.getPerThreadDataSizeForWholeThreadGroup());
+    const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
+
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan);
+    static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer).extractCommonThreadData();
+
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true);
+
+    auto cacheStorage = commandList->commandContainer.getThreadDataMapStorage();
+    ASSERT_NE(nullptr, cacheStorage);
+    EXPECT_EQ(cacheStorage->getGraphicsAllocation(), iohAllocation);
+    EXPECT_NE(cacheStorage->getGraphicsAllocation(), commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getGraphicsAllocation());
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheEnabledWhenAppendLaunchKernelThenKernelPatchedBeforeAppendLaunchKernelWithParams,
+          IsAtLeastXeHpcCore) {
+    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+
+    debugManager.flags.EnableMemoryPrefetch.set(1);
+
+    class MockCmdListForPatchCheck : public WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> {
+      public:
+        bool isKernelPatchedWhenWithParamsCalled = false;
+        ze_result_t appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions,
+                                                 Event *event, CmdListKernelLaunchParams &launchParams) override {
+            isKernelPatchedWhenWithParamsCalled = launchParams.isKernelPatched;
+            return ZE_RESULT_SUCCESS;
+        }
+    };
+
+    createKernel();
+
+    auto commandList = std::make_unique<MockCmdListForPatchCheck>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    ze_group_count_t groupCount{1, 1, 1};
+
+    kernel->patchGlobalOffset();
+    kernel->setGroupCount(groupCount.groupCountX, groupCount.groupCountY, groupCount.groupCountZ);
+
+    uint32_t inlineDataProgrammingOffset = 0u;
+    if (NEO::EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernel->getKernelDescriptor())) {
+        constexpr uint32_t inlineDataSize = FamilyType::DefaultWalkerType::getInlineDataSize();
+        inlineDataProgrammingOffset = std::min(inlineDataSize, kernel->getCrossThreadDataSize());
+    }
+    const std::span<const uint8_t> crossThreadSpan(kernel->getCrossThreadData() + inlineDataProgrammingOffset,
+                                                   kernel->getCrossThreadDataSize() - inlineDataProgrammingOffset);
+    const std::span<const uint8_t> perThreadSpan(kernel->getPerThreadData(),
+                                                 kernel->getPerThreadDataSizeForWholeThreadGroup());
+    const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
+
+    std::vector<uint8_t> combinedData(crossThreadSpan.size() + perThreadSpan.size());
+    std::copy(crossThreadSpan.begin(), crossThreadSpan.end(), combinedData.begin());
+    std::copy(perThreadSpan.begin(), perThreadSpan.end(), combinedData.begin() + crossThreadSpan.size());
+
+    commandList->commandContainer.registerThreadData(hash, std::span<const uint8_t>(combinedData));
+    static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer).extractCommonThreadData();
+    auto cacheStorage = commandList->commandContainer.getThreadDataMapStorage();
+    ASSERT_NE(nullptr, cacheStorage);
+    ASSERT_NE(nullptr, cacheStorage->getGraphicsAllocation());
+    EXPECT_NE(cacheStorage->getGraphicsAllocation(),
+              commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getGraphicsAllocation());
+
+    const auto expectedIohOffset = cacheStorage->getUsed() - combinedData.size();
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    const auto expectedPrefetchGpuVa = gmmHelper->decanonize(cacheStorage->getGraphicsAllocation()->getGpuAddress()) + expectedIohOffset;
+
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+    const auto cmdStreamOffset = cmdStream->getUsed();
+
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    EXPECT_TRUE(commandList->isKernelPatchedWhenWithParamsCalled);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), cmdStreamOffset),
+                                                      cmdStream->getUsed() - cmdStreamOffset));
+    auto itor = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(itor, cmdList.end());
+    auto statePrefetch = genCmdCast<STATE_PREFETCH *>(*itor);
+    ASSERT_NE(nullptr, statePrefetch);
+    EXPECT_FALSE(statePrefetch->getKernelInstructionPrefetch());
+    EXPECT_EQ(expectedPrefetchGpuVa, statePrefetch->getAddress());
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheDisabledWhenAppendLaunchKernelThenKernelNotPrePatchedBeforeAppendLaunchKernelWithParams,
+          IsAtLeastXeCore) {
+    class MockCmdListForPatchCheck : public WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> {
+      public:
+        bool isKernelPatchedWhenWithParamsCalled = false;
+        ze_result_t appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions,
+                                                 Event *event, CmdListKernelLaunchParams &launchParams) override {
+            isKernelPatchedWhenWithParamsCalled = launchParams.isKernelPatched;
+            return ZE_RESULT_SUCCESS;
+        }
+    };
+
+    debugManager.flags.CacheThreadDataForIOH.set(0);
+
+    createKernel();
+
+    auto commandList = std::make_unique<MockCmdListForPatchCheck>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    EXPECT_FALSE(commandList->commandContainer.getIOHCacheEnabled());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    EXPECT_FALSE(commandList->isKernelPatchedWhenWithParamsCalled);
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheEnabledAndImplicitArgsNotNullWhenAppendLaunchKernelThenKernelNotPrePatchedBeforeAppendLaunchKernelWithParams,
+          IsAtLeastXeCore) {
+    class MockCmdListForPatchCheck : public WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> {
+      public:
+        bool isKernelPatchedWhenWithParamsCalled = false;
+        ze_result_t appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions,
+                                                 Event *event, CmdListKernelLaunchParams &launchParams) override {
+            isKernelPatchedWhenWithParamsCalled = launchParams.isKernelPatched;
+            return ZE_RESULT_SUCCESS;
+        }
+    };
+
+    createKernel();
+
+    auto commandList = std::make_unique<MockCmdListForPatchCheck>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    kernel->privateState.pImplicitArgs.ptr = std::make_unique<NEO::ImplicitArgs>();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    EXPECT_FALSE(commandList->isKernelPatchedWhenWithParamsCalled);
 }
 
 } // namespace ult

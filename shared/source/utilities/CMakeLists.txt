@@ -59,6 +59,10 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/staging_buffer_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/staging_buffer_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/thread_data_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/thread_data_map.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/thread_data_hash.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/thread_data_hash.h
 )
 
 set(NEO_CORE_UTILITIES_WINDOWS

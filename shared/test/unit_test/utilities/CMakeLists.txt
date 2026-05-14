@@ -30,6 +30,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/generic_view_pool_allocator_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/staging_buffer_manager_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/thread_data_map_tests.cpp
 )
 
 add_subdirectories()

@@ -14,6 +14,8 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <optional>
+#include <span>
 #include <vector>
 
 namespace NEO {
@@ -25,6 +27,8 @@ class HeapHelper;
 class IndirectHeap;
 class LinearStream;
 class ReservedIndirectHeap;
+class ThreadDataMap;
+class ThreadDataTracker;
 
 struct L1CachePolicy;
 
@@ -211,6 +215,13 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
 
     void *findCpuBaseForCmdBufferAddress(void *cmdBufferAddress);
 
+    bool getIOHCacheEnabled() const { return isIOHCacheEnabled; }
+    std::optional<uint64_t> getCachedIohOffset(uint64_t threadDataHash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const;
+    std::optional<uint64_t> getCachedIohOffset(std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const;
+    void registerThreadData(uint64_t hash, std::span<const uint8_t> threadData);
+    void makeThreadDataMapResident();
+    IndirectHeap *getThreadDataMapStorage() const;
+
   protected:
     size_t getAlignedCmdBufferSize() const;
     size_t getMaxUsableSpace() const {
@@ -222,6 +233,7 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     bool skipHeapAllocationCreation(HeapType heapType);
     size_t getHeapSize(HeapType heapType);
     void alignPrimaryEnding(void *endPtr, size_t exactUsedSize);
+    void extractCommonThreadData();
 
     GraphicsAllocation *allocationIndirectHeaps[HeapType::numTypes] = {};
 
@@ -238,6 +250,8 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     std::unique_ptr<LinearStream> commandStream;
     std::unique_ptr<LinearStream> secondaryCommandStreamForImmediateCmdList;
     std::unique_ptr<AllocationsList> immediateReusableAllocationList;
+    std::unique_ptr<ThreadDataTracker> threadDataTracker;
+    std::unique_ptr<ThreadDataMap> threadDataMap;
 
     uint64_t instructionHeapBaseAddress = 0u;
     uint64_t indirectObjectHeapBaseAddress = 0u;
@@ -275,6 +289,7 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     bool doubleSbaWa = false;
     bool usingPrimaryBuffer = false;
     bool globalBindlessHeapsEnabled = false;
+    bool isIOHCacheEnabled = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandContainer>);
