@@ -4872,6 +4872,23 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     }
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenAppendBarrierWithoutSignalEventThenSkipBarrier) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->latestOperationHasHeapfullCbEventWithProfiling = true;
+
+    immCmdList->appendBarrier(nullptr, 0, nullptr, false);
+
+    EXPECT_EQ(offset, cmdStream->getUsed());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAfterKernelWithoutEventThenDontInheritSignalSyncAllocation) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 

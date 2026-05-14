@@ -4340,7 +4340,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
 
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
-    if (this->latestOperationHasHeapfullCbEventWithProfiling) {
+    if (signalEvent && this->latestOperationHasHeapfullCbEventWithProfiling) {
         return false;
     }
 
