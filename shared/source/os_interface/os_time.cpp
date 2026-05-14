@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,6 +63,9 @@ TimeQueryStatus DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime
     osTime->getCpuTime(&cpuTimeinNS);
 
     auto cpuTimeDiffInNS = cpuTimeinNS - fetchedTimestamps.cpuTimeinNS;
+    if (debugManager.flags.DisableKmdSubmissionForTimestamps.get()) {
+        forceKmdCall = false;
+    }
     if (forceKmdCall || cpuTimeDiffInNS >= timestampRefreshTimeoutNS) {
         refreshTimestamps = true;
     }

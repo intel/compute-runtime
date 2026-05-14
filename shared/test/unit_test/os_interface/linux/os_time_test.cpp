@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -418,11 +418,18 @@ TEST_F(DrmTimeTest, whenGettingMaxGpuTimeStampValueAfterFlagSetThenCallToKmd) {
 }
 
 TEST_F(DrmTimeTest, whenGettingMaxGpuTimeStampValueWhenForceFlagSetThenCallToKmd) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableReusingGpuTimestamps.set(true);
+
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 0u);
     TimeStampData gpuCpuTime;
     osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 1u);
 
+    osTime->getGpuCpuTime(&gpuCpuTime, true);
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 2u);
+
+    debugManager.flags.DisableKmdSubmissionForTimestamps.set(true);
     osTime->getGpuCpuTime(&gpuCpuTime, true);
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 2u);
 }

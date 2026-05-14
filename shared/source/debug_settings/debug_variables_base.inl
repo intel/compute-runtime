@@ -555,6 +555,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableDeferBacking, -1, "Enables defer backing o
 DECLARE_DEBUG_VARIABLE(bool, DisableProgrammableMetricsSupport, false, "Disable Programmable Metrics support")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitNumGrfsSupported, 512, "Limit the supported number of GRFs per thread")
 DECLARE_DEBUG_VARIABLE(bool, WddmUseHw64bToken, true, "Set UseHw64bToken on context and native fence creation, requires 64BitSemaphore")
+DECLARE_DEBUG_VARIABLE(bool, DisableKmdSubmissionForTimestamps, false, "Do not use KMD when querying GPU timestamps, calculate it on CPU side instead.")
 DECLARE_DEBUG_VARIABLE(int64_t, VmBindWaitUserFenceTimeout, -1, "-1: default, >0: time in ns for wait function timeout")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceRunAloneContext, -1, "Control creation of run-alone HW context, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AddClGlSharing, -1, "Add cl-gl extension")
