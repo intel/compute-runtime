@@ -5,7 +5,7 @@ Maintainer: Intel Graphics Team <linux-graphics@intel.com>
 XSBC-Original-Maintainer: Debian OpenCL Maintainers <pkg-opencl-devel@lists.alioth.debian.org>
 Build-Depends: debhelper (>= 11),
  cmake,
- level-zero-devel,
+ libze-dev,
  intel-igc-opencl-devel,
  libigdgmm-dev,
 # libva-dev,

@@ -86,11 +86,11 @@ if [ "${NEO_BUILD_WITH_L0}" != "TRUE" ]; then
     rm $BUILD_DIR/debian/libze-intel-gpu-dev.install
 fi
 
-LEVEL_ZERO_DEVEL_NAME=${LEVEL_ZERO_DEVEL_NAME:-level-zero-devel}
+LEVEL_ZERO_DEVEL_NAME=${LEVEL_ZERO_DEVEL_NAME:-libze-dev}
 
 LEVEL_ZERO_DEVEL_VERSION=$(apt-cache policy ${LEVEL_ZERO_DEVEL_NAME} | grep Installed | cut -f2- -d ':' | xargs)
 if [ ! -z "${LEVEL_ZERO_DEVEL_VERSION}" ]; then
-    perl -pi -e "s/^ level-zero-devel(?=,|$)/ ${LEVEL_ZERO_DEVEL_NAME} (=$LEVEL_ZERO_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+    perl -pi -e "s/^ libze-dev(?=,|$)/ ${LEVEL_ZERO_DEVEL_NAME} (=$LEVEL_ZERO_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
 fi
 
 if [[ -z "${BRANCH_SUFFIX}" ]] && [[ "${NEO_STRICT_DEPENDENCIES}" == "TRUE" ]]; then

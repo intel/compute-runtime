@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021-2025 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -67,11 +67,11 @@ if [ -f "${DEV_INSTALL}" ]; then
     cp -v $DEV_INSTALL $BUILD_DIR/debian/
 fi
 
-LEVEL_ZERO_DEVEL_NAME=${LEVEL_ZERO_DEVEL_NAME:-level-zero-devel}
+LEVEL_ZERO_DEVEL_NAME=${LEVEL_ZERO_DEVEL_NAME:-libze-dev}
 
 LEVEL_ZERO_DEVEL_VERSION=$(apt-cache policy ${LEVEL_ZERO_DEVEL_NAME} | grep Installed | cut -f2- -d ':' | xargs)
 if [ ! -z "${LEVEL_ZERO_DEVEL_VERSION}" ]; then
-    perl -pi -e "s/^ level-zero-devel(?=,|$)/ ${LEVEL_ZERO_DEVEL_NAME} (=$LEVEL_ZERO_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+    perl -pi -e "s/^ libze-dev(?=,|$)/ ${LEVEL_ZERO_DEVEL_NAME} (=$LEVEL_ZERO_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
 fi
 
 if [[ -z "${BRANCH_SUFFIX}" ]] && [[ "${NEO_STRICT_DEPENDENCIES}" == "TRUE" ]]; then
