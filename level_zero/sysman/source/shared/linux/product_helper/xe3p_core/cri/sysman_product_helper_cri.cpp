@@ -141,8 +141,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"MEMSS16_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2000},
       {"MEMSS17_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2080},
       {"MEMSS18_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2160},
-      {"MEMSS19_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2240},
-      {"ECC_STATE", 3636}}}};
+      {"MEMSS19_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2240}}},
+    {"0x5e2fa270", // CRI GFSP Rev 0
+     {{"ECC_STATE", 52}}}};
 
 static ze_result_t getErrorCode(ze_result_t result) {
     if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {

@@ -291,7 +291,7 @@ HWTEST2_F(ZesEccFixture, GivenReadValueFailsWhenGetEccStateIsCalledThenNotAvaila
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
+        std::string validGuid = "0x5e2fa270";
         if (fd == eccTelem1OffsetFd) {
             size_t toCopy = std::min(count, sizeof(telemOffset));
             memcpy(buf, &telemOffset, toCopy);
@@ -317,7 +317,7 @@ HWTEST2_F(ZesEccFixture, GivenEccEnabledInPmtWhenGetEccStateIsCalledThenEnabledS
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
+        std::string validGuid = "0x5e2fa270";
         if (fd == eccTelem1OffsetFd) {
             size_t toCopy = std::min(count, sizeof(telemOffset));
             memcpy(buf, &telemOffset, toCopy);
@@ -347,7 +347,7 @@ HWTEST2_F(ZesEccFixture, GivenEccDisabledInPmtWhenGetEccStateIsCalledThenDisable
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
+        std::string validGuid = "0x5e2fa270";
         if (fd == eccTelem1OffsetFd) {
             size_t toCopy = std::min(count, sizeof(telemOffset));
             memcpy(buf, &telemOffset, toCopy);
@@ -375,7 +375,7 @@ HWTEST2_F(ZesEccFixture, GivenOnlyNonBit0SetInEccStateWhenGetEccStateIsCalledThe
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
+        std::string validGuid = "0x5e2fa270";
         if (fd == eccTelem1OffsetFd) {
             size_t toCopy = std::min(count, sizeof(telemOffset));
             memcpy(buf, &telemOffset, toCopy);
@@ -403,7 +403,7 @@ HWTEST2_F(ZesEccFixture, GivenDefaultPropertiesExtInPNextWhenGetEccStateIsCalled
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
+        std::string validGuid = "0x5e2fa270";
         if (fd == eccTelem1OffsetFd) {
             size_t toCopy = std::min(count, sizeof(telemOffset));
             memcpy(buf, &telemOffset, toCopy);
@@ -435,7 +435,7 @@ HWTEST2_F(ZesEccFixture, GivenWrongStypeInPNextChainWhenGetEccStateIsCalledThenD
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
+        std::string validGuid = "0x5e2fa270";
         if (fd == eccTelem1OffsetFd) {
             size_t toCopy = std::min(count, sizeof(telemOffset));
             memcpy(buf, &telemOffset, toCopy);
@@ -467,7 +467,7 @@ HWTEST2_F(ZesEccFixture, GivenEccEnabledInPmtWhenGetEccAvailableIsCalledThenAvai
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
+        std::string validGuid = "0x5e2fa270";
         if (fd == eccTelem1OffsetFd) {
             size_t toCopy = std::min(count, sizeof(telemOffset));
             memcpy(buf, &telemOffset, toCopy);
@@ -495,7 +495,7 @@ HWTEST2_F(ZesEccFixture, GivenEccDisabledInPmtWhenGetEccAvailableIsCalledThenAva
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa230";
+        std::string validGuid = "0x5e2fa270";
         if (fd == eccTelem1OffsetFd) {
             size_t toCopy = std::min(count, sizeof(telemOffset));
             memcpy(buf, &telemOffset, toCopy);
