@@ -34,6 +34,7 @@ struct UnifiedMemoryProperties {
     const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields;
     AllocationType requestedAllocationType = AllocationType::unknown;
     bool isInternalAllocation = false;
+    bool fabricAccessibleIpcHandleRequested = false;
 };
 
 } // namespace NEO

@@ -54,6 +54,7 @@ struct AllocationProperties {
     uint32_t cacheRegion = 0;
     bool makeDeviceBufferLockable = false;
     bool isaPaddingIncluded = false;
+    bool fabricAccessibleIpcHandleRequested = false;
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          AllocationType allocationType, DeviceBitfield subDevicesBitfieldParam)

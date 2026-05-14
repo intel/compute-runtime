@@ -177,6 +177,10 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(*ptr);
     }
 
+    if (lookupTable.ipcHandleTypeFabric) {
+        unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = true;
+    }
+
     if (lookupTable.isExternalMemmapSystem) {
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(lookupTable.externalMemmapSystem.systemMemory);
         auto usmPtr = this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(lookupTable.externalMemmapSystem.size,
@@ -349,6 +353,10 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
 
     if (lookupTable.writeCombinedMemory) {
         unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined = 1;
+    }
+
+    if (lookupTable.ipcHandleTypeFabric) {
+        unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = true;
     }
 
     if (false == lookupTable.exportMemory) {
@@ -978,6 +986,10 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
         }
         ze_ipc_mem_handle_type_ext_desc_t *ipcHandleTypeDesc = reinterpret_cast<ze_ipc_mem_handle_type_ext_desc_t *>(pNext);
         if (ipcHandleTypeDesc->typeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE) {
+            fabricAccessibleHandle = true;
+        }
+    } else {
+        if (allocData->fabricAccessibleIpcHandleRequested) {
             fabricAccessibleHandle = true;
         }
     }
@@ -1637,6 +1649,12 @@ ze_result_t Context::createPhysicalMem(ze_device_handle_t hDevice,
 
     auto device = Device::fromHandle(hDevice);
 
+    StructuresLookupTable lookupTable = {};
+    auto parseResult = prepareL0StructuresLookupTable(lookupTable, desc->pNext);
+    if (parseResult != ZE_RESULT_SUCCESS) {
+        return parseResult;
+    }
+
     bool importMemory = false;
     int importFd = -1;
     if (desc->pNext) {
@@ -1657,7 +1675,8 @@ ze_result_t Context::createPhysicalMem(ze_device_handle_t hDevice,
             }
             importMemory = true;
             importFd = importDesc->fd;
-        } else {
+        } else if (extendedDesc->stype != ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC) {
+            // ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC is handled by prepareL0StructuresLookupTable
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }
     }
@@ -1707,6 +1726,9 @@ ze_result_t Context::createPhysicalMem(ze_device_handle_t hDevice,
     NEO::PhysicalMemoryAllocation *physicalMemoryAllocation = new NEO::PhysicalMemoryAllocation;
     physicalMemoryAllocation->allocation = allocation;
     physicalMemoryAllocation->device = neoDevice;
+    if (lookupTable.ipcHandleTypeFabric) {
+        physicalMemoryAllocation->fabricAccessibleIpcHandleRequested = true;
+    }
     auto lock = this->driverHandle->getMemoryManager()->lockPhysicalMemoryAllocationMap();
     this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().emplace(reinterpret_cast<void *>(allocation), physicalMemoryAllocation);
     *phPhysicalMemory = reinterpret_cast<ze_physical_mem_handle_t>(allocation);
@@ -1824,6 +1846,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         allocData.setAllocId(++this->driverHandle->svmAllocsManager->allocationsCounter);
         allocData.memoryType = InternalMemoryType::reservedDeviceMemory;
         allocData.virtualReservationData = virtualMemoryReservation;
+        allocData.fabricAccessibleIpcHandleRequested = allocationNode->fabricAccessibleIpcHandleRequested;
         NEO::MemoryMappedRange *mappedRange = new NEO::MemoryMappedRange;
         mappedRange->ptr = ptr;
         mappedRange->size = size;
@@ -1848,6 +1871,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         allocData.setAllocId(++this->driverHandle->svmAllocsManager->allocationsCounter);
         allocData.memoryType = InternalMemoryType::reservedHostMemory;
         allocData.virtualReservationData = virtualMemoryReservation;
+        allocData.fabricAccessibleIpcHandleRequested = allocationNode->fabricAccessibleIpcHandleRequested;
         NEO::MemoryMappedRange *mappedRange = new NEO::MemoryMappedRange;
         mappedRange->ptr = ptr;
         mappedRange->size = size;

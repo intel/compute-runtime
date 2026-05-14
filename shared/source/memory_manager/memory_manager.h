@@ -79,6 +79,7 @@ struct AlignedMallocRestrictions {
 struct PhysicalMemoryAllocation {
     GraphicsAllocation *allocation;
     Device *device;
+    bool fabricAccessibleIpcHandleRequested = false;
 };
 
 struct MemoryMappedRange {

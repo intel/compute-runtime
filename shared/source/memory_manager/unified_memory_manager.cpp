@@ -472,6 +472,12 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     if (this->usmHostAllocationsCache) {
         void *allocationFromCache = this->usmHostAllocationsCache->get(size, memoryProperties);
         if (allocationFromCache) {
+            if (memoryProperties.fabricAccessibleIpcHandleRequested) {
+                auto svmData = getSVMAlloc(allocationFromCache);
+                if (svmData) {
+                    svmData->fabricAccessibleIpcHandleRequested = true;
+                }
+            }
             return allocationFromCache;
         }
     }
@@ -498,6 +504,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     allocData.device = nullptr;
     allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(++this->allocationsCounter);
+    allocData.fabricAccessibleIpcHandleRequested = memoryProperties.fabricAccessibleIpcHandleRequested;
 
     insertSVMAlloc(usmPtr, allocData);
 
@@ -545,6 +552,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.preferCompressed &= preferCompressed;
     unifiedMemoryProperties.flags.resource48Bit = memoryProperties.allocationFlags.flags.resource48Bit;
     unifiedMemoryProperties.flags.readOnly = memoryProperties.allocationFlags.flags.readOnly;
+    unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = memoryProperties.fabricAccessibleIpcHandleRequested;
 
     if (memoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory) {
         unifiedMemoryProperties.flags.isHostInaccessibleAllocation = true;
@@ -552,6 +560,12 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
             false == memoryProperties.isInternalAllocation) {
             void *allocationFromCache = this->usmDeviceAllocationsCache->get(size, memoryProperties);
             if (allocationFromCache) {
+                if (memoryProperties.fabricAccessibleIpcHandleRequested) {
+                    auto svmData = getSVMAlloc(allocationFromCache);
+                    if (svmData) {
+                        svmData->fabricAccessibleIpcHandleRequested = true;
+                    }
+                }
                 return allocationFromCache;
             }
         }
@@ -586,6 +600,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.device = memoryProperties.device;
     allocData.setAllocId(++this->allocationsCounter);
     allocData.isInternalAllocation = memoryProperties.isInternalAllocation;
+    allocData.fabricAccessibleIpcHandleRequested = memoryProperties.fabricAccessibleIpcHandleRequested;
 
     auto retPtr = reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
     insertSVMAlloc(retPtr, allocData);
@@ -671,6 +686,7 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     allocData.size = size;
     allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(++this->allocationsCounter);
+    allocData.fabricAccessibleIpcHandleRequested = unifiedMemoryProperties.fabricAccessibleIpcHandleRequested;
 
     auto retPtr = allocationGpu->getUnderlyingBuffer();
     insertSVMAlloc(retPtr, allocData);
@@ -959,6 +975,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     allocData.pageSizeForAlignment = effectiveSvmCpuAlignment;
     allocData.size = size;
     allocData.setAllocId(++this->allocationsCounter);
+    allocData.fabricAccessibleIpcHandleRequested = unifiedMemoryProperties.fabricAccessibleIpcHandleRequested;
 
     insertSVMAlloc(svmPtr, allocData);
     return svmPtr;

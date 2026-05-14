@@ -113,6 +113,7 @@ struct StructuresLookupTable {
     bool isExternalMemmapSystem;
     bool isSrgb;
     bool overrideAllocationType;
+    bool ipcHandleTypeFabric;
 };
 
 inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupTable, const void *desc) {
@@ -212,6 +213,11 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             lookupTable.isExternalMemmapSystem = true;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC) {
             lookupTable.exportMemory = true;
+            lookupTable.ipcHandleTypeFabric = false;
+            auto ipcHandleTypeDesc = reinterpret_cast<const ze_ipc_mem_handle_type_ext_desc_t *>(extendedDesc);
+            if (ipcHandleTypeDesc->typeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE) {
+                lookupTable.ipcHandleTypeFabric = true;
+            }
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC) {
             const ze_custom_pitch_exp_desc_t *customPitchDesc = reinterpret_cast<const ze_custom_pitch_exp_desc_t *>(extendedDesc);
             lookupTable.areImageProperties = true;

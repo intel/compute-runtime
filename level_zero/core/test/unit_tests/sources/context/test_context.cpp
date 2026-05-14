@@ -1540,6 +1540,61 @@ TEST_F(ContextTest, givenOpaqueFdExportFlagWhenCallingCreatePhysicalMemThenSucce
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(ContextTest, givenValidPNextStypeNotHandledByCreatePhysicalMemWhenCallingCreatePhysicalMemThenUnsupportedEnumerationReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_compression_hints_ext_desc_t compressionHints = {};
+    compressionHints.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+    compressionHints.pNext = nullptr;
+    compressionHints.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, &compressionHints, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenUnsupportedImportFlagsWhenCallingCreatePhysicalMemThenUnsupportedEnumerationReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_external_memory_import_fd_t importDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD};
+    importDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importDesc.fd = -1;
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, &importDesc, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 TEST_F(ContextTest, givenInvalidHandleWhenCallingGetPhysicalMemPropertiesThenInvalidArgumentReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -6143,6 +6198,121 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithoutReservedHandleDataThenHandl
         auto lock = driverHandle->lockIPCHandleMap();
         EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
     }
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenFabricAccessibleIpcHandleTypeInHostMemAllocDescWhenGettingIpcHandleWithNullpNextThenFabricFlagPropagatedAndSuccessReturned) {
+    ze_ipc_mem_handle_type_ext_desc_t ipcHandleTypeDesc = {};
+    ipcHandleTypeDesc.stype = ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC;
+    ipcHandleTypeDesc.pNext = nullptr;
+    ipcHandleTypeDesc.typeFlags = ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.pNext = &ipcHandleTypeDesc;
+
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    ze_result_t result = context->allocHostMem(&hostDesc, size, 1u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    EXPECT_TRUE(allocData->fabricAccessibleIpcHandleRequested);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(ContextTest, givenFabricAccessibleIpcHandleTypeInDeviceMemAllocDescWhenGettingIpcHandleWithNullpNextThenFabricFlagPropagatedAndSuccessReturned) {
+    ze_ipc_mem_handle_type_ext_desc_t ipcHandleTypeDesc = {};
+    ipcHandleTypeDesc.stype = ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC;
+    ipcHandleTypeDesc.pNext = nullptr;
+    ipcHandleTypeDesc.typeFlags = ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    deviceDesc.pNext = &ipcHandleTypeDesc;
+
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 1u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    EXPECT_TRUE(allocData->fabricAccessibleIpcHandleRequested);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(ContextTest, givenFabricAccessibleIpcHandleTypeInPhysicalMemDescWhenMappedAndGettingIpcHandleWithNullpNextThenFabricFlagPropagatedAndSuccessReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&contextDesc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+    contextImp->settings.enableIpcHandleSharing = true;
+
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(0x0, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_ipc_mem_handle_type_ext_desc_t ipcHandleTypeDesc = {};
+    ipcHandleTypeDesc.stype = ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC;
+    ipcHandleTypeDesc.pNext = nullptr;
+    ipcHandleTypeDesc.typeFlags = ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
+
+    ze_physical_mem_desc_t physMemDesc = {};
+    physMemDesc.stype = ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC;
+    physMemDesc.pNext = &ipcHandleTypeDesc;
+    physMemDesc.flags = 0;
+    physMemDesc.size = pagesize;
+
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &physMemDesc, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE;
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    EXPECT_TRUE(allocData->fabricAccessibleIpcHandleRequested);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    res = contextImp->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

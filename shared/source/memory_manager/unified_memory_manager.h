@@ -55,6 +55,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
         }
         this->mappedAllocData = svmAllocData.mappedAllocData;
         this->virtualReservationData = svmAllocData.virtualReservationData;
+        this->fabricAccessibleIpcHandleRequested = svmAllocData.fabricAccessibleIpcHandleRequested;
     }
     SvmAllocationData(SvmAllocationData &&other) noexcept = delete;
     GraphicsAllocation *cpuAllocation = nullptr;
@@ -73,6 +74,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     bool mappedAllocData = false;
     bool isInternalAllocation = false;
     bool isSavedForReuse = false;
+    bool fabricAccessibleIpcHandleRequested = false;
 
     uint32_t getAllocId() const {
         return allocId;

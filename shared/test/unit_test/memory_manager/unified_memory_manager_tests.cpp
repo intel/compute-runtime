@@ -782,3 +782,96 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenReadOnlyFlagNotSetInAllocationPropertie
 
     svmManager->freeSVMAlloc(ptr, true);
 }
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenFabricAccessibleIpcHandleRequestedWhenReusingCachedHostAllocationThenPropertyIsSetOnSvmData) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+    device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device);
+    ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto cachedPtr = svmManager->createHostUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, cachedPtr);
+    svmManager->freeSVMAlloc(cachedPtr);
+    ASSERT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = true;
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+    EXPECT_EQ(cachedPtr, ptr);
+
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_TRUE(svmData->fabricAccessibleIpcHandleRequested);
+
+    svmManager->freeSVMAlloc(ptr);
+    svmManager->cleanupUSMAllocCaches();
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenFabricAccessibleIpcHandleRequestedWhenCachedHostAllocationNotInSvmAllocsThenPropertyIsNotSet) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+    device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device);
+    ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto cachedPtr = svmManager->createHostUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, cachedPtr);
+    svmManager->freeSVMAlloc(cachedPtr);
+    ASSERT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    // Replace the cached allocation pointer with one not tracked in svmAllocs so that
+    // getSVMAlloc returns null, exercising the defensive null check at the decision point.
+    void *unmappedPtr = reinterpret_cast<void *>(uintptr_t(1));
+    svmManager->usmHostAllocationsCache->allocations[0].allocation = unmappedPtr;
+
+    unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = true;
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
+    EXPECT_EQ(unmappedPtr, ptr);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(unmappedPtr));
+    EXPECT_EQ(0u, svmManager->usmHostAllocationsCache->allocations.size());
+
+    svmManager->freeSVMAlloc(cachedPtr);
+    svmManager->cleanupUSMAllocCaches();
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenFabricAccessibleIpcHandleRequestedWhenReusingCachedDeviceAllocationThenPropertyIsSetOnSvmData) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+    device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device);
+    ASSERT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+    auto cachedPtr = svmManager->createUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, cachedPtr);
+    svmManager->freeSVMAlloc(cachedPtr);
+    ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    unifiedMemoryProperties.fabricAccessibleIpcHandleRequested = true;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+    EXPECT_EQ(cachedPtr, ptr);
+
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_TRUE(svmData->fabricAccessibleIpcHandleRequested);
+
+    svmManager->freeSVMAlloc(ptr);
+    svmManager->cleanupUSMAllocCaches();
+}
