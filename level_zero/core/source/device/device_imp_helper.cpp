@@ -7,7 +7,13 @@
 
 #include "level_zero/core/source/device/device.h"
 
+#include <cstring>
+
 namespace L0 {
+
+bool Device::fabricEdgeModelSupportsBandwidthAndLatency(const char *model) {
+    return strstr(model, "XeLink") != nullptr;
+}
 
 uint32_t Device::getAdditionalEngines(uint32_t numAdditionalEnginesRequested,
                                       ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {

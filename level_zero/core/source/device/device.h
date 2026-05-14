@@ -275,6 +275,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     NEO::EngineGroupType getEngineGroupTypeForOrdinal(uint32_t ordinal) const;
     void getP2PPropertiesDirectFabricConnection(Device *peerDevice,
                                                 ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
+    bool fabricEdgeModelSupportsBandwidthAndLatency(const char *model);
     bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, NEO::CommandStreamReceiver **csr, bool allocateInterrupt);
     void getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const;
     MOCKABLE_VIRTUAL Module *createRequiredLibModule(const std::string &libName, ModuleBuildLog *buildLog, ze_result_t &result);

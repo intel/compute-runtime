@@ -6663,5 +6663,26 @@ TEST_F(MultipleDeviceMemAdviseTests, givenTargetDeviceNotSupportSharedSystemUsmT
     free(ptr);
 }
 
+TEST(L0DeviceTest, givenXeLinkModelWhenFabricEdgeModelSupportsBandwidthAndLatencyThenReturnTrue) {
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0);
+    MockDeviceImp mockDevice(neoMockDevice);
+
+    EXPECT_TRUE(mockDevice.fabricEdgeModelSupportsBandwidthAndLatency("XeLink"));
+}
+
+TEST(L0DeviceTest, givenNonXeLinkModelWhenFabricEdgeModelSupportsBandwidthAndLatencyThenReturnFalse) {
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0);
+    MockDeviceImp mockDevice(neoMockDevice);
+
+    EXPECT_FALSE(mockDevice.fabricEdgeModelSupportsBandwidthAndLatency("PCIe"));
+}
+
+TEST(L0DeviceTest, givenEmptyModelWhenFabricEdgeModelSupportsBandwidthAndLatencyThenReturnFalse) {
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0);
+    MockDeviceImp mockDevice(neoMockDevice);
+
+    EXPECT_FALSE(mockDevice.fabricEdgeModelSupportsBandwidthAndLatency(""));
+}
+
 } // namespace ult
 } // namespace L0
