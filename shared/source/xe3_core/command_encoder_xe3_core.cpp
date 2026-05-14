@@ -104,6 +104,10 @@ void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorT
             pipelinedThreadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(defaultPipelinedThreadArbitrationPolicy);
         }
 
+        if (debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+            pipelinedThreadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(debugManager.flags.OverrideThreadArbitrationPolicy.get());
+        }
+
         switch (pipelinedThreadArbitrationPolicy) {
         case ThreadArbitrationPolicy::RoundRobin:
             pInterfaceDescriptor->setEuThreadSchedulingModeOverride(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);

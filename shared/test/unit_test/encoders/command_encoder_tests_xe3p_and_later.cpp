@@ -927,3 +927,73 @@ HWTEST2_F(CommandEncoderTestXe3pAndLater, GivenMiSemaphoreWaitLegacyWhenProgramm
                                                         useSemaphore64bCmd);
     EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::WAIT_MODE::WAIT_MODE_SIGNAL_MODE, miSemaphoreLegacy->getWaitMode());
 }
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenPipelinedEuThreadArbitrationPolicyWhenEncodeEuSchedulingPolicyIsCalledThenIddContainsCorrectEuSchedulingPolicy, IsAtLeastXe3pCore) {
+    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
+
+    INTERFACE_DESCRIPTOR_DATA_2 idd = FamilyType::cmdInitInterfaceDescriptorData2;
+    KernelDescriptor kernelDescriptor;
+    int32_t defaultPipelinedThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+
+    {
+        kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+        EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
+    }
+
+    defaultPipelinedThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
+
+    {
+        kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+        EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
+    }
+    {
+        kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
+        EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST, idd.getEuThreadSchedulingModeOverride());
+    }
+    {
+        kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
+        EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
+    }
+    {
+        kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
+        EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
+    }
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenOverrideThreadArbitrationPolicyDebugFlagSetWhenEncodeEuSchedulingPolicyIsCalledThenIddContainsOverriddenValue, IsAtLeastXe3pCore) {
+    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
+
+    DebugManagerStateRestore debugRestorer;
+
+    INTERFACE_DESCRIPTOR_DATA_2 idd = FamilyType::cmdInitInterfaceDescriptorData2;
+    KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
+    int32_t defaultPipelinedThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
+
+    {
+        debugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
+        EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
+    }
+    {
+        debugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::AgeBased);
+        EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST, idd.getEuThreadSchedulingModeOverride());
+    }
+    {
+        debugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobinAfterDependency);
+        EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
+    }
+    {
+        kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+        debugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
+        EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
+    }
+}

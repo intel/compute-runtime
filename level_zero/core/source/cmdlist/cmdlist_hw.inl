@@ -318,9 +318,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->isPostImageWriteFlushRequired = releaseHelper ? releaseHelper->isPostImageWriteFlushRequired() : false;
     this->shouldRegisterEnqueuedWalkerWithProfiling = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
     this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->dcFlushSupport);
-    if (NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-        this->defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
-    }
     this->statelessBuiltinsEnabled = compilerProductHelper.isForceToStatelessRequired();
     this->defaultBuiltInMode = compilerProductHelper.getDefaultBuiltInAddressingMode(
         NEO::ApiSpecificConfig::getBindlessMode(*neoDevice));

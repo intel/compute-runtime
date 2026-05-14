@@ -84,6 +84,10 @@ void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorT
         pipelinedThreadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(defaultPipelinedThreadArbitrationPolicy);
     }
 
+    if (debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+        pipelinedThreadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(debugManager.flags.OverrideThreadArbitrationPolicy.get());
+    }
+
     using EU_THREAD_SCHEDULING_MODE_OVERRIDE = typename InterfaceDescriptorType::EU_THREAD_SCHEDULING_MODE_OVERRIDE;
 
     switch (pipelinedThreadArbitrationPolicy) {

@@ -188,9 +188,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
 
     auto defaultPipelinedThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
-    if (NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-        defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
-    }
     EncodeDispatchKernel<GfxFamily>::encodeEuSchedulingPolicy(&interfaceDescriptor, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
     const uint32_t threadGroupDimensions[] = {walkerCmd->getThreadGroupIdXDimension(), walkerCmd->getThreadGroupIdYDimension(), walkerCmd->getThreadGroupIdXDimension()};
     EncodeDispatchKernel<GfxFamily>::encodeThreadGroupDispatch(interfaceDescriptor, device, hardwareInfo, threadGroupDimensions, threadGroupCount, kernelDescriptor.kernelMetadata.requiredThreadGroupDispatchSize,
