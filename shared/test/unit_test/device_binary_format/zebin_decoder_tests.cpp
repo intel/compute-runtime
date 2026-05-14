@@ -4685,7 +4685,42 @@ kernels:
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
-    EXPECT_STREQ("DeviceBinaryFormat::zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0) in context of : some_kernel.\n", errors.c_str());
+    EXPECT_STREQ("DeviceBinaryFormat::zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0 and less than INT32_MAX) in context of : some_kernel.\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWithSizeEqualToInt32MaxThenErrorIsReturned) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      per_thread_memory_buffers:
+          - type:            scratch
+            usage:           private_space
+            size:            2147483647
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
+    EXPECT_STREQ("DeviceBinaryFormat::zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0 and less than INT32_MAX) in context of : some_kernel.\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenSimtThreadPerThreadMemoryBufferWithSizeExceedingUint32MaxThenErrorIsReturned) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      per_thread_memory_buffers:
+          - type:            scratch
+            usage:           private_space
+            size:            536870913
+            is_simt_thread:  true
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
+    EXPECT_STREQ("DeviceBinaryFormat::zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0 and less than INT32_MAX) in context of : some_kernel.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 

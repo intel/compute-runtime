@@ -1653,15 +1653,16 @@ DecodeError populateKernelPerThreadMemoryBuffer(KernelDescriptor &dst, const Ker
     using namespace Types::Kernel::PerThreadMemoryBuffer;
     using namespace Tags::Kernel::PerThreadMemoryBuffer::AllocationType;
     using namespace Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
-    if (src.size <= 0) {
-        outErrReason.append("DeviceBinaryFormat::zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0) in context of : " + dst.kernelMetadata.kernelName + ".\n");
-        return DecodeError::invalidBinary;
-    }
 
-    auto size = src.size;
+    uint64_t size = src.size;
     if (src.isSimtThread) {
         size *= dst.kernelAttributes.simdSize;
     }
+    if (src.size <= 0 || src.size >= INT32_MAX || size > UINT32_MAX) {
+        outErrReason.append("DeviceBinaryFormat::zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0 and less than INT32_MAX) in context of : " + dst.kernelMetadata.kernelName + ".\n");
+        return DecodeError::invalidBinary;
+    }
+
     switch (src.allocationType) {
     default:
         outErrReason.append("DeviceBinaryFormat::zebin : Invalid per-thread memory buffer allocation type in context of : " + dst.kernelMetadata.kernelName + ".\n");
@@ -1672,7 +1673,7 @@ DecodeError populateKernelPerThreadMemoryBuffer(KernelDescriptor &dst, const Ker
             return DecodeError::invalidBinary;
         }
 
-        dst.kernelAttributes.perHwThreadPrivateMemorySize = size;
+        dst.kernelAttributes.perHwThreadPrivateMemorySize = static_cast<uint32_t>(size);
         break;
     case AllocationTypeScratch:
         if (src.slot > 1) {
