@@ -91,17 +91,11 @@ NVLPTEST_F(NvlDeviceIdTest, givenSlmSizeAndHeaplessWhenEncodingThenReturnCorrect
         {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_128K), 96 * MemoryConstants::kiloByte + 1},
         {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_128K), 128 * MemoryConstants::kiloByte},
         {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_192K), 128 * MemoryConstants::kiloByte + 1},
-        {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_192K), 192 * MemoryConstants::kiloByte},
-        {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_256K), 192 * MemoryConstants::kiloByte + 1},
-        {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_256K), 256 * MemoryConstants::kiloByte},
-        {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_320K), 256 * MemoryConstants::kiloByte + 1},
-        {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_320K), 320 * MemoryConstants::kiloByte},
-        {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_384K), 320 * MemoryConstants::kiloByte + 1},
-        {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_384K), 384 * MemoryConstants::kiloByte}};
+        {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_192K), 192 * MemoryConstants::kiloByte}};
 
     for (const auto &testInput : computeSlmValuesXe3pAndLaterTestsInput) {
         EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, testInput.slmSize, releaseHelper));
     }
 
-    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 384 * MemoryConstants::kiloByte + 1, releaseHelper), std::exception);
+    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 192 * MemoryConstants::kiloByte + 1, releaseHelper), std::exception);
 }
