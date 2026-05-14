@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -82,7 +82,7 @@ if(TARGET igdrcl_aub_tests)
   if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
     set(aub_test_cmd_prefix $<TARGET_FILE:igdrcl_aub_tests>)
   else()
-    set(aub_test_cmd_prefix ${CMAKE_COMMAND} -E env "LD_LIBRARY_PATH=${NEO__GMM_LIBRARY_PATH}" "IGDRCL_TEST_SELF_EXEC=off" ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:igdrcl_aub_tests>)
+    set(aub_test_cmd_prefix ${CMAKE_COMMAND} -E env "LD_LIBRARY_PATH=${NEO__GMM_LIBRARY_PATH}" "IGDRCL_TEST_SELF_EXEC=off" "AUBSTREAM_EnablePs64=0" ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:igdrcl_aub_tests>)
   endif()
 
   unset(GTEST_OUTPUT)
@@ -106,7 +106,7 @@ if(TARGET ze_intel_gpu_aub_tests)
   if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
     set(l0_aub_test_cmd_prefix $<TARGET_FILE:ze_intel_gpu_aub_tests>)
   else()
-    set(l0_aub_test_cmd_prefix ${CMAKE_COMMAND} -E env "LD_LIBRARY_PATH=${NEO__GMM_LIBRARY_PATH}" ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_aub_tests>)
+    set(l0_aub_test_cmd_prefix ${CMAKE_COMMAND} -E env "LD_LIBRARY_PATH=${NEO__GMM_LIBRARY_PATH}" "AUBSTREAM_EnablePs64=0" ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_aub_tests>)
   endif()
 
   unset(GTEST_OUTPUT)
