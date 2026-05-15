@@ -8,6 +8,8 @@
 #pragma once
 
 #include "level_zero/driver_experimental/zex_event.h"
+#include "level_zero/driver_experimental/zex_graph.h"
+#include "level_zero/include/level_zero/driver_experimental/zex_visit.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_intel_gpu.h>
 #include <level_zero/zer_api.h>
@@ -398,5 +400,22 @@ bool checkExtensionIsPresent(ze_driver_handle_t &driverHandle, std::vector<ze_dr
 
 void prepareScratchTestValues(uint32_t &arraySize, uint32_t &vectorSize, uint32_t &expectedMemorySize, uint32_t &srcAdditionalMul, uint32_t &srcMemorySize, uint32_t &idxMemorySize);
 void prepareScratchTestBuffers(void *srcBuffer, void *idxBuffer, void *expectedMemory, uint32_t arraySize, uint32_t vectorSize, uint32_t expectedMemorySize, uint32_t srcAdditionalMul);
+
+namespace VisitExtension {
+using zeCommandListVisitExtFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t, const ze_visit_ext_desc_t *);
+using zeGraphVisitExtFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t, const ze_visit_ext_desc_t *);
+
+struct VisitApi {
+    zeCommandListVisitExtFP commandListVist = nullptr;
+    zeGraphVisitExtFP graphVist = nullptr;
+
+    bool valid() const {
+        return commandListVist != nullptr || graphVist != nullptr;
+    }
+    bool loaded = false;
+};
+
+VisitApi &loadVisitApi(ze_driver_handle_t driver);
+} // namespace VisitExtension
 
 } // namespace LevelZeroBlackBoxTests

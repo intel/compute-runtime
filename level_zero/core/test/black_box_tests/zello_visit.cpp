@@ -5,7 +5,6 @@
  *
  */
 
-#include "level_zero/include/level_zero/driver_experimental/zex_visit.h"
 #include "level_zero/include/level_zero/ze_stypes.h"
 
 #include "zello_common.h"
@@ -17,24 +16,14 @@
 #include <string>
 #include <vector>
 
-using zeCommandListVisitExtFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t, const ze_visit_ext_desc_t *);
-
-#ifndef ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC
-#define ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030031)
-#endif
-
-#ifndef ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC
-#define ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030032)
-#endif
-
 struct VisitUserData {
     ze_command_list_handle_t targetCmdList = nullptr;
-    uint32_t memoryCopyCount = 0;
-    uint32_t barrierCount = 0;
-    uint32_t launchKernelCount = 0;
     // Profiling support for concrete visitor callbacks
     std::vector<ze_event_handle_t> profilingEvents;
     std::vector<std::string> apiNames;
+    uint32_t memoryCopyCount = 0;
+    uint32_t barrierCount = 0;
+    uint32_t launchKernelCount = 0;
     uint32_t eventIndex = 0;
     bool enableProfiling = false;
 };
@@ -137,15 +126,9 @@ static void VISITOR_CCONV afterDefaultOpProfiling(const char *fname,
     ++profilingData->nextEventIndex;
 }
 
-static zeCommandListVisitExtFP loadVisitExt(ze_driver_handle_t driver) {
-    zeCommandListVisitExtFP fn = nullptr;
-    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListVisitExt", reinterpret_cast<void **>(&fn));
-    return fn;
-}
-
-bool testVisitReappend(ze_context_handle_t context,
+bool testVisitReappend(LevelZeroBlackBoxTests::VisitExtension::VisitApi &visitApi,
+                       ze_context_handle_t context,
                        ze_device_handle_t device,
-                       ze_driver_handle_t driver,
                        ze_module_handle_t module,
                        bool useConcreteVisitors,
                        bool useProfilingCallbacks,
@@ -229,23 +212,8 @@ bool testVisitReappend(ze_context_handle_t context,
     }
 
     // ---------- visit with REAPPEND ----------
-    auto visitExt = loadVisitExt(driver);
-    if (visitExt == nullptr) {
-        std::cerr << "zeCommandListVisitExt not found - skipping test\n";
-        // cleanup and return success so the binary doesn't fail on platforms
-        // that don't yet expose this extension
-        SUCCESS_OR_TERMINATE(zeCommandListDestroy(immCmdList));
-        SUCCESS_OR_TERMINATE(zeCommandListDestroy(recordCmdList));
-        SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
-        SUCCESS_OR_TERMINATE(zeMemFree(context, dstDevBuffer));
-        SUCCESS_OR_TERMINATE(zeMemFree(context, interimBuffer));
-        SUCCESS_OR_TERMINATE(zeMemFree(context, outputBuffer));
-        SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
-        return true;
-    }
 
-    ze_visit_ext_desc_t visitDesc{};
-    visitDesc.stype = static_cast<ze_structure_type_t>(ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC);
+    ze_visit_ext_desc_t visitDesc{ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC};
     VisitUserData visitUserData{};
     visitUserData.targetCmdList = immCmdList;
 
@@ -255,22 +223,19 @@ bool testVisitReappend(ze_context_handle_t context,
         visitUserData.profilingEvents = profilingData.events;
     }
 
-    ze_concrete_visitor_ext_desc_t launchKernelVisitorDesc{};
-    ze_concrete_visitor_ext_desc_t barrierVisitorDesc{};
-    ze_concrete_visitor_ext_desc_t memoryCopyVisitorDesc{};
+    ze_concrete_visitor_ext_desc_t launchKernelVisitorDesc{ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC};
+    ze_concrete_visitor_ext_desc_t barrierVisitorDesc{ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC};
+    ze_concrete_visitor_ext_desc_t memoryCopyVisitorDesc{ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC};
 
     if (useConcreteVisitors) {
-        launchKernelVisitorDesc.stype = static_cast<ze_structure_type_t>(ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC);
         launchKernelVisitorDesc.pNext = nullptr;
         launchKernelVisitorDesc.fname = "zeCommandListAppendLaunchKernel";
         launchKernelVisitorDesc.callback = reinterpret_cast<void *>(appendLaunchKernelVisitor);
 
-        barrierVisitorDesc.stype = static_cast<ze_structure_type_t>(ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC);
         barrierVisitorDesc.pNext = &launchKernelVisitorDesc;
         barrierVisitorDesc.fname = "zeCommandListAppendBarrier";
         barrierVisitorDesc.callback = reinterpret_cast<void *>(appendBarrierVisitor);
 
-        memoryCopyVisitorDesc.stype = static_cast<ze_structure_type_t>(ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC);
         memoryCopyVisitorDesc.pNext = &barrierVisitorDesc;
         memoryCopyVisitorDesc.fname = "zeCommandListAppendMemoryCopy";
         memoryCopyVisitorDesc.callback = reinterpret_cast<void *>(appendMemoryCopyVisitor);
@@ -283,7 +248,7 @@ bool testVisitReappend(ze_context_handle_t context,
     visitDesc.defaultOp = useConcreteVisitors ? ZE_VISIT_EXT_DEFAULT_OP_IGNORE : ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
     visitDesc.afterDefaultOpClb = (useProfilingCallbacks && !useConcreteVisitors) ? afterDefaultOpProfiling : nullptr;
 
-    SUCCESS_OR_TERMINATE(visitExt(recordCmdList, &visitDesc));
+    SUCCESS_OR_TERMINATE(visitApi.commandListVist(recordCmdList, &visitDesc));
 
     // ---------- synchronize and validate ----------
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(immCmdList, std::numeric_limits<uint64_t>::max()));
@@ -380,6 +345,14 @@ bool testVisitReappend(ze_context_handle_t context,
 }
 
 int main(int argc, char *argv[]) {
+    constexpr uint32_t bitNumberTestVisitReappendDefaultOp = 0u;
+    constexpr uint32_t bitNumberTestVisitReappendConcreteVisitors = 1u;
+    constexpr uint32_t bitNumberTestVisitReappendDefaultOpProfiling = 2u;
+    constexpr uint32_t bitNumberTestReappendConcreteVisitorsWithProfiling = 3u;
+
+    constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max();
+    LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
+
     const std::string blackBoxName("Zello Visit");
 
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
@@ -394,6 +367,12 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
+    auto &visitApi = LevelZeroBlackBoxTests::VisitExtension::loadVisitApi(driverHandle);
+    if (!visitApi.valid()) {
+        std::cerr << "Visit extension API is not available!" << std::endl;
+        return 0;
+    }
+
     // Build the test module (provides "memcpy_bytes" and other kernels)
     ze_module_handle_t module = nullptr;
     LevelZeroBlackBoxTests::createModuleFromSpirV(context, device, LevelZeroBlackBoxTests::openCLKernelsSource, module);
@@ -401,29 +380,37 @@ int main(int argc, char *argv[]) {
     bool boxPass = true;
     std::string currentTest;
 
-    currentTest = "Visit Reappend Default Op (MemoryCopy + LaunchKernel)";
-    std::cout << "Starting test: " << currentTest << std::endl;
-    bool casePass = testVisitReappend(context, device, driverHandle, module, false, false, aubMode);
-    LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
-    boxPass &= casePass;
+    if (testMask.test(bitNumberTestVisitReappendDefaultOp)) {
+        currentTest = "Visit Reappend Default Op (MemoryCopy + LaunchKernel)";
+        std::cout << "Starting test: " << currentTest << std::endl;
+        bool casePass = testVisitReappend(visitApi, context, device, module, false, false, aubMode);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
+    }
 
-    currentTest = "Visit Reappend Concrete Visitors (MemoryCopy + LaunchKernel)";
-    std::cout << "Starting test: " << currentTest << std::endl;
-    casePass = testVisitReappend(context, device, driverHandle, module, true, false, aubMode);
-    LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
-    boxPass &= casePass;
+    if (testMask.test(bitNumberTestVisitReappendConcreteVisitors)) {
+        currentTest = "Visit Reappend Concrete Visitors (MemoryCopy + LaunchKernel)";
+        std::cout << "Starting test: " << currentTest << std::endl;
+        bool casePass = testVisitReappend(visitApi, context, device, module, true, false, aubMode);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
+    }
 
-    currentTest = "Visit Reappend Default Op Profiling (before/after callbacks)";
-    std::cout << "Starting test: " << currentTest << std::endl;
-    casePass = testVisitReappend(context, device, driverHandle, module, false, true, aubMode);
-    LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
-    boxPass &= casePass;
+    if (testMask.test(bitNumberTestVisitReappendDefaultOpProfiling)) {
+        currentTest = "Visit Reappend Default Op Profiling (before/after callbacks)";
+        std::cout << "Starting test: " << currentTest << std::endl;
+        bool casePass = testVisitReappend(visitApi, context, device, module, false, true, aubMode);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
+    }
 
-    currentTest = "Visit Reappend Concrete Visitors with Profiling (MemoryCopy + LaunchKernel)";
-    std::cout << "Starting test: " << currentTest << std::endl;
-    casePass = testVisitReappend(context, device, driverHandle, module, true, true, aubMode);
-    LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
-    boxPass &= casePass;
+    if (testMask.test(bitNumberTestReappendConcreteVisitorsWithProfiling)) {
+        currentTest = "Visit Reappend Concrete Visitors with Profiling (MemoryCopy + LaunchKernel)";
+        std::cout << "Starting test: " << currentTest << std::endl;
+        bool casePass = testVisitReappend(visitApi, context, device, module, true, true, aubMode);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
+    }
 
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 

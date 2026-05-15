@@ -893,5 +893,30 @@ void createImmediateCmdlistWithMode(
         context, device, &queueDesc, &cmdListOut);
     SUCCESS_OR_TERMINATE(result);
 }
+namespace VisitExtension {
+
+VisitApi &loadVisitApi(ze_driver_handle_t driver) {
+    static VisitApi visitFunctions;
+
+    if (visitFunctions.loaded) {
+        return visitFunctions;
+    }
+
+    std::vector<ze_driver_extension_properties_t> extensionVector;
+    ze_driver_extension_properties_t visitExtension{};
+    std::string visitExtensionString = "ZE_extension_command_list_visit";
+    std::snprintf(visitExtension.name, sizeof(visitExtension.name), "%s", visitExtensionString.c_str());
+    visitExtension.version = ZE_MAKE_VERSION(1, 0);
+    extensionVector.push_back(visitExtension);
+    bool visitExtensionPresent = LevelZeroBlackBoxTests::checkExtensionIsPresent(driver, extensionVector);
+
+    if (visitExtensionPresent) {
+        zeDriverGetExtensionFunctionAddress(driver, "zeGraphVisitExt", reinterpret_cast<void **>(&visitFunctions.graphVist));
+        zeDriverGetExtensionFunctionAddress(driver, "zeCommandListVisitExt", reinterpret_cast<void **>(&visitFunctions.commandListVist));
+    }
+    visitFunctions.loaded = true;
+    return visitFunctions;
+}
+} // namespace VisitExtension
 
 } // namespace LevelZeroBlackBoxTests
