@@ -609,7 +609,7 @@ void ModuleTranslationUnit::updateBuildLog(const std::string &newLogEntry) {
         return;
     }
 
-    buildLog += newLogEntry;
+    buildLog += newLogEntry.c_str();
     if ('\n' != *buildLog.rbegin()) {
         buildLog.append("\n");
     }
