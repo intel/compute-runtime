@@ -51,7 +51,7 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030030)
 
 #define ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030031)
-#define ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030032)
+#define ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030032)
 
 // Metric structure types
 #define ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP static_cast<zet_structure_type_ext_t>(0x00010006)

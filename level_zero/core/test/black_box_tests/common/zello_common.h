@@ -406,11 +406,11 @@ using zeCommandListVisitExtFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle
 using zeGraphVisitExtFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t, const ze_visit_ext_desc_t *);
 
 struct VisitApi {
-    zeCommandListVisitExtFP commandListVist = nullptr;
-    zeGraphVisitExtFP graphVist = nullptr;
+    zeCommandListVisitExtFP commandListVisit = nullptr;
+    zeGraphVisitExtFP graphVisit = nullptr;
 
     bool valid() const {
-        return commandListVist != nullptr || graphVist != nullptr;
+        return commandListVisit != nullptr || graphVisit != nullptr;
     }
     bool loaded = false;
 };

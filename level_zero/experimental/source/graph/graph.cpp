@@ -1266,7 +1266,7 @@ struct VisitContext {
             if (pnext.stype != ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC) {
                 return ZE_RESULT_ERROR_INVALID_ENUMERATION;
             }
-            auto concreteVisitor = reinterpret_cast<const ze_concrete_visitor_ext_desc_t &>(pnext);
+            const auto &concreteVisitor = reinterpret_cast<const ze_concrete_visitor_ext_desc_t &>(pnext);
             if (nullptr == concreteVisitor.fname) {
                 return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
             }

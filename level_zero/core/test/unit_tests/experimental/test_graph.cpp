@@ -2384,7 +2384,7 @@ TEST(GraphTestZeGraphVisitExt, GivenValidParametersThenForwardsToGraphVisitAndRe
     ContextStubMock ctx;
     TestableGraphForVisitApi graph{&ctx, true};
     ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC;
+    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
 
     graph.returnValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphVisitExt(graph.toHandle(), &desc));
@@ -2399,7 +2399,7 @@ TEST(GraphTestVisit, GivenInvalidPnextStypeWhenVisitingThenReturnsInvalidEnumera
     ze_base_desc_t invalidDesc{};
     invalidDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
     ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC;
+    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &invalidDesc;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, graph.visit(&desc));
@@ -2413,7 +2413,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithNullFunctionNameWhenVisitingThenRet
     concreteVisitor.stype = ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = nullptr;
     ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC;
+    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, graph.visit(&desc));
@@ -2428,7 +2428,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithUnknownFunctionNameWhenVisitingThen
     concreteVisitor.fname = "unknownApiName";
     concreteVisitor.callback = nullptr;
     ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC;
+    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, graph.visit(&desc));
@@ -2444,7 +2444,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWhenVisitingThenInit
     concreteVisitor.fname = "zeCommandListGetNextCommandIdExp";
     concreteVisitor.callback = nullptr;
     ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC;
+    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));
@@ -2460,7 +2460,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWithKernelsWhenVisit
     concreteVisitor.fname = "zeCommandListGetNextCommandIdWithKernelsExp";
     concreteVisitor.callback = nullptr;
     ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC;
+    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));

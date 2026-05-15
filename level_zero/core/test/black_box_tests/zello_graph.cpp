@@ -878,9 +878,9 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
         if (executeUsingVisitor == false) {
             SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
         } else {
-            ze_visit_ext_desc_t visitDesc{ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC};
+            ze_visit_ext_desc_t visitDesc{ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
             visitDesc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
-            SUCCESS_OR_TERMINATE(visitApi->graphVist(virtualGraph, &visitDesc));
+            SUCCESS_OR_TERMINATE(visitApi->graphVisit(virtualGraph, &visitDesc));
         }
     }
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListRoot, std::numeric_limits<uint64_t>::max()));

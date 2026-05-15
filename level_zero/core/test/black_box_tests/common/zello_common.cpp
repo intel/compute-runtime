@@ -904,15 +904,15 @@ VisitApi &loadVisitApi(ze_driver_handle_t driver) {
 
     std::vector<ze_driver_extension_properties_t> extensionVector;
     ze_driver_extension_properties_t visitExtension{};
-    std::string visitExtensionString = "ZE_extension_command_list_visit";
+    std::string visitExtensionString = "ZE_extension_command_visit";
     std::snprintf(visitExtension.name, sizeof(visitExtension.name), "%s", visitExtensionString.c_str());
     visitExtension.version = ZE_MAKE_VERSION(1, 0);
     extensionVector.push_back(visitExtension);
     bool visitExtensionPresent = LevelZeroBlackBoxTests::checkExtensionIsPresent(driver, extensionVector);
 
     if (visitExtensionPresent) {
-        zeDriverGetExtensionFunctionAddress(driver, "zeGraphVisitExt", reinterpret_cast<void **>(&visitFunctions.graphVist));
-        zeDriverGetExtensionFunctionAddress(driver, "zeCommandListVisitExt", reinterpret_cast<void **>(&visitFunctions.commandListVist));
+        zeDriverGetExtensionFunctionAddress(driver, "zeGraphVisitExt", reinterpret_cast<void **>(&visitFunctions.graphVisit));
+        zeDriverGetExtensionFunctionAddress(driver, "zeCommandListVisitExt", reinterpret_cast<void **>(&visitFunctions.commandListVisit));
     }
     visitFunctions.loaded = true;
     return visitFunctions;

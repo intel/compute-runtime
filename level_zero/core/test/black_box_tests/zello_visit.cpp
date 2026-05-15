@@ -213,7 +213,7 @@ bool testVisitReappend(LevelZeroBlackBoxTests::VisitExtension::VisitApi &visitAp
 
     // ---------- visit with REAPPEND ----------
 
-    ze_visit_ext_desc_t visitDesc{ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC};
+    ze_visit_ext_desc_t visitDesc{ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
     VisitUserData visitUserData{};
     visitUserData.targetCmdList = immCmdList;
 
@@ -248,7 +248,7 @@ bool testVisitReappend(LevelZeroBlackBoxTests::VisitExtension::VisitApi &visitAp
     visitDesc.defaultOp = useConcreteVisitors ? ZE_VISIT_EXT_DEFAULT_OP_IGNORE : ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
     visitDesc.afterDefaultOpClb = (useProfilingCallbacks && !useConcreteVisitors) ? afterDefaultOpProfiling : nullptr;
 
-    SUCCESS_OR_TERMINATE(visitApi.commandListVist(recordCmdList, &visitDesc));
+    SUCCESS_OR_TERMINATE(visitApi.commandListVisit(recordCmdList, &visitDesc));
 
     // ---------- synchronize and validate ----------
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(immCmdList, std::numeric_limits<uint64_t>::max()));

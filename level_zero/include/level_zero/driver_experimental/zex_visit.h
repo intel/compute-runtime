@@ -15,17 +15,17 @@
 
 #include "zex_common.h"
 
-#ifndef ZE_COMMAND_LIST_VISIT_EXT_NAME
+#ifndef ZE_COMMAND_VISIT_EXT_NAME
 /// @brief Command List Visit Extension Name
-#define ZE_COMMAND_LIST_VISIT_EXT_NAME "ZE_extension_command_list_visit"
+#define ZE_COMMAND_VISIT_EXT_NAME "ZE_extension_command_visit"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Command List Visit Extension version(s)
-typedef enum _ze_command_list_visit_ext_version_t {
-    ZE_COMMAND_LIST_VISIT_EXT_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
-    ZE_COMMAND_LIST_VISIT_EXT_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
-    ZE_COMMAND_LIST_VISIT_EXT_VERSION_FORCE_UINT32 = 0x7fffffff,       ///< Value marking end of ZE_COMMAND_LIST_VISIT_EXT_VERSION_* ENUMs
-} ze_command_list_visit_ext_version_t;
+typedef enum _ze_command_visit_ext_version_t {
+    ZE_COMMAND_VISIT_EXT_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_COMMAND_VISIT_EXT_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_COMMAND_VISIT_EXT_VERSION_FORCE_UINT32 = 0x7fffffff,       ///< Value marking end of ZE_COMMAND_VISIT_EXT_VERSION_* ENUMs
+} ze_command_visit_ext_version_t;
 
 #if defined(__cplusplus)
 extern "C" {
@@ -90,5 +90,5 @@ ze_result_t ZE_APICALL zeGraphVisitExt(ze_graph_handle_t graph,
 } // extern "C"
 #endif
 
-#endif // ZE_COMMAND_LIST_VISIT_EXT_NAME
+#endif // ZE_COMMAND_VISIT_EXT_NAME
 #endif // _ZEX_VISIT_H
