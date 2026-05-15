@@ -60,6 +60,35 @@ using GraphTestDebugApis = Test<GraphFixture>;
 using GraphInstantiationValidation = Test<GraphFixture>;
 using GraphTestApiCaptureBeginEnd = Test<GraphFixture>;
 
+struct LaunchKernelWithArgumentsVisitorCapture {
+    ze_command_list_handle_t hCommandList = nullptr;
+    ze_kernel_handle_t hKernel = nullptr;
+    ze_group_count_t groupCounts = {0, 0, 0};
+    ze_group_size_t groupSizes = {0, 0, 0};
+    bool wasCalled = false;
+};
+
+static ze_result_t VISITOR_CCONV launchKernelWithArgumentsVisitor(
+    ze_command_list_handle_t hCommandList,
+    ze_kernel_handle_t hKernel,
+    ze_group_count_t groupCounts,
+    ze_group_size_t groupSizes,
+    void **,
+    const void *,
+    ze_event_handle_t,
+    uint32_t,
+    ze_event_handle_t *,
+    void *userData) {
+
+    auto *capture = reinterpret_cast<LaunchKernelWithArgumentsVisitorCapture *>(userData);
+    capture->hCommandList = hCommandList;
+    capture->hKernel = hKernel;
+    capture->groupCounts = groupCounts;
+    capture->groupSizes = groupSizes;
+    capture->wasCalled = true;
+    return ZE_RESULT_SUCCESS;
+}
+
 TEST(GraphTestApiCreate, GivenNonNullPNextThenGraphCreateReturnsError) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
@@ -361,6 +390,43 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenZeCommandListAppendLaunchKernelWithAr
     EXPECT_EQ(indirectArgs.capturedKernel->getGroupSize()[0], expectedGroupSizes[0]);
     EXPECT_EQ(indirectArgs.capturedKernel->getGroupSize()[1], expectedGroupSizes[1]);
     EXPECT_EQ(indirectArgs.capturedKernel->getGroupSize()[2], expectedGroupSizes[2]);
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenZeCommandListAppendLaunchKernelWithArgumentsWhenInvokingVisitorThenGroupCountAndSizeArePassedByValue) {
+    GraphsCleanupGuard graphCleanup;
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    L0::ClosureExternalStorage storage;
+
+    constexpr auto apiValue = CaptureApi::zeCommandListAppendLaunchKernelWithArguments;
+    auto apiArgs = Closure<apiValue>::ApiArgs{
+        .hCommandList = immCmdListHandle,
+        .kernelHandle = kernel.toHandle(),
+        .groupCounts = {2, 3, 4},
+        .groupSizes = {5, 6, 7},
+        .pArguments = nullptr,
+        .pNext = nullptr,
+        .hSignalEvent = nullptr,
+        .numWaitEvents = 0,
+        .phWaitEvents = nullptr};
+
+    Closure<apiValue> closure(apiArgs, storage);
+
+    LaunchKernelWithArgumentsVisitorCapture capture{};
+    auto result = closure.invokeVisitor(reinterpret_cast<void *>(launchKernelWithArgumentsVisitor), &capture, storage);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(capture.wasCalled);
+    EXPECT_EQ(apiArgs.hCommandList, capture.hCommandList);
+    EXPECT_EQ(closure.indirectArgs.capturedKernel.get(), capture.hKernel);
+    EXPECT_EQ(apiArgs.groupCounts.groupCountX, capture.groupCounts.groupCountX);
+    EXPECT_EQ(apiArgs.groupCounts.groupCountY, capture.groupCounts.groupCountY);
+    EXPECT_EQ(apiArgs.groupCounts.groupCountZ, capture.groupCounts.groupCountZ);
+    EXPECT_EQ(apiArgs.groupSizes.groupSizeX, capture.groupSizes.groupSizeX);
+    EXPECT_EQ(apiArgs.groupSizes.groupSizeY, capture.groupSizes.groupSizeY);
+    EXPECT_EQ(apiArgs.groupSizes.groupSizeZ, capture.groupSizes.groupSizeZ);
 }
 
 TEST_F(GraphTestApiInstantiate, GivenInvalidSourceGraphThenInstantiateGraphReturnsError) {
