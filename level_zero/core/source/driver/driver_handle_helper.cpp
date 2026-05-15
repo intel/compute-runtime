@@ -10,6 +10,7 @@
 #include "level_zero/driver_experimental/zex_driver.h"
 #include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/driver_experimental/zex_memory.h"
+#include "level_zero/driver_experimental/zex_visit.h"
 #include "level_zero/ze_intel_gpu.h"
 #include "level_zero/zet_intel_gpu_metric.h"
 
@@ -61,6 +62,7 @@ const std::vector<std::pair<std::string, uint32_t>> DriverHandle::extensionsSupp
     {ZE_RELAXED_ALLOCATION_LIMITS_EXP_NAME, ZE_RELAXED_ALLOCATION_LIMITS_EXP_VERSION_1_0},
     {ZE_RTAS_BUILDER_EXP_NAME, ZE_RTAS_BUILDER_EXP_VERSION_1_0},
     {ZE_SUB_ALLOCATIONS_EXP_NAME, ZE_SUB_ALLOCATIONS_EXP_VERSION_1_0},
+    {ZE_COMMAND_LIST_VISIT_EXT_NAME, ZE_COMMAND_LIST_VISIT_EXT_VERSION_1_0},
     {ZEX_COUNTER_BASED_EVENT_EXT_NAME, ZEX_COUNTER_BASED_EVENT_VERSION_1_0},
     {ZEX_MEMORY_FREE_CALLBACK_EXT_NAME, ZEX_MEMORY_FREE_CALLBACK_EXT_VERSION_1_0},
     {ZEX_MEM_IPC_HANDLES_NAME, ZEX_MEM_IPC_HANDLES_VERSION_1_0},

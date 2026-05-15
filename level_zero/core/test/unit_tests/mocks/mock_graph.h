@@ -19,6 +19,7 @@ struct MockGraph : Graph {
     using Graph::executionTarget;
     using Graph::Graph;
     using Graph::parentGraph;
+    using Graph::recordedApiCommands;
     using Graph::recordedSignals;
 };
 

@@ -92,6 +92,11 @@ zexCommandListVerifyMemory(
     size_t sizeOfComparison,
     zex_verify_memory_compare_type_t comparisonMode);
 
+ze_result_t ZE_APICALL
+zeCommandListVisitExt(
+    ze_command_list_handle_t cmdlist,
+    const ze_visit_ext_desc_t *desc);
+
 ze_result_t ZE_APICALL zeCommandListGetDeviceHandle(
     ze_command_list_handle_t hCommandList,
     ze_device_handle_t *phDevice);

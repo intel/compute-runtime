@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/event/event.h"
@@ -18,6 +20,7 @@
 #include "level_zero/zet_api.h"
 
 #include <memory>
+#include <optional>
 #include <span>
 #include <string>
 #include <utility>
@@ -33,6 +36,8 @@ struct Event;
 #endif
 
 #define RR_CAPTURED_APIS()                                            \
+    RR_CAPTURED_API(zeCommandListGetNextCommandIdExp)                 \
+    RR_CAPTURED_API(zeCommandListGetNextCommandIdWithKernelsExp)      \
     RR_CAPTURED_API(zeCommandListAppendWriteGlobalTimestamp)          \
     RR_CAPTURED_API(zeCommandListAppendBarrier)                       \
     RR_CAPTURED_API(zeCommandListAppendMemoryRangesBarrier)           \
@@ -76,8 +81,20 @@ enum class CaptureApi {
 #undef RR_CAPTURED_API
 };
 
+constexpr size_t numCapturedApis =
+#define RR_CAPTURED_API(X) +1
+    RR_CAPTURED_APIS()
+#undef RR_CAPTURED_API
+    ;
+
 struct CommandList;
 struct Event;
+
+struct EventParams {
+    ze_event_handle_t hSignalEvent;
+    uint32_t numWaitEvents;
+    ze_event_handle_t *phWaitEvents;
+};
 
 struct ExternalCbEventInfo {
     L0::Event *event = nullptr;
@@ -114,10 +131,12 @@ struct ClosureExternalStorage {
     using EventsListId = uint32_t;
     using ImageRegionId = uint32_t;
     using CopyRegionId = uint32_t;
+    using KernelArgumentsId = uint32_t;
 
     static constexpr EventsListId invalidEventsListId = std::numeric_limits<EventsListId>::max();
     static constexpr ImageRegionId invalidImageRegionId = std::numeric_limits<ImageRegionId>::max();
     static constexpr CopyRegionId invalidCopyRegionId = std::numeric_limits<CopyRegionId>::max();
+    static constexpr KernelArgumentsId invalidKernelArgumentsId = std::numeric_limits<KernelArgumentsId>::max();
 
     EventsListId registerEventsList(ze_event_handle_t *begin, ze_event_handle_t *end) {
         if (begin == end) {
@@ -144,6 +163,19 @@ struct ClosureExternalStorage {
         auto ret = copyRegions.size();
         copyRegions.push_back(*copyRegion);
         return static_cast<CopyRegionId>(ret);
+    }
+
+    KernelArgumentsId registerKernelArguments(std::span<const NEO::ArgDescriptor> argDescriptors, void **pArguments) {
+        auto ret = kernelArguments.size();
+        for (size_t i = 0; i < argDescriptors.size(); i++) {
+            auto &argDesc = argDescriptors[i];
+            auto offset = kernelArguments.size();
+            kernelArguments.resize(offset + alignUp(argDesc.getTraits().argByValSize, sizeof(void *)) / sizeof(uint64_t));
+            if (pArguments) {
+                memcpy_s(kernelArguments.data() + offset, argDesc.getTraits().argByValSize, pArguments[i], argDesc.getTraits().argByValSize);
+            }
+        }
+        return static_cast<KernelArgumentsId>(ret);
     }
 
     ze_event_handle_t *getEventsList(EventsListId id) {
@@ -174,10 +206,26 @@ struct ClosureExternalStorage {
         return copyRegions.data() + id;
     }
 
+    StackVec<void *, 16> getKernelArguments(std::span<const NEO::ArgDescriptor> argDescriptors, KernelArgumentsId id) {
+        if (invalidKernelArgumentsId == id) {
+            return {};
+        }
+        auto offset = id;
+        StackVec<void *, 16> ret;
+        ret.reserve(argDescriptors.size());
+        for (size_t i = 0; i < argDescriptors.size(); i++) {
+            auto &argDesc = argDescriptors[i];
+            ret.push_back(reinterpret_cast<void *>(kernelArguments.data() + offset));
+            offset += alignUp(argDesc.getTraits().argByValSize, sizeof(void *)) / sizeof(uint64_t);
+        }
+        return ret;
+    }
+
   protected:
     std::vector<ze_event_handle_t> waitEvents;
     std::vector<ze_image_region_t> imageRegions;
     std::vector<ze_copy_region_t> copyRegions;
+    std::vector<uint64_t> kernelArguments;
 };
 
 template <CaptureApi api>
@@ -195,7 +243,12 @@ struct Closure {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const {
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
@@ -256,6 +309,42 @@ inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
     return nullptr;
 }
 
+template <CaptureApi api, typename IndirectArgsT>
+    requires HasPhWaitEvents<typename Closure<api>::ApiArgs>
+inline std::span<ze_event_handle_t> getClosureWaitEventsList(const typename Closure<api>::ApiArgs &structuredApiArgs, IndirectArgsT &indirectArgs, ClosureExternalStorage &externalStorage) {
+    return std::span<ze_event_handle_t>{externalStorage.getEventsList(indirectArgs.waitEvents), structuredApiArgs.numWaitEvents};
+}
+
+template <CaptureApi api, typename IndirectArgsT>
+    requires(HasPhEvents<typename Closure<api>::ApiArgs> && (false == HasPhWaitEvents<typename Closure<api>::ApiArgs>))
+inline std::span<ze_event_handle_t> getClosureWaitEventsList(const typename Closure<api>::ApiArgs &structuredApiArgs, IndirectArgsT &indirectArgs, ClosureExternalStorage &externalStorage) {
+    return std::span<ze_event_handle_t>{externalStorage.getEventsList(indirectArgs.waitEvents), structuredApiArgs.numEvents};
+}
+
+template <CaptureApi api, typename IndirectArgsT>
+    requires(false == (HasPhEvents<typename Closure<api>::ApiArgs> || HasPhWaitEvents<typename Closure<api>::ApiArgs>))
+inline std::span<ze_event_handle_t> getClosureWaitEventsList(const typename Closure<api>::ApiArgs &structuredApiArgs, IndirectArgsT &indirectArgs, ClosureExternalStorage &externalStorage) {
+    return std::span<ze_event_handle_t>{};
+}
+
+template <CaptureApi api>
+    requires HasHSignalEvent<typename Closure<api>::ApiArgs>
+inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiArgs &structuredApiArgs) {
+    return structuredApiArgs.hSignalEvent;
+}
+
+template <CaptureApi api>
+    requires(api == CaptureApi::zeCommandListAppendSignalEvent)
+inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiArgs &structuredApiArgs) {
+    return structuredApiArgs.hEvent;
+}
+
+template <CaptureApi api>
+    requires((false == HasHSignalEvent<typename Closure<api>::ApiArgs>) && (api != CaptureApi::zeCommandListAppendSignalEvent))
+inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiArgs &structuredApiArgs) {
+    return nullptr;
+}
+
 struct IndirectArgsWithWaitEvents {
     IndirectArgsWithWaitEvents() = default;
     template <typename ApiArgsT>
@@ -297,7 +386,8 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryCopy> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -316,7 +406,8 @@ struct Closure<CaptureApi::zeCommandListAppendBarrier> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -334,7 +425,8 @@ struct Closure<CaptureApi::zeCommandListAppendWaitOnEvents> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -354,7 +446,8 @@ struct Closure<CaptureApi::zeCommandListAppendWriteGlobalTimestamp> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -384,7 +477,8 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryRangesBarrier> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -412,7 +506,8 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryFill> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -445,7 +540,8 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryCopyRegion> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -468,7 +564,8 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryCopyFromContext> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -489,7 +586,8 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopy> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -518,7 +616,8 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyRegion> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -544,7 +643,8 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyToMemory> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -570,7 +670,8 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyFromMemory> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -588,7 +689,8 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryPrefetch> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -608,7 +710,8 @@ struct Closure<CaptureApi::zeCommandListAppendMemAdvise> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -625,7 +728,8 @@ struct Closure<CaptureApi::zeCommandListAppendSignalEvent> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -642,7 +746,8 @@ struct Closure<CaptureApi::zeCommandListAppendEventReset> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -676,7 +781,8 @@ struct Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -705,7 +811,8 @@ struct Closure<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -734,7 +841,8 @@ struct Closure<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -762,7 +870,8 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyToMemoryExt> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -790,7 +899,8 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -814,7 +924,8 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernel> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -838,7 +949,8 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -861,7 +973,8 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -886,7 +999,8 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -915,7 +1029,8 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -925,8 +1040,8 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
     struct ApiArgs {
         ze_command_list_handle_t hCommandList;
         ze_kernel_handle_t kernelHandle;
-        const ze_group_count_t groupCounts = {0, 0, 0};
-        const ze_group_size_t groupSizes = {0, 0, 0};
+        ze_group_count_t groupCounts = {0, 0, 0};
+        ze_group_size_t groupSizes = {0, 0, 0};
         void **pArguments;
         const void *pNext;
         ze_event_handle_t hSignalEvent;
@@ -940,12 +1055,14 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
         IndirectArgs &operator=(IndirectArgs &&) = default;
         ~IndirectArgs();
         void *pNext;
+        ClosureExternalStorage::KernelArgumentsId argumentsId;
         std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -963,7 +1080,8 @@ struct Closure<CaptureApi::zetCommandListAppendMetricStreamerMarker> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -980,7 +1098,8 @@ struct Closure<CaptureApi::zetCommandListAppendMetricQueryBegin> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -1000,7 +1119,8 @@ struct Closure<CaptureApi::zetCommandListAppendMetricQueryEnd> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -1016,7 +1136,8 @@ struct Closure<CaptureApi::zetCommandListAppendMetricMemoryBarrier> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -1034,7 +1155,8 @@ struct Closure<CaptureApi::zetCommandListAppendMarkerExp> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -1062,7 +1184,8 @@ struct Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -1093,7 +1216,8 @@ struct Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 template <>
@@ -1115,7 +1239,75 @@ struct Closure<CaptureApi::zeCommandListAppendHostFunction> {
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
-    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListGetNextCommandIdExp> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        const ze_mutable_command_id_exp_desc_t *desc;
+        uint64_t *pCommandId;
+    } apiArgs;
+
+    struct IndirectArgs {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &) {
+            if (apiArgs.desc) {
+                this->desc = *apiArgs.desc;
+            }
+            if (apiArgs.pCommandId) {
+                this->commandId = *apiArgs.pCommandId;
+            }
+        }
+
+        ze_mutable_command_id_exp_desc_t desc{};
+        uint64_t commandId = 0;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        const ze_mutable_command_id_exp_desc_t *desc;
+        uint32_t numKernels;
+        ze_kernel_handle_t *phKernels;
+        uint64_t *pCommandId;
+    } apiArgs;
+
+    struct IndirectArgs {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &) {
+            if (apiArgs.desc) {
+                this->desc = *apiArgs.desc;
+            }
+            if ((apiArgs.numKernels > 0) && apiArgs.phKernels) {
+                kernels.resize(apiArgs.numKernels);
+                std::copy_n(apiArgs.phKernels, apiArgs.numKernels, kernels.begin());
+            }
+            if (apiArgs.pCommandId) {
+                this->commandId = *apiArgs.pCommandId;
+            }
+        }
+
+        ze_mutable_command_id_exp_desc_t desc{};
+        StackVec<ze_kernel_handle_t, 2> kernels;
+        uint64_t commandId = 0;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
 };
 
 namespace GraphDumpHelper {

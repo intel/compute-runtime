@@ -254,12 +254,60 @@ ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const ch
     return exporter.exportToFile(*graph, filePath);
 }
 
+ze_result_t ZE_APICALL zeGraphVisitExt(ze_graph_handle_t hGraph, const ze_visit_ext_desc_t *desc) {
+    auto *graph = L0::Graph::fromHandle(hGraph);
+    if (nullptr == graph) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    if (nullptr == desc) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    return graph->visit(desc);
+}
+
 ze_result_t ZE_APICALL zeGraphSetDestructionCallbackExp(ze_graph_handle_t hGraph, zex_mem_graph_free_callback_fn_t pfnCallback, void *pUserData, void *pNext) {
     if ((nullptr == hGraph) || (nullptr == pfnCallback)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     auto *graph = L0::Graph::fromHandle(hGraph);
     return graph->addDestructorCallback(pfnCallback, pUserData, pNext);
+}
+
+ze_result_t ZE_APICALL zeExecutableGraphGetSourceGraphExt(ze_executable_graph_handle_t hGraph, ze_graph_handle_t *phSourceGraph) {
+    auto *graph = L0::ExecutableGraph::fromHandle(hGraph);
+    if ((nullptr == graph) || (nullptr == phSourceGraph)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto *sourceGraph = graph->getSourceGraph();
+    if (nullptr == sourceGraph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    *phSourceGraph = sourceGraph->toHandle();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ZE_APICALL zeGraphGetPrimaryCommandListExt(ze_graph_handle_t hGraph, ze_command_list_handle_t *phCommandList) {
+    auto *graph = L0::Graph::fromHandle(hGraph);
+    if ((nullptr == graph) || (nullptr == phCommandList)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto *rootGraph = graph;
+    while (rootGraph->getParentGraph() != nullptr) {
+        rootGraph = rootGraph->getParentGraph();
+    }
+
+    auto *primaryCmdList = rootGraph->getPrimaryCaptureSource();
+    if (nullptr == primaryCmdList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    *phCommandList = primaryCmdList->toHandle();
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

@@ -965,6 +965,29 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     return params;
 }
 
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListGetNextCommandIdExp>(
+    const Closure<CaptureApi::zeCommandListGetNextCommandIdExp> &closure, const ClosureExternalStorage &) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("flags", std::to_string(closure.indirectArgs.desc.flags));
+    params.emplace_back("commandId", std::to_string(closure.indirectArgs.commandId));
+
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>(
+    const Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp> &closure, const ClosureExternalStorage &) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("flags", std::to_string(closure.indirectArgs.desc.flags));
+    params.emplace_back("numKernels", std::to_string(closure.indirectArgs.kernels.size()));
+    params.emplace_back("commandId", std::to_string(closure.indirectArgs.commandId));
+
+    return params;
+}
+
 } // namespace GraphDumpHelper
 
 } // namespace L0

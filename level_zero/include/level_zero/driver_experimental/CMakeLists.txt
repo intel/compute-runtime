@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024-2025 Intel Corporation
+# Copyright (C) 2024-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ set(L0_API_DRIVER_EXPERIMENTAL_INCLUDE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_graph.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_memory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_module.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/zex_visit.h
 )
 
 target_sources(${L0_STATIC_LIB_NAME}

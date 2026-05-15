@@ -28,6 +28,7 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/kernel/kernel_mutable_state.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_variable.h"
 
@@ -1106,6 +1107,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto whiteBoxCmdList = CommandList::whiteboxCast(mutableCommandList->base);
+    whiteBoxCmdList->flatCapture = std::make_unique<RecordedApiCommands>();
+    const auto *baseCmdList = mutableCommandList->base;
+    ASSERT_NE(nullptr, baseCmdList->getFlatCapture());
 
     // mutate the kernel with slm argument
     result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);

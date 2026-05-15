@@ -225,4 +225,20 @@ zexCommandListVerifyMemory(ze_command_list_handle_t hCommandList,
     return cmdList->verifyMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
+ze_result_t ZE_APICALL
+zeCommandListVisitExt(ze_command_list_handle_t cmdlist,
+                      const ze_visit_ext_desc_t *desc) {
+    auto commandList = L0::CommandList::fromHandle(cmdlist);
+
+    if (nullptr == commandList) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    if (nullptr == desc) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    return commandList->visit(desc);
+}
+
 } // namespace L0

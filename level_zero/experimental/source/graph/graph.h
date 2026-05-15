@@ -10,6 +10,7 @@
 #include "shared/source/utilities/mem_lifetime.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/driver_experimental/zex_visit.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include "level_zero/ze_api.h"
 
@@ -54,8 +55,10 @@ using CapturedCommand = ClosureVariants;
 using CapturedCommandId = uint32_t;
 using SubgraphCommandId = CapturedCommandId;
 using GraphCommandId = CapturedCommandId;
+using MclCommandId = uint64_t;
 
 struct Graph;
+struct VisitContext;
 
 struct ForkInfo {
     CapturedCommandId forkCommandId = 0;
@@ -124,6 +127,8 @@ struct OrderedCommandsRegistry final {
 };
 
 struct RecordedApiCommands {
+    MOCKABLE_VIRTUAL ~RecordedApiCommands() = default;
+
     RecordedApiCommands() {
         commands.reserve(16);
     }
@@ -136,6 +141,30 @@ struct RecordedApiCommands {
         return commands.size();
     }
 
+    CapturedCommand *getCommandByMclId(MclCommandId mclCommandId) {
+        auto it = mclMap.find(mclCommandId);
+        if (it == mclMap.end()) {
+            return nullptr;
+        }
+        CapturedCommandId cmdId = it->second; // this the getNextCommandID call
+        ++cmdId;                              // this is the actual command referred by the MCL command id
+        if (cmdId >= commands.size()) {
+            return nullptr;
+        }
+        return &commands[cmdId];
+    }
+
+    void updateKernelArgument(MclCommandId commandId, uint32_t argIndex, size_t argSize, const void *argValue);
+    void updateKernelGroupCount(MclCommandId commandId, const ze_group_count_t *pGroupCount);
+    void updateKernelGroupSize(MclCommandId commandId, const uint32_t *groupSize);
+    void updateKernelGlobalOffset(MclCommandId commandId, const uint32_t *globalOffset);
+    void updateSignalEvent(MclCommandId commandId, ze_event_handle_t signalEvent);
+    void updateWaitEvents(MclCommandId commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    void updateKernel(MclCommandId commandId, ze_kernel_handle_t kernelHandle);
+
+    MOCKABLE_VIRTUAL ze_result_t visit(const ze_visit_ext_desc_t *desc);
+    ze_result_t visit(CapturedCommandId id, VisitContext &visitCtx);
+
     template <CaptureApi api, typename... TArgs>
     bool capture(TArgs... apiArgs) {
         using ApiArgsT = typename Closure<api>::ApiArgs;
@@ -145,10 +174,14 @@ struct RecordedApiCommands {
         }
         auto capturedArgs = ApiArgsT{apiArgs...};
         commands.push_back(CapturedCommand{Closure<api>(capturedArgs, externalStorage)});
+        if constexpr ((api == CaptureApi::zeCommandListGetNextCommandIdExp) || (api == CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp)) {
+            mclMap[*capturedArgs.pCommandId] = static_cast<CapturedCommandId>(commands.size() - 1);
+        }
         return true;
     }
 
     std::vector<CapturedCommand> commands;
+    std::unordered_map<MclCommandId, CapturedCommandId> mclMap;
     ClosureExternalStorage externalStorage;
     bool brokenCapture = false;
 };
@@ -166,7 +199,7 @@ struct Graph : _ze_graph_handle_t {
     Graph(L0::Context *ctx, bool preallocated) : Graph(ctx, preallocated, {}) {
     }
 
-    ~Graph();
+    MOCKABLE_VIRTUAL ~Graph();
 
     Graph(const Graph &) = delete;
     Graph &operator=(const Graph &) = delete;
@@ -292,6 +325,8 @@ struct Graph : _ze_graph_handle_t {
         return multiEngineGraph;
     }
 
+    MOCKABLE_VIRTUAL ze_result_t visit(const ze_visit_ext_desc_t *desc);
+
     ze_result_t addDestructorCallback(zex_mem_graph_free_callback_fn_t pfnCallback, void *pUserData, void *pNext) {
         if (pNext) {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -303,6 +338,14 @@ struct Graph : _ze_graph_handle_t {
 
     Graph *getParentGraph() const {
         return parentGraph;
+    }
+
+    L0::CommandList *getCaptureSource() const {
+        return captureSrc;
+    }
+
+    L0::CommandList *getPrimaryCaptureSource() const {
+        return primaryCaptureSrc;
     }
 
   protected:
@@ -319,6 +362,7 @@ struct Graph : _ze_graph_handle_t {
     std::unordered_map<CapturedCommandId, ForkJoinInfo> potentialJoins;
 
     L0::CommandList *captureSrc = nullptr;
+    L0::CommandList *primaryCaptureSrc = nullptr;
     L0::CommandList *executionTarget = nullptr;
     L0::Context *ctx = nullptr;
     Graph *parentGraph = nullptr;
@@ -480,6 +524,10 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     WeaklyShared<OrderedExecutableSegmentsList> getOrderedCommands() {
         return orderedCommands;
+    }
+
+    Graph *getSourceGraph() const {
+        return src;
     }
 
   protected:

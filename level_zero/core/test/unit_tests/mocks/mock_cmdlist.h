@@ -334,11 +334,14 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
     using BaseClass::currentSurfaceStateBaseAddress;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
+    using BaseClass::disableFlatCapture;
     using BaseClass::dispatchCmdListBatchBufferAsPrimary;
     using BaseClass::doubleSbaWa;
     using BaseClass::finalStreamState;
+    using BaseClass::flatCapture;
     using BaseClass::frontEndStateTracking;
     using BaseClass::getDcFlushRequired;
+    using BaseClass::graphCapture;
     using BaseClass::heaplessModeEnabled;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::initialize;

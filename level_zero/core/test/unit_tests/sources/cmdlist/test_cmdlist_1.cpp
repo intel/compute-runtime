@@ -245,6 +245,49 @@ TEST_F(CommandListCreateTests, whenCommandListImmediateIsCreatedWithInvalidProdu
     ASSERT_EQ(nullptr, commandList);
 }
 
+TEST_F(CommandListCreateTests, givenRegularCommandListWhenFlatApiRecordingFlagEnabledThenFlatCaptureIsAllocated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalFlatCommandListApiRecording.set(1);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto *whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+    EXPECT_NE(nullptr, whiteBoxCmdList->flatCapture);
+}
+
+TEST_F(CommandListCreateTests, givenRegularCommandListWhenFlatApiRecordingFlagDisabledThenFlatCaptureIsNotAllocated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalFlatCommandListApiRecording.set(0);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto *whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+    EXPECT_EQ(nullptr, whiteBoxCmdList->flatCapture);
+}
+
+TEST_F(CommandListCreateTests, givenImmediateCommandListWhenFlatApiRecordingFlagEnabledThenFlatCaptureIsNotAllocated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalFlatCommandListApiRecording.set(1);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto *whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+    EXPECT_EQ(nullptr, whiteBoxCmdList->flatCapture);
+}
+
 TEST_F(CommandListCreateTests, whenCommandListIsCreatedThenItIsInitialized) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);

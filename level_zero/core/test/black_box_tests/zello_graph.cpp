@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/driver_experimental/zex_graph.h"
+#include "level_zero/include/level_zero/driver_experimental/zex_visit.h"
 
 #include "zello_common.h"
 #include "zello_compile.h"
@@ -98,6 +99,13 @@ GraphApi &loadGraphApi(ze_driver_handle_t driver) {
 
     testGraphFunctions.loaded = true;
     return testGraphFunctions;
+}
+
+using zeCommandListVisitExtFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t, const ze_visit_ext_desc_t *);
+zeCommandListVisitExtFP loadVisitExt(ze_driver_handle_t driver) {
+    zeCommandListVisitExtFP fn = nullptr;
+    zeDriverGetExtensionFunctionAddress(driver, "zeGraphVisitExt", reinterpret_cast<void **>(&fn));
+    return fn;
 }
 
 bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
@@ -743,12 +751,14 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
 }
 
 bool testMultipleLevelGraph(GraphApi &graphApi,
+                            ze_driver_handle_t &driver,
                             ze_context_handle_t &context,
                             ze_device_handle_t &device,
                             TestKernelsContainer &testKernels,
                             bool aubMode,
                             const GraphDumpSettings &dumpSettings,
-                            bool immediate) {
+                            bool immediate,
+                            bool executeUsingVisitor) {
     bool validRet = true;
 
     constexpr size_t allocSize = 512;
@@ -875,7 +885,15 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
 
     if (immediate == false) {
         // Dispatch and wait physicalGraph
-        SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
+        if (executeUsingVisitor == false) {
+            SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
+        } else {
+            auto visitExt = loadVisitExt(driver);
+            ze_visit_ext_desc_t visitDesc{};
+            visitDesc.stype = static_cast<ze_structure_type_t>(ZEX_STRUCTURE_TYPE_COMMAND_LIST_VISIT_EXT_DESC);
+            visitDesc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
+            SUCCESS_OR_TERMINATE(visitExt(virtualGraph, &visitDesc));
+        }
     }
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListRoot, std::numeric_limits<uint64_t>::max()));
 
@@ -1586,6 +1604,7 @@ int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestMultiExecForkedGraph = 9u;
     constexpr uint32_t bitNumberTestWrappedMultipleEngines = 10u;
     constexpr uint32_t bitNumberTestCopyEngineSimpleGraph = 11u;
+    constexpr uint32_t bitNumberTestVisitGraph = 12u;
 
     constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max();
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
@@ -1712,7 +1731,7 @@ int main(int argc, char *argv[]) {
         bool immediate = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-i", "--immediate");
         currentTest = getCaseName(immediate);
         std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testMultipleLevelGraph(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings, immediate);
+        casePass = testMultipleLevelGraph(graphApi, driverHandle, context, device0, kernelsMap, aubMode, graphDumpSettings, immediate, false);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -1820,6 +1839,14 @@ int main(int argc, char *argv[]) {
         currentTest = "Copy Engine Simple Graph";
         std::cout << "Starting test: " << currentTest << std::endl;
         casePass = testCopyEngineSimpleGraph(graphApi, context, device0, aubMode, graphDumpSettings);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
+    }
+
+    if (testMask.test(bitNumberTestVisitGraph)) {
+        currentTest = "Visit Graph";
+        std::cout << "Starting test: " << currentTest << std::endl;
+        casePass = testMultipleLevelGraph(graphApi, driverHandle, context, device0, kernelsMap, aubMode, graphDumpSettings, false, true);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }

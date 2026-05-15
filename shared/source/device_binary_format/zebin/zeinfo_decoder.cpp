@@ -1358,7 +1358,9 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
     }
 
     case Types::Kernel::argTypeArgByvalue: {
-        auto &argAsValue = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescValue>(true);
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex];
+        auto &argTraits = arg.getTraits();
+        auto &argAsValue = arg.as<ArgDescValue>(true);
         ArgDescValue::Element valueElement;
         valueElement.sourceOffset = 0;
         valueElement.isPtr = src.isPtr;
@@ -1371,6 +1373,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         valueElement.offset = src.offset;
         valueElement.size = src.size;
         argAsValue.elements.push_back(valueElement);
+        argTraits.argByValSize = std::max(argTraits.argByValSize, static_cast<uint16_t>(valueElement.sourceOffset + src.size));
         return DecodeError::success;
     }
 

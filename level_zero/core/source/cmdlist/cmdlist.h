@@ -243,6 +243,12 @@ struct CommandList : _ze_command_list_handle_t {
     ze_result_t getImmediatePriority(ze_command_queue_priority_t *pPriority);
     virtual ze_result_t isImmediate(ze_bool_t *pIsImmediate);
     ze_result_t isMutableExp(ze_bool_t *pIsMutable);
+    MOCKABLE_VIRTUAL ze_result_t visit(const ze_visit_ext_desc_t *desc) {
+        if (nullptr == this->flatCapture) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        return flatCapture->visit(desc);
+    }
 
     virtual ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
@@ -611,6 +617,14 @@ struct CommandList : _ze_command_list_handle_t {
 
     void disableFlatCapture() {
         flatCapture.reset();
+    }
+
+    RecordedApiCommands *getFlatCapture() {
+        return flatCapture.get();
+    }
+
+    const RecordedApiCommands *getFlatCapture() const {
+        return flatCapture.get();
     }
 
   protected:

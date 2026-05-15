@@ -13,6 +13,7 @@
 #include "level_zero/driver_experimental/zex_api.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/driver_experimental/zex_context.h"
+#include "level_zero/driver_experimental/zex_visit.h"
 #include "level_zero/ze_intel_gpu.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 #include "level_zero/zet_intel_gpu_metric.h"
@@ -84,6 +85,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendCustomOperation);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListSetCleanupCallback);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListVerifyMemory);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListVisitExt);
 
     // event
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate);
@@ -141,8 +143,11 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListIsGraphCaptureEnabledExp);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphIsEmptyExp);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphDumpContentsExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphVisitExt);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetGraphExp);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphSetDestructionCallbackExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeExecutableGraphGetSourceGraphExt);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphGetPrimaryCommandListExt);
 
     // Metrics
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceEnableMetricsExp);

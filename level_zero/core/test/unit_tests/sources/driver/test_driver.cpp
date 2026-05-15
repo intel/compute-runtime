@@ -1491,8 +1491,11 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnCommandListIsGraphCaptureEnabledExp = decltype(&zeCommandListIsGraphCaptureEnabledExp);
     using pfnGraphIsEmptyExp = decltype(&zeGraphIsEmptyExp);
     using pfnGraphDumpContentsExp = decltype(&zeGraphDumpContentsExp);
+    using pfnGraphVisitExt = decltype(&zeGraphVisitExt);
     using pfnCommandListGetGraphExp = decltype(&zeCommandListGetGraphExp);
     using pfnGraphSetDestructionCallbackExp = decltype(&zeGraphSetDestructionCallbackExp);
+    using pfnExecutableGraphGetSourceGraphExt = decltype(&zeExecutableGraphGetSourceGraphExt);
+    using pfnGraphGetPrimaryCommandListExt = decltype(&zeGraphGetPrimaryCommandListExt);
 
     // memory function types
     using pfnMemGetIpcHandles = decltype(&zexMemGetIpcHandles);
@@ -1503,6 +1506,7 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnCommandListAppendMemoryCopyWithParameters = decltype(&zexCommandListAppendMemoryCopyWithParameters);
     using pfnCommandListAppendMemoryFillWithParameters = decltype(&zexCommandListAppendMemoryFillWithParameters);
     using pfnCommandListSetCleanupCallback = decltype(&zexCommandListSetCleanupCallback);
+    using pfnCommandListVisitExt = decltype(&zeCommandListVisitExt);
 
     // driver function addresses
     decltype(&zexDriverImportExternalPointer) expectedImport = L0::zexDriverImportExternalPointer;
@@ -1545,6 +1549,7 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     pfnCommandListAppendMemoryFillWithParameters expectedCommandListAppendMemoryFillWithParameters = L0::zexCommandListAppendMemoryFillWithParameters;
     pfnCommandListSetCleanupCallback expectedCommandListSetCleanupCallback = L0::zexCommandListSetCleanupCallback;
     pfnCommandListVerifyMemory expectedCommandListVerifyMemory = L0::zexCommandListVerifyMemory;
+    pfnCommandListVisitExt expectedCommandListVisitExt = L0::zeCommandListVisitExt;
 
     // mutable command list driver experimental extension function addresses
     pfnCommandListGetVariable expectedCommandListGetVariable = zexCommandListGetVariable;
@@ -1582,8 +1587,11 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     pfnCommandListIsGraphCaptureEnabledExp expectedCommandListIsGraphCaptureEnabledExp = L0::zeCommandListIsGraphCaptureEnabledExp;
     pfnGraphIsEmptyExp expectedGraphIsEmptyExp = L0::zeGraphIsEmptyExp;
     pfnGraphDumpContentsExp expectedGraphDumpContentsExp = L0::zeGraphDumpContentsExp;
+    pfnGraphVisitExt expectedGraphVisitExt = L0::zeGraphVisitExt;
     pfnCommandListGetGraphExp expectedCommandListGetGraphExp = L0::zeCommandListGetGraphExp;
     pfnGraphSetDestructionCallbackExp expectedGraphSetDestructionCallbackExp = L0::zeGraphSetDestructionCallbackExp;
+    pfnExecutableGraphGetSourceGraphExt expectedExecutableGraphGetSourceGraphExt = L0::zeExecutableGraphGetSourceGraphExt;
+    pfnGraphGetPrimaryCommandListExt expectedGraphGetPrimaryCommandListExt = L0::zeGraphGetPrimaryCommandListExt;
 
     // Add EXPECT_EQ tests to verify function pointers
     void *funPtr = nullptr;
@@ -1735,6 +1743,9 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListVerifyMemory", &funPtr));
     EXPECT_EQ(expectedCommandListVerifyMemory, reinterpret_cast<pfnCommandListVerifyMemory>(funPtr));
 
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListVisitExt", &funPtr));
+    EXPECT_EQ(expectedCommandListVisitExt, reinterpret_cast<pfnCommandListVisitExt>(funPtr));
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphCreateExp", &funPtr));
     EXPECT_EQ(expectedGraphCreateExp, reinterpret_cast<pfnGraphCreateExp>(funPtr));
 
@@ -1768,11 +1779,20 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphDumpContentsExp", &funPtr));
     EXPECT_EQ(expectedGraphDumpContentsExp, reinterpret_cast<pfnGraphDumpContentsExp>(funPtr));
 
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphVisitExt", &funPtr));
+    EXPECT_EQ(expectedGraphVisitExt, reinterpret_cast<pfnGraphVisitExt>(funPtr));
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetGraphExp", &funPtr));
     EXPECT_EQ(expectedCommandListGetGraphExp, reinterpret_cast<pfnCommandListGetGraphExp>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphSetDestructionCallbackExp", &funPtr));
     EXPECT_EQ(expectedGraphSetDestructionCallbackExp, reinterpret_cast<pfnGraphSetDestructionCallbackExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeExecutableGraphGetSourceGraphExt", &funPtr));
+    EXPECT_EQ(expectedExecutableGraphGetSourceGraphExt, reinterpret_cast<pfnExecutableGraphGetSourceGraphExt>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphGetPrimaryCommandListExt", &funPtr));
+    EXPECT_EQ(expectedGraphGetPrimaryCommandListExt, reinterpret_cast<pfnGraphGetPrimaryCommandListExt>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexMemGetIpcHandles", &funPtr));
     EXPECT_EQ(expectedMemGetIpcHandles, reinterpret_cast<pfnMemGetIpcHandles>(funPtr));
@@ -2267,6 +2287,7 @@ TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnC
     verifyExtensionDefinition(ZE_MODULE_PROGRAM_EXP_NAME, ZE_MODULE_PROGRAM_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_MUTABLE_COMMAND_LIST_EXP_NAME, ZE_MUTABLE_COMMAND_LIST_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_RECORD_REPLAY_GRAPH_EXP_NAME, ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_CURRENT);
+    verifyExtensionDefinition(ZE_COMMAND_LIST_VISIT_EXT_NAME, ZE_COMMAND_LIST_VISIT_EXT_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_RELAXED_ALLOCATION_LIMITS_EXP_NAME, ZE_RELAXED_ALLOCATION_LIMITS_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_RTAS_BUILDER_EXP_NAME, ZE_RTAS_BUILDER_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_SUB_ALLOCATIONS_EXP_NAME, ZE_SUB_ALLOCATIONS_EXP_VERSION_CURRENT);

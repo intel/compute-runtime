@@ -20,7 +20,18 @@ ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExp(
     const ze_mutable_command_id_exp_desc_t *desc,
     uint64_t *pCommandId) {
     hCommandList = toInternalType(hCommandList);
-    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, 0, nullptr, pCommandId);
+    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, 0, nullptr, pCommandId);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto captureResult = cmdList->capture<CaptureApi::zeCommandListGetNextCommandIdExp>(hCommandList, desc, pCommandId);
+    if ((captureResult != ZE_RESULT_SUCCESS) && (captureResult != ZE_RESULT_ERROR_NOT_AVAILABLE)) {
+        return captureResult;
+    }
+
+    return result;
 }
 
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandsExp(
@@ -55,11 +66,26 @@ ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExp(
     ze_kernel_handle_t *phKernels,
     uint64_t *pCommandId) {
     hCommandList = toInternalType(hCommandList);
-    std::vector<ze_kernel_handle_t> translatedKernels{};
-    for (auto i = 0u; i < numKernels; i++) {
-        translatedKernels.push_back(toInternalType(phKernels[i]));
+    StackVec<ze_kernel_handle_t, 16> translatedKernels{};
+    translatedKernels.reserve(numKernels);
+    if (phKernels != nullptr) {
+        for (auto i = 0u; i < numKernels; i++) {
+            translatedKernels.push_back(toInternalType(phKernels[i]));
+        }
     }
-    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, numKernels, translatedKernels.data(), pCommandId);
+    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, numKernels, translatedKernels.data(), pCommandId);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto kernelsForCapture = translatedKernels.empty() ? nullptr : translatedKernels.data();
+    auto captureResult = cmdList->capture<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>(hCommandList, desc, numKernels, kernelsForCapture, pCommandId);
+    if ((captureResult != ZE_RESULT_SUCCESS) && (captureResult != ZE_RESULT_ERROR_NOT_AVAILABLE)) {
+        return captureResult;
+    }
+
+    return result;
 }
 
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
