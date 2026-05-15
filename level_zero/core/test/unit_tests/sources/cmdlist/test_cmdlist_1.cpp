@@ -288,6 +288,29 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenFlatApiRecordingFlag
     EXPECT_EQ(nullptr, whiteBoxCmdList->flatCapture);
 }
 
+TEST_F(CommandListCreateTests, givenRegularCommandListWithFlatCaptureWhenResetThenFlatCaptureIsReinitialized) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalFlatCommandListApiRecording.set(1);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto *whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+    ASSERT_NE(nullptr, whiteBoxCmdList->flatCapture);
+
+    whiteBoxCmdList->flatCapture->brokenCapture = true;
+    whiteBoxCmdList->flatCapture->mclMap[0u] = 0u;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->reset());
+
+    ASSERT_NE(nullptr, whiteBoxCmdList->flatCapture);
+    EXPECT_FALSE(whiteBoxCmdList->flatCapture->brokenCapture);
+    EXPECT_TRUE(whiteBoxCmdList->flatCapture->mclMap.empty());
+}
+
 TEST_F(CommandListCreateTests, whenCommandListIsCreatedThenItIsInitialized) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
