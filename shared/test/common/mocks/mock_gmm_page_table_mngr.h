@@ -14,6 +14,7 @@ namespace NEO {
 class MockGmmPageTableMngr : public GmmPageTableMngr {
   public:
     using GmmPageTableMngr::pageTableManager;
+    using GmmPageTableMngr::updateAuxTable;
     MockGmmPageTableMngr() {
         initContextAuxTableRegisterParamsPassed.clear();
     };
@@ -33,6 +34,9 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
     };
 
     bool initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) override {
+        if (callBaseInitContextAuxTableRegister) {
+            return GmmPageTableMngr::initContextAuxTableRegister(initialBBHandle, engineType);
+        }
         initContextAuxTableRegisterCalled++;
         initContextAuxTableRegisterParamsPassed.push_back({initialBBHandle, engineType});
         return initContextAuxTableRegisterResult;
@@ -46,8 +50,12 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
     StackVec<InitContextAuxTableRegisterParams, 2> initContextAuxTableRegisterParamsPassed{};
     uint32_t initContextAuxTableRegisterCalled = 0u;
     bool initContextAuxTableRegisterResult = true;
+    bool callBaseInitContextAuxTableRegister = false;
 
     bool updateAuxTable(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable) override {
+        if (callBaseUpdateAuxTable) {
+            return GmmPageTableMngr::updateAuxTable(ddiUpdateAuxTable);
+        }
         updateAuxTableCalled++;
         updateAuxTableParamsPassed.push_back({*ddiUpdateAuxTable});
         return updateAuxTableResult;
@@ -60,6 +68,7 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
     StackVec<UpdateAuxTableParams, 1> updateAuxTableParamsPassed{};
     uint32_t updateAuxTableCalled = 0u;
     bool updateAuxTableResult = true;
+    bool callBaseUpdateAuxTable = false;
 
     void *passedAubCsrHandle = nullptr;
 

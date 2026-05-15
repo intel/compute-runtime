@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 namespace NEO {
-GmmPageTableMngr::GmmPageTableMngr(GmmClientContext *gmmClientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb, void *aubCsrHandle) {
+GmmPageTableMngr::GmmPageTableMngr(GmmClientContext *gmmClientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb, void *aubCsrHandle) : clientContext(gmmClientContext) {
     auto clientContext = gmmClientContext->getHandle();
     auto deleter = [=](GMM_PAGETABLE_MGR *pageTableManager) {
         clientContext->DestroyPageTblMgrObject(pageTableManager);
