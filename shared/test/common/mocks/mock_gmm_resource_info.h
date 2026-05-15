@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,6 +121,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     using GmmResourceInfo::clientContext;
     using GmmResourceInfo::createResourceInfo;
     using GmmResourceInfo::decodeResourceInfo;
+    using GmmResourceInfo::gmmResourceHandle;
 
     uint64_t driverProtectionBits = 0;
     bool driverProtectionBitsUsageWasOverridden = false;
