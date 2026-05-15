@@ -91,7 +91,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
     ArrayRef<uint8_t> crossThreadDataArrayRef;
     if (crossThreadDataSize != 0) {
-        crossThreadDataTemplate.reset(new uint8_t[crossThreadDataSize]);
+        crossThreadDataTemplate = std::make_unique_for_overwrite<uint8_t[]>(crossThreadDataSize);
 
         if (kernelInfo->crossThreadData) {
             memcpy_s(crossThreadDataTemplate.get(), crossThreadDataSize,
@@ -108,8 +108,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
     if (kernelInfo->heapInfo.surfaceStateHeapSize != 0) {
         this->surfaceStateHeapSize = kernelInfo->heapInfo.surfaceStateHeapSize;
-        surfaceStateHeapTemplate.reset(new uint8_t[surfaceStateHeapSize]);
-
+        surfaceStateHeapTemplate = std::make_unique_for_overwrite<uint8_t[]>(surfaceStateHeapSize);
         memcpy_s(surfaceStateHeapTemplate.get(), surfaceStateHeapSize,
                  kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
     } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
@@ -121,13 +120,12 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
                                      surfaceStateSize;
 
         DEBUG_BREAK_IF(kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful != kernelInfo->kernelDescriptor.getBindlessOffsetToSurfaceState().size());
-        surfaceStateHeapTemplate.reset(new uint8_t[surfaceStateHeapSize]);
+        surfaceStateHeapTemplate = std::make_unique<uint8_t[]>(surfaceStateHeapSize);
     }
 
     if (kernelInfo->heapInfo.dynamicStateHeapSize != 0) {
         this->dynamicStateHeapSize = kernelInfo->heapInfo.dynamicStateHeapSize;
-        dynamicStateHeapTemplate.reset(new uint8_t[dynamicStateHeapSize]);
-
+        dynamicStateHeapTemplate = std::make_unique_for_overwrite<uint8_t[]>(dynamicStateHeapSize);
         memcpy_s(dynamicStateHeapTemplate.get(), dynamicStateHeapSize,
                  kernelInfo->heapInfo.pDsh, dynamicStateHeapSize);
     }
