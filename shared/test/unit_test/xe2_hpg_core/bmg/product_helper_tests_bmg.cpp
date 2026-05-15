@@ -151,3 +151,24 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAll
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }
+
+BMGTEST_F(BmgProductHelper, givenSingleCcsAndSliceCountAboveTwoWhenAdjustDispatchAllRequiredThenReturnTrue) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1u;
+    hwInfo.gtSystemInfo.SliceCount = 3u;
+    EXPECT_TRUE(productHelper->adjustDispatchAllRequired(hwInfo));
+}
+
+BMGTEST_F(BmgProductHelper, givenSingleCcsAndSliceCountNotAboveTwoWhenAdjustDispatchAllRequiredThenReturnFalse) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1u;
+    hwInfo.gtSystemInfo.SliceCount = 2u;
+    EXPECT_FALSE(productHelper->adjustDispatchAllRequired(hwInfo));
+}
+
+BMGTEST_F(BmgProductHelper, givenMultipleCcsEnabledWhenAdjustDispatchAllRequiredThenReturnFalse) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2u;
+    hwInfo.gtSystemInfo.SliceCount = 4u;
+    EXPECT_FALSE(productHelper->adjustDispatchAllRequired(hwInfo));
+}

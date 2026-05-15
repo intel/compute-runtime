@@ -84,3 +84,33 @@ XE2_HPG_CORETEST_F(WalkerDispatchTestsXe2HpGCore, whenEncodeAdditionalWalkerFiel
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 }
+
+XE2_HPG_CORETEST_F(WalkerDispatchTestsXe2HpGCore, givenMultipleCcsEnabledWhenEncodeComputeDispatchAllWalkerThenOptimizationIsDisabledForSmallDispatch) {
+    DebugManagerStateRestore debugRestorer;
+    MockExecutionEnvironment executionEnvironment;
+    auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
+
+    EncodeWalkerArgs walkerArgs{
+        .kernelExecutionType = KernelExecutionType::defaultType,
+        .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
+        .maxFrontEndThreads = 113,
+        .requiredSystemFence = true,
+        .hasSample = false};
+
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    VariableBackup<uint32_t> sliceCountBackup(&hwInfo.gtSystemInfo.SliceCount, 4);
+    VariableBackup<uint32_t> ccsBackup(&hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled, 2);
+
+    walkerCmd.getInterfaceDescriptor().setThreadGroupDispatchSize(FamilyType::INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
+
+    {
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+
+    {
+        walkerArgs.kernelExecutionType = KernelExecutionType::concurrent;
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+}
