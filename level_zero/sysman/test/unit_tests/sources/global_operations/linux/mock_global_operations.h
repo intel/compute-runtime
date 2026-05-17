@@ -124,6 +124,8 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
     bool mockFileWithMaxPagesNoValue = false;
     std::string mockFdoModeValue = "disabled";
     std::string mockSurvivabilityModeValue = "";
+    std::string mockGpuHealthVal = "ok";
+    std::string mockGpuHealthWrittenVal;
 
     ze_result_t getRealPath(const std::string &file, std::string &val) override {
         if (file.compare(deviceDir) == 0) {
@@ -160,6 +162,8 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
             val = mockFdoModeValue;
         } else if (file.compare("survivability_mode") == 0) {
             val = mockSurvivabilityModeValue;
+        } else if (file.compare("device/gpu_health") == 0) {
+            val = mockGpuHealthVal;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -425,6 +429,18 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
     }
 
     MockGlobalOperationsSysfsAccess() = default;
+
+    ze_result_t mockWriteError = ZE_RESULT_SUCCESS;
+    ze_result_t writeResult = ZE_RESULT_SUCCESS;
+    ze_result_t write(const std::string &file, std::string_view val) override {
+        if (mockWriteError != ZE_RESULT_SUCCESS) {
+            return mockWriteError;
+        }
+        if (file.compare("device/gpu_health") == 0) {
+            mockGpuHealthWrittenVal = std::string(val);
+        }
+        return writeResult;
+    }
 
     ADDMETHOD_NOBASE(fileExists, bool, true, (const std::string file));
 };

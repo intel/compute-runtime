@@ -387,5 +387,21 @@ ze_result_t SysmanDevice::memoryGetPageOfflineStateExp(zes_device_handle_t hDevi
     return pSysmanDevice->memoryGetPageOfflineStateExp(pageStatus, pCount, pPageOfflineInfo);
 }
 
+ze_result_t SysmanDevice::getDeviceHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t *pHealth) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pSysmanDevice->getDeviceHealthExp(pHealth);
+}
+
+ze_result_t SysmanDevice::setDeviceHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pSysmanDevice->setDeviceHealthExp(health, pReason, authTokenLength, pAuthToken);
+}
+
 } // namespace Sysman
 } // namespace L0

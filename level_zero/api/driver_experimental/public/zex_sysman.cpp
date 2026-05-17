@@ -103,6 +103,26 @@ ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(zes_device_han
     }
 }
 
+ze_result_t ZE_APICALL zesIntelDeviceGetHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t *pHealth) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDevice::getDeviceHealthExp(hDevice, pHealth);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t ZE_APICALL zesIntelDeviceSetHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDevice::setDeviceHealthExp(hDevice, health, pReason, authTokenLength, pAuthToken);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 } // namespace L0
 
 extern "C" {
@@ -141,6 +161,14 @@ ze_result_t ZE_APICALL zesIntelDeviceGetPowerUsageExp(zes_pwr_handle_t hPower, u
 
 ze_result_t ZE_APICALL zesIntelDeviceMemoryGetPageOfflineStateExp(zes_device_handle_t hDevice, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
     return L0::zesIntelDeviceMemoryGetPageOfflineStateExp(hDevice, pageStatus, pCount, pPageOfflineInfo);
+}
+
+ze_result_t ZE_APICALL zesIntelDeviceGetHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t *pHealth) {
+    return L0::zesIntelDeviceGetHealthExp(hDevice, pHealth);
+}
+
+ze_result_t ZE_APICALL zesIntelDeviceSetHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) {
+    return L0::zesIntelDeviceSetHealthExp(hDevice, health, pReason, authTokenLength, pAuthToken);
 }
 
 } // extern "C"

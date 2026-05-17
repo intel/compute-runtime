@@ -36,6 +36,7 @@ const std::string LinuxGlobalOperationsImp::driverFile("device/driver");
 const std::string LinuxGlobalOperationsImp::functionLevelReset("/reset");
 const std::string LinuxGlobalOperationsImp::clientsDir("clients");
 const std::string LinuxGlobalOperationsImp::ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
+const std::string gpuHealthSysfsNode = "device/gpu_health";
 
 // Map engine entries(numeric values) present in /sys/class/drm/card<n>/clients/<client_n>/busy,
 // with engine enum defined in leve-zero spec
@@ -807,6 +808,52 @@ ze_result_t LinuxGlobalOperationsImp::memoryGetPageOfflineStateExp(zes_intel_mem
 
 ze_result_t LinuxGlobalOperationsImp::getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) {
     return pSysmanProductHelper->getMaxMemoryOfflinePages(pSysfsAccess, pMaxOfflinePages);
+}
+
+ze_result_t LinuxGlobalOperationsImp::getDeviceHealthExp(zes_intel_device_health_status_exp_t *pHealth) {
+    std::string healthStr;
+    ze_result_t result = pSysfsAccess->read(gpuHealthSysfsNode, healthStr);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    if (healthStr == "ok") {
+        *pHealth = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK;
+    } else if (healthStr == "warning") {
+        *pHealth = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING;
+    } else if (healthStr == "critical") {
+        *pHealth = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL;
+    } else if (healthStr == "failed") {
+        *pHealth = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED;
+    } else {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxGlobalOperationsImp::setDeviceHealthExp(zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) {
+    constexpr size_t maxReasonLength = 256;
+    if (pReason != nullptr && std::strlen(pReason) > maxReasonLength) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    std::string_view healthStr;
+    switch (health) {
+    case ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK:
+        healthStr = "ok";
+        break;
+    case ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING:
+        healthStr = "warning";
+        break;
+    case ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL:
+        healthStr = "critical";
+        break;
+    case ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED:
+        healthStr = "failed";
+        break;
+    default:
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return pSysfsAccess->write(gpuHealthSysfsNode, healthStr);
 }
 
 LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {

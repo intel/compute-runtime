@@ -143,6 +143,8 @@ void usage() {
                  "\n  -re,  --rasexp                                                                                  selectively run ras experimental API black box test"
                  "\n        [--set-threshold <value>]                                                                 optionally set threshold value for RAS exp test"
                  "\n  -v,   --vftelemetry                                                                             selectively run vf telemetry API black box test"
+                 "\n  -H,   --health                                                                                  selectively run device health EXP API black box test"
+                 "\n        [--set-health <ok|warning|critical|failed>]                                               optionally set device health status (requires root)"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -1872,6 +1874,26 @@ void getGlobalOperationsExpFunctionPointers(zes_driver_handle_t driverHandle) {
     VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceMemoryGetPageOfflineStateExp", reinterpret_cast<void **>(&zesIntelDeviceMemoryGetPageOfflineStateExpPtr)));
 }
 
+// Device Health EXP APIs function pointers
+typedef ze_result_t(ZE_APICALL *zesIntelDeviceGetHealthExp_pfn)(
+    zes_device_handle_t hDevice,
+    zes_intel_device_health_status_exp_t *pHealth);
+
+typedef ze_result_t(ZE_APICALL *zesIntelDeviceSetHealthExp_pfn)(
+    zes_device_handle_t hDevice,
+    zes_intel_device_health_status_exp_t health,
+    const char *pReason,
+    const uint32_t authTokenLength,
+    const char *pAuthToken);
+
+zesIntelDeviceGetHealthExp_pfn zesIntelDeviceGetHealthExpPtr = nullptr;
+zesIntelDeviceSetHealthExp_pfn zesIntelDeviceSetHealthExpPtr = nullptr;
+
+void getDeviceHealthExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceGetHealthExp", reinterpret_cast<void **>(&zesIntelDeviceGetHealthExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceSetHealthExp", reinterpret_cast<void **>(&zesIntelDeviceSetHealthExpPtr)));
+}
+
 void testSysmanGlobalOperations(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Global Operations tests ---- " << std::endl;
@@ -2167,6 +2189,47 @@ void testSysmanVfTelemetry(ze_device_handle_t &device) {
                 std::cout << "Sampling Counter Value = " << engineUtils[it].samplingCounterValue << std::endl;
             }
         }
+    }
+}
+
+std::string getDeviceHealthStatusString(zes_intel_device_health_status_exp_t status) {
+    static const std::map<zes_intel_device_health_status_exp_t, std::string> healthStatusMap{
+        {ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, "ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK"},
+        {ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING, "ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING"},
+        {ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL, "ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL"},
+        {ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED, "ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED"}};
+    auto i = healthStatusMap.find(status);
+    if (i == healthStatusMap.end()) {
+        return "Unknown health status";
+    }
+    return i->second;
+}
+
+void testSysmanDeviceHealth(ze_device_handle_t &device, zes_intel_device_health_status_exp_t setStatus, bool doSet) {
+    std::cout << std::endl
+              << " ----  Device Health tests ---- " << std::endl;
+    bool iamroot = (geteuid() == 0);
+
+    if (!zesIntelDeviceGetHealthExpPtr || !zesIntelDeviceSetHealthExpPtr) {
+        std::cout << "Device Health EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK;
+    VALIDATECALL(zesIntelDeviceGetHealthExpPtr(device, &health));
+    std::cout << "Current device health status: " << getDeviceHealthStatusString(health) << std::endl;
+
+    if (doSet) {
+        if (!iamroot) {
+            std::cout << "Not running as Root. Skipping zesIntelDeviceSetHealthExp test." << std::endl;
+            return;
+        }
+        std::cout << "Setting device health status to: " << getDeviceHealthStatusString(setStatus) << std::endl;
+        VALIDATECALL(zesIntelDeviceSetHealthExpPtr(device, setStatus, nullptr, 0, nullptr));
+
+        zes_intel_device_health_status_exp_t verifyHealth = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK;
+        VALIDATECALL(zesIntelDeviceGetHealthExpPtr(device, &verifyHealth));
+        std::cout << "Device health status after set: " << getDeviceHealthStatusString(verifyHealth) << std::endl;
     }
 }
 
@@ -2507,6 +2570,43 @@ int main(int argc, char *argv[]) {
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanVfTelemetry(device);
         });
+    }
+
+    if (isParamEnabled(argc, argv, "-H", "--health", &optind)) {
+        bool healthDoSet = false;
+        zes_intel_device_health_status_exp_t healthSetStatus = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK;
+        optind = optind + 1;
+        while (optind < argc) {
+            buf.push_back(argv[optind]);
+            optind++;
+        }
+        if (buf.size() != 0) {
+            if (buf.size() != 2 || buf[0] != "--set-health") {
+                std::cout << "Invalid Arguments passed to set device health status" << std::endl;
+                usage();
+                exit(0);
+            }
+            const std::string &statusStr = buf[1];
+            if (statusStr == "ok") {
+                healthSetStatus = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK;
+            } else if (statusStr == "warning") {
+                healthSetStatus = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING;
+            } else if (statusStr == "critical") {
+                healthSetStatus = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL;
+            } else if (statusStr == "failed") {
+                healthSetStatus = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED;
+            } else {
+                std::cout << "Invalid health status value: " << statusStr << std::endl;
+                usage();
+                exit(0);
+            }
+            healthDoSet = true;
+        }
+        getDeviceHealthExpFunctionPointers(driver);
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanDeviceHealth(device, healthSetStatus, healthDoSet);
+        });
+        buf.clear();
     }
 
     return 0;

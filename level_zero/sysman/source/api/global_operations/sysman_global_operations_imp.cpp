@@ -178,6 +178,16 @@ ze_result_t GlobalOperationsImp::memoryGetPageOfflineStateExp(zes_intel_mem_page
     return pOsGlobalOperations->memoryGetPageOfflineStateExp(pageStatus, pCount, pPageOfflineInfo);
 }
 
+ze_result_t GlobalOperationsImp::getDeviceHealthExp(zes_intel_device_health_status_exp_t *pHealth) {
+    initGlobalOperations();
+    return pOsGlobalOperations->getDeviceHealthExp(pHealth);
+}
+
+ze_result_t GlobalOperationsImp::setDeviceHealthExp(zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) {
+    initGlobalOperations();
+    return pOsGlobalOperations->setDeviceHealthExp(health, pReason, authTokenLength, pAuthToken);
+}
+
 void GlobalOperationsImp::init() {
     if (pOsGlobalOperations == nullptr) {
         pOsGlobalOperations = OsGlobalOperations::create(pOsSysman);

@@ -43,6 +43,8 @@ class OsGlobalOperations {
     virtual ze_result_t resetExt(zes_reset_properties_t *pProperties) = 0;
     virtual ze_result_t memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) = 0;
     virtual ze_result_t getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) = 0;
+    virtual ze_result_t getDeviceHealthExp(zes_intel_device_health_status_exp_t *pHealth) = 0;
+    virtual ze_result_t setDeviceHealthExp(zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) = 0;
     static OsGlobalOperations *create(OsSysman *pOsSysman);
     virtual ~OsGlobalOperations() {}
 };

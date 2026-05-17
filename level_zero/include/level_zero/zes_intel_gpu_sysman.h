@@ -677,6 +677,101 @@ typedef struct _zes_intel_mem_page_offline_properties_exp_t {
 
 #define ZES_INTEL_MEM_TYPE_LPDDR5X 500 ///< LPDDR5X Memory Type
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DEVICE_HEALTH_EXP_NAME
+/// @brief Device Health Extension Name
+#define ZES_INTEL_DEVICE_HEALTH_EXP_NAME "ZES_intel_experimental_device_health"
+#endif // ZES_INTEL_DEVICE_HEALTH_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device Health Extension Version(s)
+typedef enum _zes_intel_device_health_exp_version_t {
+    ZES_INTEL_DEVICE_HEALTH_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DEVICE_HEALTH_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DEVICE_HEALTH_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_health_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device health status
+///
+/// @details
+///     - Device health represents a comprehensive assessment of a device's
+///       reliability and expected performance in upcoming operations.
+///     - The health indicator is stored in non-volatile memory (NVM) and
+///       persists across resets and firmware updates.
+typedef enum _zes_intel_device_health_status_exp_t {
+    ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK = 0,       ///< No impending issues that indicate the device will fail or have an issue
+                                                     ///< imminently. This does not mean that in the past everything has been ok,
+                                                     ///< but rather that currently there is no indication of an issue.
+    ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING = 1,  ///< Some heuristic has determined that there may or may not be an issue in
+                                                     ///< the device. It is still currently functioning properly but should probably
+                                                     ///< be taken offline eventually to run diagnostics.
+    ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL = 2, ///< The device is either not functioning correctly anymore, or has a high
+                                                     ///< statistical likelihood to fail again in the near future. It is advisable
+                                                     ///< to not use the device until the proper level of maintenance and
+                                                     ///< diagnostics may be applied.
+    ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED = 3,   ///< Permanent non-recoverable failure; FRU replacement required.
+    ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_health_status_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get device health status
+///
+/// @details
+///     - This function retrieves the current health status of the device.
+///     - The health status is stored in non-volatile memory and persists across resets and updates.
+///     - The health indicator serves purely as telemetry without downstream functional effects.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pHealth`
+ze_result_t ZE_APICALL zesIntelDeviceGetHealthExp(
+    zes_device_handle_t hDevice,                  ///< [in] Sysman handle of the device.
+    zes_intel_device_health_status_exp_t *pHealth ///< [out] Current health status of the device.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Set device health status
+///
+/// @details
+///     - This function sets the health status of the device.
+///     - The health status is persisted to non-volatile memory.
+///     - Setting health status requires appropriate permissions.
+///     - The application should not call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + `health` is not a recognized ::zes_intel_device_health_status_exp_t value.
+///         + `pReason != nullptr` and `strlen(pReason) > 256`.
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///         + User does not have permissions to set health status.
+ze_result_t ZE_APICALL zesIntelDeviceSetHealthExp(
+    zes_device_handle_t hDevice,                 ///< [in] Sysman handle of the device.
+    zes_intel_device_health_status_exp_t health, ///< [in] New health status to be set for the device.
+    const char *pReason,                         ///< [in][optional] Reason string (max 256 chars) printed to dmesg.
+    const uint32_t authTokenLength,              ///< [in] Length of pAuthToken in bytes; ignored when pAuthToken is nullptr.
+    const char *pAuthToken                       ///< [in][optional] Authorization token passed through to firmware.
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

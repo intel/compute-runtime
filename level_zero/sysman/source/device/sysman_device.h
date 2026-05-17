@@ -148,6 +148,12 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) = 0;
     static ze_result_t memoryGetPageOfflineStateExp(zes_device_handle_t hDevice, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo);
 
+    virtual ze_result_t getDeviceHealthExp(zes_intel_device_health_status_exp_t *pHealth) = 0;
+    static ze_result_t getDeviceHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t *pHealth);
+
+    virtual ze_result_t setDeviceHealthExp(zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) = 0;
+    static ze_result_t setDeviceHealthExp(zes_device_handle_t hDevice, zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken);
+
     virtual OsSysman *deviceGetOsInterface() = 0;
     virtual void getDeviceUuids(std::vector<std::string> &deviceUuids) = 0;
     std::atomic<bool> isDeviceInSurvivabilityMode = false;

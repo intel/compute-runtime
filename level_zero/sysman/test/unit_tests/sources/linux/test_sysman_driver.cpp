@@ -278,6 +278,7 @@ bool verifyExtensionDefinition(std::vector<zes_driver_extension_properties_t> &e
         {ZES_MEMORY_BANDWIDTH_COUNTER_BITS_EXP_PROPERTIES_NAME, ZES_MEM_BANDWIDTH_COUNTER_BITS_EXP_VERSION_CURRENT},
         {ZES_SYSMAN_DEVICE_MAPPING_EXP_NAME, ZES_SYSMAN_DEVICE_MAPPING_EXP_VERSION_CURRENT},
         {ZES_VIRTUAL_FUNCTION_MANAGEMENT_EXP_NAME, ZES_VF_MANAGEMENT_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DEVICE_HEALTH_EXP_NAME, ZES_INTEL_DEVICE_HEALTH_EXP_VERSION_CURRENT},
         {ZES_INTEL_DRIVER_NAME_EXP_PROPERTY_NAME, ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES_VERSION_CURRENT},
         {ZES_INTEL_FREQ_THROTTLE_REASON_EXP_NAME, ZES_INTEL_FREQ_THROTTLE_REASON_EXP_VERSION_CURRENT},
         {ZES_INTEL_MEMORY_PAGE_OFFLINE_EXP_NAME, ZES_INTEL_MEMORY_PAGE_OFFLINE_EXP_VERSION_CURRENT},
@@ -414,6 +415,12 @@ TEST_F(SysmanDriverHandleTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceGetPowerUsageExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceGetHealthExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceSetHealthExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportUnKnownPointer", &funPtr);
