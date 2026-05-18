@@ -12,15 +12,12 @@
 #include <array>
 #include <cstdint>
 #include <optional>
-#include <string_view>
 #include <type_traits>
 
 namespace NEO {
 
 struct KernelDescriptor;
 struct RootDeviceEnvironment;
-
-inline constexpr std::string_view implicitArgsRelocationSymbolName = "__INTEL_PATCH_CROSS_THREAD_OFFSET_OFF_R0";
 
 namespace ImplicitArgsHelper {
 std::array<uint8_t, 3> getDimensionOrderForLocalIds(const uint8_t *workgroupDimensionsOrder, std::optional<std::pair<bool /* localIdsGeneratedByRuntime */, uint32_t /* walkOrderForHwGenerationOfLocalIds */>> hwGenerationOfLocalIdsParams);

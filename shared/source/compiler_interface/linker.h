@@ -13,11 +13,16 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
 
 namespace NEO {
+
+inline constexpr std::string_view implicitArgsRelocationSymbolName = "__INTEL_PATCH_CROSS_THREAD_OFFSET_OFF_R0";
+inline constexpr std::string_view surfaceStateSizeRelocationSymbolName = "__INTEL_SURFACE_STATE_SIZE";
+
 struct ExternalFunctionInfo;
 struct ExternalFunctionUsageExtFunc;
 struct ExternalFunctionUsageKernel;
@@ -255,7 +260,7 @@ struct Linker {
 
     bool relocateSymbols(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings, const PatchableSegments &instructionsSegments, size_t globalConstantsInitDataSize, size_t globalVariablesInitDataSize);
 
-    void patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals, const KernelDescriptorsT &kernelDescriptors);
+    void patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals, const KernelDescriptorsT &kernelDescriptors, Device *pDevice);
 
     void patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo,
                            SharedPoolAllocation *globalVariablesSeg, SharedPoolAllocation *globalConstantsSeg,

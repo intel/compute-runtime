@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
@@ -19,6 +20,7 @@
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "RelocationInfo.h"
 
@@ -342,7 +344,7 @@ LinkingStatus Linker::link(const SegmentInfo &globalVariablesSegInfo, const Segm
     if (!success) {
         return LinkingStatus::error;
     }
-    patchInstructionsSegments(instructionsSegments, outUnresolvedExternals, kernelDescriptors);
+    patchInstructionsSegments(instructionsSegments, outUnresolvedExternals, kernelDescriptors, pDevice);
     patchDataSegments(globalVariablesSegInfo, globalConstantsSegInfo, globalVariablesSeg, globalConstantsSeg,
                       outUnresolvedExternals, pDevice, constantsInitData, constantsInitDataSize, variablesInitData, variablesInitDataSize);
     removeLocalSymbolsFromRelocatedSymbols();
@@ -447,7 +449,7 @@ void Linker::removeLocalSymbolsFromRelocatedSymbols() {
     }
 }
 
-void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals, const KernelDescriptorsT &kernelDescriptors) {
+void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals, const KernelDescriptorsT &kernelDescriptors, Device *pDevice) {
     if (false == data.getTraits().requiresPatchingOfInstructionSegments) {
         return;
     }
@@ -470,6 +472,13 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
                 *reinterpret_cast<uint32_t *>(relocAddress) = kernelDescriptors.at(segId)->getPerThreadDataOffset();
             } else if (relocation.symbolName == implicitArgsRelocationSymbolName) {
                 pImplicitArgsRelocationAddresses[static_cast<uint32_t>(segId)].push_back(std::pair<void *, RelocationInfo::Type>(relocAddress, relocation.type));
+            } else if (relocation.symbolName == surfaceStateSizeRelocationSymbolName) {
+                UNRECOVERABLE_IF(!pDevice);
+                [[maybe_unused]] const auto releaseHelper = pDevice->getReleaseHelper();
+                DEBUG_BREAK_IF(!(releaseHelper && releaseHelper->isReducedSurfaceStateSupported()));
+                const auto surfaceStateSize = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize());
+                auto patchSize = relocation.type == RelocationInfo::Type::address ? 8 : 4;
+                patchWithRequiredSize(relocAddress, patchSize, surfaceStateSize);
             } else if (relocation.symbolName.empty()) {
                 uint64_t patchValue = 0;
                 patchAddress(relocAddress, patchValue, relocation);
@@ -707,6 +716,7 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
 }
 
 void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments, const KernelDescriptorsT &kernelDescriptors) {
+    UNRECOVERABLE_IF(!pDevice);
     auto &productHelper = pDevice->getProductHelper();
     auto releaseHelper = pDevice->getReleaseHelper();
 
@@ -738,6 +748,15 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
                 outUnresolvedExternals[vecIndex] = outUnresolvedExternals[outUnresolvedExternals.size() - 1u];
                 outUnresolvedExternals.resize(outUnresolvedExternals.size() - 1u);
             }
+        } else if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == surfaceStateSizeRelocationSymbolName) {
+            auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
+                                          static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
+            DEBUG_BREAK_IF(!(releaseHelper && releaseHelper->isReducedSurfaceStateSupported()));
+            const auto surfaceStateSize = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize());
+            auto patchSize = outUnresolvedExternals[vecIndex].unresolvedRelocation.type == RelocationInfo::Type::address ? 8 : 4;
+            patchWithRequiredSize(relocAddress, patchSize, surfaceStateSize);
+            outUnresolvedExternals[vecIndex] = outUnresolvedExternals[outUnresolvedExternals.size() - 1u];
+            outUnresolvedExternals.resize(outUnresolvedExternals.size() - 1u);
         }
     }
 }

@@ -11,6 +11,7 @@
 #include "zello_compile.h"
 
 #include <cstring>
+#include <fstream>
 #include <sstream>
 
 template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
@@ -598,6 +599,104 @@ void executeMemoryCopyOnSystemMemory(ze_context_handle_t &context, ze_device_han
     free(memory);
 }
 
+std::vector<uint8_t> readBinaryFileToVector(const std::string &path) {
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    if (!file.is_open()) {
+        return {};
+    }
+    auto size = static_cast<size_t>(file.tellg());
+    file.seekg(0, std::ios::beg);
+    std::vector<uint8_t> buf(size);
+    file.read(reinterpret_cast<char *>(buf.data()), size);
+    return buf;
+}
+
+std::string findArgValue(int argc, char *argv[], const char *argName) {
+    for (int i = 1; i < argc - 1; ++i) {
+        if (std::string(argv[i]) == argName) {
+            return argv[i + 1];
+        }
+    }
+    return {};
+}
+
+void executeNativeModuleWithRSSValidation(ze_context_handle_t &context, ze_device_handle_t &device,
+                                          const std::string &binaryPath, const std::string &kernelName,
+                                          bool &outputValidationSuccessful, bool aubMode) {
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
+
+    auto binary = readBinaryFileToVector(binaryPath);
+    if (binary.empty()) {
+        std::cerr << "Failed to read binary file: " << binaryPath << std::endl;
+        outputValidationSuccessful = false;
+        return;
+    }
+
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    ze_module_build_log_handle_t buildlog;
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = binary.data();
+    moduleDesc.inputSize = binary.size();
+    moduleDesc.pBuildFlags = "";
+
+    if (zeModuleCreate(context, device, &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
+        if (buildlog != nullptr) {
+            size_t szLog = 0;
+            zeModuleBuildLogGetString(buildlog, &szLog, nullptr);
+            if (szLog > 0) {
+                char *strLog = (char *)malloc(szLog);
+                zeModuleBuildLogGetString(buildlog, &szLog, strLog);
+                LevelZeroBlackBoxTests::printBuildLog(strLog);
+                free(strLog);
+            }
+            SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+        }
+        std::cerr << "\nZello Sandbox Native Module RSS test FAILED. Module creation error." << std::endl;
+        outputValidationSuccessful = false;
+        return;
+    }
+    if (buildlog != nullptr) {
+        SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+    }
+
+    std::string effectiveKernelName = kernelName;
+    if (effectiveKernelName.empty()) {
+        uint32_t count = 0;
+        SUCCESS_OR_TERMINATE(zeModuleGetKernelNames(module, &count, nullptr));
+        if (count > 0) {
+            std::vector<const char *> names(count, nullptr);
+            SUCCESS_OR_TERMINATE(zeModuleGetKernelNames(module, &count, names.data()));
+            if (names[0] != nullptr) {
+                effectiveKernelName = names[0];
+            }
+        }
+    }
+
+    if (effectiveKernelName.empty()) {
+        std::cerr << "Failed to resolve kernel name from native module (use --kernel-name <name>)" << std::endl;
+        outputValidationSuccessful = false;
+        SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+        return;
+    }
+
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = effectiveKernelName.c_str();
+    if (zeKernelCreate(module, &kernelDesc, &kernel) != ZE_RESULT_SUCCESS) {
+        std::cerr << "Failed to create kernel from native module: " << effectiveKernelName << std::endl;
+        outputValidationSuccessful = false;
+        SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+        return;
+    }
+
+    if (!aubMode) {
+        std::cout << "Native module with RSS relocation successfully loaded and kernel created." << std::endl;
+    }
+
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+}
+
 void executeBarrierBetweenKernelsOnOutOfOrderQueue(ze_context_handle_t &context, ze_device_handle_t &device,
                                                    bool &outputValidationSuccessful, bool aubMode) {
     ze_module_handle_t module = nullptr;
@@ -693,6 +792,7 @@ int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestImmediateAndRegularCommandLists = 2u;
     constexpr uint32_t bitNumberTestSystemMemory = 3u;
     constexpr uint32_t bitNumberTestBarrierBetweenKernels = 4u;
+    constexpr uint32_t bitNumberTestNativeModuleRSS = 5u;
 
     const std::string blackBoxName = "Zello Sandbox";
     std::string currentTest;
@@ -808,6 +908,20 @@ int main(int argc, char *argv[]) {
             currentTest = "Barrier between kernels on out-of-order queue";
             executeBarrierBetweenKernelsOnOutOfOrderQueue(context, device, outputValidationSuccessful, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        }
+    }
+
+    if (testMask.test(bitNumberTestNativeModuleRSS)) {
+        if (outputValidationSuccessful || aubMode) {
+            std::string binaryPath = findArgValue(argc, argv, "--native-binary");
+            std::string kernelName = findArgValue(argc, argv, "--kernel-name");
+            if (!binaryPath.empty()) {
+                currentTest = "Native Module RSS Relocation Patching Validation";
+                executeNativeModuleWithRSSValidation(context, device, binaryPath, kernelName, outputValidationSuccessful, aubMode);
+                LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+            } else {
+                std::cout << "Skipping native module RSS test - no binary provided (use --native-binary <path>)" << std::endl;
+            }
         }
     }
 

@@ -216,4 +216,9 @@ bool ReleaseHelperHw<releaseType>::isLatePreemptionStartSupportedHelper() const 
     return false;
 }
 
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isReducedSurfaceStateSupported() const {
+    return false;
+}
+
 } // namespace NEO

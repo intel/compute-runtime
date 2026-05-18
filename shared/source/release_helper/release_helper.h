@@ -75,6 +75,7 @@ class ReleaseHelper {
     virtual bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const = 0;
     virtual bool isAvailableSemaphore64() const = 0;
     virtual bool isLatePreemptionStartSupportedHelper() const = 0;
+    virtual bool isReducedSurfaceStateSupported() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -128,6 +129,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const override;
     bool isAvailableSemaphore64() const override;
     bool isLatePreemptionStartSupportedHelper() const override;
+    bool isReducedSurfaceStateSupported() const override;
 };
 
 template <uint32_t architecture>
