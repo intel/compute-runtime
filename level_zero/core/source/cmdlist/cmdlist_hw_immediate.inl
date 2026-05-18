@@ -1606,8 +1606,7 @@ void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(N
         }
     }
 
-    auto gpuAddress = allocData->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->getGpuAddress();
-    auto offset = ptrDiff(ptr, gpuAddress);
+    auto offset = ptrDiff(ptr, alloc->getGpuAddress()) + alloc->getAllocationOffset();
     return ptrOffset(alloc->getLockedPtr(), offset);
 }
 

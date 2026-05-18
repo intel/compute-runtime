@@ -1554,6 +1554,94 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenNullAllocationDataWhenObtainLockedPtrF
     EXPECT_FALSE(lockingFailed);
 }
 
+HWTEST_F(AppendMemoryLockedCopyTest, givenAllocationWithoutOffsetWhenObtainLockedPtrFromDeviceThenReturnLockedPtrAtAllocationStart) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    NEO::SvmAllocationData *allocData = nullptr;
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData));
+    auto graphicsAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_EQ(0u, graphicsAllocation->getAllocationOffset());
+
+    bool lockingFailed = false;
+    auto returnedPtr = cmdList.obtainLockedPtrFromDevice(allocData, devicePtr, lockingFailed);
+    EXPECT_FALSE(lockingFailed);
+    EXPECT_EQ(graphicsAllocation->getLockedPtr(), returnedPtr);
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenAllocationWithoutOffsetAndPtrInsideAllocationWhenObtainLockedPtrFromDeviceThenReturnLockedPtrWithMatchingOffset) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    NEO::SvmAllocationData *allocData = nullptr;
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData));
+    auto graphicsAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_EQ(0u, graphicsAllocation->getAllocationOffset());
+
+    constexpr size_t userPtrOffsetInAllocation = 128u;
+    auto userPtr = ptrOffset(devicePtr, userPtrOffsetInAllocation);
+
+    bool lockingFailed = false;
+    auto returnedPtr = cmdList.obtainLockedPtrFromDevice(allocData, userPtr, lockingFailed);
+    EXPECT_FALSE(lockingFailed);
+    EXPECT_EQ(ptrOffset(graphicsAllocation->getLockedPtr(), userPtrOffsetInAllocation), returnedPtr);
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenAllocationWithNonZeroAllocationOffsetWhenObtainLockedPtrFromDeviceThenReturnedPtrAccountsForAllocationOffset) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    NEO::SvmAllocationData *allocData = nullptr;
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData));
+    auto graphicsAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+    constexpr uint64_t allocationOffsetBytes = 256u;
+    graphicsAllocation->setAllocationOffset(allocationOffsetBytes);
+
+    auto userPtr = reinterpret_cast<void *>(graphicsAllocation->getGpuAddress());
+
+    bool lockingFailed = false;
+    auto returnedPtr = cmdList.obtainLockedPtrFromDevice(allocData, userPtr, lockingFailed);
+    EXPECT_FALSE(lockingFailed);
+    EXPECT_EQ(ptrOffset(graphicsAllocation->getLockedPtr(), allocationOffsetBytes), returnedPtr);
+
+    graphicsAllocation->setAllocationOffset(0u);
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenAllocationWithAllocationOffsetAndPtrInsideAllocationWhenObtainLockedPtrFromDeviceThenReturnedPtrCombinesBothOffsets) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    NEO::SvmAllocationData *allocData = nullptr;
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData));
+    auto graphicsAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+    constexpr uint64_t allocationOffsetBytes = 256u;
+    constexpr size_t userPtrOffsetInAllocation = 128u;
+    graphicsAllocation->setAllocationOffset(allocationOffsetBytes);
+
+    auto userPtr = ptrOffset(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), userPtrOffsetInAllocation);
+
+    bool lockingFailed = false;
+    auto returnedPtr = cmdList.obtainLockedPtrFromDevice(allocData, userPtr, lockingFailed);
+    EXPECT_FALSE(lockingFailed);
+    EXPECT_EQ(ptrOffset(graphicsAllocation->getLockedPtr(), allocationOffsetBytes + userPtrOffsetInAllocation), returnedPtr);
+
+    graphicsAllocation->setAllocationOffset(0u);
+}
+
 HWTEST_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerformingCpuMemoryCopyThenErrorIsReturned) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
