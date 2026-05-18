@@ -124,6 +124,8 @@ ze_result_t ImageImp::createView(Device *device, const ze_image_desc_t *desc, ze
     image->sourceImageFormatDesc = this->imageFormatDesc;
     image->imgInfo = this->imgInfo;
     image->imageFromBuffer = this->imageFromBuffer;
+    image->customRowPitch = this->customRowPitch;
+    image->customSlicePitch = this->customSlicePitch;
 
     auto result = ZE_RESULT_SUCCESS;
     switch (desc->format.layout) {

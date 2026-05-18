@@ -253,11 +253,17 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         imgInfo.rowPitch = lookupTable.imageProperties.customRowPitch;
         imgInfo.imgDesc.imageRowPitch = lookupTable.imageProperties.customRowPitch;
         this->customRowPitch = lookupTable.imageProperties.customRowPitch;
+    } else if (this->customRowPitch > 0) {
+        imgInfo.rowPitch = this->customRowPitch;
+        imgInfo.imgDesc.imageRowPitch = this->customRowPitch;
     }
     if (lookupTable.imageProperties.customSlicePitch > 0) {
         imgInfo.slicePitch = lookupTable.imageProperties.customSlicePitch;
         imgInfo.imgDesc.imageSlicePitch = lookupTable.imageProperties.customSlicePitch;
         this->customSlicePitch = lookupTable.imageProperties.customSlicePitch;
+    } else if (this->customSlicePitch > 0) {
+        imgInfo.slicePitch = this->customSlicePitch;
+        imgInfo.imgDesc.imageSlicePitch = this->customSlicePitch;
     }
 
     imgInfo.print();
@@ -398,6 +404,9 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
         imgInfoRedescirebed.imgDesc = imgInfo.imgDesc;
         imgInfoRedescirebed.qPitch = imgInfo.qPitch;
+        if (imgInfoRedescirebed.imgDesc.imageType == NEO::ImageType::image1DBuffer) {
+            imgInfoRedescirebed.imgDesc.imageType = NEO::ImageType::image1D;
+        }
         redescribedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
         uint32_t minArrayElement, renderTargetViewExtent, depth;
