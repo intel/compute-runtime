@@ -27,6 +27,7 @@ const std::string mockRealPath2LevelsUp = "/sys/devices/pci0000:00/0000:00:01.0/
 const std::string mockRealPath2LevelsUpConfig = mockRealPath2LevelsUp + "/config";
 constexpr std::string_view pcieDowngradeCapable = "device/auto_link_downgrade_capable";
 constexpr std::string_view pcieDowngradeStatus = "device/auto_link_downgrade_status";
+constexpr int64_t mockPciMaxBandwidth = 31507692304; // 31.5 GB/s for PCIe Gen5 x8 lanes
 
 const std::vector<std::string> mockReadBytes =
     {

@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/pci/linux/mock_sysfs_pci.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
@@ -176,6 +177,41 @@ HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesDevicePci
     pMockFwInterface->mockBuf = {2, 0, 0, 0};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciLinkSpeedUpdateExt(device, downgradeUpgrade, &pendingAction));
     EXPECT_EQ(ZES_DEVICE_ACTION_NONE, pendingAction);
+}
+
+HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenPciConfigSpaceReadSucceedsThenValidValuesAreReturned, IsBMG) {
+    PublicLinuxPciImp *pLinuxPciImp = static_cast<PublicLinuxPciImp *>(pPciImp->pOsPci);
+    auto openMockReturnSuccess = +[](const char *pathname, int flags) -> int {
+        return 5;
+    };
+    auto preadMockConfigSpace = +[](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint8_t *mockBuf = static_cast<uint8_t *>(buf);
+        if (count == PCI_CFG_SPACE_SIZE) {
+            memset(mockBuf, 0, PCI_CFG_SPACE_SIZE);
+            mockBuf[0x06] = 0x10;
+            mockBuf[0x34] = 0x40;
+            mockBuf[0x40] = 0x10;
+            mockBuf[0x41] = 0x00;
+            mockBuf[0x42] = 0x02;
+            mockBuf[0x4C] = 0x51;
+            mockBuf[0x4D] = 0x00;
+
+            uint16_t linkStatus = 5 | (8 << 4);
+            mockBuf[0x52] = linkStatus & 0xFF;
+            mockBuf[0x53] = (linkStatus >> 8) & 0xFF;
+            return PCI_CFG_SPACE_SIZE;
+        }
+        return -1;
+    };
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess);
+    pLinuxPciImp->preadFunction = preadMockConfigSpace;
+
+    zes_pci_state_t pciState = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetState(device, &pciState));
+    EXPECT_EQ(pciState.speed.gen, 5);
+    EXPECT_EQ(pciState.speed.width, 8);
+    EXPECT_EQ(pciState.speed.maxBandwidth, mockPciMaxBandwidth); // 31.5 GB/s for PCIe Gen5 x8 lanes
 }
 
 } // namespace ult

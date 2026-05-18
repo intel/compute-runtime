@@ -352,7 +352,7 @@ void LinuxPciImp::getPciLinkSpeed(zes_pci_speed_t &linkSpeed) {
     if (currLinkSpeed > 0 && currLinkWidth > 0) {
         linkSpeed.gen = convertLinkSpeedToPciGen(currLinkSpeed);
         linkSpeed.width = currLinkWidth;
-        linkSpeed.maxBandwidth = currLinkSpeed * currLinkWidth;
+        linkSpeed.maxBandwidth = static_cast<int64_t>(currLinkWidth) * convertPcieSpeedFromGTsToBs(currLinkSpeed);
     }
     return;
 }
