@@ -218,7 +218,6 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isInterruptSupported(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isDeviceCapsReaderSupported() const override;
-    bool isMediaContextSupported() const override;
     bool sipUsesSubslicePools() const override;
     bool isScratchSpaceBasePointerInGrf() const override;
     bool scanFullTopologyBitmap() const override;

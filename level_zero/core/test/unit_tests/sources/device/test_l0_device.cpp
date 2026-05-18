@@ -5976,19 +5976,6 @@ TEST_F(DeviceTest, givenDeviceWhenQueryingCmdListMemWaitOnMemDataSizeThenReturnV
     EXPECT_EQ(l0GfxCoreHelper.getCmdListWaitOnMemoryDataSize(), sizeProps.cmdListWaitOnMemoryDataSizeInBytes);
 }
 
-TEST_F(DeviceTest, givenDeviceWhenQueryingMediaPropertiesThenReturnZero) {
-    ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    ze_intel_device_media_exp_properties_t mediaProps = {ZE_STRUCTURE_TYPE_INTEL_DEVICE_MEDIA_EXP_PROPERTIES};
-    mediaProps.numDecoderCores = 123;
-    mediaProps.numEncoderCores = 456;
-
-    devProps.pNext = &mediaProps;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
-    EXPECT_EQ(0u, mediaProps.numDecoderCores);
-    EXPECT_EQ(0u, mediaProps.numEncoderCores);
-}
-
 TEST_F(DeviceTest, givenDeviceWhenQueryingUsableMemSizePropertiesThenPNextChainIsHandledCorrectly) {
     ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_device_usablemem_size_ext_properties_t usableMemProps = {ZE_STRUCTURE_TYPE_DEVICE_USABLEMEM_SIZE_EXT_PROPERTIES};

@@ -112,57 +112,6 @@ typedef struct _ze_synchronized_dispatch_exp_desc_t {
 
 } ze_synchronized_dispatch_exp_desc_t;
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Forward-declare ze_intel_media_communication_desc_t
-typedef struct _ze_intel_media_communication_desc_t ze_intel_media_communication_desc_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief ze_intel_media_communication_desc_t
-typedef struct _ze_intel_media_communication_desc_t {
-    ze_structure_type_ext_t stype;          ///< [in] type of this structure
-    const void *pNext;                      ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
-    void *controlSharedMemoryBuffer;        ///< [in] control shared memory buffer pointer, must be USM address
-    uint32_t controlSharedMemoryBufferSize; ///< [in] control shared memory buffer size
-    void *controlBatchBuffer;               ///< [in] control batch buffer pointer, must be USM address
-    uint32_t controlBatchBufferSize;        ///< [in] control batch buffer size
-} ze_intel_media_communication_desc_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Forward-declare ze_intel_media_doorbell_handle_desc_t
-typedef struct _ze_intel_media_doorbell_handle_desc_t ze_intel_media_doorbell_handle_desc_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief ze_intel_media_doorbell_handle_desc_t
-/// @details Handle of the doorbell. This structure is passed as argument of zeIntelMediaCommunicationCreate and zeIntelMediaCommunicationDestroy
-typedef struct _ze_intel_media_doorbell_handle_desc_t {
-    ze_structure_type_ext_t stype; ///< [in] type of this structure
-    const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
-    void *doorbell;                ///< [in,out] handle of the doorbell
-} ze_intel_media_doorbell_handle_desc_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Supported device media flags
-typedef uint32_t ze_intel_device_media_exp_flags_t;
-typedef enum _ze_intel_device_media_exp_flag_t {
-    ZE_INTEL_DEVICE_MEDIA_SUPPORTS_ENCODING_EXP_FLAG = ZE_BIT(0), ///< Supports encoding
-    ZE_INTEL_DEVICE_MEDIA_SUPPORTS_DECODING_EXP_FLAG = ZE_BIT(1), ///< Supports decoding
-    ZE_INTEL_DEVICE_MEDIA_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
-} ze_intel_device_media_exp_flag_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Forward-declare ze_intel_device_media_exp_properties_t
-typedef struct _ze_intel_device_media_exp_properties_t ze_intel_device_media_exp_properties_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief  May be passed to ze_device_properties_t through pNext.
-typedef struct _ze_intel_device_media_exp_properties_t {
-    ze_structure_type_ext_t stype;           ///< [in] type of this structure
-    void *pNext;                             ///< [in][optional] must be null or a pointer to an extension-specific
-    ze_intel_device_media_exp_flags_t flags; ///< [out] device media flags
-    uint32_t numEncoderCores;                ///< [out] number of encoder cores
-    uint32_t numDecoderCores;                ///< [out] number of decoder cores
-} ze_intel_device_media_exp_properties_t;
-
 #ifndef ZEX_COUNTER_BASED_EVENT_EXT_NAME
 /// @brief Counter Based Event Extension Name
 #define ZEX_COUNTER_BASED_EVENT_EXT_NAME "ZEX_counter_based_event"

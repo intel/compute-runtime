@@ -1070,10 +1070,6 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
             } else if (static_cast<uint32_t>(extendedProperties->stype) == ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC) {
                 auto cmdListWaitOnMemDataSize = reinterpret_cast<ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t *>(extendedProperties);
                 cmdListWaitOnMemDataSize->cmdListWaitOnMemoryDataSizeInBytes = l0GfxCoreHelper.getCmdListWaitOnMemoryDataSize();
-            } else if (static_cast<uint32_t>(extendedProperties->stype) == ZE_STRUCTURE_TYPE_INTEL_DEVICE_MEDIA_EXP_PROPERTIES) {
-                auto deviceMediaProperties = reinterpret_cast<ze_intel_device_media_exp_properties_t *>(extendedProperties);
-                deviceMediaProperties->numDecoderCores = 0;
-                deviceMediaProperties->numEncoderCores = 0;
             } else if (extendedProperties->stype == ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES) {
                 ze_intel_device_block_array_exp_flags_t supportMatrix{0};
                 supportMatrix |= getProductHelper().supports2DBlockStore() ? ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_STORE : 0;

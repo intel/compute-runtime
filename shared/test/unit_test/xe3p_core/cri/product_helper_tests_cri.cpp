@@ -207,10 +207,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAskingShouldRegisterEnqueuedWa
     EXPECT_TRUE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }
 
-CRITEST_F(CriProductHelper, givenProductHelperWhenAskingIsMediaContextSupportedThenTrueReturned) {
-    EXPECT_TRUE(productHelper->isMediaContextSupported());
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }

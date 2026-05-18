@@ -103,8 +103,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zeImageGetDeviceOffsetExp);
 
     // context
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelMediaCommunicationCreate);
-    RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelMediaCommunicationDestroy);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexMemFreeRegisterCallbackExt);
 
     // mutable command list extension

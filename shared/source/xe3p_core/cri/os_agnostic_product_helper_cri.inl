@@ -125,11 +125,6 @@ bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() co
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isMediaContextSupported() const {
-    return true;
-}
-
-template <>
 uint32_t ProductHelperHw<gfxProduct>::getPreferredWorkgroupCountPerSubslice() const {
     return 4;
 }

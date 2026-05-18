@@ -1129,11 +1129,6 @@ bool ProductHelperHw<gfxProduct>::isDeviceCapsReaderSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isMediaContextSupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::sipUsesSubslicePools() const {
     return false;
 }

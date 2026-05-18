@@ -3394,33 +3394,6 @@ bool DrmMemoryManager::releaseInterrupt(uint32_t outHandle, uint32_t rootDeviceI
     return false;
 }
 
-bool DrmMemoryManager::createMediaContext(uint32_t rootDeviceIndex, void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, void *&outDoorbell) {
-    auto &productHelper = getGmmHelper(rootDeviceIndex)->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto &drm = getDrm(rootDeviceIndex);
-
-    if (productHelper.isMediaContextSupported()) {
-        return drm.getIoctlHelper()->createMediaContext(drm.getVirtualMemoryAddressSpace(0), controlSharedMemoryBuffer, controlSharedMemoryBufferSize, controlBatchBuffer, controlBatchBufferSize, outDoorbell);
-    }
-    return false;
-}
-
-bool DrmMemoryManager::releaseMediaContext(uint32_t rootDeviceIndex, void *doorbellHandle) {
-    auto &productHelper = getGmmHelper(rootDeviceIndex)->getRootDeviceEnvironment().getHelper<ProductHelper>();
-
-    if (productHelper.isMediaContextSupported()) {
-        return getDrm(rootDeviceIndex).getIoctlHelper()->releaseMediaContext(doorbellHandle);
-    }
-    return false;
-}
-
-uint32_t DrmMemoryManager::getNumMediaDecoders(uint32_t rootDeviceIndex) const {
-    return getDrm(rootDeviceIndex).getIoctlHelper()->getNumMediaDecoders();
-}
-
-uint32_t DrmMemoryManager::getNumMediaEncoders(uint32_t rootDeviceIndex) const {
-    return getDrm(rootDeviceIndex).getIoctlHelper()->getNumMediaEncoders();
-}
-
 bool DrmMemoryManager::isCompressionSupportedForShareable(bool isShareable) {
     // Currently KMD does not support compression with allocation sharing
     return !isShareable;

@@ -283,7 +283,6 @@ class ProductHelper {
     virtual bool shouldRegisterEnqueuedWalkerWithProfiling() const = 0;
     virtual bool isInterruptSupported(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isDeviceCapsReaderSupported() const = 0;
-    virtual bool isMediaContextSupported() const = 0;
     virtual bool sipUsesSubslicePools() const = 0;
     virtual bool isScratchSpaceBasePointerInGrf() const = 0;
     virtual bool scanFullTopologyBitmap() const = 0;

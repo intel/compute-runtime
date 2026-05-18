@@ -1521,8 +1521,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&::zeIntelKernelGetBinaryExp) expectedIntelKernelGetBinaryExp = L0::zeIntelKernelGetBinaryExp;
 
     // context function addresses
-    decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = L0::zeIntelMediaCommunicationCreate;
-    decltype(&zeIntelMediaCommunicationDestroy) expectedIntelMediaCommunicationDestroy = L0::zeIntelMediaCommunicationDestroy;
     decltype(&zexMemFreeRegisterCallbackExt) expectedIntelMemFreeRegisterCallbackExt = L0::zexMemFreeRegisterCallbackExt;
 
     // events function addresses
@@ -1625,12 +1623,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelGetDriverVersionString", &funPtr));
     EXPECT_EQ(expectedIntelGetDriverVersionString, reinterpret_cast<decltype(&zeIntelGetDriverVersionString)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelMediaCommunicationCreate", &funPtr));
-    EXPECT_EQ(expectedIntelMediaCommunicationCreate, reinterpret_cast<decltype(&zeIntelMediaCommunicationCreate)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelMediaCommunicationDestroy", &funPtr));
-    EXPECT_EQ(expectedIntelMediaCommunicationDestroy, reinterpret_cast<decltype(&zeIntelMediaCommunicationDestroy)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexMemFreeRegisterCallbackExt", &funPtr));
     EXPECT_EQ(expectedIntelMemFreeRegisterCallbackExt, reinterpret_cast<decltype(&zexMemFreeRegisterCallbackExt)>(funPtr));

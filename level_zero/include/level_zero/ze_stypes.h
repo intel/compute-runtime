@@ -22,9 +22,6 @@ using zet_structure_type_ext_t = uint32_t;
 using zes_structure_type_ext_t = uint32_t;
 
 #define ZE_STRUCTURE_TYPE_SYNCHRONIZED_DISPATCH_EXP_DESC static_cast<ze_structure_type_ext_t>(0x00020020)
-#define ZE_STRUCTURE_TYPE_INTEL_MEDIA_COMMUNICATION_DESC static_cast<ze_structure_type_ext_t>(0x00020021)
-#define ZE_STRUCTURE_TYPE_INTEL_MEDIA_DOORBELL_HANDLE_DESC static_cast<ze_structure_type_ext_t>(0x00020022)
-#define ZE_STRUCTURE_TYPE_INTEL_DEVICE_MEDIA_EXP_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00020023)
 #define ZEX_STRUCTURE_TYPE_LABEL_DESCRIPTOR static_cast<ze_structure_type_ext_t>(0x00030002)
 #define ZEX_STRUCTURE_TYPE_OPERAND_DESCRIPTOR static_cast<ze_structure_type_ext_t>(0x00030003)
 #define ZEX_STRUCTURE_TYPE_VARIABLE_DESCRIPTOR static_cast<ze_structure_type_ext_t>(0x00030004)
