@@ -25,7 +25,16 @@ namespace ult {
 
 struct GlobalTearDownTests : public ::testing::Test {
     VariableBackup<decltype(globalDriverHandles)> globalDriverHandlesBackup{&globalDriverHandles, nullptr};
+    void *savedAdditionalState = nullptr;
+
+    void SetUp() override {
+        savedAdditionalState = backupAdditionalGlobalState();
+    }
+    void TearDown() override {
+        restoreAdditionalGlobalState(savedAdditionalState);
+    }
 };
+
 TEST_F(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionForTranslateHandleIsLoadedIfAvailable) {
     void *mockSetDriverTeardownPtr = reinterpret_cast<void *>(static_cast<uintptr_t>(0x1234ABC8));
     void *mockLoaderTranslateHandlePtr = reinterpret_cast<void *>(static_cast<uintptr_t>(0x5678EF08));

@@ -11,5 +11,8 @@ namespace L0 {
 namespace ult {
 extern const char *testLoaderDllName;
 extern const char *testDllName;
+
+void *backupAdditionalGlobalState();
+void restoreAdditionalGlobalState(void *saved);
 } // namespace ult
 } // namespace L0
