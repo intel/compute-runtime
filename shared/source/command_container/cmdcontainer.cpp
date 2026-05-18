@@ -100,7 +100,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
     if (this->stateBaseAddressTracking) {
         this->defaultSshSize = defaultSshSize;
     }
-    this->isIOHCacheEnabled = false;
+    this->isIOHCacheEnabled = (this->immediateCmdListCsr != nullptr);
     if (debugManager.flags.CacheThreadDataForIOH.get() != -1) {
         this->isIOHCacheEnabled = static_cast<bool>(debugManager.flags.CacheThreadDataForIOH.get());
     }

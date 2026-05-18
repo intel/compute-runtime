@@ -2467,10 +2467,8 @@ struct MockContainerIOHCache : public CommandContainer {
 };
 
 TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenNoDataCachedThenTryGetCachedIohOffsetReturnsNullopt) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.CacheThreadDataForIOH.set(1);
-
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
@@ -2485,10 +2483,8 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenNoDataCachedThenTryGetCache
 }
 
 TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenThreadDataRegisteredAndExtractedThenTryGetCachedIohOffsetReturnsOffset) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.CacheThreadDataForIOH.set(1);
-
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
@@ -2508,10 +2504,8 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenThreadDataRegisteredAndExtr
 }
 
 TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTwoDifferentThreadDataShareSameHashThenGetCachedIohOffsetReturnsCorrectOffset) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.CacheThreadDataForIOH.set(1);
-
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
@@ -2544,15 +2538,12 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTwoDifferentThreadDataShare
 }
 
 HWTEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResidentThenAllocationMadeResident) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.CacheThreadDataForIOH.set(1);
-
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    cmdContainer->setImmediateCmdListCsr(&csr);
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->setImmediateCmdListCsr(&csr);
 
     const uint8_t data[] = {1, 2, 3, 4};
     cmdContainer->registerThreadData(42u, {data, sizeof(data)});
@@ -2567,15 +2558,12 @@ HWTEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheReside
 }
 
 HWTEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResidentWithEmptyStorageThenMakeResidentNotCalled) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.CacheThreadDataForIOH.set(1);
-
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    cmdContainer->setImmediateCmdListCsr(&csr);
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->setImmediateCmdListCsr(&csr);
 
     auto makeResidentBefore = csr.makeResidentCalledTimes;
 
@@ -2589,7 +2577,6 @@ HWTEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheReside
 
 TEST_F(CommandContainerTest, givenIndirectHeapInLocalMemoryWhenThreadDataInsertedThenOffsetsAreCacheLineAligned) {
     DebugManagerStateRestore restore;
-    debugManager.flags.CacheThreadDataForIOH.set(1);
     debugManager.flags.EnableLocalMemory.set(1);
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
@@ -2600,6 +2587,7 @@ TEST_F(CommandContainerTest, givenIndirectHeapInLocalMemoryWhenThreadDataInserte
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
 
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    cmdContainer->setImmediateCmdListCsr(device->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(device.get(), &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
@@ -2626,10 +2614,8 @@ TEST_F(CommandContainerTest, givenIndirectHeapInLocalMemoryWhenThreadDataInserte
 }
 
 TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageHasSpaceThenPreviousEntriesRetainedAfterInsert) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.CacheThreadDataForIOH.set(1);
-
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     cmdContainer->threadDataMap = std::make_unique<ThreadDataMap>(
@@ -2653,10 +2639,8 @@ TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageHasSpaceThenPreviousEn
 }
 
 TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTrackerIsEmptyThenExtractCommonThreadDataDoesNotStoreAnyData) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.CacheThreadDataForIOH.set(1);
-
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
@@ -2671,10 +2655,8 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTrackerIsEmptyThenExtractCo
 }
 
 TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageExhaustedThenReallocateCalledAndMapCleared) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.CacheThreadDataForIOH.set(1);
-
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     cmdContainer->threadDataMap = std::make_unique<ThreadDataMap>(
@@ -2701,10 +2683,8 @@ TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageExhaustedThenReallocat
 }
 
 TEST_F(CommandContainerTest, givenCachedThreadDataWhenFindCalledWithMismatchedDataThenNulloptReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.CacheThreadDataForIOH.set(1);
-
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     cmdContainer->threadDataMap = std::make_unique<ThreadDataMap>(
