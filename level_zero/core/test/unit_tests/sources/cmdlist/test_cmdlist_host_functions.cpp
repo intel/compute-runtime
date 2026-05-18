@@ -293,8 +293,8 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
 
     *csr->getHostFunctionStreamer().getHostFunctionIdPtr(0u) = expectedHostFunctionId;
     auto hostFunction = csr->getHostFunctionStreamer().getHostFunction(expectedHostFunctionId);
-    EXPECT_EQ(hostFunctionAddress, hostFunction.hostFunctionAddress);
-    EXPECT_EQ(userDataAddress, hostFunction.userDataAddress);
+    EXPECT_EQ(hostFunctionAddress, hostFunction.value().hostFunctionAddress);
+    EXPECT_EQ(userDataAddress, hostFunction.value().userDataAddress);
 }
 
 INSTANTIATE_TEST_SUITE_P(HostFunctionTestsImmediateCmdListTestValues,
@@ -382,8 +382,9 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
         *csr->getHostFunctionStreamer().getHostFunctionIdPtr(partitionId) = expectedHostFunctionId;
     }
     auto hostFunction = csr->getHostFunctionStreamer().getHostFunction(expectedHostFunctionId);
-    EXPECT_EQ(hostFunctionAddress, hostFunction.hostFunctionAddress);
-    EXPECT_EQ(userDataAddress, hostFunction.userDataAddress);
+    ASSERT_TRUE(hostFunction.has_value());
+    EXPECT_EQ(hostFunctionAddress, hostFunction->hostFunctionAddress);
+    EXPECT_EQ(userDataAddress, hostFunction->userDataAddress);
 }
 
 INSTANTIATE_TEST_SUITE_P(HostFunctionTestsImmediateCmdListImplicitScalingTestValues,

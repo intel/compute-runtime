@@ -114,8 +114,9 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
 
             // host function from host function streamer
             auto programmedHostFunction = hostFunctionStreamer->getHostFunction(expectedHostFunctionId);
-            EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
-            EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
+            ASSERT_TRUE(programmedHostFunction.has_value());
+            EXPECT_EQ(callbackAddress, programmedHostFunction->hostFunctionAddress);
+            EXPECT_EQ(userDataAddress, programmedHostFunction->userDataAddress);
         }
     }
 }
@@ -248,8 +249,9 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
 
             // host function from host function streamer
             auto programmedHostFunction = hostFunctionStreamer->getHostFunction(expectedHostFunctionId);
-            EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
-            EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
+            ASSERT_TRUE(programmedHostFunction.has_value());
+            EXPECT_EQ(callbackAddress, programmedHostFunction->hostFunctionAddress);
+            EXPECT_EQ(userDataAddress, programmedHostFunction->userDataAddress);
         }
     }
 }
@@ -315,6 +317,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                     }
 
                     auto programmedHostFunction1 = hostFunctionStreamer->getHostFunction(1u);
+                    ASSERT_TRUE(programmedHostFunction1.has_value());
 
                     EXPECT_EQ(&mockAllocation, hostFunctionStreamer->getHostFunctionIdAllocation());
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
@@ -334,21 +337,21 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                     EXPECT_TRUE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
                     EXPECT_EQ(isTbx, downloadAllocationCalled);
 
-                    hostFunctionStreamer->prepareForExecution(programmedHostFunction1);
+                    hostFunctionStreamer->prepareForExecution(programmedHostFunction1.value());
 
                     if (isTbx) {
                         EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount);
                     }
                     // next host function must wait, streamer busy until host function is completed
                     EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
-                    hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction1);
+                    hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction1.value());
 
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                         EXPECT_EQ(HostFunctionStatus::completed, hostFunctionData[partitionId]); // host function ID should be marked as completed
                     }
 
-                    EXPECT_EQ(callbackAddress1, programmedHostFunction1.hostFunctionAddress);
-                    EXPECT_EQ(userDataAddress1, programmedHostFunction1.userDataAddress);
+                    EXPECT_EQ(callbackAddress1, programmedHostFunction1->hostFunctionAddress);
+                    EXPECT_EQ(userDataAddress1, programmedHostFunction1->userDataAddress);
 
                     if (isTbx) {
                         EXPECT_EQ(nPartitions, ultCsr.writeMemoryParams.totalCallCount); // 1st update
@@ -369,6 +372,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                     }
 
                     auto programmedHostFunction2 = hostFunctionStreamer->getHostFunction(hostFunctionId);
+                    ASSERT_TRUE(programmedHostFunction2.has_value());
 
                     EXPECT_EQ(&mockAllocation, hostFunctionStreamer->getHostFunctionIdAllocation());
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
@@ -392,8 +396,8 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                     EXPECT_TRUE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
                     EXPECT_EQ(isTbx, downloadAllocationCalled);
 
-                    hostFunctionStreamer->prepareForExecution(programmedHostFunction2);
-                    hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction2);
+                    hostFunctionStreamer->prepareForExecution(programmedHostFunction2.value());
+                    hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction2.value());
 
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                         EXPECT_EQ(HostFunctionStatus::completed, hostFunctionData[partitionId]); // host function ID should be marked as completed
@@ -403,8 +407,8 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                         EXPECT_EQ(2 * nPartitions, ultCsr.writeMemoryParams.totalCallCount); // 2nd update
                     }
 
-                    EXPECT_EQ(callbackAddress2, programmedHostFunction2.hostFunctionAddress);
-                    EXPECT_EQ(userDataAddress2, programmedHostFunction2.userDataAddress);
+                    EXPECT_EQ(callbackAddress2, programmedHostFunction2->hostFunctionAddress);
+                    EXPECT_EQ(userDataAddress2, programmedHostFunction2->userDataAddress);
                 }
                 {
                     // no more programmed Host Functions
@@ -413,6 +417,41 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
             }
         }
     }
+}
+
+HWTEST_F(HostFunctionTests, givenUnknownHostFunctionIdWhenGetHostFunctionIsCalledThenNulloptIsReturned) {
+    auto partitionOffset = static_cast<uint32_t>(sizeof(uint64_t));
+    auto &csr = pDevice->getGpgpuCommandStreamReceiver();
+    auto dcFlushRequired = csr.getDcFlushSupport();
+
+    MockGraphicsAllocation mockAllocation;
+    uint64_t hostFunctionData = 0u;
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+
+    std::mutex tbxWriteMutex;
+    auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&csr,
+                                                                       &mockAllocation,
+                                                                       &hostFunctionData,
+                                                                       downloadAllocationImpl,
+                                                                       1u,
+                                                                       partitionOffset,
+                                                                       false,
+                                                                       dcFlushRequired,
+                                                                       HasSemaphore64bCmd<FamilyType>,
+                                                                       tbxWriteMutex);
+
+    HostFunction hostFunction{
+        .hostFunctionAddress = 0x1000,
+        .userDataAddress = 0x2000};
+    hostFunctionStreamer->addHostFunction(1u, std::move(hostFunction));
+
+    auto missingHostFunction = hostFunctionStreamer->getHostFunction(3u);
+    EXPECT_FALSE(missingHostFunction.has_value());
+
+    auto programmedHostFunction = hostFunctionStreamer->getHostFunction(1u);
+    ASSERT_TRUE(programmedHostFunction.has_value());
+    EXPECT_EQ(0x1000u, programmedHostFunction->hostFunctionAddress);
+    EXPECT_EQ(0x2000u, programmedHostFunction->userDataAddress);
 }
 
 HWTEST_F(HostFunctionTests, givenTbxModeWhenDownloadingHostFunctionAllocationThenOnlyChunkIsDownloaded) {
@@ -579,8 +618,9 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
     EXPECT_TRUE(miStoreUserHostFunction->getStoreQword());
 
     auto programmedHostFunction = hostFunctionStreamer->getHostFunction(1u);
-    EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
-    EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
+    ASSERT_TRUE(programmedHostFunction.has_value());
+    EXPECT_EQ(callbackAddress, programmedHostFunction->hostFunctionAddress);
+    EXPECT_EQ(userDataAddress, programmedHostFunction->userDataAddress);
 }
 
 HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetToEnableThenPipeControlIsProgrammedIfDcFlushRequired) {

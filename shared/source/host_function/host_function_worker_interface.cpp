@@ -26,9 +26,12 @@ void HostFunctionSingleWorker::processNextHostFunction(std::stop_token st) noexc
         auto hostFunctionId = waitUntilHostFunctionIsReady(st);
         if (hostFunctionId.has_value()) {
             auto hostFunction = streamer->getHostFunction(hostFunctionId.value());
-            streamer->prepareForExecution(hostFunction);
-            hostFunction.invoke();
-            streamer->signalHostFunctionCompletion(hostFunction);
+            if (!hostFunction.has_value()) {
+                return;
+            }
+            streamer->prepareForExecution(hostFunction.value());
+            hostFunction.value().invoke();
+            streamer->signalHostFunctionCompletion(hostFunction.value());
         }
     }
 }
