@@ -60,7 +60,7 @@ NVLPTEST_F(NvlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSuppo
 }
 
 NVLPTEST_F(NvlProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnCorrectValue) {
-    EXPECT_EQ(1ull, productHelper->getSharedSystemPatIndex());
+    EXPECT_EQ(19ull, productHelper->getSharedSystemPatIndex());
 }
 
 NVLPTEST_F(NvlProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
@@ -92,4 +92,17 @@ NVLPTEST_F(NvlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
+}
+
+NVLPTEST_F(NvlProductHelperLinux, givenProductHelperWhenOverrideSystemMemoryPatIndexThenReturnPat19) {
+    uint64_t patIndex = 0u;
+    EXPECT_EQ(19u, productHelper->overrideSystemMemoryPatIndex(patIndex));
+}
+
+NVLPTEST_F(NvlProductHelperLinux, givenSystemMemoryWhenGetPatIndexThenReturnOverriddenPat19) {
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    drm->vmBindPatIndexProgrammingSupported = true;
+    bool isSystemMem = true;
+    auto patIndex = drm->getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMem, false);
+    EXPECT_EQ(19u, patIndex);
 }

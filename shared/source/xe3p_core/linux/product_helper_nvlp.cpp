@@ -33,7 +33,7 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
 template <>
 uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
-    return 1;
+    return 19;
 }
 
 template <>
@@ -44,6 +44,11 @@ bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
 template <>
 bool ProductHelperHw<gfxProduct>::areSecondaryContextsSupported() const {
     return true;
+}
+
+template <>
+uint64_t ProductHelperHw<gfxProduct>::overrideSystemMemoryPatIndex(uint64_t patIndex) const {
+    return 19u;
 }
 
 template class ProductHelperHw<gfxProduct>;

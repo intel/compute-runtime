@@ -4269,11 +4269,11 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredWhenAlloca
     EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()));
     EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(1u, allocation->getAllocationOffset());
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
     if (productHelper.isMisalignedUserPtr2WayCoherent()) {
-        EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::twoWayCoherent, allocation->getBO()->peekPatIndex());
+        EXPECT_EQ(productHelper.overrideSystemMemoryPatIndex(MockGmmClientContextBase::MockPatIndex::twoWayCoherent), allocation->getBO()->peekPatIndex());
     } else {
-        EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, allocation->getBO()->peekPatIndex());
+        EXPECT_EQ(productHelper.overrideSystemMemoryPatIndex(MockGmmClientContextBase::MockPatIndex::cached), allocation->getBO()->peekPatIndex());
     }
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -4297,7 +4297,8 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredAndDebugFl
     EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()));
     EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(1u, allocation->getAllocationOffset());
-    EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, allocation->getBO()->peekPatIndex());
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    EXPECT_EQ(productHelper.overrideSystemMemoryPatIndex(MockGmmClientContextBase::MockPatIndex::cached), allocation->getBO()->peekPatIndex());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -4314,7 +4315,8 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3NotRequiredWhenAll
     auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
     EXPECT_NE(nullptr, allocation);
 
-    EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, allocation->getBO()->peekPatIndex());
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    EXPECT_EQ(productHelper.overrideSystemMemoryPatIndex(MockGmmClientContextBase::MockPatIndex::cached), allocation->getBO()->peekPatIndex());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -4335,7 +4337,28 @@ TEST_F(DrmMemoryManagerBasic, givenAlignedHostPtrWhenAllocateGraphicsMemoryThenS
     EXPECT_EQ(MemoryConstants::cacheLineSize, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(0u, allocation->getAllocationOffset());
 
-    EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, allocation->getBO()->peekPatIndex());
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    EXPECT_EQ(productHelper.overrideSystemMemoryPatIndex(MockGmmClientContextBase::MockPatIndex::cached), allocation->getBO()->peekPatIndex());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerBasic, givenNonSvmHostPtrWhenAllocateGraphicsMemoryThenOverrideSystemMemoryPatIndexIsApplied) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(MemoryConstants::max48BitAddress);
+
+    allocationData.size = 13;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.flushL3 = false;
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
+    EXPECT_NE(nullptr, allocation);
+
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    auto expectedPatIndex = productHelper.overrideSystemMemoryPatIndex(MockGmmClientContextBase::MockPatIndex::cached);
+    EXPECT_EQ(expectedPatIndex, allocation->getBO()->peekPatIndex());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
