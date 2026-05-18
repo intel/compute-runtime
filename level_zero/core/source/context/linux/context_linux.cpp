@@ -6,9 +6,12 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -62,6 +65,33 @@ void Context::initOpaqueHandleResourcesImpl() {
 
     PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                  "preallocation of fds for opaque ipc handles completed with %lld fds\n", static_cast<long long>(availableFDs));
+}
+
+void *Context::importHandleFromReservedHandleData(void *reservedHandleData,
+                                                  uint64_t cacheID,
+                                                  NEO::Device *neoDevice,
+                                                  ze_ipc_memory_flags_t flags,
+                                                  NEO::AllocationType allocationType,
+                                                  bool isHostIpcAllocation,
+                                                  bool compressedMemory,
+                                                  uint64_t &importHandle,
+                                                  NEO::GraphicsAllocation *&alloc) {
+    int reservedHandle = this->driverHandle->getMemoryManager()->getImportHandleFromReservedHandleData(reservedHandleData, neoDevice->getRootDeviceIndex());
+    if (reservedHandle != -1) {
+        importHandle = static_cast<uint64_t>(reservedHandle);
+        this->driverHandle->setCachedImportHandle(cacheID, importHandle);
+        NEO::SvmAllocationData allocDataRetry(neoDevice->getRootDeviceIndex());
+        return this->driverHandle->importFdHandle(neoDevice,
+                                                  flags,
+                                                  importHandle,
+                                                  allocationType,
+                                                  isHostIpcAllocation,
+                                                  nullptr,
+                                                  &alloc,
+                                                  allocDataRetry,
+                                                  compressedMemory);
+    }
+    return nullptr;
 }
 
 } // namespace L0

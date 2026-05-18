@@ -353,6 +353,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     struct OpaqueHandleImportResult {
         uint64_t importHandle;
         bool success;
+        bool opaqueHandlesAttempted = false;
     };
 
     OpaqueHandleImportResult importOpaqueHandleWithFallback(uint64_t handle,
@@ -360,6 +361,15 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
                                                             uint64_t cacheID,
                                                             void *reservedHandleData,
                                                             NEO::Device *neoDevice);
+    void *importHandleFromReservedHandleData(void *reservedHandleData,
+                                             uint64_t cacheID,
+                                             NEO::Device *neoDevice,
+                                             ze_ipc_memory_flags_t flags,
+                                             NEO::AllocationType allocationType,
+                                             bool isHostIpcAllocation,
+                                             bool compressedMemory,
+                                             uint64_t &importHandle,
+                                             NEO::GraphicsAllocation *&alloc);
 
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, void *pNext, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);

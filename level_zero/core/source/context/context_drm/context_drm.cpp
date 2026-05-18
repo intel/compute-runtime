@@ -90,6 +90,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
     uint64_t effectiveCacheID = cacheID;
     uint64_t importHandle = handle;
 
+    bool opaqueHandlesAttempted = false;
     if (isOpaqueHandle && settings.useOpaqueHandle) {
         // Use helper to import opaque handle with fallback
         auto importResult = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice);
@@ -97,11 +98,15 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
             return {nullptr, nullptr};
         }
         importHandle = importResult.importHandle;
+        opaqueHandlesAttempted = importResult.opaqueHandlesAttempted;
     }
 
     NEO::GraphicsAllocation *alloc = nullptr;
     NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
     auto result = this->driverHandle->importFdHandle(neoDevice, flags, importHandle, allocationType, isHostIpcAllocation, nullptr, &alloc, allocDataInternal, compressedMemory);
+    if (opaqueHandlesAttempted && !alloc && reservedHandleData) {
+        result = importHandleFromReservedHandleData(reservedHandleData, cacheID, neoDevice, flags, allocationType, isHostIpcAllocation, compressedMemory, importHandle, alloc);
+    }
 
     // Store cacheID in IPC handle tracking if opaque handles are used
     if (result && isOpaqueHandle && settings.useOpaqueHandle && effectiveCacheID != 0) {
@@ -190,19 +195,11 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
     uint64_t importHandle = handle;
     bool handleRetrieved = false;
     bool socketFallbackSuccess = false;
+    bool opaqueHandlesAttempted = false;
 
     // Check cache first for opaque handles
     if (this->driverHandle->tryGetCachedImportHandle(cacheID, importHandle)) {
         handleRetrieved = true; // Mark as successful to skip import logic
-    }
-
-    if (!handleRetrieved && reservedHandleData) {
-        int importHandleFromReserved = -1;
-        importHandleFromReserved = this->driverHandle->getMemoryManager()->getImportHandleFromReservedHandleData(reservedHandleData, neoDevice->getRootDeviceIndex());
-        if (importHandleFromReserved != -1) {
-            importHandle = static_cast<uint64_t>(importHandleFromReserved);
-            handleRetrieved = true;
-        }
     }
 
     // Try pidfd approach first (unless forced to use socket fallback or already cached)
@@ -218,10 +215,11 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
             NEO::SysCalls::close(pidfd);
             if (newfd < 0) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_getfd Syscall failed: %s\n", strerror(errno));
-                return {0, false};
+                return {0, false, false};
             } else {
                 importHandle = static_cast<uint64_t>(newfd);
                 handleRetrieved = true;
+                opaqueHandlesAttempted = true;
                 // Cache the imported handle for future use
                 this->driverHandle->setCachedImportHandle(cacheID, importHandle);
             }
@@ -239,6 +237,7 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
             if (receivedFd != -1) {
                 importHandle = static_cast<uint64_t>(receivedFd);
                 socketFallbackSuccess = true;
+                opaqueHandlesAttempted = true;
                 // Cache the imported handle for future use
                 this->driverHandle->setCachedImportHandle(cacheID, importHandle);
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -257,10 +256,10 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
         if (!socketFallbackSuccess) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                          "Socket fallback failed for handle %lu, returning failure\n", handle);
-            return {0, false};
+            return {0, false, false};
         }
     }
 
-    return {importHandle, true};
+    return {importHandle, true, opaqueHandlesAttempted};
 }
 } // namespace L0

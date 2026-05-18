@@ -214,7 +214,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithReservedHandleDataAndI
     void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, 0u, reservedHandleData, false, true).second;
 
     EXPECT_NE(nullptr, result);
-    EXPECT_EQ(0, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
+    EXPECT_EQ(1, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
     EXPECT_EQ(reservedHandleData, reservedMock->lastReservedHandleData);
     EXPECT_EQ(device->getNEODevice()->getRootDeviceIndex(), reservedMock->lastRootDeviceIndex);
 }
@@ -270,14 +270,16 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithReservedHandleDataRetu
 
     void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, 0u, reservedHandleData, false, true).second;
 
-    // Verify that reserved handle was attempted first
+    // pidfd is attempted first, then reserved handle is tried as fallback (when alloc is null)
+    EXPECT_EQ(1, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
+    EXPECT_EQ(1, static_cast<int>(NEO::SysCalls::pidfdgetfdCalled));
+
+    // Reserved handle was invoked as fallback after pidfd+importFdHandle
     EXPECT_EQ(reservedHandleData, reservedMock->lastReservedHandleData);
     EXPECT_EQ(device->getNEODevice()->getRootDeviceIndex(), reservedMock->lastRootDeviceIndex);
 
-    // Verify that pidfd fallback was used since reserved handle returned -1
-    EXPECT_NE(nullptr, result);
-    EXPECT_EQ(1, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
-    EXPECT_EQ(1, static_cast<int>(NEO::SysCalls::pidfdgetfdCalled));
+    // Reserved handle returned -1, so result is null
+    EXPECT_EQ(nullptr, result);
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpenSyscallReturnFailThenPidfdGetNotCalled) {
@@ -2013,7 +2015,7 @@ TEST_F(GetMemHandlePtrTest, givenValidImportHandleFromReservedDataThenPidfdPathI
     void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, cacheID, reservedHandleData, false, true).second;
 
     EXPECT_NE(nullptr, result);
-    EXPECT_EQ(0, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
+    EXPECT_EQ(1, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
     EXPECT_EQ(reservedHandleData, reservedMock->lastReservedHandleData);
     EXPECT_EQ(device->getNEODevice()->getRootDeviceIndex(), reservedMock->lastRootDeviceIndex);
 }
