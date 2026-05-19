@@ -518,8 +518,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendSignalEvent>::instantiateTo(L
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendEventReset>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const {
-    auto eventParams = getEffectiveEventParams<CaptureApi::zeCommandListAppendEventReset>(apiArgs, indirectArgs, externalStorage, enforcedEvents);
-    return zeCommandListAppendEventReset(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), eventParams.hSignalEvent);
+    return zeCommandListAppendEventReset(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), apiArgs.hEvent);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const {

@@ -1379,6 +1379,42 @@ TEST_F(GraphTestInstantiationTest, GivenGraphPatchPreambleDebugFlagWhenInstantia
     EXPECT_FALSE(execGraph.usePatchingPreamble);
 }
 
+TEST_F(GraphTestInstantiationTest, givenEventResetClosureAndEnforcedEventsWhenInstantiatingThenUseCapturedEventHandle) {
+    struct MockCommandListRecordingEventReset : Mock<CommandList> {
+        ze_result_t appendEventReset(ze_event_handle_t hEvent) override {
+            appendEventResetCalled++;
+            lastAppendedEventReset = hEvent;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_event_handle_t lastAppendedEventReset = nullptr;
+    };
+
+    Mock<CommandList> sourceCmdList;
+    MockCommandListRecordingEventReset executionCmdList;
+    Mock<Event> capturedEvent;
+    Mock<Event> enforcedSignalEvent;
+    ClosureExternalStorage externalStorage;
+    ExternalCbEventInfoContainer externalCbEventStorage;
+
+    Closure<CaptureApi::zeCommandListAppendEventReset>::ApiArgs apiArgs = {
+        sourceCmdList.toHandle(),
+        capturedEvent.toHandle()};
+    Closure<CaptureApi::zeCommandListAppendEventReset> closure(apiArgs, externalStorage);
+
+    EventParams enforcedEvents = {
+        enforcedSignalEvent.toHandle(),
+        0u,
+        nullptr};
+
+    auto result = closure.instantiateTo(&executionCmdList, externalStorage, externalCbEventStorage, enforcedEvents);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, executionCmdList.appendEventResetCalled);
+    EXPECT_EQ(capturedEvent.toHandle(), executionCmdList.lastAppendedEventReset);
+    EXPECT_NE(enforcedSignalEvent.toHandle(), executionCmdList.lastAppendedEventReset);
+}
+
 TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventWhenInstantiateToGraphThenDoNotRecordExternalCbEvent) {
     GraphsCleanupGuard graphCleanup;
 
