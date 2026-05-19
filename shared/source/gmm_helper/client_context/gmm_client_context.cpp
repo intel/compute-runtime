@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -71,6 +72,10 @@ void GmmClientContext::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {
 
 GMM_RESOURCE_INFO *GmmClientContext::getGmmResInfoFromExternalResourceHandle(const void *externalResourceHandle) {
     return static_cast<GMM_RESOURCE_INFO *>(const_cast<void *>(externalResourceHandle));
+}
+
+GmmResourceInfo *GmmClientContext::createResInfoFromWddmPrivateData(const void *pPrivateDriverData) {
+    return GmmResourceInfo::create(this, static_cast<GMM_RESOURCE_INFO *>(const_cast<void *>(pPrivateDriverData)));
 }
 
 MEMORY_OBJECT_CONTROL_STATE GmmClientContext::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage) {
