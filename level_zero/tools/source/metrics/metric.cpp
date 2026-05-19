@@ -537,6 +537,7 @@ ze_result_t MetricDeviceContext::createMetricGroupsFromMetricsImp(uint32_t metri
         auto metricImp = static_cast<MetricImp *>(Metric::fromHandle(phMetrics[index]));
         if (metricImp->isImmutable()) {
             *pMetricGroupCount = 0;
+            METRICS_LOG_ERR("%s", "Predefined metrics cannot be added to metric groups");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         auto &metricSource = metricImp->getMetricSource();

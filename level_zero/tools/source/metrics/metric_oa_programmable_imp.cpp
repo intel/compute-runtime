@@ -9,6 +9,7 @@
 
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.inl"
 
 #include <algorithm>
 #include <cstring>
@@ -129,6 +130,7 @@ ze_result_t OaMetricProgrammableImp::getParamValueInfo(uint32_t parameterOrdinal
                                                        zet_metric_programmable_param_value_info_exp_t *pValueInfo) {
 
     if (parameterOrdinal >= properties.parameterCount) {
+        METRICS_LOG_ERR("Invalid parameter ordinal %u", parameterOrdinal);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -175,6 +177,7 @@ ze_result_t OaMetricProgrammableImp::createMetric(zet_metric_programmable_param_
                                                   uint32_t *pMetricHandleCount, zet_metric_handle_t *phMetricHandles) {
 
     if (parameterCount > properties.parameterCount) {
+        METRICS_LOG_ERR("Invalid parameter count %u", parameterCount);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -227,6 +230,7 @@ ze_result_t OaMetricProgrammableImp::createMetric(zet_metric_programmable_param_
 
         auto mdapiStatus = clonedPrototype->SetOption(optionDescriptor->Type, &mdapiValue);
         if (mdapiStatus != MetricsDiscovery::CC_OK) {
+            METRICS_LOG_ERR("Failed to set option for parameter ordinal %u", i);
             *pMetricHandleCount = 0;
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -307,12 +311,9 @@ MetricGroup *OaMetricGroupUserDefined::create(zet_metric_group_properties_t &pro
                                               MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
                                               MetricSource &metricSource) {
 
-    auto pMetricGroup = new OaMetricGroupUserDefined(metricSource);
-    std::vector<Metric *> groupMetrics{};
-    pMetricGroup->initialize(properties, metricSet, concurrentGroup, groupMetrics, static_cast<OaMetricSourceImp &>(metricSource));
-    pMetricGroup->addMetricGroupType(ZET_METRIC_GROUP_TYPE_EXP_FLAG_USER_CREATED);
-
+    auto pMetricGroup = new OaMetricGroupUserDefined(properties, metricSet, concurrentGroup, metricSource);
     UNRECOVERABLE_IF(pMetricGroup == nullptr);
+    pMetricGroup->addMetricGroupType(ZET_METRIC_GROUP_TYPE_EXP_FLAG_USER_CREATED);
 
     return pMetricGroup;
 }
@@ -344,6 +345,7 @@ ze_result_t OaMetricGroupUserDefined::addMetric(zet_metric_handle_t hMetric, siz
 
     auto metric = static_cast<OaMetricImp *>(Metric::fromHandle(hMetric));
     if (metric->isImmutable()) {
+        METRICS_LOG_ERR("%s", "Predefined metrics cannot be added to metric groups");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -352,7 +354,7 @@ ze_result_t OaMetricGroupUserDefined::addMetric(zet_metric_handle_t hMetric, siz
 
         std::string errorString("MetricGroup does not support Metric's samplingtype ");
         MetricGroupUserDefined::updateErrorString(errorString, errorStringSize, pErrorString);
-
+        METRICS_LOG_ERR("%s", "MetricGroup does not support Metric's sampling type");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -388,6 +390,7 @@ ze_result_t OaMetricGroupUserDefined::addMetric(zet_metric_handle_t hMetric, siz
         // Use a default string, since this is not supported by Mdapi
         std::string errorString("Incompatible Metric");
         MetricGroupUserDefined::updateErrorString(errorString, errorStringSize, pErrorString);
+        METRICS_LOG_ERR("%s", "Incompatible Metric. Failed to add metric to the metric group.");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -482,15 +485,15 @@ ze_result_t OaMetricGroupUserDefined::close() {
     auto metricSetParams = metricSet->GetParams();
     auto defaultMetricCount = metricSetParams->MetricsCount - metrics.size();
     OaMetricSourceImp *metricSource = getMetricSource();
-    auto &enumeration = metricSource->getMetricEnumeration();
 
     // Create and add default metrics
     for (int32_t i = static_cast<int32_t>(defaultMetricCount - 1); i >= 0; i--) {
-        auto mdapiMetric = metricSet->GetMetric(static_cast<uint32_t>(i));
+        MetricsDiscovery::IMetric_1_0 *mdapiMetric = metricSet->GetMetric(static_cast<uint32_t>(i));
         zet_metric_properties_t properties = {};
-        enumeration.getL0MetricPropertiesFromMdapiMetric(properties, mdapiMetric);
-        auto pMetric = OaMetricImp::create(*metricSource, properties);
+        getL0MetricPropertiesFromMdapiMetric(properties, mdapiMetric);
+        auto pMetric = OaMetricImp::create(*metricSource, mdapiMetric, properties, true);
         UNRECOVERABLE_IF(pMetric == nullptr);
+        static_cast<OaMetricImp *>(pMetric)->setMetricGroup(this);
 
         // Insert it to the beginning
         metrics.insert(metrics.begin(), pMetric);
@@ -498,11 +501,12 @@ ze_result_t OaMetricGroupUserDefined::close() {
 
     // Create and add default information
     for (uint32_t i = 0; i < metricSetParams->InformationCount; i++) {
-        auto mdapiInformation = metricSet->GetInformation(i);
+        MetricsDiscovery::IInformation_1_0 *mdapiInformation = metricSet->GetInformation(i);
         zet_metric_properties_t properties = {};
-        enumeration.getL0MetricPropertiesFromMdapiInformation(properties, mdapiInformation);
-        auto pMetric = OaMetricImp::create(*metricSource, properties);
+        getL0MetricPropertiesFromMdapiInformation(properties, mdapiInformation);
+        auto pMetric = OaMetricImp::create(*metricSource, mdapiInformation, properties, true);
         UNRECOVERABLE_IF(pMetric == nullptr);
+        static_cast<OaMetricImp *>(pMetric)->setMetricGroup(this);
 
         metrics.push_back(pMetric);
     }

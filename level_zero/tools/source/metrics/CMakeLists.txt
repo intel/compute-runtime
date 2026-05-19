@@ -12,6 +12,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/metric.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_enumeration_imp.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_enumeration_imp.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_enumeration_imp.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_streamer_imp.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_streamer_imp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_query_imp.cpp

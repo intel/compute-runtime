@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,10 @@ struct OaMetricGroupUserDefined : OaMetricGroupImp {
     ze_result_t destroy() override;
 
   protected:
-    OaMetricGroupUserDefined(MetricSource &metricSource) : OaMetricGroupImp(metricSource) { isPredefined = false; }
+    OaMetricGroupUserDefined(const zet_metric_group_properties_t &sourceProperties,
+                             MetricsDiscovery::IMetricSet_1_5 &metricSet,
+                             MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
+                             MetricSource &metricSource) : OaMetricGroupImp(sourceProperties, metricSet, concurrentGroup, metricSource, false) {}
     bool readyToActivate = false;
     bool isMetricSetOpened = false;
     bool isActivated = false;
@@ -95,6 +98,7 @@ struct OaMultiDeviceMetricGroupUserDefined : OaMetricGroupImp {
     OaMultiDeviceMetricGroupUserDefined(MetricSource &metricSource) : OaMetricGroupImp(metricSource) {
         isMultiDevice = true;
     }
+
     static OaMultiDeviceMetricGroupUserDefined *create(MetricSource &metricSource,
                                                        std::vector<MetricGroupImp *> &subDeviceMetricGroups,
                                                        std::vector<MultiDeviceMetricImp *> &multiDeviceMetrics);

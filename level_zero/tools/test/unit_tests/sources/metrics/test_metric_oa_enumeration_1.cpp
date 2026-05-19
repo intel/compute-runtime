@@ -14,6 +14,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.inl"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 #include "level_zero/zet_intel_gpu_metric.h"
@@ -1093,7 +1094,7 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetMetricGetPropertiestIs
     EXPECT_EQ(1u, metric.GetParamsCalled);
 }
 
-TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCalledThenReturnSuccess) {
+TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiesIsCalledThenReturnSuccess) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1183,7 +1184,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCa
     EXPECT_EQ(1u, metric.GetParamsCalled);
 }
 
-TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCalledThenReturnSuccessExt) {
+TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiesIsCalledThenReturnSuccessExt) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -3284,6 +3285,11 @@ TEST_P(MetricEnumerationTestMetricTypes, givenValidMetricTypesWhenSetAndGetIsSam
     EXPECT_EQ(strcmp(metricProperties.description, metricParams.LongName), 0);
     EXPECT_EQ(metricProperties.metricType, static_cast<zet_metric_type_t>(metricType));
     EXPECT_EQ(metricProperties.resultType, ZET_VALUE_TYPE_UINT64);
+
+    OaMetricImp *oaMetric = static_cast<OaMetricImp *>(Metric::fromHandle(metricHandle));
+    EXPECT_EQ(oaMetric->getMdapiMetric(), &metric);
+    EXPECT_EQ(oaMetric->getMdapiInformation(), nullptr);
+    EXPECT_EQ(oaMetric->getMetricGroup(), static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(metricGroupHandle)));
 }
 
 std::vector<MetricsDiscovery::TMetricType>
@@ -3314,6 +3320,7 @@ class MetricEnumerationTestInformationTypes : public MetricEnumerationTest,
         validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_CONTEXT_ID_TAG] = ZET_METRIC_TYPE_RAW;
         validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_SAMPLE_PHASE] = ZET_METRIC_TYPE_RAW;
         validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_GPU_NODE] = ZET_METRIC_TYPE_RAW;
+        validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_LAST] = ZET_METRIC_TYPE_RAW;
     }
     ~MetricEnumerationTestInformationTypes() override {}
 };
@@ -3406,13 +3413,18 @@ TEST_P(MetricEnumerationTestInformationTypes, givenValidInformationTypesWhenSetA
     EXPECT_EQ(strcmp(metricProperties.component, sourceInformationParams.GroupName), 0);
     EXPECT_EQ(strcmp(metricProperties.resultUnits, sourceInformationParams.InfoUnits), 0);
     EXPECT_EQ(metricProperties.metricType, validate[infoType]);
+
+    OaMetricImp *oaMetric = static_cast<OaMetricImp *>(Metric::fromHandle(infoHandle));
+    EXPECT_EQ(oaMetric->getMdapiMetric(), nullptr);
+    EXPECT_EQ(oaMetric->getMdapiInformation(), &information);
+    EXPECT_EQ(oaMetric->getMetricGroup(), static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(metricGroupHandle)));
 }
 
 std::vector<MetricsDiscovery::TInformationType>
 getListOfInfoTypes() {
     std::vector<MetricsDiscovery::TInformationType> infoTypes = {};
     for (int type = MetricsDiscovery::TInformationType::INFORMATION_TYPE_REPORT_REASON;
-         type < MetricsDiscovery::TInformationType::INFORMATION_TYPE_LAST;
+         type <= MetricsDiscovery::TInformationType::INFORMATION_TYPE_LAST;
          type++) {
         infoTypes.push_back(static_cast<MetricsDiscovery::TInformationType>(type));
     }
@@ -3422,6 +3434,16 @@ getListOfInfoTypes() {
 INSTANTIATE_TEST_SUITE_P(parameterizedMetricEnumerationTestInformationTypes,
                          MetricEnumerationTestInformationTypes,
                          ::testing::ValuesIn(getListOfInfoTypes()));
+
+TEST_F(MetricEnumerationTest, givenNonExistingMdapiEntryTypeWhenCreatingMetricThenMdapiObjectIsNotSet) {
+    MockMetricSource mockMetricSource{};
+    zet_metric_properties_t properties = {};
+    uint32_t mdapiMetricType = 0xFFFFFFFF;
+    auto oaMetric = static_cast<OaMetricImp *>(OaMetricImp::create(mockMetricSource, &mdapiMetricType, properties, true));
+    EXPECT_EQ(oaMetric->getMdapiMetric(), nullptr);
+    EXPECT_EQ(oaMetric->getMdapiInformation(), nullptr);
+    delete oaMetric;
+}
 
 TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsTrue) {
 

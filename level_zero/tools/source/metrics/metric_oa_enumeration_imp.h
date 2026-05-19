@@ -73,11 +73,7 @@ struct MetricEnumeration {
         uint32_t index) {
         return metricDevice->GetConcurrentGroup(index);
     }
-    zet_metric_type_t getMetricType(const MetricsDiscovery::TMetricType sourceMetricType) const;
-    zet_value_type_t
-    getMetricResultType(const MetricsDiscovery::TMetricResultType sourceMetricResultType) const;
-    void getL0MetricPropertiesFromMdapiMetric(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IMetric_1_0 *mdapiMetric);
-    void getL0MetricPropertiesFromMdapiInformation(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IInformation_1_0 *mdapiInformation);
+
     MetricsDiscovery::IInformationLatest *getOaBufferOverflowInformation() const { return pOaBufferOverflowInformation; }
     ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables);
     MetricsDiscovery::IConcurrentGroup_1_13 *getConcurrentGroup() {
@@ -98,6 +94,14 @@ struct MetricEnumeration {
         return metricSource.getMetricDeviceContext().isProgrammableMetricsEnabled;
     }
 
+    // Metrics Discovery types mapping.
+    static uint32_t getMetricTierNumber(const uint32_t sourceUsageFlagsMask);
+    static zet_metric_type_t
+    getInformationType(const MetricsDiscovery::TInformationType sourceInformationType);
+    static zet_metric_type_t getMetricType(const MetricsDiscovery::TMetricType sourceMetricType);
+    static zet_value_type_t
+    getMetricResultType(const MetricsDiscovery::TMetricResultType sourceMetricResultType);
+
   protected:
     ze_result_t initialize();
     virtual ze_result_t openMetricsDiscovery();
@@ -110,13 +114,7 @@ struct MetricEnumeration {
                                  MetricsDiscovery::IConcurrentGroup_1_13 &pConcurrentGroup,
                                  const uint32_t domain,
                                  const zet_metric_group_sampling_type_flag_t samplingType);
-    ze_result_t createMetrics(MetricsDiscovery::IMetricSet_1_5 &metricSet,
-                              std::vector<Metric *> &metrics);
 
-    // Metrics Discovery types mapping.
-    uint32_t getMetricTierNumber(const uint32_t sourceUsageFlagsMask) const;
-    zet_metric_type_t
-    getMetricType(const MetricsDiscovery::TInformationType sourceInformationType) const;
     zet_metric_group_sampling_type_flags_t getSamplingTypeFromApiMask(const uint32_t apiMask);
     std::vector<MetricProgrammable *> &getProgrammables() {
         return metricProgrammables;
@@ -153,7 +151,12 @@ struct MetricEnumeration {
 
 struct OaMetricGroupImp : public MetricGroupImp {
     ~OaMetricGroupImp() override;
-    OaMetricGroupImp(MetricSource &metricSource) : MetricGroupImp(metricSource) {}
+    OaMetricGroupImp(MetricSource &metricSource) : MetricGroupImp(metricSource) {} // User created metric group doesn't have Metrics at creation.
+    OaMetricGroupImp(const zet_metric_group_properties_t &sourceProperties,
+                     MetricsDiscovery::IMetricSet_1_5 &metricSet,
+                     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
+                     MetricSource &metricSource,
+                     bool predefined);
 
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
     ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
@@ -179,11 +182,6 @@ struct OaMetricGroupImp : public MetricGroupImp {
     ze_result_t destroy() override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    ze_result_t initialize(const zet_metric_group_properties_t &sourceProperties,
-                           MetricsDiscovery::IMetricSet_1_5 &metricSet,
-                           MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
-                           const std::vector<Metric *> &groupMetrics,
-                           OaMetricSourceImp &metricSource);
 
     bool activate() override;
     bool deactivate() override;
@@ -221,7 +219,6 @@ struct OaMetricGroupImp : public MetricGroupImp {
     static MetricGroup *create(zet_metric_group_properties_t &properties,
                                MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
-                               const std::vector<Metric *> &metrics,
                                MetricSource &metricSource);
     OaMetricSourceImp *getMetricSource() const { return static_cast<OaMetricSourceImp *>(&metricSource); }
     static ze_result_t getProperties(const zet_metric_group_handle_t handle, zet_metric_group_properties_t *pProperties);
@@ -248,14 +245,20 @@ struct OaMetricGroupImp : public MetricGroupImp {
                                           uint32_t &metricValueCount,
                                           zet_typed_value_t *pCalculatedData);
     ze_result_t getExportDataHeapSize(size_t &exportDataHeapSize);
+    ze_result_t createMetrics(MetricsDiscovery::IMetricSet_1_5 &metricSet,
+                              std::vector<Metric *> &metrics,
+                              OaMetricGroupImp *metricGroup);
+
+    void getL0MetricPropertiesFromMdapiMetric(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IMetric_1_0 *mdapiMetric);
+    void getL0MetricPropertiesFromMdapiInformation(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IInformation_1_0 *mdapiInformation);
 
     // Cached metrics.
-    std::vector<Metric *> metrics;
+    std::vector<Metric *> metrics = {};
     zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     MetricsDiscovery::IMetricSet_1_5 *pReferenceMetricSet = nullptr;
     MetricsDiscovery::IConcurrentGroup_1_13 *pReferenceConcurrentGroup = nullptr;
 
-    std::vector<MetricGroupImp *> metricGroups;
+    std::vector<MetricGroupImp *> metricGroups = {};
     size_t cachedExportDataHeapSize = 0;
     zet_metric_group_type_exp_flags_t metricGroupType = ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER;
 
@@ -278,7 +281,24 @@ struct OaMetricImp : public MetricImp {
 
     ze_result_t initialize(const zet_metric_properties_t &sourceProperties);
 
-    static Metric *create(MetricSource &metricSource, zet_metric_properties_t &properties);
+    template <typename MdapiEntryType>
+    static Metric *create(MetricSource &metricSource, MdapiEntryType *mdapiEntry, zet_metric_properties_t &properties, bool isPredefined);
+
+    OaMetricGroupImp *getMetricGroup() const {
+        return metricGroup;
+    }
+
+    MetricsDiscovery::IMetric_1_0 *getMdapiMetric() const {
+        return mdapiMetric;
+    }
+
+    MetricsDiscovery::IInformation_1_0 *getMdapiInformation() const {
+        return mdapiInformation;
+    }
+
+    void setMetricGroup(OaMetricGroupImp *group) {
+        metricGroup = group;
+    }
 
   protected:
     void copyProperties(const zet_metric_properties_t &source,
@@ -286,6 +306,9 @@ struct OaMetricImp : public MetricImp {
 
     zet_metric_properties_t properties{
         ZET_STRUCTURE_TYPE_METRIC_PROPERTIES};
+    OaMetricGroupImp *metricGroup = nullptr;
+    MetricsDiscovery::IMetric_1_0 *mdapiMetric = nullptr;
+    MetricsDiscovery::IInformation_1_0 *mdapiInformation = nullptr;
 };
 
 } // namespace L0
