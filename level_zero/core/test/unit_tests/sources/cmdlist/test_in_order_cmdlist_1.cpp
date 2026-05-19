@@ -2550,6 +2550,7 @@ HWTEST_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingFromDifferentCm
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
+    ultCsr->residencyContainerDuplicateRemovalRequired = true;
     auto heaplessPrologProgrammed = ultCsr->heaplessPrologProgrammed;
 
     if (heaplessPrologProgrammed) {
@@ -2649,6 +2650,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenDispatchin
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
+    ultCsr->residencyContainerDuplicateRemovalRequired = true;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 0u : 1u, immCmdList->inOrderExecInfo->getCounterValue());
@@ -5958,6 +5960,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenHandl
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
     ultCsr->storeMakeResidentAllocations = true;
+    ultCsr->residencyContainerDuplicateRemovalRequired = true;
 
     constexpr uint64_t counterValue = 4;
     constexpr uint64_t incValue = 2;

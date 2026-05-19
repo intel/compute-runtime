@@ -33,6 +33,22 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenL0ApiConfigWhenCreatingDrmCsrThenE
     EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenVmBindAvailableWhenCreatingDrmCsrThenResidencyContainerDuplicateRemovalIsNotRequired) {
+    mock->callBaseIsVmBindAvailable = false;
+    mock->bindAvailable = true;
+
+    MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1);
+    EXPECT_FALSE(csr.isResidencyContainerDuplicateRemovalRequired());
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenVmBindNotAvailableWhenCreatingDrmCsrThenResidencyContainerDuplicateRemovalIsRequired) {
+    mock->callBaseIsVmBindAvailable = false;
+    mock->bindAvailable = false;
+
+    MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1);
+    EXPECT_TRUE(csr.isResidencyContainerDuplicateRemovalRequired());
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionValueThenTaskCountOfAllocationIsReturned) {
     MockGraphicsAllocation allocation{};
     uint32_t expectedValue = 0x1234;

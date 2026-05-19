@@ -328,6 +328,10 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     virtual bool isMultiOsContextCapable() const = 0;
 
+    bool isResidencyContainerDuplicateRemovalRequired() const {
+        return residencyContainerDuplicateRemovalRequired;
+    }
+
     virtual MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const = 0;
 
     void setLatestSentTaskCount(TaskCountType latestSentTaskCount) {
@@ -793,6 +797,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool use4GbHeaps = true;
     bool csrSurfaceProgrammingDone = false;
     bool latestFlushIsTaskCountUpdateOnly = false;
+    bool residencyContainerDuplicateRemovalRequired = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandStreamReceiver>);

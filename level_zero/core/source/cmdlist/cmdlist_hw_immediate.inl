@@ -463,7 +463,10 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
                                                                                                                bool requireTaskCountUpdate, CommandQueue *cmdQ,
                                                                                                                MutexLock *outerLock,
                                                                                                                std::unique_lock<std::mutex> *outerLockForIndirect) {
-    this->commandContainer.removeDuplicatesFromResidencyContainer();
+    auto csr = cmdQ->getCsr();
+    if (csr->isResidencyContainerDuplicateRemovalRequired()) {
+        this->commandContainer.removeDuplicatesFromResidencyContainer();
+    }
 
     auto commandStream = this->commandContainer.getCommandStream();
     size_t commandStreamStart = this->cmdListCurrentStartOffset;
@@ -478,7 +481,6 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         }
     }
 
-    auto csr = cmdQ->getCsr();
     auto lockCSR = outerLock != nullptr ? std::move(*outerLock) : csr->obtainUniqueOwnership();
 
     std::unique_lock<std::mutex> lockForIndirect;

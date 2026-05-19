@@ -106,6 +106,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::programStateSip;
     using BaseClass::programVFEState;
     using BaseClass::requiresInstructionCacheFlush;
+    using BaseClass::residencyContainerDuplicateRemovalRequired;
     using BaseClass::rootDeviceIndex;
     using BaseClass::shouldProgramExceptions;
     using BaseClass::skipPreemptionAllocation;

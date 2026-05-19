@@ -38,6 +38,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
 
     this->drm = rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>();
+    this->residencyContainerDuplicateRemovalRequired = !this->vmBindAvailable;
     residency.reserve(512);
     execObjectsStorage.reserve(512);
 

@@ -1334,6 +1334,62 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaunc
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
+HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListAndCsrRequiringResidencyDuplicateRemovalWhenExecutingFlushTaskThenDuplicatesAreNotPassedToMakeResident) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.residencyContainerDuplicateRemovalRequired = true;
+    csr.storeMakeResidentAllocations = true;
+
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    ze_result_t result;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false,
+                                                                              NEO::EngineGroupType::renderCompute, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    NEO::MockGraphicsAllocation allocationA;
+    NEO::MockGraphicsAllocation allocationB;
+    auto &residency = commandList->getCmdContainer().getResidencyContainer();
+    residency.clear();
+    residency.push_back(&allocationA);
+    residency.push_back(&allocationB);
+    residency.push_back(&allocationA);
+    residency.push_back(&allocationB);
+
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::kernel, false, false, nullptr, nullptr));
+
+    EXPECT_EQ(1u, csr.makeResidentAllocations[&allocationA]);
+    EXPECT_EQ(1u, csr.makeResidentAllocations[&allocationB]);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListAndCsrNotRequiringResidencyDuplicateRemovalWhenExecutingFlushTaskThenDuplicatesArePassedToMakeResident) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.residencyContainerDuplicateRemovalRequired = false;
+    csr.storeMakeResidentAllocations = true;
+
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    ze_result_t result;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false,
+                                                                              NEO::EngineGroupType::renderCompute, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    NEO::MockGraphicsAllocation allocationA;
+    NEO::MockGraphicsAllocation allocationB;
+    auto &residency = commandList->getCmdContainer().getResidencyContainer();
+    residency.clear();
+    residency.push_back(&allocationA);
+    residency.push_back(&allocationB);
+    residency.push_back(&allocationA);
+    residency.push_back(&allocationB);
+
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::kernel, false, false, nullptr, nullptr));
+
+    EXPECT_EQ(2u, csr.makeResidentAllocations[&allocationA]);
+    EXPECT_EQ(2u, csr.makeResidentAllocations[&allocationB]);
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteArgAndPlatformRequiresFlushWhenLaunchingKernelThenPipeControlWithTextureCacheInvalidationIsAdded, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto releaseHelper = std::make_unique<MockReleaseHelper>();

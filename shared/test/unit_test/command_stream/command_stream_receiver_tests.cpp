@@ -160,6 +160,10 @@ TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionValueTh
     EXPECT_EQ(expectedValue, commandStreamReceiver->getCompletionValue(allocation));
 }
 
+TEST_F(CommandStreamReceiverTest, givenBaseCommandStreamReceiverWhenQueryingResidencyContainerDuplicateRemovalRequiredThenDefaultsToFalse) {
+    EXPECT_FALSE(commandStreamReceiver->isResidencyContainerDuplicateRemovalRequired());
+}
+
 TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenSubmitingCsrDependencyWithNoTagFlushThenFalseRturned) {
     EXPECT_FALSE(commandStreamReceiver->submitDependencyUpdate(nullptr));
 }
