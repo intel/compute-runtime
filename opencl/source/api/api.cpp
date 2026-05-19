@@ -2365,7 +2365,7 @@ cl_int CL_API_CALL clFinish(cl_command_queue commandQueue) {
     auto pCommandQueue = castToObject<CommandQueue>(commandQueue);
 
     retVal = pCommandQueue
-                 ? pCommandQueue->finish(false)
+                 ? pCommandQueue->finish(true)
                  : CL_INVALID_COMMAND_QUEUE;
     TRACING_EXIT(ClFinish, &retVal);
     return retVal;

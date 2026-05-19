@@ -252,12 +252,18 @@ class MockCommandQueue : public CommandQueue {
 
     cl_int finish(bool resolvePendingL3Flushes) override {
         ++finishCalledCount;
+        finishCalledWithResolvePendingL3Flushes = resolvePendingL3Flushes;
         return CL_SUCCESS;
     }
 
     cl_int flush() override { return CL_SUCCESS; }
 
     void programPendingL3Flushes(CommandStreamReceiver &csr, bool &waitForTaskCountRequired, bool resolvePendingL3Flushes) override {
+        programPendingL3FlushesCalledCount++;
+        programPendingL3FlushesCalledWithResolve = resolvePendingL3Flushes;
+        if (programPendingL3FlushesSetsWaitRequired) {
+            waitForTaskCountRequired = true;
+        }
     }
 
     bool waitForTimestamps(std::span<CopyEngineState> copyEnginesToWait, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override {
@@ -270,8 +276,12 @@ class MockCommandQueue : public CommandQueue {
     bool enqueueMarkerWithWaitListCalled = false;
     bool releaseIndirectHeapCalled = false;
     bool waitForTimestampsCalled = false;
+    uint32_t programPendingL3FlushesCalledCount = 0;
+    bool programPendingL3FlushesCalledWithResolve = false;
+    bool programPendingL3FlushesSetsWaitRequired = false;
     cl_int writeBufferRetValue = CL_SUCCESS;
     uint32_t finishCalledCount = 0;
+    bool finishCalledWithResolvePendingL3Flushes = false;
     uint32_t isCompletedCalled = 0;
     uint32_t writeBufferCounter = 0;
     bool writeBufferBlocking = false;

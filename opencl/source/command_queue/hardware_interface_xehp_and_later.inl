@@ -108,20 +108,21 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     if (timestampPacketNode) {
 
         GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacket<WalkerType>(&commandStream, &walkerCmd, timestampPacketNode, rootDeviceEnvironment);
+    }
 
-        if constexpr (heaplessModeEnabled) {
-            auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-            if (productHelper.isL3FlushAfterPostSyncSupported()) {
-                GpgpuWalkerHelper<GfxFamily>::setupTimestampPacketFlushL3(walkerCmd,
-                                                                          commandQueue,
-                                                                          FlushL3Args{.containsPrintBuffer = kernel.hasPrintfOutput(),
-                                                                                      .usingSharedObjects = kernel.isUsingSharedObjArgs(),
-                                                                                      .signalEvent = walkerArgs.event != nullptr,
-                                                                                      .blocking = walkerArgs.blocking,
-                                                                                      .usingSystemAllocation = kernelSystemAllocation});
-            }
+    if constexpr (heaplessModeEnabled) {
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        if (productHelper.isL3FlushAfterPostSyncSupported()) {
+            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacketFlushL3(walkerCmd,
+                                                                      commandQueue,
+                                                                      FlushL3Args{.containsPrintBuffer = kernel.hasPrintfOutput(),
+                                                                                  .usingSharedObjects = kernel.isUsingSharedObjArgs(),
+                                                                                  .signalEvent = walkerArgs.event != nullptr,
+                                                                                  .blocking = walkerArgs.blocking,
+                                                                                  .usingSystemAllocation = kernelSystemAllocation});
         }
     }
+
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
 
     if (auto kernelAllocation = kernelInfo.getIsaGraphicsAllocation()) {

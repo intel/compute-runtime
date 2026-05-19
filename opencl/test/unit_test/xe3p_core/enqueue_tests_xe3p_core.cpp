@@ -20,10 +20,13 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/command_queue/hardware_interface.h"
+#include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "gtest/gtest.h"
@@ -579,6 +582,64 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenMultipleFlushConfigurationsWhen
         EXPECT_TRUE(postSync.getL2TransientFlush());
         EXPECT_TRUE(postSync.getL2Flush());
     }
+}
+
+using ZeroCopyReadBufferPendingFlushTestsXe3pCore = EnqueueFixtureXe3pCore;
+
+XE3P_CORETEST_F(ZeroCopyReadBufferPendingFlushTestsXe3pCore, givenPendingL3FlushAndZeroCopyBufferWhenEnqueueReadBufferWithEventThenFlushIsDeferredToWait) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
+    NEO::debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+
+    auto &productHelper = this->clDevice->getDevice().getProductHelper();
+    if (!productHelper.isL3FlushAfterPostSyncSupported()) {
+        GTEST_SKIP();
+    }
+
+    auto commandQueue = createCommandQueue<FamilyType>();
+    auto &csr = clDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    MockBuffer buffer;
+    buffer.isZeroCopy = true;
+
+    commandQueue->setPendingL3FlushForHostVisibleResources(true);
+    void *ptr = buffer.getCpuAddressForMemoryTransfer();
+    cl_event outEvent = nullptr;
+
+    auto retVal = commandQueue->enqueueReadBuffer(&buffer, CL_FALSE, 0, sizeof(float), ptr, nullptr, 0, nullptr, &outEvent);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, outEvent);
+
+    EXPECT_FALSE(csr.flushTagUpdateCalled);
+    EXPECT_TRUE(commandQueue->getPendingL3FlushForHostVisibleResources());
+
+    clReleaseEvent(outEvent);
+}
+
+XE3P_CORETEST_F(ZeroCopyReadBufferPendingFlushTestsXe3pCore, givenPendingL3FlushAndZeroCopyBufferWhenEnqueueReadBufferBlockingThenFinishIsCalledWithResolve) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
+    NEO::debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+
+    auto &productHelper = this->clDevice->getDevice().getProductHelper();
+    if (!productHelper.isL3FlushAfterPostSyncSupported()) {
+        GTEST_SKIP();
+    }
+
+    auto commandQueue = createCommandQueue<FamilyType>();
+    auto &csr = clDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    MockBuffer buffer;
+    buffer.isZeroCopy = true;
+    commandQueue->setPendingL3FlushForHostVisibleResources(true);
+    void *ptr = buffer.getCpuAddressForMemoryTransfer();
+
+    auto retVal = commandQueue->enqueueReadBuffer(&buffer, CL_TRUE, 0, sizeof(float), ptr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(commandQueue->getPendingL3FlushForHostVisibleResources());
+    EXPECT_TRUE(csr.flushTagUpdateCalled);
 }
 
 XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenL3FlushAfterPostSyncEnabledAndBlockingKernelWhenProgramWalkerThenFlushOptionsAreSetCorrectly) {

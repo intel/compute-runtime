@@ -1306,7 +1306,11 @@ TEST_F(SingleBufferTest, givenFillMemObjWithZerosWhenCreateBufferThenFillSubmitt
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(nullptr, buffer);
 
-    EXPECT_EQ(context->getSpecialQueue(0)->taskCount, prevTaskCount + 1u);
+    bool flushWithL3 = pClDevice->getDevice().getProductHelper().isL3FlushAfterPostSyncSupported();
+    auto expectedTaskCount = prevTaskCount;
+    expectedTaskCount += flushWithL3 ? 2u : 1u;
+
+    EXPECT_EQ(expectedTaskCount, context->getSpecialQueue(0)->taskCount);
 
     clReleaseMemObject(buffer);
 }

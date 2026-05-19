@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,5 +23,11 @@ TEST_F(ClFinishTests, GivenValidCommandQueueWhenWaitingForFinishThenSuccessIsRet
 TEST_F(ClFinishTests, GivenNullCommandQueueWhenWaitingForFinishThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clFinish(nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
+}
+
+TEST_F(ClFinishTests, WhenClFinishIsCalledThenFinishIsCalledWithResolvePendingL3Flushes) {
+    retVal = clFinish(pCommandQueue);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(pCommandQueue->finishCalledWithResolvePendingL3Flushes);
 }
 } // namespace ULT

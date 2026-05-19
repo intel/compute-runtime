@@ -496,7 +496,17 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
         this->setWaitForTaskCountRequired(false);
     }
 
-    waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, skipWaitOnTaskCount);
+    auto taskCountToWait = taskCount.load();
+
+    bool pendingL3FlushRequired = false;
+    auto &csr = cmdQueue->getGpgpuCommandStreamReceiver();
+    cmdQueue->programPendingL3Flushes(csr, pendingL3FlushRequired, true);
+    if (pendingL3FlushRequired) {
+        taskCountToWait = std::max(taskCountToWait, csr.peekTaskCount());
+        skipWaitOnTaskCount = false;
+    }
+
+    waitStatus = cmdQueue->waitUntilComplete(taskCountToWait, states, flushStamp->peekStamp(), useQuickKmdSleep, true, skipWaitOnTaskCount);
     if (waitStatus == WaitStatus::gpuHang) {
         return WaitStatus::gpuHang;
     }

@@ -1023,6 +1023,35 @@ TEST_F(InternalsEventTest, givenEventWhenWaitThenWaitForTimestampsCalled) {
     EXPECT_TRUE(cmdQ.waitForTimestampsCalled);
 }
 
+TEST_F(InternalsEventTest, givenEventWhenWaitThenProgramPendingL3FlushesIsCalledWithResolveTrue) {
+    MockCommandQueue cmdQ(mockContext, pClDevice, nullptr, false);
+    MockEvent<Event> event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+
+    EXPECT_EQ(0u, cmdQ.programPendingL3FlushesCalledCount);
+
+    event.wait(false, false);
+
+    EXPECT_EQ(1u, cmdQ.programPendingL3FlushesCalledCount);
+    EXPECT_TRUE(cmdQ.programPendingL3FlushesCalledWithResolve);
+}
+
+HWTEST_F(InternalsEventTest, givenEventWhenWaitAndPendingL3FlushRequiredThenTaskCountToWaitIsUpdatedFromCsr) {
+    MockCommandQueue cmdQ(mockContext, pClDevice, nullptr, false);
+    cmdQ.programPendingL3FlushesSetsWaitRequired = true;
+    cmdQ.waitUntilCompleteReturnValue = WaitStatus::ready;
+
+    auto &csr = cmdQ.getGpgpuCommandStreamReceiver();
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(&csr);
+    ultCsr->taskCount = 10u;
+    *ultCsr->getTagAddress() = 10u;
+
+    MockEvent<Event> event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 5);
+
+    event.wait(false, false);
+
+    EXPECT_EQ(10u, cmdQ.latestTaskCountWaited.load());
+}
+
 TEST_F(InternalsEventTest, GivenProfilingWHENMapOperationTHENTimesSet) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue *pCmdQ = new MockCommandQueue(mockContext, pClDevice, props, false);
