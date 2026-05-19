@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,106 +14,13 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr double minFreq = 300.0;
-constexpr double maxFreq = 1100.0;
-constexpr double request = 300.0;
-constexpr double actual = 300.0;
-constexpr double efficient = 300.0;
-constexpr double maxVal = 1100.0;
-constexpr double minVal = 300.0;
-
-class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
-  protected:
-    L0::Sysman::SysmanDevice *device = nullptr;
-    MockSysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
-    uint32_t numClocks = 0;
-    double step = 0;
-    uint32_t handleComponentCount = 1u;
-    MockXeFrequencySysfsAccess *sysfsAccess = nullptr;
-
-    void SetUp() override {
-        SysmanDeviceFixture::SetUp();
-        device = pSysmanDevice;
-
-        pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
-        pSysmanKmdInterface->pSysfsAccess = std::make_unique<MockXeFrequencySysfsAccess>();
-        pLinuxSysmanImp->pSysfsAccess = pSysmanKmdInterface->pSysfsAccess.get();
-        pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
-
-        auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
-        if (rootDeviceEnvironment.getHardwareInfo()->capabilityTable.supportsImages) {
-            handleComponentCount = 2;
-        }
-
-        sysfsAccess = static_cast<MockXeFrequencySysfsAccess *>(pSysmanKmdInterface->pSysfsAccess.get());
-        sysfsAccess->setVal(minFreqFile, minFreq);
-        sysfsAccess->setVal(minFreqFileMedia, minFreq);
-        sysfsAccess->setVal(maxFreqFile, maxFreq);
-        sysfsAccess->setVal(maxFreqFileMedia, maxFreq);
-        sysfsAccess->setVal(requestFreqFile, request);
-        sysfsAccess->setVal(requestFreqFileMedia, request);
-        sysfsAccess->setVal(actualFreqFile, actual);
-        sysfsAccess->setVal(actualFreqFileMedia, actual);
-        sysfsAccess->setVal(efficientFreqFile, efficient);
-        sysfsAccess->setVal(efficientFreqFileMedia, efficient);
-        sysfsAccess->setVal(maxValFreqFile, maxVal);
-        sysfsAccess->setVal(maxValFreqFileMedia, maxVal);
-        sysfsAccess->setVal(minValFreqFile, minVal);
-        sysfsAccess->setVal(minValFreqFileMedia, minVal);
-        step = 50;
-        numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
-        for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
-            delete handle;
-        }
-        pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
-    }
-
-    void TearDown() override {
-        SysmanDeviceFixture::TearDown();
-    }
-
-    double clockValue(const double calculatedClock) {
-        uint32_t actualClock = static_cast<uint32_t>(calculatedClock + 0.5);
-        return static_cast<double>(actualClock);
-    }
-
-    std::vector<zes_freq_handle_t> getFreqHandles(uint32_t count) {
-        std::vector<zes_freq_handle_t> handles(count, nullptr);
-        EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-        return handles;
-    }
-};
+using IsNotCRI = IsNoneProducts<IGFX_CRI>;
 
 TEST_F(SysmanDeviceFrequencyFixtureXe, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfFrequencyFilesThenFalseValueIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_FALSE(pSysmanKmdInterface->isDefaultFrequencyAvailable());
     EXPECT_FALSE(pSysmanKmdInterface->isBoostFrequencyAvailable());
     EXPECT_FALSE(pSysmanKmdInterface->isTdpFrequencyAvailable());
-}
-
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesThenNonZeroCountIsReturnedAndCallSucceds) {
-    uint32_t count = 0U;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(count, handleComponentCount);
-
-    uint32_t testCount = count + 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &testCount, nullptr));
-    EXPECT_EQ(count, testCount);
-
-    auto handles = getFreqHandles(count);
-    for (auto handle : handles) {
-        EXPECT_NE(handle, nullptr);
-    }
-}
-
-TEST_F(SysmanDeviceFrequencyFixtureXe, GivenComponentCountZeroAndValidPtrWhenEnumeratingFrequencyHandlesThenNonZeroCountAndNoHandlesAreReturnedAndCallSucceds) {
-    uint32_t count = 0U;
-    zes_freq_handle_t handle = static_cast<zes_freq_handle_t>(0UL);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, &handle));
-    EXPECT_EQ(count, handleComponentCount);
-    EXPECT_EQ(handle, static_cast<zes_freq_handle_t>(0UL));
 }
 
 TEST_F(SysmanDeviceFrequencyFixtureXe, GivenActualComponentCountTwoWhenTryingToGetOneComponentOnlyThenOneComponentIsReturnedAndCountUpdated) {
@@ -161,53 +68,6 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleAndZeroCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds, IsPVC) {
-    auto handles = getFreqHandles(handleComponentCount);
-    for (auto handle : handles) {
-        EXPECT_NE(handle, nullptr);
-        uint32_t count = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetAvailableClocks(handle, &count, nullptr));
-        EXPECT_EQ(numClocks, count);
-    }
-}
-
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleAndZeroCountWhenCountIsMoreThanNumClocksThenCallSucceeds, IsPVC) {
-    auto handles = getFreqHandles(handleComponentCount);
-    for (auto handle : handles) {
-        EXPECT_NE(handle, nullptr);
-        uint32_t count = 80;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetAvailableClocks(handle, &count, nullptr));
-        EXPECT_EQ(numClocks, count);
-    }
-}
-
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleAndZeroCountWhenCountIsLessThanNumClocksThenCallSucceeds, IsPVC) {
-    auto handles = getFreqHandles(handleComponentCount);
-    for (auto handle : handles) {
-        EXPECT_NE(handle, nullptr);
-        uint32_t count = 20;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetAvailableClocks(handle, &count, nullptr));
-    }
-}
-
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleAndCorrectCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds, IsPVC) {
-    auto handles = getFreqHandles(handleComponentCount);
-    for (auto handle : handles) {
-        uint32_t count = 0;
-
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetAvailableClocks(handle, &count, nullptr));
-        EXPECT_EQ(numClocks, count);
-
-        double *clocks = new double[count];
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetAvailableClocks(handle, &count, clocks));
-        EXPECT_EQ(numClocks, count);
-        for (uint32_t i = 0; i < count; i++) {
-            EXPECT_DOUBLE_EQ(clockValue(minFreq + (step * i)), clocks[i]);
-        }
-        delete[] clocks;
-    }
-}
-
 TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidateFrequencyGetRangeWhengetMaxAndgetMinFailsThenFrequencyGetRangeCallReturnsNegativeValuesForRange) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
@@ -235,59 +95,6 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures1ThenAPIExitsGracefully, IsXeCore) {
-    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-    ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
-    uint32_t subdeviceId = 0;
-    auto pFrequencyImp = std::make_unique<L0::Sysman::FrequencyImp>(pOsSysman, onSubdevice, subdeviceId, ZES_FREQ_DOMAIN_GPU);
-    zes_freq_range_t limits = {};
-
-    // Verify that Max must be within range.
-    limits.min = minFreq;
-    limits.max = 600.0;
-    sysfsAccess->mockWriteMinResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFrequencyImp->frequencySetRange(&limits));
-
-    sysfsAccess->mockWriteMinResult = ZE_RESULT_ERROR_UNKNOWN;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pFrequencyImp->frequencySetRange(&limits));
-}
-
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures2ThenAPIExitsGracefully, IsXeCore) {
-    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-    ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
-    uint32_t subdeviceId = 0;
-    auto pFrequencyImp = std::make_unique<L0::Sysman::FrequencyImp>(pOsSysman, onSubdevice, subdeviceId, ZES_FREQ_DOMAIN_GPU);
-    zes_freq_range_t limits = {};
-
-    // Verify that Max must be within range.
-    limits.min = 900.0;
-    limits.max = maxFreq;
-    sysfsAccess->mockWriteMaxResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFrequencyImp->frequencySetRange(&limits));
-
-    sysfsAccess->mockWriteMaxResult = ZE_RESULT_ERROR_UNKNOWN;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pFrequencyImp->frequencySetRange(&limits));
-}
-
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds, IsXeCore) {
-    auto handles = getFreqHandles(handleComponentCount);
-    for (auto handle : handles) {
-        const double startingMin = 900.0;
-        const double newMax = 600.0;
-        zes_freq_range_t limits;
-
-        sysfsAccess->setVal(minFreqFile, startingMin);
-        // If the new Max value is less than the old Min
-        // value, the new Min must be set before the new Max
-        limits.min = minFreq;
-        limits.max = newMax;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencySetRange(handle, &limits));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
-        EXPECT_DOUBLE_EQ(minFreq, limits.min);
-        EXPECT_DOUBLE_EQ(newMax, limits.max);
-    }
-}
-
 TEST_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalledAndSettingMaxValueFailsThenFailureIsReturned) {
     sysfsAccess->mockWriteMaxResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     auto handles = getFreqHandles(handleComponentCount);
@@ -299,41 +106,6 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalledAnd
         limits.min = negativeMin;
         limits.max = negativeMax;
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencySetRange(handle, &limits));
-    }
-}
-
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalledAndGettingDefaultMaxValueFailsThenNoFreqRangeIsInEffect, IsXeCore) {
-    auto handles = getFreqHandles(handleComponentCount);
-    for (auto &handle : handles) {
-        const double negativeMin = -1;
-        const double negativeMax = -1;
-        zes_freq_range_t limits;
-
-        limits.min = negativeMin;
-        limits.max = negativeMax;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencySetRange(handle, &limits));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
-        EXPECT_DOUBLE_EQ(-1, limits.min);
-        EXPECT_DOUBLE_EQ(-1, limits.max);
-    }
-}
-
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds, IsXeCore) {
-    auto handles = getFreqHandles(handleComponentCount);
-    for (auto handle : handles) {
-        const double startingMax = 600.0;
-        const double newMin = 900.0;
-        zes_freq_range_t limits;
-
-        sysfsAccess->setVal(maxFreqFile, startingMax);
-        // If the new Min value is greater than the old Max
-        // value, the new Max must be set before the new Min
-        limits.min = newMin;
-        limits.max = maxFreq;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencySetRange(handle, &limits));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
-        EXPECT_DOUBLE_EQ(newMin, limits.min);
-        EXPECT_DOUBLE_EQ(maxFreq, limits.max);
     }
 }
 

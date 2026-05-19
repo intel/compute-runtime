@@ -53,6 +53,9 @@ class SysmanProductHelper {
     // Frequency
     virtual void getFrequencyStepSize(double *pStepSize) = 0;
     virtual bool isFrequencySetRangeSupported() = 0;
+    virtual bool isMemoryDomainSupported() = 0;
+    virtual ze_result_t getActualFrequency(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pActual) = 0;
+    virtual ze_result_t getCurrentVoltage(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pVoltage) = 0;
     virtual zes_freq_throttle_reason_flags_t getThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, void *pNext) = 0;
 
     // Memory

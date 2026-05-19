@@ -1788,6 +1788,11 @@ int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
     return maxPcieGenSupported;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isMemoryDomainSupported() {
+    return false;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

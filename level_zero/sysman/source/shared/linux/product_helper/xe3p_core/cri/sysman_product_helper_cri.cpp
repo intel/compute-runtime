@@ -49,6 +49,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"VR_TEMPERATURE_2", 232},
       {"VR_TEMPERATURE_3", 236},
       {"VRAM_BANDWIDTH", 56},
+      {"VRAM_FREQUENCY", 56},
+      {"VCCDDRQX_VID", 60},
+      {"VCCDDRQ_VID", 60},
       {"XTAL_COUNT", 1016},
       {"XTAL_CLK_FREQUENCY", 4}}},
     {"0x5e2fa230", // CRI OOBMSM Rev 0
@@ -814,6 +817,68 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardMaxTemperature(LinuxSy
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
     return true;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isMemoryDomainSupported() {
+    return true;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pActual) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+
+    uint32_t memoryActualFreq = 0;
+    uint64_t telemOffset = 0;
+    std::string key("VRAM_FREQUENCY");
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryActualFreq)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    *pActual = static_cast<double>(memoryActualFreq & 0xFFFF);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pVoltage) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+
+    uint32_t memoryVoltage = 0;
+    uint64_t telemOffset = 0;
+    std::string key("VCCDDRQX_VID");
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryVoltage)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    // VCCDDRQX VID is 9 bits U1.8 format representation
+    uint32_t vccddrqxVid = memoryVoltage & 0x1FF;
+    double vccddrqxVoltage = static_cast<double>(vccddrqxVid) / 256.0;
+
+    // VCCDDRQ VID is 9 bits U1.8 format representation
+    uint32_t vccddrqVid = (memoryVoltage >> 18) & 0x1FF;
+    double vccddrqVoltage = static_cast<double>(vccddrqVid) / 256.0;
+
+    *pVoltage = std::max(vccddrqxVoltage, vccddrqVoltage);
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>

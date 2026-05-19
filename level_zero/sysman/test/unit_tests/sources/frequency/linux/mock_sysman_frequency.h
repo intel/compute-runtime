@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 
 #include "level_zero/sysman/source/api/frequency/linux/sysman_os_frequency_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 #include "gtest/gtest.h"
 #include "neo_igfxfmid.h"
@@ -356,6 +357,107 @@ class PublicLinuxFrequencyImp : public L0::Sysman::LinuxFrequencyImp {
     using L0::Sysman::LinuxFrequencyImp::getMin;
     using L0::Sysman::LinuxFrequencyImp::getMinVal;
     using L0::Sysman::LinuxFrequencyImp::pSysfsAccess;
+};
+
+constexpr double minFreq = 300.0;
+constexpr double maxFreq = 1100.0;
+constexpr double request = 300.0;
+constexpr double tdp = 1100.0;
+constexpr double actual = 300.0;
+constexpr double efficient = 300.0;
+constexpr double maxVal = 1100.0;
+constexpr double minVal = 300.0;
+constexpr uint32_t handleComponentCount = 1u;
+constexpr uint32_t multiHandleComponentCount = 2u;
+
+class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
+
+  protected:
+    L0::Sysman::SysmanDevice *device = nullptr;
+    std::unique_ptr<MockFrequencySysfsAccess> pSysfsAccess;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
+    uint32_t numClocks = 0;
+    double step = 0;
+
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+        device = pSysmanDevice;
+        pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
+        pSysfsAccess = std::make_unique<MockFrequencySysfsAccess>();
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
+        rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = false;
+        pSysfsAccess->setVal(minFreqFile, minFreq);
+        pSysfsAccess->setVal(maxFreqFile, maxFreq);
+        pSysfsAccess->setVal(requestFreqFile, request);
+        pSysfsAccess->setVal(tdpFreqFile, tdp);
+        pSysfsAccess->setVal(actualFreqFile, actual);
+        pSysfsAccess->setVal(efficientFreqFile, efficient);
+        pSysfsAccess->setVal(maxValFreqFile, maxVal);
+        pSysfsAccess->setVal(minValFreqFile, minVal);
+        step = 50;
+        numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
+
+        // delete handles created in initial SysmanDeviceHandleContext::init() call
+        for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
+            delete handle;
+        }
+        pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
+    }
+
+    void TearDown() override {
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+        SysmanDeviceFixture::TearDown();
+    }
+
+    double clockValue(const double calculatedClock) {
+        // i915 specific. frequency step is a fraction
+        // However, the i915 represents all clock
+        // rates as integer values. So clocks are
+        // rounded to the nearest integer.
+        uint32_t actualClock = static_cast<uint32_t>(calculatedClock + 0.5);
+        return static_cast<double>(actualClock);
+    }
+
+    std::vector<zes_freq_handle_t> getFreqHandles(uint32_t count) {
+        std::vector<zes_freq_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        return handles;
+    }
+};
+
+class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
+  protected:
+    L0::Sysman::SysmanDevice *device = nullptr;
+    std::unique_ptr<MockFrequencySysfsAccess> pSysfsAccess;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
+
+    void SetUp() override {
+        SysmanMultiDeviceFixture::SetUp();
+        device = pSysmanDevice;
+        pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
+        pSysfsAccess = std::make_unique<MockFrequencySysfsAccess>();
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
+        rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.supportsImages = false;
+        // delete handles created in initial SysmanDeviceHandleContext::init() call
+        for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
+            delete handle;
+        }
+        pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
+        getFreqHandles(0);
+    }
+
+    void TearDown() override {
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+        SysmanMultiDeviceFixture::TearDown();
+    }
+
+    std::vector<zes_freq_handle_t> getFreqHandles(uint32_t count) {
+        std::vector<zes_freq_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        return handles;
+    }
 };
 
 } // namespace ult

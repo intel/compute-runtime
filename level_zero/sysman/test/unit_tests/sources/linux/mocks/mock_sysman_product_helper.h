@@ -44,6 +44,7 @@ struct MockSysmanProductHelper : public L0::Sysman::SysmanProductHelperHw<IGFX_U
     std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override { return &mockGuidToKeyOffsetMap; }
     ADDMETHOD_NOBASE(isFrequencySetRangeSupported, bool, false, ());
     ADDMETHOD_NOBASE(isUpstreamPortConnected, bool, true, ());
+    ADDMETHOD_NOBASE(isMemoryDomainSupported, bool, false, ());
 
     ze_result_t mockGetPciStatsResult = ZE_RESULT_SUCCESS;
     ze_result_t getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) override {

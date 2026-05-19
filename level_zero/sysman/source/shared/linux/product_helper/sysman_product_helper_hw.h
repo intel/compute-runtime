@@ -24,6 +24,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // Frequency
     void getFrequencyStepSize(double *pStepSize) override;
     bool isFrequencySetRangeSupported() override;
+    bool isMemoryDomainSupported() override;
+    ze_result_t getActualFrequency(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pActual) override;
+    ze_result_t getCurrentVoltage(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pVoltage) override;
     zes_freq_throttle_reason_flags_t getThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, void *pNext) override;
 
     // Memory

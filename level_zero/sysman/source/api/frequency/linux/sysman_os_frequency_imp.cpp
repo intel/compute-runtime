@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -204,6 +204,10 @@ ze_result_t LinuxFrequencyImp::setOcTjMax(double ocTjMax) {
 }
 
 ze_result_t LinuxFrequencyImp::getMin(double &min) {
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     double freqVal = 0;
     ze_result_t result = pSysfsAccess->read(minFreqFile, freqVal);
     if (ZE_RESULT_SUCCESS != result) {
@@ -232,6 +236,10 @@ ze_result_t LinuxFrequencyImp::setMin(double min) {
 }
 
 ze_result_t LinuxFrequencyImp::getMax(double &max) {
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     double freqVal = 0;
     ze_result_t result = pSysfsAccess->read(maxFreqFile, freqVal);
     if (ZE_RESULT_SUCCESS != result) {
@@ -265,6 +273,10 @@ ze_result_t LinuxFrequencyImp::setMax(double max) {
 }
 
 ze_result_t LinuxFrequencyImp::getRequest(double &request) {
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     double freqVal = 0;
 
     ze_result_t result = pSysfsAccess->read(requestFreqFile, freqVal);
@@ -281,6 +293,10 @@ ze_result_t LinuxFrequencyImp::getRequest(double &request) {
 }
 
 ze_result_t LinuxFrequencyImp::getTdp(double &tdp) {
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
     double freqVal = 0;
 
@@ -302,6 +318,10 @@ ze_result_t LinuxFrequencyImp::getTdp(double &tdp) {
 }
 
 ze_result_t LinuxFrequencyImp::getActual(double &actual) {
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
+        return pSysmanProductHelper->getActualFrequency(pLinuxSysmanImp, frequencyDomainNumber, subdeviceId, &actual);
+    }
+
     double freqVal = 0;
 
     ze_result_t result = pSysfsAccess->read(actualFreqFile, freqVal);
@@ -318,6 +338,10 @@ ze_result_t LinuxFrequencyImp::getActual(double &actual) {
 }
 
 ze_result_t LinuxFrequencyImp::getEfficient(double &efficient) {
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     double freqVal = 0;
 
     ze_result_t result = pSysfsAccess->read(efficientFreqFile, freqVal);
@@ -334,6 +358,10 @@ ze_result_t LinuxFrequencyImp::getEfficient(double &efficient) {
 }
 
 ze_result_t LinuxFrequencyImp::getMaxVal(double &maxVal) {
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     double freqVal = 0;
 
     ze_result_t result = pSysfsAccess->read(maxValFreqFile, freqVal);
@@ -350,6 +378,10 @@ ze_result_t LinuxFrequencyImp::getMaxVal(double &maxVal) {
 }
 
 ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     double freqVal = 0;
 
     ze_result_t result = pSysfsAccess->read(minValFreqFile, freqVal);
@@ -366,10 +398,19 @@ ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
 }
 
 void LinuxFrequencyImp::getCurrentVoltage(double &voltage) {
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
+        pSysmanProductHelper->getCurrentVoltage(pLinuxSysmanImp, frequencyDomainNumber, subdeviceId, &voltage);
+        return;
+    }
+
     voltage = -1.0;
 }
 
 void LinuxFrequencyImp::init() {
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEMORY) {
+        canControl = false;
+        return;
+    }
 
     const std::string baseDir = pSysmanKmdInterface->getBasePathForFreqDomain(subdeviceId, frequencyDomainNumber);
     bool baseDirectoryExists = false;
@@ -427,6 +468,12 @@ std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSy
         }
     }
     freqDomains.push_back(ZES_FREQ_DOMAIN_GPU);
+
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    if (pSysmanProductHelper->isMemoryDomainSupported()) {
+        freqDomains.push_back(ZES_FREQ_DOMAIN_MEMORY);
+    }
+
     return freqDomains;
 }
 

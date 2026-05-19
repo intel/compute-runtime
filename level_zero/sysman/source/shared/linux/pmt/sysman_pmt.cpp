@@ -204,7 +204,6 @@ ze_result_t PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(const std::m
         if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
             continue;
         }
-
         const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
         for (const auto &[key, value] : tempKeyOffsetMap) {
             keyOffsetMap[key] = value;
