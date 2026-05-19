@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@ struct MockAssertHandler : NEO::AssertHandler {
 
     using NEO::AssertHandler::assertBufferSize;
     using NEO::AssertHandler::AssertHandler;
+    using NEO::AssertHandler::resetAssertBuffer;
 
     void printAssertAndAbort() override {
         printAssertAndAbortCalled++;

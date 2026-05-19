@@ -48,13 +48,28 @@ void AssertHandler::printMessage() const {
     printfFormatter.printKernelOutput([](char *str) { printToStderr(str); });
 }
 
+void AssertHandler::resetAssertBuffer() {
+    auto header = reinterpret_cast<AssertBufferHeader *>(assertBuffer->getUnderlyingBuffer());
+    header->flags = 0;
+    header->begin = sizeof(AssertBufferHeader);
+}
+
 void AssertHandler::printAssertAndAbort() {
-    if (checkAssert()) {
-        std::call_once(abortOnce, [this]() {
-            printMessage();
-            device->stopDirectSubmissionAndWaitForCompletion();
-            abortExecution();
-        });
+    std::lock_guard<std::mutex> lock(mtx);
+
+    auto header = reinterpret_cast<AssertBufferHeader *>(assertBuffer->getUnderlyingBuffer());
+    bool hasMessages = header->begin > sizeof(AssertBufferHeader);
+    bool assertFired = checkAssert();
+
+    if (hasMessages) {
+        printMessage();
+    }
+
+    resetAssertBuffer();
+
+    if (assertFired) {
+        device->stopDirectSubmissionAndWaitForCompletion();
+        abortExecution();
     }
 }
 

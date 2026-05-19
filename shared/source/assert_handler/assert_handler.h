@@ -42,8 +42,9 @@ class AssertHandler : NonCopyableAndNonMovableClass {
   protected:
     static constexpr size_t assertBufferSize = MemoryConstants::pageSize64k;
     void printMessage() const;
+    void resetAssertBuffer();
 
-    std::once_flag abortOnce;
+    std::mutex mtx;
     Device *device = nullptr;
     GraphicsAllocation *assertBuffer = nullptr;
 };
