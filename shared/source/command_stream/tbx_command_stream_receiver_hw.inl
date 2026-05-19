@@ -68,6 +68,10 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
     this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation, uint64_t chunkOffset, size_t chunkSize) {
         this->downloadAllocationChunkTbx(graphicsAllocation, chunkOffset, chunkSize);
     };
+
+    this->uploadAllocationChunkImpl = [this](GraphicsAllocation &graphicsAllocation, uint64_t chunkOffset, size_t chunkSize) {
+        this->writeMemoryWithAubManager(graphicsAllocation, true, chunkOffset, chunkSize);
+    };
 }
 
 template <typename GfxFamily>

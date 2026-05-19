@@ -63,6 +63,7 @@ class HostFunctionStreamer {
                          GraphicsAllocation *allocation,
                          void *hostFunctionIdAddress,
                          const std::function<void(GraphicsAllocation &, uint64_t, size_t)> &downloadAllocationImpl,
+                         const std::function<void(GraphicsAllocation &, uint64_t, size_t)> &uploadAllocationChunkImpl,
                          uint32_t activePartition,
                          uint32_t partitionOffset,
                          bool isTbx,
@@ -73,7 +74,7 @@ class HostFunctionStreamer {
 
     std::optional<uint64_t> getHostFunctionReadyToExecute() const;
     GraphicsAllocation *getHostFunctionIdAllocation() const;
-    std::optional<HostFunction> getHostFunction(uint64_t hostFunctionId);
+    HostFunction getHostFunction(uint64_t hostFunctionId);
     uint64_t getHostFunctionId(uint32_t partitionId) const;
     uint64_t getHostFunctionIdGpuAddress(uint32_t partitionId) const;
     uint64_t *getHostFunctionIdPtr(uint32_t partitionId) const;
@@ -101,6 +102,7 @@ class HostFunctionStreamer {
     CommandStreamReceiver *csr = nullptr;
     GraphicsAllocation *allocation = nullptr;
     std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl;
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl;
     std::atomic<uint64_t> nextHostFunctionId{1};
     std::atomic<uint32_t> pendingHostFunctions{0};
     uint32_t activePartitions{1};

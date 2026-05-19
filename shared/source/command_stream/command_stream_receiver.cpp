@@ -868,6 +868,7 @@ void CommandStreamReceiver::createHostFunctionStreamer(HostFunctionAllocator *al
                                                                         chunk.allocation,
                                                                         hostFunctionIdAddress,
                                                                         this->downloadAllocationImpl,
+                                                                        this->uploadAllocationChunkImpl,
                                                                         nPartitions,
                                                                         partitionOffset,
                                                                         isTbxMode(),

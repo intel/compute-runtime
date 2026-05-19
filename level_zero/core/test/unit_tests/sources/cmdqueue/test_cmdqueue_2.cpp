@@ -1372,9 +1372,8 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
                     *hostFunctionStreamer.getHostFunctionIdPtr(partitionId) = expectedId;
                 }
                 auto hostFunction = hostFunctionStreamer.getHostFunction(expectedId);
-                ASSERT_TRUE(hostFunction.has_value());
-                EXPECT_EQ(pHostFunction1, hostFunction->hostFunctionAddress);
-                EXPECT_EQ(pUserData1, hostFunction->userDataAddress);
+                EXPECT_EQ(pHostFunction1, hostFunction.hostFunctionAddress);
+                EXPECT_EQ(pUserData1, hostFunction.userDataAddress);
             }
             {
                 // callback id - mi store
@@ -1424,9 +1423,8 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
                     *hostFunctionStreamer.getHostFunctionIdPtr(partitionId) = expectedId;
                 }
                 auto hostFunction = hostFunctionStreamer.getHostFunction(expectedId);
-                ASSERT_TRUE(hostFunction.has_value());
-                EXPECT_EQ(pHostFunction2, hostFunction->hostFunctionAddress);
-                EXPECT_EQ(pUserData2, hostFunction->userDataAddress);
+                EXPECT_EQ(pHostFunction2, hostFunction.hostFunctionAddress);
+                EXPECT_EQ(pUserData2, hostFunction.userDataAddress);
             }
 
             commandQueue->csr = oldCsr;

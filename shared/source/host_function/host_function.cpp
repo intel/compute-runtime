@@ -22,6 +22,7 @@ HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
                                            GraphicsAllocation *allocation,
                                            void *hostFunctionIdAddress,
                                            const std::function<void(GraphicsAllocation &, uint64_t, size_t)> &downloadAllocationImpl,
+                                           const std::function<void(GraphicsAllocation &, uint64_t, size_t)> &uploadAllocationChunkImpl,
                                            uint32_t activePartitions,
                                            uint32_t partitionOffset,
                                            bool isTbx,
@@ -32,6 +33,7 @@ HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
       csr(csr),
       allocation(allocation),
       downloadAllocationImpl(downloadAllocationImpl),
+      uploadAllocationChunkImpl(uploadAllocationChunkImpl),
       nextHostFunctionId(1), // start from 1 to keep 0 bit for pending/completed status
       activePartitions(activePartitions),
       partitionOffset(partitionOffset),
@@ -82,15 +84,11 @@ uint32_t HostFunctionStreamer::getActivePartitions() const {
 bool HostFunctionStreamer::getDcFlushRequired() const { return dcFlushRequired; }
 
 void HostFunctionStreamer::updateTbxData() {
-    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
-
     std::lock_guard<std::mutex> lock(tbxWriteMutex);
 
     for (auto partitionId = 0u; partitionId < activePartitions; partitionId++) {
-        allocation->setTbxWritable(true, allBanks);
         auto offset = ptrDiff(getHostFunctionIdGpuAddress(partitionId), allocation->getGpuAddress());
-        csr->writeMemory(*allocation, true, offset, sizeof(uint64_t));
-        allocation->setTbxWritable(false, allBanks);
+        uploadAllocationChunkImpl(*allocation, offset, sizeof(uint64_t));
     }
 }
 
@@ -139,16 +137,14 @@ bool HostFunctionStreamer::isInOrderExecutionInProgress() const {
     return inOrderExecutionInProgress.load(std::memory_order_acquire);
 }
 
-std::optional<HostFunction> HostFunctionStreamer::getHostFunction(uint64_t hostFunctionId) {
+HostFunction HostFunctionStreamer::getHostFunction(uint64_t hostFunctionId) {
     std::unique_lock lock(hostFunctionsMutex);
 
     auto it = std::find_if(std::begin(hostFunctions), std::end(hostFunctions), [hostFunctionId](const auto &pair) {
         return pair.first == hostFunctionId;
     });
 
-    if (it == hostFunctions.end()) {
-        return std::nullopt;
-    }
+    UNRECOVERABLE_IF(it == hostFunctions.end());
 
     // swap last with current moved element
     HostFunction hostFunction = std::move(it->second);

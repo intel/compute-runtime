@@ -66,10 +66,7 @@ void HostFunctionScheduler::submit(uint32_t nHostFunctions) noexcept {
 void HostFunctionScheduler::scheduleHostFunctionToThreadPool(HostFunctionStreamer *streamer, uint64_t id) noexcept {
 
     auto hostFunction = streamer->getHostFunction(id);
-    if (!hostFunction.has_value()) {
-        return;
-    }
-    threadPool.registerHostFunctionToExecute(streamer, std::move(hostFunction.value()));
+    threadPool.registerHostFunctionToExecute(streamer, std::move(hostFunction));
 }
 
 void HostFunctionScheduler::schedulerLoop(std::stop_token st) noexcept {

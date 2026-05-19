@@ -709,6 +709,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     static void *asyncDebugBreakConfirmation(void *arg);
     static std::function<void()> debugConfirmationFunction;
     std::function<void(GraphicsAllocation &, uint64_t offset, size_t size)> downloadAllocationImpl;
+    std::function<void(GraphicsAllocation &, uint64_t offset, size_t size)> uploadAllocationChunkImpl;
 
     GraphicsAllocation *tagAllocation = nullptr;
     GraphicsAllocation *globalFenceAllocation = nullptr;

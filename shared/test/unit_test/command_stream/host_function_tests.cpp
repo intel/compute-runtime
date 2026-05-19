@@ -56,12 +56,15 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
             auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
 
             std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+
+            std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
             bool isTbx = false;
             std::mutex tbxWriteMutex;
             auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
                                                                                &allocation,
                                                                                hostFunctionId.data(),
                                                                                downloadAllocationImpl,
+                                                                               uploadAllocationChunkImpl,
                                                                                nPartitions,
                                                                                partitionOffset,
                                                                                isTbx,
@@ -114,9 +117,8 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
 
             // host function from host function streamer
             auto programmedHostFunction = hostFunctionStreamer->getHostFunction(expectedHostFunctionId);
-            ASSERT_TRUE(programmedHostFunction.has_value());
-            EXPECT_EQ(callbackAddress, programmedHostFunction->hostFunctionAddress);
-            EXPECT_EQ(userDataAddress, programmedHostFunction->userDataAddress);
+            EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
+            EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
         }
     }
 }
@@ -140,12 +142,14 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
             std::vector<uint64_t> hostFunctionId(nPartitions, 0u);
             auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
             std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+            std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
             bool isTbx = false;
             std::mutex tbxWriteMutex;
             auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
                                                                                &allocation,
                                                                                hostFunctionId.data(),
                                                                                downloadAllocationImpl,
+                                                                               uploadAllocationChunkImpl,
                                                                                nPartitions,
                                                                                partitionOffset,
                                                                                isTbx,
@@ -249,9 +253,8 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
 
             // host function from host function streamer
             auto programmedHostFunction = hostFunctionStreamer->getHostFunction(expectedHostFunctionId);
-            ASSERT_TRUE(programmedHostFunction.has_value());
-            EXPECT_EQ(callbackAddress, programmedHostFunction->hostFunctionAddress);
-            EXPECT_EQ(userDataAddress, programmedHostFunction->userDataAddress);
+            EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
+            EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
         }
     }
 }
@@ -292,6 +295,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                 MockGraphicsAllocation mockAllocation;
                 bool downloadAllocationCalled = false;
                 std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [&](GraphicsAllocation &, uint64_t, size_t) { downloadAllocationCalled = true; };
+                std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
 
                 ultCsr.writeMemoryParams.totalCallCount = 0;
 
@@ -300,6 +304,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                                                                                    &mockAllocation,
                                                                                    hostFunctionData.data(),
                                                                                    downloadAllocationImpl,
+                                                                                   uploadAllocationChunkImpl,
                                                                                    nPartitions,
                                                                                    partitionOffset,
                                                                                    isTbx,
@@ -317,7 +322,6 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                     }
 
                     auto programmedHostFunction1 = hostFunctionStreamer->getHostFunction(1u);
-                    ASSERT_TRUE(programmedHostFunction1.has_value());
 
                     EXPECT_EQ(&mockAllocation, hostFunctionStreamer->getHostFunctionIdAllocation());
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
@@ -330,31 +334,24 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
 
                     EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
 
-                    for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
-                        hostFunctionData[partitionId] = 1u;
-                    }
-
-                    EXPECT_TRUE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
-                    EXPECT_EQ(isTbx, downloadAllocationCalled);
-
-                    hostFunctionStreamer->prepareForExecution(programmedHostFunction1.value());
+                    hostFunctionStreamer->prepareForExecution(programmedHostFunction1);
 
                     if (isTbx) {
                         EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount);
                     }
                     // next host function must wait, streamer busy until host function is completed
                     EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
-                    hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction1.value());
+                    hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction1);
 
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                         EXPECT_EQ(HostFunctionStatus::completed, hostFunctionData[partitionId]); // host function ID should be marked as completed
                     }
 
-                    EXPECT_EQ(callbackAddress1, programmedHostFunction1->hostFunctionAddress);
-                    EXPECT_EQ(userDataAddress1, programmedHostFunction1->userDataAddress);
+                    EXPECT_EQ(callbackAddress1, programmedHostFunction1.hostFunctionAddress);
+                    EXPECT_EQ(userDataAddress1, programmedHostFunction1.userDataAddress);
 
                     if (isTbx) {
-                        EXPECT_EQ(nPartitions, ultCsr.writeMemoryParams.totalCallCount); // 1st update
+                        EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount); // updateTbxData uses uploadAllocationChunkImpl directly
                     }
                 }
                 {
@@ -372,7 +369,6 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                     }
 
                     auto programmedHostFunction2 = hostFunctionStreamer->getHostFunction(hostFunctionId);
-                    ASSERT_TRUE(programmedHostFunction2.has_value());
 
                     EXPECT_EQ(&mockAllocation, hostFunctionStreamer->getHostFunctionIdAllocation());
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
@@ -390,25 +386,25 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                     }
 
                     if (isTbx) {
-                        EXPECT_EQ(nPartitions, ultCsr.writeMemoryParams.totalCallCount);
+                        EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount);
                     }
 
                     EXPECT_TRUE(hostFunctionStreamer->getHostFunctionReadyToExecute().has_value());
                     EXPECT_EQ(isTbx, downloadAllocationCalled);
 
-                    hostFunctionStreamer->prepareForExecution(programmedHostFunction2.value());
-                    hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction2.value());
+                    hostFunctionStreamer->prepareForExecution(programmedHostFunction2);
+                    hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction2);
 
                     for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                         EXPECT_EQ(HostFunctionStatus::completed, hostFunctionData[partitionId]); // host function ID should be marked as completed
                     }
 
                     if (isTbx) {
-                        EXPECT_EQ(2 * nPartitions, ultCsr.writeMemoryParams.totalCallCount); // 2nd update
+                        EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount); // updateTbxData uses uploadAllocationChunkImpl directly
                     }
 
-                    EXPECT_EQ(callbackAddress2, programmedHostFunction2->hostFunctionAddress);
-                    EXPECT_EQ(userDataAddress2, programmedHostFunction2->userDataAddress);
+                    EXPECT_EQ(callbackAddress2, programmedHostFunction2.hostFunctionAddress);
+                    EXPECT_EQ(userDataAddress2, programmedHostFunction2.userDataAddress);
                 }
                 {
                     // no more programmed Host Functions
@@ -419,7 +415,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
     }
 }
 
-HWTEST_F(HostFunctionTests, givenUnknownHostFunctionIdWhenGetHostFunctionIsCalledThenNulloptIsReturned) {
+HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenGetHostFunctionIsCalledThenCorrectHostFunctionIsReturned) {
     auto partitionOffset = static_cast<uint32_t>(sizeof(uint64_t));
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     auto dcFlushRequired = csr.getDcFlushSupport();
@@ -427,12 +423,14 @@ HWTEST_F(HostFunctionTests, givenUnknownHostFunctionIdWhenGetHostFunctionIsCalle
     MockGraphicsAllocation mockAllocation;
     uint64_t hostFunctionData = 0u;
     std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
 
     std::mutex tbxWriteMutex;
     auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&csr,
                                                                        &mockAllocation,
                                                                        &hostFunctionData,
                                                                        downloadAllocationImpl,
+                                                                       uploadAllocationChunkImpl,
                                                                        1u,
                                                                        partitionOffset,
                                                                        false,
@@ -445,13 +443,9 @@ HWTEST_F(HostFunctionTests, givenUnknownHostFunctionIdWhenGetHostFunctionIsCalle
         .userDataAddress = 0x2000};
     hostFunctionStreamer->addHostFunction(1u, std::move(hostFunction));
 
-    auto missingHostFunction = hostFunctionStreamer->getHostFunction(3u);
-    EXPECT_FALSE(missingHostFunction.has_value());
-
     auto programmedHostFunction = hostFunctionStreamer->getHostFunction(1u);
-    ASSERT_TRUE(programmedHostFunction.has_value());
-    EXPECT_EQ(0x1000u, programmedHostFunction->hostFunctionAddress);
-    EXPECT_EQ(0x2000u, programmedHostFunction->userDataAddress);
+    EXPECT_EQ(0x1000u, programmedHostFunction.hostFunctionAddress);
+    EXPECT_EQ(0x2000u, programmedHostFunction.userDataAddress);
 }
 
 HWTEST_F(HostFunctionTests, givenTbxModeWhenDownloadingHostFunctionAllocationThenOnlyChunkIsDownloaded) {
@@ -475,6 +469,7 @@ HWTEST_F(HostFunctionTests, givenTbxModeWhenDownloadingHostFunctionAllocationThe
             receivedOffset = offset;
             receivedSize = size;
         };
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
 
     bool isTbx = true;
     auto dcFlushRequired = pDevice->getGpgpuCommandStreamReceiver().getDcFlushSupport();
@@ -483,6 +478,7 @@ HWTEST_F(HostFunctionTests, givenTbxModeWhenDownloadingHostFunctionAllocationThe
                                                                        &allocation,
                                                                        hostFunctionIdAddress,
                                                                        downloadAllocationImpl,
+                                                                       uploadAllocationChunkImpl,
                                                                        nPartitions,
                                                                        partitionOffset,
                                                                        isTbx,
@@ -584,12 +580,15 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
     auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
 
     std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
     bool isTbx = false;
     std::mutex tbxWriteMutex;
     auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
                                                                        &allocation,
                                                                        hostFunctionId.data(),
                                                                        downloadAllocationImpl,
+                                                                       uploadAllocationChunkImpl,
                                                                        1u,
                                                                        partitionOffset,
                                                                        isTbx,
@@ -618,9 +617,8 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
     EXPECT_TRUE(miStoreUserHostFunction->getStoreQword());
 
     auto programmedHostFunction = hostFunctionStreamer->getHostFunction(1u);
-    ASSERT_TRUE(programmedHostFunction.has_value());
-    EXPECT_EQ(callbackAddress, programmedHostFunction->hostFunctionAddress);
-    EXPECT_EQ(userDataAddress, programmedHostFunction->userDataAddress);
+    EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
+    EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
 }
 
 HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetToEnableThenPipeControlIsProgrammedIfDcFlushRequired) {
@@ -649,12 +647,15 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
     auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
 
     std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
     bool isTbx = false;
     std::mutex tbxWriteMutex;
     auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
                                                                        &allocation,
                                                                        hostFunctionId.data(),
                                                                        downloadAllocationImpl,
+                                                                       uploadAllocationChunkImpl,
                                                                        1u,
                                                                        partitionOffset,
                                                                        isTbx,
@@ -877,27 +878,12 @@ TEST(HostFunctionAllocatorTests, givenMultipleObtainChunksWhenAllocatorIsDestroy
     EXPECT_GE(mockMemoryManager->freeGraphicsMemoryCalled, 1u);
 }
 
-TEST(HostFunctionStreamerTests, givenMultiplePartitionsInTbxModeWhenUpdateTbxDataCalledThenTbxWritableIsSetBeforeEachWriteMemoryCall) {
-
-    class HostFunctionCsr : public MockCommandStreamReceiver {
-      public:
-        using MockCommandStreamReceiver::MockCommandStreamReceiver;
-
-        bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
-            constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
-            wasTbxWritableBeforeWrite.push_back(gfxAllocation.isTbxWritable(allBanks));
-            writeOffsets.push_back(gpuVaChunkOffset);
-            return true;
-        }
-
-        std::vector<bool> wasTbxWritableBeforeWrite;
-        std::vector<uint64_t> writeOffsets;
-    };
+TEST(HostFunctionStreamerTests, givenMultiplePartitionsInTbxModeWhenUpdateTbxDataCalledThenUploadAllocationChunkImplCalledWithCorrectOffsets) {
 
     MockExecutionEnvironment executionEnvironment{defaultHwInfo.get()};
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     DeviceBitfield deviceBitfield(1u);
-    HostFunctionCsr csr(executionEnvironment, 0u, deviceBitfield);
+    MockCommandStreamReceiver csr(executionEnvironment, 0u, deviceBitfield);
 
     constexpr uint32_t nPartitions = 2u;
     constexpr uint32_t partitionOffset = HostFunctionAllocator::partitionOffset;
@@ -909,11 +895,19 @@ TEST(HostFunctionStreamerTests, givenMultiplePartitionsInTbxModeWhenUpdateTbxDat
 
     std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
 
+    std::vector<uint64_t> uploadOffsets;
+    std::vector<size_t> uploadSizes;
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl = [&](GraphicsAllocation &, uint64_t offset, size_t size) {
+        uploadOffsets.push_back(offset);
+        uploadSizes.push_back(size);
+    };
+
     std::mutex tbxWriteMutex;
     auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&csr,
                                                                        &allocation,
                                                                        hostFunctionIdAddress,
                                                                        downloadAllocationImpl,
+                                                                       uploadAllocationChunkImpl,
                                                                        nPartitions,
                                                                        partitionOffset,
                                                                        true,
@@ -924,16 +918,13 @@ TEST(HostFunctionStreamerTests, givenMultiplePartitionsInTbxModeWhenUpdateTbxDat
     HostFunction hostFunction{.hostFunctionAddress = 1024, .userDataAddress = 2048};
     hostFunctionStreamer->signalHostFunctionCompletion(hostFunction);
 
-    ASSERT_EQ(nPartitions, csr.wasTbxWritableBeforeWrite.size());
+    ASSERT_EQ(nPartitions, uploadOffsets.size());
+    EXPECT_EQ(0u, uploadOffsets[0]);
+    EXPECT_EQ(static_cast<uint64_t>(partitionOffset), uploadOffsets[1]);
+
     for (auto i = 0u; i < nPartitions; i++) {
-        EXPECT_TRUE(csr.wasTbxWritableBeforeWrite[i]);
+        EXPECT_EQ(sizeof(uint64_t), uploadSizes[i]);
     }
-
-    EXPECT_EQ(0u, csr.writeOffsets[0]);
-    EXPECT_EQ(static_cast<uint64_t>(partitionOffset), csr.writeOffsets[1]);
-
-    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
-    EXPECT_FALSE(allocation.isTbxWritable(allBanks));
 }
 
 TEST(HostFunctionStreamerTests, WhenHostFunctionStreamerCreatedThenTbxWriteMutexFromAllocatorIsSetCorrectly) {
