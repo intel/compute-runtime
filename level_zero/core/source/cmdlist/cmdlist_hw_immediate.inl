@@ -191,7 +191,6 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     auto csr = getCsr(false);
 
     csr->makeResident(*ioh->getGraphicsAllocation());
-    this->commandContainer.makeThreadDataMapResident();
 
     if constexpr (streamStatesSupported) {
         if (this->requiredStreamState.stateBaseAddress.indirectObjectBaseAddress.value == NEO::StreamProperty64::initValue) {

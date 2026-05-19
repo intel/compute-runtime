@@ -2537,10 +2537,9 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTwoDifferentThreadDataShare
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
-HWTEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResidentThenAllocationMadeResident) {
+TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResidentThenAllocationMadeResident) {
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    cmdContainer->setImmediateCmdListCsr(&csr);
+    cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
@@ -2549,27 +2548,31 @@ HWTEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheReside
     cmdContainer->registerThreadData(42u, {data, sizeof(data)});
     cmdContainer->extractCommonThreadData();
 
-    auto makeResidentBefore = csr.makeResidentCalledTimes;
+    auto expectedAlloc = cmdContainer->getThreadDataMapStorage()->getGraphicsAllocation();
+    ASSERT_NE(nullptr, expectedAlloc);
+
+    auto residencyBefore = cmdContainer->getResidencyContainer().size();
     cmdContainer->makeThreadDataMapResident();
-    EXPECT_GT(csr.makeResidentCalledTimes, makeResidentBefore);
+    auto &residency = cmdContainer->getResidencyContainer();
+    EXPECT_GT(residency.size(), residencyBefore);
+    EXPECT_NE(std::find(residency.begin(), residency.end(), expectedAlloc), residency.end());
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
-HWTEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResidentWithEmptyStorageThenMakeResidentNotCalled) {
+TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResidentWithEmptyStorageThenResidencyContainerNotChanged) {
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    cmdContainer->setImmediateCmdListCsr(&csr);
+    cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
-    auto makeResidentBefore = csr.makeResidentCalledTimes;
+    auto residencyBefore = cmdContainer->getResidencyContainer().size();
 
     // No data inserted, storage has no allocation
     cmdContainer->makeThreadDataMapResident();
-    EXPECT_EQ(makeResidentBefore, csr.makeResidentCalledTimes);
+    EXPECT_EQ(residencyBefore, cmdContainer->getResidencyContainer().size());
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);

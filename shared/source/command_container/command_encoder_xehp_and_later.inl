@@ -267,6 +267,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 cachedThreadDataOffset = container.getCachedIohOffset(threadDataHash, crossThreadSpan, perThreadSpan);
                 if (cachedThreadDataOffset) {
                     offsetThreadData = *cachedThreadDataOffset;
+                    container.makeThreadDataMapResident();
                 }
             }
             if (!cachedThreadDataOffset) {

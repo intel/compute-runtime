@@ -727,9 +727,7 @@ std::optional<uint64_t> CommandContainer::getCachedIohOffset(std::span<const uin
 
 void CommandContainer::makeThreadDataMapResident() {
     auto alloc = this->getThreadDataMapStorage()->getGraphicsAllocation();
-    if (alloc) {
-        this->immediateCmdListCsr->makeResident(*alloc);
-    }
+    addToResidencyContainer(alloc);
 }
 
 IndirectHeap *CommandContainer::getThreadDataMapStorage() const {
