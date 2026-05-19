@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,25 +16,15 @@
 
 namespace NEO {
 
-#define FORWARD_CONSTRUCTOR(THIS_CLASS, BASE_CLASS)                          \
-    template <typename... ArgsT>                                             \
-    THIS_CLASS(ArgsT &&...args) : BASE_CLASS(std::forward<ArgsT>(args)...) { \
-    }
-
-#define FORWARD_FUNC(FUNC_NAME, BASE_CLASS)                  \
-    template <typename... ArgsT>                             \
-    void FUNC_NAME(ArgsT &&...args) {                        \
-        BASE_CLASS::FUNC_NAME(std::forward<ArgsT>(args)...); \
-    }
-
 template <typename BaseEventType>
 struct MockEvent : public BaseEventType {
-    FORWARD_CONSTRUCTOR(MockEvent, BaseEventType);
 
-    // make some protected members public :
-    FORWARD_FUNC(submitCommand, BaseEventType);
+    template <typename... ArgsT>
+    MockEvent(ArgsT &&...args) : BaseEventType(std::forward<ArgsT>(args)...) {}
 
+    using BaseEventType::submitCommand;
     using BaseEventType::timeStampNode;
+
     using Event::areTimestampsCompleted;
     using Event::calcProfilingData;
     using Event::cmdToSubmit;
@@ -58,9 +48,6 @@ struct MockEvent : public BaseEventType {
     std::optional<WaitStatus> waitReturnValue{};
     int waitCalled = 0;
 };
-
-#undef FORWARD_CONSTRUCTOR
-#undef FORWARD_FUNC
 
 struct MockEventBuilder : EventBuilder {
     MockEventBuilder() = default;
