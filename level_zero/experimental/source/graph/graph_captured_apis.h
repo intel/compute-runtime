@@ -87,6 +87,27 @@ constexpr size_t numCapturedApis =
 #undef RR_CAPTURED_API
     ;
 
+constexpr bool isAllowedPostJoin(CaptureApi api) {
+    switch (api) {
+    case CaptureApi::zeCommandListAppendWriteGlobalTimestamp:
+    case CaptureApi::zeCommandListAppendBarrier:
+    case CaptureApi::zeCommandListAppendMemoryRangesBarrier:
+    case CaptureApi::zeCommandListAppendSignalEvent:
+    case CaptureApi::zeCommandListAppendWaitOnEvents:
+    case CaptureApi::zeCommandListAppendEventReset:
+    case CaptureApi::zeCommandListAppendQueryKernelTimestamps:
+    case CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt:
+    case CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt:
+    case CaptureApi::zetCommandListAppendMetricStreamerMarker:
+    case CaptureApi::zetCommandListAppendMetricQueryEnd:
+    case CaptureApi::zetCommandListAppendMetricMemoryBarrier:
+    case CaptureApi::zetCommandListAppendMarkerExp:
+        return true;
+    default:
+        return false;
+    }
+}
+
 struct CommandList;
 struct Event;
 

@@ -313,8 +313,19 @@ struct Graph : _ze_graph_handle_t {
         return recordedApiCommands.externalStorage;
     }
 
-    bool isLastCommand(CapturedCommandId commandId) const {
-        return commandId + 1 == recordedApiCommands.size();
+    bool isValidJoinCommand(CapturedCommandId commandId) const {
+        if (commandId + 1 == recordedApiCommands.size()) {
+            return true; // last command
+        }
+        ++commandId;
+        while (commandId < recordedApiCommands.size()) {
+            const auto &cmd = recordedApiCommands.commands[commandId];
+            if (false == isAllowedPostJoin(static_cast<CaptureApi>(cmd.index()))) {
+                return false;
+            }
+            ++commandId;
+        }
+        return true;
     }
 
     const OrderedCommandsRegistry &getOrderedCommands() const {

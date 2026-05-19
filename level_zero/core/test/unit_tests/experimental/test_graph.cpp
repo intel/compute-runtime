@@ -1125,13 +1125,46 @@ TEST_F(GraphInstantiationValidation, WhenGraphHasUnjoinedForksThenItIsNotValidFo
         { // lvl 1
             Graph *childGraph = nullptr;
             L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, nullptr, &childCmdlist, joinEventHandle, 1U, &forkEventHandle);
-            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, childGraph, nullptr, &childCmdlist, nullptr, 0U, nullptr);
+            L0::captureCommand<CaptureApi::zeCommandListAppendMemoryPrefetch>(grandChildCmdlist, childGraph, nullptr, &childCmdlist, nullptr, 0U);
         }
         L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, nullptr, 1U, &joinEventHandle);
 
         srcGraph.stopCapturing();
         EXPECT_FALSE(srcGraph.validForInstantiation());
     }
+}
+
+TEST_F(GraphInstantiationValidation, WhenGraphHasOnlyAllowedPostJoinCommandsThenItIsValidForInstantiation) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
+    Mock<Event> joinEvent;
+    auto joinEventHandle = joinEvent.toHandle();
+    Mock<Event> postJoinSignalEvent;
+    auto postJoinSignalEventHandle = postJoinSignalEvent.toHandle();
+
+    Graph srcGraph(&ctx, true);
+    Graph *srcGraphPtr = &srcGraph;
+
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, forkEventHandle, 0U, nullptr);
+
+    {
+        Graph *childGraph = nullptr;
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, nullptr, &childCmdlist, joinEventHandle, 1U, &forkEventHandle);
+        L0::captureCommand<CaptureApi::zeCommandListAppendSignalEvent>(childCmdlist, childGraph, nullptr, &childCmdlist, postJoinSignalEventHandle);
+    }
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, nullptr, 1U, &joinEventHandle);
+
+    srcGraph.stopCapturing();
+    EXPECT_TRUE(srcGraph.validForInstantiation());
 }
 
 TEST_F(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThenWholeGraphIsNotReadyForInstantiation) {
@@ -1218,7 +1251,7 @@ TEST_F(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThe
                 Graph *grandChildGraph = nullptr;
                 // lvl 2
                 L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildGraph, nullptr, &grandChildCmdlist, joinEventHandleLvl2, 1U, &forkEventHandleLvl2);
-                L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildGraph, nullptr, &grandChildCmdlist, nullptr, 0U, nullptr);
+                L0::captureCommand<CaptureApi::zeCommandListAppendMemoryPrefetch>(grandChildCmdlist, grandChildGraph, nullptr, &grandChildCmdlist, nullptr, 0U);
             }
             L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, nullptr, &childCmdlist, joinEventHandle, 1U, &joinEventHandleLvl2);
         }
@@ -1227,6 +1260,50 @@ TEST_F(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThe
         srcGraph.stopCapturing();
         EXPECT_FALSE(srcGraph.validForInstantiation());
     }
+}
+
+TEST_F(GraphInstantiationValidation, WhenSubGraphHasOnlyAllowedPostJoinCommandsThenWholeGraphIsValidForInstantiation) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
+    MockGraphCmdListWithContext grandChildCmdlist{&ctx};
+    grandChildCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
+    Mock<Event> forkEventLvl2;
+    auto forkEventHandleLvl2 = forkEventLvl2.toHandle();
+    Mock<Event> joinEvent;
+    Mock<Event> joinEventLvl2;
+    auto joinEventHandle = joinEvent.toHandle();
+    auto joinEventHandleLvl2 = joinEventLvl2.toHandle();
+    Mock<Event> postJoinSignalEvent;
+    auto postJoinSignalEventHandle = postJoinSignalEvent.toHandle();
+
+    Graph srcGraph(&ctx, true);
+    Graph *srcGraphPtr = &srcGraph;
+
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, forkEventHandle, 0U, nullptr);
+
+    {
+        Graph *childGraph = nullptr;
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, nullptr, &childCmdlist, forkEventHandleLvl2, 1U, &forkEventHandle);
+        {
+            Graph *grandChildGraph = nullptr;
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildGraph, nullptr, &grandChildCmdlist, joinEventHandleLvl2, 1U, &forkEventHandleLvl2);
+            L0::captureCommand<CaptureApi::zeCommandListAppendSignalEvent>(grandChildCmdlist, grandChildGraph, nullptr, &grandChildCmdlist, postJoinSignalEventHandle);
+        }
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, nullptr, &childCmdlist, joinEventHandle, 1U, &joinEventHandleLvl2);
+    }
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, nullptr, 1U, &joinEventHandle);
+
+    srcGraph.stopCapturing();
+    EXPECT_TRUE(srcGraph.validForInstantiation());
 }
 
 TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCommandlists) {
