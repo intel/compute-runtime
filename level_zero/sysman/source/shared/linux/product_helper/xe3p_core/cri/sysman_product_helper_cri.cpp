@@ -315,19 +315,18 @@ template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExp(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint64_t val = static_cast<uint64_t>(limit);
-    uint64_t convertedVal = 0;
     bool anyLimitSet = false;
 
     const auto &[sustainedPowerLimitFile, sustainedPowerLimitFileExists] = powerLimitFiles.at("sustainedLimitFile");
     const auto &[burstPowerLimitFile, burstPowerLimitFileExists] = powerLimitFiles.at("burstLimitFile");
     const auto &[criticalPowerLimitFile, criticalPowerLimitFileExists] = powerLimitFiles.at("criticalLimitFile");
 
+    pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::micro, SysfsValueUnit::milli, val, val);
+
     if (powerDomain == ZES_POWER_DOMAIN_CARD) {
         // Card domain: Apply to PL1 and PL2 if enabled, Apply x2 to PsysCRIT if enabled
         if (sustainedPowerLimitFileExists) {
-            convertedVal = val;
-            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameCardSustainedPowerLimit), SysfsValueUnit::milli, convertedVal, convertedVal);
-            result = pSysfsAccess->write(sustainedPowerLimitFile, convertedVal);
+            result = pSysfsAccess->write(sustainedPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
@@ -336,9 +335,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExp(SysmanKmdInterface *
         }
 
         if (burstPowerLimitFileExists) {
-            convertedVal = val;
-            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameCardBurstPowerLimit), SysfsValueUnit::milli, convertedVal, convertedVal);
-            result = pSysfsAccess->write(burstPowerLimitFile, convertedVal);
+            result = pSysfsAccess->write(burstPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, burstPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
@@ -347,9 +344,8 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExp(SysmanKmdInterface *
         }
 
         if (criticalPowerLimitFileExists) {
-            convertedVal = val * criticalLimitMultiplyFactor;
-            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameCardCriticalPowerLimit), SysfsValueUnit::milli, convertedVal, convertedVal);
-            result = pSysfsAccess->write(criticalPowerLimitFile, convertedVal);
+            val = val * criticalLimitMultiplyFactor;
+            result = pSysfsAccess->write(criticalPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, criticalPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
@@ -359,9 +355,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExp(SysmanKmdInterface *
     } else if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
         // Package domain: Apply to PL1 and PL2 if enabled
         if (sustainedPowerLimitFileExists) {
-            convertedVal = val;
-            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), SysfsValueUnit::milli, convertedVal, convertedVal);
-            result = pSysfsAccess->write(sustainedPowerLimitFile, convertedVal);
+            result = pSysfsAccess->write(sustainedPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);
@@ -370,9 +364,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExp(SysmanKmdInterface *
         }
 
         if (burstPowerLimitFileExists) {
-            convertedVal = val;
-            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageBurstPowerLimit), SysfsValueUnit::milli, convertedVal, convertedVal);
-            result = pSysfsAccess->write(burstPowerLimitFile, convertedVal);
+            result = pSysfsAccess->write(burstPowerLimitFile, val);
             if (ZE_RESULT_SUCCESS != result) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s and returning error:0x%x \n", __FUNCTION__, burstPowerLimitFile.c_str(), getErrorCode(result));
                 return getErrorCode(result);

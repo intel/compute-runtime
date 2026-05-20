@@ -1073,6 +1073,48 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileReadStatuses
     }
 }
 
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenCardDomainAndOnlyCriticalLimitFilePresentWhenSetLimitsExpIsCalledThenCriticalLimitIsUpdatedWithMultiplier, IsCRI) {
+    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = true;
+
+    auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD);
+
+    constexpr uint32_t testLimit = 300u;
+    const uint64_t convertedLimit = (static_cast<uint64_t>(testLimit) / milliFactor) * criticalLimitMultiplyFactor;
+    const uint64_t expectedLimit = std::max(convertedLimit, xeMockMinPowerLimitVal);
+    const uint64_t sustainedLimitBeforeSet = pSysfsAccess->sustainedPowerLimitVal;
+    const uint64_t burstLimitBeforeSet = pSysfsAccess->burstPowerLimitVal;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->setLimitsExp(testLimit));
+    EXPECT_EQ(expectedLimit, pSysfsAccess->criticalPowerLimitVal);
+    EXPECT_EQ(sustainedLimitBeforeSet, pSysfsAccess->sustainedPowerLimitVal);
+    EXPECT_EQ(burstLimitBeforeSet, pSysfsAccess->burstPowerLimitVal);
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenCardDomainAndCriticalLimitWriteFailsWhenSetLimitsExpIsCalledThenMappedErrorIsReturned, IsCRI) {
+    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = true;
+    pSysfsAccess->criticalWriteResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+
+    auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPowerImp->setLimitsExp(300u));
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenPackageDomainAndOnlyCriticalLimitFilePresentWhenSetLimitsExpIsCalledThenDependencyUnavailableIsReturned, IsCRI) {
+    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = true;
+
+    auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE);
+    const uint64_t criticalLimitBeforeSet = pSysfsAccess->criticalPowerLimitVal;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPowerImp->setLimitsExp(300u));
+    EXPECT_EQ(criticalLimitBeforeSet, pSysfsAccess->criticalPowerLimitVal);
+}
+
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenPowerHandlesWhenGetAndSetLimitsExpAreCalledThenUnsupportedFeatureErrorIsReturnedForGpuAndMemoryDomains, IsCRI) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
