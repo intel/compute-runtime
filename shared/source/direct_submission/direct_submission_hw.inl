@@ -454,6 +454,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         auto sizeToCopy = ptrDiff(returnCmd, cmdStreamTaskPtr);
         auto ringPtr = ringCommandStream.getSpace(sizeToCopy);
         memcpy(ringPtr, cmdStreamTaskPtr, sizeToCopy);
+        batchBuffer.stream->reclaimSpace(batchBuffer.usedSize - batchBuffer.startOffset);
     } else {
         dispatchStartSection(commandStreamAddress);
     }

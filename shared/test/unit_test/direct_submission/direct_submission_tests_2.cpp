@@ -2533,3 +2533,23 @@ HWTEST_F(DirectSubmissionTest, givenCsrWhenUnblockPagingFenceSemaphoreCalledThen
     EXPECT_EQ(0ull, directSubmission->pagingFenceValueToWait);
     EXPECT_EQ(20u, blitterDirectSubmission->pagingFenceValueToWait);
 }
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenCopyCommandBufferIntoRingWhenDispatchWorkloadSectionThenBatchBufferStreamSpaceIsReclaimed) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
+
+    directSubmission.initialize(true);
+
+    batchBuffer.startOffset = 0x20;
+    batchBuffer.endCmdPtr = ptrOffset(batchBuffer.stream->getCpuBase(), batchBuffer.startOffset);
+
+    EXPECT_EQ(0x40u, batchBuffer.stream->getUsed());
+
+    directSubmission.dispatchWorkloadSection(batchBuffer, false);
+
+    EXPECT_EQ(batchBuffer.startOffset, batchBuffer.stream->getUsed());
+}

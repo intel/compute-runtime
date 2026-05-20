@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,7 @@ class LinearStream : NEO::NonCopyableAndNonMovableClass {
     }
 
     void ensureContinuousSpace(size_t size);
+    void reclaimSpace(size_t space);
 
   protected:
     size_t sizeUsed = 0;
@@ -73,6 +74,11 @@ inline void LinearStream::ensureContinuousSpace(size_t size) {
         UNRECOVERABLE_IF(sizeUsed + batchBufferEndSize > maxAvailableSpace);
         cmdContainer->closeAndAllocateNextCommandBuffer();
     }
+}
+
+inline void LinearStream::reclaimSpace(size_t space) {
+    DEBUG_BREAK_IF(space > sizeUsed);
+    sizeUsed -= space;
 }
 
 inline void *LinearStream::getSpace(size_t size) {
