@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,10 +34,13 @@ inline iga_gen_t translateToIgaGenBase(PRODUCT_FAMILY productFamily) {
     case IGFX_PTL:
     case IGFX_NVL_XE3G:
         return IGA_XE3;
+    case IGFX_CRI:
+    case IGFX_NVL:
+        return IGA_XE3P_XPC;
     }
 }
 
-inline iga_gen_t translateToIgaGenBase(GFXCORE_FAMILY coreFamily) {
+inline iga_gen_t translateToIgaGen(GFXCORE_FAMILY coreFamily) {
     switch (coreFamily) {
     default:
         return IGA_GEN_INVALID;
@@ -53,8 +56,9 @@ inline iga_gen_t translateToIgaGenBase(GFXCORE_FAMILY coreFamily) {
         return IGA_XE2;
     case IGFX_XE3_CORE:
         return IGA_XE3;
+    case IGFX_XE3P_CORE:
+        return IGA_XE3P_XPC;
     }
 }
 
 iga_gen_t translateToIgaGen(PRODUCT_FAMILY productFamily);
-iga_gen_t translateToIgaGen(GFXCORE_FAMILY coreFamily);
