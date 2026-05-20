@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/blit_properties.h"
@@ -767,6 +768,8 @@ struct CommandList : _ze_command_list_handle_t {
     bool inOrderWaitsDisabled = false;
     bool swTagsEnabled = false;
     bool patchPreambleEnabled = false;
+
+    NEO::QueueThrottle queueThrottle = NEO::QueueThrottle::MEDIUM;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

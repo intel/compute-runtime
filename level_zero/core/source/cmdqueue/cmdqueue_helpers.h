@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
@@ -32,6 +33,7 @@ struct CommandList;
 
 struct QueueProperties {
     NEO::SynchronizedDispatchMode synchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
+    NEO::QueueThrottle throttle = NEO::QueueThrottle::MEDIUM;
     bool interruptHint = false;
     bool copyOffloadHint = false;
     std::optional<int> priorityLevel = std::nullopt;

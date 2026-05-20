@@ -1257,7 +1257,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                 return csrToWait->waitForTaskCountWithKmdNotifyFallback(taskCountToWait,
                                                                         csrToWait->obtainCurrentFlushStamp(),
                                                                         true,
-                                                                        NEO::QueueThrottle::MEDIUM);
+                                                                        this->queueThrottle);
             }
 
             const int64_t timeoutInMicroSeconds = indefiniteWait ? 0 : static_cast<int64_t>(timeoutNs / 1000);

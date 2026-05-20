@@ -544,6 +544,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     commandList->internalUsage = internalUsage;
     commandList->cmdListType = CommandListType::typeImmediate;
     commandList->isSyncModeQueue = (cmdQdesc.mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
+    commandList->queueThrottle = queueProperties.throttle;
     if (NEO::debugManager.flags.MakeEachEnqueueBlocking.get()) {
         commandList->isSyncModeQueue |= true;
     }

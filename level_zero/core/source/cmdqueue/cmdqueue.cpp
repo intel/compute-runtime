@@ -28,6 +28,7 @@
 #include "shared/source/utilities/pool_allocators.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdqueue/internal_queue_throttle_ext.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -444,6 +445,9 @@ QueueProperties CommandQueue::extractQueueProperties(const ze_command_queue_desc
             queueProperties.copyOffloadHint = static_cast<const zex_intel_queue_copy_operations_offload_hint_exp_desc_t *>(desc.pNext)->copyOffloadEnabled;
         } else if (static_cast<uint32_t>(baseProperties->stype) == ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC) {
             queueProperties.priorityLevel = static_cast<const ze_queue_priority_desc_t *>(desc.pNext)->priority;
+        } else if (static_cast<uint32_t>(baseProperties->stype) == static_cast<uint32_t>(ZE_STRUCTURE_TYPE_QUEUE_THROTTLE_EXT_DESC)) {
+            auto throttleDesc = reinterpret_cast<const ze_queue_throttle_ext_desc_t *>(baseProperties);
+            queueProperties.throttle = throttleDesc->throttle;
         }
 
         baseProperties = static_cast<const ze_base_desc_t *>(baseProperties->pNext);

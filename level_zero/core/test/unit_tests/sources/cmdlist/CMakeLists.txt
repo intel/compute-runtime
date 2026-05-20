@@ -29,6 +29,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_host_functions.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_api.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_memory_extension.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_throttle.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_in_order_cmdlist_1.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_in_order_cmdlist_2.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_in_order_cmdlist_3.cpp

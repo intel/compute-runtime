@@ -354,6 +354,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
     using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;
+    using BaseClass::queueThrottle;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::scratchAddressPatchingEnabled;
