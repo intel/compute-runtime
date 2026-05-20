@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,7 +97,7 @@ ze_result_t metricTracerDecode2(
 }
 
 ze_result_t metricTracerDecodeCalculateValues(
-    zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
+    zet_metric_decoder_exp_handle_t hMetricDecoder,
     const size_t rawDataSize,
     size_t *usedDataSize,
     const uint8_t *pRawData,

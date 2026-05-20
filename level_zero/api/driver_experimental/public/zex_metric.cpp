@@ -18,58 +18,6 @@ ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevi
     return L0::metricsDisable(hDevice);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricTracerCreateExp(zet_context_handle_t hContext,
-                                                     zet_device_handle_t hDevice,
-                                                     uint32_t metricGroupCount,
-                                                     zet_metric_group_handle_t *phMetricGroups,
-                                                     zet_intel_metric_tracer_exp_desc_t *desc,
-                                                     ze_event_handle_t hNotificationEvent,
-                                                     zet_intel_metric_tracer_exp_handle_t *phMetricTracer) {
-    return L0::metricTracerCreate(hContext, hDevice, metricGroupCount, phMetricGroups, desc, hNotificationEvent, phMetricTracer);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerDestroyExp(zet_intel_metric_tracer_exp_handle_t hMetricTracer) {
-    return L0::metricTracerDestroy(hMetricTracer);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerEnableExp(zet_intel_metric_tracer_exp_handle_t hMetricTracer,
-                                                     ze_bool_t synchronous) {
-    return L0::metricTracerEnable(hMetricTracer, synchronous);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerDisableExp(zet_intel_metric_tracer_exp_handle_t hMetricTracer,
-                                                      ze_bool_t synchronous) {
-    return L0::metricTracerDisable(hMetricTracer, synchronous);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerReadDataExp(zet_intel_metric_tracer_exp_handle_t hMetricTracer,
-                                                       size_t *pRawDataSize, uint8_t *pRawData) {
-    return L0::metricTracerReadData(hMetricTracer, pRawDataSize, pRawData);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricDecoderCreateExp(zet_intel_metric_tracer_exp_handle_t hMetricTracer,
-                                                      zet_intel_metric_decoder_exp_handle_t *phMetricDecoder) {
-    return L0::metricDecoderCreate(hMetricTracer, phMetricDecoder);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricDecoderDestroyExp(zet_intel_metric_decoder_exp_handle_t phMetricDecoder) {
-    return L0::metricDecoderDestroy(phMetricDecoder);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricDecoderGetDecodableMetricsExp(zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
-                                                                   uint32_t *pCount,
-                                                                   zet_metric_handle_t *phMetrics) {
-    return L0::metricDecoderGetDecodableMetrics(hMetricDecoder, pCount, phMetrics);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerDecodeExp(zet_intel_metric_decoder_exp_handle_t phMetricDecoder,
-                                                     size_t *pRawDataSize, uint8_t *pRawData, uint32_t metricsCount,
-                                                     zet_metric_handle_t *phMetrics, uint32_t *pSetCount, uint32_t *pMetricEntriesCountPerSet,
-                                                     uint32_t *pMetricEntriesCount, zet_intel_metric_entry_exp_t *pMetricEntries) {
-    return L0::metricTracerDecode(phMetricDecoder, pRawDataSize, pRawData, metricsCount, phMetrics,
-                                  pSetCount, pMetricEntriesCountPerSet, pMetricEntriesCount, pMetricEntries);
-}
-
 ze_result_t ZE_APICALL zetIntelMetricCalculationOperationCreateExp(zet_context_handle_t hContext, zet_device_handle_t hDevice,
                                                                    zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                                                    zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
@@ -104,7 +52,7 @@ ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize
                                      pTotalMetricReportsCount, pMetricResults);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricTracerDecodeCalculateValuesExp(zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
+ze_result_t ZE_APICALL zetIntelMetricTracerDecodeCalculateValuesExp(zet_metric_decoder_exp_handle_t hMetricDecoder,
                                                                     const size_t rawDataSize, size_t *usedDataSize, const uint8_t *pRawData,
                                                                     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
                                                                     uint32_t *pTotalMetricReportsCount, zet_intel_metric_result_exp_t *pMetricResults) {
@@ -149,73 +97,6 @@ ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevic
 
 ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice) {
     return L0::zetIntelDeviceDisableMetricsExp(hDevice);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerCreateExp(
-    zet_context_handle_t hContext,
-    zet_device_handle_t hDevice,
-    uint32_t metricGroupCount,
-    zet_metric_group_handle_t *phMetricGroups,
-    zet_intel_metric_tracer_exp_desc_t *desc,
-    ze_event_handle_t hNotificationEvent,
-    zet_intel_metric_tracer_exp_handle_t *phMetricTracer) {
-    return L0::zetIntelMetricTracerCreateExp(hContext, hDevice, metricGroupCount, phMetricGroups, desc, hNotificationEvent, phMetricTracer);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerDestroyExp(
-    zet_intel_metric_tracer_exp_handle_t hMetricTracer) {
-    return L0::zetIntelMetricTracerDestroyExp(hMetricTracer);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerEnableExp(
-    zet_intel_metric_tracer_exp_handle_t hMetricTracer,
-    ze_bool_t synchronous) {
-    return L0::zetIntelMetricTracerEnableExp(hMetricTracer, synchronous);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerDisableExp(
-    zet_intel_metric_tracer_exp_handle_t hMetricTracer,
-    ze_bool_t synchronous) {
-    return L0::zetIntelMetricTracerDisableExp(hMetricTracer, synchronous);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerReadDataExp(
-    zet_intel_metric_tracer_exp_handle_t hMetricTracer,
-    size_t *pRawDataSize,
-    uint8_t *pRawData) {
-    return L0::zetIntelMetricTracerReadDataExp(hMetricTracer, pRawDataSize, pRawData);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricDecoderCreateExp(
-    zet_intel_metric_tracer_exp_handle_t hMetricTracer,
-    zet_intel_metric_decoder_exp_handle_t *phMetricDecoder) {
-    return L0::zetIntelMetricDecoderCreateExp(hMetricTracer, phMetricDecoder);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricDecoderDestroyExp(
-    zet_intel_metric_decoder_exp_handle_t phMetricDecoder) {
-    return L0::zetIntelMetricDecoderDestroyExp(phMetricDecoder);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricDecoderGetDecodableMetricsExp(
-    zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
-    uint32_t *pCount,
-    zet_metric_handle_t *phMetrics) {
-    return L0::zetIntelMetricDecoderGetDecodableMetricsExp(hMetricDecoder, pCount, phMetrics);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerDecodeExp(
-    zet_intel_metric_decoder_exp_handle_t phMetricDecoder,
-    size_t *pRawDataSize,
-    uint8_t *pRawData,
-    uint32_t metricsCount,
-    zet_metric_handle_t *phMetrics,
-    uint32_t *pSetCount,
-    uint32_t *pMetricEntriesCountPerSet,
-    uint32_t *pMetricEntriesCount,
-    zet_intel_metric_entry_exp_t *pMetricEntries) {
-    return L0::zetIntelMetricTracerDecodeExp(phMetricDecoder, pRawDataSize, pRawData, metricsCount, phMetrics, pSetCount,
-                                             pMetricEntriesCountPerSet, pMetricEntriesCount, pMetricEntries);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricCalculationOperationCreateExp(

@@ -151,15 +151,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     // Metrics
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceEnableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceDisableMetricsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerCreateExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerDestroyExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerEnableExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerDisableExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerReadDataExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricDecoderCreateExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricDecoderDestroyExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricDecoderGetDecodableMetricsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerDecodeExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculationOperationCreateExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculationOperationDestroyExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculationOperationGetExcludedMetricsExp);
