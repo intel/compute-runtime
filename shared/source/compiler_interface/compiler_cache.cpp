@@ -28,10 +28,16 @@ namespace NEO {
 
 std::mutex CompilerCache::cacheAccessMtx;
 
-uint64_t CompilerCache::getHashValue(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
-                                     const ArrayRef<const char> options, const ArrayRef<const char> internalOptions,
-                                     const ArrayRef<const char> specIds, const ArrayRef<const char> specValues) {
+const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
+                                                   const ArrayRef<const char> options, const ArrayRef<const char> internalOptions,
+                                                   const ArrayRef<const char> specIds, const ArrayRef<const char> specValues,
+                                                   const ArrayRef<const char> igcRevision, size_t igcLibSize, time_t igcLibMTime) {
     Hash hash;
+
+    hash.update("----", 4);
+    hash.update(&*igcRevision.begin(), igcRevision.size());
+    hash.update(safePodCast<const char *>(&igcLibSize), sizeof(igcLibSize));
+    hash.update(safePodCast<const char *>(&igcLibMTime), sizeof(igcLibMTime));
 
     hash.update("----", 4);
     hash.update(&*input.begin(), input.size());
@@ -56,28 +62,7 @@ uint64_t CompilerCache::getHashValue(const HardwareInfo &hwInfo, const ArrayRef<
 
     hash.update(reinterpret_cast<const char *>(&hwInfo.ipVersion), sizeof(uint32_t));
 
-    return hash.finish();
-}
-
-const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
-                                                   const ArrayRef<const char> options, const ArrayRef<const char> internalOptions,
-                                                   const ArrayRef<const char> specIds, const ArrayRef<const char> specValues,
-                                                   const ArrayRef<const char> igcRevision, size_t igcLibSize, time_t igcLibMTime) {
-
-    auto res = getHashValue(hwInfo, input, options, internalOptions, specIds, specValues);
-
-    Hash igcHash;
-    igcHash.update("----", 4);
-    igcHash.update(&*igcRevision.begin(), igcRevision.size());
-    igcHash.update(safePodCast<const char *>(&igcLibSize), sizeof(igcLibSize));
-    igcHash.update(safePodCast<const char *>(&igcLibMTime), sizeof(igcLibMTime));
-
-    char resBytes[sizeof(res)];
-    std::memcpy(resBytes, &res, sizeof(res));
-    igcHash.update(resBytes, sizeof(resBytes));
-
-    res = igcHash.finish();
-
+    auto res = hash.finish();
     std::stringstream stream;
     stream << std::setfill('0')
            << std::setw(sizeof(res) * 2)

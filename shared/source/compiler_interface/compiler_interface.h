@@ -234,8 +234,8 @@ static_assert(NEO::NonCopyableAndNonMovable<CompilerInterface>);
 
 class CompilerCacheHelper {
   public:
-    static void packAndCacheBinary(CompilerCache &compilerCache, const std::string &srcHash, const NEO::TargetDevice &targetDevice, const NEO::TranslationOutput &translationOutput);
-    static bool loadCacheAndSetOutput(CompilerCache &compilerCache, const std::string &srcHash, NEO::TranslationOutput &output);
+    static void packAndCacheBinary(CompilerCache &compilerCache, const std::string &kernelFileHash, const NEO::TargetDevice &targetDevice, const NEO::TranslationOutput &translationOutput);
+    static bool loadCacheAndSetOutput(CompilerCache &compilerCache, const std::string &kernelFileHash, NEO::TranslationOutput &output);
     static CachingMode getCachingMode(CompilerCache *compilerCache, IGC::CodeType::CodeType_t srcCodeType, const ArrayRef<const char> source);
 
   protected:

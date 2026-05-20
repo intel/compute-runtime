@@ -640,7 +640,6 @@ int OfflineCompiler::buildToIrBinary() {
             return retVal;
         }
     }
-    igcDumpsHash = cache->getHashValue(getHardwareInfo(), sourceCode, options, internalOptions, {}, {});
 
     UNRECOVERABLE_IF(!fclFacade->isInitialized());
 
@@ -679,7 +678,8 @@ int OfflineCompiler::buildToIrBinary() {
 
     pBuildInfo->fclOutput = fclFacade->translate(srcType, intermediateRepresentation, err.get(),
                                                  fclSrc.get(), pBuildInfo->fclOptions.get(),
-                                                 pBuildInfo->fclInternalOptions.get(), nullptr, 0, igcDumpsHash);
+                                                 pBuildInfo->fclInternalOptions.get(), nullptr, 0);
+
     if (true == NEO::areNotNullptr(err->GetMemory<char>())) {
         updateBuildLog(err->GetMemory<char>(), err->GetSizeRaw());
         retVal = OCLOC_BUILD_PROGRAM_FAILURE;
@@ -789,15 +789,15 @@ int OfflineCompiler::buildSourceCode() {
                                                               specConstantValues.size() * sizeof(uint64_t));
     }
 
-    const ArrayRef<const char> specIdsRef = useSpecConsts ? ArrayRef<const char>(reinterpret_cast<const char *>(specConstantIds.data()),
-                                                                                 specConstantIds.size() * sizeof(uint32_t))
-                                                          : ArrayRef<const char>();
-
-    const ArrayRef<const char> specValuesRef = useSpecConsts ? ArrayRef<const char>(reinterpret_cast<const char *>(specConstantValues.data()),
-                                                                                    specConstantValues.size() * sizeof(uint64_t))
-                                                             : ArrayRef<const char>();
-
     if (allowCaching) {
+        ArrayRef<const char> specIdsRef = useSpecConsts ? ArrayRef<const char>(reinterpret_cast<const char *>(specConstantIds.data()),
+                                                                               specConstantIds.size() * sizeof(uint32_t))
+                                                        : ArrayRef<const char>();
+
+        ArrayRef<const char> specValuesRef = useSpecConsts ? ArrayRef<const char>(reinterpret_cast<const char *>(specConstantValues.data()),
+                                                                                  specConstantValues.size() * sizeof(uint64_t))
+                                                           : ArrayRef<const char>();
+
         genHash = cache->getCachedFileName(getHardwareInfo(),
                                            ArrayRef<const char>(irBinary, irBinarySize),
                                            options, internalOptions,
@@ -836,24 +836,21 @@ int OfflineCompiler::buildSourceCode() {
     auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, this->outBinFormat);
     auto igcSrc = igcFacade->createConstBuffer(irBinary, irBinarySize);
 
-    const bool irInputSkippedFclStep = (igcDumpsHash == 0);
-    if (irInputSkippedFclStep) {
-        igcDumpsHash = cache->getHashValue(getHardwareInfo(),
-                                           ArrayRef<const char>(irBinary, irBinarySize),
-                                           options, internalOptions,
-                                           specIdsRef, specValuesRef);
-    }
-
-    auto igcOutput = igcTranslationCtx->Translate(
-        igcSrc.get(),
-        igcSpecConstantsIds.get(),
-        igcSpecConstantsValues.get(),
-        igcOptions.get(),
-        igcInternalOptions.get(),
-        nullptr,
-        0,
-        nullptr,
-        igcDumpsHash);
+    auto igcOutput = (useSpecConsts && igcSpecConstantsIds && igcSpecConstantsValues)
+                         ? igcTranslationCtx->Translate(
+                               igcSrc.get(),
+                               igcSpecConstantsIds.get(),
+                               igcSpecConstantsValues.get(),
+                               igcOptions.get(),
+                               igcInternalOptions.get(),
+                               nullptr,
+                               0,
+                               nullptr)
+                         : igcTranslationCtx->Translate(
+                               igcSrc.get(),
+                               igcOptions.get(),
+                               igcInternalOptions.get(),
+                               nullptr, 0);
 
     if (igcOutput == nullptr) {
         return OCLOC_OUT_OF_HOST_MEMORY;

@@ -173,8 +173,7 @@ CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> OclocIgcAsFcl::translate(IGC::Co
                                                                          CIF::Builtins::BufferSimple *options,
                                                                          CIF::Builtins::BufferSimple *internalOptions,
                                                                          CIF::Builtins::BufferSimple *tracingOptions,
-                                                                         uint32_t tracingOptionsCount,
-                                                                         uint64_t srcHash) {
+                                                                         uint32_t tracingOptionsCount) {
 
     auto translationCtx = igc->createTranslationContext(inType, outType);
 
@@ -182,8 +181,7 @@ CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> OclocIgcAsFcl::translate(IGC::Co
         return nullptr;
     }
 
-    return translationCtx->Translate(
-        src, nullptr, nullptr, options, internalOptions, tracingOptions, tracingOptionsCount, nullptr, srcHash);
+    return translationCtx->Translate(src, options, internalOptions, nullptr, 0);
 }
 
 } // namespace NEO

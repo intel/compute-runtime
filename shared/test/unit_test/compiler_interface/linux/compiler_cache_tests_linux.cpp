@@ -1020,7 +1020,7 @@ class CompilerCacheEvictionTestsMockLinux : public CompilerCache {
     size_t createCacheDirectoriesCalled = 0u;
     bool createCacheDirectoriesResult = true;
 
-    bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &srcHash) override {
+    bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash) override {
         renameTempFileBinaryToProperNameCalled++;
         return renameTempFileBinaryToProperNameResult;
     }
@@ -1061,10 +1061,10 @@ TEST(CompilerCacheTests, GivenCacheDirectoryFilledToTheLimitWhenNewBinaryFitsAft
     VariableBackup<decltype(PWriteCallsCountedAndDirSizeWritten::pWriteCalled)> pWriteCalledBackup(&PWriteCallsCountedAndDirSizeWritten::pWriteCalled, 0);
     VariableBackup<decltype(PWriteCallsCountedAndDirSizeWritten::dirSize)> dirSizeBackup(&PWriteCallsCountedAndDirSizeWritten::dirSize, 0);
 
-    const std::string srcHash = "7e3291364d8df42";
+    const std::string kernelFileHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(srcHash, binary, binarySize);
+    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
 
     const size_t expectedDirectorySize = 6 - (cacheSize / 3) + binarySize;
 
@@ -1093,10 +1093,10 @@ TEST(CompilerCacheTests, GivenCacheBinaryWhenBinaryDoesntFitAfterEvictionThenWri
     VariableBackup<decltype(PWriteCallsCountedAndDirSizeWritten::pWriteCalled)> pWriteCalledBackup(&PWriteCallsCountedAndDirSizeWritten::pWriteCalled, 0);
     VariableBackup<decltype(PWriteCallsCountedAndDirSizeWritten::dirSize)> dirSizeBackup(&PWriteCallsCountedAndDirSizeWritten::dirSize, 0);
 
-    const std::string srcHash = "7e3291364d8df42";
+    const std::string kernelFileHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(srcHash, binary, binarySize);
+    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
 
     const size_t expectedDirectorySize = 9 - (cacheSize / 3);
 
@@ -1126,10 +1126,10 @@ TEST(CompilerCacheTests, GivenCacheDirectoryFilledToTheLimitWhenNoBytesHaveBeenE
     VariableBackup<decltype(PWriteCallsCountedAndDirSizeWritten::pWriteCalled)> pWriteCalledBackup(&PWriteCallsCountedAndDirSizeWritten::pWriteCalled, 0);
     VariableBackup<decltype(PWriteCallsCountedAndDirSizeWritten::dirSize)> dirSizeBackup(&PWriteCallsCountedAndDirSizeWritten::dirSize, 0);
 
-    const std::string srcHash = "7e3291364d8df42";
+    const std::string kernelFileHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(srcHash, binary, binarySize);
+    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(1u, cache.lockConfigFileAndReadSizeCalled);
@@ -1154,10 +1154,10 @@ TEST(CompilerCacheTests, GivenCacheBinaryWhenEvictCacheFailsThenReturnFalse) {
     VariableBackup<decltype(PWriteCallsCountedAndDirSizeWritten::pWriteCalled)> pWriteCalledBackup(&PWriteCallsCountedAndDirSizeWritten::pWriteCalled, 0);
     VariableBackup<decltype(PWriteCallsCountedAndDirSizeWritten::dirSize)> dirSizeBackup(&PWriteCallsCountedAndDirSizeWritten::dirSize, 0);
 
-    const std::string srcHash = "7e3291364d8df42";
+    const std::string kernelFileHash = "7e3291364d8df42";
     const char *binary = "123456";
     const size_t binarySize = strlen(binary);
-    auto result = cache.cacheBinary(srcHash, binary, binarySize);
+    auto result = cache.cacheBinary(kernelFileHash, binary, binarySize);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(1u, cache.lockConfigFileAndReadSizeCalled);
@@ -1281,7 +1281,7 @@ class CompilerCacheLinuxReturnFalseOnCacheBinaryIfRenameFileFailed : public Comp
         return true;
     }
 
-    bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &srcHash) override {
+    bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash) override {
         return false;
     }
 };
@@ -1317,7 +1317,7 @@ class CompilerCacheLinuxReturnFalseOnCacheBinaryIfCreateCacheDirectoriesFailed :
         return true;
     }
 
-    bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &srcHash) override {
+    bool renameTempFileBinaryToProperName(const std::string &oldName, const std::string &kernelFileHash) override {
         return true;
     }
 

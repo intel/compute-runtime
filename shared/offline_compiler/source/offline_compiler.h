@@ -233,7 +233,6 @@ All supported acronyms: %s.
     std::string addressingMode = "default";
     CompilerOptions::HeaplessMode heaplessMode = CompilerOptions::HeaplessMode::defaultMode;
     std::string irHash, genHash, dbgHash, elfHash;
-    uint64_t igcDumpsHash = 0;
     std::string cacheDir;
     std::string specConstantsFile;
     std::map<uint32_t, uint64_t> specConstants;

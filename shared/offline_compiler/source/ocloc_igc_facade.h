@@ -75,8 +75,7 @@ class OclocIgcAsFcl : public OclocFclFacadeBase {
                                                               CIF::Builtins::BufferSimple *options,
                                                               CIF::Builtins::BufferSimple *internalOptions,
                                                               CIF::Builtins::BufferSimple *tracingOptions,
-                                                              uint32_t tracingOptionsCount,
-                                                              uint64_t srcHash) override;
+                                                              uint32_t tracingOptionsCount) override;
 
   protected:
     IGC::CodeType::CodeType_t preferredIntermediateRepresentation = IGC::CodeType::undefined;
