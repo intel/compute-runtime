@@ -111,7 +111,7 @@ struct MockDevice : public Device {
     ADDMETHOD_CONST_NOBASE(getEventMaxPacketCount, uint32_t, 8, ())
     ADDMETHOD_CONST_NOBASE(getEventMaxKernelCount, uint32_t, 3, ())
     ADDMETHOD_NOBASE(getAggregatedCopyOffloadIncrementValue, uint32_t, 0, ())
-    ADDMETHOD_CONST_NOBASE(getBufferFromFile, NEO::BuiltIn::Resource, std::vector<char>{'X'}, (const std::string &dirPath, const std::string &fileName))
+    ADDMETHOD_CONST_NOBASE(getBufferFromFile, NEO::BuiltIn::Resource, NEO::BuiltIn::createResource("X", 1), (const std::string &dirPath, const std::string &fileName))
     ADDMETHOD_NOBASE(doCreateRequiredLibModule, ::L0::Module *, nullptr, (NEO::BuiltIn::Resource & reqLibBuff, ::L0::ModuleBuildLog *buildLog, ze_result_t &result))
     ADDMETHOD(getRequiredLibModule, ::L0::Module *, false, nullptr, (const std::string &libName, ModuleBuildLog *moduleBuildLog), (libName, moduleBuildLog))
 

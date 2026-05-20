@@ -1715,8 +1715,8 @@ Module *Device::doCreateRequiredLibModule(NEO::BuiltIn::Resource &reqLibBuff, Mo
         .stype = ZE_STRUCTURE_TYPE_MODULE_DESC,
         .pNext = nullptr,
         .format = ZE_MODULE_FORMAT_NATIVE,
-        .inputSize = reqLibBuff.size(),
-        .pInputModule = reinterpret_cast<uint8_t *>(reqLibBuff.data()),
+        .inputSize = reqLibBuff.size,
+        .pInputModule = reinterpret_cast<const uint8_t *>(reqLibBuff.data),
         .pBuildFlags = nullptr,
         .pConstants = nullptr};
     return Module::create(this, &moduleDesc, buildLog, ModuleType::user, &result);

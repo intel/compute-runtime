@@ -133,7 +133,7 @@ HWTEST2_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingAuxTranslationBuiltinTh
     auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
     EXPECT_EQ(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::auxBuiltinsSupported,
-              mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::auxTranslation, defaultMode, BuiltIn::CodeType::binary, *pDevice).size() != 0);
+              mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::auxTranslation, defaultMode, BuiltIn::CodeType::binary, *pDevice).size != 0);
 }
 
 class MockAuxBuilInOp : public AuxTranslationBuiltin {
@@ -1537,9 +1537,9 @@ TEST_F(BuiltInTests, GivenBuiltinResourceWhenCreatingBuiltinResourceThenSizesAre
     std::string resource = "__kernel";
 
     auto br1 = BuiltIn::createResource(resource.data(), resource.size());
-    EXPECT_NE(0u, br1.size());
+    EXPECT_NE(0u, br1.size);
     auto br2 = BuiltIn::createResource(br1);
-    EXPECT_NE(0u, br2.size());
+    EXPECT_NE(0u, br2.size);
 
     EXPECT_EQ(br1, br2);
 }
@@ -1565,7 +1565,7 @@ TEST_F(BuiltInTests, GivenFileNameWhenGettingKernelFromEmbeddedStorageRegistryTh
 
     const BuiltIn::Resource *br = storageRegistry.get("kernel.cl");
     EXPECT_NE(nullptr, br);
-    EXPECT_EQ(0, strcmp(resource.data(), br->data()));
+    EXPECT_EQ(0, strcmp(resource.data(), br->data));
 
     const BuiltIn::Resource *bnr = storageRegistry.get("unknown.cl");
     EXPECT_EQ(nullptr, bnr);
@@ -1601,10 +1601,10 @@ TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromEmbeddedStorageRegis
     MockEmbeddedStorage mockEmbeddedStorage("root");
 
     BuiltIn::Resource br = mockEmbeddedStorage.loadImpl("copy_buffer_to_buffer.builtin_kernel.cl");
-    EXPECT_NE(0u, br.size());
+    EXPECT_NE(0u, br.size);
 
     BuiltIn::Resource bnr = mockEmbeddedStorage.loadImpl("unknown.cl");
-    EXPECT_EQ(0u, bnr.size());
+    EXPECT_EQ(0u, bnr.size);
 }
 
 TEST_F(BuiltInTests, WhenBuiltInLibraryIsCreatedThenAllStoragesSizeIsTwo) {
@@ -1616,7 +1616,7 @@ TEST_F(BuiltInTests, GivenTypeAnyWhenGettingBuiltinCodeThenCorrectBuiltinReturne
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, defaultMode, BuiltIn::CodeType::any, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::binary, code.type);
-    EXPECT_NE(0u, code.resource.size());
+    EXPECT_NE(0u, code.resource.size);
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
@@ -1624,7 +1624,7 @@ TEST_F(BuiltInTests, GivenTypeBinaryWhenGettingBuiltinCodeThenCorrectBuiltinRetu
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, defaultMode, BuiltIn::CodeType::binary, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::binary, code.type);
-    EXPECT_NE(0u, code.resource.size());
+    EXPECT_NE(0u, code.resource.size);
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
@@ -1632,7 +1632,7 @@ TEST_F(BuiltInTests, GivenTypeIntermediateWhenGettingBuiltinCodeThenCorrectBuilt
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::intermediate, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::intermediate, code.type);
-    EXPECT_EQ(0u, code.resource.size());
+    EXPECT_EQ(0u, code.resource.size);
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
@@ -1640,7 +1640,7 @@ TEST_F(BuiltInTests, GivenTypeSourceWhenGettingBuiltinCodeThenCorrectBuiltinRetu
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::source, code.type);
-    EXPECT_NE(0u, code.resource.size());
+    EXPECT_NE(0u, code.resource.size);
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
@@ -1648,7 +1648,7 @@ TEST_F(BuiltInTests, GivenTypeInvalidWhenGettingBuiltinCodeThenKernelIsEmpty) {
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::invalid, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::invalid, code.type);
-    EXPECT_EQ(0u, code.resource.size());
+    EXPECT_EQ(0u, code.resource.size);
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
@@ -1657,85 +1657,85 @@ HWTEST2_F(BuiltInTests, GivenImagesAndHeaplessBuiltinTypeSourceWhenGettingBuilti
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToImage3d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImage3dToBuffer, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage1d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage2d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage2d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage3d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1dBuffer, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToImage3d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImage3dToBuffer, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage1d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage2d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage2d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage3d, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1dBuffer, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
 }
 
 HWTEST2_F(BuiltInTests, GivenHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupport) {
     auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferRect, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillBuffer, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferRect, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillBuffer, BuiltIn::bindlessImageStatelessBuffer, BuiltIn::CodeType::binary, *pDevice).size);
 }
 
 TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
     auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::auxTranslation, defaultMode, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferRect, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImage3dToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1dBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::count, BuiltIn::AddressingMode{}, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::auxTranslation, defaultMode, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferRect, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImage3dToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1dBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_EQ(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::count, BuiltIn::AddressingMode{}, BuiltIn::CodeType::source, *pDevice).size);
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
     auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferRect, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImage3dToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1dBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferRect, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImage3dToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1dBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
 
-    EXPECT_EQ(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::count, BuiltIn::AddressingMode{}, BuiltIn::CodeType::binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::count, BuiltIn::AddressingMode{}, BuiltIn::CodeType::binary, *pDevice).size);
 }
 
 TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceForNotRegisteredRevisionThenResourceSizeIsNonZero) {
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId += 0xdead;
     auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferRect, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImage3dToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1dBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::count, BuiltIn::AddressingMode{}, BuiltIn::CodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferRect, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImage3dToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyImageToImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage2d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage3d, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::fillImage1dBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice).size);
+    EXPECT_EQ(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::count, BuiltIn::AddressingMode{}, BuiltIn::CodeType::source, *pDevice).size);
 }
 
 TEST_F(BuiltInTests, GivenTypeAnyWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::any, *pDevice);
-    EXPECT_NE(0u, bc.resource.size());
+    EXPECT_NE(0u, bc.resource.size);
     auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
 }
@@ -1743,7 +1743,7 @@ TEST_F(BuiltInTests, GivenTypeAnyWhenCreatingProgramFromCodeThenValidPointerIsRe
 TEST_F(BuiltInTests, GivenTypeSourceWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice);
-    EXPECT_NE(0u, bc.resource.size());
+    EXPECT_NE(0u, bc.resource.size);
     auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
 }
@@ -1752,7 +1752,7 @@ TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenForceToStatelessRequiredOr3
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
 
     const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::source, *pDevice);
-    EXPECT_NE(0u, bc.resource.size());
+    EXPECT_NE(0u, bc.resource.size);
     auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
     auto builtinInternalOptions = program->getInternalOptions();
@@ -1768,7 +1768,7 @@ TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenForceToStatelessRequiredOr3
 TEST_F(BuiltInTests, GivenTypeIntermediateWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::intermediate, *pDevice);
-    EXPECT_EQ(0u, bc.resource.size());
+    EXPECT_EQ(0u, bc.resource.size);
     auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_EQ(nullptr, program.get());
 }
@@ -1776,7 +1776,7 @@ TEST_F(BuiltInTests, GivenTypeIntermediateWhenCreatingProgramFromCodeThenNullPoi
 TEST_F(BuiltInTests, GivenTypeBinaryWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, defaultMode, BuiltIn::CodeType::binary, *pDevice);
-    EXPECT_NE(0u, bc.resource.size());
+    EXPECT_NE(0u, bc.resource.size);
     auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
 }
@@ -1784,7 +1784,7 @@ TEST_F(BuiltInTests, GivenTypeBinaryWhenCreatingProgramFromCodeThenValidPointerI
 TEST_F(BuiltInTests, GivenTypeInvalidWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::invalid, *pDevice);
-    EXPECT_EQ(0u, bc.resource.size());
+    EXPECT_EQ(0u, bc.resource.size);
     auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_EQ(nullptr, program.get());
 }
@@ -1792,7 +1792,7 @@ TEST_F(BuiltInTests, GivenTypeInvalidWhenCreatingProgramFromCodeThenNullPointerI
 TEST_F(BuiltInTests, GivenInvalidBuiltinWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     const BuiltIn::Code bc = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::count, BuiltIn::AddressingMode{}, BuiltIn::CodeType::any, *pDevice);
-    EXPECT_EQ(0u, bc.resource.size());
+    EXPECT_EQ(0u, bc.resource.size);
     auto program = std::unique_ptr<Program>(BuiltIn::DispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_EQ(nullptr, program.get());
 }
@@ -1840,7 +1840,7 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuilti
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, defaultMode, BuiltIn::CodeType::binary, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::binary, code.type);
-    EXPECT_NE(0u, code.resource.size());
+    EXPECT_NE(0u, code.resource.size);
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
@@ -1849,7 +1849,7 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCo
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::any, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::source, code.type);
-    EXPECT_NE(0u, code.resource.size());
+    EXPECT_NE(0u, code.resource.size);
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
@@ -1858,7 +1858,7 @@ TEST_F(BuiltInTests, givenOneApiPvcSendWarWaEnvFalseWhenGettingBuiltinCodeThenSo
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());
     BuiltIn::Code code = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::any, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::source, code.type);
-    EXPECT_NE(0u, code.resource.size());
+    EXPECT_NE(0u, code.resource.size);
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 

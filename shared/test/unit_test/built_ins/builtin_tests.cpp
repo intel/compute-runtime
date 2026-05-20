@@ -21,7 +21,122 @@
 
 #include "gtest/gtest.h"
 
+#include <cstring>
 #include <string>
+#include <utility>
+
+namespace {
+NEO::BuiltIn::Resource &asResourceRef(NEO::BuiltIn::Resource &resource) {
+    return resource;
+}
+} // namespace
+
+TEST(BuiltInResourceTests, givenPersistentStorageWhenCreatingResourceThenOriginalPointerIsUsed) {
+    char source[] = {'a', 'b', 'c', 'd'};
+
+    BuiltIn::Resource resource(source, sizeof(source), true);
+
+    EXPECT_EQ(sizeof(source), resource.size);
+    EXPECT_TRUE(resource.persistentMemory);
+    EXPECT_EQ(source, resource.data);
+
+    source[0] = 'z';
+    EXPECT_EQ('z', resource.data[0]);
+}
+
+TEST(BuiltInResourceTests, givenNonPersistentStorageWhenCreatingResourceThenInputIsCopied) {
+    char source[] = {'a', 'b', 'c', 'd'};
+
+    BuiltIn::Resource resource(source, sizeof(source), false);
+
+    EXPECT_EQ(sizeof(source), resource.size);
+    EXPECT_FALSE(resource.persistentMemory);
+    EXPECT_NE(source, resource.data);
+    EXPECT_EQ(0, std::memcmp(source, resource.data, sizeof(source)));
+
+    source[0] = 'z';
+    EXPECT_EQ('a', resource.data[0]);
+}
+
+TEST(BuiltInResourceTests, givenNullPointerWhenCreatingResourceThenDataRemainsNull) {
+    BuiltIn::Resource resource(nullptr, 4, true);
+
+    EXPECT_EQ(nullptr, resource.data);
+    EXPECT_EQ(4u, resource.size);
+    EXPECT_FALSE(resource.empty());
+}
+
+TEST(BuiltInResourceTests, givenZeroSizeWhenCreatingResourceThenResourceIsEmpty) {
+    char source[] = {'a'};
+    BuiltIn::Resource resource(source, 0, false);
+
+    EXPECT_EQ(nullptr, resource.data);
+    EXPECT_EQ(0u, resource.size);
+    EXPECT_TRUE(resource.empty());
+}
+
+TEST(BuiltInResourceTests, whenComparingPersistentResourcesThenPointerEqualityIsUsed) {
+    char source[] = {'a', 'b'};
+    BuiltIn::Resource lhs(source, sizeof(source), true);
+    BuiltIn::Resource rhs(source, sizeof(source), true);
+
+    EXPECT_TRUE(lhs == rhs);
+
+    char other[] = {'a', 'b'};
+    BuiltIn::Resource rhsDifferentPointer(other, sizeof(other), true);
+    EXPECT_FALSE(lhs == rhsDifferentPointer);
+}
+
+TEST(BuiltInResourceTests, whenComparingZeroSizedResourcesThenTheyAreEqual) {
+    BuiltIn::Resource lhs;
+    BuiltIn::Resource rhs;
+
+    EXPECT_TRUE(lhs == rhs);
+}
+
+TEST(BuiltInResourceTests, givenDifferentSizedResourcesWhenComparingThenTheyAreNotEqual) {
+    char lhsData[] = {'a', 'b'};
+    char rhsData[] = {'a'};
+    BuiltIn::Resource lhs(lhsData, sizeof(lhsData), false);
+    BuiltIn::Resource rhs(rhsData, sizeof(rhsData), false);
+
+    EXPECT_FALSE(lhs == rhs);
+}
+
+TEST(BuiltInResourceTests, whenCopyAssigningResourceThenDataIsCopiedAndSelfAssignIsHandled) {
+    char source[] = {'a', 'b', 'c'};
+    BuiltIn::Resource sourceResource(source, sizeof(source), false);
+    BuiltIn::Resource destination;
+
+    destination = sourceResource;
+    EXPECT_EQ(sourceResource.size, destination.size);
+    EXPECT_NE(sourceResource.data, destination.data);
+    EXPECT_EQ(0, std::memcmp(sourceResource.data, destination.data, sourceResource.size));
+
+    const char *dataBeforeSelfAssign = destination.data;
+    destination = asResourceRef(destination);
+    EXPECT_EQ(dataBeforeSelfAssign, destination.data);
+    EXPECT_EQ(sizeof(source), destination.size);
+}
+
+TEST(BuiltInResourceTests, whenMoveAssigningResourceThenOwnershipIsTransferredAndSelfMoveIsHandled) {
+    char source[] = {'x', 'y'};
+    BuiltIn::Resource moveSource(source, sizeof(source), false);
+    const char *sourceDataPtr = moveSource.data;
+
+    BuiltIn::Resource destination;
+    destination = std::move(moveSource);
+
+    EXPECT_EQ(sourceDataPtr, destination.data);
+    EXPECT_EQ(sizeof(source), destination.size);
+    EXPECT_EQ(nullptr, moveSource.data);
+    EXPECT_EQ(0u, moveSource.size);
+
+    const char *destinationDataBeforeSelfMove = destination.data;
+    destination = std::move(asResourceRef(destination));
+    EXPECT_EQ(destinationDataBeforeSelfMove, destination.data);
+    EXPECT_EQ(sizeof(source), destination.size);
+}
 
 using BuiltInSharedTest = Test<DeviceFixture>;
 
@@ -44,10 +159,10 @@ TEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatformT
 
     for (auto &builtinType : builtinTypes) {
         auto binaryBuiltinResource = builtinsLib->getBuiltinResource(builtinType, defaultBuiltInMode, BuiltIn::CodeType::binary, *pDevice);
-        EXPECT_EQ(0U, binaryBuiltinResource.size());
+        EXPECT_EQ(0U, binaryBuiltinResource.size);
 
         auto intermediateBuiltinResource = builtinsLib->getBuiltinResource(builtinType, defaultBuiltInMode, BuiltIn::CodeType::intermediate, *pDevice);
-        EXPECT_NE(0U, intermediateBuiltinResource.size());
+        EXPECT_NE(0U, intermediateBuiltinResource.size);
     }
 }
 
@@ -181,7 +296,7 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCod
 
     auto builtinCode = builtinsLib->getBuiltinCode(BuiltIn::BaseKernel::copyBufferToBuffer, defaultBuiltInMode, BuiltIn::CodeType::any, *pDevice);
     EXPECT_EQ(BuiltIn::CodeType::binary, builtinCode.type);
-    EXPECT_NE(0U, builtinCode.resource.size());
+    EXPECT_NE(0U, builtinCode.resource.size);
 }
 
 TEST_F(BuiltInSharedTest, GivenRequestedTypeWhenGettingResourceNamesThenReturnReleaseForAllWideOps) {
@@ -249,18 +364,18 @@ TEST_F(FileStorageTests, GivenFiledNameWhenLoadingImplKernelFromFileStorageThenV
     VariableBackup<long int> ftellReturnBackup(&NEO::IoFunctions::mockFtellReturn, 4L);
     VariableBackup<size_t> freadReturnBackup(&NEO::IoFunctions::mockFreadReturn, 4u);
     BuiltIn::Resource br = storage.loadImpl("copybuffer.cl");
-    EXPECT_NE(0u, br.size());
+    EXPECT_NE(0u, br.size);
 
     VariableBackup<FILE *> fopenReturnedBackup(&NEO::IoFunctions::mockFopenReturned, nullptr);
     BuiltIn::Resource bnr = storage.loadImpl("unknown.cl");
-    EXPECT_EQ(0u, bnr.size());
+    EXPECT_EQ(0u, bnr.size);
 }
 
 TEST_F(FileStorageTests, GivenFseekToEndFailsWhenLoadingImplFromFileStorageThenEmptyResourceIsReturnedAndFileIsClosed) {
     VariableBackup<uint32_t> fcloseCalledBackup(&NEO::IoFunctions::mockFcloseCalled, 0u);
     VariableBackup<int> fseekReturnBackup(&NEO::IoFunctions::mockFseekReturn, -1);
     BuiltIn::Resource res = storage.loadImpl("file.cl");
-    EXPECT_EQ(0u, res.size());
+    EXPECT_EQ(0u, res.size);
     EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
 }
 
@@ -269,7 +384,7 @@ TEST_F(FileStorageTests, GivenFtellFailsWhenLoadingImplFromFileStorageThenEmptyR
     VariableBackup<int> fseekReturnBackup(&NEO::IoFunctions::mockFseekReturn, 0);
     VariableBackup<long int> ftellReturnBackup(&NEO::IoFunctions::mockFtellReturn, -1L);
     BuiltIn::Resource res = storage.loadImpl("file.cl");
-    EXPECT_EQ(0u, res.size());
+    EXPECT_EQ(0u, res.size);
     EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
 }
 
@@ -280,7 +395,7 @@ TEST_F(FileStorageTests, GivenFseekToStartFailsWhenLoadingImplFromFileStorageThe
     VariableBackup<int> fseekReturnBackup(&NEO::IoFunctions::mockFseekReturn, 0);
     VariableBackup<long int> ftellReturnBackup(&NEO::IoFunctions::mockFtellReturn, 4L);
     BuiltIn::Resource res = storage.loadImpl("file.cl");
-    EXPECT_EQ(0u, res.size());
+    EXPECT_EQ(0u, res.size);
     EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
 }
 
@@ -290,7 +405,7 @@ TEST_F(FileStorageTests, GivenFreadReturnsFewerBytesThanExpectedWhenLoadingImplF
     VariableBackup<long int> ftellReturnBackup(&NEO::IoFunctions::mockFtellReturn, 4L);
     VariableBackup<size_t> freadReturnBackup(&NEO::IoFunctions::mockFreadReturn, 2u);
     BuiltIn::Resource res = storage.loadImpl("file.cl");
-    EXPECT_EQ(0u, res.size());
+    EXPECT_EQ(0u, res.size);
     EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
 }
 

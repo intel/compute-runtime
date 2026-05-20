@@ -21,11 +21,13 @@
 #include <cstdint>
 #include <memory>
 #include <sstream>
+#include <string_view>
+#include <utility>
 
 namespace NEO {
 
-BuiltIn::Resource BuiltIn::createResource(const char *ptr, size_t size) {
-    return BuiltIn::Resource(ptr, ptr + size);
+BuiltIn::Resource BuiltIn::createResource(const char *ptr, size_t size, bool persistentSrcMemory) {
+    return BuiltIn::Resource(ptr, size, persistentSrcMemory);
 }
 
 BuiltIn::Resource BuiltIn::createResource(const BuiltIn::Resource &r) {
@@ -97,8 +99,12 @@ BuiltIn::Resource BuiltIn::FileStorage::loadImpl(const std::string &fullResource
         return ret;
     }
     auto size = static_cast<size_t>(fileSize);
-    ret.resize(size);
-    auto bytesRead = NEO::IoFunctions::freadPtr(ret.data(), sizeof(char), size, fp.get());
+    if (0 == size) {
+        return BuiltIn::Resource{};
+    }
+    ret.size = size;
+    ret.data = new char[size];
+    auto bytesRead = NEO::IoFunctions::freadPtr(const_cast<char *>(ret.data), sizeof(char), size, fp.get());
     if (bytesRead != size) {
         return BuiltIn::Resource{};
     }
@@ -144,7 +150,7 @@ BuiltIn::Code BuiltIn::ResourceLoader::getBuiltinCode(BuiltIn::BaseKernel kernel
         for (uint32_t e = static_cast<uint32_t>(BuiltIn::CodeType::count);
              codeType != e; ++codeType) {
             bc = getBuiltinResource(kernel, mode, static_cast<BuiltIn::CodeType>(codeType), device);
-            if (bc.size() > 0) {
+            if (bc.size > 0) {
                 usedCodetType = static_cast<BuiltIn::CodeType>(codeType);
                 break;
             }
@@ -168,7 +174,7 @@ BuiltIn::Resource BuiltIn::ResourceLoader::getBuiltinResource(BuiltIn::BaseKerne
     for (auto &resourceName : resourcesToLookup) {
         for (auto &storage : allStorages) {
             builtinResource = storage->load(resourceName);
-            if (builtinResource.size() != 0) {
+            if (builtinResource.size != 0) {
                 return builtinResource;
             }
         }

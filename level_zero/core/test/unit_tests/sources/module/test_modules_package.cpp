@@ -49,6 +49,7 @@ struct MockModulesPackage : L0::ult::ModulesPackage {
 
     std::function<std::unique_ptr<Module>(L0::Device *device, ModuleBuildLog *buildLog, ModuleType type)> moduleUnitFactory;
 };
+
 } // namespace
 
 TEST(ModulesPackageInit, WhenDestroyIsCalledThenDeletesThePackageAndReturnsSuccess) {

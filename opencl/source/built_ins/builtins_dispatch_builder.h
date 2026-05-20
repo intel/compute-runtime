@@ -22,7 +22,7 @@
 namespace NEO {
 namespace BuiltIn {
 struct Code;
-using Resource = std::vector<char>;
+struct Resource;
 } // namespace BuiltIn
 class BuiltIns;
 class GraphicsAllocation;

@@ -45,8 +45,8 @@ struct MockBuiltInKernelLibImplTimestamps : BuiltInKernelLibImpl {
         ze_module_handle_t moduleHandle;
         ze_module_desc_t moduleDesc = {};
         moduleDesc.format = builtInCode.type == BuiltInCodeType::binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
-        moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtInCode.resource[0]);
-        moduleDesc.inputSize = builtInCode.resource.size();
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(builtInCode.resource.data);
+        moduleDesc.inputSize = builtInCode.resource.size;
         res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::builtin);
         UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
         module = Module::fromHandle(moduleHandle);

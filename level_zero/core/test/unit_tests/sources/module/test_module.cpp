@@ -5375,6 +5375,7 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
 }
 
 using ModuleDebugDataTest = Test<DeviceFixture>;
+
 TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDebugDataThenRelocationsAreApplied) {
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);

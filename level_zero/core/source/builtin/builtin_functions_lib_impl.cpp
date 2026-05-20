@@ -125,8 +125,8 @@ std::unique_ptr<BuiltInKernelLibImpl::BuiltInKernelData> BuiltInKernelLibImpl::l
         ze_module_handle_t moduleHandle = {};
         ze_module_desc_t moduleDesc = {};
         moduleDesc.format = builtinCode.type == BuiltInCodeType::binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
-        moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtinCode.resource[0]);
-        moduleDesc.inputSize = builtinCode.resource.size();
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(builtinCode.resource.data);
+        moduleDesc.inputSize = builtinCode.resource.size;
         res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::builtin);
         UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
 

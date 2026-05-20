@@ -93,7 +93,7 @@ TEST_P(KernelAddressingTest, givenBuiltinCopyBufferToBufferKernelsWhenWidenessIs
 TEST_P(KernelAddressingTest, givenBuiltinCopyBufferRectKernelsWhenFetchedFromProgramThenCorrectArgumentSizesAreUsed) {
 
     auto src = pDevice->getBuiltIns()->getBuiltinsLib().getBuiltinCode(BuiltIn::BaseKernel::copyBufferRect, defaultBuiltInMode, BuiltIn::CodeType::any, *pDevice);
-    ASSERT_GT(src.resource.size(), 0u);
+    ASSERT_GT(src.resource.size, 0u);
     ClDeviceVector deviceVector;
     deviceVector.push_back(pClDevice);
     prog.reset(BuiltIn::DispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());

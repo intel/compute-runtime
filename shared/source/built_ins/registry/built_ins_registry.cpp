@@ -13,7 +13,7 @@ namespace NEO {
 
 RegisterEmbeddedResource::RegisterEmbeddedResource(const char *name, const char *resource, size_t resourceLength) {
     auto &storageRegistry = BuiltIn::EmbeddedStorageRegistry::getInstance();
-    storageRegistry.store(name, BuiltIn::createResource(resource, resourceLength));
+    storageRegistry.store(name, BuiltIn::createResource(resource, resourceLength, true));
 }
 
 } // namespace NEO

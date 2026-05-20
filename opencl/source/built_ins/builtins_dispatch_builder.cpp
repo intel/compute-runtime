@@ -783,8 +783,8 @@ void BuiltIn::OwnershipWrapper::takeOwnership(BuiltIn::DispatchInfoBuilder &inpu
 
 std::unique_ptr<Program> BuiltIn::DispatchInfoBuilder::createProgramFromCode(const BuiltIn::Code &bc, const ClDeviceVector &deviceVector) {
     std::unique_ptr<Program> ret;
-    const char *data = bc.resource.data();
-    size_t dataLen = bc.resource.size();
+    const char *data = bc.resource.data;
+    size_t dataLen = bc.resource.size;
     cl_int err = 0;
     switch (bc.type) {
     default:
