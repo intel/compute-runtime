@@ -74,8 +74,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamily : public CommandList {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
-    using CommandList::skipInOrderNonWalkerSignalingAllowed;
-
     using CommandList::CommandList;
     ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) override;
     void programL3(bool isSLMused);

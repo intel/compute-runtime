@@ -28,44 +28,6 @@ namespace ult {
 HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, IGFX_XE3P_CORE);
 HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryCopyRegionBlitThenTimeStampRegistersAreAdded, IGFX_XE3P_CORE);
 HWTEST_EXCLUDE_PRODUCT(InOrderCmdListTests, givenCmdListWhenAskingForQwordDataSizeThenReturnFalse, IGFX_XE3P_CORE);
-HWTEST_EXCLUDE_PRODUCT(InOrderCmdListTests, givenDebugFlagSetWhenAskingIfSkipInOrderNonWalkerSignallingAllowedThenReturnTrue_IsAtLeastXeHpcCore, IGFX_XE3P_CORE);
-
-using InOrderCmdListTestsXe3p = Test<ModuleFixture>;
-
-XE3P_CORETEST_F(InOrderCmdListTestsXe3p, givenDebugFlagSetWhenAskingIfSkipInOrderNonWalkerSignallingAllowedThenReturnFalse) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
-
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-    eventPoolDesc.count = 1;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
-
-    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-
-    eventDesc.index = 0;
-    auto event = DestroyableZeUniquePtr<MockEvent>(static_cast<MockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue)));
-
-    ze_command_queue_desc_t desc = {};
-    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-
-    auto cmdQ = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
-
-    auto cmdList = makeZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
-
-    cmdList->cmdQImmediate = cmdQ.get();
-    cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
-    cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList->commandContainer.setImmediateCmdListCsr(csr);
-    cmdList->enableInOrderExecution();
-
-    EXPECT_FALSE(cmdList->skipInOrderNonWalkerSignalingAllowed(event.get()));
-}
 
 using CommandListAppendLaunchKernelXe3p = Test<ModuleFixture>;
 XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenVariousKernelsWhenUpdateStreamPropertiesIsCalledThenRequiredStateFinalStateAndCommandsToPatchAreCorrectlySet) {

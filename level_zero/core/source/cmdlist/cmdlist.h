@@ -458,8 +458,6 @@ struct CommandList : _ze_command_list_handle_t {
         return heaplessModeEnabled;
     }
 
-    virtual bool skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const { return false; }
-
     bool getCmdListBatchBufferFlag() const {
         return dispatchCmdListBatchBufferAsPrimary;
     }

@@ -66,28 +66,6 @@ bool CommandListCoreFamilyImmediate<IGFX_XE_HPC_CORE>::isRelaxedOrderingDispatch
     return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*csr, numEvents);
 }
 
-template <>
-bool CommandListCoreFamilyImmediate<IGFX_XE_HPC_CORE>::handleRelaxedOrderingSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result) {
-    bool nonWalkerSignalingHasRelaxedOrdering = false;
-
-    if (NEO::debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.get() != 0) {
-        auto counterValueBeforeSecondCheck = this->relaxedOrderingCounter;
-        nonWalkerSignalingHasRelaxedOrdering = isRelaxedOrderingDispatchAllowed(1, false);
-        this->relaxedOrderingCounter = counterValueBeforeSecondCheck; // dont increment twice
-    }
-
-    if (nonWalkerSignalingHasRelaxedOrdering) {
-        if (event && event->isCounterBased()) {
-            event->hostEventSetValue(Event::STATE_INITIAL);
-        }
-        result = flushImmediate(result, true, hasStallingCmds, relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, nullptr, false, nullptr, nullptr);
-        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*this->commandContainer.getCommandStream(), isCopyOnly(false));
-        relaxedOrderingDispatch = true;
-        hasStallingCmds = hasStallingCmdsForRelaxedOrdering(1, relaxedOrderingDispatch);
-    }
-    return nonWalkerSignalingHasRelaxedOrdering;
-}
-
 template struct CommandListCoreFamily<IGFX_XE_HPC_CORE>;
 template struct CommandListCoreFamilyImmediate<IGFX_XE_HPC_CORE>;
 

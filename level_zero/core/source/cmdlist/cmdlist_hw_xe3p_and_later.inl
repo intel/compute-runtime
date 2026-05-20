@@ -15,11 +15,6 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const {
-    return false;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 constexpr bool CommandListCoreFamily<gfxCoreFamily>::checkIfAllocationImportedRequired() {
     return true;
 }

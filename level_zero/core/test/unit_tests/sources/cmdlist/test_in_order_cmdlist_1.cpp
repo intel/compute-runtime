@@ -2465,40 +2465,6 @@ HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWit
     EXPECT_EQ(1u, immCmdList0->relaxedOrderingCounter);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWithCounterHeuristicWhenSubmisionSplitThenDontIncrementCounterTwice, IsXeHpcCore) {
-    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-    debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
-    debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.set(1);
-
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
-    ultCsr->directSubmission.reset(directSubmission);
-    int client1, client2;
-    ultCsr->registerClient(&client1);
-    ultCsr->registerClient(&client2);
-
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    auto eventPool = createEvents<FamilyType>(1, true);
-    events[0]->signalScope = 0;
-
-    if (!immCmdList->skipInOrderNonWalkerSignalingAllowed(events[0].get())) {
-        GTEST_SKIP(); // not supported
-    }
-
-    EXPECT_EQ(0u, immCmdList->relaxedOrderingCounter);
-
-    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
-    EXPECT_EQ(1u, immCmdList->relaxedOrderingCounter);
-
-    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
-    EXPECT_EQ(2u, immCmdList->relaxedOrderingCounter);
-
-    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
-    EXPECT_EQ(3u, immCmdList->relaxedOrderingCounter);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderEventModeWhenWaitingForEventFromPreviousAppendThenSkip) {
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -2905,141 +2871,6 @@ HWTEST2_F(InOrderCmdListTests, givenIoqAndPrefetchEnabledWhenKernelIsAppendedThe
     EXPECT_EQ(isaAddress, secondPrefetch->getAddress());
 }
 
-HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenAskingIfSkipInOrderNonWalkerSignallingAllowedThenReturnTrue, IsAtLeastXeHpcCore) {
-    debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
-    auto eventPool = createEvents<FamilyType>(1, true);
-    events[0]->signalScope = 0;
-
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    EXPECT_TRUE(immCmdList->skipInOrderNonWalkerSignalingAllowed(events[0].get()));
-}
-
-HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventThenClearAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsXeHpcCore) {
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-
-    class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
-      public:
-        using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
-        using BaseClass::BaseClass;
-
-        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
-                                   NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
-                                   MutexLock *outerLock,
-                                   std::unique_lock<std::mutex> *outerLockForIndirect) override {
-            flushData.push_back(this->cmdListCurrentStartOffset);
-
-            this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
-
-            return ZE_RESULT_SUCCESS;
-        }
-
-        std::vector<size_t> flushData; // start_offset
-    };
-
-    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-    debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
-    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
-
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
-    ultCsr->directSubmission.reset(directSubmission);
-    int client1, client2;
-    ultCsr->registerClient(&client1);
-    ultCsr->registerClient(&client2);
-
-    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, MyMockCmdList>(false);
-
-    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
-
-    auto eventPool = createEvents<FamilyType>(1, true);
-    events[0]->signalScope = 0;
-
-    if (!immCmdList->skipInOrderNonWalkerSignalingAllowed(events[0].get())) {
-        GTEST_SKIP(); // not supported
-    }
-
-    immCmdList->inOrderExecInfo->addCounterValue(1);
-
-    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0, false));
-
-    EXPECT_EQ(0u, immCmdList->flushData.size());
-
-    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
-
-    ASSERT_EQ(2u, immCmdList->flushData.size());
-    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
-    {
-
-        GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), immCmdList->flushData[1]));
-
-        if (immCmdList->isHeaplessModeEnabled()) {
-            auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-            ASSERT_NE(cmdList.end(), sdiItor);
-
-            auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
-            ASSERT_NE(nullptr, sdiCmd);
-
-            EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
-            EXPECT_EQ(0u, sdiCmd->getStoreQword());
-            EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
-
-            auto sdiOffset = ptrDiff(sdiCmd, cmdStream->getCpuBase());
-            EXPECT_TRUE(sdiOffset >= immCmdList->flushData[0]);
-            EXPECT_TRUE(sdiOffset < immCmdList->flushData[1]);
-        }
-
-        auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), walkerItor);
-
-        auto eventBaseGpuVa = events[0]->getPacketAddress(device);
-
-        auto walker = genCmdCast<WalkerType *>(*walkerItor);
-        auto &postSync = walker->getPostSync();
-        using PostSyncType = std::decay_t<decltype(postSync)>;
-
-        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
-        EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
-
-        auto walkerOffset = ptrDiff(walker, cmdStream->getCpuBase());
-        EXPECT_TRUE(walkerOffset >= immCmdList->flushData[0]);
-        EXPECT_TRUE(walkerOffset < immCmdList->flushData[1]);
-    }
-
-    {
-
-        GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), immCmdList->flushData[1]), (cmdStream->getUsed() - immCmdList->flushData[1])));
-
-        // Relaxed Ordering registers
-        auto lrrCmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_REG *>(*cmdList.begin());
-        ASSERT_NE(nullptr, lrrCmd);
-
-        EXPECT_EQ(RegisterOffsets::csGprR4, lrrCmd->getSourceRegisterAddress());
-        EXPECT_EQ(RegisterOffsets::csGprR0, lrrCmd->getDestinationRegisterAddress());
-        lrrCmd++;
-        EXPECT_EQ(RegisterOffsets::csGprR4 + 4, lrrCmd->getSourceRegisterAddress());
-        EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lrrCmd->getDestinationRegisterAddress());
-
-        lrrCmd++;
-
-        auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
-
-        EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(lrrCmd, 0, eventEndGpuVa, static_cast<uint64_t>(Event::STATE_CLEARED),
-                                                                                               NEO::CompareOperation::equal, true, false, false));
-
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(ptrOffset(lrrCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false)));
-        ASSERT_NE(nullptr, sdiCmd);
-
-        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
-        EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-        EXPECT_EQ(2u, sdiCmd->getDataDword0());
-    }
-}
-
 HWTEST_F(InOrderCmdListTests, givenCbEventWhenAppendSignalEventCalledThenFallbackToAppendBarrier) {
     class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
       public:
@@ -3117,184 +2948,6 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenAppendSignalOnImmediateCmd
     EXPECT_EQ(eventData->counterValue, incValue * 2);
 
     context->freeMem(devAddress);
-}
-
-HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventCbThenClearOnHstAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsXeHpcCore) {
-    class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
-      public:
-        using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
-        using BaseClass::BaseClass;
-
-        bool handleCounterBasedEventOperations(L0::Event *signalEvent, bool skipAddingEventToResidency) override {
-            auto ret = BaseClass::handleCounterBasedEventOperations(signalEvent, skipAddingEventToResidency);
-            usedEvent = signalEvent;
-            auto hostAddr = reinterpret_cast<uint32_t *>(usedEvent->getCompletionFieldHostAddress());
-            *hostAddr = 0x123;
-
-            return ret;
-        }
-
-        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
-                                   NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
-                                   MutexLock *outerLock,
-                                   std::unique_lock<std::mutex> *outerLockForIndirect) override {
-            auto hostAddr = reinterpret_cast<uint32_t *>(usedEvent->getCompletionFieldHostAddress());
-            eventCompletionData.push_back(*hostAddr);
-
-            if (eventCompletionData.size() == 1) {
-                *hostAddr = 0x345;
-            }
-
-            this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
-
-            return ZE_RESULT_SUCCESS;
-        }
-
-        std::vector<uint32_t> eventCompletionData;
-        L0::Event *usedEvent = nullptr;
-    };
-
-    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-    debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
-    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
-
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
-    ultCsr->directSubmission.reset(directSubmission);
-    int client1, client2;
-    ultCsr->registerClient(&client1);
-    ultCsr->registerClient(&client2);
-
-    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, MyMockCmdList>(false);
-
-    auto eventPool = createEvents<FamilyType>(1, true);
-    events[0]->signalScope = 0;
-
-    if (!immCmdList->skipInOrderNonWalkerSignalingAllowed(events[0].get())) {
-        GTEST_SKIP(); // not supported
-    }
-
-    immCmdList->inOrderExecInfo->addCounterValue(1);
-
-    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0, false));
-
-    EXPECT_EQ(0u, immCmdList->eventCompletionData.size());
-
-    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
-
-    ASSERT_EQ(2u, immCmdList->eventCompletionData.size());
-    EXPECT_EQ(static_cast<uint32_t>(Event::STATE_CLEARED), immCmdList->eventCompletionData[0]);
-    EXPECT_EQ(0x345u, immCmdList->eventCompletionData[1]);
-
-    events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
-
-    immCmdList->eventCompletionData.clear();
-
-    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
-    ASSERT_EQ(2u, immCmdList->eventCompletionData.size());
-    EXPECT_NE(static_cast<uint32_t>(Event::STATE_CLEARED), immCmdList->eventCompletionData[0]);
-}
-
-HWTEST2_F(InOrderCmdListTests, givenRegularNonTimestampEventWhenSkipItsConvertedToCounterBasedThenDisableNonWalkerSignalingSkip, IsAtLeastXeHpcCore) {
-    class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
-      public:
-        using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
-        using BaseClass::BaseClass;
-
-        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
-                                   NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
-                                   MutexLock *outerLock,
-                                   std::unique_lock<std::mutex> *outerLockForIndirect) override {
-            flushCounter++;
-
-            this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
-
-            return ZE_RESULT_SUCCESS;
-        }
-
-        uint32_t flushCounter = 0;
-    };
-
-    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-    debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
-
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
-    ultCsr->directSubmission.reset(directSubmission);
-    int client1, client2;
-    ultCsr->registerClient(&client1);
-    ultCsr->registerClient(&client2);
-
-    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, MyMockCmdList>(false);
-
-    auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->signalScope = 0;
-
-    if (!immCmdList->skipInOrderNonWalkerSignalingAllowed(events[0].get())) {
-        GTEST_SKIP(); // not supported
-    }
-
-    events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
-
-    immCmdList->inOrderExecInfo->addCounterValue(1);
-
-    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0, false));
-
-    EXPECT_EQ(0u, immCmdList->flushCounter);
-
-    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
-
-    EXPECT_EQ(1u, immCmdList->flushCounter);
-    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
-}
-
-HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingThenSignalAsSingleSubmission, IsXeHpcCore) {
-    class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
-      public:
-        using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
-        using BaseClass::BaseClass;
-
-        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
-                                   NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
-                                   MutexLock *outerLock,
-                                   std::unique_lock<std::mutex> *outerLockForIndirect) override {
-            flushCount++;
-
-            return ZE_RESULT_SUCCESS;
-        }
-
-        uint32_t flushCount = 0;
-    };
-
-    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-    debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.set(0);
-    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
-
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
-    ultCsr->directSubmission.reset(directSubmission);
-    int client1, client2;
-    ultCsr->registerClient(&client1);
-    ultCsr->registerClient(&client2);
-
-    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, MyMockCmdList>(false);
-
-    auto eventPool = createEvents<FamilyType>(1, true);
-    events[0]->signalScope = 0;
-
-    immCmdList->inOrderExecInfo->addCounterValue(1);
-
-    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0, false));
-
-    EXPECT_EQ(0u, immCmdList->flushCount);
-
-    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
-
-    ASSERT_EQ(1u, immCmdList->flushCount);
-    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenClearAndChainWithSyncAllocSignaling) {
@@ -6880,6 +6533,28 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAppendingLaunchKernelMul
 
     zeEventDestroy(handle);
     zeEventDestroy(handleWithInterruptHint);
+}
+
+HWTEST_F(InOrderCmdListTests, givenImmediateCmdListWhenAppendLaunchKernelWithSignalEventThenInOrderNonWalkerSignalingRequiredIsCachedInLaunchParams) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    CmdListKernelLaunchParams localLaunchParams = {};
+    EXPECT_FALSE(localLaunchParams.inOrderNonWalkerSignalingRequired);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, localLaunchParams);
+
+    const bool expectedCachedValue = immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get());
+    EXPECT_EQ(expectedCachedValue, localLaunchParams.inOrderNonWalkerSignalingRequired);
+}
+
+HWTEST_F(InOrderCmdListTests, givenImmediateCmdListWhenAppendLaunchKernelWithoutSignalEventThenInOrderNonWalkerSignalingRequiredCacheStaysFalse) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    CmdListKernelLaunchParams localLaunchParams = {};
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, localLaunchParams);
+
+    EXPECT_FALSE(localLaunchParams.inOrderNonWalkerSignalingRequired);
 }
 
 } // namespace ult

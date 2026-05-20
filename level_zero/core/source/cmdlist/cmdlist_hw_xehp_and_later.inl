@@ -56,6 +56,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions, Event *event,
                                                                                CmdListKernelLaunchParams &launchParams) {
 
+    launchParams.inOrderNonWalkerSignalingRequired = isInOrderNonWalkerSignalingRequired(event);
+
     if (NEO::debugManager.flags.ForcePipeControlPriorToWalker.get()) {
         NEO::PipeControlArgs args;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
@@ -288,7 +290,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (!launchParams.makeKernelCommandView) {
         inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
-        inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(event);
+        inOrderNonWalkerSignalling = launchParams.inOrderNonWalkerSignalingRequired;
 
         if (inOrderExecSignalRequired) {
             if (inOrderNonWalkerSignalling) {
@@ -423,21 +425,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
-            if (!launchParams.skipInOrderNonWalkerSignaling) {
-                if (event->isCounterBased()) {
-                    this->latestOperationHasHeapfullCbEventWithProfiling = true;
-                    event->setHeapfullCbEventWithProfiling(true);
-                } else {
-                    appendWaitOnSingleEvent<PatchCbEventTimestampPostSyncSemaphoreWait>(event, launchParams.outListCommands, false, false);
-                    appendSignalInOrderDependencyCounter(event, false, false, false, false);
-                }
+            if (event->isCounterBased()) {
+                this->latestOperationHasHeapfullCbEventWithProfiling = true;
+                event->setHeapfullCbEventWithProfiling(true);
+            } else {
+                appendWaitOnSingleEvent<PatchCbEventTimestampPostSyncSemaphoreWait>(event, launchParams.outListCommands, false, false);
+                appendSignalInOrderDependencyCounter(event, false, false, false, false);
             }
         } else {
-            launchParams.skipInOrderNonWalkerSignaling = false;
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
         }
-    } else {
-        launchParams.skipInOrderNonWalkerSignaling = false;
     }
     if (this->isWalkerPostSyncSkipEnabled && !event && !launchParams.isKernelSplitOperation) {
         this->isPostSyncSkippedOnLatestInOrderOperation = true;

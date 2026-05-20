@@ -28,14 +28,6 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFlushL3Flags(bool &isFlushL3ForE
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const {
-    if (!NEO::debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.get()) {
-        return false;
-    }
-    return this->isInOrderNonWalkerSignalingRequired(Event::fromHandle(signalEvent));
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
 
     auto clearCommandToPatchLambda = [&](auto &patch) {

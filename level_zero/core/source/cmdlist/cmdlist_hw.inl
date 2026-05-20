@@ -560,9 +560,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
 
     auto res = appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
 
-    if (!launchParams.skipInOrderNonWalkerSignaling) {
-        handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event) && !event->isCounterBased(), false);
-    }
+    handleInOrderDependencyCounter(event, launchParams.inOrderNonWalkerSignalingRequired && !event->isCounterBased(), false);
 
     if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
         appendSynchronizedDispatchCleanupSection();
@@ -719,7 +717,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParamete
     }
 
     L0::CmdListKernelLaunchParams launchParams = {};
-    launchParams.skipInOrderNonWalkerSignaling = this->skipInOrderNonWalkerSignalingAllowed(hSignalEvent);
 
     auto result = this->obtainLaunchParamsFromExtensions(reinterpret_cast<const ze_base_desc_t *>(pNext), launchParams, hKernel);
     if (result != ZE_RESULT_SUCCESS) {

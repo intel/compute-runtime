@@ -235,7 +235,6 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendVariableLa
     }
 
     CmdListKernelLaunchParams launchParams = {};
-    launchParams.skipInOrderNonWalkerSignaling = base->skipInOrderNonWalkerSignalingAllowed(signalEvent->toHandle());
     launchParams.omitAddingKernelArgumentResidency = true;
     launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
 

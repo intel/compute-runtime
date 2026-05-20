@@ -41,7 +41,7 @@ struct CmdListKernelLaunchParams {
     bool isDestinationAllocationInSystemMemory = false;
     bool isDestinationAllocationImported = false;
     bool isHostSignalScopeEvent = false;
-    bool skipInOrderNonWalkerSignaling = false;
+    bool inOrderNonWalkerSignalingRequired = false;
     bool pipeControlSignalling = false;
     bool omitAddingKernelArgumentResidency = false;
     bool omitAddingKernelInternalResidency = false;

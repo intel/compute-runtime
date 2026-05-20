@@ -607,24 +607,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
                                                                         hSignalEvent, numWaitEvents, phWaitEvents,
                                                                         launchParams);
 
-    if (launchParams.skipInOrderNonWalkerSignaling) {
-        auto event = Event::fromHandle(hSignalEvent);
-
-        if (isInOrderExecutionEnabled()) {
-            // Skip only in base appendLaunchKernel(). Handle remaining operations here.
-            bool hasRelaxedOrdering = handleRelaxedOrderingSignaling(event, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, ret);
-            handleInOrderNonWalkerSignaling(event, hasRelaxedOrdering);
-        }
-        CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(event, true, false);
-    }
-
     return flushImmediate(ret, true, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, hSignalEvent, false, nullptr, nullptr);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignaling(Event *event, bool hasRelaxedOrdering) {
-    this->template appendWaitOnSingleEvent<PatchInvalidPatchType>(event, nullptr, hasRelaxedOrdering, false);
-    CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(event, false, false, false, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2071,11 +2054,6 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) {
-    return false;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::handleRelaxedOrderingSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result) {
     return false;
 }
 

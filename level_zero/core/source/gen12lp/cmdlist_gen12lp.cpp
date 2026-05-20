@@ -68,7 +68,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                                                                                Event *event,
                                                                                CmdListKernelLaunchParams &launchParams) {
     UNRECOVERABLE_IF(kernel == nullptr);
-    UNRECOVERABLE_IF(launchParams.skipInOrderNonWalkerSignaling);
     const auto driverHandle = device->getDriverHandle();
     const auto &kernelDescriptor = kernel->getKernelDescriptor();
     if (kernelDescriptor.kernelAttributes.flags.isInvalid) {

@@ -243,7 +243,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     size_t getTransferThreshold(TransferType transferType);
     bool isBarrierRequired();
     bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) override;
-    bool skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const override;
 
   protected:
     using BaseClass::inOrderExecInfo;
@@ -255,8 +254,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const;
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
     void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override;
-    void handleInOrderNonWalkerSignaling(Event *event, bool hasRelaxedOrdering);
-    bool handleRelaxedOrderingSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result);
     CommandQueue *getCmdQImmediate(CopyOffloadMode copyOffloadMode) const;
     NEO::LinearStream *getOptionalEpilogueCmdStream(NEO::LinearStream *taskCmdStream, NEO::AppendOperations appendOperation);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -165,7 +165,6 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernel(
     }
 
     L0::CmdListKernelLaunchParams launchParams = {};
-    launchParams.skipInOrderNonWalkerSignaling = cmdList->skipInOrderNonWalkerSignalingAllowed(hSignalEvent);
 
     return cmdList->appendLaunchKernel(kernelHandle, *launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
 }
