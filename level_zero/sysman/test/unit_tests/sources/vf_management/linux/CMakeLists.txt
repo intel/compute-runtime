@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,9 @@ set(L0_TESTS_SYSMAN_VF_MANAGEMENT_LINUX
 list(APPEND L0_TESTS_SYSMAN_VF_MANAGEMENT_LINUX
      ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_sysman_vf_management.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_sysman_vf_management_prelim.cpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_sysman_vf_management_xe.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_vf_management.h
+     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_vf_management_xe.h
 )
 
 if(UNIX)

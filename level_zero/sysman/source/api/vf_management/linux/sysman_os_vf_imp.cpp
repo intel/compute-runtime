@@ -55,11 +55,8 @@ ze_result_t LinuxVfImp::getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t
 
 ze_result_t LinuxVfImp::vfOsGetCapabilities(zes_vf_exp2_capabilities_t *pCapability) {
 
-    const auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-    const auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-
     uint64_t vfLmemQuota = 0;
-    ze_result_t result = pSysmanProductHelper->getVfLocalMemoryQuota(pSysfsAccess, vfLmemQuota, vfId);
+    ze_result_t result = pSysmanKmdInterface->getVfLocalMemoryQuota(vfLmemQuota, vfId);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -122,7 +119,6 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
 
     const auto pDrm = pLinuxSysmanImp->getDrm();
     const auto pPmuInterface = pLinuxSysmanImp->getPmuInterface();
-    const auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
 
     auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
     if (hwDeviceId.getFileDescriptor() < 0) {
@@ -175,7 +171,6 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
 
 ze_result_t LinuxVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) {
 
-    const auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     if (!pSysmanKmdInterface->isVfEngineUtilizationSupported()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
@@ -234,6 +229,7 @@ bool LinuxVfImp::vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) {
 LinuxVfImp::LinuxVfImp(
     OsSysman *pOsSysman, uint32_t vfId) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     this->vfId = vfId;
 }

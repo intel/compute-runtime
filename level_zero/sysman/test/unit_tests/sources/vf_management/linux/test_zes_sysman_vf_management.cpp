@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
 #include "level_zero/sysman/test/unit_tests/sources/vf_management/linux/mock_sysfs_vf_management.h"
 
 namespace L0 {
@@ -18,20 +19,27 @@ bool mockUuidForVfTest = true;
 class ZesVfFixture : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
-    std::unique_ptr<MockVfSysfsAccessInterface> pSysfsAccess;
+    MockSysmanKmdInterfaceUpstream *pSysmanKmdInterface = nullptr;
+    MockVfSysfsAccessInterface *pSysfsAccess = nullptr;
     L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
+    L0::Sysman::SysmanKmdInterface *pSysmanKmdInterfaceOld = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         device = pSysmanDevice;
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<MockVfSysfsAccessInterface>();
-        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        pSysmanKmdInterfaceOld = pLinuxSysmanImp->pSysmanKmdInterface.release();
+        pSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->pSysmanProductHelper.get());
+        pSysfsAccess = new MockVfSysfsAccessInterface();
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
+        pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
         pSysmanDeviceImp->pVfManagementHandleContext->handleList.clear();
     }
 
     void TearDown() override {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterfaceOld);
         SysmanDeviceFixture::TearDown();
     }
 
@@ -96,6 +104,76 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenBusyAndTotalTicksConfigNotAvailableAn
 
     auto pVfImp = std::make_unique<PublicLinuxVfImp>(pOsSysman, 1);
     EXPECT_EQ(pVfImp->vfEngineDataInit(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenSuccessAndCorrectPciAddressIsReturned) {
+    constexpr uint32_t mockedDomain = 0;
+    constexpr uint32_t mockedBus = 0x4d;
+    constexpr uint32_t mockedDevice = 0;
+    constexpr uint32_t mockedFunction = 1;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(capabilities.address.domain, mockedDomain);
+        EXPECT_EQ(capabilities.address.bus, mockedBus);
+        EXPECT_EQ(capabilities.address.device, mockedDevice);
+        EXPECT_EQ(capabilities.address.function, mockedFunction);
+    }
+}
+
+TEST_F(ZesVfFixture, GivenValidVfHandleAndSysfsGetRealPathFailsWhenQueryingVfCapabilitiesThenErrorIsReturned) {
+    pSysfsAccess->mockRealPathError = ZE_RESULT_ERROR_UNKNOWN;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_ERROR_UNKNOWN);
+    }
+}
+
+TEST_F(ZesVfFixture, GivenValidVfHandleAndInvalidBDFWithImproperTokensWhenQueryingVfCapabilitiesThenErrorIsReturned) {
+    pSysfsAccess->mockValidBdfData = false;
+    pSysfsAccess->mockInvalidTokens = true;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    }
+}
+
+TEST_F(ZesVfFixture, GivenValidVfHandleAndInvalidBDFWhenQueryingVfCapabilitiesThenErrorIsReturned) {
+    pSysfsAccess->mockValidBdfData = false;
+    pSysfsAccess->mockInvalidTokens = false;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    }
+}
+
+TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenParamsReturnedCorrectly) {
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(capabilities.vfDeviceMemSize, mockLmemQuota);
+    }
+}
+
+TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesAndSysfsReadForMemoryQuotaValueFailsThenErrorIsReturned) {
+
+    pSysfsAccess->mockReadMemoryError = ZE_RESULT_ERROR_UNKNOWN;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_ERROR_UNKNOWN);
+    }
 }
 
 } // namespace ult

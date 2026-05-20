@@ -201,6 +201,7 @@ class SysmanKmdInterface {
     virtual bool isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) { return false; }
     virtual bool isDeviceInFdoMode() { return false; }
     virtual bool isDeviceInSurvivabilityMode() { return false; }
+    virtual ze_result_t getVfLocalMemoryQuota(uint64_t &lMemQuota, const uint32_t vfId) = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -222,6 +223,7 @@ class SysmanKmdInterfaceI915 {
     static std::string getEngineBasePathI915(uint32_t subDeviceId);
     static std::string getGpuBindEntryI915();
     static std::string getGpuUnBindEntryI915();
+    ze_result_t getVfLocalMemoryQuotaI915(SysFsAccessInterface *pSysfsAccess, uint64_t &lMemQuota, const uint32_t vfId);
 };
 
 class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInterfaceI915 {
@@ -284,6 +286,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
     std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
     std::string getFreqMediaDomainBasePath() override;
+    ze_result_t getVfLocalMemoryQuota(uint64_t &lMemQuota, const uint32_t vfId) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -355,6 +358,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
     std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
     std::string getFreqMediaDomainBasePath() override;
+    ze_result_t getVfLocalMemoryQuota(uint64_t &lMemQuota, const uint32_t vfId) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -433,6 +437,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) override;
     bool isDeviceInFdoMode() override;
     bool isDeviceInSurvivabilityMode() override;
+    ze_result_t getVfLocalMemoryQuota(uint64_t &lMemQuota, const uint32_t vfId) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

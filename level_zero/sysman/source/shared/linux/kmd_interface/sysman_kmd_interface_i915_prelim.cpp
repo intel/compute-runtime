@@ -287,5 +287,9 @@ std::string SysmanKmdInterfaceI915Prelim::getFreqMediaDomainBasePath() {
     return "gt/gt1/";
 }
 
+ze_result_t SysmanKmdInterfaceI915Prelim::getVfLocalMemoryQuota(uint64_t &lMemQuota, const uint32_t vfId) {
+    return getVfLocalMemoryQuotaI915(getSysFsAccess(), lMemQuota, vfId);
+}
+
 } // namespace Sysman
 } // namespace L0

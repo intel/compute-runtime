@@ -24,6 +24,7 @@ class ZesVfFixturePrelim : public SysmanDeviceFixture {
     PmuInterface *pOriginalPmuInterface = nullptr;
     MockVfNeoDrm *pDrm = nullptr;
     MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = nullptr;
+    L0::Sysman::SysmanKmdInterface *pSysmanKmdInterfaceOld = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -36,6 +37,7 @@ class ZesVfFixturePrelim : public SysmanDeviceFixture {
         pFsAccess = new MockVfFsAccessInterface();
         pSysfsAccess = new MockVfSysfsAccessInterface();
 
+        pSysmanKmdInterfaceOld = pLinuxSysmanImp->pSysmanKmdInterface.release();
         pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
         pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
@@ -61,6 +63,7 @@ class ZesVfFixturePrelim : public SysmanDeviceFixture {
 
     void TearDown() override {
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterfaceOld);
         SysmanDeviceFixture::TearDown();
     }
 
@@ -215,6 +218,23 @@ TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenPmuReadFailsThenErrorIsReturned
         std::vector<zes_vf_util_engine_exp2_t> engineUtils(count);
         result = zesVFManagementGetVFEngineUtilizationExp2(handleVf, &count, engineUtils.data());
         EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    }
+}
+
+TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenQueryingVfCapabilitiesThenSuccessAndCorrectPciAddressIsReturned) {
+    constexpr uint32_t mockedDomain = 0;
+    constexpr uint32_t mockedBus = 0x4d;
+    constexpr uint32_t mockedDevice = 0;
+    constexpr uint32_t mockedFunction = 1;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(capabilities.address.domain, mockedDomain);
+        EXPECT_EQ(capabilities.address.bus, mockedBus);
+        EXPECT_EQ(capabilities.address.device, mockedDevice);
+        EXPECT_EQ(capabilities.address.function, mockedFunction);
     }
 }
 

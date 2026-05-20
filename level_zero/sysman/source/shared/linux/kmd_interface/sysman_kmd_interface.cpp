@@ -266,5 +266,16 @@ std::string SysmanKmdInterfaceI915::getGpuUnBindEntryI915() {
     return "/sys/bus/pci/drivers/i915/unbind";
 }
 
+ze_result_t SysmanKmdInterfaceI915::getVfLocalMemoryQuotaI915(SysFsAccessInterface *pSysfsAccess, uint64_t &lMemQuota, const uint32_t vfId) {
+    const std::string pathForLmemQuota = "/gt/lmem_quota";
+    std::string pathForDeviceMemQuota = "iov/vf" + std::to_string(vfId) + pathForLmemQuota;
+    auto result = pSysfsAccess->read(std::move(pathForDeviceMemQuota), lMemQuota);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace Sysman
 } // namespace L0

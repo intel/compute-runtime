@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ namespace L0 {
 namespace Sysman {
 class SysFsAccessInterface;
 class LinuxSysmanImp;
+class SysmanKmdInterface;
 struct OsSysman;
 
 using EngineInstanceGtId = std::pair<uint32_t, uint32_t>; // Pair of engineInstance and gtId
@@ -49,6 +50,7 @@ class LinuxVfImp : public OsVf, NEO::NonCopyableAndNonMovableClass {
     void cleanup();
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     uint32_t vfId = 0;
     static const uint32_t maxMemoryTypes = 1; // Since only the Device Memory Utilization is Supported and not for the Host Memory, this value is 1
 

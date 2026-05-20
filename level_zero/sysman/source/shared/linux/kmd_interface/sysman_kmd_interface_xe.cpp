@@ -529,5 +529,15 @@ bool SysmanKmdInterfaceXe::isDeviceInSurvivabilityMode() {
     return (survivabilityModeVal == "Boot" || survivabilityModeVal == "Runtime");
 }
 
+ze_result_t SysmanKmdInterfaceXe::getVfLocalMemoryQuota(uint64_t &lMemQuota, const uint32_t vfId) {
+    const std::string pathForDeviceMemQuota = "device/sriov_admin/vf" + std::to_string(vfId) + "/profile/vram_quota";
+    auto result = pSysfsAccess->read(pathForDeviceMemQuota, lMemQuota);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace Sysman
 } // namespace L0
