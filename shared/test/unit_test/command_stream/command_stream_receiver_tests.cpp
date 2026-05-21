@@ -1150,6 +1150,34 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenSubmitiingBa
     memoryManager->freeGraphicsMemoryImpl(commandBuffer);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenUpdateTagFromWaitWhenUpdateTaskCountFromWaitForcedThenFlushBatchedSubmissionsAndFlushTagUpdateAreCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.flushBatchedSubmissionsCalled = false;
+    csr.flushTagUpdateCalled = false;
+
+    csr.updateTagFromWait();
+
+    EXPECT_TRUE(csr.flushBatchedSubmissionsCalled);
+    EXPECT_TRUE(csr.flushTagUpdateCalled);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenUpdateTagFromWaitWhenUpdateTaskCountFromWaitDisabledThenFlushBatchedSubmissionsIsCalledAndFlushTagUpdateIsNot) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UpdateTaskCountFromWait.set(0);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.flushBatchedSubmissionsCalled = false;
+    csr.flushTagUpdateCalled = false;
+
+    csr.updateTagFromWait();
+
+    EXPECT_TRUE(csr.flushBatchedSubmissionsCalled);
+    EXPECT_FALSE(csr.flushTagUpdateCalled);
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenOverrideCsrAllocationSizeWhenCreatingCommandStreamCsrGraphicsAllocationThenAllocationHasCorrectSize) {
     DebugManagerStateRestore restore;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,8 +57,8 @@ inline constexpr auto fastEvents = 1024 * 1024;
 extern AllocationEvent eventsAllocated[maxEvents];
 extern AllocationEvent eventsDeallocated[maxEvents];
 
-extern void *fastEventsAllocated[maxEvents];
-extern void *fastEventsDeallocated[maxEvents];
+extern std::atomic<void *> fastEventsAllocated[maxEvents];
+extern std::atomic<void *> fastEventsDeallocated[maxEvents];
 extern std::atomic<int> fastEventsAllocatedCount;
 extern std::atomic<int> fastEventsDeallocatedCount;
 extern std::atomic<int> fastLeaksDetectionMode;

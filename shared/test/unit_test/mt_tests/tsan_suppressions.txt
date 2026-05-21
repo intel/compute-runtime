@@ -1,0 +1,9 @@
+# waitFunctionWithPredicate polls a tag address written by KMD (hardware-signaled).
+# No C++ synchronization primitive can describe this relationship; the read is intentionally non-atomic.
+race:WaitUtils::waitFunctionWithPredicate
+
+# Test polling loops call isUsedByOsContext while the async deleter concurrently frees the
+# allocation. The deleter holds exclusive ownership at the point of free; happens-before is
+# established through the tag write/read, but TSAN cannot track it through the non-atomic poll.
+race:NEO::GraphicsAllocation::isUsedByOsContext
+

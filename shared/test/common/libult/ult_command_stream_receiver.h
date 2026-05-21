@@ -725,7 +725,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool waitForTaskCountCalled = false;
     std::atomic_bool downloadAllocationCalled = false;
     std::atomic_bool downloadAllocationsCalled = false;
-    bool flushBatchedSubmissionsCalled = false;
+    std::atomic_bool flushBatchedSubmissionsCalled = false;
     bool flushTagUpdateCalled = false;
     bool callFlushTagUpdate = true;
     bool callBaseStopDirectSubmission = true;

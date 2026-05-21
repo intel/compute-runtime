@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,8 +48,8 @@ bool fastLeakDetectionEnabled = false;
 AllocationEvent eventsAllocated[maxEvents];
 AllocationEvent eventsDeallocated[maxEvents];
 
-void *fastEventsAllocated[maxEvents];
-void *fastEventsDeallocated[maxEvents];
+std::atomic<void *> fastEventsAllocated[maxEvents];
+std::atomic<void *> fastEventsDeallocated[maxEvents];
 std::atomic<int> fastEventsAllocatedCount(0);
 std::atomic<int> fastEventsDeallocatedCount(0);
 std::atomic<int> fastLeaksDetectionMode(LeakDetectionMode::STANDARD);
@@ -134,7 +134,7 @@ static void *allocate(size_t size) {
 
     if (fastLeakDetectionEnabled && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
         auto currentIndex = fastEventsAllocatedCount++;
-        fastEventsAllocated[currentIndex] = p;
+        fastEventsAllocated[currentIndex].store(p, std::memory_order_relaxed);
         assert(currentIndex <= fastEvents);
     }
 
@@ -185,7 +185,7 @@ static void *allocate(size_t size, const std::nothrow_t &) {
 
     if (fastLeakDetectionEnabled && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
         auto currentIndex = fastEventsAllocatedCount++;
-        fastEventsAllocated[currentIndex] = p;
+        fastEventsAllocated[currentIndex].store(p, std::memory_order_relaxed);
         assert(currentIndex <= fastEvents);
     }
 
@@ -225,7 +225,7 @@ static void deallocate(void *p) {
 
         if (fastLeakDetectionEnabled && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
             auto currentIndex = fastEventsDeallocatedCount++;
-            fastEventsDeallocated[currentIndex] = p;
+            fastEventsDeallocated[currentIndex].store(p, std::memory_order_relaxed);
             assert(currentIndex <= fastEvents);
         }
         free(p);
@@ -235,14 +235,14 @@ int detectLeaks() {
     int indexLeak = -1;
 
     for (int allocationIndex = 0u; allocationIndex < fastEventsAllocatedCount; allocationIndex++) {
-        auto &eventAllocation = fastEventsAllocated[allocationIndex];
+        auto eventAllocation = fastEventsAllocated[allocationIndex].load(std::memory_order_relaxed);
         int deallocationIndex = 0u;
         for (; deallocationIndex < fastEventsDeallocatedCount; deallocationIndex++) {
-            if (fastEventsDeallocated[deallocationIndex] == nullptr) {
+            if (fastEventsDeallocated[deallocationIndex].load(std::memory_order_relaxed) == nullptr) {
                 continue;
             }
-            if (fastEventsDeallocated[deallocationIndex] == eventAllocation) {
-                fastEventsDeallocated[deallocationIndex] = nullptr;
+            if (fastEventsDeallocated[deallocationIndex].load(std::memory_order_relaxed) == eventAllocation) {
+                fastEventsDeallocated[deallocationIndex].store(nullptr, std::memory_order_relaxed);
                 break;
             }
         }
