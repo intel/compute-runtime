@@ -12,6 +12,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/driver_handle.h
                ${CMAKE_CURRENT_SOURCE_DIR}/driver_handle.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/driver_handle_helper.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}driver_handle_p2p_helper.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/driver.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/driver.h
                ${CMAKE_CURRENT_SOURCE_DIR}/extension_function_address.cpp

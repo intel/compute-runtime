@@ -807,6 +807,24 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                                                          NEO::SvmAllocationData **peerAllocData,
                                                          bool decompressP2PAllocation) {
     NEO::PeerAllocationDeps deps{};
+
+    // Check if peer access requires reserved handle data
+    auto *alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    if (alloc != nullptr) {
+        uint32_t allocOwnerRootDeviceIndex = alloc->getRootDeviceIndex();
+        Device *allocOwnerDevice = nullptr;
+        for (auto dev : this->devices) {
+            if (dev->getNEODevice()->getRootDeviceIndex() == allocOwnerRootDeviceIndex) {
+                allocOwnerDevice = dev;
+                break;
+            }
+        }
+
+        if (allocOwnerDevice != nullptr) {
+            deps.requiresReservedHandleData = peerRequiresReservedHandleData(allocOwnerDevice, device);
+        }
+    }
+
     deps.importFd = [this](NEO::Device *peerDevice, uint64_t handle, NEO::AllocationType allocationType,
                            void *basePointer, NEO::GraphicsAllocation **pAlloc,
                            NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {

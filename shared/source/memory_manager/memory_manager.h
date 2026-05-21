@@ -116,6 +116,7 @@ struct PeerAllocationDeps {
                          SvmAllocationData &mappedPeerAllocData, bool compressedMemory)>
         importFds;
     std::function<void(GraphicsAllocation *sourceAllocation)> decompressP2P;
+    bool requiresReservedHandleData = false;
 };
 
 namespace MemoryTransferHelper {

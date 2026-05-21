@@ -112,6 +112,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
                                                uintptr_t *peerGpuAddress,
                                                NEO::SvmAllocationData **peerAllocData,
                                                bool decompressP2PAllocation);
+    bool peerRequiresReservedHandleData(Device *srcDevice, Device *peerDevice);
 
     NEO::GraphicsAllocation *getCounterPeerAllocation(Device *device, NEO::GraphicsAllocation &graphicsAllocation);
     void initializeVertexes();

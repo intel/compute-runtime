@@ -5465,6 +5465,37 @@ TEST_F(MultipleDevicePeerAllocationTest,
     }
 }
 
+TEST_F(MultipleDevicePeerAllocationTest,
+       whenPeerAllocationIsRequestedWithNullDefaultGpuAllocThenNullAllocBranchIsTaken) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uintptr_t peerGpuAddress = 0u;
+    auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(allocData, nullptr);
+
+    auto peerAlloc = driverHandle->getPeerAllocation(device1, allocData, ptr, &peerGpuAddress, nullptr, false);
+    EXPECT_NE(peerAlloc, nullptr);
+
+    NEO::SvmAllocationData allocDataNoGpuAlloc(0u);
+    EXPECT_EQ(nullptr, allocDataNoGpuAlloc.gpuAllocations.getDefaultGraphicsAllocation());
+    auto peerAlloc2 = driverHandle->getPeerAllocation(device1, &allocDataNoGpuAlloc, ptr, &peerGpuAddress, nullptr, false);
+    EXPECT_NE(nullptr, peerAlloc2);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
     void SetUp() override {
 

@@ -1631,10 +1631,20 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
             };
             for (uint32_t i = 0; i < numHandles; i++) {
                 uint64_t handle = 0;
-                int ret = alloc->peekInternalHandle(this, i, handle, nullptr);
+                uint8_t reservedHandleDataStorage[32] = {0};
+                void *reservedHandleData = nullptr;
+                if (deps.requiresReservedHandleData) {
+                    reservedHandleData = reservedHandleDataStorage;
+                }
+                int ret = alloc->peekInternalHandle(this, i, handle, reservedHandleData);
                 if (ret < 0) {
                     closeImportedHandles();
                     return nullptr;
+                }
+                if (deps.requiresReservedHandleData) {
+                    int importHandleFromReserved = -1;
+                    importHandleFromReserved = this->getImportHandleFromReservedHandleData(reservedHandleData, device->getRootDevice()->getRootDeviceIndex());
+                    handle = static_cast<uint64_t>(importHandleFromReserved);
                 }
                 handles.push_back(static_cast<osHandle>(handle));
             }
@@ -1643,9 +1653,19 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
             closeImportedHandles();
         } else {
             uint64_t handle = 0;
-            int ret = alloc->peekInternalHandle(this, handle, nullptr);
+            uint8_t reservedHandleDataStorage[32] = {0};
+            void *reservedHandleData = nullptr;
+            if (deps.requiresReservedHandleData) {
+                reservedHandleData = reservedHandleDataStorage;
+            }
+            int ret = alloc->peekInternalHandle(this, handle, reservedHandleData);
             if (ret < 0) {
                 return nullptr;
+            }
+            if (deps.requiresReservedHandleData) {
+                int importHandleFromReserved = -1;
+                importHandleFromReserved = this->getImportHandleFromReservedHandleData(reservedHandleData, device->getRootDeviceIndex());
+                handle = static_cast<uint64_t>(importHandleFromReserved);
             }
             peerPtr = deps.importFd(device, handle, AllocationType::buffer, peerMapAddress, &alloc, allocDataInternal, false);
             if (alloc != originalAlloc) {
