@@ -14,6 +14,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
@@ -22,6 +23,7 @@
 #include "shared/source/utilities/wait_util.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/event/event_host_synchronize_wait.h"
 #include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/kernel/kernel.h"
@@ -774,6 +776,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     lastHangCheckTime = waitStartTime;
 
     const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInterruptFence());
+    EventHostSynchronize::WaitController waitController(*csrs[0]);
 
     auto *assertHndlr = neoDevice->getRootDeviceEnvironment().assertHandler.get();
     do {
@@ -817,6 +820,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         }
 
         currentTime = std::chrono::high_resolution_clock::now();
+        auto elapsedTimeSinceWaitStart = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime);
+        auto elapsedTimeSinceWaitStartNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count());
+
         elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
 
         if (elapsedTimeSinceGpuHangCheck.count() >= this->gpuHangCheckPeriod.count()) {
@@ -829,13 +835,24 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             }
         }
 
+        if (!fenceWait && timeout != 0) {
+            auto waitAction = waitController.getAction(elapsedTimeSinceWaitStart.count(), timeout, elapsedTimeSinceWaitStartNs);
+            if (waitAction.sleepUs > 0) {
+                NEO::sleep(std::chrono::microseconds(waitAction.sleepUs));
+
+                currentTime = std::chrono::high_resolution_clock::now();
+                elapsedTimeSinceWaitStart = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime);
+                elapsedTimeSinceWaitStartNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count());
+            }
+        }
+
         if (timeout == std::numeric_limits<uint64_t>::max()) {
             continue;
         } else if (timeout == 0) {
             break;
         }
 
-        timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count();
+        timeDiff = elapsedTimeSinceWaitStartNs;
 
     } while (timeDiff < timeout);
 

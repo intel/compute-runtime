@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -17,6 +18,8 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
@@ -30,6 +33,7 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/event/event_host_synchronize_wait.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/event_fixture.h"
@@ -2135,6 +2139,296 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroAndSt
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithNonZeroTimeoutAndStateInitialHostSynchronizeReturnsNotReady) {
     ze_result_t result = event->hostSynchronize(10);
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
+TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhenDefaultsAreUsedThenStrategyIsDisabledAndDefaultTimingsAreSet) {
+    EXPECT_EQ(0, NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get());
+    EXPECT_EQ(10000, NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.get());
+    EXPECT_EQ(1000, NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.get());
+    EXPECT_EQ(100, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
+}
+
+HWTEST_F(EventSynchronizeTest, GivenWaitControllerWhenStrategiesAndInputsAreChangedThenExpectedWaitActionsAreReturned) {
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &rootDeviceEnvironment = *neoDevice->executionEnvironment->rootDeviceEnvironments[0];
+
+    auto setWaitStrategy = [](int32_t strategy, int64_t initialPollUs, int64_t pollUs, int64_t sleepUs) {
+        NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(strategy);
+        NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(initialPollUs);
+        NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(pollUs);
+        NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(sleepUs);
+    };
+
+    auto resetAcLineStatus = [&csr]() {
+        csr.getAcLineConnectedCallBase = false;
+        csr.getAcLineConnectedCalled = 0u;
+        csr.getAcLineConnectedLastUpdateStatus = false;
+        csr.getAcLineConnectedReturnValue = false;
+    };
+
+    {
+        setWaitStrategy(2, 0, 0, 10);
+        rootDeviceEnvironment.osInterface.reset();
+        resetAcLineStatus();
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        auto waitAction = waitController.getAction(0, std::numeric_limits<uint64_t>::max(), 0);
+
+        EXPECT_EQ(0, waitAction.sleepUs);
+        EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+    }
+
+    {
+        setWaitStrategy(2, 0, 0, 10);
+        rootDeviceEnvironment.osInterface = std::make_unique<NEO::OSInterface>();
+        resetAcLineStatus();
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        auto waitAction = waitController.getAction(0, std::numeric_limits<uint64_t>::max(), 0);
+
+        EXPECT_EQ(0, waitAction.sleepUs);
+        EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+    }
+
+    {
+        setWaitStrategy(2, 0, 0, 10);
+        rootDeviceEnvironment.osInterface = std::make_unique<NEO::OSInterface>();
+        rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+        resetAcLineStatus();
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        auto waitAction = waitController.getAction(0, std::numeric_limits<uint64_t>::max(), 0);
+
+        EXPECT_EQ(0, waitAction.sleepUs);
+        EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+    }
+
+    rootDeviceEnvironment.osInterface = std::make_unique<NEO::OSInterface>();
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    {
+        setWaitStrategy(1, 10, 5, 3);
+        resetAcLineStatus();
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        auto waitAction = waitController.getAction(15, std::numeric_limits<uint64_t>::max(), 15000);
+
+        EXPECT_EQ(3, waitAction.sleepUs);
+        EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+    }
+
+    {
+        setWaitStrategy(1, 10, 5, 3);
+        resetAcLineStatus();
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        auto waitAction = waitController.getAction(14, std::numeric_limits<uint64_t>::max(), 14000);
+
+        EXPECT_EQ(0, waitAction.sleepUs);
+        EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+    }
+
+    {
+        setWaitStrategy(2, 0, 0, 10);
+        resetAcLineStatus();
+        csr.getAcLineConnectedReturnValue = false;
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        auto firstWaitAction = waitController.getAction(0, std::numeric_limits<uint64_t>::max(), 0);
+        csr.getAcLineConnectedReturnValue = true;
+        auto secondWaitAction = waitController.getAction(10, std::numeric_limits<uint64_t>::max(), 10000);
+
+        EXPECT_EQ(10, firstWaitAction.sleepUs);
+        EXPECT_EQ(10, secondWaitAction.sleepUs);
+        EXPECT_EQ(1u, csr.getAcLineConnectedCalled);
+        EXPECT_TRUE(csr.getAcLineConnectedLastUpdateStatus);
+    }
+
+    {
+        setWaitStrategy(2, 0, 0, 10);
+        resetAcLineStatus();
+        csr.getAcLineConnectedReturnValue = true;
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        auto waitAction = waitController.getAction(0, std::numeric_limits<uint64_t>::max(), 0);
+
+        EXPECT_EQ(0, waitAction.sleepUs);
+        EXPECT_EQ(1u, csr.getAcLineConnectedCalled);
+    }
+
+    {
+        setWaitStrategy(3, 0, 0, 10);
+        resetAcLineStatus();
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        auto waitAction = waitController.getAction(0, std::numeric_limits<uint64_t>::max(), 0);
+
+        EXPECT_EQ(0, waitAction.sleepUs);
+        EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+    }
+
+    {
+        setWaitStrategy(2, 0, 0, 10);
+        resetAcLineStatus();
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        auto sleepFitsTimeout = waitController.getAction(0, 20000, 5000);
+        auto sleepCappedToTimeout = waitController.getAction(10, 9000, 5000);
+        auto timeoutReached = waitController.getAction(20, 9000, 9000);
+
+        EXPECT_EQ(10, sleepFitsTimeout.sleepUs);
+        EXPECT_EQ(4, sleepCappedToTimeout.sleepUs);
+        EXPECT_EQ(0, timeoutReached.sleepUs);
+    }
+
+    {
+        setWaitStrategy(2, 0, -1, 10);
+        resetAcLineStatus();
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        EXPECT_EQ(0, waitController.getAction(0, std::numeric_limits<uint64_t>::max(), 0).sleepUs);
+
+        NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(0);
+        NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(0);
+        EXPECT_EQ(0, waitController.getAction(0, std::numeric_limits<uint64_t>::max(), 0).sleepUs);
+
+        NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(std::numeric_limits<int64_t>::max());
+        NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(1);
+        EXPECT_EQ(0, waitController.getAction(0, std::numeric_limits<uint64_t>::max(), 0).sleepUs);
+        EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+    }
+}
+
+HWTEST_F(EventSynchronizeTest, GivenZeroTimeoutWhenEventHostSynchronizeWaitStrategyIsEnabledThenAcLineStatusIsNotQueried) {
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(2);
+    NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(1);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getAcLineConnectedCallBase = false;
+
+    event->hostSynchronize(0);
+    EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenDisabledEventHostSynchronizeWaitStrategyWhenHostSynchronizeIsCalledThenAcLineStatusIsNotQueried) {
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(1);
+    NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(1);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getAcLineConnectedCallBase = false;
+
+    event->hostSynchronize(10);
+    EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenBatteryOnlyEventHostSynchronizeWaitStrategyAndWddmWhenHostSynchronizeIsCalledThenAcLineStatusIsQueriedAfterInitialPoll) {
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(2);
+    NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(1);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getAcLineConnectedCallBase = false;
+    csr.getAcLineConnectedReturnValue = false;
+
+    event->hostSynchronize(10);
+    EXPECT_NE(0u, csr.getAcLineConnectedCalled);
+    EXPECT_TRUE(csr.getAcLineConnectedLastUpdateStatus);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenBatteryOnlyEventHostSynchronizeWaitStrategyAndDrmWhenHostSynchronizeIsCalledThenAcLineStatusIsNotQueried) {
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(2);
+    NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(1);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getAcLineConnectedCallBase = false;
+
+    event->hostSynchronize(10);
+    EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyAndWddmOnLinuxWhenHostSynchronizeIsCalledThenAcLineStatusIsNotQueried) {
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(2);
+    NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(1);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    reinterpret_cast<NEO::MockRootDeviceEnvironment *>(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get())->isWddmOnLinuxEnable = true;
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getAcLineConnectedCallBase = false;
+
+    event->hostSynchronize(10);
+    EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenInitialPollNotElapsedWhenHostSynchronizeIsCalledThenAcLineStatusIsNotQueried) {
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(2);
+    NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(1000000);
+    NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(1);
+    NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(1);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getAcLineConnectedCallBase = false;
+
+    event->hostSynchronize(10);
+    EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyAndOverflowingCycleThenAcLineStatusIsNotQueried) {
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(2);
+    NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(std::numeric_limits<int64_t>::max());
+    NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(1);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getAcLineConnectedCallBase = false;
+
+    event->hostSynchronize(10);
+    EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenFenceWaitWhenEventHostSynchronizeWaitStrategyIsEnabledThenAcLineStatusIsNotQueried) {
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(2);
+    NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(1);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getAcLineConnectedCallBase = false;
+    csr.isUserFenceWaitSupported = true;
+    csr.waitUserFenceParams.forceRetStatusEnabled = true;
+    csr.waitUserFenceParams.forceRetStatusValue = false;
+    event->enableCounterBasedMode(true, 0u);
+    event->enableKmdWaitMode();
+    uint64_t counterValue = 0;
+    event->inOrderExecHelper.initializeLocalTempStorage();
+    event->inOrderExecHelper.assignData(1, 0, 1, 1, event->getAllocation(device), event->getAllocation(device), 0, 0, &counterValue, 0, 0, false, false);
+
+    event->hostSynchronize(10);
+    EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
+    EXPECT_NE(0u, csr.waitUserFenceParams.callCount);
 }
 
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroAndOverrideTimeoutSetAndStateInitialThenHostSynchronizeReturnsNotReady) {

@@ -348,6 +348,12 @@ DECLARE_DEBUG_VARIABLE(bool, MakeAllBuffersResident, false, "Make all buffers re
 DECLARE_DEBUG_VARIABLE(int32_t, sipFifoValidNodeMaxTimeoutMs, -1, "-1: default 100ms. >=0: override time in ms to wait for sip fifo entry to become valid")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideLatePreemptionStart, 0, "-1: default. >=0: override late preemption start mode")
 
+/*POWER AND CPU EFFICIENCY FLAGS*/
+DECLARE_DEBUG_VARIABLE(int32_t, EventHostSynchronizeWaitStrategy, 0, "Power/CPU efficiency mode for zeEventHostSynchronize on WDDM. 0: disabled, 1: enabled, 2: enabled only when AC line is disconnected")
+DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeInitialPollMicroseconds, 10000, "Power/CPU efficiency mode for zeEventHostSynchronize: initial active polling duration in microseconds")
+DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizePollMicroseconds, 1000, "Power/CPU efficiency mode for zeEventHostSynchronize: poll phase duration in microseconds after initial active polling")
+DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeSleepMicroseconds, 100, "Power/CPU efficiency mode for zeEventHostSynchronize: sleep phase duration in microseconds after initial active polling")
+
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(std::string, ForceLoggingDirectory, std::string("unk"), "Force directory for debug logs")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

@@ -597,6 +597,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
 
     bool waitUserFenceSupported(SyncFence *syncFence) override { return isUserFenceWaitSupported; }
 
+    bool getAcLineConnected(bool updateStatus) const override {
+        getAcLineConnectedCalled++;
+        getAcLineConnectedLastUpdateStatus = updateStatus;
+        if (getAcLineConnectedCallBase) {
+            return BaseClass::getAcLineConnected(updateStatus);
+        }
+        return getAcLineConnectedReturnValue;
+    }
+
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override {
         this->pagingFenceValueToUnblock = pagingFenceValue;
         BaseClass::unblockPagingFenceSemaphore(pagingFenceValue);
@@ -739,6 +748,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool stopDirectSubmissionCalled = false;
     bool stopDirectSubmissionCalledBlocking = false;
     bool isUserFenceWaitSupported = false;
+    bool getAcLineConnectedCallBase = true;
+    mutable uint32_t getAcLineConnectedCalled = 0u;
+    mutable bool getAcLineConnectedLastUpdateStatus = false;
+    bool getAcLineConnectedReturnValue = false;
     bool isAnyDirectSubmissionEnabledCallBase = true;
     bool isAnyDirectSubmissionEnabledResult = true;
     std::atomic_bool captureWaitForTaskCountWithKmdNotifyInputParams = false;
