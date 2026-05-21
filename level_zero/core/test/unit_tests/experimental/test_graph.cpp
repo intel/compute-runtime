@@ -2227,7 +2227,31 @@ TEST_F(GraphTestCaptureRestrictions, GivenHostSynchronizeWhenCapturingCmdlistThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 
     err = immCmdList->hostSynchronize(0);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, err);
+}
+
+TEST_F(GraphTestCaptureRestrictions, GivenEventSignalledByCapturingCmdlistWhenEventHostSynchronizeCalledThenUnsupportedFeatureReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_event_pool_desc_t poolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 1};
+    ze_event_pool_handle_t hPool = nullptr;
+    auto devHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &poolDesc, 1, &devHandle, &hPool));
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
+    ze_event_handle_t hEvent = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(hPool, &eventDesc, &hEvent));
+    auto *event = L0::Event::fromHandle(hEvent);
+
+    event->setRecordedSignalFrom(immCmdList);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, event->hostSynchronize(0));
+
+    event->setRecordedSignalFrom(nullptr);
+    EXPECT_NE(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, event->hostSynchronize(0));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(hEvent));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(hPool));
 }
 
 TEST(GraphTestZeCommandListGetGraphExp, GivenInvalidParametersThenReturnsAppropriateErrorCode) {

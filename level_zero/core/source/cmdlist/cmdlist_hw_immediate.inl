@@ -1189,7 +1189,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     ze_result_t status = ZE_RESULT_SUCCESS;
 
     if (this->isCapturingGraph()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     auto waitQueue = this->cmdQImmediate;
