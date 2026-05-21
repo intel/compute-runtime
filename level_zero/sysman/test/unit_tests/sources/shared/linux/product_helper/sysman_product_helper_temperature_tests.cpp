@@ -1043,10 +1043,10 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
             validGuid2 = "0x5e2fa230"; // SOC and VRAM temps
             gpuMaxTemperatureKeyOffset = 128;
             memoryMaxTemperatureKeyOffset = 132;
-            vrTemp0Offset = 224;
-            vrTemp1Offset = 228;
-            vrTemp2Offset = 232;
-            vrTemp3Offset = 236;
+            vrTemp0Offset = 200;
+            vrTemp1Offset = 204;
+            vrTemp2Offset = 208;
+            vrTemp3Offset = 212;
             gpuBoardTempOffset = 176;
         } else {
             // BMG has all temperature data in one GUID: 0x5e2f8211
@@ -1145,7 +1145,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
             validGuid2 = "0x5e2fa230";
             gpuMaxTemperatureKeyOffset = 128;
             memoryMaxTemperatureKeyOffset = 132;
-            vrTemp0Offset = 224;
+            vrTemp0Offset = 200;
         } else {
             // BMG has all temperature data in one GUID: 0x5e2f8211
             validGuid1 = "0x5e2f8211";
@@ -1211,10 +1211,10 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
         validGuid2 = "0x5e2fa230";
         gpuMaxTemperatureKeyOffset = 128;
         memoryMaxTemperatureKeyOffset = 132;
-        vrTemp0Offset = 224;
-        vrTemp1Offset = 228;
-        vrTemp2Offset = 232;
-        vrTemp3Offset = 236;
+        vrTemp0Offset = 200;
+        vrTemp1Offset = 204;
+        vrTemp2Offset = 208;
+        vrTemp3Offset = 212;
         gpuBoardTempOffset = 176;
 
         if (fd == 4) {
@@ -1281,10 +1281,10 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
             validGuid2 = "0x5e2fa230";
             gpuMaxTemperatureKeyOffset = 128;
             memoryMaxTemperatureKeyOffset = 132;
-            vrTemp0Offset = 224;
-            vrTemp1Offset = 228;
-            vrTemp2Offset = 232;
-            vrTemp3Offset = 236;
+            vrTemp0Offset = 200;
+            vrTemp1Offset = 204;
+            vrTemp2Offset = 208;
+            vrTemp3Offset = 212;
             gpuBoardTempOffset = 176;
         } else {
             // BMG has all temperature data in one GUID: 0x5e2f8211
@@ -1597,10 +1597,10 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
 
         if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
             validGuid = "0x1e2fa030";
-            vr0Offset = 224;
-            vr1Offset = 228;
-            vr2Offset = 232;
-            vr3Offset = 236;
+            vr0Offset = 200;
+            vr1Offset = 204;
+            vr2Offset = 208;
+            vr3Offset = 212;
         } else {
             // BMG has VR data in OOBMSM GUID: 0x5e2f8211
             validGuid = "0x5e2f8211";
@@ -1709,7 +1709,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
         std::string validGuid = "0x1e2fa030";
-        long vr0Offset = 224;
+        long vr0Offset = 200;
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
@@ -1769,10 +1769,10 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
         std::string validGuid = "0x1e2fa030";
-        long vr0Offset = 224;
-        long vr1Offset = 228;
-        long vr2Offset = 232;
-        long vr3Offset = 236;
+        long vr0Offset = 200;
+        long vr1Offset = 204;
+        long vr2Offset = 208;
+        long vr3Offset = 212;
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
