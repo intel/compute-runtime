@@ -884,12 +884,18 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     const auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
     uintptr_t gpuAddress = 0u;
     NEO::GraphicsAllocation *alloc = nullptr;
+    if (!allocData) {
+        allocData = svmAllocsManager->getSVMAlloc(requestedAddress);
+    }
     if (allocData) {
         gpuAddress = reinterpret_cast<uintptr_t>(requestedAddress);
         alloc = allocData->gpuAllocations.getGraphicsAllocation(module->getDevice()->getRootDeviceIndex());
     } else {
-        alloc = driverHandle->getDriverSystemMemoryAllocation(requestedAddress, 1u, module->getDevice()->getRootDeviceIndex(), &gpuAddress);
-        allocData = svmAllocsManager->getSVMAlloc(requestedAddress);
+        alloc = driverHandle->findHostPointerAllocation(requestedAddress, 1u, module->getDevice()->getRootDeviceIndex());
+        if (alloc != nullptr) {
+            uintptr_t offset = reinterpret_cast<uintptr_t>(requestedAddress) - reinterpret_cast<uintptr_t>(alloc->getUnderlyingBuffer());
+            gpuAddress = static_cast<uintptr_t>(alloc->getGpuAddress()) + offset;
+        }
     }
 
     NEO::SvmAllocationData *peerAllocData = nullptr;

@@ -3693,6 +3693,47 @@ TEST_F(ImportHostPointerSetKernelArg, givenHostPointerImportedWhenSettingKernelA
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
+TEST_F(ImportHostPointerSetKernelArg, givenSlowPathWithSvmThenHostImportedThenUnknownPointerThenAllocDataDrivesResidencyAndArgInfo) {
+    createKernel();
+
+    auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    auto allocationProperties = NEO::SVMAllocsManager::SvmAllocationProperties{};
+    auto svmAllocation = svmAllocsManager->createSVMAlloc(MemoryConstants::pageSize, allocationProperties, context->rootDeviceIndices, context->deviceBitfields);
+    auto svmAllocData = svmAllocsManager->getSVMAlloc(svmAllocation);
+    ASSERT_NE(nullptr, svmAllocData);
+    auto svmGraphicsAllocation = svmAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+    auto importResult = driverHandle->importExternalPointer(hostPointer, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, importResult);
+
+    const auto &argumentsResidencyContainer = kernel->getArgumentsResidencyContainer();
+    const auto &argInfos = kernel->getKernelArgInfos();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
+    EXPECT_EQ(svmGraphicsAllocation, argumentsResidencyContainer[0]);
+    EXPECT_EQ(svmAllocation, argInfos[0].value);
+    EXPECT_EQ(svmAllocData->getAllocId(), argInfos[0].allocId);
+    EXPECT_FALSE(argInfos[0].isSetToNullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(hostPointer), &hostPointer));
+    EXPECT_EQ(nullptr, argumentsResidencyContainer[0]);
+    EXPECT_EQ(hostPointer, argInfos[0].value);
+    EXPECT_EQ(0u, argInfos[0].allocId);
+    EXPECT_FALSE(argInfos[0].isSetToNullptr);
+
+    uint64_t unknownAddress = 0x1234ull;
+    void *unknownPointer = reinterpret_cast<void *>(unknownAddress);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(unknownPointer), &unknownPointer));
+    EXPECT_EQ(nullptr, argumentsResidencyContainer[0]);
+    EXPECT_EQ(unknownPointer, argInfos[0].value);
+    EXPECT_EQ(0u, argInfos[0].allocId);
+    EXPECT_FALSE(argInfos[0].isSetToNullptr);
+
+    auto releaseResult = driverHandle->releaseImportedPointer(hostPointer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, releaseResult);
+    svmAllocsManager->freeSVMAlloc(svmAllocation);
+}
+
 class KernelGlobalWorkOffsetTests : public ModuleFixture, public ::testing::Test {
   public:
     void SetUp() override {
