@@ -180,7 +180,7 @@ ze_result_t IpSamplingMetricSourceImp::metricGroupGet(uint32_t *pCount, zet_metr
         if (status != ZE_RESULT_SUCCESS || cachedMetricGroup == nullptr) {
             *pCount = 0;
             isEnabled = false;
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            return status;
         }
     }
 
@@ -322,10 +322,11 @@ bool IpSamplingMetricSourceImp::canDisable() {
     return !activationTracker->isAnyMetricGroupActivated();
 }
 
-void IpSamplingMetricSourceImp::initMetricScopes(MetricDeviceContext &metricDeviceContext) {
+ze_result_t IpSamplingMetricSourceImp::initMetricScopes(MetricDeviceContext &metricDeviceContext) {
     if (!metricDeviceContext.isComputeMetricScopesInitialized()) {
         initComputeMetricScopes(metricDeviceContext);
     }
+    return ZE_RESULT_SUCCESS;
 }
 
 IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,

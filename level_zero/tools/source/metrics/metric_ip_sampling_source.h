@@ -64,7 +64,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
 
     uint32_t metricCount = 0;
     bool canDisable() override;
-    void initMetricScopes(MetricDeviceContext &metricDeviceContext) override;
+    ze_result_t initMetricScopes(MetricDeviceContext &metricDeviceContext) override;
 
     std::unique_ptr<IpSamplingCalculation> ipSamplingCalculation = nullptr;
 

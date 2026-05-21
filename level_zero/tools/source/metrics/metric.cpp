@@ -190,7 +190,10 @@ ze_result_t MetricDeviceContext::metricGroupGet(uint32_t *pCount, zet_metric_gro
     uint32_t requestCount = *pCount;
 
     if (!metricScopesInitialized) {
-        initMetricScopes();
+        auto status = initMetricScopes();
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
     }
 
     for (auto const &entry : metricSources) {
@@ -761,7 +764,7 @@ std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_pr
     return std::make_unique<MetricScopeImp>(scopeProperties, aggregated, computeSubDeviceIndex);
 }
 
-void MetricDeviceContext::initMetricScopes() {
+ze_result_t MetricDeviceContext::initMetricScopes() {
 
     for (auto const &entry : metricSources) {
         auto const &metricSource = entry.second;
@@ -769,17 +772,25 @@ void MetricDeviceContext::initMetricScopes() {
         if (!metricSource->isAvailable()) {
             continue;
         }
-        metricSource->initMetricScopes(*this);
+        ze_result_t status = metricSource->initMetricScopes(*this);
+        if (status != ZE_RESULT_SUCCESS) {
+            metricScopesInitialized = true;
+            return status;
+        }
     }
 
     metricScopesInitialized = true;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t MetricDeviceContext::metricScopesGet(zet_context_handle_t hContext, uint32_t *pMetricScopesCount,
                                                  zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
 
     if (!metricScopesInitialized) {
-        initMetricScopes();
+        auto status = initMetricScopes();
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
     }
 
     if (*pMetricScopesCount == 0) {
@@ -815,6 +826,7 @@ uint32_t MetricDeviceContext::addMetricScope(std::string_view scopeName, std::st
     properties.iD = static_cast<uint32_t>(metricScopes.size());
     bool aggregated = (scopeName == aggregatedScopeName);
     auto newScope = MetricScopeImp::create(properties, aggregated, scopeSubDeviceIndex);
+    UNRECOVERABLE_IF(!newScope);
     metricScopes.push_back(std::move(newScope));
 
     return properties.iD;

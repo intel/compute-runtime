@@ -123,7 +123,7 @@ class MetricSource {
                                             zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                             zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) = 0;
     virtual bool canDisable() = 0;
-    virtual void initMetricScopes(MetricDeviceContext &metricDeviceContext) = 0;
+    virtual ze_result_t initMetricScopes(MetricDeviceContext &metricDeviceContext) = 0;
     static std::optional<zet_intel_metric_hw_buffer_size_exp_desc_t *> getHwBufferSizeDesc(zet_base_desc_t *baseDesc);
     static ze_result_t validateMetricsAgainstScopesAndGetExcludedMetrics(const std::vector<MetricImp *> &metrics,
                                                                          uint32_t scopeCount,
@@ -240,7 +240,7 @@ class MetricDeviceContext {
     bool enable();
     bool canDisable();
     void disable();
-    void initMetricScopes();
+    ze_result_t initMetricScopes();
 
     struct Device &device;
     uint32_t subDeviceIndex = 0;

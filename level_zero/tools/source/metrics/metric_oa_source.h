@@ -69,7 +69,7 @@ class OaMetricSourceImp : public MetricSource {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     bool canDisable() override;
-    void initMetricScopes(MetricDeviceContext &metricDeviceContext) override;
+    ze_result_t initMetricScopes(MetricDeviceContext &metricDeviceContext) override;
     ze_result_t getTimerResolution(uint64_t &resolution);
     double csTimestampPeriodNs = 0;
     uint64_t oaTimestampFrequency = 0;

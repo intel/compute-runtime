@@ -114,10 +114,11 @@ bool OaMetricSourceImp::canDisable() {
     return !activationTracker->isAnyMetricGroupActivated();
 }
 
-void OaMetricSourceImp::initMetricScopes(MetricDeviceContext &metricDeviceContext) {
+ze_result_t OaMetricSourceImp::initMetricScopes(MetricDeviceContext &metricDeviceContext) {
     if (!metricDeviceContext.isComputeMetricScopesInitialized()) {
         initComputeMetricScopes(metricDeviceContext);
     }
+    return ZE_RESULT_SUCCESS;
 }
 
 MetricsLibrary &OaMetricSourceImp::getMetricsLibrary() {

@@ -145,13 +145,14 @@ class MockMetricSource : public L0::MetricSource {
     }
     bool canDisable() override { return false; }
 
-    void initMetricScopes(MetricDeviceContext &metricDeviceContext) override {
+    ze_result_t initMetricScopes(MetricDeviceContext &metricDeviceContext) override {
         for (auto index = 0u; index < static_cast<uint32_t>(testMetricScopes.size()); index++) {
             metricDeviceContext.addMetricScope(testMetricScopes[index].name,
                                                testMetricScopes[index].description,
                                                testMetricScopes[index].computeSubDeviceIndex);
         }
         initComputeMetricScopes(metricDeviceContext);
+        return ZE_RESULT_SUCCESS;
     }
 
     void addTestMetricScope(const std::string &name, const std::string &description, uint32_t computeSubDeviceIndex) {
