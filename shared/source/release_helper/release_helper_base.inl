@@ -183,6 +183,11 @@ bool ReleaseHelperHw<releaseType>::isPostImageWriteFlushRequired() const {
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isPreImageReadFlushRequired() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const {
     return maxThreadsPerEuCount;
 }

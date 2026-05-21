@@ -501,6 +501,7 @@ struct CommandListCoreFamily : public CommandList {
     bool implicitSynchronizedDispatchForCooperativeKernelsAllowed = false;
     bool useAdditionalBlitProperties = false;
     bool isPostImageWriteFlushRequired = false;
+    bool isPreImageReadFlushRequired = false;
     bool latestFlushIsDualCopyOffload = false;
     bool isWalkerPostSyncSkipEnabled = false;
 };

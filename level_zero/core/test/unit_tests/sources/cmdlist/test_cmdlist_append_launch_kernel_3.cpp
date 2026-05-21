@@ -1205,8 +1205,6 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto sizeAfter = cmdStream->getUsed();
 
-    uint64_t bbStartGpuAddress = cmdStream->getGraphicsAllocation()->getGpuAddress() + sizeBefore;
-
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
@@ -1219,8 +1217,11 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
     auto walker = genCmdCast<WalkerType *>(*itorWalker);
     EXPECT_TRUE(walker->getWorkloadPartitionEnable());
 
-    bbStartGpuAddress += sizeof(WalkerType) + sizeof(PIPE_CONTROL) + sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
-                         sizeof(MI_BATCH_BUFFER_START) + 3 * sizeof(uint32_t);
+    auto walkerGpuAddress = cmdStream->getGraphicsAllocation()->getGpuAddress() +
+                            ptrDiff(reinterpret_cast<const uint8_t *>(*itorWalker),
+                                    static_cast<const uint8_t *>(cmdStream->getCpuBase()));
+    uint64_t bbStartGpuAddress = walkerGpuAddress + sizeof(WalkerType) + sizeof(PIPE_CONTROL) + sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
+                                 sizeof(MI_BATCH_BUFFER_START) + 3 * sizeof(uint32_t);
 
     auto itorPipeControl = find<PIPE_CONTROL *>(itorWalker, cmdList.end());
     ASSERT_NE(cmdList.end(), itorPipeControl);

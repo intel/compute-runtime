@@ -80,6 +80,10 @@ TEST_F(ReleaseHelper2001Tests, whenIsPostImageWriteFlushRequiredCalledThenFalseR
     whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
 }
 
+TEST_F(ReleaseHelper2001Tests, whenIsPreImageReadFlushRequiredCalledThenTrueReturned) {
+    whenIsPreImageReadFlushRequiredCalledThenTrueReturned();
+}
+
 TEST_F(ReleaseHelper2001Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

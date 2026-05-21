@@ -1541,49 +1541,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendi
     }
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSamplerAccessesThenInvalidateTextureCachePriorComputeWalker, IsAtLeastXeCore) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
-
-    auto kernel = std::make_unique<Mock<KernelImp>>();
-    kernel->setModule(module.get());
-    const_cast<NEO::KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.flags.hasSample = true;
-
-    ze_group_count_t groupCount{1, 1, 1};
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0, returnValue, false));
-
-    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-
-    CmdListKernelLaunchParams launchParams = {};
-    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
-    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
-
-    GenCmdList cmdList;
-    EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceAfter));
-
-    auto itorCW = findAll<COMPUTE_WALKER *>(
-        cmdList.begin(), cmdList.end());
-    ASSERT_EQ(1u, itorCW.size());
-
-    auto pipeControls =
-        findAll<PIPE_CONTROL *>(cmdList.begin(), itorCW[0]);
-
-    bool foundTextureCacheInvalidation = false;
-    for (auto itorPC : pipeControls) {
-        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
-        if (pcCmd->getTextureCacheInvalidationEnable()) {
-            foundTextureCacheInvalidation = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(foundTextureCacheInvalidation);
-}
-
 HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenTextureCacheFlushPendingStateIsCleared, IsXeHpgCore) {
     auto kernel = std::make_unique<Mock<KernelImp>>();
     kernel->setModule(module.get());
@@ -1602,6 +1559,207 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenText
     EXPECT_TRUE(commandList->isTextureCacheFlushPending());
     commandList->reset();
     EXPECT_FALSE(commandList->isTextureCacheFlushPending());
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithWriteOnlyImageThenNoTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto testKernel = std::make_unique<Mock<KernelImp>>();
+    testKernel->setModule(module.get());
+    testKernel->descriptor.kernelAttributes.hasImageWriteArg = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto *cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    CmdListKernelLaunchParams launchParams = {};
+    auto sizeBefore = cmdStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(testKernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    auto sizeAfter = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(cmdStream->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+
+    bool textureCacheInvBeforeWalker = false;
+    for (auto it = cmdList.begin(); it != itorWalker; ++it) {
+        auto pc = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pc && pc->getTextureCacheInvalidationEnable()) {
+            textureCacheInvBeforeWalker = true;
+            break;
+        }
+    }
+    EXPECT_FALSE(textureCacheInvBeforeWalker);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithReadableImageThenTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto testKernel = std::make_unique<Mock<KernelImp>>();
+    testKernel->setModule(module.get());
+    testKernel->descriptor.kernelAttributes.hasImageReadArg = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto *cmdListHw = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList.get());
+    cmdListHw->isPreImageReadFlushRequired = true;
+    auto *cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    CmdListKernelLaunchParams launchParams = {};
+    auto sizeBefore = cmdStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(testKernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    auto sizeAfter = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(cmdStream->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+
+    bool textureCacheInvBeforeWalker = false;
+    for (auto it = cmdList.begin(); it != itorWalker; ++it) {
+        auto pc = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pc && pc->getTextureCacheInvalidationEnable()) {
+            textureCacheInvBeforeWalker = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(textureCacheInvBeforeWalker);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithBindlessImageReadThenTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto testKernel = std::make_unique<Mock<KernelImp>>();
+    testKernel->setModule(module.get());
+    testKernel->descriptor.kernelAttributes.flags.hasBindlessImageRead = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto *cmdListHw = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList.get());
+    cmdListHw->isPreImageReadFlushRequired = true;
+    auto *cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    CmdListKernelLaunchParams launchParams = {};
+    auto sizeBefore = cmdStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(testKernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    auto sizeAfter = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(cmdStream->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+
+    bool textureCacheInvBeforeWalker = false;
+    for (auto it = cmdList.begin(); it != itorWalker; ++it) {
+        auto pc = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pc && pc->getTextureCacheInvalidationEnable()) {
+            textureCacheInvBeforeWalker = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(textureCacheInvBeforeWalker);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithReadableImageButPreFlushNotRequiredThenNoTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto testKernel = std::make_unique<Mock<KernelImp>>();
+    testKernel->setModule(module.get());
+    testKernel->descriptor.kernelAttributes.hasImageReadArg = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto *cmdListHw = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList.get());
+    cmdListHw->isPreImageReadFlushRequired = false;
+    auto *cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    CmdListKernelLaunchParams launchParams = {};
+    auto sizeBefore = cmdStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(testKernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    auto sizeAfter = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(cmdStream->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+
+    bool textureCacheInvBeforeWalker = false;
+    for (auto it = cmdList.begin(); it != itorWalker; ++it) {
+        auto pc = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pc && pc->getTextureCacheInvalidationEnable()) {
+            textureCacheInvBeforeWalker = true;
+            break;
+        }
+    }
+    EXPECT_FALSE(textureCacheInvBeforeWalker);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithBindlessImageReadButPreFlushNotRequiredThenNoTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto testKernel = std::make_unique<Mock<KernelImp>>();
+    testKernel->setModule(module.get());
+    testKernel->descriptor.kernelAttributes.flags.hasBindlessImageRead = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto *cmdListHw = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList.get());
+    cmdListHw->isPreImageReadFlushRequired = false;
+    auto *cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    CmdListKernelLaunchParams launchParams = {};
+    auto sizeBefore = cmdStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(testKernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    auto sizeAfter = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(cmdStream->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+
+    bool textureCacheInvBeforeWalker = false;
+    for (auto it = cmdList.begin(); it != itorWalker; ++it) {
+        auto pc = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pc && pc->getTextureCacheInvalidationEnable()) {
+            textureCacheInvBeforeWalker = true;
+            break;
+        }
+    }
+    EXPECT_FALSE(textureCacheInvBeforeWalker);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenCreatedThenIsPreImageReadFlushRequiredMatchesReleaseHelper, IsAtLeastXeCore) {
+    auto mockReleaseHelper = std::make_unique<MockReleaseHelper>();
+    auto *releaseHelperPtr = mockReleaseHelper.get();
+    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(mockReleaseHelper);
+
+    ze_result_t returnValue;
+
+    releaseHelperPtr->isPreImageReadFlushRequiredResult = true;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto *cmdListHw = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList.get());
+    EXPECT_TRUE(cmdListHw->isPreImageReadFlushRequired);
+
+    releaseHelperPtr->isPreImageReadFlushRequiredResult = false;
+    std::unique_ptr<L0::CommandList> commandList2(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto *cmdListHw2 = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList2.get());
+    EXPECT_FALSE(cmdListHw2->isPreImageReadFlushRequired);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

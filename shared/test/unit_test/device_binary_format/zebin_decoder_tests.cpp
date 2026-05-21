@@ -7620,7 +7620,7 @@ kernels:
     ASSERT_EQ(192u, kernelDescriptor->generatedSsh.size());
 }
 
-TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithReadOnlyAccessWhenPopulatingKernelDescriptorThenHasImageWriteArgIsFalse) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithReadOnlyAccessWhenPopulatingKernelDescriptorThenHasImageReadArgIsTrueAndHasImageWriteArgIsFalse) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
@@ -7640,10 +7640,11 @@ kernels:
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::success, err);
 
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.hasImageReadArg);
     EXPECT_FALSE(kernelDescriptor->kernelAttributes.hasImageWriteArg);
 }
 
-TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithWriteOnlyAccessWhenPopulatingKernelDescriptorThenHasImageWriteArgIsTrue) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithWriteOnlyAccessWhenPopulatingKernelDescriptorThenHasImageWriteArgIsTrueAndHasImageReadArgIsFalse) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
@@ -7664,9 +7665,10 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.hasImageWriteArg);
+    EXPECT_FALSE(kernelDescriptor->kernelAttributes.hasImageReadArg);
 }
 
-TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithReadWriteAccessWhenPopulatingKernelDescriptorThenHasImageWriteArgIsTrue) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithReadWriteAccessWhenPopulatingKernelDescriptorThenBothHasImageReadArgAndHasImageWriteArgAreTrue) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
@@ -7687,6 +7689,7 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.hasImageWriteArg);
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.hasImageReadArg);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenKernelWithIndirectCallsWhenPopulatingKernelDescriptorThenHasIndirectCallsIsSet) {

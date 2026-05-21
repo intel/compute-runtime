@@ -74,6 +74,10 @@ TEST_F(ReleaseHelper1261Tests, whenIsPostImageWriteFlushRequiredCalledThenFalseR
     whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
 }
 
+TEST_F(ReleaseHelper1261Tests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
+    whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
+}
+
 TEST_F(ReleaseHelper1261Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

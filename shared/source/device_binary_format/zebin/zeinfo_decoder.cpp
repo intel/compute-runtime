@@ -1093,9 +1093,14 @@ DecodeError decodeZeInfoKernelPayloadArguments(KernelDescriptor &dst, Yaml::Yaml
             }
 
             if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::argTImage>()) {
-                if (dst.payloadMappings.explicitArgs[arg.argIndex].getTraits().getAccessQualifier() == NEO::KernelArgMetadata::AccessQualifier::AccessWriteOnly ||
-                    dst.payloadMappings.explicitArgs[arg.argIndex].getTraits().getAccessQualifier() == NEO::KernelArgMetadata::AccessQualifier::AccessReadWrite) {
+                const auto accessQualifier = dst.payloadMappings.explicitArgs[arg.argIndex].getTraits().getAccessQualifier();
+                if (accessQualifier == NEO::KernelArgMetadata::AccessQualifier::AccessWriteOnly ||
+                    accessQualifier == NEO::KernelArgMetadata::AccessQualifier::AccessReadWrite) {
                     dst.kernelAttributes.hasImageWriteArg = true;
+                }
+                if (accessQualifier == NEO::KernelArgMetadata::AccessQualifier::AccessReadOnly ||
+                    accessQualifier == NEO::KernelArgMetadata::AccessQualifier::AccessReadWrite) {
+                    dst.kernelAttributes.hasImageReadArg = true;
                 }
             }
         }

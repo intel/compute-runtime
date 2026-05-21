@@ -37,6 +37,8 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
     void whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
     void whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
+    void whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
+    void whenIsPreImageReadFlushRequiredCalledThenTrueReturned();
     void whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
     void whenShouldQueryPeerAccessCalledThenFalseReturned();
     void whenShouldQueryPeerAccessCalledThenTrueReturned();

@@ -87,6 +87,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         bool hasIndirectStatelessAccess = false;
         bool hasIndirectAccessInImplicitArg = false;
         bool hasImageWriteArg = false;
+        bool hasImageReadArg = false;
 
         AddressingMode bufferAddressingMode = BindfulAndStateless;
         AddressingMode imageAddressingMode = Bindful;

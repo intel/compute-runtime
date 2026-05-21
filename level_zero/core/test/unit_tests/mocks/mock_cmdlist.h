@@ -111,6 +111,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::internalUsage;
     using BaseClass::interruptEvents;
     using BaseClass::isInOrderNonWalkerSignalingRequired;
+    using BaseClass::isPreImageReadFlushRequired;
     using BaseClass::isQwordInOrderCounter;
     using BaseClass::isRelaxedOrderingDispatchAllowed;
     using BaseClass::isSkippingInOrderBarrierAllowed;

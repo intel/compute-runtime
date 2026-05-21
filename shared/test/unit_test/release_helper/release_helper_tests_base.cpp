@@ -187,6 +187,24 @@ void ReleaseHelperTestsBase::whenIsPostImageWriteFlushRequiredCalledThenFalseRet
     }
 }
 
+void ReleaseHelperTestsBase::whenIsPreImageReadFlushRequiredCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isPreImageReadFlushRequired());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsPreImageReadFlushRequiredCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isPreImageReadFlushRequired());
+    }
+}
+
 void ReleaseHelperTestsBase::whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

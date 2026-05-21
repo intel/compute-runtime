@@ -316,6 +316,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo, this->l3FlushAfterPostSyncEnabled);
     this->useAdditionalBlitProperties = productHelper.useAdditionalBlitProperties();
     this->isPostImageWriteFlushRequired = releaseHelper ? releaseHelper->isPostImageWriteFlushRequired() : false;
+    this->isPreImageReadFlushRequired = releaseHelper ? releaseHelper->isPreImageReadFlushRequired() : false;
     this->shouldRegisterEnqueuedWalkerWithProfiling = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
     this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->dcFlushSupport);
     this->statelessBuiltinsEnabled = compilerProductHelper.isForceToStatelessRequired();
@@ -1266,12 +1267,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
                      groupSizeX, groupSizeY, groupSizeZ);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    if (this->device->getNEODevice()->isAnyDirectSubmissionEnabled()) {
-        NEO::PipeControlArgs pipeControlArgs;
-        pipeControlArgs.textureCacheInvalidationEnable = true;
-        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), pipeControlArgs);
     }
 
     ze_group_count_t kernelArgs{pSrcRegion->width / groupSizeX, pSrcRegion->height / groupSizeY,
