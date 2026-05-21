@@ -1151,4 +1151,9 @@ bool ProductHelperHw<gfxProduct>::isAvailableSemaphore64(const ReleaseHelper *re
     return releaseHelper->isAvailableSemaphore64();
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isFrontEndControllerEnabled() const {
+    return false;
+}
+
 } // namespace NEO

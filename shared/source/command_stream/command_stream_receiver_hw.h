@@ -232,6 +232,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     bool isPerQueuePrologueEnabled() const;
     void programEnginePrologue(LinearStream &csr);
+    void programFrontEndPrologue(LinearStream &csr);
+    size_t getFrontEndPrologueSize() const;
+
     size_t getCmdSizeForPrologue() const;
     void programExceptions(LinearStream &csr, Device &device);
     size_t getCmdSizeForExceptions() const;

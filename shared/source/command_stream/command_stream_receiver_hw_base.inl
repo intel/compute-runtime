@@ -259,6 +259,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
         makeResident(*getGlobalFenceAllocation());
     }
 
+    if (getFrontEndAllocation()) {
+        makeResident(*getFrontEndAllocation());
+    }
+
     makeResident(*getTagAllocation());
 
     makeResident(*commandStreamTask.getGraphicsAllocation());
@@ -572,7 +576,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     if (getGlobalFenceAllocation()) {
         makeResident(*getGlobalFenceAllocation());
     }
-
+    if (getFrontEndAllocation()) {
+        makeResident(*getFrontEndAllocation());
+    }
     makeResidentPreemptionAllocation();
 
     bool debuggingEnabled = device.getDebugger() != nullptr;
@@ -1163,6 +1169,9 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     if (getGlobalFenceAllocation()) {
         makeResident(*getGlobalFenceAllocation());
     }
+    if (getFrontEndAllocation()) {
+        makeResident(*getFrontEndAllocation());
+    }
 
     uint64_t taskStartAddress = commandStream.getGpuBase() + commandStreamStart;
 
@@ -1296,6 +1305,10 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
 
     if (getGlobalFenceAllocation()) {
         makeResident(*getGlobalFenceAllocation());
+    }
+
+    if (getFrontEndAllocation()) {
+        makeResident(*getFrontEndAllocation());
     }
 
     uint64_t taskStartAddress = commandStreamTask.getGpuBase() + commandStreamStartTask;
@@ -2239,6 +2252,10 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidenc
     if (device.isStateSipRequired()) {
         GraphicsAllocation *sipAllocation = SipKernel::getSipKernel(device, this->osContext).getSipAllocation();
         makeResident(*sipAllocation);
+    }
+
+    if (getFrontEndAllocation()) {
+        makeResident(*getFrontEndAllocation());
     }
 }
 

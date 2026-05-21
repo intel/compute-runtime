@@ -31,6 +31,7 @@ class CompilerProductHelper;
 class Debugger;
 class DebuggerL0;
 class ExecutionEnvironment;
+class FrontEndController;
 class GfxCoreHelper;
 class GmmClientContext;
 class GmmHelper;
@@ -183,6 +184,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     bool hasRootCsr() const { return rootCsrCreated; }
 
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
+    FrontEndController *getFrontEndController() const;
 
     using CreatePerformanceCountersFunc = std::unique_ptr<PerformanceCounters> (*)(Device *device);
     static CreatePerformanceCountersFunc createPerformanceCountersFunc;
@@ -340,6 +342,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     MOCKABLE_VIRTUAL bool isAnyDirectSubmissionEnabledImpl(bool light) const;
     double getPercentOfGlobalMemoryAvailable() const;
     virtual void createBindlessHeapsHelper() {}
+    virtual void createFrontEndController() {}
     bool createSubDevices();
     bool createGenericSubDevices();
     bool genericSubDevicesAllowed();

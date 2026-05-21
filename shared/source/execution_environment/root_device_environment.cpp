@@ -12,6 +12,7 @@
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_stream/front_end_controller.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/debugger/debugger.h"
@@ -153,6 +154,17 @@ const ProductHelper &RootDeviceEnvironment::getProductHelper() const {
 
 void RootDeviceEnvironment::createBindlessHeapsHelper(Device *rootDevice, bool availableDevices) {
     bindlessHeapsHelper = std::make_unique<BindlessHeapsHelper>(rootDevice, availableDevices);
+}
+
+FrontEndController *RootDeviceEnvironment::getFrontEndController() const {
+    return frontEndController.get();
+}
+
+void RootDeviceEnvironment::createFrontEndController(Device *rootDevice) {
+    frontEndController = std::make_unique<FrontEndController>(rootDevice);
+    if (!frontEndController->initialize()) {
+        frontEndController.reset();
+    }
 }
 
 CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {

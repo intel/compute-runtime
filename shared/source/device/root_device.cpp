@@ -60,6 +60,10 @@ void RootDevice::createBindlessHeapsHelper() {
     }
 }
 
+void RootDevice::createFrontEndController() {
+    this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->createFrontEndController(this);
+}
+
 bool RootDevice::createEngines() {
     if (hasGenericSubDevices) {
         if (getRootDeviceEnvironment().isExposeSingleDeviceMode()) {

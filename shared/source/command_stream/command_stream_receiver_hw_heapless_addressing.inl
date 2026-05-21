@@ -34,6 +34,9 @@ void CommandStreamReceiverHw<GfxFamily>::handleAllocationsResidencyForFlushTaskH
         makeResident(*getGlobalFenceAllocation());
     }
 
+    if (getFrontEndAllocation()) {
+        makeResident(*getFrontEndAllocation());
+    }
     makeResidentPreemptionAllocation();
 
     if (hasDsh) {
@@ -303,6 +306,10 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushStatelessAllocation
     if (device.isStateSipRequired()) {
         makeResident(*SipKernel::getSipKernel(device, osContext).getSipAllocation());
     }
+
+    if (getFrontEndAllocation()) {
+        makeResident(*getFrontEndAllocation());
+    }
 }
 
 template <typename GfxFamily>
@@ -465,6 +472,10 @@ void CommandStreamReceiverHw<GfxFamily>::handleAllocationsResidencyForHeaplessPr
 
     if (getGlobalFenceAllocation()) {
         makeResident(*getGlobalFenceAllocation());
+    }
+
+    if (getFrontEndAllocation()) {
+        makeResident(*getFrontEndAllocation());
     }
 
     makeResidentPreemptionAllocation();

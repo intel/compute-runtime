@@ -75,6 +75,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::getCmdSizeForExceptions;
     using BaseClass::getCmdSizeForHeaplessPrologue;
     using BaseClass::getCmdSizeForPrologue;
+    using BaseClass::getFrontEndPrologueSize;
     using BaseClass::getHostFunctionStreamer;
     using BaseClass::getScratchPatchAddress;
     using BaseClass::getScratchSpaceController;
@@ -99,6 +100,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::programActivePartitionConfig;
     using BaseClass::programEnginePrologue;
     using BaseClass::programExceptions;
+    using BaseClass::programFrontEndPrologue;
     using BaseClass::programPreamble;
     using BaseClass::programStallingCommandsForBarrier;
     using BaseClass::programStallingNoPostSyncCommandsForBarrier;

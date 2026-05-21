@@ -26,6 +26,8 @@ using Family = NEO::Xe3pCoreFamily;
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_pool.h"
 
+#include "command_stream_receiver_hw_xe3p_core_front_end.inl"
+
 namespace NEO {
 static auto gfxCore = IGFX_XE3P_CORE;
 
@@ -55,16 +57,31 @@ void CommandStreamReceiverHw<Family>::programEnginePrologue(LinearStream &csr) {
         if (!skip && getGlobalFenceAllocation()) {
             EncodeMemoryFence<Family>::encodeSystemMemoryFence(csr, getGlobalFenceAllocation());
         }
+        auto &rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+
+        if (rootDeviceEnvironment->getFrontEndController()) {
+            programFrontEndPrologue(csr);
+        }
         this->isEnginePrologueSent = true;
     }
 }
 
 template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPrologue() const {
+
     if (!this->isEnginePrologueSent) {
+        size_t prologueSize = 0;
+
         if (getGlobalFenceAllocation()) {
-            return EncodeMemoryFence<Family>::getSystemMemoryFenceSize();
+            prologueSize = EncodeMemoryFence<Family>::getSystemMemoryFenceSize();
         }
+
+        auto &rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+
+        if (rootDeviceEnvironment->getFrontEndController()) {
+            prologueSize += getFrontEndPrologueSize();
+        }
+        return prologueSize;
     }
     return 0u;
 }

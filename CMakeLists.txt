@@ -969,6 +969,27 @@ endmacro()
 
 apply_macro_for_each_core_type("SUPPORTED")
 
+macro(subdirlist result curdir dirmask)
+  file(GLOB children RELATIVE ${curdir} ${curdir}/${dirmask})
+  set(dirlist "")
+  foreach(child ${children})
+    if(IS_DIRECTORY ${curdir}/${child})
+      list(APPEND dirlist ${child})
+    endif()
+  endforeach()
+  set(${result} ${dirlist})
+endmacro()
+
+subdirlist(SUBDIRS ${NEO_SOURCE_DIR}/shared/source/generated "*_core")
+
+foreach(subdir ${SUBDIRS})
+  if(EXISTS ${NEO_SOURCE_DIR}/shared/source/generated/${subdir}${BRANCH_DIR_SUFFIX})
+    include_directories(${NEO_SOURCE_DIR}/shared/source/generated/${subdir}${BRANCH_DIR_SUFFIX})
+  elseif(EXISTS ${NEO_SOURCE_DIR}/shared/source/generated/${subdir})
+    include_directories(${NEO_SOURCE_DIR}/shared/source/generated/${subdir})
+  endif()
+endforeach()
+
 # Define where to put binaries
 set(TargetDir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 if(MSVC)

@@ -10,6 +10,7 @@
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/front_end_controller.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -345,12 +346,16 @@ bool Device::initDeviceFully() {
     uuid.isValid = false;
     initUsmReuseLimits();
 
+    auto &productHelper = getProductHelper();
+    if (productHelper.isFrontEndControllerEnabled()) {
+        createFrontEndController();
+    }
+
     if (getRootDeviceEnvironment().osInterface == nullptr) {
         return true;
     }
-
     auto &gfxCoreHelper = getGfxCoreHelper();
-    auto &productHelper = getProductHelper();
+
     if (debugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
         if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
 
@@ -600,6 +605,10 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     }
 
     if (!commandStreamReceiver->createGlobalFenceAllocation()) {
+        return false;
+    }
+
+    if (getProductHelper().isFrontEndControllerEnabled() && getFrontEndController() && !commandStreamReceiver->allocateFrontEndAllocation(getFrontEndController()->getFrontEndAllocationSize())) {
         return false;
     }
 
@@ -858,6 +867,10 @@ Device *Device::getNearestGenericSubDevice(uint32_t deviceId) {
 
 BindlessHeapsHelper *Device::getBindlessHeapsHelper() const {
     return getRootDeviceEnvironment().getBindlessHeapsHelper();
+}
+
+FrontEndController *Device::getFrontEndController() const {
+    return getRootDeviceEnvironment().getFrontEndController();
 }
 
 GmmClientContext *Device::getGmmClientContext() const {

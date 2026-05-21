@@ -292,6 +292,8 @@ class ProductHelper {
     virtual bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const = 0;
     virtual std::optional<uint8_t> getBcsCompressionFormat() const = 0;
     virtual bool isProgramAdditionalEngineMMIORequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isFrontEndControllerEnabled() const = 0;
+
     virtual ~ProductHelper() = default;
 
   protected:

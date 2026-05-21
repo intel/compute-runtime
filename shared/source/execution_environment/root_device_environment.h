@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class AubCenter;
 class BindlessHeapsHelper;
 class BuiltIns;
 class CompilerInterface;
+class FrontEndController;
 class SipExternalLib;
 class Debugger;
 class Device;
@@ -82,6 +83,9 @@ struct RootDeviceEnvironment : NonCopyableClass {
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
     AssertHandler *getAssertHandler(Device *neoDevice);
     void createBindlessHeapsHelper(Device *rootDevice, bool availableDevices);
+
+    FrontEndController *getFrontEndController() const;
+    void createFrontEndController(Device *rootDevice);
     bool setNumberOfCcs(uint32_t numberOfCcs);
     uint32_t getNumberOfCcs() const;
     bool isNumberOfCcsLimited() const;
@@ -132,6 +136,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     std::unique_ptr<ReleaseHelper> releaseHelper;
     std::unique_ptr<AILConfiguration> ailConfiguration;
     std::unique_ptr<BindlessHeapsHelper> bindlessHeapsHelper;
+    std::unique_ptr<FrontEndController> frontEndController;
     std::unique_ptr<HostFunctionWorker> hostFunctionScheduler;
     std::unique_ptr<AssertHandler> assertHandler;
 

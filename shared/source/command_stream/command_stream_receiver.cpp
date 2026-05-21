@@ -578,6 +578,11 @@ void CommandStreamReceiver::cleanupResources() {
         workPartitionAllocation = nullptr;
     }
 
+    if (frontEndAllocation) {
+        getMemoryManager()->freeGraphicsMemory(frontEndAllocation);
+        frontEndAllocation = nullptr;
+    }
+
     releaseGlobalStatelessHeap();
     for (auto &alloc : ownedPrivateAllocations) {
         getMemoryManager()->freeGraphicsMemory(alloc.second);
@@ -821,6 +826,18 @@ GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     }
     debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, size, AllocationType::debugContextSaveArea, getOsContext().getDeviceBitfield()});
     return debugSurface;
+}
+
+GraphicsAllocation *CommandStreamReceiver::allocateFrontEndAllocation(size_t size) {
+    UNRECOVERABLE_IF(frontEndAllocation != nullptr);
+    AllocationProperties properties{rootDeviceIndex, size, AllocationType::preemption, getOsContext().getDeviceBitfield()};
+    properties.alignment = MemoryConstants::pageSize64k;
+
+    frontEndAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    if (frontEndAllocation) {
+        memset(frontEndAllocation->getUnderlyingBuffer(), 0, size);
+    }
+    return frontEndAllocation;
 }
 
 void *CommandStreamReceiver::getIndirectHeapCurrentPtr(IndirectHeapType heapType) const {

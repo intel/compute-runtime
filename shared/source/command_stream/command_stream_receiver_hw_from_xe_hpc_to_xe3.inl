@@ -35,4 +35,12 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue() const {
     return 0u;
 }
 
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programFrontEndPrologue(LinearStream &csr) {
+}
+
+template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getFrontEndPrologueSize() const {
+    return 0;
+}
 } // namespace NEO

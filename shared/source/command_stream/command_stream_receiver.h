@@ -220,6 +220,12 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         return debugSurface;
     }
     GraphicsAllocation *allocateDebugSurface(size_t size);
+
+    GraphicsAllocation *getFrontEndAllocation() const {
+        return frontEndAllocation;
+    }
+    GraphicsAllocation *allocateFrontEndAllocation(size_t size);
+
     GraphicsAllocation *getPreemptionAllocation() const {
         if (primaryCsr) {
             return primaryCsr->getPreemptionAllocation();
@@ -718,6 +724,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     GraphicsAllocation *clearColorAllocation = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
     GraphicsAllocation *globalStatelessHeapAllocation = nullptr;
+    GraphicsAllocation *frontEndAllocation = nullptr;
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;
 
     IndirectHeap *indirectHeap[IndirectHeapType::numTypes];
