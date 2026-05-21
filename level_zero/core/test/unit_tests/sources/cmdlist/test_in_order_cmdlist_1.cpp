@@ -6557,5 +6557,30 @@ HWTEST_F(InOrderCmdListTests, givenImmediateCmdListWhenAppendLaunchKernelWithout
     EXPECT_FALSE(localLaunchParams.inOrderNonWalkerSignalingRequired);
 }
 
+HWTEST_F(InOrderCmdListTests, givenInOrderNonWalkerSignalingRequiredAndNullSignalEventWhenAppendLaunchKernelThenNoNullDereferenceOccurs) {
+    class ForceNonWalkerSignalingCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
+      public:
+        using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
+        using BaseClass::BaseClass;
+
+        ze_result_t appendLaunchKernelWithParams(L0::Kernel *kernel,
+                                                 const ze_group_count_t &threadGroupDimensions,
+                                                 L0::Event *event,
+                                                 CmdListKernelLaunchParams &launchParams) override {
+            auto result = BaseClass::appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
+            launchParams.inOrderNonWalkerSignalingRequired = true;
+            return result;
+        }
+    };
+
+    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, ForceNonWalkerSignalingCmdList>(false);
+
+    CmdListKernelLaunchParams localLaunchParams = {};
+    auto result = immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, localLaunchParams);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(localLaunchParams.inOrderNonWalkerSignalingRequired);
+}
+
 } // namespace ult
 } // namespace L0

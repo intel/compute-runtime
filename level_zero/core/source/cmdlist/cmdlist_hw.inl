@@ -561,7 +561,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
 
     auto res = appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
 
-    handleInOrderDependencyCounter(event, launchParams.inOrderNonWalkerSignalingRequired && !event->isCounterBased(), false);
+    handleInOrderDependencyCounter(event, launchParams.inOrderNonWalkerSignalingRequired && event && !event->isCounterBased(), false);
 
     if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
         appendSynchronizedDispatchCleanupSection();
