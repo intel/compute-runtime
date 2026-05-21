@@ -371,15 +371,6 @@ bool Event::calcProfilingData() {
     return dataCalculated;
 }
 
-void Event::updateTimestamp(ProfilingInfo &timestamp, uint64_t newGpuTimestamp) const {
-    auto &device = this->cmdQueue->getDevice();
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
-    auto resolution = device.getDeviceInfo().profilingTimerResolution;
-    timestamp.gpuTimeStamp = newGpuTimestamp;
-    timestamp.gpuTimeInNs = gfxCoreHelper.getGpuTimeStampInNS(timestamp.gpuTimeStamp, resolution);
-    timestamp.cpuTimeInNs = timestamp.gpuTimeInNs;
-}
-
 /**
  * @brief Timestamp returned from GPU is initially 32 bits. This method performs XOR with
  * other timestamp that tracks overflows, so passed timestamp will have correct overflow bits
@@ -404,22 +395,7 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
         startTimeStamp.gpuTimeStamp = globalStartTS;
         addOverflowToTimestamp(startTimeStamp.gpuTimeStamp, submitTimeStamp.gpuTimeStamp);
         if (startTimeStamp.gpuTimeStamp < submitTimeStamp.gpuTimeStamp) {
-            auto diff = submitTimeStamp.gpuTimeStamp - startTimeStamp.gpuTimeStamp;
-            auto diffInNS = gfxCoreHelper.getGpuTimeStampInNS(diff, resolution);
-            auto osTime = device.getOSTime();
-            if (diffInNS < osTime->getTimestampRefreshTimeout()) {
-                auto alignedSubmitTimestamp = startTimeStamp.gpuTimeStamp - 1;
-                auto alignedQueueTimestamp = startTimeStamp.gpuTimeStamp - 2;
-                if (startTimeStamp.gpuTimeStamp <= 2) {
-                    alignedSubmitTimestamp = 0;
-                    alignedQueueTimestamp = 0;
-                }
-                updateTimestamp(submitTimeStamp, alignedSubmitTimestamp);
-                updateTimestamp(queueTimeStamp, alignedQueueTimestamp);
-                osTime->setRefreshTimestampsFlag();
-            } else {
-                startTimeStamp.gpuTimeStamp += static_cast<uint64_t>(1ULL << gfxCoreHelper.getGlobalTimeStampBits());
-            }
+            startTimeStamp.gpuTimeStamp += static_cast<uint64_t>(1ULL << gfxCoreHelper.getGlobalTimeStampBits());
         }
     }
 

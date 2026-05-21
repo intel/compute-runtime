@@ -53,8 +53,7 @@ bool DeviceTime::isTimestampsRefreshEnabled() const {
 /**
  * @brief If this method is called within interval, GPU timestamp
  * will be calculated based on CPU timestamp and previous GPU ticks
- * to reduce amount of internal KMD calls. Interval is selected
- * adaptively, based on misalignment between calculated ticks and actual ticks.
+ * to reduce amount of internal KMD calls.
  *
  * @return returns appropriate error if internal call to KMD failed. SUCCESS otherwise.
  */
@@ -66,7 +65,7 @@ TimeQueryStatus DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime
     if (debugManager.flags.DisableKmdSubmissionForTimestamps.get()) {
         forceKmdCall = false;
     }
-    if (forceKmdCall || cpuTimeDiffInNS >= timestampRefreshTimeoutNS) {
+    if (forceKmdCall) {
         refreshTimestamps = true;
     }
     bool reusingTimestampsEnabled = isTimestampsRefreshEnabled();
@@ -77,19 +76,6 @@ TimeQueryStatus DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime
         }
         if (!reusingTimestampsEnabled) {
             return TimeQueryStatus::success;
-        }
-        if (initialGpuTimeStamp) {
-            UNRECOVERABLE_IF(deviceTimerResolution == 0);
-            auto calculatedTimestamp = fetchedTimestamps.gpuTimeStamp + static_cast<uint64_t>(cpuTimeDiffInNS / deviceTimerResolution);
-            auto diff = std::abs(static_cast<int64_t>(timeStamp->gpuTimeStamp - calculatedTimestamp));
-            auto elapsedTicks = timeStamp->gpuTimeStamp - fetchedTimestamps.gpuTimeStamp;
-            int64_t adaptValue = static_cast<int64_t>(diff * deviceTimerResolution);
-            adaptValue = std::min(adaptValue, static_cast<int64_t>(timestampRefreshMinTimeoutNS));
-            if (diff * 1.0f / elapsedTicks > 0.05) {
-                adaptValue = adaptValue * (-1);
-            }
-            timestampRefreshTimeoutNS += adaptValue;
-            timestampRefreshTimeoutNS = std::max(timestampRefreshMinTimeoutNS, std::min(timestampRefreshMaxTimeoutNS, timestampRefreshTimeoutNS));
         }
         fetchedTimestamps = *timeStamp;
         refreshTimestamps = false;
