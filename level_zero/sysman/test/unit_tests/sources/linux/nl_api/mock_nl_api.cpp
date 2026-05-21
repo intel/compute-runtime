@@ -753,6 +753,7 @@ int MockNlApi::nlSocketModifyCb(struct nl_sock *sock, enum nl_cb_type type, enum
 }
 
 int MockNlApi::genlUnregisterFamily(struct genl_ops *ops) {
+    genlUnregisterFamilyCallCount++;
     int returnValue = 0;
     if (!mockGenlUnregisterFamilyReturnValue.empty()) {
         returnValue = mockGenlUnregisterFamilyReturnValue.front();

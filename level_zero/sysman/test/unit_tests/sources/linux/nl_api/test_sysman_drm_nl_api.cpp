@@ -1555,6 +1555,57 @@ TEST_F(SysmanDrmNlApiFixture, GivenDrmNlApiAndNoThresholdAttrsWhenCallingGetErro
     EXPECT_EQ(0u, threshold.threshold);
 }
 
+TEST_F(SysmanDrmNlApiFixture, GivenGenlRegisterFamilyFailsWhenInitConnectionCalledThenGenlUnregisterFamilyIsNotCalled) {
+    auto pNlApi = std::make_unique<MockNlApi>();
+    pNlApi->mockLoadEntryPointsReturnValue.push_back(true);
+    pNlApi->mockNlSocketAllocReturnValue.push_back(&nlSock);
+    pNlApi->mockGenlConnectReturnValue.push_back(0);
+    pNlApi->mockGenCtrlResolveReturnValue.push_back(1);
+    pNlApi->mockGenlRegisterFamilyReturnValue.push_back(-1);
+    pNlApi->isMockGenlRegisterFamilyRepeatedCall.push_back(true);
+
+    MockNlApi *rawPNlApi = pNlApi.get();
+    drmNlApi->pNlApi = std::move(pNlApi);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, drmNlApi->initConnection());
+    EXPECT_EQ(0u, rawPNlApi->genlUnregisterFamilyCallCount);
+}
+
+TEST_F(SysmanDrmNlApiFixture, GivenGenlRegisterFamilySucceedsAndGenlOpsResolveFailsWhenInitConnectionCalledThenGenlUnregisterFamilyIsCalledOnce) {
+    auto pNlApi = std::make_unique<MockNlApi>();
+    pNlApi->mockLoadEntryPointsReturnValue.push_back(true);
+    pNlApi->mockNlSocketAllocReturnValue.push_back(&nlSock);
+    pNlApi->mockGenlConnectReturnValue.push_back(0);
+    pNlApi->mockGenCtrlResolveReturnValue.push_back(1);
+    pNlApi->mockGenlRegisterFamilyReturnValue.push_back(0);
+    pNlApi->isMockGenlRegisterFamilyRepeatedCall.push_back(false);
+    pNlApi->mockGenlOpsResolveReturnValue.push_back(-1);
+
+    MockNlApi *rawPNlApi = pNlApi.get();
+    drmNlApi->pNlApi = std::move(pNlApi);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, drmNlApi->initConnection());
+    EXPECT_EQ(1u, rawPNlApi->genlUnregisterFamilyCallCount);
+}
+
+TEST_F(SysmanDrmNlApiFixture, GivenSuccessfulInitConnectionWhenCleanupConnectionCalledThenConnectionStateIsReset) {
+    drmNlApi->pNlApi = setupInitConnectionSuccess();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, drmNlApi->initConnection());
+    EXPECT_EQ(1, drmNlApi->familyId);
+    EXPECT_TRUE(drmNlApi->isDrmRasFamilyRegistered);
+
+    drmNlApi->eventSubscribed = true;
+    drmNlApi->eventGroupId = 42;
+
+    drmNlApi->cleanupConnection();
+
+    EXPECT_EQ(0, drmNlApi->familyId);
+    EXPECT_EQ(-1, drmNlApi->eventGroupId);
+    EXPECT_FALSE(drmNlApi->eventSubscribed);
+    EXPECT_FALSE(drmNlApi->isDrmRasFamilyRegistered);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

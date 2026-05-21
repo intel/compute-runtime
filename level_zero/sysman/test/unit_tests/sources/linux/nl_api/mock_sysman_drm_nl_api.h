@@ -15,10 +15,15 @@ namespace ult {
 
 class MockDrmNlApi : public L0::Sysman::DrmNlApi {
   public:
+    using DrmNlApi::cleanupConnection;
     using DrmNlApi::currentOperation;
+    using DrmNlApi::eventGroupId;
     using DrmNlApi::eventReady;
+    using DrmNlApi::eventSubscribed;
+    using DrmNlApi::familyId;
     using DrmNlApi::handleAck;
     using DrmNlApi::initConnection;
+    using DrmNlApi::isDrmRasFamilyRegistered;
     using DrmNlApi::isInitDone;
     using DrmNlApi::nlEventSock;
     using DrmNlApi::Operation;

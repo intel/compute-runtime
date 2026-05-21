@@ -69,6 +69,7 @@ class MockNlApi : public L0::Sysman::NlApi {
     std::vector<int> mockNlSocketModifyCbReturnValue{};
     std::vector<int> mockNlRecvmsgsDefaultReturnValue{};
     std::vector<int> mockGenlUnregisterFamilyReturnValue{};
+    uint32_t genlUnregisterFamilyCallCount = 0;
     std::vector<int> mockNlSendAutoReturnValue{};
     std::vector<bool> mockLoadEntryPointsReturnValue{};
     std::vector<bool> isMockGenlRegisterFamilyRepeatedCall{};

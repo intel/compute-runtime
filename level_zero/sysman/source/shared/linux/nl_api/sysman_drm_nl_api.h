@@ -47,25 +47,33 @@ class DrmNlApi {
 
   protected:
     struct Operation {
+        void *pOutput;
+        ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
         uint16_t cmdOp;
         bool done = false;
         bool parseSingleErrorCounter = false;
-        void *pOutput;
-        ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-        Operation(uint16_t cmdOp, void *pOutput) : cmdOp(cmdOp), pOutput(pOutput) {}
+        Operation(uint16_t cmdOp, void *pOutput) : pOutput(pOutput), cmdOp(cmdOp) {}
     };
+
+    ze_result_t initConnection();
+    ze_result_t parseEventMessage(struct nl_msg *msg, DrmRasEvent &event);
+    ze_result_t initEventSocket();
+    void cleanupConnection();
+    void cleanupEventSocket();
 
     std::unique_ptr<NlApi> pNlApi;
     std::unique_ptr<Operation> currentOperation = nullptr;
     struct nl_sock *nlEventSock = nullptr;
+    int familyId = 0;
+    int eventGroupId = -1;
     bool eventReady = false;
     bool isInitDone = false;
-    ze_result_t initConnection();
-    ze_result_t parseEventMessage(struct nl_msg *msg, DrmRasEvent &event);
+    bool isDrmRasFamilyRegistered = false;
+    bool eventSubscribed = false;
 
   private:
     ze_result_t initSocketBase(struct nl_sock *&sock, int &resolvedFamilyId);
-    void cleanupConnection(bool freeSocket);
+    void freeNlSocket(struct nl_sock *&sock);
     ze_result_t allocMsg(const uint16_t &cmdOp, const bool useDumpFlags, struct nl_msg *&msg);
     ze_result_t issueRequestReadOne(const uint16_t cmdOp, const uint32_t &nodeId, const uint32_t &errorId, void *pOutput);
     ze_result_t issueRequestQueryErrors(const uint16_t &cmdOp, const uint32_t &nodeId, void *pOutput);
@@ -76,24 +84,14 @@ class DrmNlApi {
     ze_result_t issueRequestClearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId);
     void setupNlOperations();
 
-    ze_result_t initEventSocket();
-    void cleanupEventSocket();
-
-    struct nl_sock *nlSock = nullptr;
-    int familyId = 0;
-
-    int eventGroupId = -1;
-    bool eventSubscribed = false;
-    DrmRasEvent pendingEvent = {};
-
-    struct genl_ops ops = {};
-
     struct genl_cmd newCmds[NEO_DRM_RAS_CMD_MAX] = {};
     struct nla_policy nodePolicy[DRM_RAS_A_NODE_ATTRS_MAX + 1] = {};
     struct nla_policy errorPolicy[DRM_RAS_A_ERROR_COUNTER_ATTRS_MAX + 1] = {};
     struct nla_policy thresholdPolicy[DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1] = {};
-
+    struct genl_ops ops = {};
     std::string deviceName = {};
+    DrmRasEvent pendingEvent = {};
+    struct nl_sock *nlSock = nullptr;
 };
 
 } // namespace Sysman

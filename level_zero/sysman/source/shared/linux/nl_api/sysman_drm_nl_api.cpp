@@ -176,7 +176,7 @@ ze_result_t DrmNlApi::issueRequestListNodes(void *pOutput) {
         result = performTransaction(DRM_RAS_CMD_LIST_NODES, msg, pOutput, false);
     }
 
-    cleanupConnection(true);
+    cleanupConnection();
     return result;
 }
 
@@ -336,23 +336,22 @@ ze_result_t DrmNlApi::initConnection() {
     int resolvedFamilyId = 0;
     ze_result_t result = initSocketBase(nlSock, resolvedFamilyId);
     if (ZE_RESULT_SUCCESS != result) {
-        cleanupConnection(false);
         return result;
     }
 
     int retval = pNlApi->genlRegisterFamily(&ops);
     if (retval != 0) {
-        pNlApi->nlSocketFree(nlSock);
-        nlSock = nullptr;
+        freeNlSocket(nlSock);
         if (-NLE_EXIST == retval) {
             return ZE_RESULT_NOT_READY;
         }
         return ZE_RESULT_ERROR_UNKNOWN;
     }
+    isDrmRasFamilyRegistered = true;
 
     retval = pNlApi->genlOpsResolve(nlSock, &ops);
     if (retval < 0) {
-        cleanupConnection(true);
+        cleanupConnection();
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -361,26 +360,34 @@ ze_result_t DrmNlApi::initConnection() {
     retval = pNlApi->nlSocketModifyCb(nlSock, NL_CB_VALID, NL_CB_CUSTOM,
                                       globalDrmHandleMsg, reinterpret_cast<void *>(this));
     if (retval < 0) {
-        cleanupConnection(true);
+        cleanupConnection();
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     retval = pNlApi->nlSocketModifyCb(nlSock, NL_CB_ACK, NL_CB_CUSTOM,
                                       globalDrmHandleAck, reinterpret_cast<void *>(this));
     if (retval < 0) {
-        cleanupConnection(true);
+        cleanupConnection();
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
-void DrmNlApi::cleanupConnection(bool freeSocket) {
-    if (freeSocket) {
-        pNlApi->nlSocketFree(nlSock);
-        nlSock = nullptr;
-    }
+void DrmNlApi::freeNlSocket(struct nl_sock *&sock) {
+    pNlApi->nlSocketFree(sock);
+    sock = nullptr;
+}
+
+void DrmNlApi::cleanupConnection() {
+    freeNlSocket(nlSock);
+
     pNlApi->genlUnregisterFamily(&ops);
+    isDrmRasFamilyRegistered = false;
+
+    familyId = 0;
+    eventGroupId = -1;
+    eventSubscribed = false;
 }
 
 ze_result_t DrmNlApi::allocMsg(const uint16_t &cmdOp, const bool useDumpFlags, struct nl_msg *&msg) {
@@ -442,7 +449,7 @@ ze_result_t DrmNlApi::issueRequestReadOne(const uint16_t cmdOp, const uint32_t &
         result = performTransaction(cmdOp, msg, pOutput, true);
     }
 
-    cleanupConnection(true);
+    cleanupConnection();
     return result;
 }
 
@@ -459,7 +466,7 @@ ze_result_t DrmNlApi::issueRequestQueryErrors(const uint16_t &cmdOp, const uint3
         result = performTransaction(cmdOp, msg, pOutput, false);
     }
 
-    cleanupConnection(true);
+    cleanupConnection();
     return result;
 }
 
@@ -478,7 +485,7 @@ ze_result_t DrmNlApi::issueRequestSetThreshold(const uint32_t &nodeId, const uin
         result = performTransaction(DRM_RAS_CMD_SET_ERROR_THRESHOLD, msg, nullptr, false);
     }
 
-    cleanupConnection(true);
+    cleanupConnection();
     return result;
 }
 
@@ -496,7 +503,7 @@ ze_result_t DrmNlApi::issueRequestGetThreshold(const uint32_t &nodeId, const uin
         result = performTransaction(DRM_RAS_CMD_GET_ERROR_THRESHOLD, msg, pOutput, false);
     }
 
-    cleanupConnection(true);
+    cleanupConnection();
     return result;
 }
 
@@ -514,7 +521,7 @@ ze_result_t DrmNlApi::issueRequestClearErrorCounter(const uint32_t &nodeId, cons
         result = performTransaction(DRM_RAS_CMD_CLEAR_ERROR_COUNTER, msg, nullptr, false);
     }
 
-    cleanupConnection(true);
+    cleanupConnection();
     return result;
 }
 
@@ -697,8 +704,7 @@ void DrmNlApi::cleanupEventSocket() {
         if (eventGroupId >= 0) {
             pNlApi->nlSocketDropMembership(nlEventSock, eventGroupId);
         }
-        pNlApi->nlSocketFree(nlEventSock);
-        nlEventSock = nullptr;
+        freeNlSocket(nlEventSock);
     }
     eventGroupId = -1;
     eventSubscribed = false;
