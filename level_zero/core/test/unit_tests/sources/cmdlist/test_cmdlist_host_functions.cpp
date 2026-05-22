@@ -240,6 +240,7 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = queueMode;
     std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
+    commandList->commandContainer.initializeResources();
 
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     uint64_t hostFunctionAddress = reinterpret_cast<uint64_t>(pHostFunction);
@@ -320,6 +321,7 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = queueMode;
     std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
+    commandList->commandContainer.initializeResources();
 
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     uint64_t hostFunctionAddress = reinterpret_cast<uint64_t>(pHostFunction);

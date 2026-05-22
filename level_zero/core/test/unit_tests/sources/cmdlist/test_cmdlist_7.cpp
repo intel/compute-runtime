@@ -1852,6 +1852,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFor
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, commandList);
+    commandList->getCmdContainer().initializeResources();
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
     size_t useSize = commandList->getCmdContainer().getCommandStream()->getMaxAvailableSpace() - commonImmediateCommandSize + 1;
@@ -1875,6 +1876,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFor
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, commandList);
+    commandList->getCmdContainer().initializeResources();
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
     constexpr uint32_t numEvents = 100;

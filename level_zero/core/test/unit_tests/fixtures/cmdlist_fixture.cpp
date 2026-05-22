@@ -105,6 +105,7 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
     } else {
         const ze_command_queue_desc_t desc = {};
         commandList.reset(CommandList::whiteboxCast(CommandList::createImmediate(device->getHwInfo().platform.eProductFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
+        commandList->commandContainer.initializeResources();
     }
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -148,6 +149,7 @@ void ModuleMutableCommandListFixture::setUpImpl() {
 
     commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false)));
     commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+    commandListImmediate->commandContainer.initializeResources();
 
     mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
@@ -308,6 +310,7 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
 
     commandListImmediateCoexisting.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+    commandListImmediateCoexisting->commandContainer.initializeResources();
 
     if (this->dshRequired) {
         mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.numSamplers = 2;

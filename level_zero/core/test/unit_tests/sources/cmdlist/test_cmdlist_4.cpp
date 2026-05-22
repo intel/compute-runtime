@@ -1191,6 +1191,7 @@ HWTEST_F(ImmediateCommandListTest, givenImmediateCommandListWhenClosingCommandLi
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+    commandListImmediate.commandContainer.initializeResources();
 
     returnValue = commandListImmediate.close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

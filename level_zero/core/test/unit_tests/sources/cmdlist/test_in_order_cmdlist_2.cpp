@@ -4017,7 +4017,9 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
         auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
         cmdList->bcsSplitMode = bcsSplit->setupDevice(cmdList->getCsr(false), false) ? BcsSplitParams::BcsSplitMode::immediate : BcsSplitParams::BcsSplitMode::disabled;
-
+        for (auto &cmdList : bcsSplit->cmdLists) {
+            cmdList->getCmdContainer().initializeResources();
+        }
         return cmdList;
     }
 
@@ -4207,7 +4209,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
     auto immCmdList = createBcsSplitImmCmdList<FamilyType::gfxCoreFamily>();
-
+    immCmdList->getCmdContainer().initializeResources();
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo) ? 1u : 0u;
@@ -4273,7 +4275,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
         GTEST_SKIP();
     }
     auto immCmdList = createBcsSplitImmCmdList<FamilyType::gfxCoreFamily>();
-
+    immCmdList->getCmdContainer().initializeResources();
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     uint32_t copyData = 0;
@@ -4296,7 +4298,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
         GTEST_SKIP();
     }
     auto immCmdList = createBcsSplitImmCmdList<FamilyType::gfxCoreFamily>();
-
+    immCmdList->getCmdContainer().initializeResources();
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     uint32_t copyData = 0;
@@ -4324,7 +4326,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
         GTEST_SKIP();
     }
     auto immCmdList = createBcsSplitImmCmdList<FamilyType::gfxCoreFamily>();
-
+    immCmdList->getCmdContainer().initializeResources();
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     uint32_t copyData = 0;
@@ -4352,7 +4354,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
     auto immCmdList = createBcsSplitImmCmdList<FamilyType::gfxCoreFamily>();
-
+    immCmdList->getCmdContainer().initializeResources();
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo) ? 1u : 0u;

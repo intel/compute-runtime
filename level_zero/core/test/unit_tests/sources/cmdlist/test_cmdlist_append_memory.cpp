@@ -1098,11 +1098,13 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
     cmdListImmediate.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdListImmediate.cmdQImmediate = queue1.get();
     cmdListImmediate.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdListImmediate.commandContainer.initializeResources();
 
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdListImmediateInOrder;
     cmdListImmediateInOrder.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdListImmediateInOrder.cmdQImmediate = queue2.get();
     cmdListImmediateInOrder.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdListImmediateInOrder.commandContainer.initializeResources();
     cmdListImmediateInOrder.enableInOrderExecution();
 
     constexpr size_t allocSize = 1;
@@ -1626,6 +1628,7 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndProfilingThen
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    cmdList.commandContainer.initializeResources();
     auto cmdStream = cmdList.getCmdContainer().getCommandStream();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1674,6 +1677,7 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndEventWithoutP
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    cmdList.commandContainer.initializeResources();
     auto cmdStream = cmdList.getCmdContainer().getCommandStream();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1715,6 +1719,7 @@ HWTEST2_F(StagingBuffersFixture, givenSingleTransferStagingAndEventWithoutProfil
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    cmdList.commandContainer.initializeResources();
     auto cmdStream = cmdList.getCmdContainer().getCommandStream();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1814,6 +1819,7 @@ HWTEST2_F(StagingBuffersFixture, givenAppendMemoryCopyAndRegularEventWithProfili
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> commandList;
     commandList.cmdQImmediate = cmdQueue.get();
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.initializeResources();
     commandList.enableInOrderExecution();
 
     ze_event_pool_desc_t eventPoolDesc = {};

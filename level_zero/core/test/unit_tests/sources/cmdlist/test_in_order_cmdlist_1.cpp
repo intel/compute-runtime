@@ -1191,6 +1191,7 @@ HWTEST_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCa
         cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
         cmdList->initialize(inputDevice, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);
+        cmdList->commandContainer.initializeResources();
         cmdList->enableInOrderExecution();
         uint64_t *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(), cmdList->inOrderExecInfo->getAllocationOffset());
         for (uint32_t i = 0; i < cmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {

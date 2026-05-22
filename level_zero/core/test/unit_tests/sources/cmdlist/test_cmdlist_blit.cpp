@@ -38,6 +38,14 @@ namespace L0 {
 namespace ult {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+class MockImmCmdListCheckAvailableSpaceError : public WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
+  public:
+    ze_result_t checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem) override {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
   public:
     using BaseClass = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
@@ -1260,6 +1268,56 @@ HWTEST2_F(AggregatedBcsSplitTests, givenFullCmdBufferWhenAppendCalledThenAllocat
     context->freeMem(ptr);
 }
 
+HWTEST2_F(AggregatedBcsSplitTests, givenCheckAvailableSpaceReturnsErrorWhenAppendImmediateSplitCallThenPropagateError, IsAtLeastXeHpcCore) {
+    ASSERT_FALSE(bcsSplit->cmdLists.empty());
+
+    // Recreate BcsSplit object to inject mock for cmd list
+    auto subCsr = bcsSplit->cmdLists[0]->getCsr(false);
+    const auto numSubCmdLists = bcsSplit->cmdLists.size();
+
+    for (auto subCmdList : bcsSplit->cmdLists) {
+        subCmdList->destroy();
+    }
+    bcsSplit->cmdLists.clear();
+    bcsSplit->h2dCmdLists.clear();
+    bcsSplit->d2hCmdLists.clear();
+
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+
+    std::vector<std::unique_ptr<MockImmCmdListCheckAvailableSpaceError<FamilyType::gfxCoreFamily>>> mockCmdLists;
+    std::vector<std::unique_ptr<Mock<CommandQueue>>> mockQueues;
+
+    for (size_t i = 0; i < numSubCmdLists; i++) {
+        auto mockCmdList = std::make_unique<MockImmCmdListCheckAvailableSpaceError<FamilyType::gfxCoreFamily>>();
+        auto mockQueue = std::make_unique<Mock<CommandQueue>>(device, subCsr, &queueDesc);
+        mockCmdList->cmdQImmediate = mockQueue.get();
+
+        bcsSplit->cmdLists.push_back(mockCmdList.get());
+        bcsSplit->h2dCmdLists.push_back(mockCmdList.get());
+
+        mockCmdLists.push_back(std::move(mockCmdList));
+        mockQueues.push_back(std::move(mockQueue));
+    }
+
+    auto *srcPtr = allocHostMem();
+    auto *dstPtr = allocHostMem();
+
+    auto ret = cmdList->appendMemoryCopy(dstPtr, srcPtr, copySize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, ret);
+
+    bcsSplit->cmdLists.clear();
+    bcsSplit->h2dCmdLists.clear();
+    bcsSplit->d2hCmdLists.clear();
+
+    for (auto &mockCmdList : mockCmdLists) {
+        mockCmdList->cmdQImmediate = nullptr;
+    }
+
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
+}
+
 struct MultiRootAggregatedBcsSplitTests : public AggregatedBcsSplitTests {
     void SetUp() override {
         expectedNumRootDevices = 2;
@@ -1344,6 +1402,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOffloadEnab
 
     auto event = createExternalSyncStorageEvent(incValue * 2, incValue, reinterpret_cast<uint64_t *>(devAddress));
 
+    mockCmdList->getCmdContainer().initializeResources();
     auto cmdStream = mockCmdList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
     mockCmdList->appendMemoryCopy(ptr, ptr, copySize, event.get(), 0, nullptr, copyParams);

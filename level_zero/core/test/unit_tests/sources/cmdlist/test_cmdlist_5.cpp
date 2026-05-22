@@ -705,6 +705,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     event2.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     ze_event_handle_t events[] = {&event, &event2};
 
+    commandList->getCmdContainer().initializeResources();
     size_t startOffset = commandContainer.getCommandStream()->getUsed();
     commandList->appendWaitOnEvents(2, events, nullptr, false, true, false, false, false, false);
     size_t endOffset = commandContainer.getCommandStream()->getUsed();
@@ -752,6 +753,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     event2.waitScope = 0;
     ze_event_handle_t events[] = {&event, &event2};
 
+    commandList->getCmdContainer().initializeResources();
     size_t startOffset = commandContainer.getCommandStream()->getUsed();
     commandList->appendWaitOnEvents(2, events, nullptr, false, true, false, false, false, false);
     size_t endOffset = commandContainer.getCommandStream()->getUsed();
@@ -791,6 +793,7 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnly
     event2.waitScope = 0;
     ze_event_handle_t events[] = {&event, &event2};
 
+    commandList->getCmdContainer().initializeResources();
     auto used = commandContainer.getCommandStream()->getUsed();
     commandList->appendWaitOnEvents(2, events, nullptr, false, true, false, false, false, false);
     GenCmdList cmdList;
@@ -812,6 +815,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListAndAlreadyCompletedEventWhe
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
+    commandList->getCmdContainer().initializeResources();
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
@@ -927,6 +931,7 @@ HWTEST2_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdList
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     ASSERT_NE(nullptr, commandList);
+    commandList->getCmdContainer().initializeResources();
     EXPECT_NE(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
 
@@ -982,6 +987,7 @@ HWTEST2_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdList
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     ASSERT_NE(nullptr, commandList);
+    commandList->getCmdContainer().initializeResources();
     EXPECT_NE(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
 
@@ -1123,6 +1129,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
     event2.waitScope = 0;
     ze_event_handle_t events[] = {&event, &event2};
 
+    commandList->getCmdContainer().initializeResources();
     auto used = commandContainer.getCommandStream()->getUsed();
     commandList->appendWaitOnEvents(2, events, nullptr, false, true, false, false, false, false);
 

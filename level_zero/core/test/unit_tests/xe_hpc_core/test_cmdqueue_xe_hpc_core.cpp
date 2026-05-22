@@ -961,14 +961,17 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     int client;
     ultCsr->registerClient(&client);
 
+    commandList0->getCmdContainer().initializeResources();
     auto cmdStream0 = commandList0->getCmdContainer().getCommandStream();
     auto offset0 = cmdStream0->getUsed();
 
     auto cmdList2 = static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[2]);
+    cmdList2->getCmdContainer().initializeResources();
     auto cmdStream2 = cmdList2->getCmdContainer().getCommandStream();
     auto offset2 = cmdStream2->getUsed();
 
     auto cmdList3 = static_cast<WhiteBox<CommandList> *>(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists[3]);
+    cmdList3->getCmdContainer().initializeResources();
     auto cmdStream3 = cmdList3->getCmdContainer().getCommandStream();
     auto offset3 = cmdStream3->getUsed();
 

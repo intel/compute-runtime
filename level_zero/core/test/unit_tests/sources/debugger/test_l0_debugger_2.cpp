@@ -93,6 +93,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggerLogsDisabledWhenCommandListIsSy
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
 
     auto cmdListImm = static_cast<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList);
+    cmdListImm->getCmdContainer().initializeResources();
 
     cmdListImm->executeCommandListImmediateWithFlushTask(false, false, false, AppendOperations::kernel, false, false, nullptr, nullptr);
 

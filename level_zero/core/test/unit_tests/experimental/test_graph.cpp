@@ -1693,6 +1693,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ExecutableGraph execGraph;
     execGraph.instantiateFrom(srcGraph);
 
+    immCmdListHw->getCmdContainer().initializeResources();
     auto cmdStream = immCmdListHw->getCmdContainer().getCommandStream();
 
     void *immListCpuBase = cmdStream->getCpuBase();
@@ -1761,6 +1762,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     MockGraphicsAllocation otherTagAllocation(dummyCpuPtr, immCmdListHw->getCsr(false)->getTagAllocation()->getGpuAddress() + 0x1000, 1);
     execGraph.myCommandLists[0]->saveLatestTagAndTaskCount(&otherTagAllocation, 0x123);
 
+    immCmdListHw->getCmdContainer().initializeResources();
     auto cmdStream = immCmdListHw->getCmdContainer().getCommandStream();
 
     void *immListCpuBase = cmdStream->getCpuBase();

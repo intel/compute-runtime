@@ -989,7 +989,9 @@ class ImmediateCommandListWaitOnMemFixture : public DeviceFixture {
         ze_command_queue_desc_t queueDesc{};
         queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
         immCommandList.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
+        immCommandList->commandContainer.initializeResources();
         immCommandListBcs.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::copy, returnValue)));
+        immCommandListBcs->commandContainer.initializeResources();
 
         ze_event_pool_desc_t eventPoolDesc{};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;

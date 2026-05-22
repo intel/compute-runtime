@@ -225,7 +225,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void handleHeapsAndResidencyForImmediateRegularTask(void *&sshCpuBaseAddress);
     void handleDebugSurfaceStateUpdate(NEO::IndirectHeap *ssh);
 
-    void checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem);
+    MOCKABLE_VIRTUAL ze_result_t checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem);
     void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);
 
     MOCKABLE_VIRTUAL ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,

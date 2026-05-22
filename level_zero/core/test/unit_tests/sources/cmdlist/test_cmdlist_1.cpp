@@ -2289,6 +2289,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
     ultCsr->registerClient(&client1);
     ultCsr->registerClient(&client2);
 
+    cmdList->getCmdContainer().initializeResources();
     auto cmdStream = cmdList->getCmdContainer().getCommandStream();
 
     cmdList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
@@ -2651,6 +2652,7 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenThereIsNoEnoughSpace
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
+    commandList->getCmdContainer().initializeResources();
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());

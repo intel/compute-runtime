@@ -1193,6 +1193,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
     immediateCmdList->cmdQImmediate = queue.get();
     auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    immediateCmdList->commandContainer.initializeResources();
 
     CmdListKernelLaunchParams launchParams = {};
     result = immediateCmdList->appendLaunchKernelWithParams(kernel.get(), groupCount, nullptr, launchParams);

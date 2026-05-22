@@ -589,6 +589,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, immediateCommandList->partitionCount);
 
+    immediateCommandList->commandContainer.initializeResources();
     auto cmdStream = immediateCommandList->getCmdContainer().getCommandStream();
 
     size_t sizeBarrierCommands = sizeof(PIPE_CONTROL) +
@@ -685,6 +686,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, immediateCommandList->partitionCount);
 
+    immediateCommandList->commandContainer.initializeResources();
     auto cmdStream = immediateCommandList->getCmdContainer().getCommandStream();
 
     size_t usedBeforeSize = cmdStream->getUsed();
