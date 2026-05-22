@@ -29,6 +29,7 @@ void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes,
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     supportedFwTypes.clear();
     bool isDeviceInSurvivabilityMode = pLinuxSysmanImp->isDeviceInSurvivabilityMode();
 
@@ -37,15 +38,12 @@ void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes,
         return;
     }
 
-    if (pFwInterface != nullptr) {
-        if (isDeviceInSurvivabilityMode) {
-            pFwInterface->getDeviceSupportedFwTypes(supportedFwTypes);
-        } else {
-            auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-            pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, supportedFwTypes);
-            // get supported late binding fw handles
-            pSysmanKmdInterface->getLateBindingSupportedFwTypes(supportedFwTypes);
-        }
+    bool isIgscAvailable = pFwInterface != nullptr;
+    if (isIgscAvailable) {
+        pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, supportedFwTypes);
+        pSysmanKmdInterface->getLateBindingSupportedFwTypes(supportedFwTypes);
+    }
+    if (pSysmanProductHelper->isFlashOverrideSupported()) {
         supportedFwTypes.push_back(fdoFwType);
     }
 }
@@ -71,11 +69,15 @@ ze_result_t LinuxFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
 ze_result_t LinuxFirmwareImp::osFirmwareFlashExtended(void *pImage, uint32_t size) {
     // Get the current device's PCI BDF
     auto pciBdfInfo = pLinuxSysmanImp->getPciBdfInfo();
+    if (pciBdfInfo == nullptr) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
 
-    // Format the BDF string as "busdevicefunction"
-    std::string deviceBdf = std::to_string(pciBdfInfo->pciBus) +
-                            std::to_string(pciBdfInfo->pciDevice) +
-                            std::to_string(pciBdfInfo->pciFunction);
+    // Format each BDF component as hex, concatenate, then parse as hex to get decimal
+    std::ostringstream bdfHexStream;
+    bdfHexStream << std::hex << pciBdfInfo->pciBus << pciBdfInfo->pciDevice << pciBdfInfo->pciFunction;
+    uint64_t bdfValue = std::stoul(bdfHexStream.str(), nullptr, 16);
+    std::string deviceBdf = std::to_string(bdfValue);
 
     // Read /proc/mtd to find matching MTD devices
     std::vector<std::string> mtdLines;
@@ -158,19 +160,20 @@ ze_result_t LinuxFirmwareImp::osFirmwareFlashExtended(void *pImage, uint32_t siz
         uint32_t regionEnd = regionInfoIt->second[1];
         uint32_t regionSize = regionEnd - regionBegin + 1;
 
-        // Check if we have enough data for this region
-        if (regionSize > size) {
-            break; // Not enough data
+        // Check if image has enough data from regionBegin offset
+        // Check regionBegin first to avoid unsigned underflow when regionBegin > size
+        if (regionBegin > size || regionSize > (size - regionBegin)) {
+            return ZE_RESULT_ERROR_INVALID_SIZE;
         }
 
-        // Erase the region
-        result = pMtdDevice->erase(mtdPath, regionBegin, regionSize);
+        // Erase the region (offset 0 for partition device)
+        result = pMtdDevice->erase(mtdPath, 0, regionSize);
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
 
-        // Write the firmware data to this region
-        result = pMtdDevice->write(mtdPath, regionBegin, pImageData + regionBegin, regionSize);
+        // Write the firmware data to this region (offset 0 for partition, regionBegin for image data)
+        result = pMtdDevice->write(mtdPath, 0, pImageData + regionBegin, regionSize);
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }

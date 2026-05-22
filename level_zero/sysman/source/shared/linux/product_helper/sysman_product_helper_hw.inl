@@ -408,6 +408,11 @@ void SysmanProductHelperHw<gfxProduct>::getDeviceSupportedFwTypes(FirmwareUtil *
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isFlashOverrideSupported() {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isEccConfigurationSupported() {
     return false;
 }

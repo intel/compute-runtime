@@ -14,7 +14,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint32_t mockFwHandlesCount = 4;
+constexpr uint32_t mockFwHandlesCount = 3;
 const std::string mockFwVersion("DG01->0->2026");
 const std::string mockOpromVersion("OPROM CODE VERSION:123_OPROM DATA VERSION:456");
 const std::string mockPscVersion("version 1 : 2021/09/15 00:43:12");
@@ -121,7 +121,14 @@ struct MockFirmwareFsAccess : public L0::Sysman::FsAccessInterface {
 
     // Mock constants for MTD device BDF
     const std::string mockProcMtdStringPrefix = "xe.nvm.";
-    std::string expectedDeviceBdf = std::to_string(mockPciBus) + std::to_string(mockPciDevice) + std::to_string(mockPciFunction); // Formed from mockPciBus, mockPciDevice, mockPciFunction
+    // Calculate expected BDF using the same hex conversion logic as the driver:
+    // Format BDF components as hex, concatenate, then parse as hex to get decimal
+    std::string expectedDeviceBdf = []() {
+        std::ostringstream hexStream;
+        hexStream << std::hex << mockPciBus << mockPciDevice << mockPciFunction;
+        uint64_t bdfValue = std::stoul(hexStream.str(), nullptr, 16);
+        return std::to_string(bdfValue);
+    }();
 
     ze_result_t read(const std::string file, std::vector<std::string> &val) override {
         if (readResult != ZE_RESULT_SUCCESS) {

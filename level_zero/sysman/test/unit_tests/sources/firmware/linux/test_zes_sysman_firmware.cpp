@@ -73,24 +73,6 @@ class ZesSysmanFirmwareFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(ZesSysmanFirmwareFixture, GivenValidDeviceHandleAndFirmwareUnSupportedWhenCallingEnumerateThenOnlyFlashOverrideHandleIsReturned) {
-
-    struct MockSysmanProductHelperFirmware : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
-        MockSysmanProductHelperFirmware() = default;
-        void getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) override {
-            return;
-        }
-    };
-
-    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperFirmware>();
-    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
-
-    uint32_t count = 0;
-    ze_result_t result = zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, 1u);
-}
-
 TEST_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenFlashingUnkownFirmwareThenFailureIsReturned) {
     for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
         delete handle;
@@ -174,7 +156,7 @@ TEST_F(SysmanSurvivabilityDeviceTest, GivenSurvivabilityDeviceWhenFirmwareEnumer
 
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, SysmanDevice::firmwareGet(pSysmanDevice->toHandle(), &count, nullptr));
-    EXPECT_EQ(count, 4u);
+    EXPECT_EQ(count, mockFwHandlesCount);
     delete pLinuxSysmanImp->pFwUtilInterface;
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
     delete sysmanDriverHandle;
@@ -597,13 +579,12 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMultipleRegionsWhenFlashingExtendedFirmw
     // Verify successful operation (we can't easily verify call counts with the current mock setup)
 }
 
-TEST_F(SysmanFirmwareFdoFixtureXe, GivenInsufficientFirmwareDataWhenFlashingExtendedFirmwareThenOperationStops) {
+TEST_F(SysmanFirmwareFdoFixtureXe, GivenInsufficientFirmwareDataWhenFlashingExtendedFirmwareThenInvalidSizeErrorIsReturned) {
     pMockSysfsAccess->mockFdoModeValue = "enabled";
     initFirmware();
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
 
-    // Mock successful system calls for MTD operations
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, &mockCloseSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsLseek)> mockLseek(&NEO::SysCalls::sysCallsLseek, &mockLseekSuccess);
@@ -615,11 +596,88 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenInsufficientFirmwareDataWhenFlashingExte
     pLinuxSysmanImp->pciBdfInfo.pciDevice = mockPciDevice;
     pLinuxSysmanImp->pciBdfInfo.pciFunction = mockPciFunction;
 
-    // Create small test firmware data (smaller than region size)
-    std::vector<uint8_t> firmwareData(100, 0xAA); // Only 100 bytes
+    std::vector<uint8_t> firmwareData(100, 0xAA);
 
     ze_result_t result = zesFirmwareFlash(handles[0], firmwareData.data(), static_cast<uint32_t>(firmwareData.size()));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result); // Should still succeed but stop early due to insufficient data
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, result);
+}
+
+TEST_F(SysmanFirmwareFdoFixtureXe, GivenInsufficientDataForLaterRegionsWhenFlashingThenInvalidSizeErrorIsReturned) {
+    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    initFirmware();
+    auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
+    ASSERT_NE(nullptr, handles[0]);
+
+    pMockFsAccess->regionMode = MockFirmwareFsAccess::MtdRegionMode::multipleRegions;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, &mockCloseSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsLseek)> mockLseek(&NEO::SysCalls::sysCallsLseek, &mockLseekSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, &mockReadSpiDescriptorSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, &mockIoctlEraseSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsWrite)> mockWrite(&NEO::SysCalls::sysCallsWrite, &mockWriteSuccess);
+
+    pLinuxSysmanImp->pciBdfInfo.pciBus = mockPciBus;
+    pLinuxSysmanImp->pciBdfInfo.pciDevice = mockPciDevice;
+    pLinuxSysmanImp->pciBdfInfo.pciFunction = mockPciFunction;
+
+    std::vector<uint8_t> firmwareData(0x800, 0xAA);
+
+    ze_result_t result = zesFirmwareFlash(handles[0], firmwareData.data(), static_cast<uint32_t>(firmwareData.size()));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, result);
+}
+
+TEST_F(SysmanFirmwareFdoFixtureXe, GivenRegionOffsetExceedsImageSizeWhenFlashingThenInvalidSizeErrorIsReturned) {
+    pMockSysfsAccess->mockFdoModeValue = "enabled";
+    initFirmware();
+    auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
+    ASSERT_NE(nullptr, handles[0]);
+
+    static thread_local off_t lastSeekOffset = 0;
+    auto customLseek = [](int fd, off_t offset, int whence) -> off_t {
+        if ((fd >= 3 && fd <= 7) && whence == SEEK_SET) {
+            lastSeekOffset = offset;
+            return offset;
+        }
+        return -1;
+    };
+
+    auto customRead = [](int fd, void *buf, size_t count) -> ssize_t {
+        if (fd == 3 && count == sizeof(MtdSysman::SpiDescRegionBar)) {
+            MtdSysman::SpiDescRegionBar *regionBar = reinterpret_cast<MtdSysman::SpiDescRegionBar *>(buf);
+            regionBar->reserved0 = 0;
+            regionBar->reserved1 = 0;
+
+            if (lastSeekOffset == 0x40) {
+                regionBar->base = 0x0 >> 12;
+                regionBar->limit = 0x00000fff >> 12;
+            } else if (lastSeekOffset == 0x48) {
+                regionBar->base = 0x00083000 >> 12;
+                regionBar->limit = 0x004a4fff >> 12;
+            } else {
+                regionBar->base = 0;
+                regionBar->limit = 0;
+            }
+            return count;
+        }
+        return -1;
+    };
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, &mockCloseSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsLseek)> mockLseek(&NEO::SysCalls::sysCallsLseek, customLseek);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, customRead);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, &mockIoctlEraseSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsWrite)> mockWrite(&NEO::SysCalls::sysCallsWrite, &mockWriteSuccess);
+
+    pLinuxSysmanImp->pciBdfInfo.pciBus = mockPciBus;
+    pLinuxSysmanImp->pciBdfInfo.pciDevice = mockPciDevice;
+    pLinuxSysmanImp->pciBdfInfo.pciFunction = mockPciFunction;
+
+    std::vector<uint8_t> firmwareData(0x1000, 0xAA);
+
+    ze_result_t result = zesFirmwareFlash(handles[0], firmwareData.data(), static_cast<uint32_t>(firmwareData.size()));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, result);
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenMtdNumberWithoutColonWhenFlashingExtendedFirmwareThenCoversNoColonCondition) {
@@ -628,10 +686,8 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMtdNumberWithoutColonWhenFlashingExtende
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
 
-    // Mock fs access to return MTD entries with and without colon (covers both mtdNumber.back() == ':' conditions)
     pMockFsAccess->regionMode = MockFirmwareFsAccess::MtdRegionMode::mtdNumberNoColon;
 
-    // Mock successful system calls for MTD operations
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, &mockCloseSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsLseek)> mockLseek(&NEO::SysCalls::sysCallsLseek, &mockLseekSuccess);
@@ -643,10 +699,10 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMtdNumberWithoutColonWhenFlashingExtende
     pLinuxSysmanImp->pciBdfInfo.pciDevice = mockPciDevice;
     pLinuxSysmanImp->pciBdfInfo.pciFunction = mockPciFunction;
 
-    std::vector<uint8_t> firmwareData(1024, 0xAA); // Only 1KB
+    std::vector<uint8_t> firmwareData(0x800000, 0xAA);
 
     ze_result_t result = zesFirmwareFlash(handles[0], firmwareData.data(), static_cast<uint32_t>(firmwareData.size()));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result); // Should handle MTD number without colon gracefully
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenShortDeviceNameWhenFlashingExtendedFirmwareThenNoDescriptorFoundAndErrorReturned) {

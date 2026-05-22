@@ -75,6 +75,13 @@ ze_result_t LinuxSysmanImp::init() {
     rootPath = NEO::getPciRootPath(myDeviceFd).value_or("");
     pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
 
+    // Populate pciBdfInfo from driver model for normal mode
+    const auto pciBusInfo = pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
+    pciBdfInfo.pciDomain = static_cast<uint32_t>(pciBusInfo.pciDomain);
+    pciBdfInfo.pciBus = static_cast<uint32_t>(pciBusInfo.pciBus);
+    pciBdfInfo.pciDevice = static_cast<uint32_t>(pciBusInfo.pciDevice);
+    pciBdfInfo.pciFunction = static_cast<uint32_t>(pciBusInfo.pciFunction);
+
     pPmuInterface = PmuInterface::create(this);
     setDriverName(getDrm()->getDrmVersion(getDrm()->getFileDescriptor()));
 

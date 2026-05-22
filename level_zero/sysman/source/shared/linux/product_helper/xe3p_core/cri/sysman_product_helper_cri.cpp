@@ -1220,6 +1220,11 @@ bool SysmanProductHelperHw<gfxProduct>::isNetlinkEventSupported() {
     return true;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isFlashOverrideSupported() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

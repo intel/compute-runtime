@@ -75,6 +75,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Firmware
     void getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) override;
+    bool isFlashOverrideSupported() override;
 
     // Ecc
     bool isEccConfigurationSupported() override;

@@ -73,7 +73,7 @@ class ZesSysmanProductHelperFirmwareFixtureXe : public SysmanDeviceFixture {
 };
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenComponentCountZeroAndLateBindingIsSupportedThenWhenCallingZesFirmwareGetProperCountIsReturned, IsBMG) {
-    constexpr uint32_t mockFwHandlesCount = 6;
+    constexpr uint32_t mockFwHandlesCount = 5;
     std::vector<zes_firmware_handle_t> firmwareHandle{};
     uint32_t count = 0;
 
@@ -98,7 +98,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenComponentCountZeroAndLat
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenLateBindingFirmwareIsNotSupportedThenValidCountIsReturned, IsBMG) {
 
-    constexpr uint32_t mockFwHandlesCount = 4;
+    constexpr uint32_t mockFwHandlesCount = 3;
     pSysfsAccess->canReadResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     std::vector<zes_firmware_handle_t> firmwareHandle{};
     uint32_t count = 0;
@@ -110,7 +110,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenLateBindingFirmwareIsNot
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenValidLateBindingFirmwareHandleWhenFlashingFirmwareThenSuccessIsReturned, IsBMG) {
-    constexpr uint32_t mockFwHandlesCount = 6; // 3 standard + 2 late binding + 1 Flash_Override
+    constexpr uint32_t mockFwHandlesCount = 5;
     initFirmware();
 
     auto handles = getFirmwareHandles(mockFwHandlesCount);
@@ -154,6 +154,74 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenValidLateBindingFirmware
             EXPECT_STREQ(mockUnknownVersion.c_str(), properties.version);
         }
     }
+}
+
+HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenCRIProductHelperWhenCheckingFlashOverrideSupportThenTrueIsReturned, IsCRI) {
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    EXPECT_TRUE(pSysmanProductHelper->isFlashOverrideSupported());
+}
+
+HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenValidDeviceHandleAndFirmwareUnSupportedWhenCallingEnumerateThenOnlyFlashOverrideHandleIsReturned, IsCRI) {
+    struct MockSysmanProductHelperFirmware : L0::Sysman::SysmanProductHelperHw<IGFX_CRI> {
+        MockSysmanProductHelperFirmware() = default;
+        void getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) override {
+            return;
+        }
+    };
+
+    // Disable late binding firmware by making sysfs read fail
+    pSysfsAccess->canReadResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperFirmware>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    // Clear existing handles
+    for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
+
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumFirmwares(pSysmanDeviceImp->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 1u);
+
+    // Verify the handle is Flash_Override
+    std::vector<zes_firmware_handle_t> handles(count);
+    result = zesDeviceEnumFirmwares(pSysmanDeviceImp->toHandle(), &count, handles.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zes_firmware_properties_t properties = {};
+    result = zesFirmwareGetProperties(handles[0], &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_STREQ(properties.name, "Flash_Override");
+}
+
+HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenNullFirmwareInterfaceWhenCallingEnumerateThenFlashOverrideHandleIsStillReturned, IsCRI) {
+    // Set firmware interface to null
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+
+    // Clear existing handles
+    for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
+
+    // Enumerate firmware - should still get Flash_Override handle
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumFirmwares(pSysmanDeviceImp->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 1u);
+
+    // Verify the handle is Flash_Override
+    std::vector<zes_firmware_handle_t> handles(count);
+    result = zesDeviceEnumFirmwares(pSysmanDeviceImp->toHandle(), &count, handles.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zes_firmware_properties_t properties = {};
+    result = zesFirmwareGetProperties(handles[0], &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_STREQ(properties.name, "Flash_Override");
 }
 
 } // namespace ult

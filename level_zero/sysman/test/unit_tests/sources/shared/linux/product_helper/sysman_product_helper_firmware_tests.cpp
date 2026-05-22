@@ -181,7 +181,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFai
     delete ptestFirmwareImp;
 }
 
-HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenFwVersionsUnsupportedWhenInitializingFirmwareContextThenExpectOnlyFlashOverrideHandle, IsXeCore) {
+HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenFwVersionsUnsupportedWhenInitializingFirmwareContextThenExpectZeroHandles, IsXeCore) {
     for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
         delete handle;
     }
@@ -190,7 +190,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenFwVersionsUnsupportedWhenI
 
     pSysmanDeviceImp->pFirmwareHandleContext->init();
 
-    EXPECT_EQ(1u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
+    EXPECT_EQ(0u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareThenSuccessIsReturned, IsXeCore) {
