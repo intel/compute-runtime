@@ -122,9 +122,6 @@ class SysmanProductHelper {
     virtual bool isPcieDowngradeSupported() = 0;
     virtual int32_t maxPcieGenSupported() = 0;
 
-    // Engine
-    virtual bool isAggregationOfSingleEnginesSupported() = 0;
-
     // Vf Management
     virtual bool isVfMemoryUtilizationSupported() = 0;
 

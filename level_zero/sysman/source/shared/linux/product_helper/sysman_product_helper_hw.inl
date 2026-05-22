@@ -461,11 +461,6 @@ int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-bool SysmanProductHelperHw<gfxProduct>::isAggregationOfSingleEnginesSupported() {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isVfMemoryUtilizationSupported() {
     return false;
 }

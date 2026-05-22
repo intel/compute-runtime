@@ -60,7 +60,6 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInf
 
     NEO::Drm *pDrm = pLinuxSysmanImp->getDrm();
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
 
     bool status = false;
     {
@@ -96,7 +95,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInf
             }
 
             // Addition of Group Engine Info in the map
-            if (pSysmanKmdInterface->isGroupEngineInterfaceAvailable() || pSysmanProductHelper->isAggregationOfSingleEnginesSupported()) {
+            if (pSysmanKmdInterface->isGroupEngineInterfaceAvailable()) {
 
                 auto engineGroup = LinuxEngineImp::getGroupFromEngineType(l0EngineType);
                 auto itrEngineGroupInfo = mapEngineInfo.find(engineGroup);

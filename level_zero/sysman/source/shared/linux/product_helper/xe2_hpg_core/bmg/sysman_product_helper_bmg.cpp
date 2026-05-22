@@ -1679,11 +1679,6 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSy
 }
 
 template <>
-bool SysmanProductHelperHw<gfxProduct>::isAggregationOfSingleEnginesSupported() {
-    return true;
-}
-
-template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subdeviceId) {
 
     const std::unordered_map<zes_power_domain_t, std::vector<std::string>> powerDomainToKeyMap = {

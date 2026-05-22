@@ -399,7 +399,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::string getTemperatureMaxFileName() const override;
     bool isStandbyModeControlAvailable() const override { return false; }
     bool clientInfoAvailableInFdInfo() const override { return true; }
-    bool isGroupEngineInterfaceAvailable() const override { return false; }
+    bool isGroupEngineInterfaceAvailable() const override { return true; }
     ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                              LinuxSysmanImp *pLinuxSysmanImp,
                                              SysFsAccessInterface *pSysfsAccess,

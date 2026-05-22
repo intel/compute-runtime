@@ -93,9 +93,6 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     bool isPcieDowngradeSupported() override;
     int32_t maxPcieGenSupported() override;
 
-    // Engine
-    bool isAggregationOfSingleEnginesSupported() override;
-
     // Vf Management
     bool isVfMemoryUtilizationSupported() override;
 

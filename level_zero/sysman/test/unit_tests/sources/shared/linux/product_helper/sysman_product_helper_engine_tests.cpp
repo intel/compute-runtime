@@ -139,11 +139,6 @@ HWTEST2_F(SysmanProductHelperEngineTestsFixture, GivenHandleQueryItemCalledAndPm
     EXPECT_EQ(count, mockHandleCount);
 }
 
-HWTEST2_F(SysmanProductHelperEngineTestsFixture, GivenSysmanProductHelperHandleWhenCheckingIsAggregationOfSingleEnginesSupportedThenFailureIsReturned, IsPVC) {
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    EXPECT_FALSE(pSysmanProductHelper->isAggregationOfSingleEnginesSupported());
-}
-
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

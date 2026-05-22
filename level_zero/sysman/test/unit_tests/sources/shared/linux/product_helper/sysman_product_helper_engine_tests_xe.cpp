@@ -85,7 +85,7 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
     }
 };
 
-HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenComponentCountZeroWhenCallingZesDeviceEnumEngineGroupsThenCallSucceedsAndValidCountIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenComponentCountZeroWhenCallingZesDeviceEnumEngineGroupsThenCallSucceedsAndValidCountIsReturned, IsAtLeastXe2HpgCore) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint32_t mockReadVal = 23;
@@ -110,7 +110,7 @@ HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenComponentCountZeroWhenCal
     EXPECT_EQ(count, mockEngineHandleCount);
 }
 
-HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityThenCallSuccedsAndValidValuesAreReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityThenCallSuccedsAndValidValuesAreReturned, IsAtLeastXe2HpgCore) {
 
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(mockEngineHandleCount);
@@ -124,7 +124,7 @@ HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleWhenCall
     }
 }
 
-HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleAndPmuTimeStampIsZeroWhenCallingZesEngineGetActivityThenValidTimeStampIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleAndPmuTimeStampIsZeroWhenCallingZesEngineGetActivityThenValidTimeStampIsReturned, IsAtLeastXe2HpgCore) {
     zes_engine_stats_t stats = {};
     pPmuInterface->mockTimestamp = 0u;
     auto handles = getEngineHandles(mockEngineHandleCount);
@@ -141,7 +141,7 @@ HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleAndPmuTi
     }
 }
 
-HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleAndPmuReadFailsWhenCallingZesEngineGetActivityThenErrorIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleAndPmuReadFailsWhenCallingZesEngineGetActivityThenErrorIsReturned, IsAtLeastXe2HpgCore) {
 
     zes_engine_stats_t stats = {};
     pPmuInterface->mockPmuReadFailureReturnValue = -1;
@@ -152,11 +152,6 @@ HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleAndPmuRe
         ASSERT_NE(nullptr, handle);
         EXPECT_EQ(zesEngineGetActivity(handle, &stats), ZE_RESULT_ERROR_UNKNOWN);
     }
-}
-
-HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenSysmanProductHelperHandleWhenCheckingIsAggregationOfSingleEnginesSupportedThenSuccessIsReturned, IsBMG) {
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(pSysmanProductHelper->isAggregationOfSingleEnginesSupported());
 }
 
 } // namespace ult
