@@ -10,6 +10,12 @@
 namespace NEO {
 
 enum class ReleaseType {
+    release1200,
+    release1201,
+    release1202,
+    release1203,
+    release1204,
+    release1210,
     release1255,
     release1256,
     release1257,

@@ -339,7 +339,7 @@ DG2TEST_F(ProductHelperTestDg2, givenInvalidArchitectureInIpVersionWhenRefreshRe
 DG2TEST_F(ProductHelperTestDg2, givenInvalidReleaseInIpVersionWhenRefreshReleaseHelperThenNullptrIsReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.ipVersion.value = AOT::DG2_G10_A0;
-    hwInfo.ipVersion.release = 0;
+    hwInfo.ipVersion.release = 15;
 
     refreshReleaseHelper(&hwInfo);
     EXPECT_EQ(releaseHelper, nullptr);

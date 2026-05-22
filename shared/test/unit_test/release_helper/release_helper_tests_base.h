@@ -22,6 +22,7 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
 
     ReleaseHelperTestsBase();
     ~ReleaseHelperTestsBase() override;
+    void whenGettingSupportedNumGrfsThenValue128Returned();
     void whenGettingSupportedNumGrfsThenValues128And256Returned();
     void whenGettingThreadsPerEuConfigsThen4And8AreReturned();
     void whenGettingTotalMemBankSizeThenReturn32GB();

@@ -3534,8 +3534,7 @@ TEST_F(ContextTest, givenImageWhenEvictImageWithoutMakeResidentThenSuccessReturn
 }
 
 HWTEST_F(ContextTest, givenMakeImageResidentThenMakeImageResidentIsCalledWithForcePagingFenceTrue) {
-    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper() ||
-        !device->getNEODevice()->getDeviceInfo().imageSupport) {
+    if (!device->getNEODevice()->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
 
@@ -3571,7 +3570,11 @@ HWTEST_F(ContextTest, givenMakeImageResidentThenMakeImageResidentIsCalledWithFor
     EXPECT_NE(nullptr, image);
 
     contextImp->makeImageResident(device, image);
-    EXPECT_EQ(2, mockMemoryOperationsInterface->makeResidentCalledCount);
+    if (Image::fromHandle(image)->getImplicitArgsAllocation()) {
+        EXPECT_EQ(2, mockMemoryOperationsInterface->makeResidentCalledCount);
+    } else {
+        EXPECT_EQ(1, mockMemoryOperationsInterface->makeResidentCalledCount);
+    }
     EXPECT_TRUE(mockMemoryOperationsInterface->forcePagingFencePassed);
 
     Image::fromHandle(image)->destroy();

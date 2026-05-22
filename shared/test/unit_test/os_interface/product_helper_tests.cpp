@@ -1386,10 +1386,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsMemSetExtendedPayload
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsAvailableSemaphore64CalledThenCorrectValueIsReturned) {
     pInHwInfo.featureTable.flags.ftrHwSemaphore64 = true;
-    if (releaseHelper) {
-        EXPECT_EQ(releaseHelper->isAvailableSemaphore64(), productHelper->isAvailableSemaphore64(releaseHelper, pInHwInfo));
-    }
-    EXPECT_EQ(false, productHelper->isAvailableSemaphore64(nullptr, pInHwInfo));
+    EXPECT_EQ(releaseHelper->isAvailableSemaphore64(), productHelper->isAvailableSemaphore64(releaseHelper, pInHwInfo));
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperAndNoFtrHwSemaphore64WhenIsAvailableSemaphore64CalledThenCorrectValueIsReturned) {

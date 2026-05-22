@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,12 @@ inline constexpr uint32_t maxReleaseXe = 75;
 inline createReleaseHelperFunctionType releaseHelperFactoryXe[maxReleaseXe]{};
 
 EnableReleaseHelperArchitecture<12> enableReleaseHelperArchitecture12{releaseHelperFactoryXe};
+EnableReleaseHelper<ReleaseType::release1200> enablerReleaseHelper1200{releaseHelperFactoryXe[0]};
+EnableReleaseHelper<ReleaseType::release1201> enablerReleaseHelper1201{releaseHelperFactoryXe[1]};
+EnableReleaseHelper<ReleaseType::release1202> enablerReleaseHelper1202{releaseHelperFactoryXe[2]};
+EnableReleaseHelper<ReleaseType::release1203> enablerReleaseHelper1203{releaseHelperFactoryXe[3]};
+EnableReleaseHelper<ReleaseType::release1204> enablerReleaseHelper1204{releaseHelperFactoryXe[4]};
+EnableReleaseHelper<ReleaseType::release1210> enablerReleaseHelper1210{releaseHelperFactoryXe[10]};
 EnableReleaseHelper<ReleaseType::release1255> enablerReleaseHelper1255{releaseHelperFactoryXe[55]};
 EnableReleaseHelper<ReleaseType::release1256> enablerReleaseHelper1256{releaseHelperFactoryXe[56]};
 EnableReleaseHelper<ReleaseType::release1257> enablerReleaseHelper1257{releaseHelperFactoryXe[57]};

@@ -21,6 +21,16 @@ using namespace NEO;
 ReleaseHelperTestsBase::ReleaseHelperTestsBase() = default;
 ReleaseHelperTestsBase ::~ReleaseHelperTestsBase() = default;
 
+void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValue128Returned() {
+    SupportedNumGrfs expectedValues{128u};
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_EQ(expectedValues, releaseHelper->getSupportedNumGrfs());
+    }
+}
+
 void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValues128And256Returned() {
     SupportedNumGrfs expectedValues{128u, 256u};
     for (auto &revision : getRevisions()) {

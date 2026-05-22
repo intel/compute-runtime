@@ -14,6 +14,13 @@ set(NEO_CORE_RELEASE_HELPER
 
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe_lpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe_hpg.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_gen12lp.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1200.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1201.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1202.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1203.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1204.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1210.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1255.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1256.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1257.cpp

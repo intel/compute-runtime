@@ -340,9 +340,8 @@ LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getLocalMemoryAccessMode(cons
 template <PRODUCT_FAMILY gfxProduct>
 std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
     auto isBasicWARequired = false;
-    if (releaseHelper) {
-        isBasicWARequired = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired();
-    }
+    isBasicWARequired = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired();
+
     auto isExtendedWARequired = false;
     if (debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
         isExtendedWARequired = debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
@@ -620,10 +619,7 @@ bool ProductHelperHw<gfxProduct>::isUnlockingLockedPtrNecessary(const HardwareIn
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAdjustWalkOrderAvailable(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->isAdjustWalkOrderAvailable();
-    }
-    return false;
+    return releaseHelper->isAdjustWalkOrderAvailable();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -862,10 +858,7 @@ bool ProductHelperHw<gfxProduct>::isSkippingStatefulInformationRequired(const Ke
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->isResolvingSubDeviceIDNeeded();
-    }
-    return true;
+    return releaseHelper->isResolvingSubDeviceIDNeeded();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -880,12 +873,9 @@ uint64_t ProductHelperHw<gfxProduct>::overrideSystemMemoryPatIndex(uint64_t patI
 
 template <PRODUCT_FAMILY gfxProduct>
 const SupportedNumGrfs ProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        auto grfs = releaseHelper->getSupportedNumGrfs();
-        applyLimitGrfSupported(grfs);
-        return grfs;
-    }
-    return {128u};
+    auto grfs = releaseHelper->getSupportedNumGrfs();
+    applyLimitGrfSupported(grfs);
+    return grfs;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -1168,10 +1158,7 @@ bool ProductHelperHw<gfxProduct>::isAvailableSemaphore64(const ReleaseHelper *re
         return false;
     }
 
-    if (releaseHelper) {
-        return releaseHelper->isAvailableSemaphore64();
-    }
-    return false;
+    return releaseHelper->isAvailableSemaphore64();
 }
 
 } // namespace NEO
