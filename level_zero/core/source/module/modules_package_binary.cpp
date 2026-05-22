@@ -88,7 +88,7 @@ std::vector<uint8_t> ModulesPackageBinary::encode() {
     for (const auto &unit : units) {
         auto unitFName = "pkg.unit." + std::to_string(unitId);
         arEnc.appendFileEntry(unitFName, unit.data);
-        manifest.units.push_back({unitFName});
+        manifest.units.push_back({std::move(unitFName)});
         ++unitId;
     }
     std::string manifestStr = manifest.dump();

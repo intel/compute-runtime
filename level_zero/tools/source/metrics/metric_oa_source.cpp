@@ -402,7 +402,9 @@ ze_result_t OaMetricSourceImp::metricProgrammableGet(uint32_t *pCount, zet_metri
 }
 
 ze_result_t OaMetricSourceImp::appendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) {
-
+    if (nullptr == hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
     auto commandList = CommandList::fromHandle(hCommandList);
     Device *pDevice = commandList->getDevice();
 

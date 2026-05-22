@@ -200,9 +200,10 @@ struct Graph : _ze_graph_handle_t {
     }
 
     MOCKABLE_VIRTUAL ~Graph();
-
     Graph(const Graph &) = delete;
     Graph &operator=(const Graph &) = delete;
+    Graph(Graph &&) = delete;
+    Graph &operator=(Graph &&) = delete;
 
     static Graph *fromHandle(ze_graph_handle_t handle) {
         return static_cast<Graph *>(handle);
