@@ -52,6 +52,7 @@ const std::string detailedThrottleReasonCardPL1File("device/tile0/gt0/freq0/thro
 const std::string detailedThrottleReasonFastVMode("device/tile0/gt0/freq0/throttle/reason_fastvmode");
 const std::string detailedThrottleReasonMemoryThermalFile("device/tile0/gt0/freq0/throttle/reason_memory_thermal");
 const std::string detailedThrottleReasonVoltageP0File("device/tile0/gt0/freq0/throttle/reason_p0_freq");
+const std::string ratlReasonFile("device/tile0/gt0/freq0/throttle/reason_ratl");
 
 struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     std::string throttleReason = {};
@@ -70,6 +71,8 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     uint32_t throttleReasonThermalVal = 0;
     uint32_t throttleReasonVal = 0;
     uint32_t detailedThrottleReasonVal = 0;
+    uint32_t throttleReasonRatlVal = 0;
+    bool mockRatlReasonReadError = false;
 
     ze_result_t mockReadDoubleValResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadRequestResult = ZE_RESULT_SUCCESS;
@@ -119,6 +122,9 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
         if ((file.compare(detailedThrottleReasonCardPL1File) == 0) || (file.compare(detailedThrottleReasonFastVMode) == 0) ||
             (file.compare(detailedThrottleReasonMemoryThermalFile) == 0) || (file.compare(detailedThrottleReasonVoltageP0File) == 0)) {
             detailedThrottleReasonVal = val;
+        }
+        if (file.compare(ratlReasonFile) == 0) {
+            throttleReasonRatlVal = val;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -224,6 +230,13 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
             val = throttleReasonThermalVal;
+        }
+        if (file.compare(ratlReasonFile) == 0) {
+            if (mockRatlReasonReadError) {
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            val = throttleReasonRatlVal;
+            return ZE_RESULT_SUCCESS;
         }
         if ((file.compare(detailedThrottleReasonStatusFile) == 0) || mockThrottleReasonStatusReadForceSuccess) {
             mockThrottleReasonStatusReadForceSuccess = false;

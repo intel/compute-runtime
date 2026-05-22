@@ -238,6 +238,35 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
     }
 }
 
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonIsSetWhenCallingGetThrottleReasonsThenPsuAlertFlagIsReturned, IsCRI) {
+    pSysfsAccess->setValU32(detailedThrottleReasonStatusFile, validReasonValue);
+    pSysfsAccess->setValU32(ratlReasonFile, validReasonValue);
+
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pSysmanKmdInterface, pSysfsAccess.get(), 0, nullptr);
+
+    zes_freq_throttle_reason_flags_t expectedReasons = ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT |
+                                                       static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_REASON_EXP_FLAG_UTILIZATION_LIMITED);
+    EXPECT_EQ(expectedReasons, throttleReason);
+}
+
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonIsZeroWhenCallingGetThrottleReasonsThenPsuAlertFlagIsNotReturned, IsCRI) {
+    pSysfsAccess->setValU32(detailedThrottleReasonStatusFile, validReasonValue);
+    pSysfsAccess->setValU32(ratlReasonFile, invalidReasonValue);
+
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pSysmanKmdInterface, pSysfsAccess.get(), 0, nullptr);
+
+    EXPECT_EQ(0u, throttleReason & ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT);
+}
+
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonReadFailsWhenCallingGetThrottleReasonsThenPsuAlertFlagIsNotReturned, IsCRI) {
+    pSysfsAccess->setValU32(detailedThrottleReasonStatusFile, validReasonValue);
+    pSysfsAccess->mockRatlReasonReadError = true;
+
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pSysmanKmdInterface, pSysfsAccess.get(), 0, nullptr);
+
+    EXPECT_EQ(0u, throttleReason & ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT);
+}
+
 HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidProductHelperInstanceWhenQueryingMemoryDomainSupportThenMemoryDomainIsSupported, IsCRI) {
     EXPECT_TRUE(pSysmanProductHelper->isMemoryDomainSupported());
 }

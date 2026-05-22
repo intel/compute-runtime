@@ -30,6 +30,7 @@ constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
 constexpr static uint32_t maxGpuBoardTemperatureSensorCount = 2;
+const std::string throttleReasonPath = "freq0/throttle/";
 
 // XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number.
 // This vector defines the predefined value for each integer represented by the index of the vector.
@@ -622,7 +623,6 @@ static zes_freq_throttle_reason_flags_t getAggregatedThrottleReasons(const zes_i
     const zes_freq_throttle_reason_flags_t thermalFlags =
         static_cast<zes_freq_throttle_reason_flags_t>(ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_MEMORY |
                                                       ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_PROCHOT |
-                                                      ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_RATL |
                                                       ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC |
                                                       ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC_AVG |
                                                       ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_VR);
@@ -645,10 +645,7 @@ static zes_freq_throttle_reason_flags_t getAggregatedThrottleReasons(const zes_i
     return aggregatedReasons;
 }
 
-static ze_result_t getDetailedThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, zes_intel_freq_throttle_detailed_reason_exp_flags_t &detailedThrottleReasons) {
-
-    const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
-    bool baseDirectoryExists = pSysfsAccess->directoryExists(baseDir);
+static ze_result_t getDetailedThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, const std::string &baseDir, bool baseDirectoryExists, zes_intel_freq_throttle_detailed_reason_exp_flags_t &detailedThrottleReasons) {
 
     uint32_t reasonStatusVal = 0;
     std::string throttleReasonStatusFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonStatus, subdeviceId, baseDirectoryExists);
@@ -672,11 +669,9 @@ static ze_result_t getDetailedThrottleReasons(SysmanKmdInterface *pSysmanKmdInte
         {"reason_soc_avg_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC_AVG},
         {"reason_memory_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_MEMORY},
         {"reason_vr_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_VR},
-        {"reason_ratl", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_RATL},
         {"reason_prochot", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_PROCHOT},
         {"reason_p0_freq", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_VOLTAGE_P0_FREQ}};
 
-    const std::string throttleReasonPath("freq0/throttle/");
     uint32_t detailedThrottleReasonVal = 0u;
     for (const auto &reasonPair : throttleReasonMap) {
         const std::string filePath = baseDirectoryExists ? baseDir + throttleReasonPath + reasonPair.first : std::string("");
@@ -691,14 +686,29 @@ static ze_result_t getDetailedThrottleReasons(SysmanKmdInterface *pSysmanKmdInte
 
 template <>
 zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, void *pNext) {
+    const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
+    bool baseDirectoryExists = pSysfsAccess->directoryExists(baseDir);
+
     zes_intel_freq_throttle_detailed_reason_exp_flags_t detailedThrottleReasons = 0u;
-    ze_result_t result = getDetailedThrottleReasons(pSysmanKmdInterface, pSysfsAccess, subdeviceId, detailedThrottleReasons);
+    ze_result_t result = getDetailedThrottleReasons(pSysmanKmdInterface, pSysfsAccess, subdeviceId, baseDir, baseDirectoryExists, detailedThrottleReasons);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Info@ %s(): Failed to get detailed throttle reasons, returning 0 reasons\n", __func__);
         return static_cast<zes_freq_throttle_reason_flags_t>(0);
     }
 
     zes_freq_throttle_reason_flags_t aggregatedReasons = getAggregatedThrottleReasons(detailedThrottleReasons);
+
+    // "reason_ratl" maps directly to ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT and is not
+    // part of the detailed reasons enum, so it is handled separately here.
+    const std::string ratlReasonFile = "reason_ratl";
+    uint32_t ratlVal = 0u;
+    if (baseDirectoryExists) {
+        const std::string ratlFilePath = baseDir + throttleReasonPath + ratlReasonFile;
+        if ((pSysfsAccess->read(ratlFilePath, ratlVal) == ZE_RESULT_SUCCESS) && ratlVal) {
+            aggregatedReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT;
+        }
+    }
+
     void *pCurrent = pNext;
     while (pCurrent) {
         auto pExpThrottleReason = reinterpret_cast<zes_base_properties_t *>(pCurrent);

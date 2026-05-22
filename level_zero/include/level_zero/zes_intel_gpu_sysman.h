@@ -176,11 +176,10 @@ typedef enum _zes_intel_freq_throttle_detailed_reason_exp_flag_t {
     ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_FAST_VMODE = ZE_BIT(7),  ///< frequency throttled due to fast Vmode power
     ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_MEMORY = ZE_BIT(8),    ///< frequency throttled due to memory thermal
     ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_PROCHOT = ZE_BIT(9),   ///< frequency throttled due to Prochot thermal
-    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_RATL = ZE_BIT(10),     ///< frequency throttled due to RATL thermal
-    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC = ZE_BIT(11),      ///< frequency throttled due to SoC thermal
-    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC_AVG = ZE_BIT(12),  ///< frequency throttled due to SoC average thermal
-    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_VR = ZE_BIT(13),       ///< frequency throttled due to VR thermal
-    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_VOLTAGE_P0_FREQ = ZE_BIT(14),  ///< frequency throttled due to P0 frequency
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC = ZE_BIT(10),      ///< frequency throttled due to SoC thermal
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC_AVG = ZE_BIT(11),  ///< frequency throttled due to SoC average thermal
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_VR = ZE_BIT(12),       ///< frequency throttled due to VR thermal
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_VOLTAGE_P0_FREQ = ZE_BIT(13),  ///< frequency throttled due to P0 frequency
     ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_FORCE_UINT32 = 0x7fffffff      ///< Value marking end of ZES_INTEL_FREQ_THROTTLE_REASON_DETAILED_FLAG_* ENUMs
 } zes_intel_freq_throttle_detailed_reason_exp_flag_t;
 
