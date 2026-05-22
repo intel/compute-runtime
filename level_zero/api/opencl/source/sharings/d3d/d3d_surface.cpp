@@ -29,17 +29,6 @@
 namespace NEO {
 namespace LEO {
 
-void *adjustGpuPtrForPlane(void *gpu, GraphicsAllocation *graphicsAllocation, ImagePlane imagePlane) {
-    if (imagePlane == ImagePlane::noPlane || imagePlane == ImagePlane::planeY) {
-        return gpu;
-    }
-    GMM_REQ_OFFSET_INFO reqOffsetInfo = {};
-    reqOffsetInfo.ReqLock = 1;
-    reqOffsetInfo.Plane = static_cast<GMM_YUV_PLANE>(GmmTypesConverter::convertPlane(imagePlane));
-    graphicsAllocation->getDefaultGmm()->gmmResourceInfo->getOffset(reqOffsetInfo);
-    return ptrOffset(gpu, static_cast<size_t>(reqOffsetInfo.Lock.Offset));
-}
-
 D3DSurface::D3DSurface(Context *context, cl_dx9_surface_info_khr *surfaceInfo, D3D9Surface *surfaceStaging, cl_uint plane,
                        ImagePlane imagePlane, cl_dx9_media_adapter_type_khr adapterType, bool sharedResource, bool lockable)
     : D3DSharing(context, surfaceInfo->resource, surfaceStaging, plane, sharedResource), lockable(lockable), adapterType(adapterType),
@@ -81,7 +70,6 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
 
     bool isSharedResource = false;
     bool lockable = false;
-    bool needsView = imagePlane != ImagePlane::noPlane;
 
     ze_external_memory_import_win32_handle_t l0imageHandleDesc{ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32};
     l0imageHandleDesc.handle = surfaceInfo->shared_handle;
@@ -109,7 +97,14 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         l0imageAllocationTypeDesc.allocationType = NEO::AllocationType::sharedResourceCopy;
         l0imageAllocationTypeDesc.pNext = l0imageDesc.pNext;
         l0imageDesc.pNext = &l0imageAllocationTypeDesc;
+
+        if (imagePlane == ImagePlane::planeU || imagePlane == ImagePlane::planeV || imagePlane == ImagePlane::planeUV) {
+            l0imageDesc.width /= 2;
+            l0imageDesc.height /= 2;
+        }
     }
+
+    bool needsView = imagePlane != ImagePlane::noPlane && isSharedResource;
 
     ze_result_t ret = ZE_RESULT_SUCCESS;
     ze_image_handle_t baseImageHandle{};
@@ -150,10 +145,6 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
     ze_image_handle_t imageHandle{};
 
     if (needsView) {
-        if (imagePlane == ImagePlane::planeU || imagePlane == ImagePlane::planeV || imagePlane == ImagePlane::planeUV) {
-            l0imageDesc.width /= 2;
-            l0imageDesc.height /= 2;
-        }
         ret = zeImageViewCreateExp(context->getL0ContextHandle(), context->getClDevice()->getL0Handle(), &l0imageDesc, baseImageHandle, &imageHandle);
     } else {
         ret = zeImageCreate(context->getL0ContextHandle(), context->getClDevice()->getL0Handle(), &l0imageDesc, &imageHandle);
@@ -192,8 +183,7 @@ void D3DSurface::synchronizeObject(UpdateData &updateData) {
         auto gpu = context->getClDevice()->getDevice().getMemoryManager()->lockResource(graphicsAllocation);
         auto pitch = static_cast<ULONG>(lockedRect.Pitch);
         auto height = static_cast<ULONG>(image->getL0Object()->getImageInfo().imgDesc.imageHeight);
-
-        graphicsAllocation->getDefaultGmm()->resourceCopyBlt(sys, adjustGpuPtrForPlane(gpu, graphicsAllocation, imagePlane), pitch, height, 1u, imagePlane);
+        graphicsAllocation->getDefaultGmm()->resourceCopyBlt(sys, gpu, pitch, height, 1u, imagePlane);
 
         context->getClDevice()->getDevice().getMemoryManager()->unlockResource(graphicsAllocation);
 
@@ -228,8 +218,7 @@ void D3DSurface::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
         auto gpu = context->getClDevice()->getDevice().getMemoryManager()->lockResource(graphicsAllocation);
         auto pitch = static_cast<ULONG>(lockedRect.Pitch);
         auto height = static_cast<ULONG>(image->getL0Object()->getImageInfo().imgDesc.imageHeight);
-
-        graphicsAllocation->getDefaultGmm()->resourceCopyBlt(sys, adjustGpuPtrForPlane(gpu, graphicsAllocation, imagePlane), pitch, height, 0u, imagePlane);
+        graphicsAllocation->getDefaultGmm()->resourceCopyBlt(sys, gpu, pitch, height, 0u, imagePlane);
 
         context->getClDevice()->getDevice().getMemoryManager()->unlockResource(graphicsAllocation);
 
