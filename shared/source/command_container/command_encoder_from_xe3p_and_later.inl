@@ -265,6 +265,11 @@ void EncodeCommandLevelMocs<Family>::apply(CmdType &cmd) {
     if constexpr (requires { cmd.setMocsIndex(0); }) {
         if (debugManager.flags.OverrideCommandLevelMocsIndex.get() >= 0) {
             cmd.setMocsIndex(static_cast<uint32_t>(debugManager.flags.OverrideCommandLevelMocsIndex.get()));
+            return;
+        }
+
+        if (EncodeCommandLevelMocs<Family>::cmdMocsSupported) {
+            cmd.setMocsIndex(EncodeCommandLevelMocs<Family>::defaultMocs);
         }
     }
 }

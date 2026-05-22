@@ -1144,7 +1144,7 @@ std::optional<uint8_t> ProductHelperHw<gfxProduct>::getBcsCompressionFormat() co
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isProgramAdditionalEngineMMIORequired() const {
+bool ProductHelperHw<gfxProduct>::isProgramAdditionalEngineMMIORequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 

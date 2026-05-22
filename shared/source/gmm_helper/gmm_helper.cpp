@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,7 @@ void GmmHelper::initMocsDefaults() {
     mocsL1Enabled = getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
     mocsL3Enabled = getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     mocsUncached = getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    rootDeviceEnvironment.getHelper<GfxCoreHelper>().initCommandLevelMocsDefaults(*this);
 }
 
 uint32_t GmmHelper::getMOCS(uint32_t type) const {

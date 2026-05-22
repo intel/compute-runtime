@@ -976,6 +976,10 @@ bool GfxCoreHelperHw<Family>::isPerContextDebugSipRequired() const {
     return false;
 }
 
+template <typename Family>
+void GfxCoreHelperHw<Family>::initCommandLevelMocsDefaults(GmmHelper &gmmHelper) const {
+}
+
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setPipeControlRequiredFields(typename GfxFamily::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
 }

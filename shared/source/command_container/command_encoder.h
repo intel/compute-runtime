@@ -808,6 +808,9 @@ struct EncodeUserInterrupt {
 
 template <typename GfxFamily>
 struct EncodeCommandLevelMocs {
+    static inline uint32_t defaultMocs = 0u;
+    static inline bool cmdMocsSupported = false;
+
     template <typename CmdType>
     static void apply(CmdType &cmd);
 };
