@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,15 @@ HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillThenSuccessIsReturned) {
     CmdListMemoryCopyParams copyParams = {};
     auto result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST_F(AppendFillTest, givenZeroPatternSizeWhenAppendMemoryFillCalledThenInvalidSizeIsReturned) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryFill(dstPtr, pattern, 0u, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, result);
 }
 
 HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithAppendLaunchKernelFailureThenSuccessIsNotReturned) {

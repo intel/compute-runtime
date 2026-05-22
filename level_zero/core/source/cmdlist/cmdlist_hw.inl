@@ -2698,6 +2698,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    ze_event_handle_t hSignalEvent,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
+    if (patternSize == 0) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
     const auto isStateless = this->forceStateless(size);
     auto builtInMode = this->defaultBuiltInMode;
     builtInMode.adjustToWideStatelessIfRequired(size);
