@@ -45,5 +45,6 @@ bool ReleaseHelperHw<release>::isLatePreemptionStartSupportedHelper() const {
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe2.inl"
+#include "shared/source/release_helper/release_helper_preferred_slm_xe2_lpg_128k.inl"
 
 template class NEO::ReleaseHelperHw<NEO::release>;
