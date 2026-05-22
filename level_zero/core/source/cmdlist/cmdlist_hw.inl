@@ -243,7 +243,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderCounterOverflow(bool cop
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::handlePostSubmissionState() {
-    this->commandContainer.getResidencyContainer().clear();
+    this->commandContainer.clearResidencyContainer();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

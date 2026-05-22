@@ -433,7 +433,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenCmdBuffersAr
     EXPECT_EQ(cmdContainer.getResidencyContainer().size(), cmdContainer.getCmdBufferAllocations().size());
 }
 
-TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddAlreadyAddedAllocationAndDuplicatesRemovedThenExpectedSizeIsReturned) {
+TEST_F(CommandContainerTest, givenCommandContainerWhenAllocationAddedTwiceThenSecondAddIsSkipped) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     MockGraphicsAllocation mockAllocation;
@@ -443,17 +443,67 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddAlreadyAddedAlloc
     cmdContainer.addToResidencyContainer(&mockAllocation);
     auto sizeAfterFirstAdd = cmdContainer.getResidencyContainer().size();
 
-    EXPECT_NE(sizeBefore, sizeAfterFirstAdd);
+    EXPECT_EQ(sizeBefore + 1, sizeAfterFirstAdd);
 
     cmdContainer.addToResidencyContainer(&mockAllocation);
     auto sizeAfterSecondAdd = cmdContainer.getResidencyContainer().size();
 
-    EXPECT_NE(sizeAfterFirstAdd, sizeAfterSecondAdd);
+    EXPECT_EQ(sizeAfterFirstAdd, sizeAfterSecondAdd);
+    EXPECT_EQ(cmdContainer.getResidencyContainerStamp(), mockAllocation.getResidencyContainerStamp());
+}
 
-    cmdContainer.removeDuplicatesFromResidencyContainer();
-    auto sizeAfterDuplicatesRemoved = cmdContainer.getResidencyContainer().size();
+TEST_F(CommandContainerTest, givenTwoCommandContainersWhenCreatedThenAssignedStampsAreDistinct) {
+    CommandContainer cmdContainer1;
+    CommandContainer cmdContainer2;
+    EXPECT_NE(cmdContainer1.getResidencyContainerStamp(), cmdContainer2.getResidencyContainerStamp());
+    EXPECT_NE(0u, cmdContainer1.getResidencyContainerStamp());
+    EXPECT_NE(0u, cmdContainer2.getResidencyContainerStamp());
+}
 
-    EXPECT_EQ(sizeAfterFirstAdd, sizeAfterDuplicatesRemoved);
+TEST_F(CommandContainerTest, givenAllocationAddedToTwoCommandContainersWhenAddedBackToFirstThenDuplicateRemovedBySortAndUnique) {
+    CommandContainer cmdContainer1;
+    cmdContainer1.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    CommandContainer cmdContainer2;
+    cmdContainer2.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    MockGraphicsAllocation mockAllocation;
+
+    cmdContainer1.addToResidencyContainer(&mockAllocation);
+    const auto sizeAfterFirstAddInContainer1 = cmdContainer1.getResidencyContainer().size();
+
+    cmdContainer2.addToResidencyContainer(&mockAllocation);
+
+    cmdContainer1.addToResidencyContainer(&mockAllocation);
+    EXPECT_EQ(sizeAfterFirstAddInContainer1 + 1, cmdContainer1.getResidencyContainer().size());
+
+    cmdContainer1.removeDuplicatesFromResidencyContainer();
+    EXPECT_EQ(sizeAfterFirstAddInContainer1, cmdContainer1.getResidencyContainer().size());
+}
+
+TEST_F(CommandContainerTest, givenAllocationAddedToContainerWhenContainerStampClearedThenAllocationCanBeReAdded) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    MockGraphicsAllocation mockAllocation;
+
+    cmdContainer.addToResidencyContainer(&mockAllocation);
+    const auto previousStamp = cmdContainer.getResidencyContainerStamp();
+
+    cmdContainer.clearResidencyContainer();
+    EXPECT_EQ(0u, cmdContainer.getResidencyContainer().size());
+    EXPECT_NE(previousStamp, cmdContainer.getResidencyContainerStamp());
+
+    cmdContainer.addToResidencyContainer(&mockAllocation);
+    EXPECT_EQ(1u, cmdContainer.getResidencyContainer().size());
+    EXPECT_EQ(cmdContainer.getResidencyContainerStamp(), mockAllocation.getResidencyContainerStamp());
+}
+
+TEST_F(CommandContainerTest, givenAllocationsAddedToContainerWhenResetCalledThenContainerStampIsRefreshed) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    const auto stampBeforeReset = cmdContainer.getResidencyContainerStamp();
+
+    cmdContainer.reset();
+    EXPECT_NE(stampBeforeReset, cmdContainer.getResidencyContainerStamp());
 }
 
 HWTEST_F(CommandContainerTest, givenCmdContainerWhenInitializeCalledThenSSHHeapHasBindlessOffsetReserved) {

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
 
+#include <atomic>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -90,6 +91,8 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
 
     void addToResidencyContainer(GraphicsAllocation *alloc);
     void removeDuplicatesFromResidencyContainer();
+    void clearResidencyContainer();
+    uint64_t getResidencyContainerStamp() const { return residencyContainerStamp; }
 
     LinearStream *getCommandStream() { return commandStream.get(); }
 
@@ -272,11 +275,16 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     void *endCmdPtr = nullptr;
     size_t alignedPrimarySize = 0;
 
+    uint64_t residencyContainerStamp = 0u;
+
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t numIddsPerBlock = 64;
     HeapAddressModel heapAddressModel = HeapAddressModel::privateHeaps;
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
     uint32_t nextIddInBlock = 0;
+
+    static std::atomic<uint64_t> nextResidencyContainerStamp;
+    static uint64_t acquireResidencyContainerStamp();
 
     bool isFlushTaskUsedForImmediate = false;
     bool isHandleFenceCompletionRequired = false;

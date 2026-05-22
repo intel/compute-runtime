@@ -54,7 +54,7 @@ HWTEST_F(CommandListCreateTests, givenCopyOnlyCommandListWhenAppendWriteGlobalTi
 
     uint64_t dstAddress = 0xfffffffffff0L;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(dstAddress);
-    commandContainer.getResidencyContainer().clear();
+    commandContainer.clearResidencyContainer();
 
     const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
     commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);

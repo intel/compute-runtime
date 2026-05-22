@@ -539,6 +539,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         hostPtrTaskCountAssignment = value;
     }
 
+    uint64_t getResidencyContainerStamp() const {
+        return residencyContainerStamp.load(std::memory_order_relaxed);
+    }
+    void setResidencyContainerStamp(uint64_t stamp) {
+        residencyContainerStamp.store(stamp, std::memory_order_relaxed);
+    }
+
     bool isExplicitlyMadeResident() const {
         if (parentAllocation) {
             return parentAllocation->isExplicitlyMadeResident();
@@ -581,6 +588,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     GraphicsAllocation *parentAllocation = nullptr;
     size_t offsetInParent = 0u;
     std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
+    std::atomic<uint64_t> residencyContainerStamp{0};
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<GraphicsAllocation>);

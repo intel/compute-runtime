@@ -661,7 +661,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTime
     uint64_t dstAddress = 0x123456785500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(dstAddress);
     auto &commandContainer = commandList->getCmdContainer();
-    commandContainer.getResidencyContainer().clear();
+    commandContainer.clearResidencyContainer();
 
     ze_event_handle_t hEventHandle = event->toHandle();
 

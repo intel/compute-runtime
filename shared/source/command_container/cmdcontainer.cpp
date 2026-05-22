@@ -33,6 +33,12 @@
 #include "shared/source/utilities/thread_data_map.h"
 namespace NEO {
 
+std::atomic<uint64_t> CommandContainer::nextResidencyContainerStamp{1u};
+
+uint64_t CommandContainer::acquireResidencyContainerStamp() {
+    return nextResidencyContainerStamp.fetch_add(1u, std::memory_order_relaxed);
+}
+
 namespace {
 
 bool shouldSkipHeapPrefillForPool(HeapType heapType, size_t heapSize, bool linearStreamPoolEnabled, bool internalHeapPoolEnabled) {
@@ -80,6 +86,7 @@ CommandContainer::CommandContainer() {
     }
 
     residencyContainer.reserve(startingResidencyContainerSize);
+    residencyContainerStamp = acquireResidencyContainerStamp();
 
     if (debugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.get() != -1) {
         isHandleFenceCompletionRequired = !static_cast<bool>(debugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.get());
@@ -198,7 +205,16 @@ void CommandContainer::addToResidencyContainer(GraphicsAllocation *alloc) {
     if (alloc == nullptr) {
         return;
     }
+    if (alloc->getResidencyContainerStamp() == this->residencyContainerStamp) {
+        return;
+    }
+    alloc->setResidencyContainerStamp(this->residencyContainerStamp);
     this->residencyContainer.push_back(alloc);
+}
+
+void CommandContainer::clearResidencyContainer() {
+    this->residencyContainer.clear();
+    this->residencyContainerStamp = acquireResidencyContainerStamp();
 }
 
 bool CommandContainer::swapStreams() {
@@ -217,7 +233,7 @@ void CommandContainer::removeDuplicatesFromResidencyContainer() {
 void CommandContainer::reset() {
     setDirtyStateForAllHeaps(true);
     slmSize = std::numeric_limits<uint32_t>::max();
-    getResidencyContainer().clear();
+    clearResidencyContainer();
     if (getHeapHelper()) {
         for (auto deallocation : deallocationContainer) {
             if ((deallocation->getAllocationType() == AllocationType::internalHeap) || (deallocation->getAllocationType() == AllocationType::linearStream)) {

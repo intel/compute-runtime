@@ -113,7 +113,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTime
     uint64_t dstAddress = 0x12345678555500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(dstAddress);
 
-    commandContainer.getResidencyContainer().clear();
+    commandContainer.clearResidencyContainer();
 
     commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr);
 
@@ -817,7 +817,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     uint64_t dstAddress = 0x123456785500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(dstAddress);
-    commandContainer.getResidencyContainer().clear();
+    commandContainer.clearResidencyContainer();
 
     constexpr uint32_t packets = 2u;
 

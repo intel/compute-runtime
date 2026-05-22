@@ -3706,7 +3706,7 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithPos
     MiFlushArgs args{cmdlist.dummyBlitWa};
     args.commandWithPostSync = true;
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
-    commandContainer.getResidencyContainer().clear();
+    commandContainer.clearResidencyContainer();
     EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
     cmdlist.encodeMiFlush(0, 0, args);
     GenCmdList programmedCommands;
@@ -3736,7 +3736,7 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithout
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     rootDeviceEnvironment.initDummyAllocation();
     EXPECT_NE(nullptr, rootDeviceEnvironment.getDummyAllocation());
-    commandContainer.getResidencyContainer().clear();
+    commandContainer.clearResidencyContainer();
     cmdlist.encodeMiFlush(0, 0, args);
     GenCmdList programmedCommands;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -3760,7 +3760,7 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitNotRequiredWhenEncodeMiFlushThen
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     rootDeviceEnvironment.initDummyAllocation();
     EXPECT_NE(nullptr, rootDeviceEnvironment.getDummyAllocation());
-    commandContainer.getResidencyContainer().clear();
+    commandContainer.clearResidencyContainer();
     cmdlist.encodeMiFlush(0, 0, args);
     GenCmdList programmedCommands;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
