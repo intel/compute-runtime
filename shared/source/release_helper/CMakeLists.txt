@@ -43,6 +43,7 @@ set(NEO_CORE_RELEASE_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3_lpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3p.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3pv2_lpg.inl
 )
 
 set_property(GLOBAL APPEND PROPERTY NEO_CORE_ENABLE_RELEASE_HELPER
