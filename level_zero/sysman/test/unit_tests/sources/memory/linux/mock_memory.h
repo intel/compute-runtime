@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 
 #include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp.h"
 #include "level_zero/sysman/source/api/memory/sysman_memory_imp.h"

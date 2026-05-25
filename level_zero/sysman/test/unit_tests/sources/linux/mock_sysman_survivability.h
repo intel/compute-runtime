@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
