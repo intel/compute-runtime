@@ -704,7 +704,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     DispatchBcsFlags recordedBcsDispatchFlags;
     ImmediateDispatchFlags recordedImmediateDispatchFlags = {};
     BlitPropertiesContainer receivedBlitProperties = {};
-    uint32_t createAllocationForHostSurfaceCalled = 0;
+    std::atomic<uint32_t> createAllocationForHostSurfaceCalled = 0;
     WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::ready;
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
     std::optional<WaitStatus> waitForTaskCountReturnValue{};
@@ -717,7 +717,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     OsContext *initialOsContext = nullptr;
 
     bool renderStateCacheFlushed = false;
-    bool cpuCopyForHostPtrSurfaceAllowed = false;
+    std::atomic_bool cpuCopyForHostPtrSurfaceAllowed = false;
     bool createPageTableManagerCalled = false;
     bool recordFlushedBatchBuffer = false;
     bool checkAndActivateAubSubCaptureCalled = false;

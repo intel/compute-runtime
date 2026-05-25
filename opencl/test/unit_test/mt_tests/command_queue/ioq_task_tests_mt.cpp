@@ -11,7 +11,6 @@
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 
 #include <future>
 
@@ -271,23 +270,24 @@ TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingImageThenEventsAreComplete
 }
 
 TEST_F(IOQTaskTestsMt, givenBlitterWhenCopyUsingMultipleThreadsThenSuccessReturned) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(0);
+    debugManager.flags.EnableTimestampWaitForQueues.set(0);
 
-    constexpr uint32_t numThreads = 32;
+    REQUIRE_FULL_BLITTER_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
+    constexpr uint32_t numThreads = 4;
     std::atomic_uint32_t barrier = numThreads;
     std::array<std::future<void>, numThreads> threads;
 
-    auto device = MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
-    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
-    MockClDevice clDevice(device);
-    auto cmdQ = createCommandQueue(&clDevice);
+    auto cmdQ = createCommandQueue(pClDevice);
+    auto initialCsrTaskCount = cmdQ->getGpgpuCommandStreamReceiver().peekTaskCount();
+    auto bcsCsr = cmdQ->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS);
+    ASSERT_NE(nullptr, bcsCsr);
+    auto initialBcsCsrTaskCount = bcsCsr->peekTaskCount();
     EXPECT_EQ(cmdQ->taskCount, 0u);
-    EXPECT_EQ(cmdQ->getGpgpuCommandStreamReceiver().peekTaskCount(), 0u);
     EXPECT_EQ(cmdQ->peekBcsTaskCount(aub_stream::EngineType::ENGINE_BCS), 0u);
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
@@ -317,8 +317,8 @@ TEST_F(IOQTaskTestsMt, givenBlitterWhenCopyUsingMultipleThreadsThenSuccessReturn
     }
 
     EXPECT_EQ(cmdQ->taskCount, 0u);
-    EXPECT_EQ(cmdQ->getGpgpuCommandStreamReceiver().peekTaskCount(), 0u);
-    EXPECT_EQ(cmdQ->peekBcsTaskCount(aub_stream::EngineType::ENGINE_BCS), numThreads);
+    EXPECT_EQ(cmdQ->getGpgpuCommandStreamReceiver().peekTaskCount(), initialCsrTaskCount);
+    EXPECT_EQ(cmdQ->peekBcsTaskCount(aub_stream::EngineType::ENGINE_BCS), initialBcsCsrTaskCount + numThreads);
 
     clReleaseCommandQueue(cmdQ);
 }

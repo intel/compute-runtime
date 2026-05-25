@@ -62,6 +62,13 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
+    // On heapless platforms the device prolog submission runs before this point,
+    // incrementing the task count and flush counters.  Snapshot them so assertions
+    // and the drain loop measure only the work enqueued below.
+    auto initialFlushCount = mockCsr->flushCalledCount;
+    auto initialInspectionId = mockedSubmissionsAggregator->peekInspectionId();
+    int64_t initialTaskCount = mockCsr->peekTaskCount();
+
     std::atomic<bool> startEnqueueProcess(false);
 
     MockKernelWithInternals mockKernel(*context);
@@ -90,7 +97,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
     startEnqueueProcess = true;
 
     // call a flush while other threads enqueue, we can't drop anything
-    while (currentTaskCount < enqueueCount * threadCount) {
+    while (currentTaskCount < initialTaskCount + enqueueCount * threadCount) {
         clFlush(pCmdQ);
         auto locker = mockCsr->obtainUniqueOwnership();
         currentTaskCount = mockCsr->peekTaskCount();
@@ -100,12 +107,20 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
         thread.join();
     }
 
+    // Flush any work that was enqueued after the drain loop's last clFlush read.
+    // Must happen before finish() because finish() calls flushTagUpdate() on heapless
+    // platforms (isUpdateTagFromWaitEnabled()), which calls flushSmallTask() directly
+    // and increments flushCalledCount without going through the submission aggregator.
+    pCmdQ->flush();
+
+    auto testFlushCount = static_cast<int>(mockCsr->flushCalledCount - initialFlushCount);
+    auto testInspections = static_cast<int>(mockedSubmissionsAggregator->peekInspectionId() - initialInspectionId);
+
+    EXPECT_GE(testFlushCount, 1);
+    EXPECT_LE(testFlushCount, enqueueCount * threadCount);
+    EXPECT_EQ(testInspections, testFlushCount);
+
     pCmdQ->finish(false);
-
-    EXPECT_GE(mockCsr->flushCalledCount, 1u);
-
-    EXPECT_LE(static_cast<int>(mockCsr->flushCalledCount), enqueueCount * threadCount);
-    EXPECT_EQ(mockedSubmissionsAggregator->peekInspectionId() - 1u, mockCsr->flushCalledCount);
 }
 
 HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAndEnqueueNDRangeKernelInLoopThenIsNoRace) {

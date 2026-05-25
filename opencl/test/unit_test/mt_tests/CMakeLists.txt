@@ -9,7 +9,6 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
 
   set(OPENCL_MT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-  add_custom_target(run_mt_unit_tests)
   add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
@@ -52,6 +51,4 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
   if(NOT WIN32)
     set_property(TARGET igdrcl_mt_tests APPEND_STRING PROPERTY COMPILE_FLAGS " -g")
   endif()
-
-  set_target_properties(run_mt_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 endif()

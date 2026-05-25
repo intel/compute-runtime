@@ -119,6 +119,9 @@ HWTEST_F(EventTests, givenOneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFi
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create());
     std::unique_ptr<char[]> dst(new char[srcBuffer->getSize()]);
+    // On heapless platforms the device prolog increments the CSR task count before any user enqueue.
+    // Use the CSR's current count as the baseline so the assertions are platform-agnostic.
+    auto initialTaskCount = mockCmdQueue.getGpgpuCommandStreamReceiver().peekTaskCount();
     for (uint32_t i = 0; i < 4; i++) {
 
         UserEvent uEvent;
@@ -149,7 +152,7 @@ HWTEST_F(EventTests, givenOneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFi
         go = true;
 
         clFinish(&mockCmdQueue);
-        EXPECT_EQ(mockCmdQueue.latestTaskCountWaited, i + 1);
+        EXPECT_EQ(mockCmdQueue.latestTaskCountWaited, initialTaskCount + i + 1);
 
         t.join();
         updateEvent = false;

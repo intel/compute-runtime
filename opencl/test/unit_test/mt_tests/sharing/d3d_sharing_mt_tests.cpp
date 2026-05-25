@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,8 @@ class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
     void addRef(D3DResource *resource) override {
     }
     void createQuery(D3DQuery **query) override {
+    }
+    void createFence(typename D3D::D3DFence **fence) override {
     }
     void release(IUnknown *resource) override {
     }

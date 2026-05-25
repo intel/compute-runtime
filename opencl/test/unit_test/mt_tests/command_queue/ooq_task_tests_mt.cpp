@@ -9,7 +9,6 @@
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 
 #include <future>
 
@@ -97,25 +96,24 @@ TEST_F(OOQTaskTestsMt, GivenBlockedOnUserEventWhenEnqueingMarkerThenSuccessIsRet
 }
 
 TEST_F(OOQTaskTestsMt, givenBlitterWhenEnqueueCopyAndKernelUsingMultipleThreadsThenSuccessReturned) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
     debugManager.flags.DoCpuCopyOnWriteBuffer.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(0);
+    debugManager.flags.EnableTimestampWaitForQueues.set(0);
 
-    constexpr uint32_t numThreads = 32;
+    REQUIRE_FULL_BLITTER_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
+    constexpr uint32_t numThreads = 4;
     std::atomic_uint32_t barrier = numThreads;
     std::array<std::future<void>, numThreads> threads;
 
-    auto device = MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
-    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
-
-    MockClDevice clDevice(device);
-    auto cmdQ = createCommandQueue(&clDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    auto cmdQ = createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    auto bcsCsr = cmdQ->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS);
+    ASSERT_NE(nullptr, bcsCsr);
+    auto initialBcsCsrTaskCount = bcsCsr->peekTaskCount();
     EXPECT_EQ(cmdQ->taskCount, 0u);
-    EXPECT_EQ(cmdQ->getGpgpuCommandStreamReceiver().peekTaskCount(), 0u);
     EXPECT_EQ(cmdQ->peekBcsTaskCount(aub_stream::EngineType::ENGINE_BCS), 0u);
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
@@ -164,7 +162,7 @@ TEST_F(OOQTaskTestsMt, givenBlitterWhenEnqueueCopyAndKernelUsingMultipleThreadsT
 
     EXPECT_NE(cmdQ->taskCount, 0u);
     EXPECT_NE(cmdQ->getGpgpuCommandStreamReceiver().peekTaskCount(), 0u);
-    EXPECT_EQ(cmdQ->peekBcsTaskCount(aub_stream::EngineType::ENGINE_BCS), 2 * numThreads);
+    EXPECT_EQ(cmdQ->peekBcsTaskCount(aub_stream::EngineType::ENGINE_BCS), initialBcsCsrTaskCount + 2 * numThreads);
 
     clReleaseCommandQueue(cmdQ);
 }

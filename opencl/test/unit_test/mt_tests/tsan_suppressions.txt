@@ -1,0 +1,43 @@
+# This file describes excludes for false-positive issues reported by TSAN.
+
+# waitFunctionWithPredicate polls a tag address written by KMD (hardware-signaled).
+# No C++ synchronization primitive can describe this relationship; the read is intentionally non-atomic.
+race:WaitUtils::waitFunctionWithPredicate
+
+# Test polling loops call isUsedByOsContext while the async deleter concurrently frees the
+# allocation. The deleter holds exclusive ownership at the point of free; happens-before is
+# established through the tag write/read, but TSAN cannot track it through the non-atomic poll.
+race:NEO::GraphicsAllocation::isUsedByOsContext
+
+# cleanTemporaryAllocations frees BCS host-ptr surface allocations after GPU task completion.
+# Another thread may be in makeResident (or see the freed address reused) for a subsequent
+# enqueue. Happens-before is established through the BCS tag write/read; TSAN cannot track it.
+race:NEO::MemoryManager::cleanTemporaryAllocations
+
+# updateBcsTaskCount writes bcsStates[i].taskCount under the queue+BCS locks while
+# waitForAllEngines reads the same field before acquiring the queue lock. The read always
+# precedes the corresponding wait, so no incorrect ordering can result; TSAN cannot see
+# the queue lock as the synchronising edge here.
+race:NEO::CommandQueue::updateBcsTaskCount
+
+# initializeGpgpu uses a double-checked lock pattern: the outer gpgpuEngine == nullptr
+# read is intentionally outside the static mutex (inside-lock re-check guards correctness).
+# The write via tryAssignSecondaryEngine happens under the mutex; the race on the outer
+# read is benign - once set, gpgpuEngine is never reset.
+race:NEO::CommandQueue::initializeGpgpu
+race:NEO::tryAssignSecondaryEngine
+
+# FlushStampUpdateHelper::updateAll writes flushStamp/initialized on event objects that
+# may be shared between the BCS and GPGPU flush paths. Each caller holds its own CSR lock,
+# but the two locks are independent, so TSAN sees a race. The final stamp value is the same
+# regardless of write order; no incorrect ordering can result.
+race:NEO::FlushStampUpdateHelper::updateAll
+
+# registerBcsCsrClient/unregisterBcsCsrClient/unregisterGpgpuAndBcsCsrClients update
+# csrClientRegistered under the queue+BCS lock while waitForAllEngines concurrently
+# snapshots bcsStates via memcpy without a lock. Each thread's snapshot is only used to
+# determine which engines that thread must wait for; happens-before is established through
+# the BCS tag write/read. The race is benign.
+race:NEO::CommandQueue::registerBcsCsrClient
+race:NEO::CommandQueue::unregisterBcsCsrClient
+race:NEO::CommandQueue::unregisterGpgpuAndBcsCsrClients
