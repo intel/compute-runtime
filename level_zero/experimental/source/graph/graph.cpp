@@ -672,11 +672,11 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::IndirectArgs
     this->groupCounts = *apiArgs.pGroupCounts;
     this->pNext = nullptr;
 
-    auto result = CommandList::cloneAppendKernelExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->pNext);
-    UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
-
-    auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
-    this->capturedKernel = kernel->makeDependentClone();
+    externalStorage.lastResult = CommandList::cloneAppendKernelExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->pNext);
+    if (externalStorage.lastResult == ZE_RESULT_SUCCESS) {
+        auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
+        this->capturedKernel = kernel->makeDependentClone();
+    }
 }
 
 Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::IndirectArgs::~IndirectArgs() {
@@ -694,16 +694,17 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::
 Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
     this->pNext = nullptr;
 
-    auto result = CommandList::cloneAppendKernelExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->pNext);
-    UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
+    externalStorage.lastResult = CommandList::cloneAppendKernelExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->pNext);
+    if (externalStorage.lastResult == ZE_RESULT_SUCCESS) {
+        auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
+        externalStorage.lastResult = CommandList::setKernelState(kernel, apiArgs.groupSizes, apiArgs.pArguments);
+        if (externalStorage.lastResult == ZE_RESULT_SUCCESS) {
+            auto &explicitArgs = kernel->getKernelDescriptor().payloadMappings.explicitArgs;
+            this->argumentsId = externalStorage.registerKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), apiArgs.pArguments);
 
-    auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
-    result = CommandList::setKernelState(kernel, apiArgs.groupSizes, apiArgs.pArguments);
-    UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
-    auto &explicitArgs = kernel->getKernelDescriptor().payloadMappings.explicitArgs;
-    this->argumentsId = externalStorage.registerKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), apiArgs.pArguments);
-
-    this->capturedKernel = kernel->makeDependentClone();
+            this->capturedKernel = kernel->makeDependentClone();
+        }
+    }
 }
 
 Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs::~IndirectArgs() {
@@ -724,8 +725,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::i
 Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
     this->pNext = nullptr;
 
-    auto result = CommandList::cloneAppendMemoryCopyExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->pNext);
-    UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
+    externalStorage.lastResult = CommandList::cloneAppendMemoryCopyExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->pNext);
 }
 
 Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>::IndirectArgs::~IndirectArgs() {
@@ -745,8 +745,7 @@ Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters>::IndirectArgs:
 
     this->pNext = nullptr;
 
-    auto result = CommandList::cloneAppendMemoryCopyExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->pNext);
-    UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
+    externalStorage.lastResult = CommandList::cloneAppendMemoryCopyExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->pNext);
 }
 
 Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters>::IndirectArgs::~IndirectArgs() {

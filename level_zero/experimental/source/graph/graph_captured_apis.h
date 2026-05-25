@@ -247,6 +247,9 @@ struct ClosureExternalStorage {
     std::vector<ze_image_region_t> imageRegions;
     std::vector<ze_copy_region_t> copyRegions;
     std::vector<uint64_t> kernelArguments;
+
+  public:
+    ze_result_t lastResult = ZE_RESULT_SUCCESS;
 };
 
 template <CaptureApi api>
@@ -366,18 +369,25 @@ inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiA
     return nullptr;
 }
 
+template <class ApiArgsT>
+concept HasPCommandId = requires(ApiArgsT &apiArgs) {
+    apiArgs.pCommandId;
+};
+
 struct IndirectArgsWithWaitEvents {
     IndirectArgsWithWaitEvents() = default;
     template <typename ApiArgsT>
         requires HasPhWaitEvents<ApiArgsT>
     IndirectArgsWithWaitEvents(const ApiArgsT &apiArgs, ClosureExternalStorage &externalStorage) {
         waitEvents = externalStorage.registerEventsList(apiArgs.phWaitEvents, apiArgs.phWaitEvents + apiArgs.numWaitEvents);
+        externalStorage.lastResult = ZE_RESULT_SUCCESS;
     }
 
     template <typename ApiArgsT>
         requires(HasPhEvents<ApiArgsT> && (false == HasPhWaitEvents<ApiArgsT>))
     IndirectArgsWithWaitEvents(const ApiArgsT &apiArgs, ClosureExternalStorage &externalStorage) {
         waitEvents = externalStorage.registerEventsList(apiArgs.phEvents, apiArgs.phEvents + apiArgs.numEvents);
+        externalStorage.lastResult = ZE_RESULT_SUCCESS;
     }
 
     ClosureExternalStorage::EventsListId waitEvents = ClosureExternalStorage::invalidEventsListId;
@@ -385,7 +395,27 @@ struct IndirectArgsWithWaitEvents {
 
 struct EmptyIndirectArgs {
     template <typename ApiArgsT>
-    EmptyIndirectArgs(const ApiArgsT &apiArgs, ClosureExternalStorage &externalStorage) {}
+    EmptyIndirectArgs(const ApiArgsT &apiArgs, ClosureExternalStorage &externalStorage) {
+        externalStorage.lastResult = ZE_RESULT_SUCCESS;
+    }
+};
+
+struct GetNextCommandIdIndirectArgs {
+    template <typename ApiArgsT>
+        requires HasPCommandId<ApiArgsT>
+    GetNextCommandIdIndirectArgs(const ApiArgsT &apiArgs, ClosureExternalStorage &externalStorage) {
+        if (apiArgs.desc) {
+            UNRECOVERABLE_IF(apiArgs.desc->pNext != nullptr);
+            this->desc = *apiArgs.desc;
+        }
+        if (apiArgs.pCommandId) {
+            this->commandId = *apiArgs.pCommandId;
+        }
+        externalStorage.lastResult = ZE_RESULT_SUCCESS;
+    }
+
+    ze_mutable_command_id_exp_desc_t desc{};
+    uint64_t commandId = 0;
 };
 
 template <>
@@ -1274,19 +1304,8 @@ struct Closure<CaptureApi::zeCommandListGetNextCommandIdExp> {
         uint64_t *pCommandId;
     } apiArgs;
 
-    struct IndirectArgs {
-        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &) {
-            if (apiArgs.desc) {
-                this->desc = *apiArgs.desc;
-            }
-            if (apiArgs.pCommandId) {
-                this->commandId = *apiArgs.pCommandId;
-            }
-        }
-
-        ze_mutable_command_id_exp_desc_t desc{};
-        uint64_t commandId = 0;
-    } indirectArgs;
+    using IndirectArgs = GetNextCommandIdIndirectArgs;
+    IndirectArgs indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
@@ -1306,23 +1325,15 @@ struct Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp> {
         uint64_t *pCommandId;
     } apiArgs;
 
-    struct IndirectArgs {
-        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &) {
-            if (apiArgs.desc) {
-                this->desc = *apiArgs.desc;
-            }
+    struct IndirectArgs : GetNextCommandIdIndirectArgs {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : GetNextCommandIdIndirectArgs(apiArgs, externalStorage) {
             if ((apiArgs.numKernels > 0) && apiArgs.phKernels) {
                 kernels.resize(apiArgs.numKernels);
                 std::copy_n(apiArgs.phKernels, apiArgs.numKernels, kernels.begin());
             }
-            if (apiArgs.pCommandId) {
-                this->commandId = *apiArgs.pCommandId;
-            }
         }
 
-        ze_mutable_command_id_exp_desc_t desc{};
         StackVec<ze_kernel_handle_t, 2> kernels;
-        uint64_t commandId = 0;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}

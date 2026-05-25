@@ -1446,6 +1446,35 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     EXPECT_EQ(1U, graphHwCommands->appendHostFunctionCalled);
 }
 
+TEST_F(GraphTestInstantiationTest, GivenInvalidAppendKernelArgumentWithParametersWhenRecordingGraphThenReturnErrorCode) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_base_desc_t invalidDesc{ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
+
+    ze_group_count_t groupCount = {1, 1, 1};
+    ze_group_size_t groupSize = {1, 1, 1};
+    ze_group_size_t zeroGroupSize = {0, 0, 0};
+
+    L0::Graph srcGraph(&ctx, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &invalidDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, &invalidDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, zeroGroupSize, nullptr, nullptr, nullptr, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
 TEST_F(GraphTestInstantiationTest, GivenGraphPatchPreambleDebugFlagWhenInstantiatingGraphThenUseDebugSettingForPatchPreamble) {
     GraphsCleanupGuard graphCleanup;
 
@@ -2671,11 +2700,11 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdFollowedByAppendBarrierWhenGe
 
     ze_mutable_command_id_exp_desc_t desc{};
     uint64_t commandId = 0U;
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
-        cmdlist.toHandle(), &desc, &commandId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
+                                     cmdlist.toHandle(), &desc, &commandId));
 
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-        cmdlist.toHandle(), nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                     cmdlist.toHandle(), nullptr, 0U, nullptr));
 
     auto *cmd = graph.recordedApiCommands.getCommandByMclId(commandId);
     EXPECT_NE(nullptr, cmd);
@@ -2692,19 +2721,19 @@ TEST(CaptureTestMclIdMapping, GivenMultipleMutableCommandsWithDifferentFollowing
 
     ze_mutable_command_id_exp_desc_t desc1{};
     uint64_t mclId1 = 100U;
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
-        cmdlist.toHandle(), &desc1, &mclId1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
+                                     cmdlist.toHandle(), &desc1, &mclId1));
 
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-        cmdlist.toHandle(), nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                     cmdlist.toHandle(), nullptr, 0U, nullptr));
 
     ze_mutable_command_id_exp_desc_t desc2{};
     uint64_t mclId2 = 200U;
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
-        cmdlist.toHandle(), &desc2, &mclId2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
+                                     cmdlist.toHandle(), &desc2, &mclId2));
 
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-        cmdlist.toHandle(), nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                     cmdlist.toHandle(), nullptr, 0U, nullptr));
 
     auto *cmd1 = graph.recordedApiCommands.getCommandByMclId(100U);
     EXPECT_NE(nullptr, cmd1);
@@ -2728,11 +2757,11 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdWithKernelsFollowedByLaunchKe
     ze_mutable_command_id_exp_desc_t desc{};
     ze_kernel_handle_t kernels[] = {nullptr};
     uint64_t commandId = 0U;
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>(
-        cmdlist.toHandle(), &desc, 1U, kernels, &commandId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>(
+                                     cmdlist.toHandle(), &desc, 1U, kernels, &commandId));
 
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-        cmdlist.toHandle(), nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                     cmdlist.toHandle(), nullptr, 0U, nullptr));
 
     auto *cmd = graph.recordedApiCommands.getCommandByMclId(commandId);
     EXPECT_NE(nullptr, cmd);
@@ -2758,21 +2787,21 @@ TEST(CaptureTestMclIdMapping, GivenMutableCommandsBetweenRegularCommandsWhenMapp
     MockGraph graph{&ctx, true};
 
     for (int i = 0; i < 2; ++i) {
-        EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-            cmdlist.toHandle(), nullptr, 0U, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                         cmdlist.toHandle(), nullptr, 0U, nullptr));
     }
 
     ze_mutable_command_id_exp_desc_t desc{};
     uint64_t mclId = 0U;
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
-        cmdlist.toHandle(), &desc, &mclId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
+                                     cmdlist.toHandle(), &desc, &mclId));
 
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-        cmdlist.toHandle(), nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                     cmdlist.toHandle(), nullptr, 0U, nullptr));
 
     for (int i = 0; i < 1; ++i) {
-        EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-            cmdlist.toHandle(), nullptr, 0U, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                         cmdlist.toHandle(), nullptr, 0U, nullptr));
     }
 
     auto *cmd = graph.recordedApiCommands.getCommandByMclId(mclId);
@@ -2793,11 +2822,11 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdFollowedBySpecificCommandWhen
     ze_mutable_command_id_exp_desc_t desc{};
     desc.flags = 42U;
     uint64_t mclId = 0U;
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
-        cmdlist.toHandle(), &desc, &mclId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
+                                     cmdlist.toHandle(), &desc, &mclId));
 
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-        cmdlist.toHandle(), nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                     cmdlist.toHandle(), nullptr, 0U, nullptr));
 
     auto *cmd = graph.recordedApiCommands.getCommandByMclId(mclId);
     EXPECT_NE(nullptr, cmd);
@@ -2816,12 +2845,12 @@ TEST(CaptureTestMclIdMapping, GivenSequenceOfMutableCommandsWithFollowingCommand
     for (int i = 0; i < 3; ++i) {
         ze_mutable_command_id_exp_desc_t desc{};
         uint64_t mclId = 1000U + (i * 100U);
-        EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
-            cmdlist.toHandle(), &desc, &mclId));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
+                                         cmdlist.toHandle(), &desc, &mclId));
         mclIds.push_back(mclId);
 
-        EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-            cmdlist.toHandle(), nullptr, 0U, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                         cmdlist.toHandle(), nullptr, 0U, nullptr));
     }
 
     std::set<uint64_t> uniqueIds(mclIds.begin(), mclIds.end());
@@ -2846,20 +2875,20 @@ TEST(CaptureTestMclIdMapping, GivenBothMutableVariantsWithFollowingCommandsWhenM
 
     ze_mutable_command_id_exp_desc_t desc1{};
     uint64_t mclId1 = 500U;
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
-        cmdlist.toHandle(), &desc1, &mclId1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExp>(
+                                     cmdlist.toHandle(), &desc1, &mclId1));
 
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-        cmdlist.toHandle(), nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                     cmdlist.toHandle(), nullptr, 0U, nullptr));
 
     ze_mutable_command_id_exp_desc_t desc2{};
     ze_kernel_handle_t kernels[] = {nullptr};
     uint64_t mclId2 = 600U;
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>(
-        cmdlist.toHandle(), &desc2, 1U, kernels, &mclId2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>(
+                                     cmdlist.toHandle(), &desc2, 1U, kernels, &mclId2));
 
-    EXPECT_TRUE(graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
-        cmdlist.toHandle(), nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                     cmdlist.toHandle(), nullptr, 0U, nullptr));
 
     auto *cmd1 = graph.recordedApiCommands.getCommandByMclId(500U);
     EXPECT_NE(nullptr, cmd1);

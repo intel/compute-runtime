@@ -166,18 +166,23 @@ struct RecordedApiCommands {
     ze_result_t visit(CapturedCommandId id, VisitContext &visitCtx);
 
     template <CaptureApi api, typename... TArgs>
-    bool capture(TArgs... apiArgs) {
+    ze_result_t capture(TArgs... apiArgs) {
         using ApiArgsT = typename Closure<api>::ApiArgs;
         if (false == Closure<api>::isSupported) {
             brokenCapture = true;
-            return false;
+            return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }
         auto capturedArgs = ApiArgsT{apiArgs...};
         commands.push_back(CapturedCommand{Closure<api>(capturedArgs, externalStorage)});
+        if (externalStorage.lastResult != ZE_RESULT_SUCCESS) {
+            commands.pop_back();
+            brokenCapture = true;
+            return externalStorage.lastResult;
+        }
         if constexpr ((api == CaptureApi::zeCommandListGetNextCommandIdExp) || (api == CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp)) {
             mclMap[*capturedArgs.pCommandId] = static_cast<CapturedCommandId>(commands.size() - 1);
         }
-        return true;
+        return ZE_RESULT_SUCCESS;
     }
 
     std::vector<CapturedCommand> commands;
@@ -230,8 +235,7 @@ struct Graph : _ze_graph_handle_t {
             ++segments.rbegin()->numCommands;
         }
 
-        recordedApiCommands.capture<api>(apiArgs...);
-        return ZE_RESULT_SUCCESS;
+        return recordedApiCommands.capture<api>(apiArgs...);
     }
 
     const std::vector<CapturedCommand> &getCapturedCommands() const {
