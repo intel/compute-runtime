@@ -966,6 +966,8 @@ HWTEST_F(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledBu
         EXPECT_TRUE(csr.getDeferredAllocations().peekIsEmpty());
     }
     EXPECT_TRUE(this->pDevice->getUltCommandStreamReceiver<FamilyType>().requiresInstructionCacheFlush);
+
+    this->pDevice->getUltCommandStreamReceiver<FamilyType>().forceSkipResourceCleanupRequired = true;
 }
 
 HWTEST_F(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDeletedThenItRegistersCacheFlushInEveryCsrThatUsedIt) {

@@ -6,19 +6,56 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/utilities/idlist.h"
 
+#include <algorithm>
 #include <memory>
+#include <mutex>
+#include <vector>
 
 namespace NEO {
 class CommandStreamReceiver;
+struct ReusableAllocationRequirements;
 
-class AllocationsList : public IDList<GraphicsAllocation, true, true> {
+class AllocationsList : NEO::NonCopyableAndNonMovableClass {
   public:
-    AllocationsList() = default;
+    AllocationsList();
     AllocationsList(AllocationUsage allocationUsage);
+    ~AllocationsList();
+    AllocationsList(const AllocationsList &) = delete;
+    AllocationsList &operator=(const AllocationsList &) = delete;
+
+    void pushTailOne(GraphicsAllocation &allocation);
+    void pushFrontOne(GraphicsAllocation &allocation);
+    std::unique_ptr<GraphicsAllocation> removeOne(GraphicsAllocation &allocation);
+    GraphicsAllocation *peekHead();
+    GraphicsAllocation *peekTail();
+    bool peekIsEmpty();
+    bool peekContains(GraphicsAllocation &allocation);
+    std::vector<GraphicsAllocation *> peekAllocations();
+    void transferAllAllocationsTo(AllocationsList &target);
+
+    template <typename ShouldRemove, typename OnRemove>
+    void removeMatching(ShouldRemove shouldRemove, OnRemove onRemove) {
+        std::vector<GraphicsAllocation *> removedAllocations;
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            auto newEnd = std::remove_if(allocations.begin(), allocations.end(),
+                                         [&](GraphicsAllocation *allocation) {
+                                             if (shouldRemove(allocation)) {
+                                                 removedAllocations.push_back(allocation);
+                                                 return true;
+                                             }
+                                             return false;
+                                         });
+            allocations.erase(newEnd, allocations.end());
+        }
+        for (auto *allocation : removedAllocations) {
+            onRemove(allocation);
+        }
+    }
 
     std::unique_ptr<GraphicsAllocation> detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType);
     std::unique_ptr<GraphicsAllocation> detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType, bool *nonUsmHostPtrPartialOverlapFound);
@@ -27,8 +64,10 @@ class AllocationsList : public IDList<GraphicsAllocation, true, true> {
     void freeAllGraphicsAllocations(Device *neoDevice);
 
   private:
-    GraphicsAllocation *detachAllocationImpl(GraphicsAllocation *, void *);
+    std::unique_ptr<GraphicsAllocation> detachMatchingAllocation(ReusableAllocationRequirements &requirements);
 
+    std::vector<GraphicsAllocation *> allocations;
+    std::mutex mutex;
     const AllocationUsage allocationUsage{REUSABLE_ALLOCATION};
 };
 } // namespace NEO

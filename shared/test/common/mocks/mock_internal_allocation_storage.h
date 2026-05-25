@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,12 +13,13 @@ namespace NEO {
 class MockInternalAllocationStorage : public InternalAllocationStorage {
   public:
     using InternalAllocationStorage::allocationLists;
+    using InternalAllocationStorage::cleanAllocationList;
     using InternalAllocationStorage::InternalAllocationStorage;
-    void cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage) override {
+    void cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage, bool cleanHostPtrAssigned) override {
         cleanAllocationsCalled++;
         lastCleanAllocationsTaskCount = waitTaskCount;
         lastCleanAllocationUsage = allocationUsage;
-        InternalAllocationStorage::cleanAllocationList(waitTaskCount, allocationUsage);
+        InternalAllocationStorage::cleanAllocationList(waitTaskCount, allocationUsage, cleanHostPtrAssigned);
         if (doUpdateCompletion) {
             *commandStreamReceiver.getTagAddress() = valueToUpdateCompletion;
             doUpdateCompletion = false;

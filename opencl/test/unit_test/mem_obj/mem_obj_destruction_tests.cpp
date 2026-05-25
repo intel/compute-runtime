@@ -97,6 +97,13 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
         context.reset();
     }
 
+    template <typename FamilyType>
+    void forceSkipResourceCleanupOnAllEngines() {
+        for (auto &engine : device->getDevice().getAllEngines()) {
+            static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver)->forceSkipResourceCleanupRequired = true;
+        }
+    }
+
     void makeMemObjUsed() {
         memObj->getGraphicsAllocation(device->getRootDeviceIndex())->updateTaskCount(taskCountReady, contextId);
     }
@@ -144,6 +151,7 @@ class MemObjAsyncDestructionTestWithMyCsr : public MemObjAsyncDestructionTest {
         EnvironmentWithCsrWrapper environment;
         environment.setCsrType<MyCsr<FamilyType>>();
         MemObjAsyncDestructionTest::SetUp();
+        forceSkipResourceCleanupOnAllEngines<FamilyType>();
     }
     template <typename FamilyType>
     void tearDownT() {
@@ -161,6 +169,7 @@ class MemObjMultiAllocationAsyncDestructionTest : public MemObjDestructionTest<t
         EnvironmentWithCsrWrapper environment;
         environment.setCsrType<MyCsr<FamilyType>>();
         MemObjDestructionTest::SetUp();
+        forceSkipResourceCleanupOnAllEngines<FamilyType>();
     }
     template <typename FamilyType>
     void tearDownT() {
@@ -179,6 +188,7 @@ class MemObjUseHostPtrAsyncDestructionTest : public MemObjDestructionTest<false,
         EnvironmentWithCsrWrapper environment;
         environment.setCsrType<MyCsr<FamilyType>>();
         MemObjDestructionTest::SetUp();
+        forceSkipResourceCleanupOnAllEngines<FamilyType>();
     }
     template <typename FamilyType>
     void tearDownT() {
@@ -208,6 +218,7 @@ class MemObjSyncDestructionTestWithMyCsr : public MemObjSyncDestructionTest {
         EnvironmentWithCsrWrapper environment;
         environment.setCsrType<MyCsr<FamilyType>>();
         MemObjSyncDestructionTest::SetUp();
+        forceSkipResourceCleanupOnAllEngines<FamilyType>();
     }
     template <typename FamilyType>
     void tearDownT() {

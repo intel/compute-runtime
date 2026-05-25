@@ -447,6 +447,37 @@ HWTEST_F(MemoryhManagerMultiContextResourceTests, givenAllocationUsedByManyOsCon
     EXPECT_TRUE(defaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
 }
 
+HWTEST_F(MemoryhManagerMultiContextResourceTests, givenTemporaryAllocationUsedByManyOsContextsWhenCleanTemporaryAllocationsThenManyOsContextUsageIsCheckedAndCompletedAllocationIsFreed) {
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), true, 2);
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+
+    auto &lowPriorityEngine = device->getEngine(device->getHardwareInfo().capabilityTable.defaultEngineType, EngineUsage::lowPriority);
+    auto nonDefaultOsContext = lowPriorityEngine.osContext;
+    auto nonDefaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(lowPriorityEngine.commandStreamReceiver);
+    auto defaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
+    auto defaultOsContext = device->getDefaultEngine().osContext;
+
+    constexpr TaskCountType taskCount = 10u;
+    *defaultCsr->getTagAddress() = taskCount;
+    *nonDefaultCsr->getTagAddress() = taskCount;
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    graphicsAllocation->setHostPtrTaskCountAssignment(0);
+    graphicsAllocation->updateTaskCount(taskCount, defaultOsContext->getContextId());
+    graphicsAllocation->updateTaskCount(taskCount, nonDefaultOsContext->getContextId());
+    EXPECT_TRUE(graphicsAllocation->isUsedByManyOsContexts());
+
+    defaultCsr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION, taskCount);
+    EXPECT_FALSE(memoryManager->getTemporaryAllocationsList().peekIsEmpty());
+
+    memoryManager->cleanTemporaryAllocations(*defaultCsr, taskCount, false);
+
+    EXPECT_TRUE(memoryManager->getTemporaryAllocationsList().peekIsEmpty());
+}
+
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReservedOnSpecifiedHeapAndFreedThenAddressFromGfxPartitionIsUsed) {
     MockExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
@@ -3627,7 +3658,7 @@ TEST(AllocationListTest, givenAllocationInListWhenFreeAllGraphicsAllocationsCall
     EXPECT_TRUE(allocList.peekIsEmpty());
 
     auto mockGfxAllocation = std::make_unique<MockGraphicsAllocation>();
-    allocList.pushFrontOne(*mockGfxAllocation.release());
+    allocList.pushTailOne(*mockGfxAllocation.release());
     EXPECT_NE(nullptr, allocList.peekHead());
     EXPECT_NE(nullptr, allocList.peekTail());
     EXPECT_FALSE(allocList.peekIsEmpty());
