@@ -2141,11 +2141,11 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithNonZeroTimeoutAn
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
-TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhenDefaultsAreUsedThenStrategyIsDisabledAndDefaultTimingsAreSet) {
-    EXPECT_EQ(0, NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get());
-    EXPECT_EQ(10000, NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.get());
-    EXPECT_EQ(1000, NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.get());
-    EXPECT_EQ(100, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
+TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhenDefaultsAreUsedThenStrategyIsEnabledAndDefaultTimingsAreSet) {
+    EXPECT_EQ(1, NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get());
+    EXPECT_EQ(5000, NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.get());
+    EXPECT_EQ(750, NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.get());
+    EXPECT_EQ(50, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
 }
 
 HWTEST_F(EventSynchronizeTest, GivenWaitControllerWhenStrategiesAndInputsAreChangedThenExpectedWaitActionsAreReturned) {
