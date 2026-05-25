@@ -94,7 +94,7 @@ struct DeviceDrmExtensionTest : public ::testing::Test {
     const uint32_t rootDeviceIndex = 0u;
 };
 
-TEST_F(DeviceDrmExtensionTest, whenGetExternalMemoryPropertiesIsCalledThenSuccessIsReturnedAndDmaBufPropertiesAreReturned) {
+TEST_F(DeviceDrmExtensionTest, whenGetExternalMemoryPropertiesIsCalledThenSuccessIsReturnedAndDmaBufAndOpaqueFdPropertiesAreReturned) {
     ze_device_external_memory_properties_t externalMemoryProperties;
 
     ze_result_t result = device->getExternalMemoryProperties(&externalMemoryProperties);
@@ -105,8 +105,10 @@ TEST_F(DeviceDrmExtensionTest, whenGetExternalMemoryPropertiesIsCalledThenSucces
     EXPECT_FALSE(externalMemoryProperties.imageImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
     EXPECT_FALSE(externalMemoryProperties.memoryAllocationExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32);
     EXPECT_TRUE(externalMemoryProperties.memoryAllocationExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
+    EXPECT_TRUE(externalMemoryProperties.memoryAllocationExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD);
     EXPECT_FALSE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32);
     EXPECT_TRUE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
+    EXPECT_TRUE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD);
 }
 
 struct DeviceExtensionTest : public ::testing::Test {
