@@ -40,13 +40,13 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenAskedForMinimialSim
     EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
 }
 
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalseRegardlessOfLocalMemory) {
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnValueDependsOnLocalMemory) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
 
     hwInfo.featureTable.flags.ftrLocalMemory = true;
-    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper));
+    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper));
 
     hwInfo.featureTable.flags.ftrLocalMemory = false;
     EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper));

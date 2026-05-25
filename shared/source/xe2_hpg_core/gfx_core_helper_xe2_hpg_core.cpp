@@ -273,14 +273,6 @@ uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe2HPG);
 }
 
-template <>
-bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
-    if (debugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
-        return debugManager.flags.ExperimentalCopyThroughLock.get() == 1;
-    }
-    return this->isLocalMemoryEnabled(hwInfo);
-}
-
 } // namespace NEO
 
 namespace NEO {
