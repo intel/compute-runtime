@@ -664,6 +664,63 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, Given2MBLocalMemAlignmentEnabledBut
     svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(globalSurface->getGpuAddress())));
 }
 
+HWTEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledBssOnlyAllocationWhenAllocatingThenWritePooledMemoryIsCalled) {
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
+
+    auto &csr = static_cast<UltCommandStreamReceiver<FamilyType> &>(*device.getDefaultEngine().commandStreamReceiver);
+    csr.writePooledMemoryCalledCount = 0;
+
+    constexpr size_t totalSize = 64u;
+    constexpr size_t zeroInitSize = totalSize;
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, nullptr));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_EQ(1u, csr.writePooledMemoryCalledCount);
+    EXPECT_EQ(globalSurface.get(), csr.latestWritePooledMemoryAllocation);
+}
+
+HWTEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledMixedInitAndBssAllocationWhenAllocatingThenWritePooledMemoryIsCalled) {
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
+
+    auto &csr = static_cast<UltCommandStreamReceiver<FamilyType> &>(*device.getDefaultEngine().commandStreamReceiver);
+    csr.writePooledMemoryCalledCount = 0;
+
+    constexpr size_t initSize = 32u;
+    constexpr size_t zeroInitSize = 32u;
+    constexpr size_t totalSize = initSize + zeroInitSize;
+    std::vector<uint8_t> initData(initSize, 7u);
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, initData.data()));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_EQ(1u, csr.writePooledMemoryCalledCount);
+    EXPECT_EQ(globalSurface.get(), csr.latestWritePooledMemoryAllocation);
+}
+
+HWTEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenNonPooledAllocationWhenAllocatingThenWritePooledMemoryIsNotCalled) {
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
+
+    auto &csr = static_cast<UltCommandStreamReceiver<FamilyType> &>(*device.getDefaultEngine().commandStreamReceiver);
+    csr.writePooledMemoryCalledCount = 0;
+
+    constexpr size_t totalSize = 64u;
+    constexpr size_t zeroInitSize = totalSize;
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, nullptr));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_FALSE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+    EXPECT_EQ(0u, csr.writePooledMemoryCalledCount);
+    svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(globalSurface->getGpuAddress())));
+}
+
 struct AllocateGlobalSurfaceWithGenericPoolTest : public ::testing::Test {
     void SetUp() override {
         device.injectMemoryManager(new MockMemoryManager());

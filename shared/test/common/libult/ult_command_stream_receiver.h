@@ -308,6 +308,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return BaseClass::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
     }
 
+    void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) override {
+        writePooledMemoryCalledCount++;
+        latestWritePooledMemoryInitFullPageTables = initFullPageTables;
+        latestWritePooledMemoryAllocation = &sharedPoolAllocation;
+        BaseClass::writePooledMemory(sharedPoolAllocation, initFullPageTables);
+    }
+
     uint32_t getPreferredTagPoolSize() const override {
         return BaseClass::getPreferredTagPoolSize() + 1;
     }
@@ -661,6 +668,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     WaitParams latestWaitForCompletionWithTimeoutWaitParams{};
     WaitUserFenceParams waitUserFenceParams;
     WriteMemoryParams writeMemoryParams;
+    uint32_t writePooledMemoryCalledCount = 0;
+    bool latestWritePooledMemoryInitFullPageTables = false;
+    SharedPoolAllocation *latestWritePooledMemoryAllocation = nullptr;
     TaskCountType flushBcsTaskReturnValue{};
 
     LinearStream *lastFlushedCommandStream = nullptr;

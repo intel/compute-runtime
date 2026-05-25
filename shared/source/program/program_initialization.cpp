@@ -155,6 +155,7 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
         auto success = MemoryTransferHelper::memsetAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *gpuAllocation),
                                                               device, gpuAllocation, allocationOffset, 0, totalSize);
         UNRECOVERABLE_IF(!success);
+        device.getDefaultEngine().commandStreamReceiver->writePooledMemory(*globalSurfaceAllocation, true);
     }
     return globalSurfaceAllocation;
 }
