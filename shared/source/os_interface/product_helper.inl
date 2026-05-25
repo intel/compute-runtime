@@ -852,11 +852,6 @@ bool ProductHelperHw<gfxProduct>::isSkippingStatefulInformationRequired(const Ke
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const {
-    return releaseHelper->isResolvingSubDeviceIDNeeded();
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const {
     return patIndex;
 }

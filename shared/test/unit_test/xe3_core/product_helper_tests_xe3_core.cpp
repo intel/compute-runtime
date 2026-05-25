@@ -71,10 +71,6 @@ XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenAdditionalKernelExecI
     EXPECT_TRUE(fePropertiesSupport.disableOverdispatch);
 }
 
-XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenisResolvingSubDeviceIDNeededCheckedThenCorrectValueIsReturned) {
-    EXPECT_TRUE(productHelper->isResolvingSubDeviceIDNeeded(releaseHelper));
-}
-
 XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
     EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
 }

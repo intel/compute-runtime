@@ -717,13 +717,12 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
 
 void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments, const KernelDescriptorsT &kernelDescriptors) {
     UNRECOVERABLE_IF(!pDevice);
-    auto &productHelper = pDevice->getProductHelper();
     auto releaseHelper = pDevice->getReleaseHelper();
 
     int vecIndex = static_cast<int>(outUnresolvedExternals.size() - 1u);
     for (; vecIndex >= 0; --vecIndex) {
         if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == subDeviceID) {
-            if (productHelper.isResolvingSubDeviceIDNeeded(releaseHelper)) {
+            if (releaseHelper->isResolvingSubDeviceIDNeeded()) {
                 RelocatedSymbol<SymbolInfo> symbol;
                 symbol.gpuAddress = static_cast<uintptr_t>(pDevice->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress());
                 auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,

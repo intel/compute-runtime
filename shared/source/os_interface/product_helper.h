@@ -237,7 +237,6 @@ class ProductHelper {
     virtual bool is48bResourceNeededForRayTracing() const = 0;
     virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const = 0;
-    virtual bool isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const = 0;
     virtual uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const = 0;
     virtual uint64_t overrideSystemMemoryPatIndex(uint64_t patIndex) const = 0;
     virtual const SupportedNumGrfs getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const = 0;
