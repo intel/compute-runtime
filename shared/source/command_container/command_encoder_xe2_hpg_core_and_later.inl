@@ -34,23 +34,23 @@ uint32_t EncodeDispatchKernel<Family>::alignPreferredSlmSize(uint32_t slmSize) {
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
+void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const uint32_t threadsPerDssCount = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
     const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
 
-    slmTotalSize = EncodeDispatchKernel<Family>::alignPreferredSlmSize(slmTotalSize);
+    slmTotalSizePerThreadGroup = EncodeDispatchKernel<Family>::alignPreferredSlmSize(slmTotalSizePerThreadGroup);
 
     uint32_t slmSize = 0u;
 
     switch (slmPolicy) {
     case SlmPolicy::slmPolicyLargeData:
-        slmSize = slmTotalSize;
+        slmSize = slmTotalSizePerThreadGroup;
         break;
     case SlmPolicy::slmPolicyLargeSlm:
     default:
-        slmSize = slmTotalSize * workGroupCountPerDss;
+        slmSize = slmTotalSizePerThreadGroup * workGroupCountPerDss;
         break;
     }
 

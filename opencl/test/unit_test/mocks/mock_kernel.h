@@ -126,7 +126,7 @@ class MockKernel : public Kernel {
     using Kernel::privateSurface;
     using Kernel::setInlineSamplers;
     using Kernel::slmSizes;
-    using Kernel::slmTotalSize;
+    using Kernel::slmTotalSizePerThreadGroup;
     using Kernel::unifiedMemoryControls;
     using Kernel::usingImages;
 
@@ -219,7 +219,7 @@ class MockKernel : public Kernel {
     }
 
     void setTotalSLMSize(uint32_t size) {
-        slmTotalSize = size;
+        slmTotalSizePerThreadGroup = size;
     }
 
     void setKernelArguments(std::vector<SimpleKernelArgInfo> kernelArguments) {

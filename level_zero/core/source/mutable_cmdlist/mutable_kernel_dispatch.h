@@ -78,7 +78,7 @@ struct KernelDispatch {
     size_t syncBufferSize = 0;
     size_t syncBufferNoopPatchIndex = undefined<size_t>;
 
-    uint32_t slmTotalSize = 0;
+    uint32_t slmTotalSizePerThreadGroup = 0;
     uint32_t slmInlineSize = 0;
     uint32_t slmPolicy = 0;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -376,7 +376,7 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
     bool totalRequiredThreadGroupsMoreThanSingleThreadGroup = totalNumberOfItems > wsInfo.simdSize * optimalWgThreadCount;
 
     // Find biggest power of two which divide each dimension size
-    if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers) {
+    if (wsInfo.slmTotalSizePerThreadGroup == 0 && !wsInfo.hasBarriers) {
         if (debugManager.flags.EnableComputeWorkSizeSquared.get() && workDim == 2 && !wsInfo.imgUsed) {
             return computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize, workDim);
         }

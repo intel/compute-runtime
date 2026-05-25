@@ -143,7 +143,7 @@ void VariableFixture::createVariableDispatch(bool useGroupCount, bool useGroupSi
     this->kernelDispatch = std::make_unique<::L0::MCL::KernelDispatch>();
     this->kernelDispatch->kernelData = kernelData;
     this->kernelDispatch->slmInlineSize = this->slmInlineSize;
-    this->kernelDispatch->slmTotalSize = this->slmInlineSize + this->slmSize;
+    this->kernelDispatch->slmTotalSizePerThreadGroup = this->slmInlineSize + this->slmSize;
     createMutableIndirectOffset();
 
     if (useGroupCount) {

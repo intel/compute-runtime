@@ -82,7 +82,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
     } else {
         maxKernelWorkGroupSize = static_cast<uint32_t>(deviceInfo.maxWorkGroupSize);
     }
-    slmTotalSize = kernelInfoArg.kernelDescriptor.kernelAttributes.slmInlineSize;
+    slmTotalSizePerThreadGroup = kernelInfoArg.kernelDescriptor.kernelAttributes.slmInlineSize;
     this->implicitArgsVersion = getDevice().getGfxCoreHelper().getImplicitArgsVersion();
     if (program->getIndirectAccessBufferVersion() > 0) {
         this->implicitArgsVersion = program->getIndirectAccessBufferVersion();
@@ -187,9 +187,9 @@ cl_int Kernel::initialize() {
     const auto &heapInfo = kernelInfo.heapInfo;
 
     auto localMemSize = static_cast<uint32_t>(clDevice.getDevice().getDeviceInfo().localMemSize);
-    auto slmTotalSize = this->getSlmTotalSize();
-    if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+    auto slmTotalSizePerThreadGroup = this->getSlmTotalSizePerThreadGroup();
+    if (slmTotalSizePerThreadGroup > 0 && localMemSize < slmTotalSizePerThreadGroup) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSizePerThreadGroup, localMemSize);
         return CL_OUT_OF_RESOURCES;
     }
 
@@ -635,7 +635,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
         break;
 
     case CL_KERNEL_LOCAL_MEM_SIZE:
-        localMemorySize = this->getSlmTotalSize();
+        localMemorySize = this->getSlmTotalSizePerThreadGroup();
         srcSize = sizeof(localMemorySize);
         pSrc = &localMemorySize;
         break;
@@ -1197,7 +1197,7 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
     auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
                                                      commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
 
-    auto usedSlmSize = helper.alignSlmSize(slmTotalSize, device.getRootDeviceEnvironment().getReleaseHelper());
+    auto usedSlmSize = helper.alignSlmSize(slmTotalSizePerThreadGroup, device.getRootDeviceEnvironment().getReleaseHelper());
 
     bool platformImplicitScaling = helper.platformSupportsImplicitScaling(device.getRootDeviceEnvironment());
     bool isImplicitScalingEnabled = ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), platformImplicitScaling);
@@ -1540,7 +1540,7 @@ cl_int Kernel::setArgLocal(uint32_t argIndexIn,
         ++argIndex;
     }
 
-    slmTotalSize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize + alignUp(slmOffset, MemoryConstants::kiloByte);
+    slmTotalSizePerThreadGroup = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize + alignUp(slmOffset, MemoryConstants::kiloByte);
 
     return CL_SUCCESS;
 }
@@ -2215,8 +2215,8 @@ uint32_t Kernel::getMaxKernelWorkGroupSize() const {
     return maxKernelWorkGroupSize;
 }
 
-uint32_t Kernel::getSlmTotalSize() const {
-    return slmTotalSize;
+uint32_t Kernel::getSlmTotalSizePerThreadGroup() const {
+    return slmTotalSizePerThreadGroup;
 }
 
 bool Kernel::areMultipleSubDevicesInContext() const {

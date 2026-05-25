@@ -179,7 +179,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     memcpy(&slmVariablePatchValue, slmPatchFullAddress, sizeof(uint32_t));
     EXPECT_EQ(static_cast<uint32_t>(slm1arg1), slmVariablePatchValue);
 
-    EXPECT_EQ(alignUp(slm1arg1 + slm1arg2, MemoryConstants::kiloByte), static_cast<size_t>(kernelDispatch->slmTotalSize));
+    EXPECT_EQ(alignUp(slm1arg1 + slm1arg2, MemoryConstants::kiloByte), static_cast<size_t>(kernelDispatch->slmTotalSizePerThreadGroup));
 
     ze_mutable_kernel_argument_exp_desc_t kernelBufferArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
     ze_mutable_kernel_argument_exp_desc_t kernelValueArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -246,7 +246,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     memcpy(&slmVariablePatchValue, slmPatchFullAddress, sizeof(uint32_t));
     EXPECT_EQ(static_cast<uint32_t>(slm2arg1), slmVariablePatchValue);
 
-    EXPECT_EQ(alignUp(slm2arg1 + slm2arg2, MemoryConstants::kiloByte), static_cast<size_t>(kernelDispatch->slmTotalSize));
+    EXPECT_EQ(alignUp(slm2arg1 + slm2arg2, MemoryConstants::kiloByte), static_cast<size_t>(kernelDispatch->slmTotalSizePerThreadGroup));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

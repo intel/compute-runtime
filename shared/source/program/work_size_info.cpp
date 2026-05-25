@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,11 @@
 
 namespace NEO {
 
-WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion) {
+WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSizePerThreadGroup, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion) {
     this->maxWorkGroupSize = maxWorkGroupSize;
     this->hasBarriers = hasBarriers;
     this->simdSize = simdSize;
-    this->slmTotalSize = slmTotalSize;
+    this->slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup;
     this->coreFamily = rootDeviceEnvironment.getHardwareInfo()->platform.eRenderCoreFamily;
     this->numThreadsPerSubSlice = numThreadsPerSubSlice;
     this->localMemSize = localMemSize;
@@ -47,12 +47,12 @@ void WorkSizeInfo::setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEn
         uint32_t maxBarriersPerHSlice = 32;
         minWorkGroupSize = numThreadsPerSubSlice * simdSize / maxBarriersPerHSlice;
     }
-    if (slmTotalSize > 0) {
-        if (localMemSize < slmTotalSize) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+    if (slmTotalSizePerThreadGroup > 0) {
+        if (localMemSize < slmTotalSizePerThreadGroup) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSizePerThreadGroup, localMemSize);
         }
-        UNRECOVERABLE_IF(localMemSize < slmTotalSize);
-        minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSize)), minWorkGroupSize);
+        UNRECOVERABLE_IF(localMemSize < slmTotalSizePerThreadGroup);
+        minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSizePerThreadGroup)), minWorkGroupSize);
     }
 
     const auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
@@ -62,7 +62,7 @@ void WorkSizeInfo::setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEn
 }
 
 void WorkSizeInfo::checkRatio(const size_t workItems[3]) {
-    if (slmTotalSize > 0) {
+    if (slmTotalSizePerThreadGroup > 0) {
         useRatio = true;
         targetRatio = log((float)workItems[0]) - log((float)workItems[1]);
         useStrictRatio = false;

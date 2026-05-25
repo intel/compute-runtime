@@ -57,7 +57,7 @@ struct MutableHwCommandFixture : public DeviceFixture {
             grfCount,
             threadsPerThreadGroup,
             totalWorkGroupSize,
-            slmTotalSize,
+            slmTotalSizePerThreadGroup,
             0,
             1,
             NEO::RequiredPartitionDim::none,
@@ -83,7 +83,7 @@ struct MutableHwCommandFixture : public DeviceFixture {
     uint32_t simdSize = 32;
     uint32_t threadsPerThreadGroup = 2;
     uint32_t totalWorkGroupSize = threadsPerThreadGroup * simdSize;
-    uint32_t slmTotalSize = 0;
+    uint32_t slmTotalSizePerThreadGroup = 0;
 
     uint8_t indirectOffset = 0;
     uint8_t scratchOffset = 8;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 namespace NEO {
 
 bool DispatchInfo::usesSlm() const {
-    return (kernel == nullptr) ? false : kernel->getSlmTotalSize() > 0;
+    return (kernel == nullptr) ? false : kernel->getSlmTotalSizePerThreadGroup() > 0;
 }
 
 bool DispatchInfo::usesStatelessPrintfSurface() const {

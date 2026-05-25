@@ -30,9 +30,9 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenOverrideSlmTotalSizeDebugVari
     DebugManagerStateRestore restorer;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    uint32_t slmTotalSize = 0;
+    uint32_t slmTotalSizePerThreadGroup = 0;
 
-    dispatchInterface->getSlmTotalSizeResult = slmTotalSize;
+    dispatchInterface->getSlmTotalSizePerThreadGroupResult = slmTotalSizePerThreadGroup;
 
     bool requiresUncachedMocs = false;
 

@@ -144,7 +144,7 @@ struct KernelImp : Kernel {
     const uint32_t *getGroupSize() const override {
         return privateState.groupSize;
     }
-    uint32_t getSlmTotalSize() const override;
+    uint32_t getSlmTotalSizePerThreadGroup() const override;
 
     NEO::SlmPolicy getSlmPolicy() const override {
         if (privateState.cacheConfigFlags & ZE_CACHE_CONFIG_FLAG_LARGE_SLM) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
         pKernel->setKernelArgHandler(0, &Kernel::setArgBuffer);
 
-        pKernel->slmTotalSize = 128;
+        pKernel->slmTotalSizePerThreadGroup = 128;
         pKernel->isBuiltIn = true;
     }
 

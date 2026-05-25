@@ -349,7 +349,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     bool isLocalWorkSize2Patchable();
 
     uint32_t getMaxKernelWorkGroupSize() const;
-    uint32_t getSlmTotalSize() const;
+    uint32_t getSlmTotalSizePerThreadGroup() const;
     bool getHasIndirectAccess() const {
         return this->kernelHasIndirectAccess;
     }
@@ -456,7 +456,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     uint32_t imageFromBufferArgsCount = 0;
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::disableOverdispatch;
     uint32_t maxKernelWorkGroupSize = 0;
-    uint32_t slmTotalSize = 0u;
+    uint32_t slmTotalSizePerThreadGroup = 0u;
     uint32_t sshLocalSize = 0u;
     uint32_t crossThreadDataSize = 0u;
     uint32_t implicitArgsVersion = 0;

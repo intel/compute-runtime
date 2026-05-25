@@ -505,7 +505,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     this->stageCommit = true;
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
 
-    this->slmTotalSize = 4 * MemoryConstants::kiloByte;
+    this->slmTotalSizePerThreadGroup = 4 * MemoryConstants::kiloByte;
     auto walkerArgs = createMutableWalkerSpecificFieldsArguments();
     walkerArgs.isSlmKernel = true;
     walkerArgs.updateSlm = true;
@@ -515,7 +515,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     NEO::EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&controlIdd,
                                                                  neoDevice->getRootDeviceEnvironment(),
                                                                  walkerArgs.threadsPerThreadGroup,
-                                                                 walkerArgs.slmTotalSize,
+                                                                 walkerArgs.slmTotalSizePerThreadGroup,
                                                                  static_cast<NEO::SlmPolicy>(walkerArgs.slmPolicy));
 
     fillWalkerFields<WalkerType>(this->cmdBufferCpuPtr);
@@ -549,7 +549,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     this->stageCommit = true;
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
 
-    this->slmTotalSize = 4 * MemoryConstants::kiloByte;
+    this->slmTotalSizePerThreadGroup = 4 * MemoryConstants::kiloByte;
     auto walkerArgs = createMutableWalkerSpecificFieldsArguments();
     walkerArgs.isSlmKernel = true;
     walkerArgs.updateSlm = false;

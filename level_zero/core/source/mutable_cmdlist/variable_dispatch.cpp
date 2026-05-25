@@ -87,9 +87,9 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
     Variable *calcVar = groupSizeVar != nullptr ? groupSizeVar : lastSlmArgumentVar != nullptr ? lastSlmArgumentVar
                                                                                                : nullptr;
 
-    this->slmTotalSize = kernelDispatch->slmTotalSize;
-    if (calcVar != nullptr && this->isCooperative && this->slmTotalSize > 0) {
-        this->alignedSlmSize = calcVar->getAlignedSlmSize(this->slmTotalSize);
+    this->slmTotalSizePerThreadGroup = kernelDispatch->slmTotalSizePerThreadGroup;
+    if (calcVar != nullptr && this->isCooperative && this->slmTotalSizePerThreadGroup > 0) {
+        this->alignedSlmSize = calcVar->getAlignedSlmSize(this->slmTotalSizePerThreadGroup);
     }
 
     if (calcVar != nullptr && this->isCooperative) {
@@ -197,7 +197,7 @@ void VariableDispatch::setGroupSize(const MaxChannelsCArray groupSize, NEO::Devi
         .grfCount = kernelDispatch->kernelData->grfCount,
         .threadsPerThreadGroup = this->numThreadsPerThreadGroup,
         .totalWorkGroupSize = static_cast<uint32_t>(this->totalLwsSize),
-        .slmTotalSize = this->slmTotalSize,
+        .slmTotalSizePerThreadGroup = this->slmTotalSizePerThreadGroup,
         .slmPolicy = kernelDispatch->slmPolicy,
         .partitionCount = this->partitionCount,
         .requiredPartitionDim = this->requiredPartitionDim,
@@ -283,7 +283,7 @@ void VariableDispatch::setGroupCount(const MaxChannelsCArray groupCount, const N
         .grfCount = kernelDispatch->kernelData->grfCount,
         .threadsPerThreadGroup = this->numThreadsPerThreadGroup,
         .totalWorkGroupSize = static_cast<uint32_t>(this->totalLwsSize),
-        .slmTotalSize = this->slmTotalSize,
+        .slmTotalSizePerThreadGroup = this->slmTotalSizePerThreadGroup,
         .slmPolicy = kernelDispatch->slmPolicy,
         .partitionCount = this->partitionCount,
         .requiredPartitionDim = this->requiredPartitionDim,
@@ -385,9 +385,9 @@ Variable *VariableDispatch::getLastSlmArgumentVariable() const { return lastSlmA
 const MutableIndirectData::Offsets &VariableDispatch::getIndirectDataOffsets() const { return indirectData->getIndirectDataOffsets(); }
 
 void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &device, bool stageData) {
-    this->slmTotalSize = slmArgTotalSize + kernelDispatch->slmInlineSize;
+    this->slmTotalSizePerThreadGroup = slmArgTotalSize + kernelDispatch->slmInlineSize;
     if (this->isCooperative) {
-        this->alignedSlmSize = device.getGfxCoreHelper().alignSlmSize(this->slmTotalSize, device.getRootDeviceEnvironment().getReleaseHelper());
+        this->alignedSlmSize = device.getGfxCoreHelper().alignSlmSize(this->slmTotalSizePerThreadGroup, device.getRootDeviceEnvironment().getReleaseHelper());
     }
 
     if (this->isCooperative) {
@@ -410,8 +410,8 @@ void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &d
         return;
     }
 
-    mutableCommandWalker->updateSlmSize(device, this->slmTotalSize);
-    kernelDispatch->slmTotalSize = this->slmTotalSize;
+    mutableCommandWalker->updateSlmSize(device, this->slmTotalSizePerThreadGroup);
+    kernelDispatch->slmTotalSizePerThreadGroup = this->slmTotalSizePerThreadGroup;
 
     // preferred slm size
     constexpr bool updateGroupCount = false;
@@ -424,7 +424,7 @@ void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &d
         .grfCount = kernelDispatch->kernelData->grfCount,
         .threadsPerThreadGroup = this->numThreadsPerThreadGroup,
         .totalWorkGroupSize = static_cast<uint32_t>(this->totalLwsSize),
-        .slmTotalSize = this->slmTotalSize,
+        .slmTotalSizePerThreadGroup = this->slmTotalSizePerThreadGroup,
         .slmPolicy = kernelDispatch->slmPolicy,
         .partitionCount = this->partitionCount,
         .requiredPartitionDim = this->requiredPartitionDim,
@@ -477,8 +477,8 @@ void VariableDispatch::commitChanges(const NEO::Device &device) {
     }
 
     if (this->commitSlmSize) {
-        mutableCommandWalker->updateSlmSize(device, this->slmTotalSize);
-        kernelDispatch->slmTotalSize = this->slmTotalSize;
+        mutableCommandWalker->updateSlmSize(device, this->slmTotalSizePerThreadGroup);
+        kernelDispatch->slmTotalSizePerThreadGroup = this->slmTotalSizePerThreadGroup;
     }
 
     MutableWalkerSpecificFieldsArguments args{
@@ -488,7 +488,7 @@ void VariableDispatch::commitChanges(const NEO::Device &device) {
         .grfCount = kernelDispatch->kernelData->grfCount,
         .threadsPerThreadGroup = this->numThreadsPerThreadGroup,
         .totalWorkGroupSize = static_cast<uint32_t>(this->totalLwsSize),
-        .slmTotalSize = this->slmTotalSize,
+        .slmTotalSizePerThreadGroup = this->slmTotalSizePerThreadGroup,
         .slmPolicy = kernelDispatch->slmPolicy,
         .partitionCount = this->partitionCount,
         .requiredPartitionDim = this->requiredPartitionDim,

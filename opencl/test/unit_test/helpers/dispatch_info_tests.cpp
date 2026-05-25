@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
-        pKernel->slmTotalSize = 128;
+        pKernel->slmTotalSizePerThreadGroup = 128;
     }
     void tearDown() {
         delete pKernel;

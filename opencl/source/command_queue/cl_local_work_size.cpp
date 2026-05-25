@@ -91,7 +91,7 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
     WorkSizeInfo wsInfo(dispatchInfo.getKernel()->getMaxKernelWorkGroupSize(),
                         kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers(),
                         static_cast<uint32_t>(kernelInfo.getMaxSimdSize()),
-                        static_cast<uint32_t>(dispatchInfo.getKernel()->getSlmTotalSize()),
+                        static_cast<uint32_t>(dispatchInfo.getKernel()->getSlmTotalSizePerThreadGroup()),
                         device.getRootDeviceEnvironment(),
                         numThreadsPerSubSlice,
                         static_cast<uint32_t>(device.getSharedDeviceInfo().localMemSize),

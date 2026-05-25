@@ -23,7 +23,7 @@ struct MutableWalkerSpecificFieldsArguments {
     const uint32_t grfCount;
     const uint32_t threadsPerThreadGroup;
     const uint32_t totalWorkGroupSize;
-    uint32_t slmTotalSize;
+    uint32_t slmTotalSizePerThreadGroup;
     uint32_t slmPolicy;
     uint32_t partitionCount;
     NEO::RequiredPartitionDim requiredPartitionDim;
@@ -59,7 +59,7 @@ struct MutableComputeWalker {
     virtual void updateSpecificFields(const NEO::Device &device,
                                       MutableWalkerSpecificFieldsArguments &args) = 0;
 
-    virtual void updateSlmSize(const NEO::Device &device, uint32_t slmTotalSize) = 0;
+    virtual void updateSlmSize(const NEO::Device &device, uint32_t slmTotalSizePerThreadGroup) = 0;
 
     virtual void *getInlineDataPointer() const = 0;
     virtual size_t getInlineDataOffset() const = 0;

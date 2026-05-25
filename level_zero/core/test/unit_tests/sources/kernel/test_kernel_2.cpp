@@ -372,7 +372,7 @@ TEST_F(KernelImpTest, WhenSuggestingGroupSizeThenCacheValues) {
     auto &suggestGroupSizeCache = kernel.privateState.suggestGroupSizeCache;
 
     EXPECT_EQ(suggestGroupSizeCache.size(), 0u);
-    EXPECT_EQ(kernel.getSlmTotalSize(), 0u);
+    EXPECT_EQ(kernel.getSlmTotalSizePerThreadGroup(), 0u);
 
     uint32_t groupSize[3];
     kernel.KernelImp::suggestGroupSize(256, 1, 1, groupSize, groupSize + 1, groupSize + 2);

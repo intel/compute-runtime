@@ -46,14 +46,14 @@ void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> va
         for (auto &valueToTest : valuesToTest) {
             for (auto slmPolicy : slmPolicies) {
                 auto threadsPerThreadGroup = threadsPerDssCount / localWorkGroupsPerDssCount;
-                auto slmTotalSize = (slmPolicy == NEO::SlmPolicy::slmPolicyLargeData)
-                                        ? valueToTest.preferredSlmAllocationSizePerDss
-                                        : valueToTest.preferredSlmAllocationSizePerDss / localWorkGroupsPerDssCount;
+                auto slmTotalSizePerThreadGroup = (slmPolicy == NEO::SlmPolicy::slmPolicyLargeData)
+                                                      ? valueToTest.preferredSlmAllocationSizePerDss
+                                                      : valueToTest.preferredSlmAllocationSizePerDss / localWorkGroupsPerDssCount;
 
                 NEO::EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd,
                                                                              rootDeviceEnvironment,
                                                                              threadsPerThreadGroup,
-                                                                             slmTotalSize,
+                                                                             slmTotalSizePerThreadGroup,
                                                                              slmPolicy);
 
                 EXPECT_EQ(valueToTest.expectedValueInIdd, idd.getPreferredSlmAllocationSize());

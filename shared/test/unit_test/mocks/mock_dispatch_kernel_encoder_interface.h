@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
 
     ADDMETHOD_CONST_NOBASE(getKernelDescriptor, const KernelDescriptor &, kernelDescriptor, ());
     ADDMETHOD_CONST_NOBASE(getGroupSize, const uint32_t *, groupSizes, ());
-    ADDMETHOD_CONST_NOBASE(getSlmTotalSize, uint32_t, 0u, ());
+    ADDMETHOD_CONST_NOBASE(getSlmTotalSizePerThreadGroup, uint32_t, 0u, ());
     ADDMETHOD_CONST_NOBASE(getCrossThreadData, const uint8_t *, dataCrossThread, ());
     ADDMETHOD_CONST_NOBASE(getCrossThreadDataSize, uint32_t, crossThreadSize, ());
     ADDMETHOD_CONST_NOBASE(getThreadExecutionMask, uint32_t, 0u, ());

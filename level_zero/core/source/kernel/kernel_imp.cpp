@@ -583,7 +583,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
                                         this->privateState.suggestGroupSizeCache.end(),
                                         [&](const auto &other) {
                                             return other.groupSize == workItems &&
-                                                   other.slmArgsTotalSize == this->getSlmTotalSize();
+                                                   other.slmArgsTotalSize == this->getSlmTotalSizePerThreadGroup();
                                         });
     if (cachedGroupSize != this->privateState.suggestGroupSizeCache.end()) {
         *groupSizeX = static_cast<uint32_t>(cachedGroupSize->suggestedGroupSize.x);
@@ -599,17 +599,17 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         uint32_t numThreadsPerSubSlice = (uint32_t)deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU;
         uint32_t localMemSize = (uint32_t)deviceInfo.localMemSize;
 
-        if (this->getSlmTotalSize() > 0 && localMemSize < this->getSlmTotalSize()) {
+        if (this->getSlmTotalSizePerThreadGroup() > 0 && localMemSize < this->getSlmTotalSizePerThreadGroup()) {
             const auto device = module->getDevice();
             const auto driverHandle = device->getDriverHandle();
 
-            CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
+            CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSizePerThreadGroup(), localMemSize);
             driverHandle->setErrorDescription(std::string(str.get()));
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSizePerThreadGroup(), localMemSize);
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
 
-        NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelDescriptor.kernelAttributes.usesBarriers(), simd, this->getSlmTotalSize(),
+        NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelDescriptor.kernelAttributes.usesBarriers(), simd, this->getSlmTotalSizePerThreadGroup(),
                                  neoDevice->getRootDeviceEnvironment(), numThreadsPerSubSlice, localMemSize,
                                  usesImages, false, kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion);
         NEO::computeWorkgroupSizeND(wsInfo, retGroupSize, workItems, dim);
@@ -625,7 +625,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
     *groupSizeX = static_cast<uint32_t>(retGroupSize[0]);
     *groupSizeY = static_cast<uint32_t>(retGroupSize[1]);
     *groupSizeZ = static_cast<uint32_t>(retGroupSize[2]);
-    this->privateState.suggestGroupSizeCache.emplace_back(workItems, this->getSlmTotalSize(), retGroupSize);
+    this->privateState.suggestGroupSizeCache.emplace_back(workItems, this->getSlmTotalSizePerThreadGroup(), retGroupSize);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1090,7 +1090,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
     pKernelProperties->requiredNumSubGroups = kernelDescriptor.kernelMetadata.compiledSubGroupsNumber;
     pKernelProperties->requiredSubgroupSize = kernelDescriptor.kernelMetadata.requiredSubGroupSize;
     pKernelProperties->maxSubgroupSize = kernelDescriptor.kernelAttributes.simdSize;
-    pKernelProperties->localMemSize = this->getSlmTotalSize();
+    pKernelProperties->localMemSize = this->getSlmTotalSizePerThreadGroup();
     pKernelProperties->privateMemSize = gfxCoreHelper.getKernelPrivateMemSize(kernelDescriptor);
     pKernelProperties->spillMemSize = kernelDescriptor.kernelAttributes.spillFillScratchMemorySize;
     memset(pKernelProperties->uuid.kid, 0, ZE_MAX_KERNEL_UUID_SIZE);
@@ -1525,7 +1525,7 @@ bool KernelImp::hasIndirectAllocationsAllowed() const {
                                          privateState.unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
-uint32_t KernelImp::getSlmTotalSize() const {
+uint32_t KernelImp::getSlmTotalSizePerThreadGroup() const {
     return privateState.slmArgsTotalSize + getImmutableData()->getDescriptor().kernelAttributes.slmInlineSize;
 }
 

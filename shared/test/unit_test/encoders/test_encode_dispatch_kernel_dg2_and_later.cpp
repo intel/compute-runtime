@@ -168,9 +168,9 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocatio
     debugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(5);
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    uint32_t slmTotalSize = 1;
+    uint32_t slmTotalSizePerThreadGroup = 1;
 
-    dispatchInterface->getSlmTotalSizeResult = slmTotalSize;
+    dispatchInterface->getSlmTotalSizePerThreadGroupResult = slmTotalSizePerThreadGroup;
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);

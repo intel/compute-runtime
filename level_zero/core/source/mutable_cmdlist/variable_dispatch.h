@@ -105,7 +105,7 @@ struct VariableDispatch {
     uint32_t threadExecutionMask;
     uint32_t threadGroupCount = 1;
     uint32_t maxCooperativeGroupCount = 0;
-    uint32_t slmTotalSize = 0;
+    uint32_t slmTotalSizePerThreadGroup = 0;
     uint32_t alignedSlmSize = 0;
 
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;

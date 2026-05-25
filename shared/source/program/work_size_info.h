@@ -20,7 +20,7 @@ struct WorkSizeInfo {
     uint32_t minWorkGroupSize;
     bool hasBarriers;
     uint32_t simdSize;
-    uint32_t slmTotalSize;
+    uint32_t slmTotalSizePerThreadGroup;
     GFXCORE_FAMILY coreFamily;
     uint32_t numThreadsPerSubSlice;
     uint32_t localMemSize;
@@ -31,7 +31,7 @@ struct WorkSizeInfo {
     float targetRatio = 0;
     uint32_t preferredWgCountPerSubSlice = 0;
 
-    WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion);
+    WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSizePerThreadGroup, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion);
 
     void setIfUseImg(const KernelInfo &kernelInfo);
     void setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEnvironment, bool disableEUFusion);

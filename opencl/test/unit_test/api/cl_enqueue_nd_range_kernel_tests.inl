@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,7 +92,7 @@ TEST_F(ClEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 
     output = capture.getCapturedStderr();
-    const auto &slmInlineSize = pKernel->getSlmTotalSize();
+    const auto &slmInlineSize = pKernel->getSlmTotalSizePerThreadGroup();
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_EQ(expectedOutput, output);
 }

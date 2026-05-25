@@ -156,14 +156,14 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     //  # of threads in thread group should be based on LWS.
     interfaceDescriptor.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
 
-    auto slmTotalSize = kernel.getSlmTotalSize();
+    auto slmTotalSizePerThreadGroup = kernel.getSlmTotalSizePerThreadGroup();
     const auto &kernelDescriptor = kernel.getKernelInfo().kernelDescriptor;
 
     EncodeDispatchKernel<GfxFamily>::setGrfInfo(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                                 sizeCrossThreadData, sizePerThreadData, device.getRootDeviceEnvironment());
 
     EncodeDispatchKernel<GfxFamily>::setupPreferredSlmSize(&interfaceDescriptor, device.getRootDeviceEnvironment(),
-                                                           threadsPerThreadGroup, slmTotalSize, SlmPolicy::slmPolicyNone);
+                                                           threadsPerThreadGroup, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
 
     if constexpr (heaplessModeEnabled == false) {
         interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
@@ -179,7 +179,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     const auto &hardwareInfo = device.getHardwareInfo();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
 
-    EncodeDispatchKernel<GfxFamily>::setupProgrammableSlmSize(&interfaceDescriptor, device.getRootDeviceEnvironment(), slmTotalSize, heaplessModeEnabled);
+    EncodeDispatchKernel<GfxFamily>::setupProgrammableSlmSize(&interfaceDescriptor, device.getRootDeviceEnvironment(), slmTotalSizePerThreadGroup, heaplessModeEnabled);
 
     EncodeDispatchKernel<GfxFamily>::programBarrierEnable(interfaceDescriptor,
                                                           kernelDescriptor,

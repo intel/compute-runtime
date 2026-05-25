@@ -2844,7 +2844,7 @@ TEST_F(KernelCrossThreadTests, GivenSlmStatisSizeWhenCreatingKernelThenSlmTotalS
 
     MockKernel *kernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
 
-    EXPECT_EQ(1024u, kernel->slmTotalSize);
+    EXPECT_EQ(1024u, kernel->slmTotalSizePerThreadGroup);
 
     delete kernel;
 }
@@ -3671,7 +3671,7 @@ class KernelCreateTest : public ::testing::Test {
     struct MockKernel {
         MockKernel(MockProgram *, const KernelInfo &, ClDevice &) {}
         int initialize() { return -1; };
-        uint32_t getSlmTotalSize() const { return 0u; };
+        uint32_t getSlmTotalSizePerThreadGroup() const { return 0u; };
     };
 
     MockProgram mockProgram{};
@@ -3702,8 +3702,8 @@ TEST(KernelInitializationTest, givenSlmSizeExceedingLocalMemorySizeWhenInitializ
     MockKernelInfo mockKernelInfoExceedsSLM{};
     mockKernelInfoExceedsSLM.kernelDescriptor.kernelAttributes.simdSize = 1u;
 
-    auto slmTotalSize = deviceLocalMemSize + 10u;
-    mockKernelInfoExceedsSLM.kernelDescriptor.kernelAttributes.slmInlineSize = slmTotalSize;
+    auto slmTotalSizePerThreadGroup = deviceLocalMemSize + 10u;
+    mockKernelInfoExceedsSLM.kernelDescriptor.kernelAttributes.slmInlineSize = slmTotalSizePerThreadGroup;
     auto localMemSize = static_cast<uint32_t>(clDevice->getDevice().getDeviceInfo().localMemSize);
 
     std::string output = capture.getCapturedStderr();
@@ -3715,7 +3715,7 @@ TEST(KernelInitializationTest, givenSlmSizeExceedingLocalMemorySizeWhenInitializ
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 
     output = capture.getCapturedStderr();
-    std::string expectedOutput = "Size of SLM (" + std::to_string(slmTotalSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
+    std::string expectedOutput = "Size of SLM (" + std::to_string(slmTotalSizePerThreadGroup) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_EQ(expectedOutput, output);
 }
 

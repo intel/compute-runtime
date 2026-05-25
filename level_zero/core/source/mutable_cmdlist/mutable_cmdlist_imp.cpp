@@ -313,8 +313,8 @@ ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, Mut
     dispatch.offsets.walkerCmdOffset = walkerCmdOffset;
     dispatch.kernelData = kernelData;
     dispatch.walkerCmd = walkerCmd;
-    if (kernel->getSlmTotalSize() > 0) {
-        dispatch.slmTotalSize = kernel->getSlmTotalSize();
+    if (kernel->getSlmTotalSizePerThreadGroup() > 0) {
+        dispatch.slmTotalSizePerThreadGroup = kernel->getSlmTotalSizePerThreadGroup();
         dispatch.slmInlineSize = kernelDescriptor.kernelAttributes.slmInlineSize;
     }
     dispatch.slmPolicy = static_cast<uint32_t>(kernel->getSlmPolicy());

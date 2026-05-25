@@ -836,7 +836,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(slmSize, slmArgument->desc.slmValue.slmSize);
 
     slmArgument->commitVariable();
-    EXPECT_EQ(slmSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(slmSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
     EXPECT_FALSE(slmArgument->desc.commitRequired);
 
     ret = slmArgument->setValue(slmSize, 0, nullptr);
@@ -863,7 +863,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_FALSE(slmArgument->desc.commitRequired);
     EXPECT_EQ(slmSize, slmArgument->desc.slmValue.slmSize);
-    EXPECT_EQ(slmSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(slmSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -887,7 +887,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(slmSize, slmArgument->desc.slmValue.slmSize);
 
     slmArgument->commitVariable();
-    EXPECT_EQ(expectedSlmSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(expectedSlmSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
     EXPECT_FALSE(slmArgument->desc.commitRequired);
 
     slmSize = 2;
@@ -897,7 +897,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(slmSize, slmArgument->desc.slmValue.slmSize);
 
     slmArgument->commitVariable();
-    EXPECT_EQ(expectedSlmSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(expectedSlmSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -917,7 +917,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     slmArgument->commitVariable();
-    EXPECT_EQ(slmSize + this->slmInlineSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(slmSize + this->slmInlineSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -950,7 +950,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(slmLastArgument->desc.commitRequired);
 
     slmLastArgument->commitVariable();
-    EXPECT_EQ(slmFirstSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(slmFirstSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
 
     ret = slmLastArgument->setValue(slmSecondSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -962,7 +962,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(slmLastArgument->desc.commitRequired);
 
     slmLastArgument->commitVariable();
-    EXPECT_EQ(slmFirstSize + slmSecondSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(slmFirstSize + slmSecondSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
 
     auto slmNextValue = slmFirstSize + 1;
     ret = slmFirstArgument->setValue(slmNextValue, 0, nullptr);
@@ -1009,7 +1009,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(slmLastArgument->desc.commitRequired);
 
     slmLastArgument->commitVariable();
-    EXPECT_EQ(slmSecondSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(slmSecondSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
 
     ret = slmFirstArgument->setValue(slmFirstSize, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -1022,7 +1022,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(slmLastArgument->desc.commitRequired);
 
     slmLastArgument->commitVariable();
-    EXPECT_EQ(slmFirstSize + slmSecondSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(slmFirstSize + slmSecondSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1069,7 +1069,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(slmLastArgument->desc.commitRequired);
 
     slmLastArgument->commitVariable();
-    EXPECT_EQ(slmFirstSize + slmSecondSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(slmFirstSize + slmSecondSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1117,7 +1117,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(slmLastArgument->desc.commitRequired);
 
     slmLastArgument->commitVariable();
-    EXPECT_EQ(slmFirstSize + slmSecondSize, this->kernelDispatch->slmTotalSize);
+    EXPECT_EQ(slmFirstSize + slmSecondSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

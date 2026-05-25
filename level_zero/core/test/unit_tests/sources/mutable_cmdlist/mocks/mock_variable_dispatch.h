@@ -55,7 +55,7 @@ struct WhiteBox<::L0::MCL::VariableDispatch>
     using BaseClass::requiresLocalIdGeneration;
     using BaseClass::setGws;
     using BaseClass::setWorkDim;
-    using BaseClass::slmTotalSize;
+    using BaseClass::slmTotalSizePerThreadGroup;
     using BaseClass::syncBufferOffset;
     using BaseClass::threadExecutionMask;
     using BaseClass::threadGroupCount;

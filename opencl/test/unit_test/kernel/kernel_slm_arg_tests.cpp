@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,7 +86,7 @@ TEST_F(KernelSlmArgTest, WhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
         slmOffset = ptrOffset(crossThreadData, 0x30);
         EXPECT_EQ(0x200u, *slmOffset);
 
-        EXPECT_EQ(4 * MemoryConstants::kiloByte, pKernel[rootDeviceIndex]->slmTotalSize);
+        EXPECT_EQ(4 * MemoryConstants::kiloByte, pKernel[rootDeviceIndex]->slmTotalSizePerThreadGroup);
     }
 }
 
@@ -105,6 +105,6 @@ TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSl
         slmOffset = ptrOffset(crossThreadData, 0x30);
         EXPECT_EQ(0x200u, *slmOffset);
 
-        EXPECT_EQ(4 * MemoryConstants::kiloByte, pKernel[rootDeviceIndex]->slmTotalSize);
+        EXPECT_EQ(4 * MemoryConstants::kiloByte, pKernel[rootDeviceIndex]->slmTotalSizePerThreadGroup);
     }
 }

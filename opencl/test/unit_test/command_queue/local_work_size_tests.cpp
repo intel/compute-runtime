@@ -35,7 +35,7 @@ TEST_F(LocalWorkSizeTest, givenDisableEUFusionWhenCreatingWorkSizeInfoThenCorrec
     WorkSizeInfo wsInfo(256,                   // maxWorkGroupSize
                         1u,                    // hasBariers
                         simdSize,              // simdSize
-                        0u,                    // slmTotalSize
+                        0u,                    // slmTotalSizePerThreadGroup
                         rootDeviceEnvironment, // rootDeviceEnvironment
                         numThreadsPerSubS,     // numThreadsPerSubS
                         0u,                    // localMemorySize
@@ -61,7 +61,7 @@ TEST_F(LocalWorkSizeTest, GivenSlmLargerThanLocalThenWarningIsReturned) {
     EXPECT_THROW(WorkSizeInfo wsInfo(256,                   // maxWorkGroupSize
                                      1u,                    // hasBariers
                                      8,                     // simdSize
-                                     128u,                  // slmTotalSize
+                                     128u,                  // slmTotalSizePerThreadGroup
                                      rootDeviceEnvironment, // rootDeviceEnvironment
                                      32u,                   // numThreadsPerSubSlice
                                      64u,                   // localMemorySize
@@ -84,7 +84,7 @@ TEST_F(LocalWorkSizeTest, GivenSlmSmallerThanLocalThenWarningIsNotReturned) {
     WorkSizeInfo wsInfo(256,                   // maxWorkGroupSize
                         1u,                    // hasBariers
                         8,                     // simdSize
-                        64u,                   // slmTotalSize
+                        64u,                   // slmTotalSizePerThreadGroup
                         rootDeviceEnvironment, // rootDeviceEnvironment
                         32u,                   // numThreadsPerSubSlice
                         128u,                  // localMemorySize
@@ -104,7 +104,7 @@ TEST_F(LocalWorkSizeTest, whenSettingHasBarriersWithNoFusedDispatchThenMinWorkGr
     WorkSizeInfo wsInfo0(256,                   // maxWorkGroupSize
                          0u,                    // hasBariers
                          8,                     // simdSize
-                         0u,                    // slmTotalSize
+                         0u,                    // slmTotalSizePerThreadGroup
                          rootDeviceEnvironment, // rootDeviceEnvironment
                          32u,                   // numThreadsPerSubSlice
                          128u,                  // localMemorySize
@@ -117,7 +117,7 @@ TEST_F(LocalWorkSizeTest, whenSettingHasBarriersWithNoFusedDispatchThenMinWorkGr
     WorkSizeInfo wsInfo1(256,                   // maxWorkGroupSize
                          1u,                    // hasBariers
                          8,                     // simdSize
-                         0u,                    // slmTotalSize
+                         0u,                    // slmTotalSizePerThreadGroup
                          rootDeviceEnvironment, // rootDeviceEnvironment
                          32u,                   // numThreadsPerSubSlice
                          128u,                  // localMemorySize
@@ -132,7 +132,7 @@ TEST_F(LocalWorkSizeTest, given3DimWorkGroupAndSimdEqual8AndBarriersWhenComputeC
     WorkSizeInfo wsInfo(256,                   // maxWorkGroupSize
                         1u,                    // hasBariers
                         8,                     // simdSize
-                        0u,                    // slmTotalSize
+                        0u,                    // slmTotalSizePerThreadGroup
                         rootDeviceEnvironment, // rootDeviceEnvironment
                         32u,                   // numThreadsPerSubSlice
                         0u,                    // localMemorySize
@@ -163,7 +163,7 @@ TEST_F(LocalWorkSizeTest, givenSmallerLocalMemSizeThanSlmTotalSizeThenExceptionI
     EXPECT_THROW(WorkSizeInfo wsInfo(256,                   // maxWorkGroupSize
                                      1u,                    // hasBariers
                                      8,                     // simdSize
-                                     128u,                  // slmTotalSize
+                                     128u,                  // slmTotalSizePerThreadGroup
                                      rootDeviceEnvironment, // rootDeviceEnvironment
                                      32u,                   // numThreadsPerSubSlice
                                      64u,                   // localMemorySize
@@ -178,7 +178,7 @@ TEST_F(LocalWorkSizeTest, given2DimWorkGroupAndSimdEqual8AndNoBarriersWhenComput
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableComputeWorkSizeSquared.set(true);
 
-    // wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, rootDeviceEnvironment, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface, disableEUFusion
+    // wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSizePerThreadGroup, rootDeviceEnvironment, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface, disableEUFusion
     WorkSizeInfo wsInfo(256, 0u, 8, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {10003, 10003, 1};
@@ -198,7 +198,7 @@ TEST_F(LocalWorkSizeTest, given2DimWorkGroupAndSimdEqual8AndNoBarriersWhenComput
 }
 
 TEST_F(LocalWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
-    // wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, hardwareInfo, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface, disableEUFusion
+    // wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSizePerThreadGroup, hardwareInfo, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface, disableEUFusion
     WorkSizeInfo wsInfo(256, 0u, 8, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
     uint32_t workDim = 1;
     size_t workGroup[3] = {6144, 1, 1};
@@ -500,7 +500,7 @@ TEST_F(LocalWorkSizeTest, givenSimdEqual32AndPreferredWgCountPerSubslice4WhenBar
             wsInfo.hasBarriers = true;
         } else if (i == 1) {
             wsInfo.hasBarriers = false;
-            wsInfo.slmTotalSize = 256;
+            wsInfo.slmTotalSizePerThreadGroup = 256;
         }
 
         uint32_t workDim = 2;
@@ -508,7 +508,7 @@ TEST_F(LocalWorkSizeTest, givenSimdEqual32AndPreferredWgCountPerSubslice4WhenBar
         size_t workGroupSize[3];
 
         NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-        if (wsInfo.slmTotalSize == 0) {
+        if (wsInfo.slmTotalSizePerThreadGroup == 0) {
             EXPECT_EQ(workGroupSize[0], 384u);
             EXPECT_EQ(workGroupSize[1], 2u);
             EXPECT_EQ(workGroupSize[2], 1u);
@@ -543,7 +543,7 @@ TEST_F(LocalWorkSizeTest, givenSimdEqual32AndPreferredWgCountPerSubslice4WhenBar
         workGroup[1] = 9;
         wsInfo.imgUsed = false;
         NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-        if (wsInfo.slmTotalSize == 0) {
+        if (wsInfo.slmTotalSizePerThreadGroup == 0) {
             EXPECT_EQ(workGroupSize[0], 512u);
             EXPECT_EQ(workGroupSize[1], 1u);
             EXPECT_EQ(workGroupSize[2], 1u);
@@ -1226,7 +1226,7 @@ TEST_F(LocalWorkSizeTest, givenGwsWithSmallXAndBigYWhenLwsIsCalculatedThenDescen
 
     // Enforce ratio requirement
     wsInfo.yTiledSurfaces = false;
-    wsInfo.slmTotalSize = 128U;
+    wsInfo.slmTotalSizePerThreadGroup = 128U;
     NEO::choosePrefferedWorkgroupSize(wsInfo, workGroupSize, workGroup, workDim);
     EXPECT_EQ(workGroupSize[0], 2u);
     EXPECT_EQ(workGroupSize[1], 128u);
