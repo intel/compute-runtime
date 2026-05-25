@@ -5825,5 +5825,32 @@ TEST_F(EventTests, givenInvalidExtensionArgumentWhenCreatingEventThenDoNotAbortA
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
+TEST_F(EventTests, givenNotCounterBasedEventWhenCallingGetCounterBasedFlagsThenReturnSuccessAndFlagsAreZero) {
+    ze_event_counter_based_flags_t flags{};
+    auto result = event->getCounterBasedFlags(&flags);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, flags);
+    EXPECT_FALSE(event->isCounterBased());
+}
+
+TEST_F(EventTests, givenCounterBasedEventWhenCallingGetCounterBasedFlagsThenReturnSuccessAndCorrectFlags) {
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    ze_event_counter_based_flags_t flags{};
+    auto result = event->getCounterBasedFlags(&flags);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE, flags);
+    EXPECT_TRUE(event->isCounterBased());
+}
+
+using CounterBasedEventTests = Test<CounterBasedEventFixture>;
+TEST_F(CounterBasedEventTests, givenEventCreatedWithCounterBasedEventPoolAndCallingGetCounterBasedEventFlagsThenEventIsCounterBasedAndCorrectFlagsReturned) {
+    EXPECT_TRUE(event->isCounterBased());
+    ze_event_counter_based_flags_t counterBasedEventFlags{};
+    auto result = event->getCounterBasedFlags(&counterBasedEventFlags);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    constexpr uint32_t counterBasedEventPoolFlag = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE;
+    EXPECT_EQ(counterBasedEventPoolFlag, counterBasedEventFlags);
+}
+
 } // namespace ult
 } // namespace L0

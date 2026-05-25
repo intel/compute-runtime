@@ -1507,6 +1507,26 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnCommandListAppendMemoryFillWithParameters = decltype(&zexCommandListAppendMemoryFillWithParameters);
     using pfnCommandListSetCleanupCallback = decltype(&zexCommandListSetCleanupCallback);
     using pfnCommandListVisitExt = decltype(&zeCommandListVisitExt);
+    using pfnCommandListGetDeviceHandle = decltype(&zeCommandListGetDeviceHandle);
+    using pfnCommandListGetContextHandle = decltype(&zeCommandListGetContextHandle);
+    using pfnCommandListGetOrdinal = decltype(&zeCommandListGetOrdinal);
+    using pfnCommandListGetFlags = decltype(&zeCommandListGetFlags);
+    using pfnCommandListImmediateGetIndex = decltype(&zeCommandListImmediateGetIndex);
+    using pfnCommandListImmediateGetFlags = decltype(&zeCommandListImmediateGetFlags);
+    using pfnCommandListImmediateGetMode = decltype(&zeCommandListImmediateGetMode);
+    using pfnCommandListImmediateGetPriority = decltype(&zeCommandListImmediateGetPriority);
+    using pfnCommandListIsImmediate = decltype(&zeCommandListIsImmediate);
+    using pfnCommandListIsMutableExp = decltype(&zeCommandListIsMutableExp);
+
+    // event function types
+    using pfnEventGetCounterBasedFlags = decltype(&zeEventGetCounterBasedFlags);
+
+    // command queue function types
+    using pfnCommandQueueGetOrdinal = decltype(&zeCommandQueueGetOrdinal);
+    using pfnCommandQueueGetIndex = decltype(&zeCommandQueueGetIndex);
+    using pfnCommandQueueGetFlags = decltype(&zeCommandQueueGetFlags);
+    using pfnCommandQueueGetMode = decltype(&zeCommandQueueGetMode);
+    using pfnCommandQueueGetPriority = decltype(&zeCommandQueueGetPriority);
 
     // driver function addresses
     decltype(&zexDriverImportExternalPointer) expectedImport = L0::zexDriverImportExternalPointer;
@@ -1533,6 +1553,7 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexDeviceGetAggregatedCopyOffloadIncrementValue) expectedZexDeviceGetAggregatedCopyOffloadIncrementValueHandle = L0::zexDeviceGetAggregatedCopyOffloadIncrementValue;
     decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = L0::zexIntelAllocateNetworkInterrupt;
     decltype(&zexIntelReleaseNetworkInterrupt) expectedIntelReleaseNetworkInterrupt = L0::zexIntelReleaseNetworkInterrupt;
+    pfnEventGetCounterBasedFlags expectedEventGetCounterBasedFlags = L0::zeEventGetCounterBasedFlags;
 
     // memory function addresses
     pfnMemGetIpcHandles expectedMemGetIpcHandles = L0::zexMemGetIpcHandles;
@@ -1548,6 +1569,16 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     pfnCommandListSetCleanupCallback expectedCommandListSetCleanupCallback = L0::zexCommandListSetCleanupCallback;
     pfnCommandListVerifyMemory expectedCommandListVerifyMemory = L0::zexCommandListVerifyMemory;
     pfnCommandListVisitExt expectedCommandListVisitExt = L0::zeCommandListVisitExt;
+    pfnCommandListGetDeviceHandle expectedCommandListGetDeviceHandle = L0::zeCommandListGetDeviceHandle;
+    pfnCommandListGetContextHandle expectedCommandListGetContextHandle = L0::zeCommandListGetContextHandle;
+    pfnCommandListGetOrdinal expectedCommandListGetOrdinal = L0::zeCommandListGetOrdinal;
+    pfnCommandListGetFlags expectedCommandListGetFlags = L0::zeCommandListGetFlags;
+    pfnCommandListImmediateGetIndex expectedCommandListImmediateGetIndex = L0::zeCommandListImmediateGetIndex;
+    pfnCommandListImmediateGetFlags expectedCommandListImmediateGetFlags = L0::zeCommandListImmediateGetFlags;
+    pfnCommandListImmediateGetMode expectedCommandListImmediateGetMode = L0::zeCommandListImmediateGetMode;
+    pfnCommandListImmediateGetPriority expectedCommandListImmediateGetPriority = L0::zeCommandListImmediateGetPriority;
+    pfnCommandListIsImmediate expectedCommandListIsImmediate = L0::zeCommandListIsImmediate;
+    pfnCommandListIsMutableExp expectedCommandListIsMutableExp = L0::zeCommandListIsMutableExp;
 
     // mutable command list driver experimental extension function addresses
     pfnCommandListGetVariable expectedCommandListGetVariable = zexCommandListGetVariable;
@@ -1590,6 +1621,13 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     pfnGraphSetDestructionCallbackExp expectedGraphSetDestructionCallbackExp = L0::zeGraphSetDestructionCallbackExp;
     pfnExecutableGraphGetSourceGraphExt expectedExecutableGraphGetSourceGraphExt = L0::zeExecutableGraphGetSourceGraphExt;
     pfnGraphGetPrimaryCommandListExt expectedGraphGetPrimaryCommandListExt = L0::zeGraphGetPrimaryCommandListExt;
+
+    // command queue function addresses
+    pfnCommandQueueGetOrdinal expectedCommandQueueGetOrdinal = L0::zeCommandQueueGetOrdinal;
+    pfnCommandQueueGetIndex expectedCommandQueueGetIndex = L0::zeCommandQueueGetIndex;
+    pfnCommandQueueGetFlags expectedCommandQueueGetFlags = L0::zeCommandQueueGetFlags;
+    pfnCommandQueueGetMode expectedCommandQueueGetMode = L0::zeCommandQueueGetMode;
+    pfnCommandQueueGetPriority expectedCommandQueueGetPriority = L0::zeCommandQueueGetPriority;
 
     // Add EXPECT_EQ tests to verify function pointers
     void *funPtr = nullptr;
@@ -1796,49 +1834,52 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     EXPECT_EQ(expectedIntelMemMapDeviceMemToHost, reinterpret_cast<pfnIntelMemMapDeviceMemToHost>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetOrdinal", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandQueueGetOrdinal, reinterpret_cast<pfnCommandQueueGetOrdinal>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetIndex", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandQueueGetIndex, reinterpret_cast<pfnCommandQueueGetIndex>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetFlags", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandQueueGetFlags, reinterpret_cast<pfnCommandQueueGetFlags>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetMode", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandQueueGetMode, reinterpret_cast<pfnCommandQueueGetMode>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetPriority", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandQueueGetPriority, reinterpret_cast<pfnCommandQueueGetPriority>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetDeviceHandle", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandListGetDeviceHandle, reinterpret_cast<pfnCommandListGetDeviceHandle>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetContextHandle", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandListGetContextHandle, reinterpret_cast<pfnCommandListGetContextHandle>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetOrdinal", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandListGetOrdinal, reinterpret_cast<pfnCommandListGetOrdinal>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetFlags", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandListGetFlags, reinterpret_cast<pfnCommandListGetFlags>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetIndex", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandListImmediateGetIndex, reinterpret_cast<pfnCommandListImmediateGetIndex>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetFlags", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandListImmediateGetFlags, reinterpret_cast<pfnCommandListImmediateGetFlags>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetMode", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandListImmediateGetMode, reinterpret_cast<pfnCommandListImmediateGetMode>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetPriority", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandListImmediateGetPriority, reinterpret_cast<pfnCommandListImmediateGetPriority>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListIsImmediate", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandListIsImmediate, reinterpret_cast<pfnCommandListIsImmediate>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListIsMutableExp", &funPtr));
-    EXPECT_NE(nullptr, funPtr);
+    EXPECT_EQ(expectedCommandListIsMutableExp, reinterpret_cast<pfnCommandListIsMutableExp>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeEventGetCounterBasedFlags", &funPtr));
+    EXPECT_EQ(expectedEventGetCounterBasedFlags, reinterpret_cast<pfnEventGetCounterBasedFlags>(funPtr));
 }
 
 TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenExpectProperBehavior) {

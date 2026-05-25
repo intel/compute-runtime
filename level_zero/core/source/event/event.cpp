@@ -1135,6 +1135,16 @@ NEO::GraphicsAllocation *Event::getExternalCounterAllocationFromAddress(uint64_t
     return allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 }
 
+ze_result_t Event::getCounterBasedFlags(ze_event_counter_based_flags_t *pFlags) const {
+    if (this->isCounterBased()) {
+        *pFlags = this->counterBasedFlags;
+    } else {
+        *pFlags = 0;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
     bool interruptMode = false;
     bool kmdWaitMode = false;

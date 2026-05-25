@@ -31,11 +31,9 @@ void EventFixtureImpl::setUpImpl(int32_t eventPoolHostFlag, int32_t eventPoolTim
         eventPoolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
     }
 
-    eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.count = 4;
     eventPoolDesc.flags = eventPoolFlags;
 
-    eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     eventDesc.index = 0;
     eventDesc.signal = 0;
     eventDesc.wait = 0;

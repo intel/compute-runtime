@@ -616,6 +616,13 @@ typedef struct _zex_bfloat16_atomic_ext_properties_t {
 #define ZE_HOST_MEM_ALLOC_FLAG_MEM_READ_ONLY ZE_BIT(4)
 #endif
 
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 16)
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventGetCounterBasedFlags(
+    ze_event_handle_t hEvent,              ///< [in] handle of the event
+    ze_event_counter_based_flags_t *pFlags ///< [out] pointer to value indicating the flags of the counter based event
+);
+#endif
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

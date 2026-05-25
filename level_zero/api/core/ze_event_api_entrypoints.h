@@ -199,6 +199,19 @@ ze_result_t ZE_APICALL zeEventCounterBasedCloseIpcHandle(
     return Event::fromHandle(hEvent)->destroy();
 }
 
+ze_result_t ZE_APICALL zeEventGetCounterBasedFlags(
+    ze_event_handle_t hEvent,
+    ze_event_counter_based_flags_t *pFlags) {
+    auto event = Event::fromHandle(hEvent);
+    if (!event) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+    if (pFlags == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    return event->getCounterBasedFlags(pFlags);
+}
+
 } // namespace L0
 
 extern "C" {

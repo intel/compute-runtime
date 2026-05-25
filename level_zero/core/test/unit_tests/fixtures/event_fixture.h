@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,19 @@ struct EventUsedPacketSignalFixture : public EventFixture<eventPoolHostFlag, eve
 
         EventFixture<eventPoolHostFlag, eventPoolTimestampFlag>::setUp();
     }
+};
+
+struct CounterBasedEventFixture : public EventFixtureImpl {
+    void setUp() {
+        eventPoolDesc.pNext = &counterBasedEventPoolDesc;
+        EventFixtureImpl::setUpImpl(0, 0);
+    }
+
+    void tearDown() {
+        EventFixtureImpl::tearDown();
+    }
+
+    ze_event_pool_counter_based_exp_desc_t counterBasedEventPoolDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
 };
 
 } // namespace ult

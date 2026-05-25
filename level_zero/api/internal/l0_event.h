@@ -44,4 +44,6 @@ ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEve
 
 ze_result_t ZE_APICALL zexDeviceGetAggregatedCopyOffloadIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue);
 
+ze_result_t ZE_APICALL zeEventGetCounterBasedFlags(ze_event_handle_t hEvent, ze_event_counter_based_flags_t *pFlags);
+
 } // namespace L0

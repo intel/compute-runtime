@@ -97,6 +97,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventOpenIpcHandle);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCounterBasedEventCloseIpcHandle);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexDeviceGetAggregatedCopyOffloadIncrementValue);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeEventGetCounterBasedFlags);
 
     // image
     RETURN_FUNC_PTR_IF_EXIST(zeMemGetPitchFor2dImage);

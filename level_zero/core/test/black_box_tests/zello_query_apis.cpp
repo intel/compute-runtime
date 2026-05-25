@@ -30,6 +30,8 @@ using ze_pfnCommandListImmediateGetPriority_t = ze_result_t(ZE_APICALL *)(ze_com
 using ze_pfnCommandListIsImmediate_t = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, ze_bool_t *pIsImmediate);
 using ze_pfnCommandListIsMutableExp_t = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, ze_bool_t *pIsMutable);
 
+using ze_pfnEventGetCounterBasedFlags_t = ze_result_t(ZE_APICALL *)(ze_event_handle_t hEvent, ze_event_counter_based_flags_t *pFlags);
+
 struct QueryApiFunctions {
     ze_pfnCommandQueueGetOrdinal_t commandQueueGetOrdinal = nullptr;
     ze_pfnCommandQueueGetIndex_t commandQueueGetIndex = nullptr;
@@ -47,6 +49,8 @@ struct QueryApiFunctions {
     ze_pfnCommandListImmediateGetPriority_t commandListImmediateGetPriority = nullptr;
     ze_pfnCommandListIsImmediate_t commandListIsImmediate = nullptr;
     ze_pfnCommandListIsMutableExp_t commandListIsMutableExp = nullptr;
+
+    ze_pfnEventGetCounterBasedFlags_t eventGetCounterBasedFlags = nullptr;
 };
 
 template <typename FuncType>
@@ -72,6 +76,8 @@ void loadQueryFunctions(ze_driver_handle_t driverHandle, QueryApiFunctions &func
     loadFunction(driverHandle, "zeCommandListImmediateGetPriority", functions.commandListImmediateGetPriority);
     loadFunction(driverHandle, "zeCommandListIsImmediate", functions.commandListIsImmediate);
     loadFunction(driverHandle, "zeCommandListIsMutableExp", functions.commandListIsMutableExp);
+
+    loadFunction(driverHandle, "zeEventGetCounterBasedFlags", functions.eventGetCounterBasedFlags);
 }
 
 } // namespace
@@ -215,6 +221,20 @@ int main(int argc, char *argv[]) {
     expect(queriedImmediateFlags == immediateCmdListDesc.flags, "immediate command list queue flags mismatch");
     expect(queriedImmediateMode == immediateCmdListDesc.mode, "immediate command list queue mode mismatch");
     expect(queriedImmediatePriority == immediateCmdListDesc.priority, "immediate command list queue priority mismatch");
+
+    ze_event_counter_based_desc_t counterBasedEventDesc{
+        .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
+        .pNext = nullptr,
+        .flags = ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE};
+    ze_event_handle_t hCounterBasedEvent{};
+    SUCCESS_OR_TERMINATE(zeEventCounterBasedCreate(context, device, &counterBasedEventDesc, &hCounterBasedEvent));
+
+    ze_event_counter_based_flags_t counterBasedEventFlags{};
+    SUCCESS_OR_TERMINATE(functions.eventGetCounterBasedFlags(hCounterBasedEvent, &counterBasedEventFlags));
+
+    expect(counterBasedEventFlags != 0, "counter based events have a non-zero flags value");
+
+    SUCCESS_OR_TERMINATE(zeEventDestroy(hCounterBasedEvent));
 
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(immediateCmdList));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));

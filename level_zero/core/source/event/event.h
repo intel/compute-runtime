@@ -413,6 +413,8 @@ struct Event : _ze_event_handle_t {
         this->isDualCopyOffloadEvent = value;
     }
 
+    ze_result_t getCounterBasedFlags(ze_event_counter_based_flags_t *pFlags) const;
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
