@@ -10,6 +10,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_builtins.h"
@@ -68,6 +69,13 @@ struct L0DebuggerFixture {
     }
 
     void tearDown() {
+        if (neoDevice != nullptr) {
+            for (auto *allocation : neoDevice->getMemoryManager()->getTemporaryAllocationsList().peekAllocations()) {
+                while (allocation->getHostPtrTaskCountAssignment() > 0) {
+                    allocation->decrementHostPtrTaskCountAssignment();
+                }
+            }
+        }
     }
 
     std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;

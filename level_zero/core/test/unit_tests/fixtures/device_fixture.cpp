@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -68,6 +69,21 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
 }
 
 void DeviceFixture::tearDown() {
+    // Tests that import host pointers via createAllocationForHostSurface /
+    // appendMemoryCopy / similar paths increment hostPtrTaskCountAssignment.
+    // Without a real GPU completing the task, the counter never drops to zero
+    // so the entries stick in temporaryAllocations past CSR teardown. Drain
+    // them here so MemoryManager's per-CSR cleanAllocationList can free
+    // everything and ~AllocationsList's UNRECOVERABLE_IF(!empty) is satisfied.
+    // execEnv is reffed up in setupWithExecutionEnvironment so memoryManager
+    // is alive even when a test already triggered Device::releaseResources.
+    if (execEnv != nullptr && execEnv->memoryManager != nullptr) {
+        for (auto *allocation : execEnv->memoryManager->getTemporaryAllocationsList().peekAllocations()) {
+            while (allocation->getHostPtrTaskCountAssignment() > 0) {
+                allocation->decrementHostPtrTaskCountAssignment();
+            }
+        }
+    }
     context->destroy();
     driverHandle.reset(nullptr);
     execEnv->decRefInternal();

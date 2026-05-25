@@ -615,6 +615,204 @@ HWTEST_F(CommandStreamReceiverTest, givenNoGpuHangWhenWaititingForCompletionWith
     EXPECT_EQ(WaitStatus::ready, waitStatus);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenTagAlreadyReachedWhenPollForCompletionDuringCleanupThenReadyIsReturned) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+
+    TagAddressType tasksCount[16] = {};
+    tasksCount[0] = 1;
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+
+    EXPECT_EQ(WaitStatus::ready, csr.pollForCompletionDuringCleanup(1));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenNullTagAddressWhenPollForCompletionDuringCleanupThenReadyIsReturned) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = nullptr;
+
+    EXPECT_EQ(WaitStatus::ready, csr.pollForCompletionDuringCleanup(1));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenSkipResourceCleanupWhenPollForCompletionDuringCleanupThenReadyIsReturnedWithoutPolling) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+    csr.forceSkipResourceCleanupRequired = true;
+
+    TagAddressType tasksCount[16] = {};
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+
+    EXPECT_EQ(WaitStatus::ready, csr.pollForCompletionDuringCleanup(1));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenPollForCompletionDuringCleanupThenGpuHangIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = true;
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+    csr.activePartitions = 1;
+    csr.gpuHangCheckPeriod = 0us;
+
+    TagAddressType tasksCount[16] = {};
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+
+    EXPECT_EQ(WaitStatus::gpuHang, csr.pollForCompletionDuringCleanup(1));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenTagReachedAfterPollingWhenPollForCompletionDuringCleanupThenReadyIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = false;
+
+    TagAddressType tasksCount[16] = {};
+    driverModelMock->isGpuHangDetectedSideEffect = [&tasksCount] {
+        tasksCount[0]++;
+    };
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+    csr.activePartitions = 1;
+    csr.gpuHangCheckPeriod = 0us;
+
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+
+    EXPECT_EQ(WaitStatus::ready, csr.pollForCompletionDuringCleanup(1));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenMultiplePartitionsWhenPollForCompletionDuringCleanupThenEachPartitionIsPolled) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = false;
+
+    TagAddressType tasksCount[16] = {};
+    tasksCount[0] = 1;
+    driverModelMock->isGpuHangDetectedSideEffect = [&tasksCount] {
+        tasksCount[1]++;
+    };
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+    csr.activePartitions = 2;
+    csr.immWritePostSyncWriteOffset = sizeof(TagAddressType);
+    csr.gpuHangCheckPeriod = 0us;
+
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+
+    EXPECT_EQ(WaitStatus::ready, csr.pollForCompletionDuringCleanup(1));
+    EXPECT_EQ(1u, tasksCount[1]);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenHangCheckPeriodNotElapsedWhenPollForCompletionDuringCleanupThenHangDetectionIsSkippedUntilTagIsReady) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+    csr.gpuHangCheckPeriod = std::chrono::microseconds(std::chrono::hours(1)); // never elapses -> hang-check branch is skipped
+
+    TagAddressType tasksCount[16] = {};
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+    csr.latestFlushedTaskCount = 1; // enable downloadTagAllocation so the hook below runs each poll iteration
+
+    uint32_t downloadCount = 0;
+    csr.downloadAllocationImpl = [&downloadCount, &tasksCount](GraphicsAllocation &, uint64_t, size_t) {
+        if (++downloadCount == 2u) {
+            tasksCount[0] = 1; // signal completion on the second iteration, after the hang-check branch was skipped once
+        }
+    };
+
+    EXPECT_EQ(WaitStatus::ready, csr.pollForCompletionDuringCleanup(1));
+    EXPECT_EQ(2u, downloadCount);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenSkipResourceCleanupWhenWaitForTaskCountThenReadyIsReturnedWithoutWaiting) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.forceSkipResourceCleanupRequired = true;
+
+    TagAddressType tasksCount[16] = {};
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+
+    EXPECT_EQ(WaitStatus::ready, csr.CommandStreamReceiver::waitForTaskCount(1));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenTagReachedWhenWaitForTaskCountThenReadyIsReturned) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+
+    TagAddressType tasksCount[16] = {};
+    tasksCount[0] = 5;
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+    csr.latestFlushedTaskCount = 5;
+
+    EXPECT_EQ(WaitStatus::ready, csr.CommandStreamReceiver::waitForTaskCount(5));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenReusableAllocationUsageWhenWaitForTaskCountAndCleanAllocationListThenReadyIsReturnedAndDeferredListIsNotCleaned) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+
+    TagAddressType tasksCount[16] = {};
+    tasksCount[0] = 1;
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+    csr.latestFlushedTaskCount = 1;
+
+    EXPECT_EQ(WaitStatus::ready, csr.waitForTaskCountAndCleanAllocationList(1, REUSABLE_ALLOCATION));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCompletedReusableAllocationWhenCleanupResourcesThenAllocationIsFreed) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    allocation->updateTaskCount(1, csr.getOsContext().getContextId());
+
+    TagAddressType tasksCount[16] = {};
+    tasksCount[0] = 9;
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+    csr.latestFlushedTaskCount = 9;
+
+    EXPECT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
+    csr.cleanupResources();
+    EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenOnlyDeferredAllocationWhenCleanupResourcesThenCompletedAllocationIsFreed) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation->updateTaskCount(1, csr.getOsContext().getContextId());
+    internalAllocationStorage->getDeferredAllocations().pushTailOne(*allocation);
+
+    TagAddressType tasksCount[16] = {};
+    tasksCount[0] = 9;
+    VariableBackup<volatile TagAddressType *> tagAddressBackup(&csr.tagAddress);
+    csr.tagAddress = tasksCount;
+    csr.latestFlushedTaskCount = 9;
+
+    EXPECT_TRUE(internalAllocationStorage->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(internalAllocationStorage->getDeferredAllocations().peekIsEmpty());
+    csr.cleanupResources();
+    EXPECT_TRUE(internalAllocationStorage->getDeferredAllocations().peekIsEmpty());
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenSimulationModeWhenWritingAllocationChunkWithZeroSizeThenSkipUpload) {
     SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
@@ -2265,6 +2463,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAll
 
     auto hostSurfaceAllocationPtr = hostSurface.getAllocation();
     EXPECT_EQ(allocationPtr, hostSurfaceAllocationPtr);
+    allocationPtr->decrementHostPtrTaskCountAssignment();
 }
 
 class MockCommandStreamReceiverHostPtrCreate : public MockCommandStreamReceiver {
@@ -2313,6 +2512,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAll
     EXPECT_EQ(allocationPtr->getTaskCount(0u), 10u);
     commandStreamReceiver->createAllocationForHostSurface(hostSurface, false);
     EXPECT_EQ(allocationPtr->getTaskCount(0u), 0u);
+    allocationPtr->decrementHostPtrTaskCountAssignment();
 }
 
 TEST_F(CreateAllocationForHostSurfaceTest, whenCreatingAllocationFromHostPtrSurfaceThenLockMutex) {

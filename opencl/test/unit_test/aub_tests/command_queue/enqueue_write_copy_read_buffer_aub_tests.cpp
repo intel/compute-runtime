@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,9 +122,12 @@ void AubWriteCopyReadBuffer::runTest() {
 
     pCmdQ->flush();
 
-    GraphicsAllocation *allocation = csr->getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != hostPtrMemory) {
-        allocation = allocation->next;
+    GraphicsAllocation *allocation = nullptr;
+    for (auto *candidate : csr->getTemporaryAllocations().peekAllocations()) {
+        if (candidate->getUnderlyingBuffer() == hostPtrMemory) {
+            allocation = candidate;
+            break;
+        }
     }
 
     expectMemory<FamilyType>(AUBFixture::getGpuPointer(allocation), srcMemoryToWrite, bufferSize);
