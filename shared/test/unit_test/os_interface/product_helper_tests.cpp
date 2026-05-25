@@ -718,11 +718,6 @@ HWTEST2_F(ProductHelperTest, givenForceThreadArbitrationPolicyProgrammingWithScm
     EXPECT_TRUE(productHelper->isThreadArbitrationPolicyReportedWithScm());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsAdjustWalkOrderAvailableCallThenFalseReturn) {
-
-    EXPECT_FALSE(productHelper->isAdjustWalkOrderAvailable(releaseHelper));
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsPrefetcherDisablingInDirectSubmissionRequiredThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isPrefetcherDisablingInDirectSubmissionRequired());
 }

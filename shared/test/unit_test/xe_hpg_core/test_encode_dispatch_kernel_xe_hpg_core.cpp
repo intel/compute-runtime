@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,13 +8,12 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
-#include "shared/test//common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
@@ -36,18 +35,15 @@ HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenVariousValuesWhenCallingSetBarr
         EXPECT_EQ(barrierCount, idd.getNumberOfBarriers());
     }
 }
-template <PRODUCT_FAMILY productFamily>
-struct TempMockProductHelper : NEO::ProductHelperHw<productFamily> {
-    bool isAdjustWalkOrderAvailable(const ReleaseHelper *releaseHelper) const override { return true; }
-};
-
 HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenRequiredWorkGroupOrderAndIsAdjustWalkOrderAvailableReturnTrueWhenCallAdjustWalkOrderThenWalkerIsProgrammedCorrectly, IsXeHpgCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
-    RAIIProductHelperFactory<TempMockProductHelper<productFamily>> raii(rootDeviceEnvironment);
+    auto mockReleaseHelper = std::make_unique<MockReleaseHelper>();
+    mockReleaseHelper->isAdjustWalkOrderAvailableResult = true;
+    rootDeviceEnvironment.releaseHelper = std::move(mockReleaseHelper);
 
     DefaultWalkerType walkerCmd{};
     DefaultWalkerType walkerOnStart{};
@@ -73,10 +69,9 @@ XE_HPG_CORETEST_F(EncodeKernelXeHpgCoreTest, givenRequiredWorkGroupOrderWhenCall
     DefaultWalkerType walkerCmd{};
     uint32_t yOrder = 2u;
 
-    auto &productHelper = getHelper<ProductHelper>();
     auto releaseHelper = getReleaseHelper();
     auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
-    auto isExpectedNewWalkOrderApplied = productHelper.isAdjustWalkOrderAvailable(releaseHelper);
+    auto isExpectedNewWalkOrderApplied = releaseHelper->isAdjustWalkOrderAvailable();
 
     EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[yOrder], HwWalkOrderHelper::yOrderWalk);
 
@@ -106,10 +101,9 @@ XE_HPG_CORETEST_F(EncodeKernelXeHpgCoreTest, givenRequiredWorkGroupOrderWhenCall
     uint32_t numWorkGroups[3] = {1, 1, 1};
     uint32_t workGroupSizes[3] = {1, 1, 1};
 
-    auto &productHelper = getHelper<ProductHelper>();
     auto releaseHelper = getReleaseHelper();
 
-    auto isExpectedNewWalkOrderApplied = productHelper.isAdjustWalkOrderAvailable(releaseHelper);
+    auto isExpectedNewWalkOrderApplied = releaseHelper->isAdjustWalkOrderAvailable();
     auto dispatchWalkOrderBeforeAdjust = walkerCmd.getDispatchWalkOrder();
     auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
 

@@ -20,11 +20,6 @@ bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsWARe
 }
 
 template <>
-bool ReleaseHelperHw<release>::isAdjustWalkOrderAvailable() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isResolvingSubDeviceIDNeeded() const {
     return true;
 }

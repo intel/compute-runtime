@@ -618,11 +618,6 @@ bool ProductHelperHw<gfxProduct>::isUnlockingLockedPtrNecessary(const HardwareIn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isAdjustWalkOrderAvailable(const ReleaseHelper *releaseHelper) const {
-    return releaseHelper->isAdjustWalkOrderAvailable();
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getL1CachePolicy(bool isDebuggerActive) const {
     return L1CachePolicyHelper<gfxProduct>::getL1CachePolicy(isDebuggerActive);
 }
