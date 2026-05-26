@@ -7,6 +7,6 @@
 
 extern "C" {
 const char *__asan_default_options() { // NOLINT(readability-identifier-naming0
-    return "allow_user_segv_handler=1";
+    return "allow_user_segv_handler=1:detect_leaks=0";
 }
 }

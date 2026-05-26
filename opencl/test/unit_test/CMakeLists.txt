@@ -82,10 +82,6 @@ if(GTEST_FILTERING_PATTERN)
   message(STATUS "GTest filter for regular tests: ${GTEST_FILTERING_PATTERN}")
 endif()
 
-if(USE_ASAN)
-  set(GTEST_ENV "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan_suppressions.txt")
-endif()
-
 target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
 

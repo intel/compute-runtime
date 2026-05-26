@@ -177,6 +177,9 @@ get_property(CLOC_LIB_COMPILE_FLAGS TARGET ocloc_lib PROPERTY COMPILE_FLAGS)
 set_property(TARGET ocloc_tests PROPERTY FOLDER ${CLOC_LIB_FOLDER})
 set_property(TARGET ocloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${CLOC_LIB_COMPILE_FLAGS} ${ASAN_FLAGS} ${TSAN_FLAGS})
 set_property(TARGET ocloc_tests PROPERTY ENABLE_EXPORTS TRUE)
+if(USE_ASAN)
+  target_sources(ocloc_tests PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/common/default_asan_options.cpp)
+endif()
 
 add_custom_target(run_ocloc_tests ALL
                   DEPENDS ocloc_tests
