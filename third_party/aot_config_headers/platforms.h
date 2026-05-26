@@ -238,6 +238,8 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
     {"pvc-xt-b0", PVC_XT_B0},
     {"pvc-xt-b1", PVC_XT_B1},
     {"pvc-xt-c0", PVC_XT_C0},
+#endif
+#ifdef SUPPORT_AOT_XE_HPC_VG
     {"pvc-xt-c0-vg", PVC_XT_C0_VG},
 #endif
 #endif
@@ -290,6 +292,8 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
     {"nvl-u-a0", NVL_U_A0},
     {"nvl-u-a1", NVL_U_A1},
     {"nvl-u-b0", NVL_U_B0},
+#endif
+#ifdef SUPPORT_AOT_XE3P_LPG
     {"nvl-p-a0", NVL_P_A0},
     {"nvl-p-b0", NVL_P_B0},
 #endif
