@@ -1259,7 +1259,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         dispatchGlobals.rtMemBasePtr = rtStackAllocation->getGpuAddress() + rtStackSize;
         dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
         auto releaseHelper = getReleaseHelper();
-        dispatchGlobals.stackSizePerRay = releaseHelper ? releaseHelper->getStackSizePerRay() : 0;
+        dispatchGlobals.stackSizePerRay = releaseHelper->getStackSizePerRay();
 
         auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(*this);
         dispatchGlobals.numDSSRTStacks = rtStacksPerDss;
@@ -1267,9 +1267,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         uint32_t *dispatchGlobalsAsArray = reinterpret_cast<uint32_t *>(&dispatchGlobals);
         dispatchGlobalsAsArray[7] = 1;
 
-        if (releaseHelper) {
-            releaseHelper->adjustRTDispatchGlobals(static_cast<void *>(&dispatchGlobals), rtStacksPerDss, maxBvhLevels);
-        }
+        releaseHelper->adjustRTDispatchGlobals(static_cast<void *>(&dispatchGlobals), rtStacksPerDss, maxBvhLevels);
 
         MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(this->getRootDeviceEnvironment(), *dispatchGlobalsArrayAllocation),
                                                          *this,
@@ -1485,7 +1483,7 @@ bool Device::canAccessPeer(QueryPeerAccessFunc queryPeerAccess, FreeMemoryFunc f
 void Device::initializePeerAccessForDevices(QueryPeerAccessFunc queryPeerAccess, FreeMemoryFunc freeMemory, const std::vector<NEO::Device *> &devices) {
     for (auto &device : devices) {
         auto releaseHelper = device->getReleaseHelper();
-        if (!releaseHelper || !releaseHelper->shouldQueryPeerAccess()) {
+        if (!releaseHelper->shouldQueryPeerAccess()) {
             continue;
         }
 

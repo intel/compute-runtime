@@ -847,7 +847,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
             ze_device_raytracing_ext_properties_t *rtProperties =
                 reinterpret_cast<ze_device_raytracing_ext_properties_t *>(extendedProperties);
 
-            if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+            if (releaseHelper->isRayTracingSupported()) {
                 rtProperties->flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_RAYQUERY;
                 rtProperties->maxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
 
@@ -1049,7 +1049,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormatExp();
                 rtasProperties->rtasBufferAlignment = 128;
 
-                if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+                if (releaseHelper->isRayTracingSupported()) {
                     ze_result_t result = this->getDriverHandle()->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXP_INVALID;
@@ -1061,7 +1061,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormatExt();
                 rtasProperties->rtasBufferAlignment = 128;
 
-                if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+                if (releaseHelper->isRayTracingSupported()) {
                     ze_result_t result = this->getDriverHandle()->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXT_INVALID;

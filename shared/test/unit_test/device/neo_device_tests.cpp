@@ -261,11 +261,7 @@ TEST_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledThenStackSizePerRayIsSet
     RTDispatchGlobals dispatchGlobals = *reinterpret_cast<struct RTDispatchGlobals *>(pDevice->getRTDispatchGlobals(3)->rtDispatchGlobalsArray->getUnderlyingBuffer());
 
     auto releaseHelper = getReleaseHelper();
-    if (releaseHelper) {
-        EXPECT_EQ(dispatchGlobals.stackSizePerRay, releaseHelper->getStackSizePerRay());
-    } else {
-        EXPECT_EQ(dispatchGlobals.stackSizePerRay, 0u);
-    }
+    EXPECT_EQ(dispatchGlobals.stackSizePerRay, releaseHelper->getStackSizePerRay());
 }
 
 TEST_F(DeviceTest, givenNot48bResourceForRtWhenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsAllocatedWithout48bResourceFlag) {
@@ -3332,30 +3328,6 @@ TEST(DevicePeerAccessInitializationTest, givenDevicesThatDontRequirePeerAccessQu
     auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
     releaseHelper1->shouldQueryPeerAccessResult = false;
     rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
-
-    uint32_t queryCalled = 0;
-    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
-        queryCalled++;
-        return true;
-    };
-
-    MockDevice::initializePeerAccessForDevices(queryPeerAccess, nullptr, rootDevices);
-
-    EXPECT_EQ(0u, queryCalled);
-
-    EXPECT_FALSE(rootDevices[0]->hasAnyPeerAccess().has_value());
-    EXPECT_FALSE(rootDevices[1]->hasAnyPeerAccess().has_value());
-}
-
-TEST(DevicePeerAccessInitializationTest, givenDevicesWithoutReleaseHelperWhenInitializePeerAccessCalledThenDontSetHasPeerAccess) {
-    UltDeviceFactory deviceFactory{2, 0};
-    std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
-
-    rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper.reset();
-    rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper.reset();
-
-    ASSERT_EQ(nullptr, rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper);
-    ASSERT_EQ(nullptr, rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper);
 
     uint32_t queryCalled = 0;
     auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
