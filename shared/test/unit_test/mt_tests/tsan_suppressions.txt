@@ -1,3 +1,5 @@
+# This file describes excludes for false-positive issues reported by TSAN.
+
 # waitFunctionWithPredicate polls a tag address written by KMD (hardware-signaled).
 # No C++ synchronization primitive can describe this relationship; the read is intentionally non-atomic.
 race:WaitUtils::waitFunctionWithPredicate
