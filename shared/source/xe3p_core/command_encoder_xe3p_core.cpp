@@ -132,7 +132,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
 template <>
 uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
-    UNRECOVERABLE_IF(!releaseHelper);
+    DEBUG_BREAK_IF(!releaseHelper);
     return releaseHelper->alignSlmSize(slmSize);
 }
 
@@ -143,7 +143,7 @@ uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwIn
     if (slmSize == 0u) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K;
     }
-    UNRECOVERABLE_IF(!releaseHelper);
+    DEBUG_BREAK_IF(!releaseHelper);
     return releaseHelper->computeSlmValues(slmSize);
 }
 

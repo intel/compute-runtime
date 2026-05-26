@@ -78,7 +78,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     auto maskBits = stateComputeMode.getMaskBits();
 
     auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    UNRECOVERABLE_IF(!releaseHelper);
+    DEBUG_BREAK_IF(!releaseHelper);
     bool ignoreIsDirty = releaseHelper->isProgramAllStateComputeCommandFieldsWARequired();
 
     if (properties.zPassAsyncComputeThreadLimit.isDirty ||

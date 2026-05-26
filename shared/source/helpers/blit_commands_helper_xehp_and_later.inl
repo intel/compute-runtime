@@ -347,7 +347,7 @@ bool BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(const EncodeDummyBlitWaA
             return debugManager.flags.ForceDummyBlitWa.get();
         }
         auto releaseHelper = waArgs.rootDeviceEnvironment->getReleaseHelper();
-        UNRECOVERABLE_IF(!releaseHelper);
+        DEBUG_BREAK_IF(!releaseHelper);
         return releaseHelper->isDummyBlitWaRequired();
     }
     return false;
