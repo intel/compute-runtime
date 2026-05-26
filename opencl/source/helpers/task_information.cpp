@@ -483,8 +483,11 @@ Command::~Command() {
             }
         }
     } else {
-        if (commandQueue.getDeferredTimestampPackets() && timestampPacketDependencies.get()) {
-            timestampPacketDependencies->moveNodesToNewContainer(*commandQueue.getDeferredTimestampPackets());
+        if (timestampPacketDependencies.get()) {
+            TakeOwnershipWrapper<CommandQueue> queueOwnership(commandQueue);
+            if (commandQueue.getDeferredTimestampPackets()) {
+                timestampPacketDependencies->moveNodesToNewContainer(*commandQueue.getDeferredTimestampPackets());
+            }
         }
     }
 

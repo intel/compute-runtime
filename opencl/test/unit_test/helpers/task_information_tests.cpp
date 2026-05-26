@@ -529,3 +529,59 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     auto expectedThreadArbitrationPolicy = kernel.mockKernel->getDescriptor().kernelAttributes.threadArbitrationPolicy;
     EXPECT_EQ(expectedThreadArbitrationPolicy, mockCsr->passedDispatchFlags.threadArbitrationPolicy);
 }
+
+HWTEST_F(DispatchFlagsTests, givenCommandWithTimestampDependenciesWhenDestroyedThenDeferredPacketsAccessedUnderQueueOwnership) {
+    using CsrType = MockCsr1<FamilyType>;
+    setUpImpl<CsrType>();
+
+    // takeOwnership() installs a sentinel container; releaseOwnership() captures it and
+    // installs another. The node must land in the during-lock container, not after.
+    struct TrackingQueue : MockCommandQueueHw<FamilyType> {
+        TrackingQueue(Context *context, ClDevice *device, cl_queue_properties *properties)
+            : MockCommandQueueHw<FamilyType>(context, device, properties) {}
+        std::unique_ptr<TimestampPacketContainer> duringLockContainer;
+        TimestampPacketContainer *afterLock = nullptr;
+
+        void takeOwnership() const override {
+            MockCommandQueueHw<FamilyType>::takeOwnership();
+            auto *self = const_cast<TrackingQueue *>(this);
+            self->deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
+        }
+
+        void releaseOwnership() const override {
+            auto *self = const_cast<TrackingQueue *>(this);
+            self->duringLockContainer = std::move(self->deferredTimestampPackets);
+            auto afterSentinel = std::make_unique<TimestampPacketContainer>();
+            self->afterLock = afterSentinel.get();
+            self->deferredTimestampPackets = std::move(afterSentinel);
+            MockCommandQueueHw<FamilyType>::releaseOwnership();
+        }
+    };
+
+    auto mockCmdQ = std::make_unique<TrackingQueue>(context.get(), device.get(), nullptr);
+    mockCmdQ->deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
+    mockCmdQ->timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+
+    auto *csr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
+    auto *tag = csr->getTimestampPacketAllocator()->getTag();
+
+    IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::indirectObject, 1, ih2);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::surfaceState, 1, ih3);
+    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), 1, AllocationType::commandBuffer, device->getDeviceBitfield()}));
+    auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    kernelOperation->setHeaps(ih1, ih2, ih3);
+
+    TimestampPacketDependencies timestampPacketDependencies;
+    timestampPacketDependencies.cacheFlushNodes.add(tag);
+    auto command = std::make_unique<CommandWithoutKernel>(*mockCmdQ, kernelOperation, nullptr);
+    command->setTimestampPacketNode(*mockCmdQ->timestampPacketContainer, std::move(timestampPacketDependencies));
+
+    command.reset();
+
+    ASSERT_EQ(1u, mockCmdQ->duringLockContainer->peekNodes().size());
+    EXPECT_EQ(tag, mockCmdQ->duringLockContainer->peekNodes()[0]);
+    EXPECT_EQ(0u, mockCmdQ->afterLock->peekNodes().size());
+}
