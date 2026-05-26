@@ -1044,8 +1044,8 @@ void EncodeDispatchKernel<Family>::setupProgrammableSlmSize(InterfaceDescriptorT
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
 
-    uint32_t actualHwSlmSizeKb = rootDeviceEnvironment.getProductHelper().getActualHwSlmSize(rootDeviceEnvironment);
-    auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, actualHwSlmSizeKb);
+    uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment);
+    auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, availableSlmSizePerSubslice);
     auto programmableSlmSize = std::min(slmTotalSize, static_cast<uint32_t>(maxProgrammableSlmSizeKb * MemoryConstants::kiloByte));
 
     auto programmableIDSLMSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, programmableSlmSize, releaseHelper);

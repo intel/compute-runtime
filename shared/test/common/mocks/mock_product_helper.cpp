@@ -499,7 +499,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isDisableScratchPagesSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+uint32_t ProductHelperHw<gfxProduct>::getAvailableSlmSizePerSubslice(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return hwInfo.gtSystemInfo.SLMSizeInKb;
 }

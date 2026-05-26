@@ -225,8 +225,8 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenSlmTotalSizeExceedsHardwareLi
     hwInfo.gtSystemInfo.SubSliceCount = 2;
     hwInfo.gtSystemInfo.SLMSizeInKb = 32;
 
-    uint32_t actualSlmSizeKb = rootDeviceEnvironment.getProductHelper().getActualHwSlmSize(rootDeviceEnvironment);
-    bool usesWddmPreXe2Method = (actualSlmSizeKb == hwInfo.gtSystemInfo.SLMSizeInKb / hwInfo.gtSystemInfo.DualSubSliceCount);
+    uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment);
+    bool usesWddmPreXe2Method = (availableSlmSizePerSubslice == hwInfo.gtSystemInfo.SLMSizeInKb / hwInfo.gtSystemInfo.DualSubSliceCount);
 
     std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest;
     if (usesWddmPreXe2Method) {

@@ -450,8 +450,8 @@ template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::setupProgrammableSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSize, bool heaplessModeEnabled) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
-    uint32_t actualHwSlmSizeKb = rootDeviceEnvironment.getProductHelper().getActualHwSlmSize(rootDeviceEnvironment);
-    auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, actualHwSlmSizeKb);
+    uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment);
+    auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, availableSlmSizePerSubslice);
     auto programmableSlmSize = std::min(slmTotalSize, static_cast<uint32_t>(maxProgrammableSlmSizeKb * MemoryConstants::kiloByte));
 
     auto programmableIDSLMSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, programmableSlmSize, nullptr);

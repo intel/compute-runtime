@@ -10,7 +10,7 @@
 
 namespace NEO {
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+uint32_t ProductHelperHw<gfxProduct>::getAvailableSlmSizePerSubslice(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (rootDeviceEnvironment.isWddmOnLinux()) {
         return hwInfo.gtSystemInfo.SLMSizeInKb / hwInfo.gtSystemInfo.DualSubSliceCount;

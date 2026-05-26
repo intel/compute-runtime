@@ -64,17 +64,17 @@ template <typename GfxFamily>
 void MutableComputeWalkerHw<GfxFamily>::updateSlmSize(const NEO::Device &device, uint32_t slmTotalSize) {
     auto &hwInfo = device.getHardwareInfo();
 
-    uint32_t actualHwSlmSizeKb = device.getProductHelper().getActualHwSlmSize(device.getRootDeviceEnvironment());
-    auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, actualHwSlmSizeKb);
-    auto programmableSlmSize = std::min(slmTotalSize, static_cast<uint32_t>(maxProgrammableSlmSizeKb * MemoryConstants::kiloByte));
+    uint32_t availableSlmSizePerSubslice = device.getProductHelper().getAvailableSlmSizePerSubslice(device.getRootDeviceEnvironment());
+    auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, availableSlmSizePerSubslice);
+    slmTotalSize = std::min(slmTotalSize, static_cast<uint32_t>(maxProgrammableSlmSizeKb * MemoryConstants::kiloByte));
 
-    auto slmSize = NEO::EncodeDispatchKernel<GfxFamily>::computeSlmValues(device.getHardwareInfo(), programmableSlmSize, device.getReleaseHelper());
+    auto programmableIDSLMSize = NEO::EncodeDispatchKernel<GfxFamily>::computeSlmValues(device.getHardwareInfo(), slmTotalSize, device.getReleaseHelper());
 
     if (NEO::debugManager.flags.OverrideSlmAllocationSize.get() != -1) {
-        slmSize = static_cast<uint32_t>(NEO::debugManager.flags.OverrideSlmAllocationSize.get());
+        programmableIDSLMSize = static_cast<uint32_t>(NEO::debugManager.flags.OverrideSlmAllocationSize.get());
     }
 
-    this->setSlmSize(slmSize);
+    this->setSlmSize(programmableIDSLMSize);
 }
 
 template <typename GfxFamily>

@@ -74,8 +74,8 @@ void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType
         break;
     }
 
-    uint32_t actualHwSlmSizeKb = rootDeviceEnvironment.getProductHelper().getActualHwSlmSize(rootDeviceEnvironment);
-    slmSize = std::min(slmSize, static_cast<uint32_t>(actualHwSlmSizeKb * MemoryConstants::kiloByte));
+    uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment);
+    slmSize = std::min(slmSize, static_cast<uint32_t>(availableSlmSizePerSubslice * MemoryConstants::kiloByte));
 
     auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     const auto &sizeToPreferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue();
