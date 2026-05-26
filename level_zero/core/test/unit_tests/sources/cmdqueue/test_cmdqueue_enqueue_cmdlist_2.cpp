@@ -296,7 +296,6 @@ struct PauseOnGpuFixture : public Test<ModuleFixture> {
         ze_result_t returnValue;
         commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
         ASSERT_NE(nullptr, commandList);
-        commandList->getCmdContainer().initializeResources();
         commandListHandle = commandList->toHandle();
     }
 
@@ -573,7 +572,6 @@ struct PauseOnGpuWithImmediateCommandListTests : public PauseOnGpuFixture {
 
         commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
         ASSERT_NE(nullptr, commandList);
-        commandList->getCmdContainer().initializeResources();
         commandListHandle = commandList->toHandle();
     }
 

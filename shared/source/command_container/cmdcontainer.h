@@ -111,7 +111,6 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     void *getHeapSpaceAllowGrow(HeapType heapType, size_t size);
 
     ErrorCode initialize(Device *device, AllocationsList *reusableAllocationList, size_t defaultSshSize, bool requireHeaps, bool createSecondaryCmdBufferInHostMem);
-    ErrorCode initializeResources();
 
     void prepareBindfulSsh();
 
@@ -299,7 +298,6 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     bool usingPrimaryBuffer = false;
     bool globalBindlessHeapsEnabled = false;
     bool isIOHCacheEnabled = false;
-    bool resourcesInitialized = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandContainer>);

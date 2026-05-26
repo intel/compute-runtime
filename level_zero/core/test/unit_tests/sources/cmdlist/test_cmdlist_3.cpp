@@ -117,7 +117,7 @@ HWTEST_F(CommandListCreateNegativeStateBaseAddressTest, GivenStateBaseAddressTra
     EXPECT_EQ(sizeUsedBefore, csrStream.getUsed());
 }
 
-HWTEST_F(CommandListCreateNegativeTest, whenDeviceAllocationFailsDuringCommandListImmediateCreateThenAppropriateValueIsReturned) {
+TEST_F(CommandListCreateNegativeTest, whenDeviceAllocationFailsDuringCommandListImmediateCreateThenAppropriateValueIsReturned) {
     ze_result_t returnValue;
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
@@ -128,12 +128,8 @@ HWTEST_F(CommandListCreateNegativeTest, whenDeviceAllocationFailsDuringCommandLi
                                                                               internalEngine,
                                                                               NEO::EngineGroupType::renderCompute,
                                                                               returnValue));
-    if (commandList) {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList.get());
-        returnValue = immediateCmdList->checkAvailableSpace(0, false, commonImmediateCommandSize, false);
-    }
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
+    ASSERT_EQ(nullptr, commandList);
 }
 
 HWTEST_F(CommandListCreateTests, givenHostAllocInMapWhenGettingAllocInRangeThenAllocFromMapReturned) {
@@ -1585,156 +1581,6 @@ HWTEST_F(CommandListCreateTests, givenForcePatchPreambleDebugSetToValueWhenComma
     commandList.reset(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_TRUE(commandList->isPatchPreambleEnabled());
-}
-
-struct ImmediateCmdListCheckAvailableSpaceNegativeFixture : public CommandListCreateNegativeFixture<0> {
-    void setUp() {
-        CommandListCreateNegativeFixture<0>::setUp();
-        const ze_command_queue_desc_t desc = {};
-        ze_result_t returnValue;
-        commandList.reset(CommandList::createImmediate(
-            neoDevice->getHardwareInfo().platform.eProductFamily,
-            device, &desc, false,
-            NEO::EngineGroupType::renderCompute, returnValue));
-        memoryManager->forceFailureInPrimaryAllocation = true;
-    }
-    void tearDown() {
-        commandList.reset();
-        CommandListCreateNegativeFixture<0>::tearDown();
-    }
-    std::unique_ptr<L0::CommandList> commandList;
-};
-
-using ImmediateCmdListCheckAvailableSpaceNegativeTest = Test<ImmediateCmdListCheckAvailableSpaceNegativeFixture>;
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendLaunchKernelThenErrorPropagated) {
-    const ze_group_count_t groupCount{};
-    CmdListKernelLaunchParams launchParams{};
-    auto result = commandList->appendLaunchKernel(nullptr, groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendLaunchKernelIndirectThenErrorPropagated) {
-    const ze_group_count_t groupCount{};
-    auto result = commandList->appendLaunchKernelIndirect(nullptr, groupCount, nullptr, 0, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendBarrierThenErrorPropagated) {
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendMemoryCopyThenErrorPropagated) {
-    CmdListMemoryCopyParams memoryCopyParams{};
-    auto result = commandList->appendMemoryCopy(nullptr, nullptr, 0, nullptr, 0, nullptr, memoryCopyParams);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendMemoryCopyRegionThenErrorPropagated) {
-    CmdListMemoryCopyParams memoryCopyParams{};
-    auto result = commandList->appendMemoryCopyRegion(nullptr, nullptr, 0, 0, nullptr, nullptr, 0, 0, nullptr, 0, nullptr, memoryCopyParams);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendMemoryFillThenErrorPropagated) {
-    CmdListMemoryCopyParams memoryCopyParams{};
-    auto result = commandList->appendMemoryFill(nullptr, nullptr, 0, 0, nullptr, 0, nullptr, memoryCopyParams);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendSignalEventThenErrorPropagated) {
-    MockEvent event;
-    auto result = commandList->appendSignalEvent(event.toHandle(), false);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendEventResetThenErrorPropagated) {
-    auto result = commandList->appendEventReset(nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendWaitOnEventsThenErrorPropagated) {
-    MockEvent event;
-    auto eventHandle = event.toHandle();
-    auto result = commandList->appendWaitOnEvents(1, &eventHandle, nullptr, false, true, false, false, false, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendWriteGlobalTimestampThenErrorPropagated) {
-    auto result = commandList->appendWriteGlobalTimestamp(nullptr, nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendImageCopyRegionThenErrorPropagated) {
-    CmdListMemoryCopyParams memoryCopyParams{};
-    auto result = commandList->appendImageCopyRegion(nullptr, nullptr, nullptr, nullptr, nullptr, 0, nullptr, memoryCopyParams);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendImageCopyFromMemoryThenErrorPropagated) {
-    CmdListMemoryCopyParams memoryCopyParams{};
-    auto result = commandList->appendImageCopyFromMemory(nullptr, nullptr, nullptr, nullptr, 0, nullptr, memoryCopyParams);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendImageCopyToMemoryThenErrorPropagated) {
-    CmdListMemoryCopyParams memoryCopyParams{};
-    auto result = commandList->appendImageCopyToMemory(nullptr, nullptr, nullptr, nullptr, 0, nullptr, memoryCopyParams);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendImageCopyFromMemoryExtThenErrorPropagated) {
-    CmdListMemoryCopyParams memoryCopyParams{};
-    auto result = commandList->appendImageCopyFromMemoryExt(nullptr, nullptr, nullptr, 0, 0, nullptr, 0, nullptr, memoryCopyParams);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendImageCopyToMemoryExtThenErrorPropagated) {
-    CmdListMemoryCopyParams memoryCopyParams{};
-    auto result = commandList->appendImageCopyToMemoryExt(nullptr, nullptr, nullptr, 0, 0, nullptr, 0, nullptr, memoryCopyParams);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendMemoryRangesBarrierThenErrorPropagated) {
-    auto result = commandList->appendMemoryRangesBarrier(0, nullptr, nullptr, nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendWaitOnMemoryThenErrorPropagated) {
-    auto result = commandList->appendWaitOnMemory(nullptr, nullptr, 0, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendWriteToMemoryThenErrorPropagated) {
-    auto result = commandList->appendWriteToMemory(nullptr, nullptr, 0);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendHostFunctionThenErrorPropagated) {
-    CmdListHostFunctionParameters params{};
-    auto result = commandList->appendHostFunction(nullptr, nullptr, nullptr, nullptr, 0, nullptr, params);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendWaitExternalSemaphoresThenErrorPropagated) {
-    auto result = commandList->appendWaitExternalSemaphores(0, nullptr, nullptr, nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendSignalExternalSemaphoresThenErrorPropagated) {
-    auto result = commandList->appendSignalExternalSemaphores(0, nullptr, nullptr, nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendCommandListsThenErrorPropagated) {
-    auto result = commandList->appendCommandLists(0, nullptr, nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-}
-
-HWTEST_F(ImmediateCmdListCheckAvailableSpaceNegativeTest, givenCheckAvailableSpaceFailsWhenAppendPageFaultCopyThenErrorPropagated) {
-    auto result = commandList->appendPageFaultCopy(nullptr, nullptr, 0u, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
 }
 
 } // namespace ult

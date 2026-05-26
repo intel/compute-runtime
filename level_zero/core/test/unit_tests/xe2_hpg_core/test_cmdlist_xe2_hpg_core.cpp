@@ -360,7 +360,6 @@ HWTEST2_F(CommandListAppendLaunchKernelXe2HpgCoreDebugger, givenDebuggingEnabled
     immediateCmdList->cmdQImmediate = queue.get();
     auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    immediateCmdList->getCmdContainer().initializeResources();
 
     auto cmdStream = immediateCmdList->getCmdContainer().getCommandStream();
 

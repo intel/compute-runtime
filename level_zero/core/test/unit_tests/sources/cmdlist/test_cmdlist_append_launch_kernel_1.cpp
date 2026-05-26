@@ -1345,7 +1345,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListAndCsrRequiring
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false,
                                                                               NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    commandList->getCmdContainer().initializeResources();
 
     NEO::MockGraphicsAllocation allocationA;
     NEO::MockGraphicsAllocation allocationB;
@@ -1374,7 +1373,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListAndCsrNotRequir
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false,
                                                                               NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    commandList->getCmdContainer().initializeResources();
 
     NEO::MockGraphicsAllocation allocationA;
     NEO::MockGraphicsAllocation allocationB;
@@ -1410,7 +1408,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteA
     commandList.cmdQImmediate = queue.get();
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-    commandList.commandContainer.initializeResources();
 
     auto usedSpaceBefore = commandList.getCmdContainer().getCommandStream()->getUsed();
 

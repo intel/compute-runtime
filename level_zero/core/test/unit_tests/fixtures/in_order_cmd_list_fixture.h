@@ -227,7 +227,6 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
         cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);
-        cmdList->commandContainer.initializeResources();
         cmdList->enableInOrderExecution();
 
         if (copyOffloadEnabled) {
@@ -494,7 +493,6 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
                                                                                          copyOnly ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute,
                                                                                          returnValue));
 
-        commandList->getCmdContainer().initializeResources();
         *commandList->getInOrderExecInfo()->getBaseHostAddress() = std::numeric_limits<uint64_t>::max();
 
         return commandList;

@@ -100,6 +100,7 @@ CommandContainer::CommandContainer(uint32_t maxNumAggregatedIdds) : CommandConta
 CommandContainer::ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList, size_t defaultSshSize, bool requireHeaps, bool createSecondaryCmdBufferInHostMem) {
     this->device = device;
     this->reusableAllocationList = reusableAllocationList;
+    size_t usableSize = getMaxUsableSpace();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &productHelper = device->getProductHelper();
     this->defaultSshSize = gfxCoreHelper.getDefaultSshSize(productHelper);
@@ -113,32 +114,6 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
     globalBindlessHeapsEnabled = this->device->getExecutionEnvironment()->rootDeviceEnvironments[this->device->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr;
 
-    if (this->usingPrimaryBuffer) {
-        this->selectedBbCmdSize = gfxCoreHelper.getBatchBufferStartSize();
-    } else {
-        this->selectedBbCmdSize = gfxCoreHelper.getBatchBufferEndSize();
-        this->bbEndReference = gfxCoreHelper.getBatchBufferEndReference();
-    }
-    this->useSecondaryCommandStream = createSecondaryCmdBufferInHostMem;
-
-    if (requireHeaps) {
-        heapHelper = std::make_unique<HeapHelper>(device, device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u);
-        instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), device->getMemoryManager()->isLocalMemoryUsedForIsa(device->getRootDeviceIndex()));
-
-        iddBlock = nullptr;
-        nextIddInBlock = this->getNumIddPerBlock();
-    }
-    if (this->immediateCmdListCsr) {
-        return ErrorCode::success;
-    }
-    return this->initializeResources();
-}
-
-CommandContainer::ErrorCode CommandContainer::initializeResources() {
-    if (resourcesInitialized) {
-        return ErrorCode::success;
-    }
-    size_t usableSize = getMaxUsableSpace();
     auto cmdBufferAllocation = this->obtainNextCommandBufferAllocation();
 
     if (!cmdBufferAllocation) {
@@ -146,6 +121,13 @@ CommandContainer::ErrorCode CommandContainer::initializeResources() {
     }
 
     cmdBufferAllocations.push_back(cmdBufferAllocation);
+
+    if (this->usingPrimaryBuffer) {
+        this->selectedBbCmdSize = gfxCoreHelper.getBatchBufferStartSize();
+    } else {
+        this->selectedBbCmdSize = gfxCoreHelper.getBatchBufferEndSize();
+        this->bbEndReference = gfxCoreHelper.getBatchBufferEndReference();
+    }
 
     CommandContainer *cmdcontainer = this;
     if (this->immediateCmdListCsr) {
@@ -156,7 +138,9 @@ CommandContainer::ErrorCode CommandContainer::initializeResources() {
 
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 
-    if (this->useSecondaryCommandStream) {
+    if (createSecondaryCmdBufferInHostMem) {
+        this->useSecondaryCommandStream = true;
+
         auto cmdBufferAllocationHost = this->obtainNextCommandBufferAllocation(true);
         if (!cmdBufferAllocationHost) {
             return ErrorCode::outOfDeviceMemory;
@@ -169,8 +153,9 @@ CommandContainer::ErrorCode CommandContainer::initializeResources() {
     }
 
     addToResidencyContainer(cmdBufferAllocation);
+    if (requireHeaps) {
+        heapHelper = std::make_unique<HeapHelper>(device, device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u);
 
-    if (heapHelper) {
         for (uint32_t i = 0; i < IndirectHeap::Type::numTypes; i++) {
             auto heapType = static_cast<HeapType>(i);
             if (skipHeapAllocationCreation(heapType)) {
@@ -199,16 +184,20 @@ CommandContainer::ErrorCode CommandContainer::initializeResources() {
                 indirectHeaps[i]->getSpace(reservedSshSize);
             }
         }
+
         indirectObjectHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), indirectHeapInLocalMemory);
 
-        auto heapAlignment = device->getProductHelper().getCacheLineSize();
+        instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), device->getMemoryManager()->isLocalMemoryUsedForIsa(device->getRootDeviceIndex()));
+
+        iddBlock = nullptr;
+        nextIddInBlock = this->getNumIddPerBlock();
+        auto heapAlignment = productHelper.getCacheLineSize();
         if (indirectHeapInLocalMemory) {
             heapAlignment = MemoryConstants::cacheLineSize;
         }
         this->threadDataTracker = std::make_unique<ThreadDataTracker>();
         this->threadDataMap = std::make_unique<ThreadDataMap>(heapHelper.get(), device->getRootDeviceIndex(), heapAlignment);
     }
-    resourcesInitialized = true;
     return ErrorCode::success;
 }
 
@@ -242,7 +231,6 @@ void CommandContainer::removeDuplicatesFromResidencyContainer() {
 }
 
 void CommandContainer::reset() {
-    initializeResources();
     setDirtyStateForAllHeaps(true);
     slmSize = std::numeric_limits<uint32_t>::max();
     clearResidencyContainer();

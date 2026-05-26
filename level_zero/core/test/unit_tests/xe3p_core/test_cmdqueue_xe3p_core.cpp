@@ -481,7 +481,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessWhenExecutingComma
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
-    commandListImmediate.getCmdContainer().initializeResources();
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::kernel, false, false, nullptr, nullptr));
 }
@@ -493,7 +492,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessWhenExecutingComma
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
-    commandListImmediate.getCmdContainer().initializeResources();
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
 }
@@ -508,7 +506,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndRegisterInstruc
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
-    commandListImmediate.getCmdContainer().initializeResources();
     commandListImmediate.getCsr(false)->registerInstructionCacheFlush();
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::kernel, false, false, nullptr, nullptr));
@@ -541,7 +538,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndStateCacheDirty
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
-    commandListImmediate.getCmdContainer().initializeResources();
 
     auto csr = commandListImmediate.getCsr(false);
     auto contextId = csr->getOsContext().getContextId();
@@ -583,7 +579,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p,
         void *sshCpuBaseAddress = nullptr;
         commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
         auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
-        commandListImmediate.getCmdContainer().initializeResources();
         commandListImmediate.cmdListHeapAddressModel = HeapAddressModel::globalStateless;
         commandListImmediate.getCsr(false)->createGlobalStatelessHeap();
 
@@ -596,7 +591,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p,
         void *sshCpuBaseAddress = nullptr;
         commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
         auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
-        commandListImmediate.getCmdContainer().initializeResources();
         commandListImmediate.cmdListHeapAddressModel = HeapAddressModel::globalBindless;
         commandListImmediate.immediateCmdListHeapSharing = true;
         commandListImmediate.dynamicHeapRequired = true;
@@ -615,7 +609,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p,
         void *sshCpuBaseAddress = nullptr;
         commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
         auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
-        commandListImmediate.getCmdContainer().initializeResources();
         commandListImmediate.cmdListHeapAddressModel = HeapAddressModel::privateHeaps;
         commandListImmediate.immediateCmdListHeapSharing = false;
         commandListImmediate.dynamicHeapRequired = true;
@@ -679,7 +672,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenImmediateCmdListAndAppendi
     std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
-    immCommandList->getCmdContainer().initializeResources();
     auto usedSpaceBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
     result = immCommandList->appendCommandLists(1u, &commandListHandle, hSignalEventHandle, 1u, &hWaitEventHandle);
 

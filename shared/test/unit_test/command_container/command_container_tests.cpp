@@ -2079,7 +2079,6 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenImmediateCmdListCsrIsSetThenCo
     CommandContainer cmdContainer;
     cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, false);
-    cmdContainer.initializeResources();
     EXPECT_EQ(cmdContainer.getCommandStream()->getCmdContainer(), nullptr);
 }
 
@@ -2088,7 +2087,6 @@ TEST_F(CommandContainerTest, givenCmdContainerWithImmediateCsrWhenCreatingSecond
     cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     constexpr bool createSecondary = true;
     cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, createSecondary);
-    cmdContainer.initializeResources();
     ASSERT_NE(nullptr, cmdContainer.secondaryCommandStreamForImmediateCmdList.get());
     EXPECT_EQ(cmdContainer.secondaryCommandStreamForImmediateCmdList->getCmdContainer(), nullptr);
 }
@@ -2523,7 +2521,7 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenNoDataCachedThenTryGetCache
     cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->initializeResources();
+
     const uint8_t ctd[] = {1, 2, 3, 4};
     const uint8_t ptd[] = {5, 6, 7, 8};
 
@@ -2539,7 +2537,7 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenThreadDataRegisteredAndExtr
     cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->initializeResources();
+
     const uint8_t ctd[] = {1, 2, 3, 4};
     const uint8_t ptd[] = {5, 6, 7, 8};
     const uint8_t combined[] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -2560,7 +2558,7 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTwoDifferentThreadDataShare
     cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->initializeResources();
+
     // Simulate a hash collision: two different data items sharing the same hash
     constexpr uint64_t collisionHash = 42u;
 
@@ -2595,7 +2593,7 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResident
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->initializeResources();
+
     const uint8_t data[] = {1, 2, 3, 4};
     cmdContainer->registerThreadData(42u, {data, sizeof(data)});
     cmdContainer->extractCommonThreadData();
@@ -2619,7 +2617,7 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResident
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->initializeResources();
+
     auto residencyBefore = cmdContainer->getResidencyContainer().size();
 
     // No data inserted, storage has no allocation
@@ -2645,7 +2643,7 @@ TEST_F(CommandContainerTest, givenIndirectHeapInLocalMemoryWhenThreadDataInserte
     cmdContainer->setImmediateCmdListCsr(device->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(device.get(), &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->initializeResources();
+
     const uint8_t data1[] = {1, 2, 3};
     auto hash1 = ThreadDataHash::computeThreadDataHash({data1, sizeof(data1)}, {});
     cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)});
@@ -2673,7 +2671,6 @@ TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageHasSpaceThenPreviousEn
     cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->initializeResources();
     cmdContainer->threadDataMap = std::make_unique<ThreadDataMap>(
         cmdContainer->heapHelper.get(), pDevice->getRootDeviceIndex(), MemoryConstants::cacheLineSize);
 
@@ -2699,7 +2696,7 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTrackerIsEmptyThenExtractCo
     cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->initializeResources();
+
     cmdContainer->extractCommonThreadData();
 
     const uint8_t data[] = {1, 2, 3, 4};
@@ -2715,7 +2712,6 @@ TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageExhaustedThenReallocat
     cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->initializeResources();
     cmdContainer->threadDataMap = std::make_unique<ThreadDataMap>(
         cmdContainer->heapHelper.get(), pDevice->getRootDeviceIndex(), MemoryConstants::cacheLineSize);
 
@@ -2744,7 +2740,6 @@ TEST_F(CommandContainerTest, givenCachedThreadDataWhenFindCalledWithMismatchedDa
     cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-    cmdContainer->initializeResources();
     cmdContainer->threadDataMap = std::make_unique<ThreadDataMap>(
         cmdContainer->heapHelper.get(), pDevice->getRootDeviceIndex(), MemoryConstants::cacheLineSize);
 

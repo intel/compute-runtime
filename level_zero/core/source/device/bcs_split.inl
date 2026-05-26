@@ -61,9 +61,7 @@ ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gf
 
         auto lock = subCmdList->getCsr(false)->obtainUniqueOwnership();
 
-        if (subCmdList->checkAvailableSpace(numWaitEvents, hasRelaxedOrderingDependencies, estimatedCmdBufferSize, false) != ZE_RESULT_SUCCESS) {
-            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-        }
+        subCmdList->checkAvailableSpace(numWaitEvents, hasRelaxedOrderingDependencies, estimatedCmdBufferSize, false);
 
         if (barrierRequired) {
             auto barrierEventHandle = this->events.getEventResources().barrier[markerEventIndex]->toHandle();
