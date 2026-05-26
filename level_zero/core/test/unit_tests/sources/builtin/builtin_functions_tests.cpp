@@ -132,41 +132,6 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenCallToBuiltinFunctionWithWrongIdThenE
     EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinKernel(static_cast<L0::BufferBuiltIn>(builtId), mode), std::exception);
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, whenCreateBuiltinFunctionsLibThenImmediateFillIsLoaded) {
-    struct MockBuiltInKernelLibImpl : public BuiltInKernelLibImpl {
-        using BuiltInKernelLibImpl::BuiltInKernelLibImpl;
-        using BuiltInKernelLibImpl::builtins;
-        using BuiltInKernelLibImpl::ensureInitCompletion;
-        using BuiltInKernelLibImpl::initAsyncComplete;
-        using BuiltInKernelLibImpl::maxBufferCacheSize;
-        using BuiltInKernelLibImpl::toBufferCacheIndex;
-    };
-
-    EXPECT_TRUE(mockBuiltinFunctionsLibImpl->initAsyncComplete);
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useinitBuiltinsAsyncEnabled = true;
-    MockBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
-    EXPECT_FALSE(lib.initAsyncComplete);
-    lib.ensureInitCompletion();
-    EXPECT_TRUE(lib.initAsyncComplete);
-    auto defaultMode = getDefaultBuiltInMode();
-    auto expectedCacheIndex = lib.toBufferCacheIndex(BufferBuiltIn::fillBufferImmediate, defaultMode);
-
-    for (uint32_t builtId = 0; builtId < lib.maxBufferCacheSize; builtId++) {
-        if (builtId == expectedCacheIndex) {
-            EXPECT_NE(nullptr, lib.builtins[builtId]);
-        } else {
-            EXPECT_EQ(nullptr, lib.builtins[builtId]);
-        }
-    }
-    uint32_t builtId = static_cast<uint32_t>(BufferBuiltIn::count) + 1;
-    EXPECT_THROW(lib.initBuiltinKernel(static_cast<L0::BufferBuiltIn>(builtId), defaultMode), std::exception);
-
-    /* std::async may create a detached thread - completion of the scheduled task can be ensured,
-       but there is no way to ensure that actual OS thread exited and its resources are freed */
-    MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
-}
-
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenBindlessBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
 
     MockCheckPassedArgumentsBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());

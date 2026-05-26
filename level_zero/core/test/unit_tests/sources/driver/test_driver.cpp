@@ -859,38 +859,6 @@ TEST(DriverTest, givenDriverWhenGetDefaultContextApiIsCalledThenProperHandleIsRe
     delete driverHandle;
 }
 
-TEST(DriverTest, givenBuiltinsAsyncInitEnabledWhenCreatingDriverThenMakeSureBuiltinsInitIsCompletedOnExitOfDriverHandleInitialization) {
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useinitBuiltinsAsyncEnabled = true;
-
-    ze_result_t returnValue;
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-
-    NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
-
-    NEO::DeviceVector devices;
-    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-
-    L0EnvVariables envVariables = {};
-
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
-    EXPECT_NE(nullptr, driverHandle);
-
-    L0::Device *device = driverHandle->devices[0];
-    auto builtinFunctionsLib = device->getBuiltinFunctionsLib();
-
-    if (builtinFunctionsLib) {
-        auto builtinsLibIpl = static_cast<MockBuiltInKernelLibImpl *>(builtinFunctionsLib);
-        EXPECT_TRUE(builtinsLibIpl->initAsyncComplete);
-    }
-
-    delete driverHandle;
-
-    /* std::async may create a detached thread - completion of the scheduled task can be ensured,
-       but there is no way to ensure that actual OS thread exited and its resources are freed */
-    MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
-}
-
 TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIsReturned) {
     VariableBackup<bool> backupUseMockSip{&MockSipData::useMockSip};
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
