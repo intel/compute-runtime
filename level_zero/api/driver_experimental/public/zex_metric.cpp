@@ -5,8 +5,8 @@
  *
  */
 
+#include "level_zero/include/level_zero/zet_intel_gpu_metric.h"
 #include "level_zero/tools/source/metrics/metric.h"
-#include "level_zero/zet_intel_gpu_metric.h"
 
 namespace L0 {
 
@@ -16,6 +16,13 @@ ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevic
 
 ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice) {
     return L0::metricsDisable(hDevice);
+}
+
+ze_result_t ZE_APICALL zetIntelMetricTracerExportExp(zet_metric_tracer_exp_handle_t hMetricTracer,
+                                                     zet_intel_metric_export_format_t exportFormat,
+                                                     size_t *pSizeOfExportInBytes,
+                                                     void *pExportData) {
+    return L0::metricTracerExport(hMetricTracer, exportFormat, pSizeOfExportInBytes, pExportData);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricCalculationOperationCreateExp(zet_context_handle_t hContext, zet_device_handle_t hDevice,
@@ -97,6 +104,14 @@ ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevic
 
 ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice) {
     return L0::zetIntelDeviceDisableMetricsExp(hDevice);
+}
+
+ze_result_t ZE_APICALL zetIntelMetricTracerExportExp(
+    zet_metric_tracer_exp_handle_t hMetricTracer,
+    zet_intel_metric_export_format_t exportFormat,
+    size_t *pSizeOfExportInBytes,
+    void *pExportData) {
+    return L0::zetIntelMetricTracerExportExp(hMetricTracer, exportFormat, pSizeOfExportInBytes, pExportData);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricCalculationOperationCreateExp(

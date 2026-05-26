@@ -425,6 +425,50 @@ typedef struct _zet_intel_metric_hw_buffer_size_exp_desc_t {
                                     ///< The actual size used by the HW will be updated in "sizeInBytes" member by the implementation.
 } zet_intel_metric_hw_buffer_size_exp_desc_t;
 
+#ifndef ZET_INTEL_METRIC_TRACER_EXPORT_EXP_NAME
+/// @brief Extension name for metric tracer export
+#define ZET_INTEL_METRIC_TRACER_EXPORT_EXP_NAME "ZET_intel_metric_tracer_export"
+#endif // ZET_INTEL_METRIC_TRACER_EXPORT_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Metric Tracer Export extension Version(s)
+typedef enum _zet_intel_metric_tracer_export_exp_version_t {
+    ZET_INTEL_METRIC_TRACER_EXPORT_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                              ///< version 1.0
+    ZET_INTEL_METRIC_TRACER_EXPORT_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_TRACER_EXPORT_EXP_VERSION_1_0, ///< latest known version
+    ZET_INTEL_METRIC_TRACER_EXPORT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zet_intel_metric_tracer_export_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Metric export format
+typedef enum _zet_intel_metric_export_format_t {
+    ZET_INTEL_METRIC_EXPORT_FORMAT_RAW = 0, ///< Raw binary format
+    ZET_INTEL_METRIC_EXPORT_FORMAT_FORCE_UINT32 = 0x7fffffff
+} zet_intel_metric_export_format_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Export metric tracer data
+///
+/// @details
+///     - All metric groups enabled for the tracer handle will be exported.
+///     - If sizeOfExportInBytes is 0, the API returns the number of bytes necessary
+///       to hold the export data in sizeOfExportInBytes.
+///     - It is an error if the application passes in a value less than what was
+///       returned by the API when querying the size.
+///     - The implementation will write the export data into pExportData buffer.
+///
+/// @returns
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + The provided buffer size is less than required
+ze_result_t ZE_APICALL zetIntelMetricTracerExportExp(
+    zet_metric_tracer_exp_handle_t hTracer,        ///< [in] input Tracer handle. All metric groups enabled for this tracer handle will be exported.
+    zet_intel_metric_export_format_t exportFormat, ///< [in] format of the exported data.
+    size_t *pSizeOfExportInBytes,                  ///< [in,out] size of export data in bytes. If 0 is passed in, then the API returns
+                                                   ///< the number of bytes necessary to hold the export data. It is an error if the
+                                                   ///< application passes in a value less than what was returned by zetIntelMetricTracerExportExp API.
+    void *pExportData                              ///< [in,out][optional][range(0, *pSizeOfExportInBytes)] buffer to hold the exported data.
+                                                   ///< Implementation will write the export data into this buffer.
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

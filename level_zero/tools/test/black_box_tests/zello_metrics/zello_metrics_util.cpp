@@ -10,6 +10,7 @@
 #include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics.h"
 
 #include <cstring>
+#include <fstream>
 #include <iomanip>
 #include <mutex>
 #include <thread>
@@ -554,6 +555,7 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
                      "\n  -y,   --showSystemInfo                capture and show system info like frequency and power"
                      "\n                                        (requires ZES_ENABLE_SYSMAN=1)"
                      "\n  -p,   --programmableLimit <count>     max number of programmables to iterate (0 = no limit)"
+                     "\n  -w,   --writeFile <prefix>            save raw and export data with prefix (creates prefix_d#_s#_raw.bin and prefix_d#_s#_export.bin)"
                      "\n  -h,   --help                          display help message"
                      "\n";
     };
@@ -603,6 +605,10 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
     if (isParamEnabled(argc, argv, "-p", "--programmableLimit", &optind)) {
         programmableLimit.set(static_cast<uint32_t>(std::atoi(copyArg(argc, argv, optind).c_str())));
     }
+
+    if (isParamEnabled(argc, argv, "-w", "--writeFile", &optind)) {
+        saveDataPrefix.set(copyArg(argc, argv, optind));
+    }
 }
 
 TestSettings *TestSettings::get() {
@@ -642,5 +648,22 @@ ZetIntelMetricExtensions::ZetIntelMetricExtensions(ze_driver_handle_t driverHand
 class DummyStreamBuf : public std::streambuf {};
 DummyStreamBuf emptyStreamBuf;
 std::ostream emptyCout(&emptyStreamBuf);
+
+bool saveDataToFile(const std::string &filepath, const uint8_t *data, size_t size) {
+    if (filepath.empty()) {
+        return true;
+    }
+
+    std::ofstream outFile(filepath, std::ios::binary);
+    if (outFile.is_open()) {
+        outFile.write(reinterpret_cast<const char *>(data), size);
+        outFile.close();
+        LOG(LogLevel::INFO) << "Data saved to: " << filepath << " (" << size << " bytes)\n";
+        return true;
+    } else {
+        LOG(LogLevel::ERROR) << "Failed to open file: " << filepath << "\n";
+        return false;
+    }
+}
 
 } // namespace ZelloMetricsUtility

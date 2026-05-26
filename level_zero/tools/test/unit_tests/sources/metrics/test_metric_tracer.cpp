@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ TEST(MetricTracerTest, WhenTracerRelatedApisAreCalledThenReturnUnsupportedFeatur
                                                                                                 rawDataSize, nullptr, nullptr, nullptr,
                                                                                                 nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricTracerDecodeExp2(nullptr, rawDataSize, nullptr, 0, nullptr, 0, nullptr, 0, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricTracerExportExp(nullptr, ZET_INTEL_METRIC_EXPORT_FORMAT_RAW, nullptr, nullptr));
 }
 
 } // namespace ult

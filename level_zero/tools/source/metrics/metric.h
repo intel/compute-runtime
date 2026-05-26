@@ -618,6 +618,9 @@ ze_result_t metricTracerDisable(zet_metric_tracer_exp_handle_t hMetricTracer, ze
 
 ze_result_t metricTracerReadData(zet_metric_tracer_exp_handle_t hMetricTracer, size_t *pRawDataSize, uint8_t *pRawData);
 
+ze_result_t metricTracerExport(zet_metric_tracer_exp_handle_t hMetricTracer, zet_intel_metric_export_format_t exportFormat,
+                               size_t *pSizeOfExportInBytes, void *pExportData);
+
 ze_result_t metricDecoderCreate(zet_metric_tracer_exp_handle_t hMetricTracer, zet_metric_decoder_exp_handle_t *phMetricDecoder);
 
 ze_result_t metricDecoderDestroy(zet_metric_decoder_exp_handle_t hMetricDecoder);

@@ -51,6 +51,14 @@ ze_result_t metricTracerReadData(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t metricTracerExport(
+    zet_metric_tracer_exp_handle_t hMetricTracer,
+    zet_intel_metric_export_format_t exportFormat,
+    size_t *pSizeOfExportInBytes,
+    void *pExportData) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t metricDecoderCreate(
     zet_metric_tracer_exp_handle_t hMetricTracer,
     zet_metric_decoder_exp_handle_t *phMetricDecoder) {
