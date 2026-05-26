@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/opencl/source/platform/platform.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/global_teardown.h"
@@ -25,14 +26,7 @@ namespace ult {
 
 struct GlobalTearDownTests : public ::testing::Test {
     VariableBackup<decltype(globalDriverHandles)> globalDriverHandlesBackup{&globalDriverHandles, nullptr};
-    void *savedAdditionalState = nullptr;
-
-    void SetUp() override {
-        savedAdditionalState = backupAdditionalGlobalState();
-    }
-    void TearDown() override {
-        restoreAdditionalGlobalState(savedAdditionalState);
-    }
+    VariableBackup<decltype(NEO::LEO::platformsImpl)> platformsImplBackup{&NEO::LEO::platformsImpl, nullptr};
 };
 
 TEST_F(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionForTranslateHandleIsLoadedIfAvailable) {

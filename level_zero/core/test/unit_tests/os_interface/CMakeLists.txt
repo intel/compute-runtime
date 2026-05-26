@@ -9,7 +9,6 @@ set(NEO_L0_OS_INTERFACE_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_l0_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/global_teardown_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/global_teardown_tests.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/global_teardown_tests_extra.cpp
 )
 
 add_subdirectories()

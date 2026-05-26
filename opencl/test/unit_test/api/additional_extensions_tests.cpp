@@ -15,7 +15,3 @@ TEST(AdditionalExtension, GivenFuncNameWhenGetingFunctionAddressThenReturnNullpt
     auto address = getAdditionalExtensionFunctionAddress("clFunction");
     EXPECT_EQ(nullptr, address);
 }
-
-TEST(AdditionalExtension, whenCheckDoNotReportClPlatformThenReturnProperValue) {
-    EXPECT_FALSE(doNotReportClPlatform());
-}

@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 
+#include "level_zero/api/opencl/source/platform/platform.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/ddi/ze_ddi_tables.h"
@@ -32,7 +33,9 @@ void globalDriverSetup() {
         loaderTranslateHandleFunc = reinterpret_cast<decltype(&zelLoaderTranslateHandle)>(loaderLibrary->getProcAddress("zelLoaderTranslateHandle"));
     }
 
-    additionalSetup();
+    if (!NEO::LEO::platformsImpl) {
+        NEO::LEO::platformsImpl = new std::vector<std::unique_ptr<NEO::LEO::Platform>>;
+    }
 }
 
 void removePageFaultManagerAtTermination() {
@@ -48,7 +51,10 @@ void removePageFaultManagerAtTermination() {
     }
 }
 void globalDriverTeardown() {
-    additionalTeardown();
+    if (NEO::LEO::platformsImpl) {
+        delete NEO::LEO::platformsImpl;
+    }
+    NEO::LEO::platformsImpl = nullptr;
 
     if (levelZeroDriverInitialized) {
         NEO::OsLibraryCreateProperties loaderLibraryProperties("ze_loader.dll");

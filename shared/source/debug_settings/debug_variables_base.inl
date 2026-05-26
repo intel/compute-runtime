@@ -562,6 +562,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, LimitNumGrfsSupported, 512, "Limit the supported
 DECLARE_DEBUG_VARIABLE(bool, WddmUseHw64bToken, true, "Set UseHw64bToken on context and native fence creation, requires 64BitSemaphore")
 DECLARE_DEBUG_VARIABLE(bool, DisableKmdSubmissionForTimestamps, false, "Do not use KMD when querying GPU timestamps, calculate it on CPU side instead.")
 DECLARE_DEBUG_VARIABLE(int64_t, VmBindWaitUserFenceTimeout, -1, "-1: default, >0: time in ns for wait function timeout")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableLEO, -1, "Enable LEO - Level Zero executing OpenCL. -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceRunAloneContext, -1, "Control creation of run-alone HW context, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AddClGlSharing, -1, "Add cl-gl extension")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBOMmapCreate, -1, "Create BOs using mmap, -1:default, 0:disable(GEM_USERPTR), 1:enable")

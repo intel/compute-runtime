@@ -17,7 +17,4 @@ void globalDriverTeardown();
 void removePageFaultManagerAtTermination();
 void globalDriverSetup();
 
-void additionalSetup();
-void additionalTeardown();
-
 } // namespace L0

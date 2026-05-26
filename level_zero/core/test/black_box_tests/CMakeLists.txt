@@ -89,6 +89,7 @@ set(TEST_TARGETS
     zello_world_jitc_ocloc
     zello_world_usm
     zello_fabric
+    zello_opencl_interop
 )
 
 include_directories(common)
@@ -111,6 +112,9 @@ foreach(TEST_NAME ${TEST_TARGETS})
       continue()
     endif()
     if(${TEST_NAME} STREQUAL "zello_ipc_event")
+      continue()
+    endif()
+    if(${TEST_NAME} STREQUAL "zello_opencl_interop")
       continue()
     endif()
   endif()
