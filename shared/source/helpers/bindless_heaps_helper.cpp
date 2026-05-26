@@ -125,8 +125,8 @@ bool BindlessHeapsHelper::initializeReservedMemory() {
     heapFrontWindow = std::make_unique<HeapAllocator>(reservedRangeBase, heapFrontWindowSize, MemoryConstants::pageSize64k, 0);
     heapRegular = std::make_unique<HeapAllocator>(reservedRangeBase + heapFrontWindowSize, heapRegularSize, MemoryConstants::pageSize64k, 0);
 
-    memManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, {heapFrontWindow.get(), reservedRangeBase});
-    memManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, {heapRegular.get(), reservedRangeBase});
+    memManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, rootDeviceIndex, {heapFrontWindow.get(), reservedRangeBase});
+    memManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, rootDeviceIndex, {heapRegular.get(), reservedRangeBase});
 
     reservedMemoryInitialized = true;
     return true;
@@ -145,8 +145,8 @@ BindlessHeapsHelper::~BindlessHeapsHelper() {
     reservedRanges.clear();
 
     if (reservedMemoryInitialized) {
-        memManager->removeCustomHeapAllocatorConfig(AllocationType::linearStream, true);
-        memManager->removeCustomHeapAllocatorConfig(AllocationType::linearStream, false);
+        memManager->removeCustomHeapAllocatorConfig(AllocationType::linearStream, true, rootDeviceIndex);
+        memManager->removeCustomHeapAllocatorConfig(AllocationType::linearStream, false, rootDeviceIndex);
     }
 }
 

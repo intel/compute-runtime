@@ -1422,20 +1422,22 @@ uint64_t MemoryManager::adjustToggleBitFlagForGpuVa(AllocationType inputAllocati
     return gpuAddress;
 }
 
-void MemoryManager::addCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, const CustomHeapAllocatorConfig &config) {
-    customHeapAllocators[{allocationType, isFrontWindowPool}] = config;
+void MemoryManager::addCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, uint32_t rootDeviceIndex,
+                                                 const CustomHeapAllocatorConfig &config) {
+    customHeapAllocators[{allocationType, isFrontWindowPool, rootDeviceIndex}] = config;
 }
 
-std::optional<std::reference_wrapper<CustomHeapAllocatorConfig>> MemoryManager::getCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool) {
-    auto it = customHeapAllocators.find({allocationType, isFrontWindowPool});
+std::optional<std::reference_wrapper<CustomHeapAllocatorConfig>>
+MemoryManager::getCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, uint32_t rootDeviceIndex) {
+    auto it = customHeapAllocators.find({allocationType, isFrontWindowPool, rootDeviceIndex});
     if (it != customHeapAllocators.end()) {
         return it->second;
     }
     return std::nullopt;
 }
 
-void MemoryManager::removeCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool) {
-    customHeapAllocators.erase({allocationType, isFrontWindowPool});
+void MemoryManager::removeCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, uint32_t rootDeviceIndex) {
+    customHeapAllocators.erase({allocationType, isFrontWindowPool, rootDeviceIndex});
 }
 
 bool MemoryManager::getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const {

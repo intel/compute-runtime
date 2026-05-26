@@ -5046,8 +5046,8 @@ class WddmMemoryManagerBindlessHeapHelperCustomHeapAllocatorCfgTest : public Wdd
 };
 
 TEST_F(WddmMemoryManagerBindlessHeapHelperCustomHeapAllocatorCfgTest, givenCustomHeapAllocatorForFrontWindowWhenAllocatingThenGpuAddressAndBaseAreAssignedByCustomAllocator) {
-    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, {heapFrontWindow.get(), heapBase});
-    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, {heapRegular.get(), heapBase});
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, mockRootDeviceIndex, {heapFrontWindow.get(), heapBase});
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, mockRootDeviceIndex, {heapRegular.get(), heapBase});
 
     NEO::AllocationProperties properties{mockRootDeviceIndex, true, allocationSize, AllocationType::linearStream, false, mockDeviceBitfield};
     properties.flags.use32BitFrontWindow = 1;
@@ -5067,8 +5067,8 @@ TEST_F(WddmMemoryManagerBindlessHeapHelperCustomHeapAllocatorCfgTest, givenCusto
 }
 
 TEST_F(WddmMemoryManagerBindlessHeapHelperCustomHeapAllocatorCfgTest, givenCustomHeapAllocatorForNonFrontWindowHeapWhenAllocatingThenGpuAddressAndBaseAreAssignedByCustomAllocator) {
-    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, {heapFrontWindow.get(), heapBase});
-    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, {heapRegular.get(), heapBase});
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, mockRootDeviceIndex, {heapFrontWindow.get(), heapBase});
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, mockRootDeviceIndex, {heapRegular.get(), heapBase});
 
     NEO::AllocationProperties properties{mockRootDeviceIndex, true, allocationSize, AllocationType::linearStream, false, mockDeviceBitfield};
     properties.flags.use32BitFrontWindow = 0;
@@ -5093,8 +5093,8 @@ TEST_F(WddmMemoryManagerBindlessHeapHelperCustomHeapAllocatorCfgTest, givenCusto
     CustomHeapAllocatorConfig cfg2;
     cfg2.allocator = heapRegular.get();
 
-    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, cfg1);
-    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, cfg2);
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, mockRootDeviceIndex, cfg1);
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, mockRootDeviceIndex, cfg2);
 
     NEO::AllocationProperties properties{mockRootDeviceIndex, true, allocationSize, AllocationType::linearStream, false, mockDeviceBitfield};
     properties.flags.use32BitFrontWindow = 1;

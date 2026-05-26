@@ -1068,7 +1068,10 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
         addressToMap = allocation->getReservedGpuVirtualAddress();
     }
 
-    auto customHeapAllocatorCfg = getCustomHeapAllocatorConfig(allocation->getAllocationType(), allocation->isAllocInFrontWindowPool());
+    auto customHeapAllocatorCfg = getCustomHeapAllocatorConfig(
+        allocation->getAllocationType(),
+        allocation->isAllocInFrontWindowPool(),
+        allocation->getRootDeviceIndex());
 
     auto gfxPartition = getGfxPartition(allocation->getRootDeviceIndex());
     auto alignedSize = allocation->getAlignedSize();
@@ -1082,6 +1085,10 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
 
     D3DGPU_VIRTUAL_ADDRESS minimumAddress = gfxPartition->getHeapMinimalAddress(heapIndex);
     D3DGPU_VIRTUAL_ADDRESS maximumAddress = gfxPartition->getHeapLimit(heapIndex);
+
+    // addressToMap is requested but not within gfxPartition heap range
+    DEBUG_BREAK_IF(addressToMap != 0 && !(minimumAddress <= addressToMap && addressToMap <= maximumAddress));
+
     auto status = getWddm(allocation->getRootDeviceIndex()).mapGpuVirtualAddress(allocation->getDefaultGmm(), allocation->getDefaultHandle(), minimumAddress, maximumAddress, addressToMap, allocation->getGpuAddressToModify(), allocation->getAllocationType(), flags);
 
     if (!status && deferredDeleter) {

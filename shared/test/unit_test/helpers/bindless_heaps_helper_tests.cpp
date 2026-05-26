@@ -773,16 +773,16 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenSuccessfullyInitiali
 
     {
         // heapFrontWindow
-        ASSERT_TRUE(memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true).has_value());
-        EXPECT_EQ(bindlessHeapHelper->heapFrontWindow.get(), memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true)->get().allocator);
-        EXPECT_EQ(bindlessHeapHelper->reservedRangeBase, memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true)->get().gpuVaBase);
+        ASSERT_TRUE(memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true, rootDeviceIndex).has_value());
+        EXPECT_EQ(bindlessHeapHelper->heapFrontWindow.get(), memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true, rootDeviceIndex)->get().allocator);
+        EXPECT_EQ(bindlessHeapHelper->reservedRangeBase, memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true, rootDeviceIndex)->get().gpuVaBase);
     }
 
     {
         // heapRegular
-        ASSERT_TRUE(memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false).has_value());
-        EXPECT_EQ(bindlessHeapHelper->heapRegular.get(), memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false)->get().allocator);
-        EXPECT_EQ(bindlessHeapHelper->reservedRangeBase, memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false)->get().gpuVaBase);
+        ASSERT_TRUE(memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false, rootDeviceIndex).has_value());
+        EXPECT_EQ(bindlessHeapHelper->heapRegular.get(), memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false, rootDeviceIndex)->get().allocator);
+        EXPECT_EQ(bindlessHeapHelper->reservedRangeBase, memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false, rootDeviceIndex)->get().gpuVaBase);
     }
 
     bindlessHeapHelper.reset();
@@ -805,4 +805,88 @@ TEST_F(BindlessHeapsHelperTests, givenReservedMemoryModeAvailableWhenSpecialSshR
 
     EXPECT_TRUE(bindlessHeapHelper->reservedMemoryInitialized);
     EXPECT_TRUE(bindlessHeapHelper->useReservedMemory);
+}
+
+TEST(BindlessHeapsHelperTestsFixtureless, givenTwoRootDevicesWhenInitializingReservedMemoryThenEachDeviceRegistersIndependentCustomHeapAllocatorConfigs) {
+    constexpr uint64_t reservedRangeSize = 4 * MemoryConstants::gigaByte;
+    if constexpr (reservedRangeSize > std::numeric_limits<size_t>::max()) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+
+    // Two root devices (indices 0 and 1) sharing the same ExecutionEnvironment and MemoryManager.
+    UltDeviceFactory deviceFactory(2, 0);
+
+    auto *device0 = deviceFactory.rootDevices[0];
+    auto *device1 = deviceFactory.rootDevices[1];
+    auto *memManager = static_cast<MockMemoryManager *>(device0->getMemoryManager());
+
+    // GfxPartition for each device
+    for (uint32_t idx = 0; idx < 2; idx++) {
+        auto mockPartition = std::make_unique<MockGfxPartition>();
+        mockPartition->initHeap(HeapIndex::heapStandard,
+                                maxNBitValue(48) + 1 + static_cast<uint64_t>(idx) * MemoryConstants::teraByte,
+                                MemoryConstants::teraByte,
+                                MemoryConstants::pageSize64k);
+        mockPartition->callHeapAllocate = false;
+        memManager->gfxPartitions[idx] = std::move(mockPartition);
+    }
+
+    memManager->customHeapAllocators.clear();
+    memManager->reserveGpuAddressOnHeapCalled = 0u;
+
+    // Construct helpers,initializeReservedMemory() not called implicitly
+    auto helper0 = std::make_unique<MockBindlesHeapsHelper>(device0, false);
+    auto helper1 = std::make_unique<MockBindlesHeapsHelper>(device1, false);
+    ASSERT_FALSE(helper0->reservedMemoryInitialized);
+    ASSERT_FALSE(helper1->reservedMemoryInitialized);
+
+    EXPECT_TRUE(helper0->initializeReservedMemory());
+    EXPECT_TRUE(helper1->initializeReservedMemory());
+
+    EXPECT_EQ(2u, memManager->reserveGpuAddressOnHeapCalled);
+    EXPECT_EQ(4u, memManager->customHeapAllocators.size());
+
+    // Device 0 - front window: config must point to helper0's allocator, not helper1's.
+    {
+        auto cfg = memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true, 0u);
+        ASSERT_TRUE(cfg.has_value());
+        EXPECT_EQ(helper0->heapFrontWindow.get(), cfg->get().allocator);
+        EXPECT_EQ(helper0->reservedRangeBase, cfg->get().gpuVaBase);
+    }
+    // Device 0 - regular
+    {
+        auto cfg = memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false, 0u);
+        ASSERT_TRUE(cfg.has_value());
+        EXPECT_EQ(helper0->heapRegular.get(), cfg->get().allocator);
+        EXPECT_EQ(helper0->reservedRangeBase, cfg->get().gpuVaBase);
+    }
+    // Device 1 - front window: config must point to helper1's allocator, not helper0's.
+    {
+        auto cfg = memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true, 1u);
+        ASSERT_TRUE(cfg.has_value());
+        EXPECT_EQ(helper1->heapFrontWindow.get(), cfg->get().allocator);
+        EXPECT_EQ(helper1->reservedRangeBase, cfg->get().gpuVaBase);
+    }
+    // Device 1 - regular
+    {
+        auto cfg = memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false, 1u);
+        ASSERT_TRUE(cfg.has_value());
+        EXPECT_EQ(helper1->heapRegular.get(), cfg->get().allocator);
+        EXPECT_EQ(helper1->reservedRangeBase, cfg->get().gpuVaBase);
+    }
+
+    // Destroying helper0 must remove only device 0's 2 entries; device 1's must remain intact.
+    helper0.reset();
+    EXPECT_EQ(2u, memManager->customHeapAllocators.size());
+    EXPECT_FALSE(memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true, 0u).has_value());
+    EXPECT_FALSE(memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false, 0u).has_value());
+    EXPECT_TRUE(memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true, 1u).has_value());
+    EXPECT_TRUE(memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false, 1u).has_value());
+
+    // Destroying helper1 must remove the remaining 2 entries.
+    helper1.reset();
+    EXPECT_EQ(0u, memManager->customHeapAllocators.size());
 }

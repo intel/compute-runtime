@@ -418,9 +418,9 @@ class MemoryManager {
         return getUsedSystemMemorySize() >= usmReuseInfo.getLimitAllocationsReuseThreshold();
     }
 
-    void addCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, const CustomHeapAllocatorConfig &config);
-    std::optional<std::reference_wrapper<CustomHeapAllocatorConfig>> getCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool);
-    void removeCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool);
+    void addCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, uint32_t rootDeviceIndex, const CustomHeapAllocatorConfig &config);
+    std::optional<std::reference_wrapper<CustomHeapAllocatorConfig>> getCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, uint32_t rootDeviceIndex);
+    void removeCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, uint32_t rootDeviceIndex);
 
     void storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t osContextId, TaskCountType taskCount);
     void cleanTemporaryAllocations(const CommandStreamReceiver &csr, TaskCountType waitTaskCount);
@@ -502,7 +502,7 @@ class MemoryManager {
     std::mutex physicalMemoryAllocationMapMutex;
     std::unique_ptr<std::atomic<size_t>[]> localMemAllocsSize;
     std::atomic<size_t> sysMemAllocsSize;
-    std::map<std::pair<AllocationType, bool>, CustomHeapAllocatorConfig> customHeapAllocators;
+    std::map<std::tuple<AllocationType, bool, uint32_t>, CustomHeapAllocatorConfig> customHeapAllocators;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

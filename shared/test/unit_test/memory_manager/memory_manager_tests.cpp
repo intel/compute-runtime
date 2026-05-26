@@ -3680,12 +3680,12 @@ TEST(MemoryManagerTest, WhenAddingCustomHeapAllocatorConfigsThenCanRetrieveAndMa
 
     MockMemoryManager memoryManager;
 
-    memoryManager.addCustomHeapAllocatorConfig(AllocationType::linearStream, true, {allocator1.get(), heapBase});
-    memoryManager.addCustomHeapAllocatorConfig(AllocationType::linearStream, false, {allocator2.get(), heapBase});
+    memoryManager.addCustomHeapAllocatorConfig(AllocationType::linearStream, true, mockRootDeviceIndex, {allocator1.get(), heapBase});
+    memoryManager.addCustomHeapAllocatorConfig(AllocationType::linearStream, false, mockRootDeviceIndex, {allocator2.get(), heapBase});
 
-    auto config1 = memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, true);
-    auto config2 = memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, false);
-    auto configNonExisting = memoryManager.getCustomHeapAllocatorConfig(AllocationType::buffer, false);
+    auto config1 = memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, true, mockRootDeviceIndex);
+    auto config2 = memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, false, mockRootDeviceIndex);
+    auto configNonExisting = memoryManager.getCustomHeapAllocatorConfig(AllocationType::buffer, false, mockRootDeviceIndex);
 
     EXPECT_TRUE(config1.has_value());
     EXPECT_TRUE(config2.has_value());
@@ -3697,11 +3697,11 @@ TEST(MemoryManagerTest, WhenAddingCustomHeapAllocatorConfigsThenCanRetrieveAndMa
     EXPECT_EQ(allocator2.get(), config2->get().allocator);
     EXPECT_EQ(heapBase, config2->get().gpuVaBase);
 
-    memoryManager.removeCustomHeapAllocatorConfig(AllocationType::linearStream, true);
-    memoryManager.removeCustomHeapAllocatorConfig(AllocationType::linearStream, false);
+    memoryManager.removeCustomHeapAllocatorConfig(AllocationType::linearStream, true, mockRootDeviceIndex);
+    memoryManager.removeCustomHeapAllocatorConfig(AllocationType::linearStream, false, mockRootDeviceIndex);
 
-    EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, true).has_value());
-    EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, false).has_value());
+    EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, true, mockRootDeviceIndex).has_value());
+    EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, false, mockRootDeviceIndex).has_value());
 }
 
 TEST(MemoryManagerTest, givenGpuHangWhenAllocInUseCalledThenReturnFalse) {
