@@ -19,6 +19,8 @@
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/utilities/idlist.h"
 
+#include <vector>
+
 namespace NEO {
 
 using osHandle = unsigned int;
@@ -134,7 +136,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
 
     friend class SubmissionAggregator;
 
-    StackVec<UsageInfo, 32> usageInfos;
+    std::vector<UsageInfo> usageInfos;
     uint64_t gpuBaseAddress = 0;
     uint64_t gpuAddress = 0;
     uint64_t allocationOffset = 0u;
@@ -576,8 +578,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     }
 
   protected:
-    StackVec<uint32_t, 32> inspectionIds;
-    StackVec<Gmm *, EngineLimits::maxHandleCount> gmms;
+    std::vector<uint32_t> inspectionIds;
+    std::vector<Gmm *> gmms;
     AubInfo aubInfo;
     SharingInfo sharingInfo;
     ReservedAddressRange reservedAddressRangeInfo;

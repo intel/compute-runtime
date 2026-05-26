@@ -69,7 +69,7 @@ class WddmAllocation : public GraphicsAllocation {
         return alignSizeWholePage(this->cpuPtr, this->size);
     }
 
-    const StackVec<D3DKMT_HANDLE, EngineLimits::maxHandleCount> &getHandles() const { return handles; }
+    const std::vector<D3DKMT_HANDLE> &getHandles() const { return handles; }
     D3DKMT_HANDLE &getHandleToModify(uint32_t handleIndex) { return handles[handleIndex]; }
     D3DKMT_HANDLE getDefaultHandle() const { return handles[0]; }
     D3DKMT_HANDLE getHandle(uint32_t handleIndex) const { return handles[handleIndex]; }
@@ -140,7 +140,7 @@ class WddmAllocation : public GraphicsAllocation {
         return ss.str();
     }
 
-    StackVec<D3DKMT_HANDLE, EngineLimits::maxHandleCount> handles;
+    std::vector<D3DKMT_HANDLE> handles;
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
     uint32_t shareable = 0u;
     bool allocInFrontWindowPool = false;

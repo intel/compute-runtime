@@ -27,8 +27,7 @@ class MockWddmAllocation : public WddmAllocation {
         for (uint32_t i = 0; i < getNumGmms(); i++) {
             delete getGmm(i);
         }
-        setGmm(nullptr, 0);
-        gmms.resize(0);
+        gmms.clear();
     }
     ~MockWddmAllocation() override {
         clearGmms();
