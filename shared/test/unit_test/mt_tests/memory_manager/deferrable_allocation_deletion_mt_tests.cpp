@@ -144,6 +144,9 @@ HWTEST_F(DeferrableAllocationDeletionMtTest, givenAllocationUsedByTwoOsContextsW
     EXPECT_FALSE(nonDefaultCommandStreamReceiver.flushBatchedSubmissionsCalled);
     asyncDeleter->allowExit = true;
     *hwTag = 1u;
+    while (!asyncDeleter->shouldStopReached) {
+        std::this_thread::yield();
+    }
 }
 
 HWTEST_F(DeferrableAllocationDeletionMtTest, givenDeferrableAllocationDeletionWhenFlushedTaskIsGreaterThanAllocationTaskCountThenDoNotProgrammTagUpdate) {
@@ -164,6 +167,9 @@ HWTEST_F(DeferrableAllocationDeletionMtTest, givenDeferrableAllocationDeletionWh
     EXPECT_EQ(used, nonDefaultCommandStreamReceiver.getCS(0u).getUsed());
     asyncDeleter->allowExit = true;
     *hwTag = 1u;
+    while (!asyncDeleter->shouldStopReached) {
+        std::this_thread::yield();
+    }
 }
 
 TEST_F(DeferrableAllocationDeletionMtTest, givenNotUsedAllocationWhenApplyDeletionThenDontWait) {
@@ -200,4 +206,7 @@ TEST_F(DeferrableAllocationDeletionMtTest, givenTwoAllocationsUsedByOneOsContext
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
     asyncDeleter->allowExit = true;
     *hwTag = 2u;
+    while (!asyncDeleter->shouldStopReached) {
+        std::this_thread::yield();
+    }
 }
