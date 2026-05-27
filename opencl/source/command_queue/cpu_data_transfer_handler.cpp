@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,8 +44,9 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(),
                               transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset);
 
+        auto graphicsAllocationForMap = transferProperties.memObj->getGraphicsAllocation(getDevice().getRootDeviceIndex());
         if (!transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
-                                                     transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel, nullptr)) {
+                                                     transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel, graphicsAllocationForMap)) {
             err.set(CL_INVALID_OPERATION);
             return nullptr;
         }

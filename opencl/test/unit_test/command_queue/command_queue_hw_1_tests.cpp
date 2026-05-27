@@ -1504,6 +1504,28 @@ HWTEST_F(CommandQueueHwTest, givenNotBlockedIOQWhenCpuTransferIsBlockedOutEventP
     clReleaseEvent(returnEvent);
 }
 
+HWTEST_F(CommandQueueHwTest, givenCpuMapOperationWhenCpuDataTransferHandlerCalledThenMapInfoStoresGraphicsAllocation) {
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    MockGraphicsAllocation alloc{};
+    auto buffer = std::make_unique<MockBuffer>(context, alloc);
+    auto mem = std::make_unique<uint8_t[]>(4096u);
+    buffer->hostPtr = mem.get();
+    buffer->memoryStorage = mem.get();
+    auto retVal = CL_SUCCESS;
+    commandQueue->taskLevel = 0u;
+    size_t offset = 0;
+    size_t size = 4096u;
+    TransferProperties transferProperties(buffer.get(), CL_COMMAND_MAP_BUFFER, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    commandQueue->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    MapInfo mapInfo{};
+    auto mappedPtr = buffer->getCpuAddressForMapping();
+    EXPECT_TRUE(buffer->findMappedPtr(mappedPtr, mapInfo));
+    EXPECT_EQ(&alloc, mapInfo.graphicsAllocation);
+    buffer->removeMappedPtr(mappedPtr);
+}
+
 HWTEST_F(CommandQueueHwTest, givenDirectSubmissionAndSharedDisplayableImageWhenReleasingSharedObjectThenFlushRenderStateCacheAndForceDcFlush) {
     MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
     mockCmdQueueHw.updateLatestSentEnqueueType(EnqueueProperties::Operation::profilingOnly);
