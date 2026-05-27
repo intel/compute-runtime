@@ -12,6 +12,8 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -291,6 +293,202 @@ TEST_F(MultipleDeviceQueryPeerAccessDrmTests, givenDeviceFailPeekInternalHandleT
     bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
 
     EXPECT_FALSE(canAccess);
+}
+
+class ConfigurableMakeResidentMemoryOps : public NEO::MockMemoryOperations {
+  public:
+    NEO::MemoryOperationsStatus makeResident(NEO::Device *device, ArrayRef<NEO::GraphicsAllocation *> gfxAllocations,
+                                             bool isDummyExecNeeded, const bool forcePagingFence) override {
+        NEO::MockMemoryOperations::makeResident(device, gfxAllocations, isDummyExecNeeded, forcePagingFence);
+        lastDeviceArg = device;
+        lastAllocs.assign(gfxAllocations.begin(), gfxAllocations.end());
+        return makeResidentResult;
+    }
+
+    NEO::MemoryOperationsStatus makeResidentResult = NEO::MemoryOperationsStatus::success;
+    NEO::Device *lastDeviceArg = nullptr;
+    std::vector<NEO::GraphicsAllocation *> lastAllocs;
+};
+
+struct DriverHandleWithImportedAlloc : public Mock<DriverHandle> {
+    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType,
+                         bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc,
+                         NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override {
+        importFdHandleCalled++;
+        importFdHandleLastPAllocPtr = pAlloc;
+        if (pAlloc != nullptr) {
+            *pAlloc = importedAllocOverride;
+        }
+        return importFdHandleResult;
+    }
+
+    NEO::GraphicsAllocation *importedAllocOverride = nullptr;
+    NEO::GraphicsAllocation **importFdHandleLastPAllocPtr = nullptr;
+};
+
+struct PeerAccessMakeResidentFixture {
+    void setUp() {
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+
+        NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment;
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (uint32_t i = 0; i < numRootDevices; ++i) {
+            executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
+            executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[i]));
+        }
+
+        driverHandle = std::make_unique<DriverHandleWithImportedAlloc>();
+        driverHandle->importFdHandleResult = reinterpret_cast<void *>(0x1234);
+
+        for (auto &device : driverHandle->devices) {
+            delete device;
+        }
+        driverHandle->devices.clear();
+
+        auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
+        ze_result_t res = driverHandle->initialize(std::move(devices));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        ASSERT_EQ(numRootDevices, driverHandle->devices.size());
+        for (uint32_t i = 0; i < numRootDevices; ++i) {
+            auto &rootEnv = *driverHandle->devices[i]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[i];
+            auto configurable = std::make_unique<ConfigurableMakeResidentMemoryOps>();
+            configurableOps[i] = configurable.get();
+            rootEnv.memoryOperationsInterface = std::move(configurable);
+        }
+
+        prevMemoryManager = driverHandle->getMemoryManager();
+        currMemoryManager = std::make_unique<MemoryManagerFdMock>(*executionEnvironment);
+        driverHandle->setMemoryManager(currMemoryManager.get());
+
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = std::make_unique<NEO::SVMAllocsManager>(currMemoryManager.get());
+        driverHandle->svmAllocsManager = currSvmAllocsManager.get();
+
+        ze_context_handle_t hContext{};
+        ze_context_desc_t desc{ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+        res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = Context::fromHandle(hContext);
+
+        device0 = driverHandle->devices[0];
+        device1 = driverHandle->devices[1];
+        ASSERT_NE(nullptr, device0);
+        ASSERT_NE(nullptr, device1);
+
+        importedAllocStorage = std::make_unique<NEO::MockGraphicsAllocation>();
+        driverHandle->importedAllocOverride = importedAllocStorage.get();
+
+        for (uint32_t i = 0; i < numRootDevices; ++i) {
+            configurableOps[i]->makeResidentCalledCount = 0;
+            configurableOps[i]->lastDeviceArg = nullptr;
+            configurableOps[i]->lastAllocs.clear();
+        }
+        driverHandle->importFdHandleCalled = 0;
+    }
+
+    void tearDown() {
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
+        currSvmAllocsManager.reset();
+        driverHandle->setMemoryManager(prevMemoryManager);
+        currMemoryManager.reset();
+
+        context->destroy();
+    }
+
+    struct TempAlloc {
+        NEO::Device &neoDevice;
+        void *handlePtr = nullptr;
+        uint64_t handle = std::numeric_limits<uint64_t>::max();
+
+        TempAlloc(NEO::Device &device) : neoDevice(device) {}
+        ~TempAlloc() {
+            if (handlePtr) {
+                MockDevice::freeMemoryAllocation(neoDevice, handlePtr);
+            }
+        }
+    };
+
+    uint32_t numRootDevices = 2u;
+    L0::Device *device0 = nullptr;
+    L0::Device *device1 = nullptr;
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<DriverHandleWithImportedAlloc> driverHandle;
+    L0::Context *context = nullptr;
+
+    NEO::MemoryManager *prevMemoryManager = nullptr;
+    std::unique_ptr<MemoryManagerFdMock> currMemoryManager;
+
+    SVMAllocsManager *prevSvmAllocsManager = nullptr;
+    std::unique_ptr<NEO::SVMAllocsManager> currSvmAllocsManager;
+
+    ConfigurableMakeResidentMemoryOps *configurableOps[2] = {nullptr, nullptr};
+    std::unique_ptr<NEO::MockGraphicsAllocation> importedAllocStorage;
+};
+
+using PeerAccessMakeResidentTests = Test<PeerAccessMakeResidentFixture>;
+
+TEST_F(PeerAccessMakeResidentTests, givenMakeResidentReturnsSuccessThenQueryPeerAccessReturnsTrueAndMakeResidentCalledWithPeerDeviceAndImportedAlloc) {
+    auto *peerOps = configurableOps[device1->getNEODevice()->getRootDeviceIndex()];
+    peerOps->makeResidentResult = NEO::MemoryOperationsStatus::success;
+
+    TempAlloc alloc(*device0->getNEODevice());
+    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+
+    EXPECT_TRUE(canAccess);
+    EXPECT_GE(driverHandle->importFdHandleCalled, 1u);
+    EXPECT_EQ(1, peerOps->makeResidentCalledCount.load());
+    EXPECT_EQ(device1->getNEODevice(), peerOps->lastDeviceArg);
+    ASSERT_EQ(1u, peerOps->lastAllocs.size());
+    EXPECT_EQ(importedAllocStorage.get(), peerOps->lastAllocs[0]);
+}
+
+TEST_F(PeerAccessMakeResidentTests, givenMakeResidentReturnsFailedThenQueryPeerAccessReturnsFalse) {
+    auto *peerOps = configurableOps[device1->getNEODevice()->getRootDeviceIndex()];
+    peerOps->makeResidentResult = NEO::MemoryOperationsStatus::failed;
+
+    TempAlloc alloc(*device0->getNEODevice());
+    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+
+    EXPECT_FALSE(canAccess);
+    EXPECT_EQ(1, peerOps->makeResidentCalledCount.load());
+}
+
+TEST_F(PeerAccessMakeResidentTests, givenMakeResidentReturnsDeviceUninitializedThenQueryPeerAccessReturnsFalse) {
+    auto *peerOps = configurableOps[device1->getNEODevice()->getRootDeviceIndex()];
+    peerOps->makeResidentResult = NEO::MemoryOperationsStatus::deviceUninitialized;
+
+    TempAlloc alloc(*device0->getNEODevice());
+    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+
+    EXPECT_FALSE(canAccess);
+    EXPECT_EQ(1, peerOps->makeResidentCalledCount.load());
+}
+
+TEST_F(PeerAccessMakeResidentTests, givenPeerMemoryOperationsInterfaceIsNullThenQueryPeerAccessReturnsTrueAndMakeResidentNotCalled) {
+    auto peerRootIndex = device1->getNEODevice()->getRootDeviceIndex();
+    auto &peerEnv = *driverHandle->devices[peerRootIndex]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[peerRootIndex];
+    peerEnv.memoryOperationsInterface.reset();
+    configurableOps[peerRootIndex] = nullptr;
+
+    TempAlloc alloc(*device0->getNEODevice());
+    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+
+    EXPECT_TRUE(canAccess);
+}
+
+TEST_F(PeerAccessMakeResidentTests, givenImportFdHandleDoesNotPopulateAllocOutParamThenQueryPeerAccessReturnsTrueAndMakeResidentNotCalled) {
+    driverHandle->importedAllocOverride = nullptr;
+
+    auto *peerOps = configurableOps[device1->getNEODevice()->getRootDeviceIndex()];
+    peerOps->makeResidentResult = NEO::MemoryOperationsStatus::failed;
+
+    TempAlloc alloc(*device0->getNEODevice());
+    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &alloc.handlePtr, &alloc.handle);
+
+    EXPECT_TRUE(canAccess);
+    EXPECT_EQ(0, peerOps->makeResidentCalledCount.load());
 }
 
 } // namespace ult
