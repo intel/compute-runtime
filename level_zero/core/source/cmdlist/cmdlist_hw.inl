@@ -4670,14 +4670,14 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                                                                                const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                                                uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                                                                                  const ze_external_semaphore_signal_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                                                  uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

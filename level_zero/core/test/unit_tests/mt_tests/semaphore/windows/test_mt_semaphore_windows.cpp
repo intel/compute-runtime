@@ -296,7 +296,7 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenRegularCommandListWhenAppendWaitExter
 
     ze_external_semaphore_wait_params_ext_t waitParams = {};
     result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 
     ensureThreadCompletion(*driverHandle->externalSemaphoreController);
 

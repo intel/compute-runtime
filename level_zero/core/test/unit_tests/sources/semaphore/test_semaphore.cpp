@@ -119,7 +119,7 @@ HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendWaitExternalSem
     ze_external_semaphore_wait_params_ext_t waitParams = {};
     ze_external_semaphore_ext_handle_t hSemaphore = reinterpret_cast<ze_external_semaphore_ext_handle_t>(0x1);
     ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendSignalExternalSemaphoresIsCalledThenInvalidArgumentIsReturned) {
@@ -129,7 +129,7 @@ HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendSignalExternalS
     ze_external_semaphore_signal_params_ext_t signalParams = {};
     ze_external_semaphore_ext_handle_t hSemaphore = reinterpret_cast<ze_external_semaphore_ext_handle_t>(0x1);
     ze_result_t result = cmdList.appendSignalExternalSemaphores(1, &hSemaphore, &signalParams, nullptr, 0, nullptr);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 using MockDriverHandle = Mock<L0::DriverHandle>;
