@@ -69,14 +69,6 @@ bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithBufferStatefulAccess
 }
 
 template <>
-bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->isMatrixMultiplyAccumulateSupported();
-    }
-    return true;
-}
-
-template <>
 bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const {
     auto config = getProductConfigFromHwInfo(hwInfo);
     if (config >= AOT::PVC_XT_B0 && config < AOT::PVC_XT_C0_VG) {

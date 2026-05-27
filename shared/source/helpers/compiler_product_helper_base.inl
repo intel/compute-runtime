@@ -148,7 +148,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_subgroup_local_block_io ";
     }
 
-    if (isMatrixMultiplyAccumulateSupported(releaseHelper)) {
+    if (releaseHelper->isMatrixMultiplyAccumulateSupported()) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
     }
 
@@ -211,15 +211,6 @@ bool CompilerProductHelperHw<gfxProduct>::isHeaplessModeEnabled(const HardwareIn
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t CompilerProductHelperHw<gfxProduct>::matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const {
     return ipVersion.value;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->isMatrixMultiplyAccumulateSupported();
-    }
-
-    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

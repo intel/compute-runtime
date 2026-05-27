@@ -143,18 +143,6 @@ HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenBFloat16Conversion
     EXPECT_TRUE(compilerProductHelper.isBFloat16ConversionSupported(releaseHelper));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenMatrixMultiplyAccumulateIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto releaseHelper = pDevice->getReleaseHelper();
-
-    if (releaseHelper) {
-
-        EXPECT_EQ(releaseHelper->isMatrixMultiplyAccumulateSupported(), compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
-    } else {
-        EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
-    }
-}
-
 HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterThenMatrixMultiplyAccumulateTF32IsSupported, IsAtLeastXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto hwInfo = *defaultHwInfo;
@@ -179,13 +167,6 @@ HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenDotProductAccumula
     } else {
         EXPECT_FALSE(compilerProductHelper.isDotProductAccumulateSystolicSupported(releaseHelper));
     }
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenMatrixMultiplyAccumulateIsSupported, IsXeHpcCore) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto releaseHelper = pDevice->getReleaseHelper();
-
-    EXPECT_TRUE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
 }
 
 HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenDotProductAccumulateSystolicIsSupported, IsXeHpcCore) {
