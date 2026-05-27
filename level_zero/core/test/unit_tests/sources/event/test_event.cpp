@@ -2146,6 +2146,7 @@ TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhen
     EXPECT_EQ(5000, NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.get());
     EXPECT_EQ(750, NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.get());
     EXPECT_EQ(50, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
+    EXPECT_EQ(20000, NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.get());
 }
 
 HWTEST_F(EventSynchronizeTest, GivenWaitControllerWhenStrategiesAndInputsAreChangedThenExpectedWaitActionsAreReturned) {
@@ -2157,6 +2158,7 @@ HWTEST_F(EventSynchronizeTest, GivenWaitControllerWhenStrategiesAndInputsAreChan
         NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(initialPollUs);
         NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(pollUs);
         NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.set(sleepUs);
+        NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.set(20);
     };
 
     auto resetAcLineStatus = [&csr]() {
@@ -2272,13 +2274,30 @@ HWTEST_F(EventSynchronizeTest, GivenWaitControllerWhenStrategiesAndInputsAreChan
         resetAcLineStatus();
         L0::EventHostSynchronize::WaitController waitController(csr);
 
-        auto sleepFitsTimeout = waitController.getAction(0, 20000, 5000);
-        auto sleepCappedToTimeout = waitController.getAction(10, 9000, 5000);
-        auto timeoutReached = waitController.getAction(20, 9000, 9000);
+        auto infiniteTimeout = waitController.getAction(0, std::numeric_limits<uint64_t>::max(), 0);
+        auto shortFiniteTimeout = waitController.getAction(10, 20000, 10000);
+        auto longFiniteTimeout = waitController.getAction(10, 40000, 10000);
+        auto nearDeadline = waitController.getAction(10, 100000, 80000);
+        auto deadlineReached = waitController.getAction(10, 100000, 100000);
 
-        EXPECT_EQ(10, sleepFitsTimeout.sleepUs);
-        EXPECT_EQ(4, sleepCappedToTimeout.sleepUs);
-        EXPECT_EQ(0, timeoutReached.sleepUs);
+        EXPECT_EQ(10, infiniteTimeout.sleepUs);
+        EXPECT_EQ(0, shortFiniteTimeout.sleepUs);
+        EXPECT_EQ(10, longFiniteTimeout.sleepUs);
+        EXPECT_EQ(0, nearDeadline.sleepUs);
+        EXPECT_EQ(0, deadlineReached.sleepUs);
+    }
+
+    {
+        setWaitStrategy(2, 0, 0, 10);
+        NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.set(0);
+        resetAcLineStatus();
+        L0::EventHostSynchronize::WaitController waitController(csr);
+
+        auto finiteTimeout = waitController.getAction(0, 1, 0);
+        auto deadlineReached = waitController.getAction(10, 100000, 100000);
+
+        EXPECT_EQ(10, finiteTimeout.sleepUs);
+        EXPECT_EQ(0, deadlineReached.sleepUs);
     }
 
     {
@@ -2329,7 +2348,7 @@ HWTEST_F(EventSynchronizeTest, GivenDisabledEventHostSynchronizeWaitStrategyWhen
     EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
 }
 
-HWTEST_F(EventSynchronizeTest, GivenBatteryOnlyEventHostSynchronizeWaitStrategyAndWddmWhenHostSynchronizeIsCalledThenAcLineStatusIsQueriedAfterInitialPoll) {
+HWTEST_F(EventSynchronizeTest, GivenFiniteTimeoutAndBatteryOnlyEventHostSynchronizeWaitStrategyAndWddmWhenHostSynchronizeIsCalledThenAcLineStatusIsNotQueried) {
     NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(2);
     NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.set(0);
     NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.set(0);
@@ -2342,8 +2361,7 @@ HWTEST_F(EventSynchronizeTest, GivenBatteryOnlyEventHostSynchronizeWaitStrategyA
     csr.getAcLineConnectedReturnValue = false;
 
     event->hostSynchronize(10);
-    EXPECT_NE(0u, csr.getAcLineConnectedCalled);
-    EXPECT_TRUE(csr.getAcLineConnectedLastUpdateStatus);
+    EXPECT_EQ(0u, csr.getAcLineConnectedCalled);
 }
 
 HWTEST_F(EventSynchronizeTest, GivenBatteryOnlyEventHostSynchronizeWaitStrategyAndDrmWhenHostSynchronizeIsCalledThenAcLineStatusIsNotQueried) {

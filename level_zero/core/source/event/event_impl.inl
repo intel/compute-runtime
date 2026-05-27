@@ -835,7 +835,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             }
         }
 
-        if (!fenceWait && timeout != 0) {
+        if (!fenceWait) {
             auto waitAction = waitController.getAction(elapsedTimeSinceWaitStart.count(), timeout, elapsedTimeSinceWaitStartNs);
             if (waitAction.sleepUs > 0) {
                 NEO::sleep(std::chrono::microseconds(waitAction.sleepUs));

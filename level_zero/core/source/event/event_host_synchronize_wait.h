@@ -28,6 +28,10 @@ class WaitController {
     explicit WaitController(const NEO::CommandStreamReceiver &csr) : csr(csr) {}
 
     WaitAction getAction(int64_t elapsedUs, uint64_t timeout, uint64_t elapsedNs) {
+        if (!allowsSleepForTimeout(timeout, elapsedNs)) {
+            return {};
+        }
+
         auto sleepUs = getScheduledSleepUs(elapsedUs);
         if (sleepUs <= 0) {
             return {};
@@ -41,10 +45,39 @@ class WaitController {
             return {};
         }
 
-        return {capToTimeout(sleepUs, timeout, elapsedNs)};
+        return {sleepUs};
     }
 
   private:
+    static bool allowsSleepForTimeout(uint64_t timeout, uint64_t elapsedNs) {
+        if (timeout == std::numeric_limits<uint64_t>::max()) {
+            return true;
+        }
+        if (timeout == 0) {
+            return false;
+        }
+        if (elapsedNs >= timeout) {
+            return false;
+        }
+
+        const auto minTimeoutUs = NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.get();
+        if (minTimeoutUs <= 0) {
+            return true;
+        }
+
+        const auto minTimeoutUsAsUint = static_cast<uint64_t>(minTimeoutUs);
+        if (minTimeoutUsAsUint > std::numeric_limits<uint64_t>::max() / 1000u) {
+            return false;
+        }
+
+        const auto minTimeoutNs = minTimeoutUsAsUint * 1000u;
+        if (timeout <= minTimeoutNs) {
+            return false;
+        }
+
+        return (timeout - elapsedNs) > minTimeoutNs;
+    }
+
     bool isEnabled() const {
         const auto strategy = NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get();
         if ((strategy == 0) || !isNativeWddm()) {
@@ -85,18 +118,6 @@ class WaitController {
         const auto cycleUs = pollUs + sleepUs;
         const auto elapsedInCycleUs = (elapsedUs - activePollUs) % cycleUs;
         return elapsedInCycleUs >= pollUs ? cycleUs - elapsedInCycleUs : int64_t{0};
-    }
-
-    static int64_t capToTimeout(int64_t sleepUs, uint64_t timeout, uint64_t elapsedNs) {
-        if (timeout == std::numeric_limits<uint64_t>::max()) {
-            return sleepUs;
-        }
-        if (elapsedNs >= timeout) {
-            return 0;
-        }
-
-        const auto remainingUs = static_cast<int64_t>((timeout - elapsedNs) / 1000u);
-        return sleepUs < remainingUs ? sleepUs : remainingUs;
     }
 
     const NEO::CommandStreamReceiver &csr;
