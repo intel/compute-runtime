@@ -18,9 +18,9 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 
+#include "level_zero/api/opencl/extensions/public/cl_gl_private_intel.h"
 #include "level_zero/api/opencl/source/cl_device/cl_device.h"
 #include "level_zero/api/opencl/source/context/context.h"
-#include "level_zero/api/opencl/source/extensions/public/cl_gl_private_intel.h"
 #include "level_zero/api/opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/helpers/gmm_types_converter.h"
 #include "level_zero/api/opencl/source/mem_obj/image.h"

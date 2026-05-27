@@ -10,7 +10,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 
-#include "level_zero/api/opencl/source/extensions/public/cl_ext_private.h"
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/helpers/get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/surface_formats.h"

@@ -10,7 +10,7 @@
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/helpers/constants.h"
 
-#include "level_zero/api/opencl/source/extensions/public/cl_ext_private.h"
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 
 #include <vector>
 

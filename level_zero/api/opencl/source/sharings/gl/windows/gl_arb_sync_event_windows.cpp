@@ -13,10 +13,10 @@
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
+#include "level_zero/api/opencl/extensions/public/cl_gl_private_intel.h"
 #include "level_zero/api/opencl/source/command_queue/command_queue.h"
 #include "level_zero/api/opencl/source/context/context.h"
 #include "level_zero/api/opencl/source/event/event.h"
-#include "level_zero/api/opencl/source/extensions/public/cl_gl_private_intel.h"
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/api/opencl/source/sharings/gl/gl_arb_sync_event.h"
 #include "level_zero/api/opencl/source/sharings/gl/windows/gl_sharing_windows.h"

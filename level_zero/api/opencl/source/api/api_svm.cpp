@@ -7,10 +7,10 @@
 
 #include "shared/source/helpers/get_info.h"
 
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/api/api.h"
 #include "level_zero/api/opencl/source/cl_device/cl_device.h"
 #include "level_zero/api/opencl/source/context/context.h"
-#include "level_zero/api/opencl/source/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/api/opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/helpers/cl_to_l0_handles.h"

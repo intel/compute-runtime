@@ -7,11 +7,11 @@
 
 #include "shared/source/helpers/get_info.h"
 
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/api/api.h"
 #include "level_zero/api/opencl/source/cl_device/cl_device.h"
 #include "level_zero/api/opencl/source/command_queue/command_queue.h"
 #include "level_zero/api/opencl/source/context/context.h"
-#include "level_zero/api/opencl/source/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/api/opencl/source/helpers/cl_validators.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"

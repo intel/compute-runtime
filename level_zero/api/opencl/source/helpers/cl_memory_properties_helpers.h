@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/memory_manager/unified_memory_properties.h"
 
-#include "level_zero/api/opencl/source/extensions/public/cl_ext_private.h"
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 
 namespace NEO {
 namespace LEO {

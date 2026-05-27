@@ -9,7 +9,7 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/memory_properties_flags.h"
 
-#include "level_zero/api/opencl/source/extensions/public/cl_ext_private.h"
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/helpers/cl_memory_properties_helpers.h"
 
 #include "CL/cl_ext.h"

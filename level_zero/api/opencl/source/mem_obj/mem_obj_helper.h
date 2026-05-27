@@ -12,7 +12,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
-#include "level_zero/api/opencl/source/extensions/public/cl_ext_private.h"
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 
 #include "CL/cl.h"
 

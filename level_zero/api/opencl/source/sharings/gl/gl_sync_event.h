@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "level_zero/api/opencl/extensions/public/cl_gl_private_intel.h"
 #include "level_zero/api/opencl/source/event/event.h"
-#include "level_zero/api/opencl/source/extensions/public/cl_gl_private_intel.h"
 
 #include <GL/gl.h>
 

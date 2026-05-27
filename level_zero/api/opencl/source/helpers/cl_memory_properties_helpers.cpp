@@ -8,9 +8,9 @@
 #include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/cl_device/cl_device.h"
 #include "level_zero/api/opencl/source/context/context.h"
-#include "level_zero/api/opencl/source/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/helpers/cl_memory_properties_helpers_base.inl"
 #include "level_zero/api/opencl/source/mem_obj/mem_obj.h"
 

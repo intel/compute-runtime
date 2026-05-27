@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/helpers/surface_format_info.h"
 
-#include "level_zero/api/opencl/source/extensions/public/cl_ext_private.h"
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/helpers/surface_formats.h"
 #include "level_zero/api/opencl/source/sharings/va/va_sharing.h"
 

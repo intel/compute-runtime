@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/api/opencl/source/extensions/public/cl_next.h"
+#include "level_zero/api/opencl/extensions/public/cl_next.h"
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/api/opencl/source/extensions/public/cl_gl_private_intel.h"
+#include "level_zero/api/opencl/extensions/public/cl_gl_private_intel.h"
 #include "level_zero/api/opencl/source/sharings/gl/gl_sharing.h"
 #include "level_zero/api/opencl/source/sharings/gl/linux/include/gl_types.h"
 
