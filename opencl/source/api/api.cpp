@@ -23,6 +23,7 @@
 
 #include "opencl/source/api/additional_extensions.h"
 #include "opencl/source/api/api_enter.h"
+#include "opencl/source/api/leo_forwarding.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
@@ -61,11 +62,8 @@ using namespace NEO;
 cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                                     cl_platform_id *platforms,
                                     cl_uint *numPlatforms) {
-    if (debugManager.flags.EnableLEO.get() == 1) {
-        if (numPlatforms) {
-            *numPlatforms = 0;
-        }
-        return CL_SUCCESS;
+    if (isLEOEnabled()) {
+        return forwardClGetPlatformIDs(numEntries, platforms, numPlatforms);
     }
 
     TRACING_ENTER(ClGetPlatformIDs, &numEntries, &platforms, &numPlatforms);
@@ -164,6 +162,9 @@ cl_int CL_API_CALL clGetPlatformInfo(cl_platform_id platform,
                                      size_t paramValueSize,
                                      void *paramValue,
                                      size_t *paramValueSizeRet) {
+    if (isLEOEnabled()) {
+        return forwardClGetPlatformInfo(platform, paramName, paramValueSize, paramValue, paramValueSizeRet);
+    }
     TRACING_ENTER(ClGetPlatformInfo, &platform, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_INVALID_PLATFORM;
     API_ENTER(&retVal);
@@ -199,6 +200,9 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                                   cl_uint numEntries,
                                   cl_device_id *devices,
                                   cl_uint *numDevices) {
+    if (isLEOEnabled()) {
+        return forwardClGetDeviceIDs(platform, deviceType, numEntries, devices, numDevices);
+    }
     TRACING_ENTER(ClGetDeviceIDs, &platform, &deviceType, &numEntries, &devices, &numDevices);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -4735,6 +4739,9 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command
         }                                                                                 \
     }
 void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
+    if (isLEOEnabled()) {
+        return forwardClGetExtensionFunctionAddress(funcName);
+    }
     TRACING_ENTER(ClGetExtensionFunctionAddress, &funcName);
 
     DBG_LOG_INPUTS("funcName", funcName);

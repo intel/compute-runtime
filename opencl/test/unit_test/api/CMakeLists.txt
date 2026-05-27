@@ -7,6 +7,7 @@
 set(IGDRCL_SRCS_tests_api
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}additional_extensions_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_forwarding_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/api_tests_wrapper1.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/api_tests_wrapper2.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/api_tests_wrapper3.cpp

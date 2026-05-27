@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "opencl/source/api/leo_forwarding.h"
 #include "opencl/source/platform/platform.h"
 
 namespace NEO {
@@ -22,6 +23,7 @@ void globalPlatformTeardown(bool processTermination) {
         }
         return;
     }
+    releaseL0Library();
     delete platformsImpl;
     platformsImpl = nullptr;
 }

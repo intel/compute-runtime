@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,8 @@ set(RUNTIME_SRCS_API
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_forwarding.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_forwarding.h
 )
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_API})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_API ${RUNTIME_SRCS_API})

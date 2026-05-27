@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "opencl/extensions/public/cl_gl_private_intel.h"
+#include "opencl/source/api/leo_forwarding.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/base_object.h"
@@ -224,17 +225,26 @@ extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueMarkerWithSyncObjectINTEL(cl_command_queue commandQueue,
                                    cl_event *event,
                                    cl_context *context) {
+    if (NEO::isLEOEnabled()) {
+        return NEO::forwardClEnqueueMarkerWithSyncObjectINTEL(commandQueue, event, context);
+    }
     return CL_INVALID_OPERATION;
 }
 
 extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clGetCLObjectInfoINTEL(cl_mem memObj,
                        void *pResourceInfo) {
+    if (NEO::isLEOEnabled()) {
+        return NEO::forwardClGetCLObjectInfoINTEL(memObj, pResourceInfo);
+    }
     return CL_INVALID_OPERATION;
 }
 
 extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clGetCLEventInfoINTEL(cl_event event, PCL_GL_SYNC_INFO *pSyncInfoHandleRet, cl_context *pClContextRet) {
+    if (NEO::isLEOEnabled()) {
+        return NEO::forwardClGetCLEventInfoINTEL(event, reinterpret_cast<void **>(pSyncInfoHandleRet), pClContextRet);
+    }
     if ((nullptr == pSyncInfoHandleRet) || (nullptr == pClContextRet)) {
         return CL_INVALID_ARG_VALUE;
     }
@@ -270,6 +280,9 @@ clGetCLEventInfoINTEL(cl_event event, PCL_GL_SYNC_INFO *pSyncInfoHandleRet, cl_c
 
 extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clReleaseGlSharedEventINTEL(cl_event event) {
+    if (NEO::isLEOEnabled()) {
+        return NEO::forwardClReleaseGlSharedEventINTEL(event);
+    }
     auto neoEvent = NEO::castToObject<NEO::Event>(event);
     if (nullptr == neoEvent) {
         return CL_INVALID_EVENT;
