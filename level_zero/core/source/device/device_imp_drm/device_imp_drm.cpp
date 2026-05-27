@@ -25,10 +25,8 @@ uint32_t Device::queryDeviceNodeMask() {
 ze_result_t Device::getExternalMemoryProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties) {
     pExternalMemoryProperties->imageExportTypes = 0u;
     pExternalMemoryProperties->imageImportTypes = 0u;
-    pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF |
-                                                             ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
-    pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF |
-                                                             ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
+    pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
 
     return ZE_RESULT_SUCCESS;
 }
