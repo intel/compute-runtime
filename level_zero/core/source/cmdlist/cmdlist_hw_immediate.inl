@@ -1948,7 +1948,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) {
     auto relaxedOrdering = memoryCopyParams.relaxedOrderingDispatch;
     bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(0, relaxedOrdering);
-    memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadEnabled() && this->isCopyOffloadForFillOrStagingPreferred();
+    bool isWriteToImageFromBuffer = false;
+    memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadEnabled() && this->isCopyOffloadForFillOrStagingPreferred(isWriteToImageFromBuffer);
 
     Event *event = Event::fromHandle(hSignalEvent);
     auto isRead = cpuMemCopyInfo.dstAllocInfo.svmAlloc == nullptr;

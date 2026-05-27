@@ -928,7 +928,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), false, remoteCopy, false, imgInfo.imgDesc.numMipLevels);
+    bool imageToBuffer = false;
+    bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), remoteCopy, false, imgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
@@ -1153,7 +1155,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         remoteCopy = true;
     }
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, true, remoteCopy, false, imgInfo.imgDesc.numMipLevels);
+    bool imageToBuffer = true;
+    bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, remoteCopy, false, imgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
@@ -1376,7 +1380,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     const auto &srcImgInfo = srcImage->getImageInfo();
     const auto &dstImgInfo = dstImage->getImageInfo();
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), false, remoteCopy, false, srcImgInfo.imgDesc.numMipLevels);
+    bool imageToBuffer = false;
+    bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), remoteCopy, false, srcImgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImgInfo.surfaceFormat->imageElementSizeInBytes);
@@ -1916,13 +1922,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool imageToBuffer, bool remoteCopy, bool localToLocalAllowed, uint32_t mipLevel) const {
+bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool remoteCopy, bool localToLocalAllowed, uint32_t mipLevel) const {
     if (mipLevel > 1) {
-        return false;
-    }
-
-    bool preferred = device->getProductHelper().blitEnqueuePreferred(imageToBuffer);
-    if (!NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(preferred)) {
         return false;
     }
 
@@ -2142,7 +2143,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     emitMemAdviseForSystemCopy(srcAllocationStruct, size);
 
     if (!memoryCopyParams.copyOffloadAllowed) {
-        memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy, size <= BlitterConstants::maxD2DBcsCopySize, 0);
+        bool imageToBuffer = false;
+        bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
+        memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, remoteCopy, size <= BlitterConstants::maxD2DBcsCopySize, 0) && shouldUseCopyOffload;
     }
 
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
@@ -2399,7 +2402,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     emitMemAdviseForSystemCopy(dstAllocationStruct, dstSize);
     emitMemAdviseForSystemCopy(srcAllocationStruct, srcSize);
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, false, remoteCopy, std::max(srcSize, dstSize) <= BlitterConstants::maxD2DBcsCopySize, 0);
+    bool imageToBuffer = false;
+    bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, remoteCopy, std::max(srcSize, dstSize) <= BlitterConstants::maxD2DBcsCopySize, 0) && shouldUseCopyOffload;
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
@@ -2679,8 +2684,8 @@ inline bool canUseImmediateFill(size_t size, size_t patternSize, size_t offset, 
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadForFillOrStagingPreferred() const {
-    return NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(device->getProductHelper().blitEnqueuePreferred(false));
+bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadForFillOrStagingPreferred(bool isWriteToImageFromBuffer) const {
+    return NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(device->getProductHelper().blitEnqueuePreferred(isWriteToImageFromBuffer));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2704,7 +2709,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     const auto isStateless = this->forceStateless(size);
     auto builtInMode = this->defaultBuiltInMode;
     builtInMode.adjustToWideStatelessIfRequired(size);
-    const bool shouldUseCopyOffload = (isCopyOffloadForFillOrStagingPreferred() && isCopyOffloadForFillPreferred(size)) || doParamsRequireCopyOnly(memoryCopyParams);
+    bool isWriteToImageFromBuffer = false;
+    const bool shouldUseCopyOffload = (isCopyOffloadForFillOrStagingPreferred(isWriteToImageFromBuffer) && isCopyOffloadForFillPreferred(size)) || doParamsRequireCopyOnly(memoryCopyParams);
 
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && (patternSize <= this->maxFillPatternSizeForCopyEngine) && (0 == size % patternSize) && shouldUseCopyOffload;
 

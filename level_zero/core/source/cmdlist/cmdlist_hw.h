@@ -456,7 +456,7 @@ struct CommandListCoreFamily : public CommandList {
     bool singleEventPacketRequired(bool inputSinglePacketEventRequest) const;
     void programEventL3Flush(Event *event);
     virtual ze_result_t flushInOrderCounterSignal() { return ZE_RESULT_SUCCESS; };
-    bool isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool imageToBuffer, bool remoteCopy, bool localToLocalAllowed, uint32_t mipLevel) const;
+    bool isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool remoteCopy, bool localToLocalAllowed, uint32_t mipLevel) const;
     bool isSharedSystemEnabled() const;
     void emitMemAdviseForSystemCopy(const AlignedAllocationData &allocationStruct, size_t size);
     void setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const;
@@ -486,7 +486,7 @@ struct CommandListCoreFamily : public CommandList {
         (this->commandContainer.addToResidencyContainer(alloc), ...);
     }
 
-    bool isCopyOffloadForFillOrStagingPreferred() const;
+    bool isCopyOffloadForFillOrStagingPreferred(bool isWriteToImageFromBuffer) const;
     bool isCopyOffloadForFillPreferred(size_t size) const;
 
     void setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize);

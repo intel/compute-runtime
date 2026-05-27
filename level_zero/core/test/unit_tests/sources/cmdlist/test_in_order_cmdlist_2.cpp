@@ -28,7 +28,7 @@ namespace L0 {
 namespace ult {
 using CopyOffloadInOrderTests = CopyOffloadInOrderFixture;
 
-HWTEST_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenAskingForCopyOffloadThenReturnCorrectValue) {
+HWTEST_F(CopyOffloadInOrderTests, givenVariousParametersWhenAskingForCopyOffloadThenReturnCorrectValue) {
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
     MockGraphicsAllocation hostAlloc;
@@ -37,36 +37,23 @@ HWTEST_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenAskingForCopyOffloadThenR
     MockGraphicsAllocation deviceAlloc;
     deviceAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
 
-    auto &productHelper = device->getProductHelper();
-
     std::array<GraphicsAllocation *, 3> allocations = {&hostAlloc, &deviceAlloc, nullptr};
 
-    for (int32_t flag : {-1, 0, 1}) {
-        debugManager.flags.EnableBlitterForEnqueueOperations.set(flag);
-        for (auto srcAlloc : allocations) {
-            for (auto dstAlloc : allocations) {
-                for (bool imageToBuffer : {true, false}) {
-                    for (bool remoteCopy : {true, false}) {
-                        for (bool localToLocalAllowed : {true, false}) {
-                            bool expected = false;
+    for (auto srcAlloc : allocations) {
+        for (auto dstAlloc : allocations) {
+            for (bool remoteCopy : {true, false}) {
+                for (bool localToLocalAllowed : {true, false}) {
+                    bool expected = false;
 
-                            if (flag != 0) {
-                                bool preferred = productHelper.blitEnqueuePreferred(imageToBuffer);
-
-                                if (!debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(preferred)) {
-                                    expected = false;
-                                } else if (remoteCopy || srcAlloc == nullptr || dstAlloc == nullptr) {
-                                    expected = true;
-                                } else if (srcAlloc->isAllocatedInLocalMemoryPool() && dstAlloc->isAllocatedInLocalMemoryPool()) {
-                                    expected = localToLocalAllowed;
-                                } else {
-                                    expected = true;
-                                }
-                            }
-
-                            EXPECT_EQ(expected, immCmdList->isCopyOffloadAllowed(srcAlloc, dstAlloc, imageToBuffer, remoteCopy, localToLocalAllowed, 0));
-                        }
+                    if (remoteCopy || srcAlloc == nullptr || dstAlloc == nullptr) {
+                        expected = true;
+                    } else if (srcAlloc->isAllocatedInLocalMemoryPool() && dstAlloc->isAllocatedInLocalMemoryPool()) {
+                        expected = localToLocalAllowed;
+                    } else {
+                        expected = true;
                     }
+
+                    EXPECT_EQ(expected, immCmdList->isCopyOffloadAllowed(srcAlloc, dstAlloc, remoteCopy, localToLocalAllowed, 0));
                 }
             }
         }
@@ -82,7 +69,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenLocalToLocalAllowedWhenCheckingCopyOffloa
     MockGraphicsAllocation dstAlloc;
     dstAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
 
-    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, false, true, 0));
+    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, true, 0));
 }
 
 HWTEST_F(CopyOffloadInOrderTests, givenLocalToLocalNotAllowedWhenCheckingCopyOffloadThenBcsBlocked) {
@@ -94,7 +81,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenLocalToLocalNotAllowedWhenCheckingCopyOff
     MockGraphicsAllocation dstAlloc;
     dstAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
 
-    EXPECT_FALSE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, false, false, 0));
+    EXPECT_FALSE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, false, 0));
 }
 
 HWTEST_F(CopyOffloadInOrderTests, givenRemoteCopyWhenCheckingCopyOffloadThenLocalToLocalFlagIgnored) {
@@ -106,8 +93,8 @@ HWTEST_F(CopyOffloadInOrderTests, givenRemoteCopyWhenCheckingCopyOffloadThenLoca
     MockGraphicsAllocation dstAlloc;
     dstAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
 
-    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, true, false, 0));
-    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, false, true, true, 0));
+    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, true, false, 0));
+    EXPECT_TRUE(immCmdList->isCopyOffloadAllowed(&srcAlloc, &dstAlloc, true, true, 0));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenCmdsChainingWhenDispatchingCopyOffloadThenDontSkipImplictDependency) {
