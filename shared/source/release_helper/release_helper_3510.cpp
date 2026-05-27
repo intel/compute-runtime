@@ -13,7 +13,7 @@ constexpr auto release = ReleaseType::release3510;
 
 #include "shared/source/release_helper/release_helper_common_xe3_and_later.inl"
 #include "shared/source/release_helper/release_helper_common_xe3p.inl"
-#include "shared/source/release_helper/release_helper_common_xe3pv2_lpg.inl"
+#include "shared/source/release_helper/release_helper_common_xe3p_lpg.inl"
 #include "shared/source/release_helper/release_helper_preferred_slm_xe3p_igpu_192k.inl"
 
 template class NEO::ReleaseHelperHw<NEO::release>;
