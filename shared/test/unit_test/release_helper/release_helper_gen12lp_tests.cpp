@@ -29,8 +29,8 @@ TEST_P(ReleaseHelperGen12LpTests, whenGettingCapabilitiesThenCorrectPropertiesAr
         ASSERT_NE(nullptr, releaseHelper);
 
         EXPECT_FALSE(releaseHelper->isAdjustWalkOrderAvailable());
-        EXPECT_TRUE(releaseHelper->isMatrixMultiplyAccumulateSupported());
-        EXPECT_TRUE(releaseHelper->isDotProductAccumulateSystolicSupported());
+        EXPECT_FALSE(releaseHelper->isMatrixMultiplyAccumulateSupported());
+        EXPECT_FALSE(releaseHelper->isDotProductAccumulateSystolicSupported());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
         EXPECT_FALSE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
