@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,7 @@ unsigned char umwaitRetValue = 0;
 
 std::function<void()> setupPauseAddress;
 std::function<void()> controlUmwait;
+std::function<void()> controlTpause;
 } // namespace CpuIntrinsicsTests
 
 namespace NEO {
@@ -77,6 +78,9 @@ void pause() {
 
 uint8_t tpause(uint32_t control, uint64_t counter) {
     CpuIntrinsicsTests::tpauseCounter++;
+    if (CpuIntrinsicsTests::controlTpause) {
+        CpuIntrinsicsTests::controlTpause();
+    }
     return 0;
 }
 

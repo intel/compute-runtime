@@ -749,7 +749,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
     std::chrono::microseconds elapsedTimeSinceGpuHangCheck{0};
     std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
-    uint64_t timeDiff = 0;
+    int64_t elapsedTimeSinceWaitStartUs = 0;
+    uint64_t elapsedTimeSinceWaitStartNs = 0;
 
     ze_result_t ret = ZE_RESULT_NOT_READY;
 
@@ -792,7 +793,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             if (fenceWait) {
                 ret = waitForUserFence(timeout);
             } else {
-                ret = queryStatus(timeDiff);
+                ret = queryStatus(elapsedTimeSinceWaitStartUs);
             }
         }
         if (ret == ZE_RESULT_SUCCESS) {
@@ -820,8 +821,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         }
 
         currentTime = std::chrono::high_resolution_clock::now();
-        auto elapsedTimeSinceWaitStart = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime);
-        auto elapsedTimeSinceWaitStartNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count());
+        auto elapsedTimeSinceWaitStart = currentTime - waitStartTime;
+        elapsedTimeSinceWaitStartUs = std::chrono::duration_cast<std::chrono::microseconds>(elapsedTimeSinceWaitStart).count();
+        elapsedTimeSinceWaitStartNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeSinceWaitStart).count());
 
         elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
 
@@ -836,13 +838,14 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         }
 
         if (!fenceWait) {
-            auto waitAction = waitController.getAction(elapsedTimeSinceWaitStart.count(), timeout, elapsedTimeSinceWaitStartNs);
+            auto waitAction = waitController.getAction(elapsedTimeSinceWaitStartUs, timeout, elapsedTimeSinceWaitStartNs);
             if (waitAction.sleepUs > 0) {
                 NEO::sleep(std::chrono::microseconds(waitAction.sleepUs));
 
                 currentTime = std::chrono::high_resolution_clock::now();
-                elapsedTimeSinceWaitStart = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime);
-                elapsedTimeSinceWaitStartNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count());
+                elapsedTimeSinceWaitStart = currentTime - waitStartTime;
+                elapsedTimeSinceWaitStartUs = std::chrono::duration_cast<std::chrono::microseconds>(elapsedTimeSinceWaitStart).count();
+                elapsedTimeSinceWaitStartNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeSinceWaitStart).count());
             }
         }
 
@@ -852,9 +855,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             break;
         }
 
-        timeDiff = elapsedTimeSinceWaitStartNs;
-
-    } while (timeDiff < timeout);
+    } while (elapsedTimeSinceWaitStartNs < timeout);
 
     if (assertHndlr) {
         assertHndlr->printAssertAndAbort();
