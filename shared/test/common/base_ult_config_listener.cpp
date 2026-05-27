@@ -11,6 +11,7 @@
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
 #include "aubstream/aubstream.h"
@@ -20,6 +21,12 @@ extern bool enableAlarm;
 namespace NEO {
 
 extern unsigned int testCaseMaxTimeInMs;
+
+void BaseUltConfigListener::OnTestIterationStart(const ::testing::UnitTest &, int) {
+    if (enableAlarm) {
+        resetAlarm();
+    }
+}
 
 void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
     WaitUtils::waitpkgUse = WaitUtils::WaitpkgUse::uninitialized;

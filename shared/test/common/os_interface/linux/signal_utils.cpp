@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,10 +88,6 @@ int setAlarm(bool enableAlarm) {
         }
     }
     if (enableAlarm) {
-        if (clock_gettime(CLOCK_MONOTONIC_RAW, &startTimeSpec)) {
-            startTimeSpec.tv_sec = 0;
-        }
-
         std::string envVar = std::string("NEO_") + NEO::executionName + "_ITERATION_MAX_TIME";
         auto ultIterationMaxTimeInSEnv = getenv(envVar.c_str());
         if (ultIterationMaxTimeInSEnv != nullptr) {
@@ -102,7 +98,6 @@ int setAlarm(bool enableAlarm) {
                 currentUltIterationMaxTimeInS = atoi(ultIterationMaxTimeInSEnv);
             }
         }
-        unsigned int alarmTime = currentUltIterationMaxTimeInS * ::testing::GTEST_FLAG(repeat);
 
         struct sigaction sa;
         sa.sa_handler = &handleSIGALRM;
@@ -115,10 +110,16 @@ int setAlarm(bool enableAlarm) {
         if (newStdOut == -1) {
             newStdOut = dup(1);
         }
-        alarm(alarmTime);
-        std::cout << "set timeout to: " << alarmTime << " seconds" << std::endl;
+        std::cout << "timeout per iteration: " << currentUltIterationMaxTimeInS << " seconds" << std::endl;
     }
     return 0;
+}
+
+void resetAlarm() {
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &startTimeSpec)) {
+        startTimeSpec.tv_sec = 0;
+    }
+    alarm(currentUltIterationMaxTimeInS);
 }
 
 int setSegv(bool enableSegv) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,5 +16,7 @@ int setSegv(bool enableSegv);
 int setAbrt(bool enableAbrt);
 
 void cleanupSignals();
+
+void resetAlarm();
 
 void handleTestsTimeout(std::string_view testName, uint32_t elapsedTime);

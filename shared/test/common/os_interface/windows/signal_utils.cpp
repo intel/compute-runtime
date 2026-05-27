@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,6 +59,8 @@ int setAbrt(bool enableAbrt) {
 }
 
 std::atomic<bool> abortOnTimeout = false;
+static unsigned int resolvedAlarmTimeInS = 0;
+static std::atomic<int64_t> iterationStartMs{0};
 
 int setAlarm(bool enableAlarm) {
     std::cout << "enable SIGALRM handler: " << enableAlarm << std::endl;
@@ -88,24 +90,27 @@ int setAlarm(bool enableAlarm) {
                     currentUltIterationMaxTimeInS = atoi(ultIterationMaxTimeInSEnv);
                 }
             }
-            unsigned int alarmTimeInS = currentUltIterationMaxTimeInS * ::testing::GTEST_FLAG(repeat);
-            std::cout << "set timeout to: " << alarmTimeInS << " seconds" << std::endl;
+            resolvedAlarmTimeInS = currentUltIterationMaxTimeInS;
+            std::cout << "timeout per iteration: " << resolvedAlarmTimeInS << " seconds" << std::endl;
+            iterationStartMs.store(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::high_resolution_clock::now().time_since_epoch())
+                                       .count());
             threadStarted = true;
-            std::chrono::high_resolution_clock::time_point startTime, endTime;
-            std::chrono::milliseconds elapsedTimeInMs{};
-            startTime = std::chrono::high_resolution_clock::now();
+            int64_t elapsedMs = 0;
             do {
                 std::this_thread::yield();
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                endTime = std::chrono::high_resolution_clock::now();
-                elapsedTimeInMs = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
                 if (!abortOnTimeout) {
                     return;
                 }
-            } while (abortOnTimeout && elapsedTimeInMs.count() < alarmTimeInS * 1000);
+                elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                std::chrono::high_resolution_clock::now().time_since_epoch())
+                                .count() -
+                            iterationStartMs.load();
+            } while (abortOnTimeout && elapsedMs < static_cast<int64_t>(resolvedAlarmTimeInS) * 1000);
 
             if (abortOnTimeout) {
-                handleTestsTimeout(lastTest, static_cast<uint32_t>(elapsedTimeInMs.count() / 1000));
+                handleTestsTimeout(lastTest, static_cast<uint32_t>(elapsedMs / 1000));
             }
         });
         SetThreadPriority(alarmThread->native_handle(), THREAD_PRIORITY_LOWEST);
@@ -128,4 +133,10 @@ void cleanupSignals() {
         alarmThread->join();
         alarmThread.reset();
     }
+}
+
+void resetAlarm() {
+    iterationStartMs.store(std::chrono::duration_cast<std::chrono::milliseconds>(
+                               std::chrono::high_resolution_clock::now().time_since_epoch())
+                               .count());
 }

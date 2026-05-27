@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ namespace NEO {
 
 class BaseUltConfigListener : public ::testing::EmptyTestEventListener {
   protected:
+    void OnTestIterationStart(const ::testing::UnitTest &, int) override;
     void OnTestStart(const ::testing::TestInfo &) override;
     void OnTestEnd(const ::testing::TestInfo &) override;
 
