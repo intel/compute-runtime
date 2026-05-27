@@ -49,10 +49,11 @@ TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenExportToStringThenCo
     Mock<Event> event;
 
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::string dot = exporter.exportToString(testGraph);
@@ -64,12 +65,13 @@ TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenExportToStringThe
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
 
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
-    testGraph.capture<CaptureApi::zeCommandListAppendMemoryCopy>(&cmdlist, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendMemoryCopy>(cmdlistHandle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::string dot = exporter.exportToString(testGraph);
@@ -95,10 +97,11 @@ TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenWriteNodesThenGeneratesNod
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::ostringstream dot;
@@ -113,11 +116,12 @@ TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenWriteEdgesThenGen
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
-    testGraph.capture<CaptureApi::zeCommandListAppendMemoryCopy>(&cmdlist, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendMemoryCopy>(cmdlistHandle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::ostringstream dot;
@@ -131,10 +135,11 @@ TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenWriteEdgesThenDoesNo
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::ostringstream dot;
@@ -148,10 +153,11 @@ TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenGetCommandNodeLabelThenRet
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::string label = exporter.getCommandNodeLabel(testGraph, 0, "");
@@ -162,14 +168,16 @@ TEST_F(GraphDotExporterTest, GivenDifferentCommandTypesWhenGetCommandNodeAttribu
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
-    testGraph.capture<CaptureApi::zeCommandListAppendMemoryCopy>(&cmdlist, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
-    testGraph.capture<CaptureApi::zeCommandListAppendSignalEvent>(&cmdlist, &event);
-    testGraph.capture<CaptureApi::zeCommandListAppendImageCopy>(&cmdlist, nullptr, nullptr, nullptr, 0U, nullptr);
-    testGraph.capture<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>(&cmdlist, nullptr, nullptr, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendMemoryCopy>(cmdlistHandle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendSignalEvent>(cmdlistHandle, &event);
+    testGraph.capture<CaptureApi::zeCommandListAppendImageCopy>(cmdlistHandle, nullptr, nullptr, nullptr, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>(cmdlistHandle, nullptr, nullptr, 0U, nullptr);
+    testGraph.capture<CaptureApi::NoopedCommandListFailedFunction>(cmdlistHandle);
 
     testGraph.stopCapturing();
 
@@ -178,6 +186,7 @@ TEST_F(GraphDotExporterTest, GivenDifferentCommandTypesWhenGetCommandNodeAttribu
     EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 2), ", fillcolor=yellow");
     EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 3), ", fillcolor=lightgreen");
     EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 4), ", fillcolor=pink");
+    EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 5), ", fillcolor=red");
 }
 
 TEST_F(GraphDotExporterTest, WhenGenerateNodeIdThenReturnsCorrectFormat) {
@@ -831,6 +840,7 @@ DEFINE_APIARGS_FIELDS(zetCommandListAppendMetricQueryBegin, "hCommandList", "hMe
 DEFINE_APIARGS_FIELDS(zetCommandListAppendMetricQueryEnd, "hCommandList", "hMetricQuery", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zetCommandListAppendMetricMemoryBarrier, "hCommandList");
 DEFINE_APIARGS_FIELDS(zetCommandListAppendMarkerExp, "hCommandList", "hMetricGroup", "value");
+DEFINE_APIARGS_FIELDS(NoopedCommandListFailedFunction, "hCommandList", "failed_function_name", "failed_function_return_value");
 
 TEST_F(ExtractParametersTest, zeCommandListAppendWriteGlobalTimestamp) {
     Closure<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>::ApiArgs args{};
@@ -1005,6 +1015,22 @@ TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelWithParameters) {
     args.kernelHandle = &kernel;
     args.pGroupCounts = &dummyLaunchArgs;
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(args);
+}
+
+TEST_F(ExtractParametersTest, NoopedCommandListFailedFunction) {
+    Closure<CaptureApi::NoopedCommandListFailedFunction>::ApiArgs args{};
+    args.failedFunctionName = "dummyFunction";
+    expectAllApiArgsPresent<CaptureApi::NoopedCommandListFailedFunction>(args);
+
+    Closure<CaptureApi::NoopedCommandListFailedFunction> closure(args, storage);
+    auto params = GraphDumpHelper::extractParameters<CaptureApi::NoopedCommandListFailedFunction>(closure, storage);
+
+    std::string cmdListHandle = GraphDumpHelper::formatPointer(nullptr);
+    EXPECT_EQ(cmdListHandle, getParamValue(params, "hCommandList"));
+    std::string expectedFailedFunctionName = "dummyFunction";
+    EXPECT_EQ(expectedFailedFunctionName, getParamValue(params, "failed_function_name"));
+    std::string expectedFailedFunctionReturnValue = "0";
+    EXPECT_EQ(expectedFailedFunctionReturnValue, getParamValue(params, "failed_function_return_value"));
 }
 
 TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelWithArguments) {

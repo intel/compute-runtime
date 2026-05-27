@@ -295,6 +295,9 @@ std::string GraphDotExporter::getCommandNodeAttributes(const Graph &graph, Captu
     case CaptureApi::zeCommandListAppendQueryKernelTimestamps:
         return ", fillcolor=pink";
 
+    case CaptureApi::NoopedCommandListFailedFunction:
+        return ", fillcolor=red";
+
     default:
         return ", fillcolor=aliceblue";
     }
@@ -984,6 +987,18 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     params.emplace_back("flags", std::to_string(closure.indirectArgs.desc.flags));
     params.emplace_back("numKernels", std::to_string(closure.indirectArgs.kernels.size()));
     params.emplace_back("commandId", std::to_string(closure.indirectArgs.commandId));
+
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::NoopedCommandListFailedFunction>(
+    const Closure<CaptureApi::NoopedCommandListFailedFunction> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    std::string failedFunctionName(closure.apiArgs.failedFunctionName);
+    params.emplace_back("failed_function_name", failedFunctionName);
+    params.emplace_back("failed_function_return_value", std::to_string(closure.indirectArgs.failureResult));
 
     return params;
 }

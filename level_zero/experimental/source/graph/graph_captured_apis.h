@@ -36,6 +36,7 @@ struct Event;
 #endif
 
 #define RR_CAPTURED_APIS()                                            \
+    RR_CAPTURED_API(NoopedCommandListFailedFunction)                  \
     RR_CAPTURED_API(zeCommandListGetNextCommandIdExp)                 \
     RR_CAPTURED_API(zeCommandListGetNextCommandIdWithKernelsExp)      \
     RR_CAPTURED_API(zeCommandListAppendWriteGlobalTimestamp)          \
@@ -80,6 +81,14 @@ enum class CaptureApi {
     RR_CAPTURED_APIS()
 #undef RR_CAPTURED_API
 };
+
+namespace CaptureApiStrings {
+#define RR_CAPTURED_API(X) #X,
+constexpr const char *names[] = {
+    RR_CAPTURED_APIS()};
+#undef RR_CAPTURED_API
+
+} // namespace CaptureApiStrings
 
 constexpr size_t numCapturedApis =
 #define RR_CAPTURED_API(X) +1
@@ -416,6 +425,31 @@ struct GetNextCommandIdIndirectArgs {
 
     ze_mutable_command_id_exp_desc_t desc{};
     uint64_t commandId = 0;
+};
+
+template <>
+struct Closure<CaptureApi::NoopedCommandListFailedFunction> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        const char *failedFunctionName;
+    } apiArgs;
+
+    struct IndirectArgs {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage)
+            : failureResult(externalStorage.lastResult) {}
+        ze_result_t failureResult;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage, std::optional<EventParams> enforcedEvents) const {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
+        return ZE_RESULT_SUCCESS;
+    }
 };
 
 template <>

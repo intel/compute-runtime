@@ -1475,6 +1475,37 @@ TEST_F(GraphTestInstantiationTest, GivenInvalidAppendKernelArgumentWithParameter
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
 }
 
+TEST_F(GraphTestInstantiationTest, GivenFailingAppendKernelWithParametersWhenRecordingGraphThenSegmentCommandCounterSaved) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_base_desc_t invalidDesc{ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0, nullptr));
+
+    ASSERT_EQ(1u, srcGraph.segments.size());
+    EXPECT_EQ(1u, srcGraph.segments[0].numCommands);
+    EXPECT_EQ(1u, srcGraph.recordedApiCommands.commands.size());
+
+    EXPECT_NE(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &invalidDesc, nullptr, 0, nullptr));
+
+    ASSERT_EQ(1u, srcGraph.segments.size());
+    EXPECT_EQ(2u, srcGraph.recordedApiCommands.commands.size());
+    EXPECT_EQ(srcGraph.recordedApiCommands.commands.size(), srcGraph.segments[0].numCommands);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
 TEST_F(GraphTestInstantiationTest, GivenGraphPatchPreambleDebugFlagWhenInstantiatingGraphThenUseDebugSettingForPatchPreamble) {
     GraphsCleanupGuard graphCleanup;
 

@@ -176,6 +176,8 @@ struct RecordedApiCommands {
         commands.push_back(CapturedCommand{Closure<api>(capturedArgs, externalStorage)});
         if (externalStorage.lastResult != ZE_RESULT_SUCCESS) {
             commands.pop_back();
+            Closure<CaptureApi::NoopedCommandListFailedFunction>::ApiArgs noopedArgs{capturedArgs.hCommandList, CaptureApiStrings::names[static_cast<size_t>(api)]};
+            commands.push_back(CapturedCommand{Closure<CaptureApi::NoopedCommandListFailedFunction>(noopedArgs, externalStorage)});
             brokenCapture = true;
             return externalStorage.lastResult;
         }

@@ -21,6 +21,7 @@ struct MockGraph : Graph {
     using Graph::parentGraph;
     using Graph::recordedApiCommands;
     using Graph::recordedSignals;
+    using Graph::segments;
 };
 
 struct MockExecutableGraph : ExecutableGraph {
