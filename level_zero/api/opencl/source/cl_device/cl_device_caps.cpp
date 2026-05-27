@@ -115,7 +115,7 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.vendor = vendor.c_str();
     deviceInfo.profile = profile.c_str();
-    deviceInfo.clVersion = "OpenCL 3.0 NEO ";
+    deviceInfo.clVersion = "OpenCL 3.0 LEO ";
     deviceInfo.clCVersion = "OpenCL C 1.2 ";
     deviceInfo.numericClVersion = CL_MAKE_VERSION(3, 0, 0);
     deviceInfo.latestConformanceVersionPassed = latestConformanceVersionPassed;
