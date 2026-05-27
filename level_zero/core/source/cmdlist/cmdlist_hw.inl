@@ -2144,7 +2144,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     if (!memoryCopyParams.copyOffloadAllowed) {
         bool imageToBuffer = false;
-        bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
+        bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer) || doParamsRequireCopyOnly(memoryCopyParams);
         memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, remoteCopy, size <= BlitterConstants::maxD2DBcsCopySize, 0) && shouldUseCopyOffload;
     }
 
@@ -2159,6 +2159,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     NEO::BuiltIn::AddressingMode builtInMode = this->defaultBuiltInMode;
 
     if (!isCopyOnlyEnabled) {
+        if (doParamsRequireCopyOnly(memoryCopyParams)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
         middleElSize = sizeof(uint32_t) * 4;
         builtInMode = this->defaultBuiltInMode;
         builtInMode.adjustToWideStatelessIfRequired(size);
