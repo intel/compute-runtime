@@ -37,6 +37,8 @@ struct DriverHandleGetFdMock : public L0::DriverHandle {
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
                          NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override;
 
+    bool initializeIpcSocketServer() override { return true; }
+
     const int mockFd = 57;
     std::pair<void *, int> allocationMap;
     NEO::AllocationType allocationTypeRequested = NEO::AllocationType::unknown;

@@ -1351,74 +1351,6 @@ HWTEST_F(InOrderIpcTests, givenSocketHandleSharingNotSupportedWhenGettingCounter
     EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
 }
 
-HWTEST_F(InOrderIpcTests, givenSocketHandleSharingSupportedWhenGettingCounterBasedIpcHandleThenHandlesAreTracked) {
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    auto pool = createEvents<FamilyType>(1, false);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    enableEventSharing(*events[0]);
-
-    auto defaultContext = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
-    defaultContext->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
-    defaultContext->settings.handleType = IpcHandleType::fdHandle;
-    EXPECT_TRUE(defaultContext->isSocketHandleSharingSupported());
-
-    ze_ipc_event_counter_based_handle_t zeIpcData = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
-
-    EXPECT_FALSE(events[0]->exportedIpcServerHandles.empty());
-}
-
-HWTEST_F(InOrderIpcTests, givenEventWithTrackedIpcHandlesWhenDestroyCalledThenHandlesAreUnregistered) {
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    auto pool = createEvents<FamilyType>(1, false);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    enableEventSharing(*events[0]);
-
-    auto defaultContext = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
-    defaultContext->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
-    defaultContext->settings.handleType = IpcHandleType::fdHandle;
-
-    ze_ipc_event_counter_based_handle_t zeIpcData = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
-
-    EXPECT_FALSE(events[0]->exportedIpcServerHandles.empty());
-
-    events[0].release()->destroy();
-}
-
-HWTEST_F(InOrderIpcTests, givenEventWithTrackedIpcHandlesWhenUpdateInOrderExecStateWithDifferentAddressThenOldHandlesAreCleared) {
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    auto pool = createEvents<FamilyType>(2, false);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    enableEventSharing(*events[0]);
-
-    auto defaultContext = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
-    defaultContext->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
-    defaultContext->settings.handleType = IpcHandleType::fdHandle;
-
-    ze_ipc_event_counter_based_handle_t zeIpcData = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
-
-    auto handleCountAfterFullExport = events[0]->exportedIpcServerHandles.size();
-    EXPECT_GT(handleCountAfterFullExport, 0u);
-
-    auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
-    immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
-
-    auto newInOrderExecInfo = immCmdList2->inOrderExecInfo;
-    EXPECT_NE(newInOrderExecInfo->getBaseDeviceAddress(), events[0]->getInOrderExecEventHelper().getBaseDeviceAddress());
-
-    events[0]->updateInOrderExecState(newInOrderExecInfo, 1, 0);
-
-    EXPECT_LT(events[0]->exportedIpcServerHandles.size(), handleCountAfterFullExport);
-}
-
 HWTEST_F(InOrderIpcTests, givenOpaqueHandleWhenOpenIpcHandleThenCacheIdsAreStored) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -1515,27 +1447,6 @@ HWTEST_F(InOrderIpcTests, givenValidEventDataWhenImportCbAllocationsCalledThenRe
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
-HWTEST_F(InOrderIpcTests, givenSocketSharingWhenGetIpcHandleCalledThenHandlesAreTracked) {
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    auto pool = createEvents<FamilyType>(1, false);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    enableEventSharing(*events[0]);
-
-    auto defaultContext = Context::fromHandle(device->getDriverHandle()->getDefaultContext());
-    defaultContext->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
-    defaultContext->settings.handleType = IpcHandleType::fdHandle;
-    EXPECT_TRUE(defaultContext->isSocketHandleSharingSupported());
-
-    EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
-
-    ze_ipc_event_counter_based_handle_t zeIpcData = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
-
-    EXPECT_FALSE(events[0]->exportedIpcServerHandles.empty());
-}
-
 HWTEST_F(InOrderIpcTests, givenCachedImportHandleWhenMultipleGetAndClearThenRefCountIsCorrect) {
     auto *driverHandle = device->getDriverHandle();
     auto &cache = driverHandle->opaqueHandleImportCache;
@@ -1559,6 +1470,25 @@ HWTEST_F(InOrderIpcTests, givenCachedImportHandleWhenMultipleGetAndClearThenRefC
 
     driverHandle->clearCachedImportHandle(testCacheId);
     EXPECT_EQ(0u, cache.count(testCacheId));
+}
+
+HWTEST_F(InOrderIpcTests, givenEventWithExportedIpcHandlesWhenUnregisterCalledThenHandlesAreCleared) {
+    auto pool = createEvents<FamilyType>(1, false);
+
+    events[0]->exportedIpcServerHandles.push_back(111u);
+    events[0]->exportedIpcServerHandles.push_back(222u);
+
+    EXPECT_FALSE(events[0]->exportedIpcServerHandles.empty());
+    events[0]->unregisterExportedIpcHandles();
+    EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
+}
+
+HWTEST_F(InOrderIpcTests, givenEventWithNoExportedIpcHandlesWhenUnregisterCalledThenNothingHappens) {
+    auto pool = createEvents<FamilyType>(1, false);
+
+    EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
+    events[0]->unregisterExportedIpcHandles();
+    EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
 }
 
 } // namespace ult

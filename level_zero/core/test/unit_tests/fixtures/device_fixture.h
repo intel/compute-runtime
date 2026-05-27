@@ -95,6 +95,8 @@ struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandle {
         return {nullptr, &mockHandle};
     }
 
+    bool initializeIpcSocketServer() override { return true; }
+
     uint64_t mockHandle = 57;
     int mockFd = 57;
     bool failHandleLookup = false;

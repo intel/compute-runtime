@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
+#include "shared/test/common/mocks/mock_os_thread.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -3590,6 +3591,22 @@ class ContextWhiteboxForIpcTesting : public ::L0::Context {
     using ::L0::Context::setIPCHandleData;
 };
 
+class ContextIpcSocketTest : public Test<DeviceFixture> {
+  public:
+    VariableBackup<decltype(NEO::Thread::createFunc)> threadCreateBackup{&NEO::Thread::createFunc};
+
+    void SetUp() override {
+        DeviceFixture::setUp();
+        NEO::Thread::createFunc = [](void *(*)(void *), void *) -> std::unique_ptr<NEO::Thread> {
+            return std::make_unique<NEO::MockThread>();
+        };
+    }
+
+    void TearDown() override {
+        DeviceFixture::tearDown();
+    }
+};
+
 TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcMemoryDataTypeThenIpcDataIsSetInHandleTracking) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -5344,7 +5361,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNtHandleTypeThenUnregisterIsNo
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndSocketsAndFdHandleThenUnregisterIsCalled) {
+TEST_F(ContextIpcSocketTest, whenCallingFreeMemWithIpcHandleAndSocketsAndFdHandleThenUnregisterIsCalled) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -5353,7 +5370,6 @@ TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndSocketsAndFdHandleThenUnre
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
-    // Set both conditions to true for the nested if in freeMem line 559
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
 
@@ -5381,15 +5397,12 @@ TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndSocketsAndFdHandleThenUnre
         driverHandle->getIPCHandleMap()[testHandle] = handleTracking;
     }
 
-    // Initialize socket server to enable unregister functionality
     driverHandle->initializeIpcSocketServer();
     driverHandle->registerIpcHandleWithServer(testHandle, static_cast<int>(testHandle));
 
-    // Free the memory - should trigger unregister because both conditions are met
     res = contextImp->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    // Verify the handle was removed from the map
     {
         auto lock = driverHandle->lockIPCHandleMap();
         EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
@@ -5525,7 +5538,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithCachedImportThenCacheIsCleared) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingPutIpcMemHandleWithExactlySocketsOpaqueHandleAndFdTypeThenUnregisterIsCalled) {
+TEST_F(ContextIpcSocketTest, whenCallingPutIpcMemHandleWithExactlySocketsOpaqueHandleAndFdTypeThenUnregisterIsCalled) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -5534,7 +5547,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithExactlySocketsOpaqueHandleAndF
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
-    // Set ONLY sockets, not a combination - this is needed to hit line 783
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
 
@@ -5555,7 +5567,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithExactlySocketsOpaqueHandleAndF
         driverHandle->getIPCHandleMap()[testHandle] = handleTracking;
     }
 
-    // Initialize socket server to enable unregister functionality
     driverHandle->initializeIpcSocketServer();
     driverHandle->registerIpcHandleWithServer(testHandle, static_cast<int>(testHandle));
 
@@ -5577,7 +5588,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithExactlySocketsOpaqueHandleAndF
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsAndFdHandleThenServerRegistrationIsAttempted) {
+TEST_F(ContextIpcSocketTest, whenCallingSetIPCHandleDataWithSocketsAndFdHandleThenServerRegistrationIsAttempted) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -5586,7 +5597,6 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsAndFdHandleThenServerR
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
-    // Set conditions to hit setIPCHandleData line 300
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
     contextImp->settings.enableIpcHandleSharing = true;
@@ -5595,7 +5605,6 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsAndFdHandleThenServerR
     size_t alignment = 4096;
     void *ptr = nullptr;
 
-    // Create allocation with export memory to trigger IPC handle creation
     ze_external_memory_export_desc_t externalMemoryExportDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC};
     externalMemoryExportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
 
@@ -5603,19 +5612,16 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsAndFdHandleThenServerR
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     deviceDesc.pNext = &externalMemoryExportDesc;
 
-    // Initialize socket server
     driverHandle->initializeIpcSocketServer();
 
     res = contextImp->allocDeviceMem(device->toHandle(), &deviceDesc, size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, ptr);
 
-    // Get IPC handle - this will trigger setIPCHandleData
     ze_ipc_mem_handle_t ipcHandle = {};
     res = contextImp->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    // Clean up
     res = contextImp->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -5720,7 +5726,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithSocketsOpaqueHandleButNtHandleTypeThen
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleThenSocketServerIsInitializedAndHandleIsRegistered) {
+TEST_F(ContextIpcSocketTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleThenSocketServerIsInitializedAndHandleIsRegistered) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -5818,7 +5824,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleDisabledThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueNtHandleThenSocketServerIsNotInitialized) {
+TEST_F(ContextIpcSocketTest, whenCallingSetIPCHandleDataWithOpaqueNtHandleThenSocketServerIsNotInitialized) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -5867,7 +5873,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueNtHandleThenSocketServe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueHandleAndSocketsEnabledThenSocketCodePathIsTriggered) {
+TEST_F(ContextIpcSocketTest, whenCallingSetIPCHandleDataWithOpaqueHandleAndSocketsEnabledThenSocketCodePathIsTriggered) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
