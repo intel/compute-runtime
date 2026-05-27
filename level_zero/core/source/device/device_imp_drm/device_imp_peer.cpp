@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -111,13 +112,21 @@ bool queryPeerAccessDrm(NEO::Device &device, NEO::Device &peerDevice, void **han
 
     ze_ipc_memory_flags_t flags = {};
     NEO::SvmAllocationData allocDataInternal(peerDevice.getRootDeviceIndex());
-    void *importedPtr = driverHandle->importFdHandle(&peerDevice, flags, *handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false);
+    NEO::GraphicsAllocation *importedAlloc = nullptr;
+    void *importedPtr = driverHandle->importFdHandle(&peerDevice, flags, *handle, NEO::AllocationType::buffer, false, nullptr, &importedAlloc, allocDataInternal, false);
 
-    bool canAccess = importedPtr != nullptr;
-    if (canAccess) {
-        context->freeMem(importedPtr);
+    if (importedPtr == nullptr) {
+        return false;
     }
 
+    bool canAccess = true;
+    auto memoryOperationsInterface = peerDevice.getRootDeviceEnvironment().memoryOperationsInterface.get();
+    if (importedAlloc != nullptr && memoryOperationsInterface != nullptr) {
+        auto residencyStatus = memoryOperationsInterface->makeResident(&peerDevice, ArrayRef<NEO::GraphicsAllocation *>(&importedAlloc, 1), false, false);
+        canAccess = (residencyStatus == NEO::MemoryOperationsStatus::success);
+    }
+
+    context->freeMem(importedPtr);
     return canAccess;
 }
 
