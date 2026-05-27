@@ -205,6 +205,32 @@ TEST(CreateKernelsInProgramTests, givenProgramWithExternalFunctionsWhenCreateKer
     EXPECT_EQ(2u, numKernels);
 }
 
+TEST(GetProgramInfoTests, givenProgramWithExternalFunctionsWhenGetProgramInfoWithNumKernelsThenExternalFunctionsAreFilteredOut) {
+    std::string externalFunctionsName{NEO::Zebin::Elf::SectionNames::externalFunctions};
+    MockModuleForKernelNames mockModule({"kernel0", externalFunctionsName, "kernel1"});
+
+    MockContextForKernelNames context;
+    MockProgramForKernelNames program(&context, mockModule.toHandle());
+
+    uint32_t numKernels = 0;
+    auto retVal = clGetProgramInfo(&program, CL_PROGRAM_NUM_KERNELS, sizeof(numKernels), &numKernels, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, numKernels);
+}
+
+TEST(GetProgramInfoTests, givenProgramWithExternalFunctionsWhenGetProgramInfoWithKernelNamesThenExternalFunctionsAreFilteredOut) {
+    std::string externalFunctionsName{NEO::Zebin::Elf::SectionNames::externalFunctions};
+    MockModuleForKernelNames mockModule({"kernel0", externalFunctionsName, "kernel1"});
+
+    MockContextForKernelNames context;
+    MockProgramForKernelNames program(&context, mockModule.toHandle());
+
+    char kernelNames[64] = {};
+    auto retVal = clGetProgramInfo(&program, CL_PROGRAM_KERNEL_NAMES, sizeof(kernelNames), kernelNames, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_STREQ("kernel0;kernel1", kernelNames);
+}
+
 TEST(CloneKernelTests, givenNullKernelWhenCloneKernelThenReturnsCLInvalidKernel) {
     cl_int errcode = CL_SUCCESS;
     auto kernel = clCloneKernel(nullptr, &errcode);

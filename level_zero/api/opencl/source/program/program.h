@@ -12,6 +12,7 @@
 #include "level_zero/core/source/module/module_imp.h"
 
 #include <span>
+#include <vector>
 
 namespace NEO {
 namespace LEO {
@@ -83,6 +84,7 @@ class Program : public BaseObject<_cl_program> {
     size_t getIrBinarySize() const;
     bool getIsSpirv() const;
     ze_module_handle_t getModuleHandle() const;
+    std::vector<const char *> getUserKernelNames() const;
     L0::ModuleImp *getL0Object() const { return static_cast<L0::ModuleImp *>(L0::Module::fromHandle(this->moduleHandle)); }
     static bool isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
     void invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);

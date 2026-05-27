@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 
@@ -95,23 +94,7 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
         return retVal;
     }
 
-    auto moduleHandle = pProgram->getModuleHandle();
-    uint32_t numKernelsInModule = 0u;
-    auto status = zeModuleGetKernelNames(moduleHandle, &numKernelsInModule, nullptr);
-    if (ZE_RESULT_SUCCESS != status) [[unlikely]] {
-        return L0ToClResultMapper(status);
-    }
-
-    std::vector<const char *> kernelNames(numKernelsInModule, nullptr);
-    status = zeModuleGetKernelNames(moduleHandle, &numKernelsInModule, kernelNames.data());
-    if (ZE_RESULT_SUCCESS != status) [[unlikely]] {
-        return L0ToClResultMapper(status);
-    }
-
-    kernelNames.erase(std::remove_if(kernelNames.begin(), kernelNames.end(),
-                                     [](const char *name) { return NEO::Zebin::Elf::SectionNames::externalFunctions == name; }),
-                      kernelNames.end());
-
+    auto kernelNames = pProgram->getUserKernelNames();
     auto numUserKernels = static_cast<cl_uint>(kernelNames.size());
 
     if (kernels) [[likely]] {

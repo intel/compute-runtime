@@ -9,6 +9,7 @@
 
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/get_info.h"
 
 #include "level_zero/api/opencl/source/helpers/cl_to_l0_handles.h"
@@ -18,6 +19,7 @@
 #include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
 
+#include <algorithm>
 #include <cstring>
 #include <string_view>
 
@@ -74,6 +76,17 @@ bool Program::getIsSpirv() const {
 
 ze_module_handle_t Program::getModuleHandle() const {
     return this->moduleHandle;
+}
+
+std::vector<const char *> Program::getUserKernelNames() const {
+    uint32_t numKernels = 0u;
+    zeModuleGetKernelNames(moduleHandle, &numKernels, nullptr);
+    std::vector<const char *> kernelNames(numKernels, nullptr);
+    zeModuleGetKernelNames(moduleHandle, &numKernels, kernelNames.data());
+    kernelNames.erase(std::remove_if(kernelNames.begin(), kernelNames.end(),
+                                     [](const char *name) { return NEO::Zebin::Elf::SectionNames::externalFunctions == name; }),
+                      kernelNames.end());
+    return kernelNames;
 }
 
 bool Program::isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData) {
@@ -380,7 +393,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         if (nullptr == moduleHandle) {
             retVal = CL_INVALID_PROGRAM_EXECUTABLE;
         } else {
-            zeModuleGetKernelNames(moduleHandle, &numKernels, nullptr);
+            numKernels = static_cast<uint32_t>(getUserKernelNames().size());
             pSrc = &numKernels;
             retSize = srcSize = sizeof(numKernels);
         }
@@ -389,10 +402,8 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         if (nullptr == moduleHandle) {
             retVal = CL_INVALID_PROGRAM_EXECUTABLE;
         } else {
-            zeModuleGetKernelNames(moduleHandle, &numKernels, nullptr);
-            std::vector<char *> kernelNamePtrs(numKernels, nullptr);
-            zeModuleGetKernelNames(moduleHandle, &numKernels, const_cast<const char **>(kernelNamePtrs.data()));
-            for (auto kernelName : kernelNamePtrs) {
+            auto userKernelNames = getUserKernelNames();
+            for (auto kernelName : userKernelNames) {
                 if (!kernelNames.empty()) {
                     kernelNames += ";";
                 }
