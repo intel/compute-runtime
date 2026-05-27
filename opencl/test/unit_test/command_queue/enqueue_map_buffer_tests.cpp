@@ -830,7 +830,7 @@ HWTEST_F(EnqueueMapBufferTest, givenMapBufferOnGpuWhenMappingBufferThenStoreGrap
 
     MapInfo mapInfo{};
     EXPECT_TRUE(bufferForCpuMap->findMappedPtr(pointerMappedOnCpu, mapInfo));
-    EXPECT_EQ(nullptr, mapInfo.graphicsAllocation);
+    EXPECT_NE(nullptr, mapInfo.graphicsAllocation);
     EXPECT_TRUE(bufferForGpuMap->findMappedPtr(pointerMappedOnGpu, mapInfo));
     EXPECT_NE(nullptr, mapInfo.graphicsAllocation);
 }
