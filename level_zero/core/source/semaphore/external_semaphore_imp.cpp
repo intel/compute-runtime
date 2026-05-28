@@ -116,39 +116,54 @@ std::unique_ptr<ExternalSemaphoreController> ExternalSemaphoreController::create
 }
 
 ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_device_handle_t hDevice, ze_context_handle_t hContext, ze_event_handle_t *phEvent) {
-    if (this->eventPoolsMap.find(hDevice) == this->eventPoolsMap.end()) {
-        this->eventPoolsMap[hDevice] = std::vector<EventPool *>();
-        this->eventsCreatedFromLatestPoolMap[hDevice] = 0u;
+    if (eventPools.find(hDevice) == eventPools.end()) {
+        eventPools.emplace(hDevice, ReusableEventPools{});
     }
 
-    if (this->eventPoolsMap[hDevice].empty() ||
-        this->eventsCreatedFromLatestPoolMap[hDevice] + 1 > this->maxEventCountInPool) {
-        ze_result_t result;
+    ReusableEventPools &devPools = eventPools[hDevice];
+    EventPool *pool = nullptr;
+    uint32_t idx = 0;
+    if (devPools.eventSlots) {
+        // Event slots available, check for reusable slots before using new pool slot.
+        if (devPools.reuseEvent.empty()) {
+            // No reusable events, use available slot in most recently created pool.
+            pool = devPools.pools.back();
+            idx = poolCapacity - devPools.eventSlots;
+        } else { // Reuse event from the reuse stack.
+            auto slot = devPools.reuseEvent.top();
+            devPools.reuseEvent.pop();
+            pool = slot.pool;
+            idx = slot.eventIdx;
+        }
+    } else { // No available event slots --> create new pool.
+        auto driver = L0::Device::fromHandle(hDevice)->getDriverHandle();
+        auto context = L0::Context::fromHandle(hContext);
+
         ze_event_pool_desc_t desc{};
         desc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
-        desc.count = static_cast<uint32_t>(this->maxEventCountInPool);
+        desc.count = poolCapacity;
         desc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-        auto driverHandle = L0::Device::fromHandle(hDevice)->getDriverHandle();
-        auto pool = EventPool::create(driverHandle, L0::Context::fromHandle(hContext), 1, &hDevice, &desc, result);
+        auto result = ZE_RESULT_SUCCESS;
+        pool = EventPool::create(driver, context, 1, &hDevice, &desc, result);
         if (!pool) {
-            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+            return result;
         }
-        this->eventPoolsMap[hDevice].push_back(pool);
-        this->eventsCreatedFromLatestPoolMap[hDevice] = 0u;
+        devPools.pools.push_back(pool);
+        devPools.eventSlots += poolCapacity;
+        idx = 0u;
     }
-
-    auto pool = this->eventPoolsMap[hDevice][this->eventPoolsMap[hDevice].size() - 1];
     ze_event_desc_t desc{};
-    desc.index = static_cast<uint32_t>(this->eventsCreatedFromLatestPoolMap[hDevice]++);
+    desc.index = idx;
     desc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
     desc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
 
     ze_event_handle_t hEvent{};
-    pool->createEvent(&desc, &hEvent);
-
-    *phEvent = hEvent;
-
-    return ZE_RESULT_SUCCESS;
+    ze_result_t result = pool->createEvent(&desc, &hEvent);
+    if (result == ZE_RESULT_SUCCESS) {
+        devPools.eventSlots--;
+        *phEvent = hEvent;
+    }
+    return result;
 }
 
 void ExternalSemaphoreController::processProxyEvents() {
@@ -166,20 +181,30 @@ void ExternalSemaphoreController::processProxyEvents() {
             }
             if (neoSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled) {
                 event->hostSignal(false);
-                it = this->proxyEvents.erase(it);
-                this->processedProxyEvents.push_back(event);
+                it = proxyEvents.erase(it);
+                if (syncEvents.find(neoSemaphore) != syncEvents.end() &&
+                    syncEvents[neoSemaphore] != event) {
+                    releaseEvent(syncEvents[neoSemaphore]);
+                }
+                syncEvents[neoSemaphore] = event;
             } else {
                 ++it;
             }
         } else {
-            // Timeout value doesn't matter here since the event should already
-            //   be signaled on the host side by the time it processes the
-            //   Signal operation for the proxy event.
+            // Timeout value doesn't matter here since event should already be
+            //   signaled on host side when processing Signal operation.
             ze_result_t ret = event->hostSynchronize(20);
             if (ret == ZE_RESULT_SUCCESS) {
                 neoSemaphore->enqueueSignal(&fenceValue);
-                event->destroy();
-                it = this->proxyEvents.erase(it);
+                releaseEvent(event);
+                it = proxyEvents.erase(it);
+                auto syncEventIt = syncEvents.find(neoSemaphore);
+                if (syncEventIt != syncEvents.end()) {
+                    if (syncEventIt->second != event) {
+                        releaseEvent(syncEventIt->second);
+                    }
+                    syncEvents.erase(syncEventIt);
+                }
             } else {
                 ++it;
             }
@@ -187,19 +212,58 @@ void ExternalSemaphoreController::processProxyEvents() {
     }
 }
 
+void ExternalSemaphoreController::releaseEvent(Event *event) {
+    if (Device *dev = event->getDevice(); dev) {
+        if (auto devPools = eventPools.find(dev->toHandle()); devPools != eventPools.end()) {
+            ReusableEventPools &pools = devPools->second;
+            pools.reuseEvent.emplace(event->peekEventPool(), event->getPoolIndex());
+            event->destroy();
+            pools.eventSlots++;
+            return;
+        }
+    }
+    event->destroy();
+}
+
 void ExternalSemaphoreController::runController() {
     while (true) {
-        std::unique_lock<std::mutex> lock(this->semControllerMutex);
-        this->semControllerCv.wait(lock, [this] { return (!this->proxyEvents.empty() || !this->continueRunning); });
+        std::unique_lock<std::mutex> lock(semControllerMutex);
+        semControllerCv.wait(lock, [this] { return (!proxyEvents.empty() || !continueRunning); });
 
-        if (!this->continueRunning) {
+        if (!continueRunning) {
             lock.unlock();
             break;
         } else {
-            this->processProxyEvents();
+            processProxyEvents();
 
             lock.unlock();
-            this->semControllerCv.notify_all();
+            semControllerCv.notify_all();
+        }
+    }
+}
+
+void ExternalSemaphoreController::releaseResources() {
+    {
+        std::lock_guard<std::mutex> lock(this->semControllerMutex);
+        this->continueRunning = false;
+        this->semControllerCv.notify_one();
+    }
+
+    joinThread();
+
+    for (auto proxyEvent : proxyEvents) {
+        proxyEvent.event->destroy();
+    }
+    proxyEvents.clear();
+
+    for (auto &syncEvent : syncEvents) {
+        syncEvent.second->destroy();
+    }
+    syncEvents.clear();
+
+    for (auto &devPools : eventPools) {
+        for (auto &pool : devPools.second.pools) {
+            pool->destroy();
         }
     }
 }

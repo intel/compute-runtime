@@ -19,6 +19,7 @@
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <stack>
 #include <thread>
 
 namespace L0 {
@@ -69,45 +70,34 @@ class ExternalSemaphoreController : NEO::NonCopyableAndNonMovableClass {
         }
     }
 
-    void releaseResources() {
-        {
-            std::lock_guard<std::mutex> lock(this->semControllerMutex);
-            this->continueRunning = false;
-            this->semControllerCv.notify_one();
-        }
-
-        joinThread();
-
-        for (auto it = proxyEvents.begin(); it != proxyEvents.end(); ++it) {
-            it->event->destroy();
-        }
-
-        for (auto event : processedProxyEvents) {
-            event->destroy();
-        }
-
-        for (auto &eventPools : eventPoolsMap) {
-            for (auto &eventPool : eventPools.second) {
-                eventPool->destroy();
-            }
-        }
-    }
-
     ze_result_t allocateProxyEvent(ze_device_handle_t hDevice, ze_context_handle_t hContext, ze_event_handle_t *phEvent);
-    void processProxyEvents();
 
     std::mutex semControllerMutex;
     std::condition_variable semControllerCv;
 
-    std::unordered_map<ze_device_handle_t, std::vector<EventPool *>> eventPoolsMap;
-    std::unordered_map<ze_device_handle_t, size_t> eventsCreatedFromLatestPoolMap;
-    const size_t maxEventCountInPool = 20u;
     std::vector<ProxyEvent> proxyEvents;
-    std::vector<Event *> processedProxyEvents;
-    bool continueRunning = true;
+    static constexpr uint32_t poolCapacity = 32u;
 
-  private:
+  protected:
+    struct ReuseEvent {
+        EventPool *pool = nullptr;
+        uint32_t eventIdx = 0u;
+    };
+
+    struct ReusableEventPools {
+        std::vector<EventPool *> pools{};
+        uint32_t eventSlots = 0u;
+        std::stack<ReuseEvent> reuseEvent{};
+    };
+
+    void processProxyEvents();
+    void releaseEvent(Event *event);
     void runController();
+    void releaseResources();
+
+    std::unordered_map<ze_device_handle_t, ReusableEventPools> eventPools;
+    std::unordered_map<NEO::ExternalSemaphore *, Event *> syncEvents;
+    bool continueRunning = true;
 
     std::thread extSemThread;
 };

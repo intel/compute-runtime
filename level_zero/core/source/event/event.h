@@ -212,6 +212,7 @@ struct Event : _ze_event_handle_t {
     MOCKABLE_VIRTUAL void resetPackets(bool resetAllPackets);
     virtual void resetKernelCountAndPacketUsedCount() = 0;
     void *getHostAddress() const;
+    uint32_t getPoolIndex() const { return static_cast<uint32_t>(eventPoolOffset / totalEventSize); }
     virtual void setPacketsInUse(uint32_t value) = 0;
     uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
     MOCKABLE_VIRTUAL void setGpuStartTimestamp();
