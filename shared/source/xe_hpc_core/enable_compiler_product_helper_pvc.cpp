@@ -77,11 +77,6 @@ bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateTF32Supported(
     return false;
 }
 
-template <>
-bool CompilerProductHelperHw<IGFX_PVC>::isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const {
-    return true;
-}
-
 static EnableCompilerProductHelper<IGFX_PVC> enableCompilerProductHelperPVC;
 
 } // namespace NEO

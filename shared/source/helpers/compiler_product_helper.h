@@ -60,7 +60,6 @@ class CompilerProductHelper {
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
     virtual bool isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const = 0;
-    virtual bool isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isSubgroupLocalBlockIoSupported() const = 0;
     virtual bool isCreateBufferWithPropertiesSupported() const = 0;
     virtual bool isSubgroupNamedBarrierSupported() const = 0;
@@ -111,7 +110,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isStatelessToStatefulBufferOffsetSupported() const override;
     bool isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const override;
     bool isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const override;
-    bool isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const override;
     bool isSubgroupLocalBlockIoSupported() const override;
     bool isCreateBufferWithPropertiesSupported() const override;
     bool isSubgroupNamedBarrierSupported() const override;

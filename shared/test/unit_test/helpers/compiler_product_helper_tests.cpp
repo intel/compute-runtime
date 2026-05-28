@@ -125,24 +125,6 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpcThenSubgroupBufferPrefetchI
     EXPECT_FALSE(compilerProductHelper.isSubgroupBufferPrefetchSupported());
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenCompilerProductHelperThenBFloat16ConversionIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto releaseHelper = pDevice->getReleaseHelper();
-
-    if (releaseHelper) {
-
-        EXPECT_EQ(releaseHelper->isBFloat16ConversionSupported(), compilerProductHelper.isBFloat16ConversionSupported(releaseHelper));
-    } else {
-        EXPECT_FALSE(compilerProductHelper.isBFloat16ConversionSupported(releaseHelper));
-    }
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenBFloat16ConversionIsSupported, IsXeHpcCore) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto releaseHelper = pDevice->getReleaseHelper();
-    EXPECT_TRUE(compilerProductHelper.isBFloat16ConversionSupported(releaseHelper));
-}
-
 HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterThenMatrixMultiplyAccumulateTF32IsSupported, IsAtLeastXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto hwInfo = *defaultHwInfo;

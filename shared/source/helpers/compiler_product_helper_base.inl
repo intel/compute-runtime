@@ -136,7 +136,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_media_block_io ";
     }
 
-    if (isBFloat16ConversionSupported(releaseHelper)) {
+    if (releaseHelper->isBFloat16ConversionSupported()) {
         extensions += "cl_intel_bfloat16_conversions ";
     }
 
@@ -217,14 +217,6 @@ template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
     if (releaseHelper) {
         return releaseHelper->isSplitMatrixMultiplyAccumulateSupported();
-    }
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->isBFloat16ConversionSupported();
     }
     return false;
 }
