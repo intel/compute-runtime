@@ -125,28 +125,4 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetIndex(
         hCommandQueue,
         pIndex);
 }
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetFlags(
-    ze_command_queue_handle_t hCommandQueue,
-    ze_command_queue_flags_t *pFlags) {
-    return L0::zeCommandQueueGetFlags(
-        hCommandQueue,
-        pFlags);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetMode(
-    ze_command_queue_handle_t hCommandQueue,
-    ze_command_queue_mode_t *pMode) {
-    return L0::zeCommandQueueGetMode(
-        hCommandQueue,
-        pMode);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetPriority(
-    ze_command_queue_handle_t hCommandQueue,
-    ze_command_queue_priority_t *pPriority) {
-    return L0::zeCommandQueueGetPriority(
-        hCommandQueue,
-        pPriority);
-}
 }

@@ -617,6 +617,38 @@ typedef struct _zex_bfloat16_atomic_ext_properties_t {
 #endif
 
 #if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 16)
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetFlags(
+    ze_command_list_handle_t hCommandList,
+    ze_command_list_flags_t *pFlags);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetFlags(
+    ze_command_list_handle_t hCommandListImmediate,
+    ze_command_queue_flags_t *pFlags);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetMode(
+    ze_command_list_handle_t hCommandListImmediate,
+    ze_command_queue_mode_t *pMode);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetPriority(
+    ze_command_list_handle_t hCommandListImmediate,
+    ze_command_queue_priority_t *pPriority);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetFlags(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_flags_t *pFlags);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetMode(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_mode_t *pMode);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetPriority(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_priority_t *pPriority);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsMutableExp(
+    ze_command_list_handle_t hCommandList,
+    ze_bool_t *pIsMutable);
+
 ZE_APIEXPORT ze_result_t ZE_APICALL zeEventGetCounterBasedFlags(
     ze_event_handle_t hEvent,              ///< [in] handle of the event
     ze_event_counter_based_flags_t *pFlags ///< [out] pointer to value indicating the flags of the counter based event

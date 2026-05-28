@@ -326,44 +326,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetOrdinal(
         pOrdinal);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetFlags(
-    ze_command_list_handle_t hCommandList,
-    ze_command_list_flags_t *pFlags) {
-    return L0::zeCommandListGetFlags(
-        hCommandList,
-        pFlags);
-}
-
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetIndex(
     ze_command_list_handle_t hCommandListImmediate,
     uint32_t *pIndex) {
     return L0::zeCommandListImmediateGetIndex(
         hCommandListImmediate,
         pIndex);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetFlags(
-    ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_flags_t *pFlags) {
-    return L0::zeCommandListImmediateGetFlags(
-        hCommandListImmediate,
-        pFlags);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetMode(
-    ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_mode_t *pMode) {
-    return L0::zeCommandListImmediateGetMode(
-        hCommandListImmediate,
-        pMode);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetPriority(
-    ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_priority_t *pPriority) {
-    return L0::zeCommandListImmediateGetPriority(
-        hCommandListImmediate,
-        pPriority);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsImmediate(

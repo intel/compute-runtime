@@ -160,12 +160,6 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
     return L0::zeCommandListUpdateMutableCommandKernelsExp(hCommandList, numKernels, pCommandId, phKernels);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsMutableExp(
-    ze_command_list_handle_t hCommandList,
-    ze_bool_t *pIsMutable) {
-    return L0::zeCommandListIsMutableExp(hCommandList, pIsMutable);
-}
-
 #if defined(__cplusplus)
 } // extern "C"
 #endif

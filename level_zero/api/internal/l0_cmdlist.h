@@ -124,7 +124,7 @@ ze_result_t ZE_APICALL zeCommandListImmediateGetPriority(
 ze_result_t ZE_APICALL zeCommandListIsImmediate(
     ze_command_list_handle_t hCommandList,
     ze_bool_t *pIsImmediate);
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsMutableExp(
+ze_result_t ZE_APICALL zeCommandListIsMutableExp(
     ze_command_list_handle_t hCommandList,
     ze_bool_t *pIsMutable);
 
