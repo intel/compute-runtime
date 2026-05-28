@@ -7,6 +7,7 @@
 
 #pragma once
 #include <cstdint>
+#include <string>
 #include <string_view>
 
 int setAlarm(bool enableAlarm);
@@ -20,3 +21,6 @@ void cleanupSignals();
 void resetAlarm();
 
 void handleTestsTimeout(std::string_view testName, uint32_t elapsedTime);
+
+constexpr size_t maxTestNameLength = 256;
+extern std::string lastTest;

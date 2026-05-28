@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 
-extern std::string lastTest;
 namespace NEO {
 extern const char *executionName;
 extern const char *apiName;
@@ -70,9 +69,6 @@ class CCustomEventListener : public ::testing::TestEventListener {
     }
 
     void OnTestStart(const ::testing::TestInfo &testCase) override {
-        std::stringstream ss;
-        ss << testCase.test_case_name() << "." << testCase.name();
-        lastTest = ss.str();
     }
 
     void OnTestPartResult(const ::testing::TestPartResult &testPartResult) override {

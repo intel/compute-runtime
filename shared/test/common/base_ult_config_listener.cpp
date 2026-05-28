@@ -23,12 +23,14 @@ namespace NEO {
 extern unsigned int testCaseMaxTimeInMs;
 
 void BaseUltConfigListener::OnTestIterationStart(const ::testing::UnitTest &, int) {
+    lastTest.reserve(maxTestNameLength);
     if (enableAlarm) {
         resetAlarm();
     }
 }
 
-void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
+void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
+    lastTest = std::string(testInfo.test_suite_name()) + "." + testInfo.name();
     WaitUtils::waitpkgUse = WaitUtils::WaitpkgUse::uninitialized;
     WaitUtils::waitPkgThresholdInMicroSeconds = WaitUtils::defaultWaitPkgThresholdInMicroSeconds;
     WaitUtils::waitpkgCounterValue = WaitUtils::defaultCounterValue;
