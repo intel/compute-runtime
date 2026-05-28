@@ -62,7 +62,6 @@ class CompilerProductHelper {
     virtual bool isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isSubgroupLocalBlockIoSupported() const = 0;
-    virtual bool isDotProductAccumulateSystolicSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isCreateBufferWithPropertiesSupported() const = 0;
     virtual bool isSubgroupNamedBarrierSupported() const = 0;
     virtual bool isSubgroupExtendedBlockReadSupported() const = 0;
@@ -114,7 +113,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const override;
     bool isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const override;
     bool isSubgroupLocalBlockIoSupported() const override;
-    bool isDotProductAccumulateSystolicSupported(const ReleaseHelper *releaseHelper) const override;
     bool isCreateBufferWithPropertiesSupported() const override;
     bool isSubgroupNamedBarrierSupported() const override;
     bool isSubgroupExtendedBlockReadSupported() const override;
