@@ -269,7 +269,7 @@ zetIntelMetricTracerDecodeCalculateValuesExp(
                                                                                ///< calculated metrics results.
 
 ze_result_t ZE_APICALL
-zetIntelMetricDecodeToBinaryBufferExp(
+zetIntelMetricTracerDecodeToBinaryBufferExp(
     zet_metric_decoder_exp_handle_t hMetricDecoder,                             ///< [in] handle of the metric decoder object
     size_t *pRawDataSize,                                                       ///< [in,out] size in bytes of raw data buffer. If pDecodedBufferSize is greater
                                                                                 ///< than 0 but smaller than the total number of bytes required for decoding
