@@ -209,6 +209,11 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
 
     MockDebugSessionLinuxi915(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxi915(config, device, debugFd, nullptr) {}
 
+    ~MockDebugSessionLinuxi915() override {
+        closeAsyncThread();
+        closeInternalEventsThread();
+    }
+
     ze_result_t initialize() override {
         if (initializeRetVal != ZE_RESULT_FORCE_UINT32) {
             bool isRootDevice = !connectedDevice->getNEODevice()->isSubDevice();

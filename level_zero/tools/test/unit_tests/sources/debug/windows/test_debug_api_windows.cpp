@@ -81,6 +81,10 @@ struct MockDebugSessionWindows : DebugSessionWindows {
 
     MockDebugSessionWindows(const zet_debug_config_t &config, L0::Device *device) : DebugSessionWindows(config, device) {}
 
+    ~MockDebugSessionWindows() override {
+        closeAsyncThread();
+    }
+
     ze_result_t initialize() override {
         if (resultInitialize != ZE_RESULT_FORCE_UINT32) {
             return resultInitialize;

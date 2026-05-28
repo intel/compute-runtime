@@ -218,6 +218,11 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     }
     MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxXe(config, device, debugFd, nullptr) {}
 
+    ~MockDebugSessionLinuxXe() override {
+        closeAsyncThread();
+        closeInternalEventsThread();
+    }
+
     void addThreadToNewlyStoppedFromRaisedAttentionForTileSession(EuThread::ThreadId threadId,
                                                                   uint64_t memoryHandle,
                                                                   const void *stateSaveArea,
