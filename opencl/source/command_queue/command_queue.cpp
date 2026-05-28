@@ -1169,9 +1169,8 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
     if (debugManager.flags.EnableBlitterForEnqueueImageOperations.get() != -1) {
         blitEnqueueImageAllowed = debugManager.flags.EnableBlitterForEnqueueImageOperations.get();
     }
-    if (releaseHelper) {
-        blitEnqueueImageAllowed &= !(Image::isDepthFormat(image.getImageFormat()) && !releaseHelper->isBlitImageAllowedForDepthFormat());
-    }
+
+    blitEnqueueImageAllowed &= !(Image::isDepthFormat(image.getImageFormat()) && !releaseHelper->isBlitImageAllowedForDepthFormat());
 
     blitEnqueueImageAllowed &= !isMipMapped(image.getImageDesc());
 

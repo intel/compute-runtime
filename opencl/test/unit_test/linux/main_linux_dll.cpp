@@ -916,6 +916,9 @@ int main(int argc, char **argv) {
     defaultHwInfo = std::make_unique<HardwareInfo>();
     *defaultHwInfo = DEFAULT_TEST_PLATFORM::hwInfo;
 
+    auto compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    defaultHwInfo->ipVersion.value = compilerProductHelper->getHwIpVersion(*defaultHwInfo);
+
     debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     initializeTestedDevice();
 

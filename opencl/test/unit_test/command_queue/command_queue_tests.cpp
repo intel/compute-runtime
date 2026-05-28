@@ -2333,20 +2333,6 @@ TEST(CommandQueue, givenImageWithDepthTypeWhenDepthAllowedForBlitThenBlitEnqueue
     EXPECT_TRUE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
 }
 
-TEST(CommandQueue, givenImageWithDepthTypeWhenReleaseHelperNotAvailableThenBlitEnqueueForImageIsAllowed) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
-    MockContext context{};
-    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
-    context.getDevice(0)->getDevice().getRootDeviceEnvironmentRef().releaseHelper.reset();
-    size_t correctRegion[3] = {10u, 10u, 0};
-    size_t correctOrigin[3] = {1u, 1u, 0};
-    MockImageBase image;
-    image.imageFormat = {CL_DEPTH, CL_UNSIGNED_INT8};
-
-    EXPECT_TRUE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
-}
-
 TEST(CommandQueue, given64KBTileWith3DImageTypeWhenCallingBlitEnqueueImageAllowedThenCorrectResultIsReturned) {
     DebugManagerStateRestore restorer;
     MockContext context{};

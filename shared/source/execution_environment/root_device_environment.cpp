@@ -230,6 +230,7 @@ void RootDeviceEnvironment::initAilConfigurationHelper() {
 }
 
 ReleaseHelper *RootDeviceEnvironment::getReleaseHelper() const {
+    UNRECOVERABLE_IF(releaseHelper == nullptr);
     return releaseHelper.get();
 }
 
@@ -271,12 +272,11 @@ bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
 }
 
 void RootDeviceEnvironment::setRcsExposure() {
-    if (releaseHelper) {
-        if (releaseHelper->isRcsExposureDisabled()) {
-            hwInfo->featureTable.flags.ftrRcsNode = false;
-            if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) || (debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS))) {
-                hwInfo->featureTable.flags.ftrRcsNode = true;
-            }
+    UNRECOVERABLE_IF(releaseHelper == nullptr);
+    if (releaseHelper->isRcsExposureDisabled()) {
+        hwInfo->featureTable.flags.ftrRcsNode = false;
+        if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) || (debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS))) {
+            hwInfo->featureTable.flags.ftrRcsNode = true;
         }
     }
 }

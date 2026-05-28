@@ -62,7 +62,7 @@ void ProductHelperTest::SetUp() {
 
 void ProductHelperTest::refreshReleaseHelper(HardwareInfo *hwInfo) {
     executionEnvironment->rootDeviceEnvironments[0]->releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->releaseHelper->create(hwInfo->ipVersion);
-    releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
+    releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->releaseHelper.get();
 }
 
 TEST(ProductHelperTestCreate, WhenProductHelperCreateIsCalledWithUnknownProductThenNullptrIsReturned) {
