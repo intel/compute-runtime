@@ -934,8 +934,6 @@ HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegion
     EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeDstPitch);
 }
 
-using ImageSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
-
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToImageTheBuiltinFlagIsSet, ImageSupport) {
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);

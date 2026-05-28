@@ -6602,8 +6602,6 @@ struct MultipleDevicePeerImageTest : public ::testing::Test {
     const uint32_t numSubDevices = 2u;
 };
 
-using ImageSupport = IsGen12LP;
-
 HWTEST2_F(MultipleDevicePeerImageTest,
           whenisRemoteImageNeededIsCalledWithDifferentCombinationsOfInputsThenExpectedOutputIsReturned,
           ImageSupport) {
