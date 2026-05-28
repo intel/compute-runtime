@@ -96,12 +96,13 @@ TEST_F(GraphDotExporterTest, WhenWriteHeaderThenGeneratesValidDotHeader) {
 TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenWriteNodesThenGeneratesNodeDefinitions) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
+    auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
     auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::ostringstream dot;
@@ -115,12 +116,13 @@ TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenWriteNodesThenGeneratesNod
 TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenWriteEdgesThenGeneratesSequentialEdges) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
+    auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
     auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
     testGraph.capture<CaptureApi::zeCommandListAppendMemoryCopy>(cmdlistHandle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
     testGraph.stopCapturing();
 
@@ -134,12 +136,13 @@ TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenWriteEdgesThenGen
 TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenWriteEdgesThenDoesNotGenerateSequentialSectionComment) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
+    auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
     auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::ostringstream dot;
@@ -152,12 +155,13 @@ TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenWriteEdgesThenDoesNo
 TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenGetCommandNodeLabelThenReturnsCorrectLabel) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
+    auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
     auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::string label = exporter.getCommandNodeLabel(testGraph, 0, "");
@@ -167,14 +171,15 @@ TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenGetCommandNodeLabelThenRet
 TEST_F(GraphDotExporterTest, GivenDifferentCommandTypesWhenGetCommandNodeAttributesThenReturnsCorrectColors) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
+    auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
     auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
     testGraph.capture<CaptureApi::zeCommandListAppendMemoryCopy>(cmdlistHandle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
-    testGraph.capture<CaptureApi::zeCommandListAppendSignalEvent>(cmdlistHandle, &event);
+    testGraph.capture<CaptureApi::zeCommandListAppendSignalEvent>(cmdlistHandle, eventHandle);
     testGraph.capture<CaptureApi::zeCommandListAppendImageCopy>(cmdlistHandle, nullptr, nullptr, nullptr, 0U, nullptr);
     testGraph.capture<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>(cmdlistHandle, nullptr, nullptr, 0U, nullptr);
     testGraph.capture<CaptureApi::NoopedCommandListFailedFunction>(cmdlistHandle);
@@ -227,27 +232,31 @@ TEST_F(GraphDotExporterTest, GivenGraphWithoutSubgraphsWhenWriteSubgraphsThenGen
 TEST_F(GraphDotExporterTest, GivenGraphWithSubgraphsWhenWriteSubgraphsThenGeneratesSubgraphStructure) {
     Graph testGraph{&ctx, true};
     Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
+    auto joinEventHandle = joinEvent.toHandle();
     Mock<CommandList> mainCmdList;
+    auto mainCmdListHandle = mainCmdList.toHandle();
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     mainCmdList.device = this->device;
     Mock<CommandList> subCmdList;
+    auto subCmdListHandle = subCmdList.toHandle();
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     subCmdList.device = this->device;
     testGraph.startCapturingFrom(mainCmdList, false);
 
     Graph *testGraphPtr = &testGraph;
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEventHandle, 0U, nullptr);
 
     Graph *subGraph = nullptr;
     testGraph.forkTo(subCmdList, subGraph, forkEvent);
     ASSERT_NE(subGraph, nullptr);
 
-    captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList, subGraph, nullptr, &subCmdList, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, &subCmdList, &joinEvent, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList, subGraph, nullptr, subCmdListHandle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, subCmdListHandle, joinEventHandle, 0U, nullptr);
 
     testGraph.tryJoinOnNextCommand(subCmdList, joinEvent);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, nullptr, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, nullptr, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::ostringstream dot;
@@ -277,25 +286,32 @@ TEST_F(GraphDotExporterTest, GivenGraphWithNestedSubgraphsWhenWriteSubgraphsThen
     subCmdList2.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     subCmdList2.device = this->device;
 
+    auto mainCmdListHandle = mainCmdList.toHandle();
+    auto subCmdList1Handle = subCmdList1.toHandle();
+    auto subCmdList2Handle = subCmdList2.toHandle();
+    auto forkEvent1Handle = forkEvent1.toHandle();
+    auto forkEvent2Handle = forkEvent2.toHandle();
+    auto joinEvent1Handle = joinEvent1.toHandle();
+    auto joinEvent2Handle = joinEvent2.toHandle();
+
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent1, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEvent1Handle, 0U, nullptr);
 
     Graph *subGraph1 = nullptr;
     testGraph.forkTo(subCmdList1, subGraph1, forkEvent1);
     ASSERT_NE(subGraph1, nullptr);
 
-    captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList1, subGraph1, nullptr, &subCmdList1, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList1, subGraph1, nullptr, subCmdList1Handle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
 
     Graph *subGraph2 = nullptr;
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList1, subGraph1, nullptr, &subCmdList1, &forkEvent2, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList1, subGraph1, nullptr, subCmdList1Handle, forkEvent2Handle, 0U, nullptr);
     subGraph1->forkTo(subCmdList2, subGraph2, forkEvent2);
     ASSERT_NE(subGraph2, nullptr);
 
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList2, subGraph2, nullptr, &subCmdList2, &joinEvent2, 0U, nullptr);
-
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList2, subGraph2, nullptr, subCmdList2Handle, joinEvent2Handle, 0U, nullptr);
     subGraph1->tryJoinOnNextCommand(subCmdList2, joinEvent2);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList1, subGraph1, nullptr, &subCmdList1, &joinEvent1, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList1, subGraph1, nullptr, subCmdList1Handle, joinEvent1Handle, 0U, nullptr);
 
     testGraph.tryJoinOnNextCommand(subCmdList1, joinEvent1);
     testGraph.stopCapturing();
@@ -326,29 +342,36 @@ TEST_F(GraphDotExporterTest, GivenGraphWithAdjacentSubgraphsWhenWriteSubgraphsTh
     subCmdList2.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     subCmdList2.device = this->device;
 
+    auto mainCmdListHandle = mainCmdList.toHandle();
+    auto subCmdList1Handle = subCmdList1.toHandle();
+    auto subCmdList2Handle = subCmdList2.toHandle();
+    auto forkEvent1Handle = forkEvent1.toHandle();
+    auto forkEvent2Handle = forkEvent2.toHandle();
+    auto joinEvent1Handle = joinEvent1.toHandle();
+    auto joinEvent2Handle = joinEvent2.toHandle();
+
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent1, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEvent1Handle, 0U, nullptr);
 
     Graph *subGraph1 = nullptr;
     testGraph.forkTo(subCmdList1, subGraph1, forkEvent1);
     ASSERT_NE(subGraph1, nullptr);
 
-    captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList1, subGraph1, nullptr, &subCmdList1, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList1, subGraph1, nullptr, &subCmdList1, &joinEvent1, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList1, subGraph1, nullptr, subCmdList1Handle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList1, subGraph1, nullptr, subCmdList1Handle, joinEvent1Handle, 0U, nullptr);
 
     testGraph.tryJoinOnNextCommand(subCmdList1, joinEvent1);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent2, 0U, nullptr);
-
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEvent2Handle, 0U, nullptr);
     Graph *subGraph2 = nullptr;
     testGraph.forkTo(subCmdList2, subGraph2, forkEvent2);
     ASSERT_NE(subGraph2, nullptr);
 
-    captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList2, subGraph2, nullptr, &subCmdList2, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList2, subGraph2, nullptr, &subCmdList2, &joinEvent2, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList2, subGraph2, nullptr, subCmdList2Handle, nullptr, nullptr, 0U, nullptr, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList2, subGraph2, nullptr, subCmdList2Handle, joinEvent2Handle, 0U, nullptr);
 
     testGraph.tryJoinOnNextCommand(subCmdList2, joinEvent2);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, nullptr, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, nullptr, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::ostringstream dot;
@@ -377,21 +400,23 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexWithInvalidSubgraphThenReturns
     Mock<Event> joinEvent;
     auto joinEventHandle = joinEvent.toHandle();
     Mock<CommandList> mainCmdList;
+    auto mainCmdListHandle = mainCmdList.toHandle();
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     mainCmdList.device = this->device;
     Mock<CommandList> subCmdList;
+    auto subCmdListHandle = subCmdList.toHandle();
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     subCmdList.device = this->device;
 
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEventHandle, 0U, nullptr);
 
     Graph *subGraph = nullptr;
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, &mainCmdList, &joinEvent, 1U, &forkEventHandle);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, subCmdListHandle, joinEventHandle, 1U, &forkEventHandle);
     ASSERT_NE(subGraph, nullptr);
 
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, nullptr, 1U, &joinEventHandle);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, nullptr, 1U, &joinEventHandle);
     testGraph.stopCapturing();
 
     const auto &subGraphs = testGraph.getSubgraphs();
@@ -414,15 +439,17 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexWithValidGraphThenReturnsCorre
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     subCmdList.device = this->device;
 
+    auto mainCmdListHandle = mainCmdList.toHandle();
+    auto subCmdListHandle = subCmdList.toHandle();
+
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent, 0U, nullptr);
-
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEventHandle, 0U, nullptr);
     Graph *subGraph = nullptr;
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, &subCmdList, &joinEvent, 1U, &forkEventHandle);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, subCmdListHandle, joinEventHandle, 1U, &forkEventHandle);
     ASSERT_NE(subGraph, nullptr);
 
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, nullptr, 1U, &joinEventHandle);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, nullptr, 1U, &joinEventHandle);
     testGraph.stopCapturing();
 
     const auto &subGraphs = testGraph.getSubgraphs();
@@ -453,15 +480,18 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexByCommandListWithInvalidComman
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     subCmdList.device = this->device;
 
+    auto mainCmdListHandle = mainCmdList.toHandle();
+    auto subCmdListHandle = subCmdList.toHandle();
+
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEventHandle, 0U, nullptr);
 
     Graph *subGraph = nullptr;
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, &mainCmdList, &joinEvent, 1U, &forkEventHandle);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, subCmdListHandle, joinEventHandle, 1U, &forkEventHandle);
     ASSERT_NE(subGraph, nullptr);
 
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, nullptr, 1U, &joinEventHandle);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, nullptr, 1U, &joinEventHandle);
     testGraph.stopCapturing();
 
     const auto &subGraphs = testGraph.getSubgraphs();
@@ -484,15 +514,18 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexByCommandListWithValidCommandL
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     subCmdList.device = this->device;
 
+    auto mainCmdListHandle = mainCmdList.toHandle();
+    auto subCmdListHandle = subCmdList.toHandle();
+
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEventHandle, 0U, nullptr);
 
     Graph *subGraph = nullptr;
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, &subCmdList, &joinEvent, 1U, &forkEventHandle);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, subCmdListHandle, joinEventHandle, 1U, &forkEventHandle);
     ASSERT_NE(subGraph, nullptr);
 
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, nullptr, 1U, &joinEventHandle);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, nullptr, 1U, &joinEventHandle);
     testGraph.stopCapturing();
 
     const auto &subGraphs = testGraph.getSubgraphs();
@@ -514,14 +547,16 @@ TEST_F(GraphDotExporterTest, GivenGraphWithEmptySubgraphWhenWriteForkJoinEdgesTh
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     subCmdList.device = this->device;
 
+    auto mainCmdListHandle = mainCmdList.toHandle();
+    auto subCmdListHandle = subCmdList.toHandle();
+
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEventHandle, 0U, nullptr);
 
     // fork
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, testGraphPtr, nullptr, &mainCmdList, nullptr, 1U, &forkEventHandle);
-
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, nullptr, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, testGraphPtr, nullptr, subCmdListHandle, nullptr, 1U, &forkEventHandle);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, nullptr, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::ostringstream dot;
@@ -552,12 +587,15 @@ TEST_F(GraphDotExporterTest, GivenGraphWithUnjoinedForksWhenWriteUnjoinedForkEdg
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     subCmdList.device = this->device;
 
+    auto mainCmdListHandle = mainCmdList.toHandle();
+    auto subCmdListHandle = subCmdList.toHandle();
+
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEventHandle, 0U, nullptr);
 
     Graph *subGraph = nullptr;
-    captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList, subGraph, nullptr, &subCmdList, nullptr, nullptr, 0U, nullptr, 1U, &forkEventHandle);
+    captureCommand<CaptureApi::zeCommandListAppendMemoryCopy>(subCmdList, subGraph, nullptr, subCmdListHandle, nullptr, nullptr, 0U, nullptr, 1U, &forkEventHandle);
     ASSERT_NE(subGraph, nullptr);
 
     std::ostringstream dot;
@@ -596,10 +634,11 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeAttributes
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
     testGraph.stopCapturing();
 
     EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 0), ", fillcolor=white");
@@ -609,10 +648,11 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeLabelThenL
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, &event, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::string label = exporter.getCommandNodeLabel(testGraph, 0, "");
@@ -622,6 +662,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeLabelThenL
 TEST_F(GraphDotExporterSimpleStyleTest, GivenKernelCommandWhenGetCommandNodeLabelThenLabelIncludesTypeAndName) {
     Graph testGraph{&ctx, true};
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
 
@@ -652,7 +693,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenKernelCommandWhenGetCommandNodeLabe
 
     ze_group_count_t launchArgs = {1, 1, 1};
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendLaunchKernel>(&cmdlist, &kernel, &launchArgs, nullptr, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendLaunchKernel>(cmdlistHandle, kernel.toHandle(), &launchArgs, nullptr, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::string label = exporter.getCommandNodeLabel(testGraph, 0, "");
@@ -662,7 +703,9 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenKernelCommandWhenGetCommandNodeLabe
 TEST_F(GraphDotExporterSimpleStyleTest, GivenGraphWithSubgraphsWhenWriteSubgraphsThenGeneratesSimpleSubgraphStructure) {
     Graph testGraph{&ctx, true};
     Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
+    auto joinEventHandle = joinEvent.toHandle();
     Mock<CommandList> mainCmdList;
     mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     mainCmdList.device = this->device;
@@ -670,18 +713,21 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenGraphWithSubgraphsWhenWriteSubgraph
     subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     subCmdList.device = this->device;
 
+    auto mainCmdListHandle = mainCmdList.toHandle();
+    auto subCmdListHandle = subCmdList.toHandle();
+
     Graph *testGraphPtr = &testGraph;
     testGraph.startCapturingFrom(mainCmdList, false);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, &forkEvent, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, forkEventHandle, 0U, nullptr);
 
     Graph *subGraph = nullptr;
     testGraph.forkTo(subCmdList, subGraph, forkEvent);
     ASSERT_NE(subGraph, nullptr);
 
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, &subCmdList, &joinEvent, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, nullptr, subCmdListHandle, joinEventHandle, 0U, nullptr);
 
     testGraph.tryJoinOnNextCommand(subCmdList, joinEvent);
-    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, &mainCmdList, nullptr, 0U, nullptr);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, nullptr, mainCmdListHandle, nullptr, 0U, nullptr);
     testGraph.stopCapturing();
 
     std::ostringstream dot;
@@ -1012,7 +1058,7 @@ TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelWithParameters) {
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
     args.hSignalEvent = dummyEvents[0];
-    args.kernelHandle = &kernel;
+    args.kernelHandle = kernel.toHandle();
     args.pGroupCounts = &dummyLaunchArgs;
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(args);
 }
@@ -1029,7 +1075,7 @@ TEST_F(ExtractParametersTest, NoopedCommandListFailedFunction) {
     EXPECT_EQ(cmdListHandle, getParamValue(params, "hCommandList"));
     std::string expectedFailedFunctionName = "dummyFunction";
     EXPECT_EQ(expectedFailedFunctionName, getParamValue(params, "failed_function_name"));
-    std::string expectedFailedFunctionReturnValue = "0";
+    std::string expectedFailedFunctionReturnValue = "0x0";
     EXPECT_EQ(expectedFailedFunctionReturnValue, getParamValue(params, "failed_function_return_value"));
 }
 
@@ -1037,7 +1083,7 @@ TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelWithArguments) {
     const ze_group_size_t groupSizes{dummyLaunchArgs.groupCountX, dummyLaunchArgs.groupCountY, dummyLaunchArgs.groupCountZ};
     Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::ApiArgs args{
         .hCommandList = nullptr,
-        .kernelHandle = &kernel,
+        .kernelHandle = kernel.toHandle(),
         .groupCounts = dummyLaunchArgs,
         .groupSizes = groupSizes,
         .pArguments = nullptr,
@@ -1254,7 +1300,7 @@ TEST_F(ExtractParametersTest, GivenLaunchKernelWithParametersWhenNoExtensionsPro
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
     args.hSignalEvent = dummyEvents[0];
-    args.kernelHandle = &kernel;
+    args.kernelHandle = kernel.toHandle();
     args.pGroupCounts = &dummyLaunchArgs;
 
     Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> closure(args, storage);
@@ -1271,7 +1317,7 @@ TEST_F(ExtractParametersTest, GivenLaunchKernelWithParametersWhenCooperativeExte
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
     args.hSignalEvent = dummyEvents[0];
-    args.kernelHandle = &kernel;
+    args.kernelHandle = kernel.toHandle();
     args.pGroupCounts = &dummyLaunchArgs;
     args.pNext = &cooperativeDesc;
 
@@ -1294,7 +1340,7 @@ TEST_F(ExtractParametersTest, GivenLaunchKernelWithArgumentsWhenExtractParameter
 
     Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::ApiArgs args{
         .hCommandList = nullptr,
-        .kernelHandle = &kernel,
+        .kernelHandle = kernel.toHandle(),
         .groupCounts = dummyLaunchArgs,
         .groupSizes = groupSizes,
         .pArguments = argumentPointers,
@@ -1319,7 +1365,7 @@ TEST_F(ExtractParametersTest, GivenLaunchKernelWithArgumentsWhenCooperativeExten
     ze_group_size_t groupSizes{dummyLaunchArgs.groupCountX, dummyLaunchArgs.groupCountY, dummyLaunchArgs.groupCountZ};
     Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::ApiArgs args{
         .hCommandList = nullptr,
-        .kernelHandle = &kernel,
+        .kernelHandle = kernel.toHandle(),
         .groupCounts = dummyLaunchArgs,
         .groupSizes = groupSizes,
         .pArguments = nullptr,
@@ -1456,11 +1502,13 @@ TEST_F(GraphDumpApiTest, GivenUnsupportedExtensionTypeWhenZeGraphDumpContentsExp
 TEST_F(GraphDumpApiTest, GivenValidParametersWithNullpNextWhenZeGraphDumpContentsExpIsCalledThenUsesDetailedStyleByDefault) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
+    auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
     testGraph.stopCapturing();
 
     setupSuccessfulWrite(testGraph);
@@ -1480,12 +1528,14 @@ TEST_F(GraphDumpApiTest, GivenValidParametersWithNullpNextWhenZeGraphDumpContent
 TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesSimpleStyle) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
+    auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
 
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
     testGraph.stopCapturing();
 
     setupSuccessfulWrite(testGraph, GraphExportStyle::simple);
@@ -1510,12 +1560,14 @@ TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCa
 TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesDetailedStyle) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
+    auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
 
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
     testGraph.stopCapturing();
 
     setupSuccessfulWrite(testGraph);
@@ -1537,12 +1589,14 @@ TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIs
 TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenReturnsInvalidArgument) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
+    auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
+    auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     cmdlist.device = this->device;
 
     testGraph.startCapturingFrom(cmdlist, false);
-    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(cmdlistHandle, eventHandle, 0U, nullptr);
     testGraph.stopCapturing();
 
     setupSuccessfulWrite(testGraph);

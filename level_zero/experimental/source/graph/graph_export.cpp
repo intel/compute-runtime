@@ -998,7 +998,11 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::N
     auto params = createBaseParams(closure.apiArgs);
     std::string failedFunctionName(closure.apiArgs.failedFunctionName);
     params.emplace_back("failed_function_name", failedFunctionName);
-    params.emplace_back("failed_function_return_value", std::to_string(closure.indirectArgs.failureResult));
+
+    std::ostringstream oss;
+    oss << "0x" << std::hex << closure.indirectArgs.failureResult;
+    std::string hexStr = oss.str();
+    params.emplace_back("failed_function_return_value", hexStr);
 
     return params;
 }
