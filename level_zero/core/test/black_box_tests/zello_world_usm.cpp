@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
 
     ze_command_list_handle_t cmdList;
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;

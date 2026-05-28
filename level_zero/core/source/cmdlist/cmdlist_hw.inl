@@ -65,6 +65,7 @@
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/driver_experimental/zex_api.h"
 
 #include "CL/cl_platform.h"
 
@@ -406,7 +407,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
 
     if (isImmediateType() == false) {
-        if (NEO::debugManager.flags.ExperimentalFlatCommandListApiRecording.get()) {
+        if ((this->flags & ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING) || NEO::debugManager.flags.ExperimentalFlatCommandListApiRecording.get()) {
+            this->flags |= ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING;
             this->flatCapture = std::make_unique<RecordedApiCommands>();
         }
     }

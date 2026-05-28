@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ void createCmdQueueAndCmdList(ze_device_handle_t &device,
                               ze_command_list_handle_t &cmdList) {
     // Create commandQueue and cmdList
     cmdqueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
 }
 
 void createCmdQueueAndCmdListWithOrdinal(ze_device_handle_t &device,
@@ -28,7 +28,7 @@ void createCmdQueueAndCmdListWithOrdinal(ze_device_handle_t &device,
                                          ze_command_list_handle_t &cmdList) {
     // Create commandQueue and cmdList
     cmdqueue = LevelZeroBlackBoxTests::createCommandQueueWithOrdinal(context, device, ordinal, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, ordinal));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, ordinal, 0));
 }
 
 // Test Device Signal and Device wait followed by Host Wait

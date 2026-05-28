@@ -112,10 +112,10 @@ ze_command_queue_handle_t createCommandQueueWithOrdinal(ze_context_handle_t &con
 
 ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device, uint32_t *ordinal, bool useCooperativeFlag);
 
-ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList, uint32_t ordinal);
+ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList, uint32_t ordinal, uint32_t flags);
 
-inline ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList, bool useCooperativeFlag) {
-    return createCommandList(context, device, cmdList, getCommandQueueOrdinal(device, useCooperativeFlag));
+inline ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList, bool useCooperativeFlag, uint32_t flags) {
+    return createCommandList(context, device, cmdList, getCommandQueueOrdinal(device, useCooperativeFlag), flags);
 }
 
 void createImmediateCmdlistWithMode(ze_context_handle_t context,

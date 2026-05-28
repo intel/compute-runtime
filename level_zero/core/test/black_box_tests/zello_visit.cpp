@@ -175,7 +175,7 @@ bool testVisitReappend(LevelZeroBlackBoxTests::VisitExtension::VisitApi &visitAp
 
     // ---------- build the non-immediate command list ----------
     ze_command_list_handle_t recordCmdList = nullptr;
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, recordCmdList, false));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, recordCmdList, false, ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING));
 
     // host src -> device interim
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(recordCmdList, interimBuffer, srcBuffer, allocSize, nullptr, 0, nullptr));

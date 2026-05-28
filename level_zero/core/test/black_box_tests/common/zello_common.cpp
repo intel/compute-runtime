@@ -373,12 +373,12 @@ ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_de
     return createCommandQueue(context, device, ordinal, ZE_COMMAND_QUEUE_MODE_DEFAULT, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, useCooperativeFlag);
 }
 
-ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList, uint32_t ordinal) {
+ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList, uint32_t ordinal, uint32_t flags) {
     ze_command_list_desc_t descriptor = {};
     descriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
 
     descriptor.pNext = nullptr;
-    descriptor.flags = 0;
+    descriptor.flags = flags;
     descriptor.commandQueueGroupOrdinal = ordinal;
 
     return zeCommandListCreate(context, device, &descriptor, &cmdList);
@@ -708,7 +708,7 @@ ze_result_t CommandHandler::create(ze_context_handle_t context, ze_device_handle
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
-        result = createCommandList(context, device, cmdList, false);
+        result = createCommandList(context, device, cmdList, false, 0);
     }
 
     return result;

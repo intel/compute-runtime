@@ -72,7 +72,7 @@ void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_dev
 
     SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &immediateCmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
 
     const size_t kernelDataSize = 32;
     const int numIteration = 5;
@@ -205,7 +205,7 @@ void executeMemoryTransferAndValidate(ze_context_handle_t &context, ze_device_ha
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
     } else {
         SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
     }
 
     ze_event_pool_handle_t eventPool;
@@ -350,7 +350,7 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
     } else {
         SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, queueGroup));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, queueGroup, 0));
     }
 
     uint32_t subDevCount = 0;
@@ -374,7 +374,7 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
             SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, subDevice, &cmdQueueDesc, &cmdListSubDevice));
         } else {
             SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, subDevice, &cmdQueueDesc, &cmdQueueSubDevice));
-            SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, subDevice, cmdListSubDevice, subDeviceQueueGroup));
+            SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, subDevice, cmdListSubDevice, subDeviceQueueGroup, 0));
         }
     }
 
@@ -396,7 +396,7 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
             SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, copyDevice, &cmdQueueDesc, &cmdListCopy));
         } else {
             SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, copyDevice, &cmdQueueDesc, &cmdQueueCopy));
-            SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, copyDevice, cmdListCopy, copyQueueGroup));
+            SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, copyDevice, cmdListCopy, copyQueueGroup, 0));
         }
     }
 

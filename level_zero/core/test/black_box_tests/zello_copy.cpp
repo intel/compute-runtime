@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t &context, z
     ze_command_list_handle_t cmdList;
 
     cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, false);
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
@@ -68,7 +68,7 @@ void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t &context, z
     ze_command_list_handle_t cmdList;
 
     cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, false);
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
 
     ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
@@ -119,7 +119,7 @@ void testAppendMemoryCopy2DRegion(ze_context_handle_t &context, ze_device_handle
     ze_command_list_handle_t cmdList;
 
     cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, false);
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
 
     void *dstBuffer = nullptr;
     uint32_t dstWidth = LevelZeroBlackBoxTests::verbose ? 16 : 256;  // width of the dst 2D buffer in bytes
@@ -230,7 +230,7 @@ void testMemoryFillWithWordSizedPattern(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, false);
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
 
     // Initialize buffers
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -287,7 +287,7 @@ void testAppendMemoryFillWithSomePattern(ze_context_handle_t &context, ze_device
     ze_command_list_handle_t cmdList;
 
     cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, false);
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
 
     // Initialize buffers
     // zeBuffer0 and zeBuffer1 are shared allocations, so they have UVA between host and device
@@ -372,7 +372,7 @@ void testAppendMemoryCopy3DRegion(ze_context_handle_t &context, ze_device_handle
     ze_command_list_handle_t cmdList;
 
     cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, false);
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
 
     void *dstBuffer = nullptr;
     uint32_t dstWidth = LevelZeroBlackBoxTests::verbose ? 8 : 64;  // width of the dst 3D buffer in bytes

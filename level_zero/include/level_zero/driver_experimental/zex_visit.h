@@ -27,6 +27,8 @@ typedef enum _ze_command_visit_ext_version_t {
     ZE_COMMAND_VISIT_EXT_VERSION_FORCE_UINT32 = 0x7fffffff,       ///< Value marking end of ZE_COMMAND_VISIT_EXT_VERSION_* ENUMs
 } ze_command_visit_ext_version_t;
 
+#define ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING (static_cast<uint32_t>(ZE_BIT(6)))
+
 #if defined(__cplusplus)
 extern "C" {
 #endif

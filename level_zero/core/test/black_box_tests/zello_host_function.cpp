@@ -51,7 +51,7 @@ void testHostFunction(ze_driver_handle_t &driver, ze_context_handle_t &context, 
         LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
     } else {
         cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
-        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false, 0));
     }
 
     ze_device_mem_alloc_desc_t deviceDesc = {};

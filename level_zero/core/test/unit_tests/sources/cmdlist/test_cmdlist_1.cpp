@@ -39,6 +39,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 #include "level_zero/include/level_zero/driver_experimental/zex_cmdlist.h"
+#include "level_zero/include/level_zero/driver_experimental/zex_visit.h"
 
 using namespace NEO;
 #include "shared/test/common/test_macros/header/heapful_test_definitions.h"
@@ -245,12 +246,25 @@ TEST_F(CommandListCreateTests, whenCommandListImmediateIsCreatedWithInvalidProdu
     ASSERT_EQ(nullptr, commandList);
 }
 
-TEST_F(CommandListCreateTests, givenRegularCommandListWhenFlatApiRecordingFlagEnabledThenFlatCaptureIsAllocated) {
+TEST_F(CommandListCreateTests, givenRegularCommandListWhenFlatApiRecordingDebugFlagEnabledThenFlatCaptureIsAllocated) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ExperimentalFlatCommandListApiRecording.set(1);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto *whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+    EXPECT_NE(nullptr, whiteBoxCmdList->flatCapture);
+
+    EXPECT_NE(0u, (commandList->getCmdListFlags() & ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING));
+}
+
+TEST_F(CommandListCreateTests, givenRegularCommandListWhenFlatApiRecordingApiFlagEnabledThenFlatCaptureIsAllocated) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING, returnValue, false));
 
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
