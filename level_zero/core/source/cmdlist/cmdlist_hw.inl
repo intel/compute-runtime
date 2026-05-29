@@ -110,7 +110,7 @@ void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     if (flatCapture) {
-        flatCapture = std::make_unique<RecordedApiCommands>();
+        flatCapture->reset();
     }
     this->storeFillPatternResourcesForReuse();
     removeDeallocationContainerData();

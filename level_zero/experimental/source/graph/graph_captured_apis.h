@@ -168,6 +168,14 @@ struct ClosureExternalStorage {
     static constexpr CopyRegionId invalidCopyRegionId = std::numeric_limits<CopyRegionId>::max();
     static constexpr KernelArgumentsId invalidKernelArgumentsId = std::numeric_limits<KernelArgumentsId>::max();
 
+    void reset() {
+        waitEvents.clear();
+        imageRegions.clear();
+        copyRegions.clear();
+        kernelArguments.clear();
+        lastResult = ZE_RESULT_SUCCESS;
+    }
+
     EventsListId registerEventsList(ze_event_handle_t *begin, ze_event_handle_t *end) {
         if (begin == end) {
             return invalidEventsListId;

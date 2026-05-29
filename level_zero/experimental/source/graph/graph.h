@@ -141,6 +141,13 @@ struct RecordedApiCommands {
         return commands.size();
     }
 
+    void reset() {
+        commands.clear();
+        mclMap.clear();
+        externalStorage.reset();
+        brokenCapture = false;
+    }
+
     CapturedCommand *getCommandByMclId(MclCommandId mclCommandId) {
         auto it = mclMap.find(mclCommandId);
         if (it == mclMap.end()) {
