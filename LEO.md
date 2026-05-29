@@ -63,6 +63,30 @@ OpenCL objects such as `cl_command_queue`, `cl_mem`, and `cl_kernel` are interna
 | Event | Counter-based event |
 | User event | Regular event |
 
+## Usage
+
+### Enabling LEO
+
+LEO is **off by default** and must be explicitly enabled through the `EnableLEO` release variable. When it is not set to `1`, `igdrcl` services the OpenCL API directly (native NEO) and no calls are forwarded to `ze_intel_gpu`.
+
+| Value | Meaning |
+|-------|---------|
+| `-1` | Default -- LEO disabled |
+| `0` | Disabled |
+| `1` | Enabled -- OpenCL entry points are forwarded to the Level Zero backend |
+
+
+### Verifying that LEO is active
+
+When LEO is enabled, the OpenCL device version is reported differently. `clGetDeviceInfo` with `CL_DEVICE_VERSION` returns a string carrying the `LEO` marker instead of the native `NEO` marker:
+
+| Path | `CL_DEVICE_VERSION` |
+|------|---------------------|
+| Native NEO (LEO disabled) | `OpenCL 3.0 NEO ` |
+| LEO (LEO enabled) | `OpenCL 3.0 LEO ` |
+
+Querying `CL_DEVICE_VERSION` (for example via `clinfo`) and observing `OpenCL 3.0 LEO ` confirms that the OpenCL calls are being serviced through the Level Zero backend.
+
 ## Current Status
 
 > **Experimental** -- LEO is under active development and is not yet intended for production use.
