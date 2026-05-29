@@ -4389,6 +4389,104 @@ HWTEST_F(EventContextGroupTests, givenSecondaryCsrWhenDownloadingAllocationThenU
     event->destroy();
 }
 
+HWTEST_F(EventContextGroupTests, givenPendingSecondaryCsrTaskWhenHostSynchronizeRequiresCacheFlushThenFlushAndWaitForTaskCountAreCalledOnPrimaryCsr) {
+    if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
+        GTEST_SKIP();
+    }
+
+    if (!event->isDcFlushAllowed) {
+        GTEST_SKIP();
+    }
+
+    neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
+
+    auto defaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_NE(nullptr, defaultCsr);
+
+    defaultCsr->taskCount = 0;
+    defaultCsr->latestFlushedTaskCount = 0;
+    defaultCsr->flushTagUpdateCalled = false;
+    defaultCsr->waitForTaskCountCalled = false;
+    defaultCsr->waitForTaskCountReturnValue = NEO::WaitStatus::ready;
+    defaultCsr->callFlushTagUpdate = true;
+
+    auto secondaryCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
+
+    OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
+    secondaryCsr->setupContext(osContext);
+    secondaryCsr->initializeResources(false, device->getDevicePreemptionMode());
+    secondaryCsr->setPrimaryCsr(defaultCsr);
+
+    secondaryCsr->taskCount = 1;
+    secondaryCsr->latestFlushedTaskCount = 0;
+
+    neoDevice->secondaryCsrs.clear();
+    neoDevice->secondaryCsrs.push_back(std::move(secondaryCsr));
+
+    event->isDualCopyOffloadEvent = true;
+    *static_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_SIGNALED;
+
+    auto result = event->hostSynchronize(0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(defaultCsr->flushTagUpdateCalled);
+    EXPECT_EQ(1u, defaultCsr->taskCount);
+    EXPECT_EQ(1u, defaultCsr->latestFlushedTaskCount);
+
+    EXPECT_TRUE(defaultCsr->waitForTaskCountCalled);
+
+    neoDevice->secondaryCsrs.clear();
+}
+
+HWTEST_F(EventContextGroupTests, givenNoPendingTaskInCsrGroupWhenHostSynchronizeRequiresCacheFlushThenFlushAndWaitForTaskCountAreNotCalledOnPrimaryCsr) {
+    if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
+        GTEST_SKIP();
+    }
+
+    if (!event->isDcFlushAllowed) {
+        GTEST_SKIP();
+    }
+
+    neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
+
+    auto defaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_NE(nullptr, defaultCsr);
+
+    defaultCsr->taskCount = 0;
+    defaultCsr->latestFlushedTaskCount = 0;
+    defaultCsr->flushTagUpdateCalled = false;
+    defaultCsr->waitForTaskCountCalled = false;
+    defaultCsr->waitForTaskCountReturnValue = NEO::WaitStatus::ready;
+    defaultCsr->callFlushTagUpdate = true;
+
+    auto secondaryCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
+
+    OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
+    secondaryCsr->setupContext(osContext);
+    secondaryCsr->initializeResources(false, device->getDevicePreemptionMode());
+    secondaryCsr->setPrimaryCsr(defaultCsr);
+
+    secondaryCsr->taskCount = 1;
+    secondaryCsr->latestFlushedTaskCount = 1;
+
+    neoDevice->secondaryCsrs.clear();
+    neoDevice->secondaryCsrs.push_back(std::move(secondaryCsr));
+
+    event->isDualCopyOffloadEvent = true;
+    *static_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_SIGNALED;
+
+    auto result = event->hostSynchronize(0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_FALSE(defaultCsr->flushTagUpdateCalled);
+    EXPECT_EQ(0u, defaultCsr->taskCount);
+    EXPECT_EQ(0u, defaultCsr->latestFlushedTaskCount);
+
+    EXPECT_FALSE(defaultCsr->waitForTaskCountCalled);
+
+    neoDevice->secondaryCsrs.clear();
+}
+
 HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenAllocationIsDownloaded) {
     std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
 

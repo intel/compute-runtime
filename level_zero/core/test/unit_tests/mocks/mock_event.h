@@ -55,6 +55,7 @@ struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass::hostAddressFromPool;
     using BaseClass::hostEventSetValueTimestamps;
     using BaseClass::inOrderExecHelper;
+    using BaseClass::isDualCopyOffloadEvent;
     using BaseClass::isFromIpcPool;
     using BaseClass::l3FlushAppliedOnKernel;
     using BaseClass::maxKernelCount;

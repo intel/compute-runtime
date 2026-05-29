@@ -1623,4 +1623,47 @@ DeferredFreeContext CommandStreamReceiver::createDeferredFreeContext() const {
     ctx.tagOffset = getImmWritePostSyncWriteOffset();
     return ctx;
 }
+
+TaskCountType CommandStreamReceiver::flushTagUpdateIfRequiredForCsrGroup() {
+    auto *primaryCsrInGroup = this->getPrimaryCsr() ? this->getPrimaryCsr() : this;
+    DEBUG_BREAK_IF(primaryCsrInGroup != this);
+
+    auto getFlushRequired = [&]() {
+        bool flushRequired = false;
+
+        auto checkCsrInGroup = [&](NEO::CommandStreamReceiver *csr) {
+            if (csr == nullptr) {
+                return;
+            }
+
+            auto *csrPrimary = csr->getPrimaryCsr() ? csr->getPrimaryCsr() : csr;
+            if (csrPrimary != primaryCsrInGroup) {
+                return;
+            }
+
+            auto taskCountToWait = csr->peekTaskCount();
+            if (taskCountToWait > csr->peekLatestFlushedTaskCount()) {
+                flushRequired = true;
+            }
+        };
+
+        checkCsrInGroup(primaryCsrInGroup);
+
+        for (auto &secondaryCsr : primaryCsrInGroup->device->getSecondaryCsrs()) {
+            checkCsrInGroup(secondaryCsr.get());
+        }
+
+        return flushRequired;
+    };
+
+    if (getFlushRequired()) {
+        auto lock = primaryCsrInGroup->obtainUniqueOwnership();
+        if (getFlushRequired()) {
+            primaryCsrInGroup->flushTagUpdate();
+        }
+    }
+
+    return primaryCsrInGroup->peekLatestFlushedTaskCount();
+}
+
 } // namespace NEO

@@ -768,9 +768,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     }
     auto neoDevice = this->device->getNEODevice();
     auto csrForCacheFlush = neoDevice->getDefaultEngine().commandStreamReceiver;
+    auto cacheFlushRequiredForHostSync = this->isCacheFlushRequiredForHostSync();
     TaskCountType taskCountToWaitForL3Flush = 0;
-    if (this->isCacheFlushRequiredForHostSync()) {
-        taskCountToWaitForL3Flush = csrForCacheFlush->flushTagUpdateIfRequired();
+
+    if (cacheFlushRequiredForHostSync) {
+        if (!this->device->getGfxCoreHelper().areSecondaryContextsSupported()) {
+            taskCountToWaitForL3Flush = csrForCacheFlush->flushTagUpdateIfRequired();
+        }
     }
 
     waitStartTime = std::chrono::high_resolution_clock::now();
@@ -797,6 +801,11 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             }
         }
         if (ret == ZE_RESULT_SUCCESS) {
+            if (cacheFlushRequiredForHostSync) {
+                if (device->getGfxCoreHelper().areSecondaryContextsSupported()) {
+                    taskCountToWaitForL3Flush = csrForCacheFlush->flushTagUpdateIfRequiredForCsrGroup();
+                }
+            }
             if (this->getKernelWithPrintfDeviceMutex() != nullptr) {
                 std::lock_guard<std::mutex> lock(*this->getKernelWithPrintfDeviceMutex());
                 if (!this->getKernelForPrintf().expired()) {

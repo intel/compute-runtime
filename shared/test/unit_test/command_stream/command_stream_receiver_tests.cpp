@@ -7324,3 +7324,149 @@ HWTEST_F(CommandStreamReceiverTest, givenPoolAllocatorEnabledWhenRequestedSizeEx
     EXPECT_FALSE(allocation->isView());
     EXPECT_EQ(AllocationType::commandBuffer, allocation->getAllocationType());
 }
+
+HWTEST_F(CommandStreamReceiverTest, givenPrimaryCsrPendingTaskWhenFlushingTagUpdateForCsrGroupThenFlushIsTriggered) {
+    auto mockDevice = static_cast<MockDevice *>(pDevice);
+    auto &primaryCsr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    primaryCsr.callFlushTagUpdate = false;
+    primaryCsr.flushTagUpdateCalled = false;
+    primaryCsr.taskCount = 1;
+    primaryCsr.latestFlushedTaskCount = 0;
+
+    mockDevice->secondaryCsrs.clear();
+
+    auto returnedTaskCount = primaryCsr.flushTagUpdateIfRequiredForCsrGroup();
+
+    EXPECT_TRUE(primaryCsr.flushTagUpdateCalled);
+    EXPECT_EQ(primaryCsr.peekLatestFlushedTaskCount(), returnedTaskCount);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenSameGroupSecondaryCsrPendingTaskWhenFlushingTagUpdateForCsrGroupThenFlushIsTriggeredOnPrimary) {
+    auto mockDevice = static_cast<MockDevice *>(pDevice);
+    auto &primaryCsr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    primaryCsr.callFlushTagUpdate = false;
+    primaryCsr.flushTagUpdateCalled = false;
+    primaryCsr.taskCount = 0;
+    primaryCsr.latestFlushedTaskCount = 0;
+
+    mockDevice->secondaryCsrs.clear();
+
+    auto secondaryCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    secondaryCsr->setPrimaryCsr(&primaryCsr);
+    secondaryCsr->taskCount = 1;
+    secondaryCsr->latestFlushedTaskCount = 0;
+
+    mockDevice->secondaryCsrs.push_back(std::move(secondaryCsr));
+
+    auto returnedTaskCount = primaryCsr.flushTagUpdateIfRequiredForCsrGroup();
+
+    EXPECT_TRUE(primaryCsr.flushTagUpdateCalled);
+    EXPECT_EQ(primaryCsr.peekLatestFlushedTaskCount(), returnedTaskCount);
+
+    mockDevice->secondaryCsrs.clear();
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenSameGroupSecondaryCsrWithoutPendingTaskWhenFlushingTagUpdateForCsrGroupThenFlushIsNotTriggered) {
+    auto mockDevice = static_cast<MockDevice *>(pDevice);
+    auto &primaryCsr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    primaryCsr.callFlushTagUpdate = false;
+    primaryCsr.flushTagUpdateCalled = false;
+    primaryCsr.taskCount = 0;
+    primaryCsr.latestFlushedTaskCount = 0;
+
+    mockDevice->secondaryCsrs.clear();
+
+    auto secondaryCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    secondaryCsr->setPrimaryCsr(&primaryCsr);
+    secondaryCsr->taskCount = 1;
+    secondaryCsr->latestFlushedTaskCount = 1;
+
+    mockDevice->secondaryCsrs.push_back(std::move(secondaryCsr));
+
+    auto returnedTaskCount = primaryCsr.flushTagUpdateIfRequiredForCsrGroup();
+
+    EXPECT_FALSE(primaryCsr.flushTagUpdateCalled);
+    EXPECT_EQ(primaryCsr.peekLatestFlushedTaskCount(), returnedTaskCount);
+
+    mockDevice->secondaryCsrs.clear();
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenSecondaryCsrFromDifferentGroupWhenFlushingTagUpdateForCsrGroupThenItIsIgnored) {
+    auto mockDevice = static_cast<MockDevice *>(pDevice);
+    auto &primaryCsr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    primaryCsr.callFlushTagUpdate = false;
+    primaryCsr.flushTagUpdateCalled = false;
+    primaryCsr.taskCount = 0;
+    primaryCsr.latestFlushedTaskCount = 0;
+
+    mockDevice->secondaryCsrs.clear();
+
+    auto differentPrimaryCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto secondaryCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+    secondaryCsr->setPrimaryCsr(differentPrimaryCsr.get());
+    secondaryCsr->taskCount = 1;
+    secondaryCsr->latestFlushedTaskCount = 0;
+
+    mockDevice->secondaryCsrs.push_back(std::move(secondaryCsr));
+
+    auto returnedTaskCount = primaryCsr.flushTagUpdateIfRequiredForCsrGroup();
+
+    EXPECT_FALSE(primaryCsr.flushTagUpdateCalled);
+    EXPECT_EQ(primaryCsr.peekLatestFlushedTaskCount(), returnedTaskCount);
+
+    mockDevice->secondaryCsrs.clear();
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenNullSecondaryCsrWhenFlushingTagUpdateForCsrGroupThenItIsIgnored) {
+    auto mockDevice = static_cast<MockDevice *>(pDevice);
+    auto &primaryCsr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    primaryCsr.callFlushTagUpdate = false;
+    primaryCsr.flushTagUpdateCalled = false;
+    primaryCsr.taskCount = 0;
+    primaryCsr.latestFlushedTaskCount = 0;
+
+    mockDevice->secondaryCsrs.clear();
+    mockDevice->secondaryCsrs.push_back(nullptr);
+
+    auto returnedTaskCount = primaryCsr.flushTagUpdateIfRequiredForCsrGroup();
+
+    EXPECT_FALSE(primaryCsr.flushTagUpdateCalled);
+    EXPECT_EQ(primaryCsr.peekLatestFlushedTaskCount(), returnedTaskCount);
+
+    mockDevice->secondaryCsrs.clear();
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenOnlyPrimaryCsrHasPendingTaskWhenFlushingTagUpdateForCsrGroupThenPrimaryTaskCountIsCheckedAndFlushIsTriggered) {
+    auto mockDevice = static_cast<MockDevice *>(pDevice);
+    auto &primaryCsr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    primaryCsr.callFlushTagUpdate = false;
+    primaryCsr.flushTagUpdateCalled = false;
+    primaryCsr.taskCount = 1;
+    primaryCsr.latestFlushedTaskCount = 0;
+
+    mockDevice->secondaryCsrs.clear();
+
+    auto secondaryCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(
+        *pDevice->executionEnvironment,
+        pDevice->getRootDeviceIndex(),
+        pDevice->getDeviceBitfield());
+    secondaryCsr->setPrimaryCsr(&primaryCsr);
+    secondaryCsr->taskCount = 0;
+    secondaryCsr->latestFlushedTaskCount = 0;
+
+    mockDevice->secondaryCsrs.push_back(std::move(secondaryCsr));
+
+    auto returnedTaskCount = primaryCsr.flushTagUpdateIfRequiredForCsrGroup();
+
+    EXPECT_TRUE(primaryCsr.flushTagUpdateCalled);
+    EXPECT_EQ(primaryCsr.peekLatestFlushedTaskCount(), returnedTaskCount);
+
+    mockDevice->secondaryCsrs.clear();
+}

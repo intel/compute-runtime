@@ -358,6 +358,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     TaskCountType flushTagUpdateIfRequired() {
         return flushTagUpdateIfRequired(this->peekTaskCount());
     }
+
     TaskCountType flushTagUpdateIfRequired(TaskCountType taskCountToWait) {
         if (taskCountToWait > this->peekLatestFlushedTaskCount()) {
             auto lock = this->obtainUniqueOwnership();
@@ -367,6 +368,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         }
         return this->peekLatestFlushedTaskCount();
     }
+
+    TaskCountType flushTagUpdateIfRequiredForCsrGroup();
 
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();
