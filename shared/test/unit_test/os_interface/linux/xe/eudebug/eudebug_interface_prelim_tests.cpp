@@ -30,6 +30,7 @@ TEST(EuDebugInterfacePrelimTest, whenGettingParamValueThenCorrectValueIsReturned
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_PAGEFAULT), euDebugInterface.getParamValue(EuDebugParam::eventTypePagefault));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_READ), euDebugInterface.getParamValue(EuDebugParam::eventTypeRead));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_VM), euDebugInterface.getParamValue(EuDebugParam::eventTypeVm));
+    EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST), euDebugInterface.getParamValue(EuDebugParam::eventTypeSyncHost));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_VM_BIND), euDebugInterface.getParamValue(EuDebugParam::eventTypeVmBind));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_VM_BIND_OP), euDebugInterface.getParamValue(EuDebugParam::eventTypeVmBindOp));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA), euDebugInterface.getParamValue(EuDebugParam::eventTypeVmBindOpMetadata));
@@ -398,4 +399,29 @@ TEST(EuDebugInterfacePrelimTest, givenInterfaceAckEventWhenConvertingToDrmAckEve
     EXPECT_EQ(1u, drmAckEvent->type);
     EXPECT_EQ(2u, drmAckEvent->flags);
     EXPECT_EQ(3u, drmAckEvent->seqno);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmSyncHostWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_sync_host drmSyncHost = {};
+    drmSyncHost.base.type = PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST;
+    drmSyncHost.base.flags = 0x1;
+    drmSyncHost.base.len = sizeof(drmSyncHost);
+    drmSyncHost.base.seqno = 42;
+    drmSyncHost.base.reserved = 0;
+    drmSyncHost.client_handle = 0x100;
+    drmSyncHost.exec_queue_handle = 0x200;
+    drmSyncHost.lrc_handle = 0x300;
+
+    auto event = euDebugInterface.toEuDebugEventSyncHost(&drmSyncHost);
+
+    EXPECT_EQ(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST, event.base.type);
+    EXPECT_EQ(0x1u, event.base.flags);
+    EXPECT_EQ(sizeof(drmSyncHost), event.base.len);
+    EXPECT_EQ(42u, event.base.seqno);
+    EXPECT_EQ(0u, event.base.reserved);
+    EXPECT_EQ(0x100u, event.clientHandle);
+    EXPECT_EQ(0x200u, event.execQueueHandle);
+    EXPECT_EQ(0x300u, event.lrcHandle);
 }

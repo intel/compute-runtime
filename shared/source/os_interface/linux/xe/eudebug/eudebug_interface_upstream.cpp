@@ -46,6 +46,8 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
         return 0;
     case EuDebugParam::eventTypePagefault:
         return DRM_XE_EUDEBUG_EVENT_PAGEFAULT;
+    case EuDebugParam::eventTypeSyncHost:
+        return 0;
     case EuDebugParam::eventTypeRead:
         return DRM_XE_EUDEBUG_EVENT_READ;
     case EuDebugParam::eventTypeVm:
@@ -267,6 +269,10 @@ std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> EuDebu
     };
 
     return std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)>(pPageFaultEvent, deleter);
+}
+
+EuDebugEventSyncHost EuDebugInterfaceUpstream::toEuDebugEventSyncHost(const void *drmType) {
+    return {};
 }
 
 EuDebugEuControl EuDebugInterfaceUpstream::toEuDebugEuControl(const void *drmType) {

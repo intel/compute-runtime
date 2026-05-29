@@ -42,6 +42,7 @@ uint32_t MockEuDebugInterface::getParamValue(EuDebugParam param) const {
         RETURN_AS_IS(EuDebugParam::eventTypeMetadata);
         RETURN_AS_IS(EuDebugParam::eventTypeOpen);
         RETURN_AS_IS(EuDebugParam::eventTypePagefault);
+        RETURN_AS_IS(EuDebugParam::eventTypeSyncHost);
         RETURN_AS_IS(EuDebugParam::eventTypeRead);
         RETURN_AS_IS(EuDebugParam::eventTypeVm);
         RETURN_AS_IS(EuDebugParam::eventTypeVmBind);
@@ -184,6 +185,10 @@ std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> MockEu
     };
 
     return std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)>(pPageFaultEvent, deleter);
+}
+
+EuDebugEventSyncHost MockEuDebugInterface::toEuDebugEventSyncHost(const void *drmType) {
+    return *static_cast<const EuDebugEventSyncHost *>(drmType);
 }
 
 EuDebugEventVmBindOpDebugData MockEuDebugInterface::toEuDebugEventVmBindOpDebugData(const void *drmType) {

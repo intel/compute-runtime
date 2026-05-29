@@ -178,7 +178,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     void extractMetaData(uint64_t client, const MetaData &metaData);
     bool checkAllEventsCollected();
     MOCKABLE_VIRTUAL void handleEvent(NEO::EuDebugEvent *event);
-    void additionalEvents(NEO::EuDebugEvent *event);
     MOCKABLE_VIRTUAL bool eventTypeIsAttention(uint16_t eventType);
     void readInternalEventsAsync() override;
     std::atomic<bool> detached{false};

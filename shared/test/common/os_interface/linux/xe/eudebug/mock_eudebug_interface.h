@@ -32,6 +32,7 @@ class MockEuDebugInterface : public EuDebugInterface {
     EuDebugEventVmBindOpMetadata toEuDebugEventVmBindOpMetadata(const void *drmType) override;
     EuDebugEventVmBindUfence toEuDebugEventVmBindUfence(const void *drmType) override;
     std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> toEuDebugEventPageFault(const void *drmType) override;
+    EuDebugEventSyncHost toEuDebugEventSyncHost(const void *drmType) override;
     EuDebugEventVmBindOpDebugData toEuDebugEventVmBindOpDebugData(const void *drmType) override;
     EuDebugEuControl toEuDebugEuControl(const void *drmType) override;
     EuDebugConnect toEuDebugConnect(const void *drmType) override;

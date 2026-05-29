@@ -45,6 +45,8 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
         return PRELIM_DRM_XE_EUDEBUG_EVENT_OPEN;
     case EuDebugParam::eventTypePagefault:
         return PRELIM_DRM_XE_EUDEBUG_EVENT_PAGEFAULT;
+    case EuDebugParam::eventTypeSyncHost:
+        return PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST;
     case EuDebugParam::eventTypeRead:
         return PRELIM_DRM_XE_EUDEBUG_EVENT_READ;
     case EuDebugParam::eventTypeVm:
@@ -325,6 +327,23 @@ std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> EuDebu
     };
 
     return std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)>(pPageFaultEvent, deleter);
+}
+
+EuDebugEventSyncHost EuDebugInterfacePrelim::toEuDebugEventSyncHost(const void *drmType) {
+    const prelim_drm_xe_eudebug_event_sync_host *event = static_cast<const prelim_drm_xe_eudebug_event_sync_host *>(drmType);
+    EuDebugEventSyncHost syncHostEvent = {};
+
+    syncHostEvent.base.len = event->base.len;
+    syncHostEvent.base.type = event->base.type;
+    syncHostEvent.base.flags = event->base.flags;
+    syncHostEvent.base.seqno = event->base.seqno;
+    syncHostEvent.base.reserved = event->base.reserved;
+
+    syncHostEvent.clientHandle = event->client_handle;
+    syncHostEvent.execQueueHandle = event->exec_queue_handle;
+    syncHostEvent.lrcHandle = event->lrc_handle;
+
+    return syncHostEvent;
 }
 
 EuDebugEventVmBindOpDebugData EuDebugInterfacePrelim::toEuDebugEventVmBindOpDebugData(const void *drmType) {

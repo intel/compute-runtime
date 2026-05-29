@@ -576,8 +576,33 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
 
         vmBindData.vmBindOpDebugDataVec.push_back(eventVmBindDebugData);
         vmBindData.pendingNumBinds--;
+    } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeSyncHost)) {
+        auto syncHost = euDebugInterface->toEuDebugEventSyncHost(event);
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_SYNC_HOST client_handle = %llu exec_queue_handle = %llu lrc_handle = %llu\n",
+                                (uint64_t)syncHost.clientHandle, (uint64_t)syncHost.execQueueHandle, (uint64_t)syncHost.lrcHandle);
+
+        if (syncHost.base.seqno < newestAttSeqNo.load()) {
+            PRINT_DEBUGGER_INFO_LOG("Dropping stale sync host event seqno=%llu\n", (uint64_t)syncHost.base.seqno);
+        } else if (interruptSent && syncHost.base.seqno <= euControlInterruptSeqno) {
+            PRINT_DEBUGGER_INFO_LOG("Discarding SYNC HOST event for interrupt request. Event seqno == %llu <= %llu == interrupt seqno\n",
+                                    static_cast<uint64_t>(syncHost.base.seqno), euControlInterruptSeqno);
+        } else {
+            AttentionEventFields attentionEventFields{};
+            attentionEventFields.clientHandle = syncHost.clientHandle;
+            attentionEventFields.contextHandle = syncHost.execQueueHandle;
+            attentionEventFields.lrcHandle = syncHost.lrcHandle;
+
+            auto vmHandle = getVmHandleFromClientAndlrcHandle(syncHost.clientHandle, syncHost.lrcHandle);
+            if (vmHandle == invalidHandle) {
+                PRINT_DEBUGGER_ERROR_LOG("%s", "DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_SYNC_HOST invalid vmHandle\n");
+            } else {
+                attentionEventContext[vmHandle] = attentionEventFields;
+                handleStoppedThreads();
+            }
+        }
     } else {
-        additionalEvents(event);
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED %u flags = %u len = %lu\n", (uint16_t)event->type, (uint16_t)event->flags, (uint32_t)event->len);
     }
 }
 
@@ -1303,6 +1328,11 @@ EuThread::ThreadId DebugSessionLinuxXe::convertToThreadId(ze_device_thread_t thr
 ze_device_thread_t DebugSessionLinuxXe::convertToApi(EuThread::ThreadId threadId) {
     ze_device_thread_t thread = {static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
     return thread;
+}
+
+bool DebugSessionLinuxXe::eventTypeIsAttention(uint16_t eventType) {
+    return (eventType == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeEuAttention)) ||
+           (eventType == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeSyncHost));
 }
 
 } // namespace L0

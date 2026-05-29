@@ -37,6 +37,7 @@ class EuDebugInterface {
     virtual EuDebugEventVmBindOpMetadata toEuDebugEventVmBindOpMetadata(const void *drmType) = 0;
     virtual EuDebugEventVmBindUfence toEuDebugEventVmBindUfence(const void *drmType) = 0;
     virtual std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> toEuDebugEventPageFault(const void *drmType) = 0;
+    virtual EuDebugEventSyncHost toEuDebugEventSyncHost(const void *drmType) = 0;
     virtual EuDebugEuControl toEuDebugEuControl(const void *drmType) = 0;
     virtual EuDebugConnect toEuDebugConnect(const void *drmType) = 0;
     virtual EuDebugEventVmBindOpDebugData toEuDebugEventVmBindOpDebugData(const void *drmType) = 0;

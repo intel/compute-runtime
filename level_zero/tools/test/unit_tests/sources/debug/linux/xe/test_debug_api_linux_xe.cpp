@@ -12,6 +12,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/xe/xedrm_prelim.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
@@ -4654,6 +4655,283 @@ TEST_F(DebugApiLinuxTestXe, GivenThreadConversionFunctionsCalledThenNoRemappingA
     EXPECT_EQ(threadId.eu, apiThread.eu);
     EXPECT_EQ(threadId.thread, apiThread.thread);
 }
+
+TEST_F(DebugApiLinuxTestXe, GivenEuDebugSyncHostEventWithEventCreateFlagWhenHandleEventThenReadFifoIsCalledSuccesfully) {
+    struct MockDebugSessionLinuxXeExt : public MockDebugSessionLinuxXe {
+        MockDebugSessionLinuxXeExt(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxXe(config, device, debugFd) {}
+        ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
+            readFifoCount++;
+            threadsWithAttention.emplace_back(0, 0, 0, 0, 0);
+            threadsWithAttentionValidate = threadsWithAttention;
+            return ZE_RESULT_SUCCESS;
+        }
+        ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
+            updateStoppedThreadsAndCheckTriggerEventsCount++;
+            return ZE_RESULT_SUCCESS;
+        }
+        std::vector<EuThread::ThreadId> threadsWithAttentionValidate;
+        int readFifoCount = 0;
+        int updateStoppedThreadsAndCheckTriggerEventsCount = 0;
+    };
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXeExt>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    session->interruptSent = true;
+    session->euControlInterruptSeqno = 1;
+
+    NEO::EuDebugEventClient client1;
+    client1.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client1.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client1.clientHandle = 0x123456789;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
+
+    session->clientHandleToConnection[client1.clientHandle]->lrcHandleToVmHandle[10] = 100u;
+
+    NEO::EuDebugEventSyncHost syncHost = {};
+    syncHost.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeSyncHost);
+    syncHost.base.len = sizeof(NEO::EuDebugEventSyncHost);
+    syncHost.base.seqno = session->euControlInterruptSeqno + 1;
+    syncHost.clientHandle = client1.clientHandle;
+    syncHost.lrcHandle = 10;
+
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&syncHost.base));
+    EXPECT_EQ(session->readFifoCount, 1);
+    EXPECT_EQ(session->threadsWithAttentionValidate.size(), 1u);
+    EXPECT_EQ(session->updateStoppedThreadsAndCheckTriggerEventsCount, 1);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenSyncHostEventAndLrcHandleNotFoundWhenHandleEventThenReadFifoIsNotCalled) {
+    struct MockDebugSessionLinuxXeExt : public MockDebugSessionLinuxXe {
+        MockDebugSessionLinuxXeExt(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxXe(config, device, debugFd) {}
+        ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
+            readFifoCount++;
+            return ZE_RESULT_SUCCESS;
+        }
+        int readFifoCount = 0;
+    };
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXeExt>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+
+    NEO::EuDebugEventClient client1;
+    client1.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client1.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client1.clientHandle = 0x123456789;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
+
+    constexpr uint64_t lrcHandle = 10u;
+    session->clientHandleToConnection[client1.clientHandle]->lrcHandleToVmHandle[lrcHandle] = 100u;
+
+    NEO::EuDebugEventSyncHost syncHost = {};
+    syncHost.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeSyncHost);
+    syncHost.base.len = sizeof(NEO::EuDebugEventSyncHost);
+    syncHost.clientHandle = client1.clientHandle;
+    syncHost.lrcHandle = lrcHandle + 1;
+
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&syncHost.base));
+    EXPECT_EQ(session->readFifoCount, 0);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenEuDebugSyncHostEventWhenReadFifoIsFailedThenEventHandlingReturnWithoutProceeding) {
+    struct MockDebugSessionLinuxXeExt : public MockDebugSessionLinuxXe {
+        MockDebugSessionLinuxXeExt(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxXe(config, device, debugFd) {}
+        ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
+            readFifoCount++;
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
+            updateStoppedThreadsAndCheckTriggerEventsCount++;
+            return ZE_RESULT_SUCCESS;
+        }
+        int readFifoCount = 0;
+        int updateStoppedThreadsAndCheckTriggerEventsCount = 0;
+    };
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXeExt>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+
+    NEO::EuDebugEventClient client1;
+    client1.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client1.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client1.clientHandle = 0x123456789;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
+
+    session->clientHandleToConnection[client1.clientHandle]->lrcHandleToVmHandle[10] = 100u;
+
+    NEO::EuDebugEventSyncHost syncHost = {};
+    syncHost.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeSyncHost);
+    syncHost.base.len = sizeof(NEO::EuDebugEventSyncHost);
+    syncHost.clientHandle = client1.clientHandle;
+    syncHost.lrcHandle = 10;
+
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&syncHost.base));
+    EXPECT_EQ(session->readFifoCount, 1);
+    EXPECT_EQ(session->updateStoppedThreadsAndCheckTriggerEventsCount, 0);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenEuDebugSyncHostEventWhenReadFifoSucceedButThreadsWithAttentionNotPresentThenCallReturnWithoutProceeding) {
+    struct MockDebugSessionLinuxXeExt : public MockDebugSessionLinuxXe {
+        MockDebugSessionLinuxXeExt(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxXe(config, device, debugFd) {}
+        ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
+            readFifoCount++;
+            threadsWithAttentionValidate = threadsWithAttention;
+            return ZE_RESULT_SUCCESS;
+        }
+        ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
+            updateStoppedThreadsAndCheckTriggerEventsCount++;
+            return ZE_RESULT_SUCCESS;
+        }
+        std::vector<EuThread::ThreadId> threadsWithAttentionValidate;
+        int readFifoCount = 0;
+        int updateStoppedThreadsAndCheckTriggerEventsCount = 0;
+    };
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXeExt>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+
+    NEO::EuDebugEventClient client1;
+    client1.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client1.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client1.clientHandle = 0x123456789;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
+
+    session->clientHandleToConnection[client1.clientHandle]->lrcHandleToVmHandle[10] = 100u;
+
+    NEO::EuDebugEventSyncHost syncHost = {};
+    syncHost.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeSyncHost);
+    syncHost.base.len = sizeof(NEO::EuDebugEventSyncHost);
+    syncHost.clientHandle = client1.clientHandle;
+    syncHost.lrcHandle = 10;
+
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&syncHost.base));
+    EXPECT_EQ(session->readFifoCount, 1);
+    EXPECT_EQ(session->threadsWithAttentionValidate.size(), 0u);
+    EXPECT_EQ(session->updateStoppedThreadsAndCheckTriggerEventsCount, 0);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenStaleEuDebugSyncHostEventWhenhandlingEventThenEventNotHandled) {
+    struct MockDebugSessionLinuxXeExt : public MockDebugSessionLinuxXe {
+        MockDebugSessionLinuxXeExt(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxXe(config, device, debugFd) {}
+        ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
+            readFifoCount++;
+            return ZE_RESULT_SUCCESS;
+        }
+        int readFifoCount = 0;
+    };
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXeExt>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    session->newestAttSeqNo.store(10);
+
+    NEO::EuDebugEventClient client1;
+    client1.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client1.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client1.clientHandle = 0x123456789;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
+
+    session->clientHandleToConnection[client1.clientHandle]->lrcHandleToVmHandle[10] = 100u;
+
+    NEO::EuDebugEventSyncHost syncHost = {};
+    syncHost.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeSyncHost);
+    syncHost.base.len = sizeof(NEO::EuDebugEventSyncHost);
+    syncHost.base.seqno = 2;
+    syncHost.clientHandle = client1.clientHandle;
+    syncHost.lrcHandle = 10;
+
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&syncHost.base));
+    EXPECT_EQ(session->readFifoCount, 0);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenInterruptSentWhenSyncHostEventSeqNoIsLessThanInterruptSeqNoThenEventNotHandled) {
+    struct MockDebugSessionLinuxXeExt : public MockDebugSessionLinuxXe {
+        MockDebugSessionLinuxXeExt(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxXe(config, device, debugFd) {}
+        ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
+            readFifoCount++;
+            return ZE_RESULT_SUCCESS;
+        }
+        int readFifoCount = 0;
+    };
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXeExt>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+
+    session->interruptSent = true;
+    NEO::EuDebugEventClient client1;
+    client1.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client1.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client1.clientHandle = 0x123456789;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
+
+    session->clientHandleToConnection[client1.clientHandle]->lrcHandleToVmHandle[10] = 100u;
+
+    session->euControlInterruptSeqno = 1;
+    NEO::EuDebugEventSyncHost syncHost = {};
+    syncHost.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeSyncHost);
+    syncHost.base.len = sizeof(NEO::EuDebugEventSyncHost);
+    syncHost.base.seqno = session->euControlInterruptSeqno - 1;
+    syncHost.clientHandle = client1.clientHandle;
+    syncHost.lrcHandle = 10;
+
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&syncHost.base));
+    EXPECT_EQ(session->readFifoCount, 0);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenSyncHostOrAttentionEventWhenCheckingIfEventTypeIsAttentionThenTrueReturnedOtherwiseFalseReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    auto syncHostType = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeSyncHost);
+    auto attentionType = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeEuAttention);
+    EXPECT_TRUE(session->eventTypeIsAttention(syncHostType));
+    EXPECT_TRUE(session->eventTypeIsAttention(attentionType));
+    EXPECT_FALSE(session->eventTypeIsAttention(0));
+    EXPECT_FALSE(session->eventTypeIsAttention(static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVm)));
+    EXPECT_FALSE(session->eventTypeIsAttention(static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueue)));
+}
+
+static_assert(sizeof(NEO::EuDebugEventSyncHost) == sizeof(prelim_drm_xe_eudebug_event_sync_host));
+static_assert(offsetof(NEO::EuDebugEventSyncHost, base) == offsetof(prelim_drm_xe_eudebug_event_sync_host, base));
+static_assert(offsetof(NEO::EuDebugEventSyncHost, clientHandle) == offsetof(prelim_drm_xe_eudebug_event_sync_host, client_handle));
+static_assert(offsetof(NEO::EuDebugEventSyncHost, execQueueHandle) == offsetof(prelim_drm_xe_eudebug_event_sync_host, exec_queue_handle));
+static_assert(offsetof(NEO::EuDebugEventSyncHost, lrcHandle) == offsetof(prelim_drm_xe_eudebug_event_sync_host, lrc_handle));
+
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypeEuAttention));
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueue));
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypeMetadata));
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen));
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypePagefault));
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypeRead));
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVm));
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBind));
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOp));
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOpMetadata));
+static_assert(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_SYNC_HOST) != static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindUfence));
 
 } // namespace ult
 } // namespace L0

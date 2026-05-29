@@ -119,6 +119,13 @@ struct EuDebugEventVmBindUfence {
     uint64_t vmBindRefSeqno;
 };
 
+struct EuDebugEventSyncHost {
+    struct EuDebugEvent base;
+    uint64_t clientHandle;
+    uint64_t execQueueHandle;
+    uint64_t lrcHandle;
+};
+
 struct EuDebugEventPageFault {
     struct EuDebugEvent base;
     uint64_t clientHandle;
@@ -231,6 +238,7 @@ enum class EuDebugParam {
     eventTypeRead,
     eventTypeVm,
     eventTypeVmBind,
+    eventTypeSyncHost,
     eventTypeVmBindOp,
     eventTypeVmBindOpMetadata,
     eventTypeVmBindOpDebugData,
