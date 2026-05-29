@@ -4129,6 +4129,9 @@ int main(int argc, char *argv[]) {
         for (auto eventOption : eventOptionValues) {
             for (auto useSameArguments : useSameArgumentsValues) {
                 caseName = testNameMutateMulKernelIntoAddKernelBackMulKernel(useSameArguments, eventOption);
+                std::cout << std::endl
+                          << "Starting test case: " << caseName
+                          << std::endl;
                 caseResult = testMutateMulKernelIntoAddKernelBackMulKernel(env.get(), module, useSameArguments, aubMode, eventOption);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 valid &= caseResult;
@@ -4148,6 +4151,9 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
         for (auto eventOption : eventOptionValues) {
             caseName = testNameMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalEventArguments(eventOption);
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalEventArguments(env.get(), module, aubMode, eventOption);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -4166,6 +4172,9 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
         for (auto eventOption : eventOptionValues) {
             caseName = testNameMutateKernelsWaitSignalEvents(eventOption);
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateKernelsWaitSignalEvents(env.get(), module, aubMode, eventOption);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -4183,6 +4192,9 @@ int main(int argc, char *argv[]) {
 
             for (auto scratchKernelFirst : scratchKernelFirstValues) {
                 caseName = testNameMutateKernelsScratch(scratchKernelFirst);
+                std::cout << std::endl
+                          << "Starting test case: " << caseName
+                          << std::endl;
                 caseResult = testMutateKernelsScratch(env.get(), module, scratchKernel, scratchKernelFirst, aubMode);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 valid &= caseResult;
@@ -4197,6 +4209,9 @@ int main(int argc, char *argv[]) {
             std::vector<bool> slmKernelFirstValues = {true, false};
             for (auto slmKernelFirst : slmKernelFirstValues) {
                 caseName = testNameMutateKernelsSlm(slmKernelFirst);
+                std::cout << std::endl
+                          << "Starting test case: " << caseName
+                          << std::endl;
                 caseResult = testMutateKernelsSlm(env.get(), module, slmKernelFirst, aubMode);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 valid &= caseResult;
@@ -4213,6 +4228,9 @@ int main(int argc, char *argv[]) {
 
             for (auto privateMemoryKernelFirst : privateMemoryKernelFirstValues) {
                 caseName = testNameMutateKernelsPrivateMemory(privateMemoryKernelFirst);
+                std::cout << std::endl
+                          << "Starting test case: " << caseName
+                          << std::endl;
                 caseResult = testMutateKernelsPrivateMemory(env.get(), module, privateKernel, privateMemoryKernelFirst, aubMode);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 valid &= caseResult;
@@ -4237,6 +4255,9 @@ int main(int argc, char *argv[]) {
                 for (auto &addScalarLinearKernelGroupSize : addScalarLinearKernelGroupSizeValues) {
                     for (auto localWorkSizeKernelFirst : localWorkSizeKernelFirstValues) {
                         caseName = testNameMutateKernelsLocalWorkSize(localWorkSizeKernelFirst, localWorkSizeKernelGroupSize.data(), addScalarLinearKernelGroupSize.data());
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testMutateKernelsLocalWorkSize(env.get(), module, localWorkSizeKernelGroupSize.data(), addScalarLinearKernelGroupSize.data(), localWorkSizeKernelFirst, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -4258,6 +4279,9 @@ int main(int argc, char *argv[]) {
                 for (auto &addScalarLinearKernelGroupCount : addScalarLinearKernelGroupCountValues) {
                     for (auto globalWorkSizeKernelFirst : globalWorkSizeKernelFirstValues) {
                         caseName = testNameMutateKernelsGlobalWorkSize(globalWorkSizeKernelFirst, globalWorkSizeKernelGroupCount.data(), addScalarLinearKernelGroupCount.data());
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testMutateKernelsGlobalWorkSize(env.get(), module, globalWorkSizeKernelGroupCount.data(), addScalarLinearKernelGroupCount.data(), globalWorkSizeKernelFirst, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -4276,6 +4300,9 @@ int main(int argc, char *argv[]) {
             for (auto &globalOffsets : globalOffsetValues) {
                 for (auto globalOffsetKernelFirst : globalOffsetKernelFirstValues) {
                     caseName = testNameMutateKernelsGlobalOffset(globalOffsetKernelFirst, globalOffsets.data());
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testMutateKernelsGlobalOffset(env.get(), module, globalOffsets.data(), globalOffsetKernelFirst, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -4303,6 +4330,9 @@ int main(int argc, char *argv[]) {
             for (auto &localWorkSizeKernelMutateGroupSize : localWorkSizeKernelMutateGroupSizeValues) {
                 for (auto eventOption : eventOptionValues) {
                     caseName = testNameSameKernelsMutateArgumentsShapesEvents(localWorkSizeKernelInitGroupSize.data(), localWorkSizeKernelMutateGroupSize.data(), eventOption);
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testSameKernelsMutateArgumentsShapesEvents(env.get(), module, localWorkSizeKernelInitGroupSize.data(), localWorkSizeKernelMutateGroupSize.data(), eventOption, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -4332,6 +4362,9 @@ int main(int argc, char *argv[]) {
                 for (auto &gwsGroupCount : gwsGroupCountValues) {
                     for (auto eventOption : eventOptionValues) {
                         caseName = testNameDifferentKernelsMutateArgumentsShapesEvents(globalOffsetKernelFirst, gwsGroupCount.data(), globalOffsets.data(), eventOption);
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testDifferentKernelsMutateArgumentsShapesEvents(env.get(), module, globalOffsetKernelFirst, gwsGroupCount.data(), globalOffsets.data(), eventOption, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -4346,6 +4379,9 @@ int main(int argc, char *argv[]) {
         std::vector<bool> passGroupCountDescValues = {false, true};
         for (auto passGroupCountDesc : passGroupCountDescValues) {
             caseName = testNameMutateSingleTaskKernelArgumentsAndKeepGroupCount(passGroupCountDesc);
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateSingleTaskKernelArgumentsAndKeepGroupCount(env.get(), module, passGroupCountDesc, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -4376,6 +4412,9 @@ int main(int argc, char *argv[]) {
                         }
                         const std::string baseName = "Global Barrier";
                         caseName = testNameMixingGlobalBarrierKernels(baseName, firstKernel, mutateKernel, mutateBackKernel);
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testMutateGlobalBarrierKernels(env.get(), module, env->getGlobalBarrierModule(), firstKernel, mutateKernel, mutateBackKernel, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -4408,6 +4447,9 @@ int main(int argc, char *argv[]) {
                         continue;
                     }
                     caseName = testNameMixingSlmKernels(firstKernel, mutateKernel, mutateBackKernel);
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testMutateSlmKernels(env.get(), module, env->getSlmModule(), firstKernel, mutateKernel, mutateBackKernel, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -4421,6 +4463,9 @@ int main(int argc, char *argv[]) {
         bool firstMultiple = false;
 
         caseName = testNameMutateBackKernel(firstMultiple);
+        std::cout << std::endl
+                  << "Starting test case: " << caseName
+                  << std::endl;
         caseResult = testMutateBackKernel(env.get(), module, firstMultiple, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
         valid &= caseResult;
@@ -4429,6 +4474,9 @@ int main(int argc, char *argv[]) {
         firstMultiple = true;
 
         caseName = testNameMutateBackKernel(firstMultiple);
+        std::cout << std::endl
+                  << "Starting test case: " << caseName
+                  << std::endl;
         caseResult = testMutateBackKernel(env.get(), module, firstMultiple, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
         valid &= caseResult;

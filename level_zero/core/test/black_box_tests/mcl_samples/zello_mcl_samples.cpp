@@ -620,43 +620,61 @@ int main(int argc, char *argv[]) {
     std::string caseName = "";
 
     if (testMask.test(bitNumberTestMemoryVariableKernelArgument)) {
-        testCase = variableKernelArgumentTest(env.get(), module, aubMode);
         caseName = "Variable Kernel Argument Test";
+        std::cout << std::endl
+                  << "Starting test case: " << caseName
+                  << std::endl;
+        testCase = variableKernelArgumentTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
     }
 
     if (testMask.test(bitNumberTestVariableDispatch)) {
-        testCase = variableDispatchTest(env.get(), module, aubMode);
         caseName = "Variable Dispatch Test";
+        std::cout << std::endl
+                  << "Starting test case: " << caseName
+                  << std::endl;
+        testCase = variableDispatchTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
     }
 
     if (testMask.test(bitNumberTestTemporaryVariable)) {
-        testCase = temporaryVariableTest(env.get(), module, aubMode);
         caseName = "Temporary Variable Test";
+        std::cout << std::endl
+                  << "Starting test case: " << caseName
+                  << std::endl;
+        testCase = temporaryVariableTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
     }
 
     if (testMask.test(bitNumberTestControlFlowIfStatement)) {
-        testCase = controlFlowIfStatementTest(env.get(), module, aubMode);
         caseName = "Control Flow If Statement Test";
+        std::cout << std::endl
+                  << "Starting test case: " << caseName
+                  << std::endl;
+        testCase = controlFlowIfStatementTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
     }
 
     if (testMask.test(bitNumberTestControlFlowWhileLoop)) {
-        testCase = controlFlowWhileLoopTest(env.get(), module, aubMode);
         caseName = "Control Flow While Loop Test";
+        std::cout << std::endl
+                  << "Starting test case: " << caseName
+                  << std::endl;
+        testCase = controlFlowWhileLoopTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
     }
 
     if (testMask.test(bitNumberTestMemoryVariableMultipleKernelArguments)) {
-        testCase = variableKernelMultipleArgumentsTest(env.get(), module, aubMode);
         caseName = "Variable Multiple Kernel Arguments Test";
+        std::cout << std::endl
+                  << "Starting test case: " << caseName
+                  << std::endl;
+        testCase = variableKernelMultipleArgumentsTest(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, testCase, blackBoxName, caseName);
         valid &= testCase;
     }

@@ -5721,12 +5721,18 @@ int main(int argc, char *argv[]) {
             ze_command_list_handle_t sharedCmdList;
 
             caseName = "Mutate Memory Kernel Argument Test";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateMemoryArgument(env.get(), module, sharedCmdList, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
             MclTests::addFailedCase(caseResult, caseName, bitNumberTestKernelArgument);
 
             caseName = "Reset Command List and Mutate Scalar Kernel Argument Test";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testResetCmdlistAndMutateScalarArgument(env.get(), module, sharedCmdList, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -5735,12 +5741,18 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(1)) {
             caseName = "Mutate Multiple Memory Kernel Arguments - First Append Immutable Test";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateMultipleMemoryArguments(env.get(), module, true, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
             MclTests::addFailedCase(caseResult, caseName, bitNumberTestKernelArgument);
 
             caseName = "Mutate Multiple Memory Kernel Arguments - First Append Mutable Test";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateMultipleMemoryArguments(env.get(), module, false, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -5749,6 +5761,9 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(2)) {
             caseName = "Mutate Offset Memory Kernel Argument";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testOffsetMemoryArgument(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -5757,6 +5772,9 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(3)) {
             caseName = "Mutate Freed Memory Kernel Argument";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateAfterFreedMemoryArgument(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -5793,6 +5811,9 @@ int main(int argc, char *argv[]) {
                                 caseName = testNameMutateSignalEvent(mutateFirst, mutateSecond,
                                                                      useDifferentPoolFirstKernel, useDifferentPoolSecondKernel,
                                                                      eventOption);
+                                std::cout << std::endl
+                                          << "Starting test case: " << caseName
+                                          << std::endl;
                                 caseResult = testMutateSignalEvent(env.get(), module,
                                                                    mutateFirst, mutateSecond,
                                                                    useDifferentPoolFirstKernel, useDifferentPoolSecondKernel,
@@ -5811,6 +5832,9 @@ int main(int argc, char *argv[]) {
         if (testSubMask.test(1)) {
             for (auto eventOption : eventOptionValues) {
                 caseName = testNameMutateSignalEventMutateOriginalBack(eventOption);
+                std::cout << std::endl
+                          << "Starting test case: " << caseName
+                          << std::endl;
                 caseResult = testMutateSignalEventMutateOriginalBack(env.get(), module,
                                                                      eventOption,
                                                                      aubMode);
@@ -5828,6 +5852,9 @@ int main(int argc, char *argv[]) {
                 for (auto useTimestamp : useTimestampValues) {
                     for (auto useFirstSignal : useFirstSignalValues) {
                         caseName = testNameMutateMixedSignalEventOnCommandList(useTimestamp, useFirstSignal, useInOrder);
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testMutateMixedSignalEventOnCommandList(env.get(), module, useTimestamp, useFirstSignal, useInOrder, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -5868,6 +5895,9 @@ int main(int argc, char *argv[]) {
                                     caseName = testNameMutateWaitEvent(mutateFirst, mutateSecond,
                                                                        useDifferentPoolFirstKernel, useDifferentPoolSecondKernel,
                                                                        eventOption, bitMask);
+                                    std::cout << std::endl
+                                              << "Starting test case: " << caseName
+                                              << std::endl;
                                     caseResult = testMutateWaitEvent(env.get(), module, mutateFirst, mutateSecond,
                                                                      useDifferentPoolFirstKernel, useDifferentPoolSecondKernel,
                                                                      eventOption, bitMask,
@@ -5888,6 +5918,9 @@ int main(int argc, char *argv[]) {
                 for (auto eventMask : eventMaskValues) {
                     WaitEventMask bitMask(eventMask);
                     caseName = testNameMutateNoopWaitEvent(eventOption, bitMask);
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testMutateNoopWaitEvent(env.get(), module,
                                                          eventOption, bitMask,
                                                          aubMode);
@@ -5907,6 +5940,9 @@ int main(int argc, char *argv[]) {
         if (testSubMask.test(0)) {
             for (auto eventOption : eventOptionValues) {
                 caseName = testNameMutateMemoryAndImmediateArgumentsSignalAndWaitEvents(eventOption);
+                std::cout << std::endl
+                          << "Starting test case: " << caseName
+                          << std::endl;
                 caseResult = testMutateMemoryAndImmediateArgumentsSignalAndWaitEvents(env.get(), module, eventOption, aubMode);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 MclTests::addFailedCase(caseResult, caseName, bitNumberTestMutateKernelArgumentsAndEvents);
@@ -5925,6 +5961,9 @@ int main(int argc, char *argv[]) {
             for (auto eventOption : eventOptionValues) {
                 for (auto useAnotherPool : useAnotherPoolValues) {
                     caseName = testNameMutateSignalAndWaitEventsAndRemoveOldEvent(eventOption, useAnotherPool);
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testMutateSignalAndWaitEventsAndRemoveOldEvent(env.get(), module, eventOption, useAnotherPool, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -5945,6 +5984,9 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
         for (auto eventOption : eventOptionValues) {
             caseName = testNameMutateSignalEventOnInOrderCommandList(eventOption);
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateSignalEventOnInOrderCommandList(env.get(), module, eventOption, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -5964,6 +6006,9 @@ int main(int argc, char *argv[]) {
                 }
                 for (auto eventOption : eventOptionValues) {
                     caseName = testNameCbWaitEventMutateNoopMutateBack(eventOption, baseIndex, mutableIndex);
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testCbWaitEventMutateNoopMutateBack(env.get(), module, eventOption, baseIndex, mutableIndex, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -5993,6 +6038,9 @@ int main(int argc, char *argv[]) {
                 }
                 for (auto sourceIndex : sourceIndexValues) {
                     caseName = testNameMixedWaitEvent(eventOption, sourceIndex, srcCmdListInOrder);
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testMixedWaitEvent(env.get(), module, eventOption, sourceIndex, srcCmdListInOrder, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6005,6 +6053,9 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestCbWaitEventExternalMemory)) {
         if (env->getCbEventExtensionPresent()) {
             caseName = "External Memory CB wait events mutation";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testExternalMemoryCbWaitEvent(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6016,6 +6067,9 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestGroupCount)) {
         caseName = "Group count mutation - copy kernel";
+        std::cout << std::endl
+                  << "Starting test case: " << caseName
+                  << std::endl;
         caseResult = testGroupCountCopy(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
         valid &= caseResult;
@@ -6037,6 +6091,9 @@ int main(int argc, char *argv[]) {
                     testStream << "Group count mutation - bif kernel - group count: " << groupCountData[0] << " " << groupCountData[1] << " " << groupCountData[2];
 
                     caseName = testStream.str();
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testGroupCountBif(env.get(), module, groupCountData.data(), aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6069,7 +6126,9 @@ int main(int argc, char *argv[]) {
                             std::cerr << "Skipping case: " << caseName << std::endl;
                             continue;
                         }
-
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testGroupSizeBif(env.get(), module, groupSizeData.data(), aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6103,7 +6162,9 @@ int main(int argc, char *argv[]) {
                             std::cerr << "Skipping case: " << caseName << std::endl;
                             continue;
                         }
-
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testGroupSizeBif(env.get(), module, groupSizeData.data(), aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6116,6 +6177,9 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestGlobalOffset)) {
         caseName = "Global offset mutation - copy kernel";
+        std::cout << std::endl
+                  << "Starting test case: " << caseName
+                  << std::endl;
         caseResult = testGlobalOffsetCopy(env.get(), module, aubMode);
         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
         valid &= caseResult;
@@ -6137,6 +6201,9 @@ int main(int argc, char *argv[]) {
                     testStream << "Global offset mutation - bif kernel - offset size: " << offsetData[0] << " " << offsetData[1] << " " << offsetData[2];
 
                     caseName = testStream.str();
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testGlobalOffsetBif(env.get(), module, offsetData.data(), aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6149,6 +6216,9 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestMixedTests)) {
         if (testSubMask.test(0)) {
             caseName = "Mixed Offset Arguments and Global Size 3D non-power of 2 mutation";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMixedOffsetMemoryArgumentGlobalSize3DNonPow2(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6157,6 +6227,9 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(1)) {
             caseName = "Set buffer argument to null and then make argument mutation";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testSetNullPtrThenMutateToBuffer(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6165,6 +6238,9 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(2)) {
             caseName = "Mutate group size dimensions, remain total group size constant";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testGroupSizeDimensionsTotalConstant(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6173,12 +6249,18 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(3)) {
             caseName = "Mutate kernel argument from buffer to null and back to buffer";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateBufferToNullAndBack(env.get(), module, aubMode, false);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
             MclTests::addFailedCase(caseResult, caseName, bitNumberTestMixedTests);
 
             caseName = "Mutate kernel argument from null to buffer and back to null";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateBufferToNullAndBack(env.get(), module, aubMode, true);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6193,6 +6275,9 @@ int main(int argc, char *argv[]) {
                                                                  MclTests::EventOptions::cbEventSignalTimestamp};
         for (auto eventOption : eventOptionValues) {
             caseName = testNameMultiExecutionMutatedCbEvents(eventOption);
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMultiExecutionMutatedCbEvents(env.get(), module, eventOption, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6208,6 +6293,9 @@ int main(int argc, char *argv[]) {
 
                 if (testSubMask.test(0)) {
                     caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 1, true);
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalCalculations1, 1, true>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6216,6 +6304,9 @@ int main(int argc, char *argv[]) {
 
                 if (testSubMask.test(1)) {
                     caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 2, true);
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalCalculations2, 2, true>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6224,6 +6315,9 @@ int main(int argc, char *argv[]) {
 
                 if (testSubMask.test(2)) {
                     caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 3, true);
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalCalculations3, 3, true>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6232,6 +6326,9 @@ int main(int argc, char *argv[]) {
 
                 if (testSubMask.test(3)) {
                     caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 4, true);
+                    std::cout << std::endl
+                              << "Starting test case: " << caseName
+                              << std::endl;
                     caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalCalculations4, 4, true>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                     LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                     valid &= caseResult;
@@ -6241,6 +6338,9 @@ int main(int argc, char *argv[]) {
                 if (!conditionalAdd) {
                     if (testSubMask.test(4)) {
                         caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 1, false);
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalMulCalculations1, 1, false>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6249,6 +6349,9 @@ int main(int argc, char *argv[]) {
 
                     if (testSubMask.test(5)) {
                         caseName = testNameMutateComplexStructurePassedAsImmediate(conditionalAdd, conditionalMul, 2, false);
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testMutateComplexStructurePassedAsImmediate<ConditionalMulCalculations2, 2, false>(env.get(), module, conditionalAdd, conditionalMul, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6272,6 +6375,9 @@ int main(int argc, char *argv[]) {
                     }
                     for (auto groupCount : groupCountValues) {
                         caseName = testNameMutateSlmArgumentKernel(firstGroupSize, mutateGroupSize, groupCount, kernelOneArg);
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testMutateSlmArgumentKernel(env.get(), env->getSlmModule(), firstGroupSize, mutateGroupSize, groupCount, kernelOneArg, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6289,6 +6395,9 @@ int main(int argc, char *argv[]) {
                     }
                     for (auto groupCount : groupCountValues) {
                         caseName = testNameMutateSlmArgumentKernel(firstGroupSize, mutateGroupSize, groupCount, kernelOneArg);
+                        std::cout << std::endl
+                                  << "Starting test case: " << caseName
+                                  << std::endl;
                         caseResult = testMutateSlmArgumentKernel(env.get(), env->getSlmModule(), firstGroupSize, mutateGroupSize, groupCount, kernelOneArg, aubMode);
                         LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                         valid &= caseResult;
@@ -6302,6 +6411,9 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestCbSignalIncrementEvent)) {
         if (env->getCbEventExtensionPresent()) {
             caseName = "Signal external increment CB Event";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testSignalExternalIncrementCbEvent(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6314,6 +6426,9 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestExperimental)) {
         if (testSubMask.test(0)) {
             caseName = "Simple SLM kernel";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testSimpleSlm(env.get(), aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6322,6 +6437,9 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(1)) {
             caseName = "Sync via Event and Mutate Shared Memory Kernel Arg";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testMutateKernelArgSharedMemoryAndEventSync(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6332,6 +6450,9 @@ int main(int argc, char *argv[]) {
             constexpr uint32_t defaultAppendCount = 4335;
             uint32_t appendCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-ac", "-appendCount", defaultAppendCount);
             caseName = "Immediate Command List Execution of MCL";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testImmediateCmdListExecuteMcl(env.get(), aubMode, appendCount);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6340,6 +6461,9 @@ int main(int argc, char *argv[]) {
 
         if (testSubMask.test(3)) {
             caseName = "Profile append operations using timestamp events";
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testProfileAppendOperationsUsingTsEvents(env.get(), module, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6366,6 +6490,9 @@ int main(int argc, char *argv[]) {
             bool copyOffload = !!LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--copy_offload", defaultCopyOffload);
 
             caseName = getCaseName(immediateSubmit, copyOffload, iterations);
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testSubmitGraphOnImmediate(env.get(), module, immediateSubmit, copyOffload, iterations, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6394,6 +6521,9 @@ int main(int argc, char *argv[]) {
                 bool immediateSubmit = !!LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--use_immediate", defaultImmediateSubmit);
 
                 caseName = getCaseName(immediateSubmit, iterations);
+                std::cout << std::endl
+                          << "Starting test case: " << caseName
+                          << std::endl;
                 caseResult = testSubmitCopyCmdListOnCopyImmediateCmdList(env.get(), copyOrdinal, immediateSubmit, iterations, aubMode);
                 LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
                 valid &= caseResult;
@@ -6418,6 +6548,9 @@ int main(int argc, char *argv[]) {
             bool useEvents = static_cast<bool>(LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--use_event", static_cast<int>(defaultUseEvents)));
 
             caseName = getCaseName(iterations, useEvents);
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testAppendRegularOnOutOfOrderImmediate(env.get(), module, iterations, useEvents, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
@@ -6446,6 +6579,9 @@ int main(int argc, char *argv[]) {
             uint32_t regularCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--count", defaultRegularCount);
 
             caseName = getCaseName(regularCount, iterations, inOrder);
+            std::cout << std::endl
+                      << "Starting test case: " << caseName
+                      << std::endl;
             caseResult = testAppendMultipleRegularOnInOrderImmediate(env.get(), module, regularCount, iterations, inOrder, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, caseResult, blackBoxName, caseName);
             valid &= caseResult;
