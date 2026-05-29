@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -375,14 +375,20 @@ enum class PowerDomainsType {
 
 enum ActivityDomainsType {
     ActitvityDomainGT = 0,
-    ActivityDomainRenderCompute,
+    ActivityDomainCompute,
     ActivityDomainMedia,
     ActivityDomainCopy,
     ActivityDomainComputeSingle,
     ActivityDomainRenderSingle,
-    ActivityDomainMediaCodecSingle,
-    ActivityDomainMediaEnhancementSingle,
+    ActivityDomainMediaDecodeSingle, // Deprecated
+    ActivityDomainMediaEncodeSingle, // Deprecated
     ActivityDomainCopySingle,
+    ActivityDomainMediaEnhancementSingle,
+    ActivityDomain3dSingle,        // Deprecated
+    ActivityDomain3dRenderCompute, // Deprecated
+    ActivityDomainRender,
+    ActivityDomain3d, // Deprecated
+    ActivityDomainMediaCodecSingle,
 
     ActivityDomainMaxTypes,
 };

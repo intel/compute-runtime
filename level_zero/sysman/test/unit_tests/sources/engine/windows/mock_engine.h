@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,33 +15,43 @@ namespace ult {
 
 struct MockEngineKmdSysManager : public MockKmdSysManager {
 
-    static const uint32_t mockEngineHandleComponentCount = 10u;
+    static const uint32_t mockEngineHandleComponentCount = 15u;
     KmdSysman::ActivityDomainsType mockEngineTypes[mockEngineHandleComponentCount] = {
         KmdSysman::ActivityDomainsType::ActitvityDomainGT,
-        KmdSysman::ActivityDomainsType::ActivityDomainRenderCompute,
+        KmdSysman::ActivityDomainsType::ActivityDomainCompute,
         KmdSysman::ActivityDomainsType::ActivityDomainMedia,
         KmdSysman::ActivityDomainsType::ActivityDomainCopy,
         KmdSysman::ActivityDomainsType::ActivityDomainComputeSingle,
         KmdSysman::ActivityDomainsType::ActivityDomainRenderSingle,
-        KmdSysman::ActivityDomainsType::ActivityDomainMediaCodecSingle,
-        KmdSysman::ActivityDomainsType::ActivityDomainMediaCodecSingle,
-        KmdSysman::ActivityDomainsType::ActivityDomainMediaEnhancementSingle,
+        KmdSysman::ActivityDomainsType::ActivityDomainMediaDecodeSingle,
+        KmdSysman::ActivityDomainsType::ActivityDomainMediaEncodeSingle,
         KmdSysman::ActivityDomainsType::ActivityDomainCopySingle,
+        KmdSysman::ActivityDomainsType::ActivityDomainMediaEnhancementSingle,
+        KmdSysman::ActivityDomainsType::ActivityDomain3dSingle,
+        KmdSysman::ActivityDomainsType::ActivityDomain3dRenderCompute,
+        KmdSysman::ActivityDomainsType::ActivityDomainRender,
+        KmdSysman::ActivityDomainsType::ActivityDomain3d,
+        KmdSysman::ActivityDomainsType::ActivityDomainMediaCodecSingle,
     };
 
     uint64_t mockActivityCounters[mockEngineHandleComponentCount] = {
-        652411,
-        222115,
-        451115,
-        451115,
-        451115,
-        451115,
-        451115,
-        451115,
-        451115,
-        451115,
+        100000,  // ActitvityDomainGT
+        200000,  // ActivityDomainCompute
+        300000,  // ActivityDomainMedia
+        400000,  // ActivityDomainCopy
+        500000,  // ActivityDomainComputeSingle
+        600000,  // ActivityDomainRenderSingle
+        700000,  // ActivityDomainMediaDecodeSingle
+        800000,  // ActivityDomainMediaEncodeSingle
+        900000,  // ActivityDomainCopySingle
+        1000000, // ActivityDomainMediaEnhancementSingle
+        1100000, // ActivityDomain3dSingle
+        1200000, // ActivityDomain3dRenderCompute
+        1300000, // ActivityDomainRender
+        1400000, // ActivityDomain3d
+        1500000, // ActivityDomainMediaCodecSingle
     };
-    uint64_t mockActivityTimeStamps[mockEngineHandleComponentCount] = {4465421, 2566851, 1226621, 1226622, 1226622, 1226622, 1226622, 1226622, 1226622, 1226622};
+    uint64_t mockActivityTimeStamps[mockEngineHandleComponentCount] = {4465421, 2566851, 1226621, 1226622, 1226622, 1226622, 1226622, 1226622, 1226622, 1226622, 1226622, 1226622, 1226622, 1226622, 1226622};
     uint32_t mockNumSupportedEngineGroups = mockEngineHandleComponentCount;
     uint32_t mockFrequencyTimeStamp = 38400000;
     uint32_t mockFrequencyActivity = 1200000;

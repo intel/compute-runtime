@@ -15,15 +15,20 @@ namespace Sysman {
 
 static const std::map<zes_engine_group_t, KmdSysman::ActivityDomainsType> engineGroupToDomainTypeMap = {
     {ZES_ENGINE_GROUP_ALL, KmdSysman::ActivityDomainsType::ActitvityDomainGT},
-    {ZES_ENGINE_GROUP_COMPUTE_ALL, KmdSysman::ActivityDomainsType::ActivityDomainRenderCompute},
+    {ZES_ENGINE_GROUP_COMPUTE_ALL, KmdSysman::ActivityDomainsType::ActivityDomainCompute},
     {ZES_ENGINE_GROUP_MEDIA_ALL, KmdSysman::ActivityDomainsType::ActivityDomainMedia},
     {ZES_ENGINE_GROUP_COPY_ALL, KmdSysman::ActivityDomainsType::ActivityDomainCopy},
     {ZES_ENGINE_GROUP_COMPUTE_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainComputeSingle},
     {ZES_ENGINE_GROUP_RENDER_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainRenderSingle},
-    {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainMediaCodecSingle},
-    {ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainMediaCodecSingle},
-    {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainMediaEnhancementSingle},
+    {ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainMediaDecodeSingle},
+    {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainMediaEncodeSingle},
     {ZES_ENGINE_GROUP_COPY_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainCopySingle},
+    {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainMediaEnhancementSingle},
+    {ZES_ENGINE_GROUP_3D_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomain3dSingle},
+    {ZES_ENGINE_GROUP_3D_RENDER_COMPUTE_ALL, KmdSysman::ActivityDomainsType::ActivityDomain3dRenderCompute},
+    {ZES_ENGINE_GROUP_RENDER_ALL, KmdSysman::ActivityDomainsType::ActivityDomainRender},
+    {ZES_ENGINE_GROUP_3D_ALL, KmdSysman::ActivityDomainsType::ActivityDomain3d},
+    {ZES_ENGINE_GROUP_MEDIA_CODEC_SINGLE, KmdSysman::ActivityDomainsType::ActivityDomainMediaCodecSingle},
 };
 
 ze_result_t WddmEngineImp::getActivity(zes_engine_stats_t *pStats) {
@@ -85,7 +90,9 @@ WddmEngineImp::WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType,
         ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE,
         ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE,
         ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE,
-        ZES_ENGINE_GROUP_COPY_SINGLE};
+        ZES_ENGINE_GROUP_COPY_SINGLE,
+        ZES_ENGINE_GROUP_3D_SINGLE,
+        ZES_ENGINE_GROUP_MEDIA_CODEC_SINGLE};
 
     if (std::find(singleEngineGroups.begin(), singleEngineGroups.end(), engineType) != singleEngineGroups.end()) {
         isSingle = true;
