@@ -10,24 +10,24 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_tests_base.h
 
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_gen12lp_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_55_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_56_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_57_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_60_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_61_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_70_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_71_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_74_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_20_01_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_20_02_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_20_04_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_30_00_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_30_01_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_30_03_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_30_04_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_30_05_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_35_10_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_35_11_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_dg2_g10_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_dg2_g11_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_dg2_g12_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_pvc_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_pvc_vg_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_mtl_u_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_mtl_h_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_arl_h_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_bmg_g21_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_bmg_g31_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_lnl_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_ptl_h_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_ptl_u_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_wcl_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_nvl_s_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_nvl_u_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_nvl_p_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_cri_tests.cpp
 )
 
 add_subdirectories()

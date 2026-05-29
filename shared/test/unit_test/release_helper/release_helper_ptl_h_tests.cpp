@@ -10,14 +10,14 @@
 
 #include "gtest/gtest.h"
 
-struct ReleaseHelper3000Tests : public ReleaseHelperTests<30, 0> {
+struct ReleaseHelperPtlHTests : public ReleaseHelperTests<30, 0> {
 
     std::vector<uint32_t> getRevisions() override {
         return {0, 4};
     }
 };
 
-TEST_F(ReleaseHelper3000Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -44,51 +44,51 @@ TEST_F(ReleaseHelper3000Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
     }
 }
 
-TEST_F(ReleaseHelper3000Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu) {
+TEST_F(ReleaseHelperPtlHTests, whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu) {
     whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
+TEST_F(ReleaseHelperPtlHTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperPtlHTests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperPtlHTests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
     whenIsLocalOnlyAllowedCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
     whenIsDummyBlitWaRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
     whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
     whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
     whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenIsPreImageReadFlushRequiredCalledThenTrueReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenIsPreImageReadFlushRequiredCalledThenTrueReturned) {
     whenIsPreImageReadFlushRequiredCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
+TEST_F(ReleaseHelperPtlHTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -117,22 +117,22 @@ TEST_F(ReleaseHelper3000Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
     }
 }
 
-TEST_F(ReleaseHelper3000Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
     whenShouldQueryPeerAccessCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned) {
+TEST_F(ReleaseHelperPtlHTests, whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned();
 }

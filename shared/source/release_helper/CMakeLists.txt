@@ -15,30 +15,30 @@ set(NEO_CORE_RELEASE_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe_lpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe_hpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_gen12lp.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1200.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1201.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1202.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1203.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1204.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1210.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1255.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1256.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1257.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1260.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1261.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1270.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1271.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1274.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_2001.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_2002.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_2004.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3000.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3001.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3003.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3004.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3005.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3510.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3511.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_tgl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_rkl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_adl_s.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_adl_p.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_adl_n.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_dg1.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_dg2_g10.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_dg2_g11.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_dg2_g12.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_pvc.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_pvc_vg.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_mtl_u.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_mtl_h.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_arl_h.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_bmg_g21.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_bmg_g31.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_lnl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_ptl_h.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_ptl_u.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_wcl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_nvl_s.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_nvl_u.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_nvl_p.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_cri.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe2.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3_lpg.inl

@@ -12,14 +12,14 @@
 #include "gtest/gtest.h"
 #include "neo_aot_platforms.h"
 
-struct ReleaseHelper3510Tests : public ReleaseHelperTests<35, 10> {
+struct ReleaseHelperNvlPTests : public ReleaseHelperTests<35, 10> {
 
     std::vector<uint32_t> getRevisions() override {
         return {0, 4};
     }
 };
 
-TEST_F(ReleaseHelper3510Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -45,7 +45,7 @@ TEST_F(ReleaseHelper3510Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
     }
 }
 
-TEST_F(ReleaseHelper3510Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     SupportedNumGrfs expectedValuesRev0{32u, 64u, 96u, 128u, 160u, 192u, 256u, 512u};
     SupportedNumGrfs expectedValues{32u, 64u, 96u, 128u, 160u, 192u, 256u, 320u, 448u, 512u};
     for (auto &baseIpVersion : {static_cast<uint32_t>(AOT::NVL_P_A0)}) {
@@ -63,39 +63,39 @@ TEST_F(ReleaseHelper3510Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreRe
     }
 }
 
-TEST_F(ReleaseHelper3510Tests, whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu) {
+TEST_F(ReleaseHelperNvlPTests, whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu) {
     whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
+TEST_F(ReleaseHelperNvlPTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities) {
+TEST_F(ReleaseHelperNvlPTests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities) {
     whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities) {
+TEST_F(ReleaseHelperNvlPTests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities) {
     whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
     whenIsLocalOnlyAllowedCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
     whenIsDummyBlitWaRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
     whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
     whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -104,11 +104,11 @@ TEST_F(ReleaseHelper3510Tests, whenIsPostImageWriteFlushRequiredCalledThenFalseR
     }
 }
 
-TEST_F(ReleaseHelper3510Tests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
     whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
+TEST_F(ReleaseHelperNvlPTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -143,7 +143,7 @@ TEST_F(ReleaseHelper3510Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
     }
 }
 
-TEST_F(ReleaseHelper3510Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     for (auto &baseIpVersion : {static_cast<uint32_t>(AOT::NVL_P_A0)}) {
         ipVersion.value = baseIpVersion;
         for (auto &revision : getRevisions()) {
@@ -192,15 +192,15 @@ TEST_F(ReleaseHelper3510Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectV
     }
 }
 
-TEST_F(ReleaseHelper3510Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
     whenShouldQueryPeerAccessCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenIsStateCacheInvalidationWaRequiredCalledThenCorrectValueIsReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenIsStateCacheInvalidationWaRequiredCalledThenCorrectValueIsReturned) {
     for (auto &baseIpVersion : {static_cast<uint32_t>(AOT::NVL_P_A0)}) {
         ipVersion.value = baseIpVersion;
         for (auto &revision : getRevisions()) {
@@ -216,11 +216,11 @@ TEST_F(ReleaseHelper3510Tests, whenIsStateCacheInvalidationWaRequiredCalledThenC
     }
 }
 
-TEST_F(ReleaseHelper3510Tests, whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned();
 }
 
-TEST_F(ReleaseHelper3510Tests, whenIsAvailableSemaphore64CalledThenCorrectValueReturned) {
+TEST_F(ReleaseHelperNvlPTests, whenIsAvailableSemaphore64CalledThenCorrectValueReturned) {
     for (const auto &baseIpVersion : {static_cast<uint32_t>(AOT::NVL_P_A0)}) {
         ipVersion.value = baseIpVersion;
         for (auto &revision : getRevisions()) {

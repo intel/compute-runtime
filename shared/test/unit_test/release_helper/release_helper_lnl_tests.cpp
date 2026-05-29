@@ -1,23 +1,24 @@
 /*
- * Copyright (C) 2025-2026 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/xe2_hpg_core/hw_cmds_base.h"
 #include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
 #include "gtest/gtest.h"
 
-struct ReleaseHelper3004Tests : public ReleaseHelperTests<30, 4> {
+struct ReleaseHelperLnlTests : public ReleaseHelperTests<20, 4> {
 
     std::vector<uint32_t> getRevisions() override {
-        return {0, 4};
+        return {0, 1, 4};
     }
 };
 
-TEST_F(ReleaseHelper3004Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+TEST_F(ReleaseHelperLnlTests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -32,63 +33,64 @@ TEST_F(ReleaseHelper3004Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_FALSE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
+        EXPECT_TRUE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
         EXPECT_FALSE(releaseHelper->isBindlessAddressingDisabled());
-        EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
-        EXPECT_FALSE(releaseHelper->isRayTracingSupported());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
+        EXPECT_TRUE(releaseHelper->isRayTracingSupported());
+        EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
-        EXPECT_TRUE(releaseHelper->getFtrXe2Compression());
+        EXPECT_FALSE(releaseHelper->getFtrXe2Compression());
         EXPECT_FALSE(releaseHelper->isAvailableSemaphore64());
-        EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
+        EXPECT_TRUE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
 
-TEST_F(ReleaseHelper3004Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
-    whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
+TEST_F(ReleaseHelperLnlTests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
+    whenGettingSupportedNumGrfsThenValues128And256Returned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu) {
-    whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
+TEST_F(ReleaseHelperLnlTests, whenGettingThreadsPerEuConfigsThen4And8AreReturned) {
+    whenGettingThreadsPerEuConfigsThen4And8AreReturned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
+TEST_F(ReleaseHelperLnlTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperLnlTests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperLnlTests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
+TEST_F(ReleaseHelperLnlTests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
     whenIsLocalOnlyAllowedCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperLnlTests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
     whenIsDummyBlitWaRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
+TEST_F(ReleaseHelperLnlTests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
     whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
+TEST_F(ReleaseHelperLnlTests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
     whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperLnlTests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
     whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenIsPreImageReadFlushRequiredCalledThenTrueReturned) {
+TEST_F(ReleaseHelperLnlTests, whenIsPreImageReadFlushRequiredCalledThenTrueReturned) {
     whenIsPreImageReadFlushRequiredCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
+TEST_F(ReleaseHelperLnlTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -117,18 +119,22 @@ TEST_F(ReleaseHelper3004Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
     }
 }
 
-TEST_F(ReleaseHelper3004Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+TEST_F(ReleaseHelperLnlTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
+TEST_F(ReleaseHelperLnlTests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
     whenShouldQueryPeerAccessCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
+TEST_F(ReleaseHelperLnlTests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3004Tests, whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned) {
+TEST_F(ReleaseHelperLnlTests, whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned();
+}
+
+TEST_F(ReleaseHelperLnlTests, whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned) {
+    whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned();
 }

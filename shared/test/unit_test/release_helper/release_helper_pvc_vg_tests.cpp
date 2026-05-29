@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2026 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,32 +10,29 @@
 
 #include "gtest/gtest.h"
 
-struct ReleaseHelper1257Tests : public ReleaseHelperTests<12, 57> {
-
+struct ReleaseHelperPvcVgTests : public ReleaseHelperTests<12, 61> {
     std::vector<uint32_t> getRevisions() override {
-        return {0};
+        return {7};
     }
 };
 
-TEST_F(ReleaseHelper1257Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+TEST_F(ReleaseHelperPvcVgTests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
 
         EXPECT_FALSE(releaseHelper->isAdjustWalkOrderAvailable());
-        EXPECT_TRUE(releaseHelper->isMatrixMultiplyAccumulateSupported());
-        EXPECT_TRUE(releaseHelper->isDotProductAccumulateSystolicSupported());
+        EXPECT_FALSE(releaseHelper->isMatrixMultiplyAccumulateSupported());
+        EXPECT_FALSE(releaseHelper->isDotProductAccumulateSystolicSupported());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
-        EXPECT_TRUE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
-        EXPECT_TRUE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
+        EXPECT_FALSE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
+        EXPECT_FALSE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
-        EXPECT_FALSE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
-        EXPECT_FALSE(releaseHelper->isBindlessAddressingDisabled());
-        EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
+        EXPECT_TRUE(releaseHelper->isBindlessAddressingDisabled());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
@@ -45,56 +42,43 @@ TEST_F(ReleaseHelper1257Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
     }
 }
 
-TEST_F(ReleaseHelper1257Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
-    whenGettingSupportedNumGrfsThenValues128And256Returned();
-}
-
-TEST_F(ReleaseHelper1257Tests, whenGettingThreadsPerEuConfigsThen4And8AreReturned) {
-    whenGettingThreadsPerEuConfigsThen4And8AreReturned();
-}
-
-TEST_F(ReleaseHelper1257Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
+TEST_F(ReleaseHelperPvcVgTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperPvcVgTests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperPvcVgTests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
+TEST_F(ReleaseHelperPvcVgTests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
     whenIsLocalOnlyAllowedCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenIsDummyBlitWaRequiredCalledThenTrueReturned) {
+TEST_F(ReleaseHelperPvcVgTests, whenIsDummyBlitWaRequiredCalledThenTrueReturned) {
     whenIsDummyBlitWaRequiredCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
+TEST_F(ReleaseHelperPvcVgTests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
     whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPvcVgTests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
     whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenIsPostImageWriteFlushRequiredCalledThenTrueReturned) {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isPostImageWriteFlushRequired());
-    }
+TEST_F(ReleaseHelperPvcVgTests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
+    whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPvcVgTests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
     whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
+TEST_F(ReleaseHelperPvcVgTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -123,18 +107,18 @@ TEST_F(ReleaseHelper1257Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
     }
 }
 
-TEST_F(ReleaseHelper1257Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+TEST_F(ReleaseHelperPvcVgTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPvcVgTests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
     whenShouldQueryPeerAccessCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPvcVgTests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperPvcVgTests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
 }

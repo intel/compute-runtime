@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2026 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,14 +10,14 @@
 
 #include "gtest/gtest.h"
 
-struct ReleaseHelper1260Tests : public ReleaseHelperTests<12, 60> {
+struct ReleaseHelperNvlUTests : public ReleaseHelperTests<30, 5> {
 
     std::vector<uint32_t> getRevisions() override {
-        return {0, 1, 3, 5, 6, 7};
+        return {0, 1, 4};
     }
 };
 
-TEST_F(ReleaseHelper1260Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+TEST_F(ReleaseHelperNvlUTests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -33,53 +33,62 @@ TEST_F(ReleaseHelper1260Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
-        EXPECT_TRUE(releaseHelper->isBindlessAddressingDisabled());
-        EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
+        EXPECT_FALSE(releaseHelper->isBindlessAddressingDisabled());
+        EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
+        EXPECT_EQ(64u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
-        EXPECT_FALSE(releaseHelper->getFtrXe2Compression());
+        EXPECT_TRUE(releaseHelper->getFtrXe2Compression());
         EXPECT_FALSE(releaseHelper->isAvailableSemaphore64());
         EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
 
-TEST_F(ReleaseHelper1260Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
+TEST_F(ReleaseHelperNvlUTests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
+    whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
+}
+
+TEST_F(ReleaseHelperNvlUTests, whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu) {
+    whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
+}
+
+TEST_F(ReleaseHelperNvlUTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperNvlUTests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperNvlUTests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
-    whenIsLocalOnlyAllowedCalledThenTrueReturned();
+TEST_F(ReleaseHelperNvlUTests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
+    whenIsLocalOnlyAllowedCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenIsDummyBlitWaRequiredCalledThenTrueReturned) {
-    whenIsDummyBlitWaRequiredCalledThenTrueReturned();
+TEST_F(ReleaseHelperNvlUTests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
+    whenIsDummyBlitWaRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
+TEST_F(ReleaseHelperNvlUTests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
     whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlUTests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
     whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlUTests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
     whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
-    whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
+TEST_F(ReleaseHelperNvlUTests, whenIsPreImageReadFlushRequiredCalledThenTrueReturned) {
+    whenIsPreImageReadFlushRequiredCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
+TEST_F(ReleaseHelperNvlUTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -89,37 +98,37 @@ TEST_F(ReleaseHelper1260Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
 
         auto &preferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue();
         EXPECT_EQ(0u, preferredSlmValueArray[0].upperLimit);
-        EXPECT_EQ(8u, preferredSlmValueArray[0].valueToProgram);
+        EXPECT_EQ(0u, preferredSlmValueArray[0].valueToProgram);
 
         EXPECT_EQ(16 * kB, preferredSlmValueArray[1].upperLimit);
-        EXPECT_EQ(9u, preferredSlmValueArray[1].valueToProgram);
+        EXPECT_EQ(1u, preferredSlmValueArray[1].valueToProgram);
 
         EXPECT_EQ(32 * kB, preferredSlmValueArray[2].upperLimit);
-        EXPECT_EQ(10u, preferredSlmValueArray[2].valueToProgram);
+        EXPECT_EQ(2u, preferredSlmValueArray[2].valueToProgram);
 
         EXPECT_EQ(64 * kB, preferredSlmValueArray[3].upperLimit);
-        EXPECT_EQ(11u, preferredSlmValueArray[3].valueToProgram);
+        EXPECT_EQ(3u, preferredSlmValueArray[3].valueToProgram);
 
         EXPECT_EQ(96 * kB, preferredSlmValueArray[4].upperLimit);
-        EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
+        EXPECT_EQ(4u, preferredSlmValueArray[4].valueToProgram);
 
         EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[5].upperLimit);
-        EXPECT_EQ(13u, preferredSlmValueArray[5].valueToProgram);
+        EXPECT_EQ(5u, preferredSlmValueArray[5].valueToProgram);
     }
 }
 
-TEST_F(ReleaseHelper1260Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+TEST_F(ReleaseHelperNvlUTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlUTests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
     whenShouldQueryPeerAccessCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
+TEST_F(ReleaseHelperNvlUTests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1260Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
-    whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
+TEST_F(ReleaseHelperNvlUTests, whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned) {
+    whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned();
 }

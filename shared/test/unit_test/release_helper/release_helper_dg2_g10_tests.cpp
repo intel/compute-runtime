@@ -9,15 +9,16 @@
 #include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
 #include "gtest/gtest.h"
+#include "neo_aot_platforms.h"
 
-struct ReleaseHelper1256Tests : public ReleaseHelperTests<12, 56> {
+struct ReleaseHelperDg2G10Tests : public ReleaseHelperTests<12, 55> {
 
     std::vector<uint32_t> getRevisions() override {
-        return {0, 4, 5};
+        return {0, 1, 4, 8};
     }
 };
 
-TEST_F(ReleaseHelper1256Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -45,43 +46,43 @@ TEST_F(ReleaseHelper1256Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
     }
 }
 
-TEST_F(ReleaseHelper1256Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValues128And256Returned();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenGettingThreadsPerEuConfigsThen4And8AreReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenGettingThreadsPerEuConfigsThen4And8AreReturned) {
     whenGettingThreadsPerEuConfigsThen4And8AreReturned();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
+TEST_F(ReleaseHelperDg2G10Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperDg2G10Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperDg2G10Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
     whenIsLocalOnlyAllowedCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenIsDummyBlitWaRequiredCalledThenTrueReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenIsDummyBlitWaRequiredCalledThenTrueReturned) {
     whenIsDummyBlitWaRequiredCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
     whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
     whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenIsPostImageWriteFlushRequiredCalledThenTrueReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenIsPostImageWriteFlushRequiredCalledThenTrueReturned) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -90,11 +91,11 @@ TEST_F(ReleaseHelper1256Tests, whenIsPostImageWriteFlushRequiredCalledThenTrueRe
     }
 }
 
-TEST_F(ReleaseHelper1256Tests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
     whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
+TEST_F(ReleaseHelperDg2G10Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -115,23 +116,31 @@ TEST_F(ReleaseHelper1256Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
         EXPECT_EQ(64 * kB, preferredSlmValueArray[3].upperLimit);
         EXPECT_EQ(11u, preferredSlmValueArray[3].valueToProgram);
 
-        EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[4].upperLimit);
-        EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
+        if (ipVersion.value == AOT::DG2_G10_B0) {
+            EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[4].upperLimit);
+            EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
+        } else {
+            EXPECT_EQ(96 * kB, preferredSlmValueArray[4].upperLimit);
+            EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
+
+            EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[5].upperLimit);
+            EXPECT_EQ(13u, preferredSlmValueArray[5].valueToProgram);
+        }
     }
 }
 
-TEST_F(ReleaseHelper1256Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
     whenShouldQueryPeerAccessCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1256Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperDg2G10Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
 }

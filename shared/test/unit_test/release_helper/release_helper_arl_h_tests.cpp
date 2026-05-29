@@ -9,93 +9,84 @@
 #include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
 #include "gtest/gtest.h"
-#include "neo_aot_platforms.h"
 
-struct ReleaseHelper1255Tests : public ReleaseHelperTests<12, 55> {
+struct ReleaseHelperArlHTests : public ReleaseHelperTests<12, 74> {
 
     std::vector<uint32_t> getRevisions() override {
-        return {0, 1, 4, 8};
+        return {0, 4};
     }
 };
 
-TEST_F(ReleaseHelper1255Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+TEST_F(ReleaseHelperArlHTests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
 
-        EXPECT_FALSE(releaseHelper->isAdjustWalkOrderAvailable());
+        EXPECT_TRUE(releaseHelper->isAdjustWalkOrderAvailable());
         EXPECT_TRUE(releaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(releaseHelper->isDotProductAccumulateSystolicSupported());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired());
-        EXPECT_FALSE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
-        EXPECT_TRUE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
-        EXPECT_TRUE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
+        EXPECT_TRUE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
+        EXPECT_FALSE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
+        EXPECT_FALSE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_FALSE(releaseHelper->isAuxSurfaceModeOverrideRequired());
-        EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
+        EXPECT_FALSE(releaseHelper->isRcsExposureDisabled());
         EXPECT_FALSE(releaseHelper->isBindlessAddressingDisabled());
         EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_FALSE(releaseHelper->getFtrXe2Compression());
+        EXPECT_TRUE(releaseHelper->isDirectSubmissionLightSupported());
         EXPECT_FALSE(releaseHelper->isAvailableSemaphore64());
         EXPECT_FALSE(releaseHelper->isLatePreemptionStartSupportedHelper());
     }
 }
 
-TEST_F(ReleaseHelper1255Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
+TEST_F(ReleaseHelperArlHTests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValues128And256Returned();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenGettingThreadsPerEuConfigsThen4And8AreReturned) {
+TEST_F(ReleaseHelperArlHTests, whenGettingThreadsPerEuConfigsThen4And8AreReturned) {
     whenGettingThreadsPerEuConfigsThen4And8AreReturned();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
+TEST_F(ReleaseHelperArlHTests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperArlHTests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
+TEST_F(ReleaseHelperArlHTests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
+TEST_F(ReleaseHelperArlHTests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
     whenIsLocalOnlyAllowedCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenIsDummyBlitWaRequiredCalledThenTrueReturned) {
-    whenIsDummyBlitWaRequiredCalledThenTrueReturned();
+TEST_F(ReleaseHelperArlHTests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
+    whenIsDummyBlitWaRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
-    whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
-}
-
-TEST_F(ReleaseHelper1255Tests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
+TEST_F(ReleaseHelperArlHTests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
     whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenIsPostImageWriteFlushRequiredCalledThenTrueReturned) {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isPostImageWriteFlushRequired());
-    }
+TEST_F(ReleaseHelperArlHTests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
+    whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperArlHTests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
     whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
+TEST_F(ReleaseHelperArlHTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -116,31 +107,34 @@ TEST_F(ReleaseHelper1255Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
         EXPECT_EQ(64 * kB, preferredSlmValueArray[3].upperLimit);
         EXPECT_EQ(11u, preferredSlmValueArray[3].valueToProgram);
 
-        if (ipVersion.value == AOT::DG2_G10_B0) {
-            EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[4].upperLimit);
-            EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
-        } else {
-            EXPECT_EQ(96 * kB, preferredSlmValueArray[4].upperLimit);
-            EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
+        EXPECT_EQ(96 * kB, preferredSlmValueArray[4].upperLimit);
+        EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
 
-            EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[5].upperLimit);
-            EXPECT_EQ(13u, preferredSlmValueArray[5].valueToProgram);
-        }
+        EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[5].upperLimit);
+        EXPECT_EQ(13u, preferredSlmValueArray[5].valueToProgram);
+    }
+}
+TEST_F(ReleaseHelperArlHTests, whenIsBlitImageAllowedForDepthFormatCalledThenFalseReturned) {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isBlitImageAllowedForDepthFormat());
     }
 }
 
-TEST_F(ReleaseHelper1255Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+TEST_F(ReleaseHelperArlHTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
+TEST_F(ReleaseHelperArlHTests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
     whenShouldQueryPeerAccessCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
+TEST_F(ReleaseHelperArlHTests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
-    whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
+TEST_F(ReleaseHelperArlHTests, whenIsStateCacheInvalidationWaRequiredCalledThenTrueOnlyForImmediateAndImageOrSampler) {
+    whenIsStateCacheInvalidationWaRequiredCalledThenTrueOnlyForImmediateAndImageOrSampler();
 }

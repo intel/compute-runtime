@@ -12,14 +12,14 @@
 
 #include "gtest/gtest.h"
 
-struct ReleaseHelper3511Tests : public ReleaseHelperTests<35, 11> {
+struct ReleaseHelperCriTests : public ReleaseHelperTests<35, 11> {
 
     std::vector<uint32_t> getRevisions() override {
         return {0};
     }
 };
 
-TEST_F(ReleaseHelper3511Tests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+TEST_F(ReleaseHelperCriTests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -45,15 +45,15 @@ TEST_F(ReleaseHelper3511Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
     }
 }
 
-TEST_F(ReleaseHelper3511Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
+TEST_F(ReleaseHelperCriTests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValuesUpTo512Returned();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu) {
+TEST_F(ReleaseHelperCriTests, whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu) {
     whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenGettingTotalMemBankSizeThenReturn8GB) {
+TEST_F(ReleaseHelperCriTests, whenGettingTotalMemBankSizeThenReturn8GB) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -62,39 +62,39 @@ TEST_F(ReleaseHelper3511Tests, whenGettingTotalMemBankSizeThenReturn8GB) {
     }
 }
 
-TEST_F(ReleaseHelper3511Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities) {
+TEST_F(ReleaseHelperCriTests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities) {
     whenGettingAdditionalFp16AtomicCapabilitiesThenReturnAddCapabilities();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities) {
+TEST_F(ReleaseHelperCriTests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities) {
     whenGettingAdditionalExtraKernelCapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
+TEST_F(ReleaseHelperCriTests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
     whenIsLocalOnlyAllowedCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperCriTests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
     whenIsDummyBlitWaRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
+TEST_F(ReleaseHelperCriTests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
     whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
+TEST_F(ReleaseHelperCriTests, whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned) {
     whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperCriTests, whenIsPostImageWriteFlushRequiredCalledThenFalseReturned) {
     whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperCriTests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
     whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
+TEST_F(ReleaseHelperCriTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -138,18 +138,18 @@ TEST_F(ReleaseHelper3511Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
     }
 }
 
-TEST_F(ReleaseHelper3511Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+TEST_F(ReleaseHelperCriTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
+TEST_F(ReleaseHelperCriTests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
     whenShouldQueryPeerAccessCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
+TEST_F(ReleaseHelperCriTests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper3511Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
+TEST_F(ReleaseHelperCriTests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
 }
