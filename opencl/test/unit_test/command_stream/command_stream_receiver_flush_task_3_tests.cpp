@@ -1797,7 +1797,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispa
     EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::HIGH);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenEpilogueRequiredFlagWhenTaskIsSubmittedDirectlyThenItPointsBackToCsr) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenEpilogueRequiredFlagWhenTaskIsSubmittedDirectlyThenItPointsBackToCsr, IsGen12LP) {
     configureCSRtoNonDirtyState<FamilyType>(false);
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 

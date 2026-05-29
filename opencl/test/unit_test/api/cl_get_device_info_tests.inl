@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -439,100 +439,74 @@ HWTEST_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyInte
     EXPECT_EQ(0u, paramRetSize);
 }
 
-//------------------------------------------------------------------------------
-struct GetDeviceInfoP : public ApiFixture,
-                        public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
-    void SetUp() override {
-        param = GetParam();
-        ApiFixture::setUp();
+static cl_device_info deviceInfoStrParams[] = {
+    CL_DEVICE_BUILT_IN_KERNELS,
+    CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED,
+    CL_DEVICE_NAME,
+    CL_DEVICE_OPENCL_C_VERSION,
+    CL_DEVICE_PROFILE,
+    CL_DEVICE_VENDOR,
+    CL_DEVICE_VERSION,
+    CL_DRIVER_VERSION};
+
+TEST_F(clGetDeviceInfoTests, GivenStringTypeParamWhenGettingDeviceInfoThenSuccessIsReturned) {
+    for (auto param : deviceInfoStrParams) {
+        size_t paramRetSize = 0;
+
+        cl_int retVal = clGetDeviceInfo(
+            testedClDevice,
+            param,
+            0,
+            nullptr,
+            &paramRetSize);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(0u, paramRetSize);
+
+        auto paramValue = std::make_unique<char[]>(paramRetSize);
+
+        retVal = clGetDeviceInfo(
+            testedClDevice,
+            param,
+            paramRetSize,
+            paramValue.get(),
+            nullptr);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
     }
-
-    void TearDown() override {
-        ApiFixture::tearDown();
-    }
-
-    cl_device_info param;
-};
-
-typedef GetDeviceInfoP GetDeviceInfoStr;
-
-TEST_P(GetDeviceInfoStr, GivenStringTypeParamWhenGettingDeviceInfoThenSuccessIsReturned) {
-    size_t paramRetSize = 0;
-
-    cl_int retVal = clGetDeviceInfo(
-        testedClDevice,
-        param,
-        0,
-        nullptr,
-        &paramRetSize);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(0u, paramRetSize);
-
-    auto paramValue = std::make_unique<char[]>(paramRetSize);
-
-    retVal = clGetDeviceInfo(
-        testedClDevice,
-        param,
-        paramRetSize,
-        paramValue.get(),
-        nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-static cl_device_info deviceInfoStrParams[] =
-    {
-        CL_DEVICE_BUILT_IN_KERNELS,
-        CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED,
-        CL_DEVICE_NAME,
-        CL_DEVICE_OPENCL_C_VERSION,
-        CL_DEVICE_PROFILE,
-        CL_DEVICE_VENDOR,
-        CL_DEVICE_VERSION,
-        CL_DRIVER_VERSION};
-
-INSTANTIATE_TEST_SUITE_P(
-    api,
-    GetDeviceInfoStr,
-    testing::ValuesIn(deviceInfoStrParams));
-
-typedef GetDeviceInfoP GetDeviceInfoVectorWidth;
-
-TEST_P(GetDeviceInfoVectorWidth, GivenParamTypeVectorWhenGettingDeviceInfoThenSizeIsGreaterThanZeroAndValueIsGreaterThanZero) {
-    cl_uint paramValue = 0;
-    size_t paramRetSize = 0;
-
-    auto retVal = clGetDeviceInfo(
-        testedClDevice,
-        param,
-        0,
-        nullptr,
-        &paramRetSize);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sizeof(cl_uint), paramRetSize);
-
-    retVal = clGetDeviceInfo(
-        testedClDevice,
-        param,
-        paramRetSize,
-        &paramValue,
-        nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_GT(paramValue, 0u);
-}
-
-cl_device_info devicePreferredVector[] = {
+static cl_device_info devicePreferredVector[] = {
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR,
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT,
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT,
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG,
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT};
 
-INSTANTIATE_TEST_SUITE_P(
-    api,
-    GetDeviceInfoVectorWidth,
-    testing::ValuesIn(devicePreferredVector));
+TEST_F(clGetDeviceInfoTests, GivenParamTypeVectorWhenGettingDeviceInfoThenSizeIsGreaterThanZeroAndValueIsGreaterThanZero) {
+    for (auto param : devicePreferredVector) {
+        cl_uint paramValue = 0;
+        size_t paramRetSize = 0;
+
+        auto retVal = clGetDeviceInfo(
+            testedClDevice,
+            param,
+            0,
+            nullptr,
+            &paramRetSize);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(sizeof(cl_uint), paramRetSize);
+
+        retVal = clGetDeviceInfo(
+            testedClDevice,
+            param,
+            paramRetSize,
+            &paramValue,
+            nullptr);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_GT(paramValue, 0u);
+    }
+}
 
 TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDotCapsThenCorrectValuesAreSet) {
     size_t paramRetSize = 0;

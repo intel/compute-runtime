@@ -63,7 +63,7 @@ void HardwareCommandsTest::addSpaceForSingleKernelArg() {
     mockKernelWithInternal->mockKernel->setKernelArguments(kernelArguments);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptorDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated) {
+HWTEST2_F(HardwareCommandsTest, WhenProgramInterfaceDescriptorDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated, IsGen12LP) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     GPGPU_WALKER walkerCmd{};
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
@@ -105,7 +105,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenProgramInterfaceDescrip
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenMediaInterfaceDescriptorIsCreatedThenOnlyRequiredSpaceInCommandStreamIsAllocated) {
+HWTEST2_F(HardwareCommandsTest, WhenMediaInterfaceDescriptorIsCreatedThenOnlyRequiredSpaceInCommandStreamIsAllocated, IsGen12LP) {
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
 
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -123,7 +123,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenMediaInterfaceDescripto
     EXPECT_EQ(sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD) + sizeof(MEDIA_STATE_FLUSH), usedAfter - usedBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenMediaStateFlushIsCreatedThenOnlyRequiredSpaceInCommandStreamIsAllocated) {
+HWTEST2_F(HardwareCommandsTest, WhenMediaStateFlushIsCreatedThenOnlyRequiredSpaceInCommandStreamIsAllocated, IsGen12LP) {
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
 
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -219,7 +219,7 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
     EXPECT_EQ(PatchInfoAllocationType::indirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, givenIndirectHeapNotAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenOffsetZeroIsReturned) {
+HWTEST2_F(HardwareCommandsTest, givenIndirectHeapNotAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenOffsetZeroIsReturned, IsGen12LP) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     auto nonInternalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap indirectHeap(nonInternalAllocation, false);
@@ -237,7 +237,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, givenIndirectHeapNotAllocat
     pDevice->getMemoryManager()->freeGraphicsMemory(nonInternalAllocation);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, givenIndirectHeapAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenHeapBaseOffsetIsReturned) {
+HWTEST2_F(HardwareCommandsTest, givenIndirectHeapAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenHeapBaseOffsetIsReturned, IsGen12LP) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     auto internalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::internalHeap, pDevice->getDeviceBitfield()));
     IndirectHeap indirectHeap(internalAllocation, true);
@@ -257,7 +257,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, givenIndirectHeapAllocatedF
     pDevice->getMemoryManager()->freeGraphicsMemory(internalAllocation);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataOffsetsAreMoved) {
+HWTEST2_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataOffsetsAreMoved, IsGen12LP) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
@@ -303,7 +303,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, givenSendCrossThreadDataWhe
     EXPECT_EQ(PatchInfoAllocationType::indirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateResourceThenCorrectSizeIsAllocated) {
+HWTEST2_F(HardwareCommandsTest, WhenAllocatingIndirectStateResourceThenCorrectSizeIsAllocated, IsGen12LP) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
@@ -396,7 +396,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenAllocatingIndirectState
     EXPECT_GE(HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(), usedAfterCS - usedBeforeCS);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, givenKernelWithFourBindingTableEntriesWhenIndirectStateIsEmittedThenInterfaceDescriptorContainsCorrectBindingTableEntryCount) {
+HWTEST2_F(HardwareCommandsTest, givenKernelWithFourBindingTableEntriesWhenIndirectStateIsEmittedThenInterfaceDescriptorContainsCorrectBindingTableEntryCount, IsGen12LP) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
@@ -445,7 +445,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, givenKernelWithFourBindingT
     }
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, givenKernelWith100BindingTableEntriesWhenIndirectStateIsEmittedThenInterfaceDescriptorHas31BindingTableEntriesSet) {
+HWTEST2_F(HardwareCommandsTest, givenKernelWith100BindingTableEntriesWhenIndirectStateIsEmittedThenInterfaceDescriptorHas31BindingTableEntriesSet, IsGen12LP) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
@@ -494,7 +494,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, givenKernelWith100BindingTa
     }
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKernelsWalkOrderIsTakenIntoAccount) {
+HWTEST2_F(HardwareCommandsTest, whenSendingIndirectStateThenKernelsWalkOrderIsTakenIntoAccount, IsGen12LP) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
@@ -588,7 +588,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, whenSendingIndirectStateThe
     alignedFree(expectedLocalIds);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBindingTableStatesPointersAreCorrect) {
+HWTEST2_F(HardwareCommandsTest, WhenSendingIndirectStateThenBindingTableStatesPointersAreCorrect, IsGen12LP) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -667,7 +667,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenSendingIndirectStateThe
     EXPECT_EQ(sshUsed + 0x00000040u, *(&bindingTableStatesPointers[1]));
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePointersAreCorrect) {
+HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePointersAreCorrect, IsGen12LP) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
@@ -905,7 +905,7 @@ HWTEST2_F(HardwareCommandsTest, givenNoBTEntriesInKernelDescriptorAndGTPinInitia
     isGTPinInitialized = false;
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerStateArrayWhenSendIndirectStateIsCalledThenInterfaceDescriptorIsNotPopulated) {
+HWTEST2_F(HardwareCommandsTest, GivenKernelWithInvalidSamplerStateArrayWhenSendIndirectStateIsCalledThenInterfaceDescriptorIsNotPopulated, IsGen12LP) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
@@ -977,7 +977,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, GivenKernelWithInvalidSampl
     EXPECT_EQ(0U, interfaceDescriptor->getSamplerCount());
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgrammedThenBorderColorIsCorrectlyCopiedToDshAndSamplerStatesAreProgrammedWithPointer) {
+HWTEST2_F(HardwareCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgrammedThenBorderColorIsCorrectlyCopiedToDshAndSamplerStatesAreProgrammedWithPointer, IsGen12LP) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
@@ -1263,7 +1263,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenXeHpAndLate
     EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgsV0::getSize()));
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsImplicitArgsTests, givenPreXeHpPlatformWhenSendingIndirectStateForKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithoutLocalIds) {
+HWTEST2_F(HardwareCommandsImplicitArgsTests, givenPreXeHpPlatformWhenSendingIndirectStateForKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithoutLocalIds, IsGen12LP) {
     dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto implicitArgsInIndirectData = indirectHeapAllocation->getUnderlyingBuffer();

@@ -152,7 +152,7 @@ HWTEST_F(EnqueueReadBufferRectTest, GivenNonBlockingEnqueueWhenReadingBufferThen
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, Given2dRegionWhenReadingBufferThenCommandsAreProgrammedCorrectly) {
+HWTEST2_F(EnqueueReadBufferRectTest, Given2dRegionWhenReadingBufferThenCommandsAreProgrammedCorrectly, IsGen12LP) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueReadBufferRect2D<FamilyType>();
 
@@ -198,7 +198,7 @@ HWTEST_F(EnqueueReadBufferRectTest, WhenReadingBufferThenCommandsAreAdded) {
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, WhenReadingBufferThenIndirectDataIsAdded) {
+HWTEST2_F(EnqueueReadBufferRectTest, WhenReadingBufferThenIndirectDataIsAdded, IsGen12LP) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
@@ -241,7 +241,7 @@ HWTEST_F(EnqueueReadBufferRectTest, WhenReadingBufferThenL3ProgrammingIsCorrect)
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, When2DEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWTEST2_F(EnqueueReadBufferRectTest, When2DEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed, IsGen12LP) {
     enqueueReadBufferRect2D<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
@@ -251,7 +251,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, When2DEnqueueIsDoneThe
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, WhenReadingBufferThenMediaInterfaceDescriptorIsCorrect) {
+HWTEST2_F(EnqueueReadBufferRectTest, WhenReadingBufferThenMediaInterfaceDescriptorIsCorrect, IsGen12LP) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -279,7 +279,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, WhenReadingBufferThenM
     FamilyType::Parse::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorCmd);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, WhenReadingBufferThenInterfaceDescriptorDataIsCorrect) {
+HWTEST2_F(EnqueueReadBufferRectTest, WhenReadingBufferThenInterfaceDescriptorDataIsCorrect, IsGen12LP) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -322,12 +322,12 @@ HWTEST2_F(EnqueueReadBufferRectTest, WhenReadingBufferThenOnePipelineSelectIsPro
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, WhenReadingBufferThenMediaVfeStateIsCorrect) {
+HWTEST2_F(EnqueueReadBufferRectTest, WhenReadingBufferThenMediaVfeStateIsCorrect, IsGen12LP) {
     enqueueReadBufferRect2D<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferRectTest, GivenBlockingEnqueueWhenReadingBufferThenPipeControlIsProgrammedAfterWalkerWithDcFlushSet) {
+HWTEST2_F(EnqueueReadBufferRectTest, GivenBlockingEnqueueWhenReadingBufferThenPipeControlIsProgrammedAfterWalkerWithDcFlushSet, IsGen12LP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     auto blocking = CL_TRUE;

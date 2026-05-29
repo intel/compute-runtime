@@ -51,7 +51,7 @@ TEST(GetDeviceInfo, GivenInvalidParametersWhenGettingDeviceInfoThenValueSizeRetI
     EXPECT_EQ(0x1234u, valueSizeRet);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledForBdwAndLaterThenClSuccessIsReturned) {
+HWTEST2_F(GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledThenClSuccessIsReturned, IsGen12LP) {
 
     std::vector<TestParams> params = {
         {CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL,
@@ -841,40 +841,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenDeviceRootDeviceWhenInitializingCaps
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
 }
 
-struct GetDeviceInfo : public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
-    void SetUp() override {
-        param = GetParam();
-    }
-
-    cl_device_info param;
-};
-
-TEST_P(GetDeviceInfo, GivenValidParamsWhenGettingDeviceInfoThenSuccessIsReturned) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    size_t sizeReturned = GetInfo::invalidSourceSize;
-    auto retVal = device->getDeviceInfo(
-        param,
-        0,
-        nullptr,
-        &sizeReturned);
-    if (CL_SUCCESS != retVal) {
-        ASSERT_EQ(CL_SUCCESS, retVal) << " param = " << param;
-    }
-    ASSERT_NE(GetInfo::invalidSourceSize, sizeReturned);
-
-    auto *object = new char[sizeReturned];
-    retVal = device->getDeviceInfo(
-        param,
-        sizeReturned,
-        object,
-        nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    delete[] object;
-}
-
-// Define new command types to run the parameterized tests
+// Define params to run the device info tests
 cl_device_info deviceInfoParams[] = {
     CL_DEVICE_ADDRESS_BITS,
     CL_DEVICE_AVAILABLE,
@@ -981,10 +948,32 @@ cl_device_info deviceInfoParams[] = {
     CL_DRIVER_VERSION,
     CL_DRIVER_UUID_KHR};
 
-INSTANTIATE_TEST_SUITE_P(
-    Device_,
-    GetDeviceInfo,
-    testing::ValuesIn(deviceInfoParams));
+TEST(GetDeviceInfo, GivenValidParamsWhenGettingDeviceInfoThenSuccessIsReturned) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    for (auto param : deviceInfoParams) {
+        size_t sizeReturned = GetInfo::invalidSourceSize;
+        auto retVal = device->getDeviceInfo(
+            param,
+            0,
+            nullptr,
+            &sizeReturned);
+        if (CL_SUCCESS != retVal) {
+            ASSERT_EQ(CL_SUCCESS, retVal) << " param = " << param;
+        }
+        ASSERT_NE(GetInfo::invalidSourceSize, sizeReturned);
+
+        auto *object = new char[sizeReturned];
+        retVal = device->getDeviceInfo(
+            param,
+            sizeReturned,
+            object,
+            nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        delete[] object;
+    }
+}
 
 TEST(GetDeviceInfoTest, givenDeviceWithSubDevicesWhenGettingNumberOfComputeUnitsThenRootDeviceExposesAllComputeUnits) {
     UltClDeviceFactory deviceFactory{1, 3};
@@ -1076,12 +1065,8 @@ TEST(GetDeviceInfo, givenDeviceUuidWhenGettingDeviceInfoThenGenerateDeviceUuidFr
     EXPECT_EQ(generateDeviceUuid, deviceUuidKHR);
 }
 
-struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
-    void SetUp() override {
-        param = GetParam();
-    }
-
-    void verifyDeviceAttribute(ClDevice &device) {
+struct DeviceAttributeQueryTest : public ::testing::Test {
+    void verifyDeviceAttribute(cl_device_info param, ClDevice &device) {
         size_t sizeReturned = GetInfo::invalidSourceSize;
         auto retVal = device.getDeviceInfo(
             param,
@@ -1157,7 +1142,6 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
         }
     }
 
-    cl_device_info param;
     DebugManagerStateRestore restorer;
 };
 
@@ -1179,7 +1163,16 @@ TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFro
     EXPECT_EQ(sizeof(cl_device_atomic_capabilities), retSize);
 }
 
-TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedOnRootDeviceAndSubDevicesThenReturnCorrectAttributeValues) {
+cl_device_info deviceAttributeQueryParams[] = {
+    CL_DEVICE_IP_VERSION_INTEL,
+    CL_DEVICE_ID_INTEL,
+    CL_DEVICE_NUM_SLICES_INTEL,
+    CL_DEVICE_NUM_SUB_SLICES_PER_SLICE_INTEL,
+    CL_DEVICE_NUM_EUS_PER_SUB_SLICE_INTEL,
+    CL_DEVICE_NUM_THREADS_PER_EU_INTEL,
+    CL_DEVICE_FEATURE_CAPABILITIES_INTEL};
+
+TEST_F(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedOnRootDeviceAndSubDevicesThenReturnCorrectAttributeValues) {
     debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
@@ -1191,10 +1184,12 @@ TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedO
     auto pRootClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     ASSERT_EQ(2u, pRootClDevice->subDevices.size());
 
-    verifyDeviceAttribute(*pRootClDevice);
+    for (auto param : deviceAttributeQueryParams) {
+        verifyDeviceAttribute(param, *pRootClDevice);
 
-    for (const auto &pClSubDevice : pRootClDevice->subDevices) {
-        verifyDeviceAttribute(*pClSubDevice);
+        for (const auto &pClSubDevice : pRootClDevice->subDevices) {
+            verifyDeviceAttribute(param, *pClSubDevice);
+        }
     }
 }
 
@@ -1210,17 +1205,3 @@ TEST(ExposedIpVersionOverrideTest, givenGetDeviceInfoWhenDeviceIpOverrideIsSetTh
 
     EXPECT_EQ(versionExpected, versionGot);
 }
-
-cl_device_info deviceAttributeQueryParams[] = {
-    CL_DEVICE_IP_VERSION_INTEL,
-    CL_DEVICE_ID_INTEL,
-    CL_DEVICE_NUM_SLICES_INTEL,
-    CL_DEVICE_NUM_SUB_SLICES_PER_SLICE_INTEL,
-    CL_DEVICE_NUM_EUS_PER_SUB_SLICE_INTEL,
-    CL_DEVICE_NUM_THREADS_PER_EU_INTEL,
-    CL_DEVICE_FEATURE_CAPABILITIES_INTEL};
-
-INSTANTIATE_TEST_SUITE_P(
-    Device_,
-    DeviceAttributeQueryTest,
-    testing::ValuesIn(deviceAttributeQueryParams));

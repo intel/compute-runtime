@@ -109,14 +109,14 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenTaskCountIsInc
     EXPECT_EQ(commandStreamReceiver.heaplessPrologProgrammed ? 2u : 1u, commandStreamReceiver.peekTaskCount());
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenconfigureCSRtoNonDirtyStateWhenFlushTaskIsCalledThenNoCommandsAreAdded) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenconfigureCSRtoNonDirtyStateWhenFlushTaskIsCalledThenNoCommandsAreAdded, IsGen12LP) {
     configureCSRtoNonDirtyState<FamilyType>(false);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);
     EXPECT_EQ(0u, commandStreamReceiver.commandStream.getUsed());
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSubmittedViaCsrThenBbEndCoversPaddingEnoughToFitMiBatchBufferStart) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSubmittedViaCsrThenBbEndCoversPaddingEnoughToFitMiBatchBufferStart, IsGen12LP) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     mockCsr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr.timestampPacketWriteEnabled = false;
@@ -302,7 +302,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTestsWithMockCsrFlushCmdBuffer, whenFlush
                        *pDevice);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, GivenSameTaskLevelWhenFlushingTaskThenDoNotSendPipeControl) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenSameTaskLevelWhenFlushingTaskThenDoNotSendPipeControl, IsGen12LP) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     // Configure the CSR to not need to submit any state or commands.
@@ -353,7 +353,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenHigherTaskLevelWhenFlushingTa
     EXPECT_NE(cmdList.end(), itorPC);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWithInstructionCacheRequestWhenFlushTaskIsCalledThenPipeControlWithInstructionCacheIsEmitted) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWithInstructionCacheRequestWhenFlushTaskIsCalledThenPipeControlWithInstructionCacheIsEmitted, IsGen12LP) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     configureCSRtoNonDirtyState<FamilyType>(false);
@@ -372,7 +372,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenCommand
     EXPECT_FALSE(commandStreamReceiver.requiresInstructionCacheFlush);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenHigherTaskLevelWhenTimestampPacketWriteIsEnabledThenDontAddPipeControl) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenHigherTaskLevelWhenTimestampPacketWriteIsEnabledThenDontAddPipeControl, IsGen12LP) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.timestampPacketWriteEnabled = true;
     commandStreamReceiver.isPreambleSent = true;
@@ -388,7 +388,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenHigherT
     EXPECT_EQ(cmdList.end(), itorPC);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, WhenForcePipeControlPriorToWalkerIsSetThenAddExtraPipeControls) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, WhenForcePipeControlPriorToWalkerIsSetThenAddExtraPipeControls, IsGen12LP) {
     DebugManagerStateRestore stateResore;
     debugManager.flags.ForcePipeControlPriorToWalker.set(true);
     debugManager.flags.FlushAllCaches.set(-1);
@@ -433,7 +433,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, WhenForcePip
     EXPECT_EQ(counterPC, 2);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushNotRequiredThenDontSendPipecontrol) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushNotRequiredThenDontSendPipecontrol, IsGen12LP) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     NEO::WorkaroundTable *waTable = &pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable;
 
@@ -480,7 +480,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeThenSen
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeAndWaSamplerCacheFlushBetweenRedescribedSurfaceReadsDasabledThenDontSendPipecontrol) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeAndWaSamplerCacheFlushBetweenRedescribedSurfaceReadsDasabledThenDontSendPipecontrol, IsGen12LP) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
@@ -564,7 +564,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenStateBaseAddre
     EXPECT_FALSE(commandStreamReceiver.sshState.updateAndCheck(&ssh));
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenStateBaseAddressProgrammingShouldMatchTracking) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenStateBaseAddressProgrammingShouldMatchTracking, IsGen12LP) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     auto gmmHelper = pDevice->getGmmHelper();
     auto stateHeapMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
@@ -1158,7 +1158,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
     EXPECT_EQ(0u, numberOfPC);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, GivenBlockingWhenFlushingTaskThenAddPipeControlWithDcFlush) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenBlockingWhenFlushingTaskThenAddPipeControlWithDcFlush, IsGen12LP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     configureCSRtoNonDirtyState<FamilyType>(false);

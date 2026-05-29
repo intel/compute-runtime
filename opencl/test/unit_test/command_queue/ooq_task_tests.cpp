@@ -19,33 +19,48 @@
 using namespace NEO;
 
 struct OOQFixtureFactory : public HelloWorldFixtureFactory {
-    typedef OOQueueFixture CommandQueueFixture;
+    using CommandQueueFixture = OOQueueFixture;
 };
 
+template <typename T>
+struct OOQEnqueueTypeTag {
+    using type = T;
+};
+
+template <typename... Types>
+struct OOQEnqueueTypeList {
+    template <typename F>
+    static void forEach(F &&func) {
+        (func(OOQEnqueueTypeTag<Types>{}), ...);
+    }
+};
+
+using OOQEnqueueTypes = OOQEnqueueTypeList<
+    EnqueueCopyBufferHelper<>,
+    EnqueueCopyImageHelper<>,
+    EnqueueFillBufferHelper<>,
+    EnqueueFillImageHelper<>,
+    EnqueueReadBufferHelper<>,
+    EnqueueReadImageHelper<>,
+    EnqueueWriteBufferHelper<>,
+    EnqueueWriteImageHelper<>>;
+
 template <typename TypeParam>
+static bool isImageEnqueueType() {
+    return std::is_same_v<TypeParam, EnqueueCopyImageHelper<>> ||
+           std::is_same_v<TypeParam, EnqueueFillImageHelper<>> ||
+           std::is_same_v<TypeParam, EnqueueReadImageHelper<>> ||
+           std::is_same_v<TypeParam, EnqueueWriteImageHelper<>>;
+}
+
 struct OOQTaskTypedTests : public HelloWorldTest<OOQFixtureFactory> {
     void SetUp() override {
-        if (std::is_same<TypeParam, EnqueueCopyImageHelper<>>::value ||
-            std::is_same<TypeParam, EnqueueFillImageHelper<>>::value ||
-            std::is_same<TypeParam, EnqueueReadImageHelper<>>::value ||
-            std::is_same<TypeParam, EnqueueWriteImageHelper<>>::value) {
-            REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-        }
         debugManager.flags.PerformImplicitFlushForNewResource.set(0);
         debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
         HelloWorldTest<OOQFixtureFactory>::SetUp();
-        initialized = true;
-    }
-    void TearDown() override {
-        if (initialized) {
-            HelloWorldTest<OOQFixtureFactory>::TearDown();
-        }
     }
     DebugManagerStateRestore stateRestore;
-    bool initialized = false;
 };
-
-TYPED_TEST_SUITE_P(OOQTaskTypedTests);
 
 bool isBlockingCall(unsigned int cmdType) {
     if (cmdType == CL_COMMAND_WRITE_BUFFER ||
@@ -58,80 +73,86 @@ bool isBlockingCall(unsigned int cmdType) {
     }
 }
 
-TYPED_TEST_P(OOQTaskTypedTests, givenNonBlockingCallWhenDoneOnOutOfOrderQueueThenTaskLevelDoesntChange) {
-    auto &commandStreamReceiver = this->pCmdQ->getGpgpuCommandStreamReceiver();
-    auto tagAddress = commandStreamReceiver.getTagAddress();
+TEST_F(OOQTaskTypedTests, givenNonBlockingCallWhenDoneOnOutOfOrderQueueThenTaskLevelDoesntChange) {
+    OOQEnqueueTypes::forEach([this](auto tag) {
+        using TypeParam = typename decltype(tag)::type;
+        if (isImageEnqueueType<TypeParam>() && !NEO::TestChecks::supportsImages(defaultHwInfo)) {
+            return;
+        }
 
-    auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
-    auto taskLevelClosed = blockingCall ? 1u : 0u; // for blocking commands task level will be closed
+        auto &commandStreamReceiver = this->pCmdQ->getGpgpuCommandStreamReceiver();
+        auto tagAddress = commandStreamReceiver.getTagAddress();
 
-    if (commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
-        taskLevelClosed = 0u;
-    }
+        // Keep pCmdQ in sync with CSR so prior blocking iterations don't skew the delta.
+        auto initialTaskLevel = commandStreamReceiver.peekTaskLevel();
+        this->pCmdQ->taskLevel = initialTaskLevel;
+        *tagAddress = initialHardwareTag;
 
-    // for non blocking calls make sure that resources are added to defer free list instead of being destructed in place
-    if (!blockingCall) {
-        *tagAddress = 0;
-    }
+        auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
+        auto taskLevelClosed = blockingCall ? 1u : 0u;
 
-    auto previousTaskLevel = this->pCmdQ->taskLevel;
+        if (commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
+            taskLevelClosed = 0u;
+        }
 
-    if (TypeParam::Traits::cmdType == CL_COMMAND_WRITE_BUFFER || TypeParam::Traits::cmdType == CL_COMMAND_READ_BUFFER) {
-        auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
-        buffer->forceDisallowCPUCopy = true; // no task level logic when cpu copy
-        TypeParam::enqueue(this->pCmdQ, buffer.get());
-        this->pCmdQ->flush();
+        if (!blockingCall) {
+            *tagAddress = 0;
+        }
 
-    } else {
-        TypeParam::enqueue(this->pCmdQ, nullptr);
-    }
-    EXPECT_EQ(previousTaskLevel + taskLevelClosed, this->pCmdQ->taskLevel);
-    *tagAddress = initialHardwareTag;
+        if (TypeParam::Traits::cmdType == CL_COMMAND_WRITE_BUFFER || TypeParam::Traits::cmdType == CL_COMMAND_READ_BUFFER) {
+            auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+            buffer->forceDisallowCPUCopy = true;
+            TypeParam::enqueue(this->pCmdQ, buffer.get());
+            this->pCmdQ->flush();
+        } else {
+            TypeParam::enqueue(this->pCmdQ, nullptr);
+        }
+        EXPECT_EQ(initialTaskLevel + taskLevelClosed, this->pCmdQ->taskLevel);
+        *tagAddress = initialHardwareTag;
+    });
 }
 
-TYPED_TEST_P(OOQTaskTypedTests, givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCountIsUpdated) {
-    auto &commandStreamReceiver = this->pCmdQ->getGpgpuCommandStreamReceiver();
-    auto previousTaskCount = commandStreamReceiver.peekTaskCount();
-    auto tagAddress = commandStreamReceiver.getTagAddress();
-    auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
+TEST_F(OOQTaskTypedTests, givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCountIsUpdated) {
+    OOQEnqueueTypes::forEach([this](auto tag) {
+        using TypeParam = typename decltype(tag)::type;
+        if (isImageEnqueueType<TypeParam>() && !NEO::TestChecks::supportsImages(defaultHwInfo)) {
+            return;
+        }
 
-    // for non blocking calls make sure that resources are added to defer free list instead of being destructed in place
-    if (!blockingCall) {
-        *tagAddress = 0;
-    }
+        auto &commandStreamReceiver = this->pCmdQ->getGpgpuCommandStreamReceiver();
+        auto tagAddress = commandStreamReceiver.getTagAddress();
 
-    if (TypeParam::Traits::cmdType == CL_COMMAND_WRITE_BUFFER || TypeParam::Traits::cmdType == CL_COMMAND_READ_BUFFER) {
-        auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
-        buffer->forceDisallowCPUCopy = true; // no task level logic when cpu copy
-        TypeParam::enqueue(this->pCmdQ, buffer.get());
-        this->pCmdQ->flush();
-    } else {
-        TypeParam::enqueue(this->pCmdQ, nullptr);
-    }
-    EXPECT_LT(previousTaskCount, commandStreamReceiver.peekTaskCount());
-    EXPECT_LE(this->pCmdQ->taskCount, commandStreamReceiver.peekTaskCount());
-    *tagAddress = initialHardwareTag;
+        this->pCmdQ->taskLevel = commandStreamReceiver.peekTaskLevel();
+        *tagAddress = initialHardwareTag;
+        auto previousTaskCount = commandStreamReceiver.peekTaskCount();
+        auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
+
+        if (!blockingCall) {
+            *tagAddress = 0;
+        }
+
+        if (TypeParam::Traits::cmdType == CL_COMMAND_WRITE_BUFFER || TypeParam::Traits::cmdType == CL_COMMAND_READ_BUFFER) {
+            auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+            buffer->forceDisallowCPUCopy = true;
+            TypeParam::enqueue(this->pCmdQ, buffer.get());
+            this->pCmdQ->flush();
+        } else {
+            TypeParam::enqueue(this->pCmdQ, nullptr);
+        }
+        EXPECT_LT(previousTaskCount, commandStreamReceiver.peekTaskCount());
+        EXPECT_LE(this->pCmdQ->taskCount, commandStreamReceiver.peekTaskCount());
+        *tagAddress = initialHardwareTag;
+    });
 }
 
-typedef ::testing::Types<
-    EnqueueCopyBufferHelper<>,
-    EnqueueCopyImageHelper<>,
-    EnqueueFillBufferHelper<>,
-    EnqueueFillImageHelper<>,
-    EnqueueReadBufferHelper<>,
-    EnqueueReadImageHelper<>,
-    EnqueueWriteBufferHelper<>,
-    EnqueueWriteImageHelper<>>
-    EnqueueParams;
-
-REGISTER_TYPED_TEST_SUITE_P(OOQTaskTypedTests,
-                            givenNonBlockingCallWhenDoneOnOutOfOrderQueueThenTaskLevelDoesntChange,
-                            givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCountIsUpdated);
-
-// Instantiate all of these parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(OOQ, OOQTaskTypedTests, EnqueueParams);
-
-typedef OOQTaskTypedTests<EnqueueKernelHelper<>> OOQTaskTests;
+struct OOQTaskTests : public HelloWorldTest<OOQFixtureFactory> {
+    void SetUp() override {
+        debugManager.flags.PerformImplicitFlushForNewResource.set(0);
+        debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+        HelloWorldTest<OOQFixtureFactory>::SetUp();
+    }
+    DebugManagerStateRestore stateRestore;
+};
 
 struct OOQTaskTestsWithMockCsr : public OOQTaskTests {
     void SetUp() override {}

@@ -29,7 +29,7 @@
 
 using namespace NEO;
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenWritingImageThenCommandsAreProgrammedCorrectly) {
+HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenCommandsAreProgrammedCorrectly, IsGen12LP) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueWriteImage<FamilyType>();
 
@@ -146,7 +146,7 @@ HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenL3ProgrammingIsCorrect) {
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWTEST2_F(EnqueueWriteImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed, IsGen12LP) {
     enqueueWriteImage<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
@@ -156,7 +156,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenEnqueueIsDoneThenState
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenWritingImageThenMediaInterfaceDescriptorIsCorrect) {
+HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenMediaInterfaceDescriptorIsCorrect, IsGen12LP) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -182,7 +182,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenWritingImageThenMediaI
     FamilyType::Parse::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenWritingImageThenInterfaceDescriptorDataIsCorrect) {
+HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenInterfaceDescriptorDataIsCorrect, IsGen12LP) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -237,7 +237,7 @@ HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenOnePipelineSelectIsProgramm
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenWritingImageThenMediaVfeStateIsCorrect) {
+HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenMediaVfeStateIsCorrect, IsGen12LP) {
     enqueueWriteImage<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }

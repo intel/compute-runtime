@@ -45,8 +45,7 @@ struct DriverDiagnosticsTest : public PlatformFixture,
     char expectedHint[DriverDiagnostics::maxHintStringSize]{};
 };
 
-struct VerboseLevelTest : public DriverDiagnosticsTest,
-                          public ::testing::WithParamInterface<uint64_t> {
+struct VerboseLevelTest : public DriverDiagnosticsTest {
 
     void SetUp() override {
         DriverDiagnosticsTest::SetUp();
@@ -81,12 +80,10 @@ struct PerformanceHintTest : public DriverDiagnosticsTest,
     }
 };
 
-struct PerformanceHintBufferTest : public PerformanceHintTest,
-                                   public ::testing::WithParamInterface<std::tuple<bool /*address aligned*/, bool /*size aligned*/, bool /*provide performance hint*/>> {
+struct PerformanceHintBufferTest : public PerformanceHintTest {
 
     void SetUp() override {
         PerformanceHintTest::SetUp();
-        std::tie(alignedAddress, alignedSize, providePerformanceHint) = GetParam();
         address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
     }
 
@@ -102,17 +99,16 @@ struct PerformanceHintBufferTest : public PerformanceHintTest,
     Buffer *buffer = nullptr;
 };
 
-struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
-                                         public ::testing::WithParamInterface<std::tuple<bool /*profiling enabled*/, bool /*preemption supported*/>> {
+struct PerformanceHintCommandQueueTest : public PerformanceHintTest {
 
     void SetUp() override {
         PerformanceHintTest::SetUp();
-        std::tie(profilingEnabled, preemptionSupported) = GetParam();
-        static_cast<MockClDevice *>(context->getDevice(0))->deviceInfo.preemptionSupported = preemptionSupported;
     }
 
     void TearDown() override {
-        clReleaseCommandQueue(cmdQ);
+        if (cmdQ) {
+            clReleaseCommandQueue(cmdQ);
+        }
         PerformanceHintTest::TearDown();
     }
     cl_command_queue cmdQ = nullptr;
@@ -152,12 +148,10 @@ struct PerformanceHintEnqueueBufferTest : public PerformanceHintEnqueueTest {
     Buffer *buffer = nullptr;
 };
 
-struct PerformanceHintEnqueueReadBufferTest : public PerformanceHintEnqueueBufferTest,
-                                              public ::testing::WithParamInterface<std::tuple<bool /*address aligned*/, bool /*size aligned*/>> {
+struct PerformanceHintEnqueueReadBufferTest : public PerformanceHintEnqueueBufferTest {
 
     void SetUp() override {
         PerformanceHintEnqueueBufferTest::SetUp();
-        std::tie(alignedAddress, alignedSize) = GetParam();
     }
 
     void TearDown() override {
@@ -194,12 +188,10 @@ struct PerformanceHintEnqueueImageTest : public PerformanceHintEnqueueTest {
     bool initialized = false;
 };
 
-struct PerformanceHintEnqueueReadImageTest : public PerformanceHintEnqueueImageTest,
-                                             public ::testing::WithParamInterface<std::tuple<bool /*address aligned*/, bool /*size aligned*/>> {
+struct PerformanceHintEnqueueReadImageTest : public PerformanceHintEnqueueImageTest {
 
     void SetUp() override {
         PerformanceHintEnqueueImageTest::SetUp();
-        std::tie(alignedAddress, alignedSize) = GetParam();
     }
 
     void TearDown() override {
@@ -209,8 +201,7 @@ struct PerformanceHintEnqueueReadImageTest : public PerformanceHintEnqueueImageT
     bool alignedAddress = false;
 };
 
-struct PerformanceHintEnqueueMapTest : public PerformanceHintEnqueueTest,
-                                       public ::testing::WithParamInterface<bool /*zero-copy obj*/> {
+struct PerformanceHintEnqueueMapTest : public PerformanceHintEnqueueTest {
 
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
@@ -245,8 +236,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
     size_t globalWorkGroupSize[3]{};
 };
 
-struct PerformanceHintEnqueueKernelBadSizeTest : public PerformanceHintEnqueueKernelTest,
-                                                 public ::testing::WithParamInterface<int /*bad size dimension*/> {
+struct PerformanceHintEnqueueKernelBadSizeTest : public PerformanceHintEnqueueKernelTest {
 
     void SetUp() override {
         PerformanceHintEnqueueKernelTest::SetUp();
@@ -285,14 +275,12 @@ struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTes
     size_t globalWorkGroupSize[3]{};
 };
 
-struct PerformanceHintKernelTest : public PerformanceHintTest,
-                                   public ::testing::WithParamInterface<bool /*zero-sized*/> {
+struct PerformanceHintKernelTest : public PerformanceHintTest {
 
     void SetUp() override {
         debugManager.flags.CreateMultipleRootDevices.set(2);
         debugManager.flags.EnableMultiRootDeviceContexts.set(true);
         PerformanceHintTest::SetUp();
-        zeroSized = GetParam();
     }
 
     void TearDown() override {

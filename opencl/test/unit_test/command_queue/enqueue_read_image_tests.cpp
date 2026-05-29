@@ -29,7 +29,7 @@
 
 using namespace NEO;
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadImageTest, WhenReadingImageThenGpgpuWalkerIsProgrammedCorrectly) {
+HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenGpgpuWalkerIsProgrammedCorrectly, IsGen12LP) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueReadImage<FamilyType>();
 
@@ -584,7 +584,7 @@ HWTEST_F(EnqueueReadImageTest, WhenReadingImageThenL3ProgrammingIsCorrect) {
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWTEST2_F(EnqueueReadImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed, IsGen12LP) {
     enqueueReadImage<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
@@ -594,7 +594,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadImageTest, WhenEnqueueIsDoneThenStateB
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadImageTest, WhenReadingImageThenMediaInterfaceDescriptorIsCorrect) {
+HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenMediaInterfaceDescriptorIsCorrect, IsGen12LP) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -620,7 +620,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadImageTest, WhenReadingImageThenMediaIn
     FamilyType::Parse::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadImageTest, WhenReadingImageThenInterfaceDescriptorData) {
+HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenInterfaceDescriptorData, IsGen12LP) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -676,12 +676,12 @@ HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenPipelineSelectIsProgrammed, 
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadImageTest, WhenReadingImageThenMediaVfeStateIsCorrect) {
+HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenMediaVfeStateIsCorrect, IsGen12LP) {
     enqueueReadImage<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadImageTest, GivenBlockingEnqueueWhenReadingImageThenPipeControlWithDcFlushIsSetAfterWalker) {
+HWTEST2_F(EnqueueReadImageTest, GivenBlockingEnqueueWhenReadingImageThenPipeControlWithDcFlushIsSetAfterWalker, IsGen12LP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     bool blocking = true;

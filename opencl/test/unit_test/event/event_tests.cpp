@@ -748,7 +748,7 @@ TEST_F(InternalsEventTest, GivenMapOperationNonZeroCopyBufferWhenSubmittingComma
     buffer->decRefInternal();
 }
 
-uint32_t commands[] = {
+static uint32_t commands[] = {
     CL_COMMAND_NDRANGE_KERNEL,
     CL_COMMAND_TASK,
     CL_COMMAND_NATIVE_KERNEL,
@@ -780,28 +780,15 @@ uint32_t commands[] = {
     CL_COMMAND_SVM_UNMAP,
 };
 
-class InternalsEventProfilingTest : public InternalsEventTest,
-                                    public ::testing::WithParamInterface<uint32_t> {
-    void SetUp() override {
-        InternalsEventTest::SetUp();
-    }
-
-    void TearDown() override {
-        InternalsEventTest::TearDown();
-    }
-};
-
-TEST_P(InternalsEventProfilingTest, GivenProfilingWhenEventCreatedThenProfilingSet) {
+TEST_F(InternalsEventTest, GivenProfilingWhenEventCreatedThenProfilingSet) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     std::unique_ptr<MockCommandQueue> pCmdQ(new MockCommandQueue(mockContext, pClDevice, props, false));
 
-    std::unique_ptr<MockEvent<Event>> event(new MockEvent<Event>(pCmdQ.get(), GetParam(), 0, 0));
-    EXPECT_TRUE(event->isProfilingEnabled());
+    for (auto cmd : commands) {
+        std::unique_ptr<MockEvent<Event>> event(new MockEvent<Event>(pCmdQ.get(), cmd, 0, 0));
+        EXPECT_TRUE(event->isProfilingEnabled()) << " cmd = " << cmd;
+    }
 }
-
-INSTANTIATE_TEST_SUITE_P(InternalsEventProfilingTest,
-                         InternalsEventProfilingTest,
-                         ::testing::ValuesIn(commands));
 
 TEST_F(InternalsEventTest, GivenProfilingWhenUserEventCreatedThenProfilingNotSet) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};

@@ -31,7 +31,7 @@
 
 using namespace NEO;
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddPipeControl) {
+HWTEST2_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddPipeControl, IsGen12LP) {
     MockKernelWithInternals kernel2(*context);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
     auto mockCmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
@@ -294,7 +294,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhen
     EXPECT_EQ(expectedSize, TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDepsSize3, false));
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, TimestampPacketTests, givenTimestampPacketWhenDispatchingGpuWalkerThenAddTwoPcForLastWalker) {
+HWTEST2_F(TimestampPacketTests, givenTimestampPacketWhenDispatchingGpuWalkerThenAddTwoPcForLastWalker, IsGen12LP) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     MockTimestampPacketContainer timestampPacket(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
@@ -339,7 +339,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, TimestampPacketTests, givenTimestampPacketWhenDis
     EXPECT_EQ(2u, walkersFound);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, TimestampPacketTests, givenTimestampPacketDisabledWhenDispatchingGpuWalkerThenDontAddPipeControls) {
+HWTEST2_F(TimestampPacketTests, givenTimestampPacketDisabledWhenDispatchingGpuWalkerThenDontAddPipeControls, IsGen12LP) {
     MockTimestampPacketContainer timestampPacket(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel->mockKernel);
     auto &cmdStream = mockCmdQ->getCS(0);

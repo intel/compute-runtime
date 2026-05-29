@@ -866,7 +866,7 @@ HWTEST_F(DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenWorkDi
     }
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenInterfaceDescriptorsAreProgrammedCorrectly) {
+HWTEST2_F(DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenInterfaceDescriptorsAreProgrammedCorrectly, IsGen12LP) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     auto memoryManager = this->pDevice->getMemoryManager();
@@ -961,7 +961,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispa
     memoryManager->freeGraphicsMemory(kernelIsaWithSamplerAllocation);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenGpgpuWalkerIdOffsetIsProgrammedCorrectly) {
+HWTEST2_F(DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenGpgpuWalkerIdOffsetIsProgrammedCorrectly, IsGen12LP) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockKernel kernel1(program.get(), kernelInfo, *pClDevice);
@@ -1001,7 +1001,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispa
     }
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenThreadGroupIdStartingCoordinatesAreProgrammedCorrectly) {
+HWTEST2_F(DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenThreadGroupIdStartingCoordinatesAreProgrammedCorrectly, IsGen12LP) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockKernel kernel1(program.get(), kernelInfo, *pClDevice);
@@ -1045,7 +1045,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispa
     }
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, DispatchWalkerTest, GivenMultipleDispatchInfoAndSameKernelWhenDispatchingWalkerThenGpgpuWalkerThreadGroupIdStartingCoordinatesAreCorrectlyProgrammed) {
+HWTEST2_F(DispatchWalkerTest, GivenMultipleDispatchInfoAndSameKernelWhenDispatchingWalkerThenGpgpuWalkerThreadGroupIdStartingCoordinatesAreCorrectlyProgrammed, IsGen12LP) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
@@ -1213,118 +1213,6 @@ struct ProfilingCommandsTest : public DispatchWalkerTest, ::testing::WithParamIn
         DispatchWalkerTest::TearDown();
     }
 };
-
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenTimeStampAddressIsProgrammedCorrectly) {
-    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    auto &cmdStream = pCmdQ->getCS(0);
-    MockTagAllocator<HwTimeStamps> timeStampAllocator(pDevice->getRootDeviceIndex(), this->pDevice->getMemoryManager(), 10,
-                                                      MemoryConstants::cacheLineSize, sizeof(HwTimeStamps), false, pDevice->getDeviceBitfield());
-
-    auto hwTimeStamp1 = timeStampAllocator.getTag();
-    ASSERT_NE(nullptr, hwTimeStamp1);
-
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream, pDevice->getRootDeviceEnvironment());
-
-    auto hwTimeStamp2 = timeStampAllocator.getTag();
-    ASSERT_NE(nullptr, hwTimeStamp2);
-
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp2, &cmdStream, pDevice->getRootDeviceEnvironment());
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
-
-    auto itorStoreReg = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorStoreReg);
-    auto storeReg = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorStoreReg);
-    ASSERT_NE(nullptr, storeReg);
-
-    uint64_t gpuAddress = storeReg->getMemoryAddress();
-    auto contextTimestampFieldOffset = offsetof(HwTimeStamps, contextStartTS);
-    uint64_t expectedAddress = hwTimeStamp1->getGpuAddress() + contextTimestampFieldOffset;
-    EXPECT_EQ(expectedAddress, gpuAddress);
-
-    itorStoreReg++;
-    itorStoreReg = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(itorStoreReg, cmdList.end());
-    ASSERT_NE(cmdList.end(), itorStoreReg);
-    storeReg = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorStoreReg);
-    ASSERT_NE(nullptr, storeReg);
-
-    gpuAddress = storeReg->getMemoryAddress();
-    expectedAddress = hwTimeStamp2->getGpuAddress() + contextTimestampFieldOffset;
-    EXPECT_EQ(expectedAddress, gpuAddress);
-
-    auto itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorPipeCtrl);
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment())) {
-        itorPipeCtrl++;
-    }
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
-        itorPipeCtrl++;
-    }
-    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
-    ASSERT_NE(nullptr, pipeControl);
-
-    gpuAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
-    expectedAddress = hwTimeStamp1->getGpuAddress() + offsetof(HwTimeStamps, globalStartTS);
-    EXPECT_EQ(expectedAddress, gpuAddress);
-
-    itorPipeCtrl++;
-    itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(itorPipeCtrl, cmdList.end());
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment())) {
-        itorPipeCtrl++;
-    }
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
-        itorPipeCtrl++;
-    }
-    ASSERT_NE(cmdList.end(), itorPipeCtrl);
-    pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
-    ASSERT_NE(nullptr, pipeControl);
-
-    gpuAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
-    expectedAddress = hwTimeStamp2->getGpuAddress() + offsetof(HwTimeStamps, globalStartTS);
-    EXPECT_EQ(expectedAddress, gpuAddress);
-}
-
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsNotTakenThenTimeStampAddressIsProgrammedCorrectly) {
-    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
-
-    auto &cmdStream = pCmdQ->getCS(0);
-    MockTagAllocator<HwTimeStamps> timeStampAllocator(pDevice->getRootDeviceIndex(), this->pDevice->getMemoryManager(), 10,
-                                                      MemoryConstants::cacheLineSize, sizeof(HwTimeStamps), false, pDevice->getDeviceBitfield());
-
-    auto hwTimeStamp1 = timeStampAllocator.getTag();
-    ASSERT_NE(nullptr, hwTimeStamp1);
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream, pDevice->getRootDeviceEnvironment());
-
-    auto hwTimeStamp2 = timeStampAllocator.getTag();
-    ASSERT_NE(nullptr, hwTimeStamp2);
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp2, &cmdStream, pDevice->getRootDeviceEnvironment());
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
-
-    auto itorStoreReg = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorStoreReg);
-    auto storeReg = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorStoreReg);
-    ASSERT_NE(nullptr, storeReg);
-
-    uint64_t gpuAddress = storeReg->getMemoryAddress();
-    auto contextTimestampFieldOffset = offsetof(HwTimeStamps, contextEndTS);
-    uint64_t expectedAddress = hwTimeStamp1->getGpuAddress() + contextTimestampFieldOffset;
-    EXPECT_EQ(expectedAddress, gpuAddress);
-
-    itorStoreReg++;
-    itorStoreReg = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(itorStoreReg, cmdList.end());
-    ASSERT_NE(cmdList.end(), itorStoreReg);
-    storeReg = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorStoreReg);
-    ASSERT_NE(nullptr, storeReg);
-
-    gpuAddress = storeReg->getMemoryAddress();
-    expectedAddress = hwTimeStamp2->getGpuAddress() + contextTimestampFieldOffset;
-    EXPECT_EQ(expectedAddress, gpuAddress);
-}
 
 HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSpace) {
     size_t globalOffsets[3] = {0, 0, 0};

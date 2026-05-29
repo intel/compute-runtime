@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,23 +36,13 @@ namespace ULT {
 
 typedef Test<KernelSubGroupInfoKhrFixture> KernelSubGroupInfoKhrTest;
 
-template <typename ParamType>
-struct KernelSubGroupInfoKhrParamFixture : KernelSubGroupInfoKhrFixture,
-                                           ::testing::TestWithParam<ParamType> {
-    void SetUp() override {
-        KernelSubGroupInfoKhrFixture::setUp();
-    }
-
-    void TearDown() override {
-        KernelSubGroupInfoKhrFixture::tearDown();
-    }
-};
-
 struct TestParam {
     size_t gwsX;
     size_t gwsY;
     size_t gwsZ;
-} kernelSubGroupInfoKhrWGS[] = {
+};
+
+static TestParam kernelSubGroupInfoKhrWGS[] = {
     {0, 0, 0},
     {1, 1, 1},
     {1, 5, 1},
@@ -64,13 +54,11 @@ struct TestParam {
     {1, 510, 1},
     {512, 1, 1}};
 
-typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturnSizeTest;
+static uint32_t /*cl_kernel_sub_group_info_khr*/ kernelSubGroupInfoKhrInputParams[] = {
+    CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,
+    CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE_KHR};
 
-INSTANTIATE_TEST_SUITE_P(wgs,
-                         KernelSubGroupInfoKhrReturnSizeTest,
-                         ::testing::ValuesIn(kernelSubGroupInfoKhrWGS));
-
-TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGroupSizeThenCorrectValueIsReturned) {
+TEST_F(KernelSubGroupInfoKhrTest, GivenLwsParameterWhenGettingMaxSubGroupSizeThenCorrectValueIsReturned) {
     paramValueSizeRet = 0;
 
     retVal = clGetKernelSubGroupInfoKHR(
@@ -85,46 +73,39 @@ TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGr
 
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-
     EXPECT_EQ(paramValue, maxSimdSize);
 }
 
-typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturnCountTest;
+TEST_F(KernelSubGroupInfoKhrTest, GivenLwsParameterWhenGettingSubGroupCountThenCorrectValueIsReturned) {
+    for (const auto &wgs : kernelSubGroupInfoKhrWGS) {
+        paramValueSizeRet = 0;
+        inputValue[0] = wgs.gwsX;
+        inputValue[1] = wgs.gwsY;
+        inputValue[2] = wgs.gwsZ;
+        calculatedWGS = inputValue[0] * inputValue[1] * inputValue[2];
 
-INSTANTIATE_TEST_SUITE_P(wgs,
-                         KernelSubGroupInfoKhrReturnCountTest,
-                         ::testing::ValuesIn(kernelSubGroupInfoKhrWGS));
+        retVal = clGetKernelSubGroupInfoKHR(
+            pMultiDeviceKernel,
+            pClDevice,
+            CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
+            sizeof(size_t) * 3,
+            inputValue,
+            sizeof(size_t),
+            &paramValue,
+            &paramValueSizeRet);
 
-TEST_P(KernelSubGroupInfoKhrReturnCountTest, GivenLwsParameterWhenGettingSubGroupCountThenCorrectValueIsReturned) {
-    paramValueSizeRet = 0;
-    inputValue[0] = GetParam().gwsX;
-    inputValue[1] = GetParam().gwsY;
-    inputValue[2] = GetParam().gwsZ;
-    calculatedWGS = inputValue[0] * inputValue[1] * inputValue[2];
+        EXPECT_EQ(retVal, CL_SUCCESS);
+        EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
-    retVal = clGetKernelSubGroupInfoKHR(
-        pMultiDeviceKernel,
-        pClDevice,
-        CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
-        sizeof(size_t) * 3,
-        inputValue,
-        sizeof(size_t),
-        &paramValue,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-
-    if (calculatedWGS % maxSimdSize == 0) {
-        EXPECT_EQ(paramValue, calculatedWGS / maxSimdSize);
-    } else {
-        EXPECT_EQ(paramValue, (calculatedWGS / maxSimdSize) + 1);
+        if (calculatedWGS % maxSimdSize == 0) {
+            EXPECT_EQ(paramValue, calculatedWGS / maxSimdSize);
+        } else {
+            EXPECT_EQ(paramValue, (calculatedWGS / maxSimdSize) + 1);
+        }
     }
 }
 
-typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturnCompileSizeTest;
-
-TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, GivenKernelWhenGettingRequiredSubGroupSizeThenCorrectValueIsReturned) {
+TEST_F(KernelSubGroupInfoKhrTest, GivenKernelWhenGettingRequiredSubGroupSizeThenCorrectValueIsReturned) {
 
     retVal = clGetKernelSubGroupInfoKHR(
         pMultiDeviceKernel,
@@ -220,96 +201,92 @@ TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidParamNameWhenGettingKernelSubGroup
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 }
 
-uint32_t /*cl_kernel_sub_group_info_khr*/ kernelSubGroupInfoKhrInputParams[] = {
-    CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,
-    CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE_KHR};
+TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidInputWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
+    for (auto param : kernelSubGroupInfoKhrInputParams) {
+        // work dim == 0
+        retVal = clGetKernelSubGroupInfoKHR(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            0,
+            inputValue,
+            0,
+            nullptr,
+            nullptr);
 
-typedef KernelSubGroupInfoKhrParamFixture<uint32_t /*cl_kernel_sub_group_info_khr*/> KernelSubGroupInfoKhrInputParamsTest;
+        EXPECT_EQ(retVal, CL_INVALID_VALUE);
 
-INSTANTIATE_TEST_SUITE_P(KernelSubGroupInfoKhrInputParams,
-                         KernelSubGroupInfoKhrInputParamsTest,
-                         ::testing::ValuesIn(kernelSubGroupInfoKhrInputParams));
+        // work dim % sizeof(size_t) != 0
+        retVal = clGetKernelSubGroupInfoKHR(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            (sizeof(size_t) * maxWorkDim) - 1,
+            inputValue,
+            0,
+            nullptr,
+            nullptr);
 
-TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
-    // work dim == 0
-    retVal = clGetKernelSubGroupInfoKHR(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        0,
-        inputValue,
-        0,
-        nullptr,
-        nullptr);
+        EXPECT_EQ(retVal, CL_INVALID_VALUE);
 
-    EXPECT_EQ(retVal, CL_INVALID_VALUE);
+        // work dim > maxWorkDim
+        retVal = clGetKernelSubGroupInfoKHR(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            sizeof(size_t) * (maxWorkDim + 1),
+            inputValue,
+            0,
+            nullptr,
+            nullptr);
 
-    // work dim % sizeof(size_t) != 0
-    retVal = clGetKernelSubGroupInfoKHR(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        (sizeof(size_t) * maxWorkDim) - 1,
-        inputValue,
-        0,
-        nullptr,
-        nullptr);
+        EXPECT_EQ(retVal, CL_INVALID_VALUE);
 
-    EXPECT_EQ(retVal, CL_INVALID_VALUE);
+        // null input_value
+        retVal = clGetKernelSubGroupInfoKHR(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            sizeof(size_t) * (maxWorkDim),
+            nullptr,
+            0,
+            nullptr,
+            nullptr);
 
-    // work dim > maxWorkDim
-    retVal = clGetKernelSubGroupInfoKHR(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        sizeof(size_t) * (maxWorkDim + 1),
-        inputValue,
-        0,
-        nullptr,
-        nullptr);
-
-    EXPECT_EQ(retVal, CL_INVALID_VALUE);
-
-    // null input_value
-    retVal = clGetKernelSubGroupInfoKHR(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        sizeof(size_t) * (maxWorkDim),
-        nullptr,
-        0,
-        nullptr,
-        nullptr);
-
-    EXPECT_EQ(retVal, CL_INVALID_VALUE);
+        EXPECT_EQ(retVal, CL_INVALID_VALUE);
+    }
 }
 
-TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidParamSizeWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
-    // param_value_size < sizeof(size_t)
-    retVal = clGetKernelSubGroupInfoKHR(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        sizeof(size_t),
-        inputValue,
-        sizeof(size_t) - 1,
-        &paramValue,
-        nullptr);
+TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidParamSizeWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
+    for (auto param : kernelSubGroupInfoKhrInputParams) {
+        // param_value_size < sizeof(size_t)
+        retVal = clGetKernelSubGroupInfoKHR(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            sizeof(size_t),
+            inputValue,
+            sizeof(size_t) - 1,
+            &paramValue,
+            nullptr);
 
-    EXPECT_EQ(retVal, CL_INVALID_VALUE);
+        EXPECT_EQ(retVal, CL_INVALID_VALUE);
+    }
 }
 
-TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenNoReturnPointerWhenGettingKernelSubGroupInfoThenSuccessIsReturned) {
-    retVal = clGetKernelSubGroupInfoKHR(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        sizeof(size_t),
-        inputValue,
-        0,
-        nullptr,
-        nullptr);
+TEST_F(KernelSubGroupInfoKhrTest, GivenNoReturnPointerWhenGettingKernelSubGroupInfoThenSuccessIsReturned) {
+    for (auto param : kernelSubGroupInfoKhrInputParams) {
+        retVal = clGetKernelSubGroupInfoKHR(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            sizeof(size_t),
+            inputValue,
+            0,
+            nullptr,
+            nullptr);
 
-    EXPECT_EQ(retVal, CL_SUCCESS);
+        EXPECT_EQ(retVal, CL_SUCCESS);
+    }
 }
 } // namespace ULT

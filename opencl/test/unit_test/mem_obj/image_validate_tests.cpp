@@ -23,140 +23,6 @@ using namespace NEO;
 
 typedef decltype(&Image::redescribe) RedescribeMethod;
 
-class ImageValidateTest : public testing::TestWithParam<cl_image_desc> {
-  public:
-    ImageValidateTest() {
-        imageFormat = &surfaceFormat.oclImageFormat;
-        imageFormat->image_channel_data_type = CL_UNSIGNED_INT8;
-        imageFormat->image_channel_order = CL_RGBA;
-    }
-
-  protected:
-    void SetUp() override {
-    }
-
-    void TearDown() override {
-    }
-
-    cl_int retVal = CL_SUCCESS;
-    MockContext context;
-    ClSurfaceFormatInfo surfaceFormat;
-    cl_image_format *imageFormat;
-    cl_image_desc imageDesc;
-};
-
-typedef ImageValidateTest ValidDescriptor;
-typedef ImageValidateTest InvalidDescriptor;
-typedef ImageValidateTest InvalidSize;
-
-TEST_P(ValidDescriptor, GivenValidSizeWhenValidatingThenSuccessIsReturned) {
-    imageDesc = GetParam();
-    retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
-
-TEST_P(InvalidDescriptor, GivenZeroSizeWhenValidatingThenInvalidImageDescriptorErrorIsReturned) {
-    imageDesc = GetParam();
-    retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
-    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
-}
-
-TEST_P(InvalidSize, GivenInvalidSizeWhenValidatingThenInvalidImageSizeErrorIsReturned) {
-    imageDesc = GetParam();
-    retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
-    EXPECT_EQ(CL_INVALID_IMAGE_SIZE, retVal);
-}
-
-TEST_P(ValidDescriptor, given3dImageFormatWhenGetSupportedFormatIsCalledThenDontReturnDepthFormats) {
-    imageDesc = GetParam();
-    uint32_t readOnlyformatCount;
-    uint32_t writeOnlyformatCount;
-    uint32_t readWriteOnlyformatCount;
-
-    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_ONLY, imageDesc.image_type, 0, nullptr, &readOnlyformatCount);
-    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_WRITE_ONLY, imageDesc.image_type, 0, nullptr, &writeOnlyformatCount);
-    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_WRITE, imageDesc.image_type, 0, nullptr, &readWriteOnlyformatCount);
-    auto readOnlyImgFormats = new cl_image_format[readOnlyformatCount];
-    auto writeOnlyImgFormats = new cl_image_format[writeOnlyformatCount];
-    auto readWriteOnlyImgFormats = new cl_image_format[readWriteOnlyformatCount];
-    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_ONLY, imageDesc.image_type, readOnlyformatCount, readOnlyImgFormats, 0);
-    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_WRITE_ONLY, imageDesc.image_type, writeOnlyformatCount, writeOnlyImgFormats, 0);
-    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_WRITE, imageDesc.image_type, readWriteOnlyformatCount, readWriteOnlyImgFormats, 0);
-
-    bool depthFound = false;
-    for (uint32_t i = 0; i < readOnlyformatCount; i++) {
-        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
-            depthFound = true;
-        }
-    }
-    for (uint32_t i = 0; i < readOnlyformatCount; i++) {
-        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
-            depthFound = true;
-        }
-    }
-    for (uint32_t i = 0; i < readOnlyformatCount; i++) {
-        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
-            depthFound = true;
-        }
-    }
-
-    if (!Image::isImage2dOr2dArray(imageDesc.image_type)) {
-        EXPECT_FALSE(depthFound);
-    } else {
-        EXPECT_TRUE(depthFound);
-    }
-
-    delete[] readOnlyImgFormats;
-    delete[] writeOnlyImgFormats;
-    delete[] readWriteOnlyImgFormats;
-}
-
-TEST(ImageDepthFormatTest, GivenDepthFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
-    cl_image_format imgFormat = {};
-    imgFormat.image_channel_order = CL_DEPTH;
-    imgFormat.image_channel_data_type = CL_FLOAT;
-
-    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat);
-    ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
-
-    imgFormat.image_channel_data_type = CL_UNORM_INT16;
-    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat);
-    ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
-}
-
-TEST(ImageDepthFormatTest, GivenWriteOnlyDepthFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
-    cl_image_format imgFormat = {};
-    imgFormat.image_channel_order = CL_DEPTH;
-    imgFormat.image_channel_data_type = CL_FLOAT;
-
-    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat);
-    ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
-
-    imgFormat.image_channel_data_type = CL_UNORM_INT16;
-    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat);
-    ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
-}
-
-TEST(ImageDepthFormatTest, GivenDepthStencilFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
-    cl_image_format imgFormat = {};
-    imgFormat.image_channel_order = CL_DEPTH_STENCIL;
-    imgFormat.image_channel_data_type = CL_UNORM_INT24;
-
-    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat);
-    ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_GENERIC_32BIT);
-
-    imgFormat.image_channel_order = CL_DEPTH_STENCIL;
-    imgFormat.image_channel_data_type = CL_FLOAT;
-    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat);
-    ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32G32_FLOAT_TYPE);
-}
-
 static cl_image_desc validImageDesc[] = {
     {CL_MEM_OBJECT_IMAGE1D, /*image_type*/
      16384,                 /*image_width*/
@@ -296,373 +162,390 @@ static cl_image_desc invalidImageSize[] = {
      {0}},                  /*mem_object */
 };
 
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidDescriptor,
-    ::testing::ValuesIn(validImageDesc));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidDescriptor,
-    ::testing::ValuesIn(invalidImageDesc));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidSize,
-    ::testing::ValuesIn(invalidImageSize));
-
-class ValidImageFormatTest : public ::testing::TestWithParam<std::tuple<unsigned int, unsigned int>> {
+class ImageValidateTest : public ::testing::Test {
   public:
-    void validateFormat() {
-        cl_image_format imageFormat;
-        cl_int retVal;
-        std::tie(imageFormat.image_channel_order, imageFormat.image_channel_data_type) = GetParam();
-        retVal = Image::validateImageFormat(&imageFormat);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    ImageValidateTest() {
+        imageFormat = &surfaceFormat.oclImageFormat;
+        imageFormat->image_channel_data_type = CL_UNSIGNED_INT8;
+        imageFormat->image_channel_order = CL_RGBA;
     }
+
+  protected:
+    cl_int retVal = CL_SUCCESS;
+    MockContext context;
+    ClSurfaceFormatInfo surfaceFormat;
+    cl_image_format *imageFormat;
+    cl_image_desc imageDesc;
 };
 
-class InvalidImageFormatTest : public ::testing::TestWithParam<std::tuple<unsigned int, unsigned int>> {
-  public:
-    void validateFormat() {
-        cl_image_format imageFormat;
-        cl_int retVal;
-        std::tie(imageFormat.image_channel_order, imageFormat.image_channel_data_type) = GetParam();
-        retVal = Image::validateImageFormat(&imageFormat);
-        EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+TEST_F(ImageValidateTest, GivenValidSizeWhenValidatingThenSuccessIsReturned) {
+    for (const auto &desc : validImageDesc) {
+        imageDesc = desc;
+        retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal) << " image_type=" << desc.image_type;
     }
-};
-
-typedef ValidImageFormatTest ValidSingleChannelFormat;
-typedef InvalidImageFormatTest InvalidSingleChannelFormat;
-
-cl_channel_order validSingleChannelOrder[] = {CL_R, CL_A, CL_Rx};
-cl_channel_type validSingleChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_INT16, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
-                                                 CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT};
-
-cl_channel_type invalidSingleChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidSingleChannelFormat, givenValidSingleChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidSingleChannelFormat, givenInvalidSingleChannelChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidSingleChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validSingleChannelOrder),
-        ::testing::ValuesIn(validSingleChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidSingleChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validSingleChannelOrder),
-        ::testing::ValuesIn(invalidSingleChannelDataTypes)));
-
-typedef ValidImageFormatTest ValidIntensityFormat;
-typedef InvalidImageFormatTest InvalidIntensityFormat;
-
-cl_channel_order validIntensityChannelOrders[] = {CL_INTENSITY};
-cl_channel_type validIntensityChannelDataTypes[] = {CL_UNORM_INT8, CL_UNORM_INT16, CL_SNORM_INT8, CL_SNORM_INT16, CL_HALF_FLOAT, CL_FLOAT};
-cl_channel_type invalidIntensityChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
-                                                      CL_UNSIGNED_INT32, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidIntensityFormat, givenValidIntensityImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidIntensityFormat, givenInvalidIntensityChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidIntensityFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validIntensityChannelOrders),
-        ::testing::ValuesIn(validIntensityChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidIntensityFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validIntensityChannelOrders),
-        ::testing::ValuesIn(invalidIntensityChannelDataTypes)));
-
-typedef ValidImageFormatTest ValidLuminanceFormat;
-typedef InvalidImageFormatTest InvalidLuminanceFormat;
-
-cl_channel_order validLuminanceChannelOrders[] = {CL_LUMINANCE};
-cl_channel_type validLuminanceChannelDataTypes[] = {CL_UNORM_INT8, CL_UNORM_INT16, CL_SNORM_INT8, CL_SNORM_INT16, CL_HALF_FLOAT, CL_FLOAT};
-cl_channel_type invalidLuminanceChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
-                                                      CL_UNSIGNED_INT32, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidLuminanceFormat, givenValidLuminanceImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidLuminanceFormat, givenInvalidLuminanceChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidLuminanceFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validLuminanceChannelOrders),
-        ::testing::ValuesIn(validLuminanceChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidLuminanceFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validLuminanceChannelOrders),
-        ::testing::ValuesIn(invalidLuminanceChannelDataTypes)));
-
-typedef ValidImageFormatTest ValidDepthFormat;
-typedef InvalidImageFormatTest InvalidDepthFormat;
-
-cl_channel_order validDepthChannelOrders[] = {CL_DEPTH};
-cl_channel_type validDepthChannelDataTypes[] = {CL_UNORM_INT16, CL_FLOAT};
-cl_channel_type invalidDepthChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
-                                                  CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidDepthFormat, givenValidDepthImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidDepthFormat, givenInvalidDepthChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidDepthFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validDepthChannelOrders),
-        ::testing::ValuesIn(validDepthChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidDepthFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validDepthChannelOrders),
-        ::testing::ValuesIn(invalidDepthChannelDataTypes)));
-
-typedef ValidImageFormatTest ValidDoubleChannelFormat;
-typedef InvalidImageFormatTest InvalidDoubleChannelFormat;
-
-cl_channel_order validDoubleChannelOrders[] = {CL_RG, CL_RGx, CL_RA};
-cl_channel_type validDoubleChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_INT16, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
-                                                 CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT};
-cl_channel_type invalidDoubleChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidDoubleChannelFormat, givenValidDoubleChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidDoubleChannelFormat, givenInvalidDoubleChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidDoubleChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validDoubleChannelOrders),
-        ::testing::ValuesIn(validDoubleChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidDoubleChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validDoubleChannelOrders),
-        ::testing::ValuesIn(invalidDoubleChannelDataTypes)));
-
-typedef ValidImageFormatTest ValidTripleChannelFormat;
-typedef InvalidImageFormatTest InvalidTripleChannelFormat;
-
-cl_channel_order validTripleChannelOrders[] = {CL_RGB, CL_RGBx};
-cl_channel_type validTripleChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010};
-cl_channel_type invalidTripleChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_INT16, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
-                                                   CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidTripleChannelFormat, givenValidTripleChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidTripleChannelFormat, givenInvalidTripleChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidTripleChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validTripleChannelOrders),
-        ::testing::ValuesIn(validTripleChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidTripleChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validTripleChannelOrders),
-        ::testing::ValuesIn(invalidTripleChannelDataTypes)));
-
-typedef ValidImageFormatTest ValidRGBAChannelFormat;
-typedef InvalidImageFormatTest InvalidRGBAChannelFormat;
-
-cl_channel_order validRGBAChannelOrders[] = {CL_RGBA};
-cl_channel_type validRGBAChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_INT16, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
-                                               CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT};
-cl_channel_type invalidRGBAChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidRGBAChannelFormat, givenValidRGBAChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidRGBAChannelFormat, givenInvalidRGBAChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidRGBAChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validRGBAChannelOrders),
-        ::testing::ValuesIn(validRGBAChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidRGBAChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validRGBAChannelOrders),
-        ::testing::ValuesIn(invalidRGBAChannelDataTypes)));
-
-typedef ValidImageFormatTest ValidSRGBChannelFormat;
-typedef InvalidImageFormatTest InvalidSRGBChannelFormat;
-
-cl_channel_order validSRGBChannelOrders[] = {CL_sRGB, CL_sRGBx, CL_sRGBA, CL_sBGRA};
-cl_channel_type validSRGBChannelDataTypes[] = {CL_UNORM_INT8};
-cl_channel_type invalidSRGBChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16, CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
-                                                 CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidSRGBChannelFormat, givenValidSRGBChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidSRGBChannelFormat, givenInvalidSRGBChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidSRGBChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validSRGBChannelOrders),
-        ::testing::ValuesIn(validSRGBChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidSRGBChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validSRGBChannelOrders),
-        ::testing::ValuesIn(invalidSRGBChannelDataTypes)));
-
-typedef ValidImageFormatTest ValidARGBChannelFormat;
-typedef InvalidImageFormatTest InvalidARGBChannelFormat;
-
-cl_channel_order validARGBChannelOrders[] = {CL_ARGB, CL_BGRA, CL_ABGR};
-cl_channel_type validARGBChannelDataTypes[] = {CL_UNORM_INT8, CL_SNORM_INT8, CL_SIGNED_INT8, CL_UNSIGNED_INT8};
-cl_channel_type invalidARGBChannelDataTypes[] = {CL_SNORM_INT16, CL_UNORM_INT16, CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT16,
-                                                 CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidARGBChannelFormat, givenValidARGBChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidARGBChannelFormat, givenInvalidARGBChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidARGBChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validARGBChannelOrders),
-        ::testing::ValuesIn(validARGBChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidARGBChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validARGBChannelOrders),
-        ::testing::ValuesIn(invalidARGBChannelDataTypes)));
-
-typedef ValidImageFormatTest ValidDepthStencilChannelFormat;
-typedef InvalidImageFormatTest InvalidDepthStencilChannelFormat;
-
-cl_channel_order validDepthStencilChannelOrders[] = {CL_DEPTH_STENCIL};
-cl_channel_type validDepthStencilChannelDataTypes[] = {CL_UNORM_INT24, CL_FLOAT};
-cl_channel_type invalidDepthStencilChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_INT16, CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
-                                                         CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidDepthStencilChannelFormat, givenValidDepthStencilChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidDepthStencilChannelFormat, givenInvalidDepthStencilChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidDepthStencilChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validDepthStencilChannelOrders),
-        ::testing::ValuesIn(validDepthStencilChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidDepthStencilChannelFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validDepthStencilChannelOrders),
-        ::testing::ValuesIn(invalidDepthStencilChannelDataTypes)));
-
-typedef ValidImageFormatTest ValidYUVImageFormat;
-typedef InvalidImageFormatTest InvalidYUVImageFormat;
-
-cl_channel_order validYUVChannelOrders[] = {CL_NV12_INTEL, CL_YUYV_INTEL, CL_UYVY_INTEL, CL_YVYU_INTEL, CL_VYUY_INTEL};
-cl_channel_type validYUVChannelDataTypes[] = {CL_UNORM_INT8};
-cl_channel_type invalidYUVChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16, CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
-                                                CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
-
-TEST_P(ValidYUVImageFormat, givenValidYUVImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
-    validateFormat();
-};
-
-TEST_P(InvalidYUVImageFormat, givenInvalidYUVChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
-    validateFormat();
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    ValidYUVImageFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validYUVChannelOrders),
-        ::testing::ValuesIn(validYUVChannelDataTypes)));
-
-INSTANTIATE_TEST_SUITE_P(
-    ImageValidate,
-    InvalidYUVImageFormat,
-    ::testing::Combine(
-        ::testing::ValuesIn(validYUVChannelOrders),
-        ::testing::ValuesIn(invalidYUVChannelDataTypes)));
+}
+
+TEST_F(ImageValidateTest, GivenZeroSizeWhenValidatingThenInvalidImageDescriptorErrorIsReturned) {
+    for (const auto &desc : invalidImageDesc) {
+        imageDesc = desc;
+        retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
+        EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal) << " image_type=" << desc.image_type;
+    }
+}
+
+TEST_F(ImageValidateTest, GivenInvalidSizeWhenValidatingThenInvalidImageSizeErrorIsReturned) {
+    for (const auto &desc : invalidImageSize) {
+        imageDesc = desc;
+        retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
+        EXPECT_EQ(CL_INVALID_IMAGE_SIZE, retVal) << " image_type=" << desc.image_type;
+    }
+}
+
+TEST_F(ImageValidateTest, given3dImageFormatWhenGetSupportedFormatIsCalledThenDontReturnDepthFormats) {
+    for (const auto &desc : validImageDesc) {
+        imageDesc = desc;
+        uint32_t readOnlyformatCount;
+        uint32_t writeOnlyformatCount;
+        uint32_t readWriteOnlyformatCount;
+
+        context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_ONLY, imageDesc.image_type, 0, nullptr, &readOnlyformatCount);
+        context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_WRITE_ONLY, imageDesc.image_type, 0, nullptr, &writeOnlyformatCount);
+        context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_WRITE, imageDesc.image_type, 0, nullptr, &readWriteOnlyformatCount);
+        auto readOnlyImgFormats = new cl_image_format[readOnlyformatCount];
+        auto writeOnlyImgFormats = new cl_image_format[writeOnlyformatCount];
+        auto readWriteOnlyImgFormats = new cl_image_format[readWriteOnlyformatCount];
+        context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_ONLY, imageDesc.image_type, readOnlyformatCount, readOnlyImgFormats, 0);
+        context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_WRITE_ONLY, imageDesc.image_type, writeOnlyformatCount, writeOnlyImgFormats, 0);
+        context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_WRITE, imageDesc.image_type, readWriteOnlyformatCount, readWriteOnlyImgFormats, 0);
+
+        bool depthFound = false;
+        for (uint32_t i = 0; i < readOnlyformatCount; i++) {
+            if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
+                depthFound = true;
+            }
+        }
+        for (uint32_t i = 0; i < readOnlyformatCount; i++) {
+            if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
+                depthFound = true;
+            }
+        }
+        for (uint32_t i = 0; i < readOnlyformatCount; i++) {
+            if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
+                depthFound = true;
+            }
+        }
+
+        if (!Image::isImage2dOr2dArray(imageDesc.image_type)) {
+            EXPECT_FALSE(depthFound) << " image_type=" << desc.image_type;
+        } else {
+            EXPECT_TRUE(depthFound) << " image_type=" << desc.image_type;
+        }
+
+        delete[] readOnlyImgFormats;
+        delete[] writeOnlyImgFormats;
+        delete[] readWriteOnlyImgFormats;
+    }
+}
+
+TEST(ImageDepthFormatTest, GivenDepthFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
+    cl_image_format imgFormat = {};
+    imgFormat.image_channel_order = CL_DEPTH;
+    imgFormat.image_channel_data_type = CL_FLOAT;
+
+    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat);
+    ASSERT_NE(surfaceFormatInfo, nullptr);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
+
+    imgFormat.image_channel_data_type = CL_UNORM_INT16;
+    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat);
+    ASSERT_NE(surfaceFormatInfo, nullptr);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
+}
+
+TEST(ImageDepthFormatTest, GivenWriteOnlyDepthFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
+    cl_image_format imgFormat = {};
+    imgFormat.image_channel_order = CL_DEPTH;
+    imgFormat.image_channel_data_type = CL_FLOAT;
+
+    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat);
+    ASSERT_NE(surfaceFormatInfo, nullptr);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
+
+    imgFormat.image_channel_data_type = CL_UNORM_INT16;
+    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat);
+    ASSERT_NE(surfaceFormatInfo, nullptr);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
+}
+
+TEST(ImageDepthFormatTest, GivenDepthStencilFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
+    cl_image_format imgFormat = {};
+    imgFormat.image_channel_order = CL_DEPTH_STENCIL;
+    imgFormat.image_channel_data_type = CL_UNORM_INT24;
+
+    auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat);
+    ASSERT_NE(surfaceFormatInfo, nullptr);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_GENERIC_32BIT);
+
+    imgFormat.image_channel_order = CL_DEPTH_STENCIL;
+    imgFormat.image_channel_data_type = CL_FLOAT;
+    surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat);
+    ASSERT_NE(surfaceFormatInfo, nullptr);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.gmmSurfaceFormat == GMM_FORMAT_R32G32_FLOAT_TYPE);
+}
+
+static cl_channel_order validSingleChannelOrder[] = {CL_R, CL_A, CL_Rx};
+static cl_channel_type validSingleChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_INT16, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
+                                                        CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT};
+static cl_channel_type invalidSingleChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
+
+TEST(ValidSingleChannelFormat, givenValidSingleChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validSingleChannelOrder) {
+        for (auto dataType : validSingleChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidSingleChannelFormat, givenInvalidSingleChannelChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validSingleChannelOrder) {
+        for (auto dataType : invalidSingleChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+static cl_channel_order validIntensityChannelOrders[] = {CL_INTENSITY};
+static cl_channel_type validIntensityChannelDataTypes[] = {CL_UNORM_INT8, CL_UNORM_INT16, CL_SNORM_INT8, CL_SNORM_INT16, CL_HALF_FLOAT, CL_FLOAT};
+static cl_channel_type invalidIntensityChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
+                                                             CL_UNSIGNED_INT32, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
+
+TEST(ValidIntensityFormat, givenValidIntensityImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validIntensityChannelOrders) {
+        for (auto dataType : validIntensityChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidIntensityFormat, givenInvalidIntensityChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validIntensityChannelOrders) {
+        for (auto dataType : invalidIntensityChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+static cl_channel_order validLuminanceChannelOrders[] = {CL_LUMINANCE};
+static cl_channel_type validLuminanceChannelDataTypes[] = {CL_UNORM_INT8, CL_UNORM_INT16, CL_SNORM_INT8, CL_SNORM_INT16, CL_HALF_FLOAT, CL_FLOAT};
+static cl_channel_type invalidLuminanceChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
+                                                             CL_UNSIGNED_INT32, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
+
+TEST(ValidLuminanceFormat, givenValidLuminanceImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validLuminanceChannelOrders) {
+        for (auto dataType : validLuminanceChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidLuminanceFormat, givenInvalidLuminanceChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validLuminanceChannelOrders) {
+        for (auto dataType : invalidLuminanceChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+static cl_channel_order validDepthChannelOrders[] = {CL_DEPTH};
+static cl_channel_type validDepthChannelDataTypes[] = {CL_UNORM_INT16, CL_FLOAT};
+static cl_channel_type invalidDepthChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
+                                                         CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
+
+TEST(ValidDepthFormat, givenValidDepthImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validDepthChannelOrders) {
+        for (auto dataType : validDepthChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidDepthFormat, givenInvalidDepthChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validDepthChannelOrders) {
+        for (auto dataType : invalidDepthChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+static cl_channel_order validDoubleChannelOrders[] = {CL_RG, CL_RGx, CL_RA};
+static cl_channel_type validDoubleChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_INT16, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
+                                                        CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT};
+static cl_channel_type invalidDoubleChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
+
+TEST(ValidDoubleChannelFormat, givenValidDoubleChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validDoubleChannelOrders) {
+        for (auto dataType : validDoubleChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidDoubleChannelFormat, givenInvalidDoubleChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validDoubleChannelOrders) {
+        for (auto dataType : invalidDoubleChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+static cl_channel_order validTripleChannelOrders[] = {CL_RGB, CL_RGBx};
+static cl_channel_type validTripleChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010};
+static cl_channel_type invalidTripleChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_INT16, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
+                                                          CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
+
+TEST(ValidTripleChannelFormat, givenValidTripleChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validTripleChannelOrders) {
+        for (auto dataType : validTripleChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidTripleChannelFormat, givenInvalidTripleChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validTripleChannelOrders) {
+        for (auto dataType : invalidTripleChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+static cl_channel_order validRGBAChannelOrders[] = {CL_RGBA};
+static cl_channel_type validRGBAChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_INT16, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
+                                                      CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT};
+static cl_channel_type invalidRGBAChannelDataTypes[] = {CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
+
+TEST(ValidRGBAChannelFormat, givenValidRGBAChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validRGBAChannelOrders) {
+        for (auto dataType : validRGBAChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidRGBAChannelFormat, givenInvalidRGBAChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validRGBAChannelOrders) {
+        for (auto dataType : invalidRGBAChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+static cl_channel_order validSRGBChannelOrders[] = {CL_sRGB, CL_sRGBx, CL_sRGBA, CL_sBGRA};
+static cl_channel_type validSRGBChannelDataTypes[] = {CL_UNORM_INT8};
+static cl_channel_type invalidSRGBChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16, CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
+                                                        CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
+
+TEST(ValidSRGBChannelFormat, givenValidSRGBChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validSRGBChannelOrders) {
+        for (auto dataType : validSRGBChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidSRGBChannelFormat, givenInvalidSRGBChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validSRGBChannelOrders) {
+        for (auto dataType : invalidSRGBChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+static cl_channel_order validARGBChannelOrders[] = {CL_ARGB, CL_BGRA, CL_ABGR};
+static cl_channel_type validARGBChannelDataTypes[] = {CL_UNORM_INT8, CL_SNORM_INT8, CL_SIGNED_INT8, CL_UNSIGNED_INT8};
+static cl_channel_type invalidARGBChannelDataTypes[] = {CL_SNORM_INT16, CL_UNORM_INT16, CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT16,
+                                                        CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
+
+TEST(ValidARGBChannelFormat, givenValidARGBChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validARGBChannelOrders) {
+        for (auto dataType : validARGBChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidARGBChannelFormat, givenInvalidARGBChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validARGBChannelOrders) {
+        for (auto dataType : invalidARGBChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+static cl_channel_order validDepthStencilChannelOrders[] = {CL_DEPTH_STENCIL};
+static cl_channel_type validDepthStencilChannelDataTypes[] = {CL_UNORM_INT24, CL_FLOAT};
+static cl_channel_type invalidDepthStencilChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT8, CL_UNORM_INT16, CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
+                                                                CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_UNORM_INT_101010_2};
+
+TEST(ValidDepthStencilChannelFormat, givenValidDepthStencilChannelImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validDepthStencilChannelOrders) {
+        for (auto dataType : validDepthStencilChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidDepthStencilChannelFormat, givenInvalidDepthStencilChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validDepthStencilChannelOrders) {
+        for (auto dataType : invalidDepthStencilChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+static cl_channel_order validYUVChannelOrders[] = {CL_NV12_INTEL, CL_YUYV_INTEL, CL_UYVY_INTEL, CL_YVYU_INTEL, CL_VYUY_INTEL};
+static cl_channel_type validYUVChannelDataTypes[] = {CL_UNORM_INT8};
+static cl_channel_type invalidYUVChannelDataTypes[] = {CL_SNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16, CL_UNORM_SHORT_565, CL_UNORM_SHORT_555, CL_UNORM_INT_101010, CL_SIGNED_INT8, CL_SIGNED_INT16, CL_SIGNED_INT32, CL_UNSIGNED_INT8, CL_UNSIGNED_INT16,
+                                                       CL_UNSIGNED_INT32, CL_HALF_FLOAT, CL_FLOAT, CL_UNORM_INT24, CL_UNORM_INT_101010_2};
+
+TEST(ValidYUVImageFormat, givenValidYUVImageFormatWhenValidateImageFormatIsCalledThenReturnsSuccess) {
+    for (auto order : validYUVChannelOrders) {
+        for (auto dataType : validYUVChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_SUCCESS, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
+
+TEST(InvalidYUVImageFormat, givenInvalidYUVChannelDataTypeWhenValidateImageFormatIsCalledThenReturnsError) {
+    for (auto order : validYUVChannelOrders) {
+        for (auto dataType : invalidYUVChannelDataTypes) {
+            cl_image_format imageFormat = {order, dataType};
+            EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, Image::validateImageFormat(&imageFormat)) << " order=" << order << " dataType=" << dataType;
+        }
+    }
+}
 
 TEST(ImageFormat, givenNullptrImageFormatWhenValidateImageFormatIsCalledThenReturnsError) {
     auto retVal = Image::validateImageFormat(nullptr);
@@ -728,7 +611,7 @@ TEST(validateAndCreateImage, givenValidImageParamsWhenValidateAndCreateImageIsCa
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-std::tuple<uint32_t, int32_t> normalizingFactorValues[] = {
+static std::tuple<uint32_t, int32_t> normalizingFactorValues[] = {
     std::make_tuple(CL_SNORM_INT8, 0x7F),
     std::make_tuple(CL_SNORM_INT16, 0x7fFF),
     std::make_tuple(CL_UNORM_INT8, 0xFF),
@@ -748,22 +631,14 @@ std::tuple<uint32_t, int32_t> normalizingFactorValues[] = {
     std::make_tuple(CL_UNORM_INT_101010_2, 0),
 };
 
-using NormalizingFactorTests = ::testing::TestWithParam<std::tuple<uint32_t, int32_t>>;
+TEST(NormalizingFactorTests, givenChannelTypeWhenAskingForFactorThenReturnValidValue) {
+    for (const auto &[channelType, expectedFactor] : normalizingFactorValues) {
+        EXPECT_EQ(expectedFactor, selectNormalizingFactor(channelType)) << " channelType=" << channelType;
+    }
+}
 
-TEST_P(NormalizingFactorTests, givenChannelTypeWhenAskingForFactorThenReturnValidValue) {
-    auto factor = selectNormalizingFactor(std::get<0>(GetParam()));
-    EXPECT_EQ(std::get<1>(GetParam()), factor);
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    NormalizingFactorTests,
-    NormalizingFactorTests,
-    ::testing::ValuesIn(normalizingFactorValues));
-
-using ValidParentImageFormatTest = ::testing::TestWithParam<std::tuple<uint32_t, uint32_t>>;
-
-cl_channel_order allChannelOrders[] = {CL_R, CL_A, CL_RG, CL_RA, CL_RGB, CL_RGBA, CL_BGRA, CL_ARGB, CL_INTENSITY, CL_LUMINANCE, CL_Rx, CL_RGx, CL_RGBx, CL_DEPTH, CL_DEPTH_STENCIL, CL_sRGB,
-                                       CL_sRGBx, CL_sRGBA, CL_sBGRA, CL_ABGR, CL_NV12_INTEL, CL_YUYV_INTEL};
+static cl_channel_order allChannelOrders[] = {CL_R, CL_A, CL_RG, CL_RA, CL_RGB, CL_RGBA, CL_BGRA, CL_ARGB, CL_INTENSITY, CL_LUMINANCE, CL_Rx, CL_RGx, CL_RGBx, CL_DEPTH, CL_DEPTH_STENCIL, CL_sRGB,
+                                              CL_sRGBx, CL_sRGBA, CL_sBGRA, CL_ABGR, CL_NV12_INTEL, CL_YUYV_INTEL};
 
 struct NullImage : public Image {
     using Image::imageDesc;
@@ -779,23 +654,7 @@ struct NullImage : public Image {
     void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) override {}
 };
 
-TEST_P(ValidParentImageFormatTest, givenParentChannelOrderWhenTestWithAllChannelOrdersThenReturnTrueForValidChannelOrder) {
-    cl_image_format parentImageFormat;
-    cl_image_format imageFormat;
-    cl_channel_order validChannelOrder;
-    NullImage image;
-    std::tie(parentImageFormat.image_channel_order, validChannelOrder) = GetParam();
-    parentImageFormat.image_channel_data_type = CL_UNORM_INT8;
-    imageFormat.image_channel_data_type = CL_UNORM_INT8;
-    image.imageFormat = parentImageFormat;
-
-    for (auto channelOrder : allChannelOrders) {
-        imageFormat.image_channel_order = channelOrder;
-        bool retVal = image.hasValidParentImageFormat(imageFormat);
-        EXPECT_EQ(imageFormat.image_channel_order == validChannelOrder, retVal);
-    }
-};
-std::tuple<uint32_t, uint32_t> imageFromImageValidChannelOrderPairs[] = {
+static std::tuple<uint32_t, uint32_t> imageFromImageValidChannelOrderPairs[] = {
     std::make_tuple(CL_BGRA, CL_sBGRA),
     std::make_tuple(CL_sBGRA, CL_BGRA),
     std::make_tuple(CL_RGBA, CL_sRGBA),
@@ -819,10 +678,20 @@ std::tuple<uint32_t, uint32_t> imageFromImageValidChannelOrderPairs[] = {
     std::make_tuple(CL_NV12_INTEL, 0),
     std::make_tuple(CL_YUYV_INTEL, CL_RGBA)};
 
-INSTANTIATE_TEST_SUITE_P(
-    ValidParentImageFormatTests,
-    ValidParentImageFormatTest,
-    ::testing::ValuesIn(imageFromImageValidChannelOrderPairs));
+TEST(ValidParentImageFormatTest, givenParentChannelOrderWhenTestWithAllChannelOrdersThenReturnTrueForValidChannelOrder) {
+    for (const auto &[parentOrder, validChannelOrder] : imageFromImageValidChannelOrderPairs) {
+        NullImage image;
+        cl_image_format parentImageFormat = {parentOrder, CL_UNORM_INT8};
+        cl_image_format imageFormat;
+        imageFormat.image_channel_data_type = CL_UNORM_INT8;
+        image.imageFormat = parentImageFormat;
+        for (auto channelOrder : allChannelOrders) {
+            imageFormat.image_channel_order = channelOrder;
+            bool retVal = image.hasValidParentImageFormat(imageFormat);
+            EXPECT_EQ(imageFormat.image_channel_order == validChannelOrder, retVal) << " parent=" << parentOrder << " channel=" << channelOrder;
+        }
+    }
+}
 
 TEST(ImageDescriptorComparatorTest, givenImageWhenCallHasSameDescriptorWithSameDescriptorThenReturnTrueOtherwiseFalse) {
     NullImage image;

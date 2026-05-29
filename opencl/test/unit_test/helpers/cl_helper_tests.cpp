@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,7 +142,7 @@ HWTEST_F(ClGfxCoreHelperTest, WhenCheckingIsLimitationForPreemptionNeededThenRet
     EXPECT_FALSE(clGfxCoreHelper.isLimitationForPreemptionNeeded());
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ClGfxCoreHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned) {
+HWTEST2_F(ClGfxCoreHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned, IsGen12LP) {
     static const cl_image_format redescribeFormats[] = {
         {CL_R, CL_UNSIGNED_INT8},
         {CL_R, CL_UNSIGNED_INT16},

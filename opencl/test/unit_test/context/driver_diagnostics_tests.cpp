@@ -40,115 +40,144 @@ void CL_CALLBACK callbackFunction(const char *providedHint, const void *flags, s
     strcpy_s((char *)userData + offset, DriverDiagnostics::maxHintStringSize, providedHint);
 }
 
-cl_diagnostic_verbose_level_intel diagnosticsVerboseLevels[] = {
+static cl_diagnostic_verbose_level_intel diagnosticsVerboseLevels[] = {
     CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL,
     CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL,
     CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL};
 
-TEST_P(VerboseLevelTest, GivenVerboseLevelWhenProvidedHintLevelIsSameOrAllThenCallbackFunctionTakesProvidedHint) {
-    cl_device_id deviceID = devices[0];
-    cl_diagnostic_verbose_level_intel diagnosticsLevel = GetParam();
-    cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, (cl_context_properties)diagnosticsLevel, 0};
-    retVal = CL_SUCCESS;
+TEST_F(VerboseLevelTest, GivenVerboseLevelWhenProvidedHintLevelIsSameOrAllThenCallbackFunctionTakesProvidedHint) {
+    for (auto diagnosticsLevel : diagnosticsVerboseLevels) {
+        cl_device_id deviceID = devices[0];
+        cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, (cl_context_properties)diagnosticsLevel, 0};
+        retVal = CL_SUCCESS;
 
-    auto context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, context);
+        auto context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, context);
 
-    for (auto hintLevel : validLevels) {
+        for (auto hintLevel : validLevels) {
+            memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+            context->providePerformanceHint(hintLevel, hintId);
+            if (hintLevel == diagnosticsLevel || hintLevel == CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL) {
+                EXPECT_TRUE(containsHint(expectedHint, userData));
+            } else {
+                EXPECT_FALSE(containsHint(expectedHint, userData));
+            }
+        }
+        delete context;
         memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
-        context->providePerformanceHint(hintLevel, hintId);
-        if (hintLevel == diagnosticsLevel || hintLevel == CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL) {
-            EXPECT_TRUE(containsHint(expectedHint, userData));
-        } else {
-            EXPECT_FALSE(containsHint(expectedHint, userData));
+    }
+}
+
+TEST_F(VerboseLevelTest, GivenVerboseLevelAllWhenAnyHintIsProvidedThenCallbackFunctionTakesProvidedHint) {
+    for (auto providedHintLevel : diagnosticsVerboseLevels) {
+        cl_device_id deviceID = devices[0];
+        cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
+        retVal = CL_SUCCESS;
+
+        auto context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, context);
+
+        context->providePerformanceHint(providedHintLevel, hintId);
+        EXPECT_TRUE(containsHint(expectedHint, userData));
+        delete context;
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+    }
+}
+
+TEST_F(PerformanceHintBufferTest, GivenHostPtrAndSizeAlignmentsWhenBufferIsCreatingThenContextProvidesHintsAboutAlignmentsAndAllocatingMemory) {
+    for (bool addrAligned : ::testing::Bool()) {
+        for (bool szAligned : ::testing::Bool()) {
+            for (bool withPerfHint : ::testing::Bool()) {
+                alignedAddress = addrAligned;
+                alignedSize = szAligned;
+                providePerformanceHint = withPerfHint;
+
+                uintptr_t addressForBuffer = (uintptr_t)address;
+                size_t sizeForBuffer = MemoryConstants::cacheLineSize;
+                if (!alignedAddress) {
+                    addressForBuffer++;
+                }
+                if (!alignedSize) {
+                    sizeForBuffer--;
+                }
+                auto flags = CL_MEM_USE_HOST_PTR;
+                if (alignedAddress && alignedSize) {
+                    flags |= CL_MEM_FORCE_HOST_MEMORY_INTEL;
+                }
+                Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};
+                bufferCreateArgs.isAllocationForPool = !providePerformanceHint;
+                buffer = Buffer::create(context, flags, sizeForBuffer, (void *)addressForBuffer, bufferCreateArgs, retVal);
+                EXPECT_EQ(CL_SUCCESS, retVal);
+                EXPECT_NE(nullptr, buffer);
+
+                snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForBuffer, sizeForBuffer, MemoryConstants::pageSize, MemoryConstants::pageSize);
+                EXPECT_EQ(providePerformanceHint && !(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+                snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_BUFFER_NEEDS_ALLOCATE_MEMORY], 0);
+                EXPECT_EQ(providePerformanceHint && !(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+
+                delete buffer;
+                buffer = nullptr;
+                memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+            }
         }
     }
-    delete context;
 }
 
-TEST_P(VerboseLevelTest, GivenVerboseLevelAllWhenAnyHintIsProvidedThenCallbackFunctionTakesProvidedHint) {
-    cl_device_id deviceID = devices[0];
-    cl_diagnostic_verbose_level_intel providedHintLevel = GetParam();
-    cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-    retVal = CL_SUCCESS;
+TEST_F(PerformanceHintCommandQueueTest, GivenProfilingFlagAndPreemptionFlagWhenCommandQueueIsCreatingThenContextProvidesProperHints) {
+    for (bool withProfiling : ::testing::Bool()) {
+        for (bool withPreemption : ::testing::Bool()) {
+            profilingEnabled = withProfiling;
+            preemptionSupported = withPreemption;
+            static_cast<MockClDevice *>(context->getDevice(0))->deviceInfo.preemptionSupported = preemptionSupported;
 
-    auto context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, context);
+            cl_command_queue_properties properties = 0;
+            if (profilingEnabled) {
+                properties = CL_QUEUE_PROFILING_ENABLE;
+            }
+            cmdQ = clCreateCommandQueue(context, context->getDevice(0), properties, &retVal);
+            ASSERT_NE(nullptr, cmdQ);
+            ASSERT_EQ(CL_SUCCESS, retVal);
 
-    context->providePerformanceHint(providedHintLevel, hintId);
-    EXPECT_TRUE(containsHint(expectedHint, userData));
-    delete context;
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[DRIVER_CALLS_INTERNAL_CL_FLUSH], 0);
+            EXPECT_TRUE(containsHint(expectedHint, userData));
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED], 0);
+            EXPECT_EQ(profilingEnabled, containsHint(expectedHint, userData));
+
+            clReleaseCommandQueue(cmdQ);
+            cmdQ = nullptr;
+            memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+        }
+    }
 }
 
-TEST_P(PerformanceHintBufferTest, GivenHostPtrAndSizeAlignmentsWhenBufferIsCreatingThenContextProvidesHintsAboutAlignmentsAndAllocatingMemory) {
-    uintptr_t addressForBuffer = (uintptr_t)address;
-    size_t sizeForBuffer = MemoryConstants::cacheLineSize;
-    if (!alignedAddress) {
-        addressForBuffer++;
+TEST_F(PerformanceHintCommandQueueTest, GivenEnabledProfilingFlagAndSupportedPreemptionFlagWhenCommandQueueIsCreatingWithPropertiesThenContextProvidesProperHints) {
+    for (bool withProfiling : ::testing::Bool()) {
+        for (bool withPreemption : ::testing::Bool()) {
+            profilingEnabled = withProfiling;
+            preemptionSupported = withPreemption;
+            static_cast<MockClDevice *>(context->getDevice(0))->deviceInfo.preemptionSupported = preemptionSupported;
+
+            cl_command_queue_properties properties[3] = {0};
+            if (profilingEnabled) {
+                properties[0] = CL_QUEUE_PROPERTIES;
+                properties[1] = CL_QUEUE_PROFILING_ENABLE;
+            }
+            cmdQ = clCreateCommandQueueWithProperties(context, context->getDevice(0), properties, &retVal);
+            ASSERT_NE(nullptr, cmdQ);
+            ASSERT_EQ(CL_SUCCESS, retVal);
+
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[DRIVER_CALLS_INTERNAL_CL_FLUSH], 0);
+            EXPECT_TRUE(containsHint(expectedHint, userData));
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED], 0);
+            EXPECT_EQ(profilingEnabled, containsHint(expectedHint, userData));
+
+            clReleaseCommandQueue(cmdQ);
+            cmdQ = nullptr;
+            memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+        }
     }
-    if (!alignedSize) {
-        sizeForBuffer--;
-    }
-    auto flags = CL_MEM_USE_HOST_PTR;
-
-    if (alignedAddress && alignedSize) {
-        flags |= CL_MEM_FORCE_HOST_MEMORY_INTEL;
-    }
-
-    Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};
-    bufferCreateArgs.isAllocationForPool = !providePerformanceHint;
-
-    buffer = Buffer::create(
-        context,
-        flags,
-        sizeForBuffer,
-        (void *)addressForBuffer,
-        bufferCreateArgs,
-        retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, buffer);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForBuffer, sizeForBuffer, MemoryConstants::pageSize, MemoryConstants::pageSize);
-    EXPECT_EQ(providePerformanceHint && !(alignedSize && alignedAddress), containsHint(expectedHint, userData));
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_BUFFER_NEEDS_ALLOCATE_MEMORY], 0);
-    EXPECT_EQ(providePerformanceHint && !(alignedSize && alignedAddress), containsHint(expectedHint, userData));
-}
-
-TEST_P(PerformanceHintCommandQueueTest, GivenProfilingFlagAndPreemptionFlagWhenCommandQueueIsCreatingThenContextProvidesProperHints) {
-    cl_command_queue_properties properties = 0;
-    if (profilingEnabled) {
-        properties = CL_QUEUE_PROFILING_ENABLE;
-    }
-    cmdQ = clCreateCommandQueue(context, context->getDevice(0), properties, &retVal);
-
-    ASSERT_NE(nullptr, cmdQ);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[DRIVER_CALLS_INTERNAL_CL_FLUSH], 0);
-    EXPECT_TRUE(containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED], 0);
-    EXPECT_EQ(profilingEnabled, containsHint(expectedHint, userData));
-}
-
-TEST_P(PerformanceHintCommandQueueTest, GivenEnabledProfilingFlagAndSupportedPreemptionFlagWhenCommandQueueIsCreatingWithPropertiesThenContextProvidesProperHints) {
-    cl_command_queue_properties properties[3] = {0};
-    if (profilingEnabled) {
-        properties[0] = CL_QUEUE_PROPERTIES;
-        properties[1] = CL_QUEUE_PROFILING_ENABLE;
-    }
-    cmdQ = clCreateCommandQueueWithProperties(context, context->getDevice(0), properties, &retVal);
-
-    ASSERT_NE(nullptr, cmdQ);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[DRIVER_CALLS_INTERNAL_CL_FLUSH], 0);
-    EXPECT_TRUE(containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED], 0);
-    EXPECT_EQ(profilingEnabled, containsHint(expectedHint, userData));
 }
 
 TEST_F(PerformanceHintTest, GivenAlignedHostPtrWhenSubbufferIsCreatingThenContextProvidesHintAboutSharingMemoryWithParentBuffer) {
@@ -791,72 +820,49 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     }
 }
 
-TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenContextProvidesProperHint) {
+TEST_F(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenContextProvidesProperHint) {
+    for (bool isZeroSized : ::testing::Bool()) {
+        zeroSized = isZeroSized;
 
-    auto spillSize = zeroSized ? 0 : 1024;
-    MockKernelWithInternals mockKernel(*context);
-
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.spillFillScratchMemorySize = spillSize;
-
-    uint32_t computeUnitsForScratch[] = {0x10, 0x20};
-    auto pClDevice = &mockKernel.mockKernel->getDevice();
-    auto &deviceInfo = const_cast<DeviceInfo &>(pClDevice->getSharedDeviceInfo());
-    deviceInfo.computeUnitsUsedForScratch = computeUnitsForScratch[pClDevice->getRootDeviceIndex()];
-
-    mockKernel.mockKernel->initialize();
-
-    auto expectedSize = spillSize * pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[REGISTER_PRESSURE_TOO_HIGH],
-             mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), expectedSize);
-    EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
-}
-
-TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThenContextProvidesProperHint) {
-    auto pDevice = castToObject<ClDevice>(devices[1]);
-    static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager())->turnOnFakingBigAllocations();
-
-    for (auto isSimtThread : {false, true}) {
-        auto size = zeroSized ? 0 : 1024;
-
+        auto spillSize = zeroSized ? 0 : 1024;
         MockKernelWithInternals mockKernel(*context);
+        mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.spillFillScratchMemorySize = spillSize;
 
-        mockKernel.kernelInfo.setPrivateMemory(size, isSimtThread, 8, 16, 0);
-
-        size *= pDevice->getSharedDeviceInfo().computeUnitsUsedForScratch;
-        size *= isSimtThread ? mockKernel.mockKernel->getKernelInfo().getMaxSimdSize() : 1;
+        uint32_t computeUnitsForScratch[] = {0x10, 0x20};
+        auto pClDevice = &mockKernel.mockKernel->getDevice();
+        auto &deviceInfo = const_cast<DeviceInfo &>(pClDevice->getSharedDeviceInfo());
+        deviceInfo.computeUnitsUsedForScratch = computeUnitsForScratch[pClDevice->getRootDeviceIndex()];
 
         mockKernel.mockKernel->initialize();
 
-        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PRIVATE_MEMORY_USAGE_TOO_HIGH],
-                 mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), size);
+        auto expectedSize = spillSize * pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[REGISTER_PRESSURE_TOO_HIGH],
+                 mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), expectedSize);
         EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    DriverDiagnosticsTests,
-    VerboseLevelTest,
-    testing::ValuesIn(diagnosticsVerboseLevels));
+TEST_F(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThenContextProvidesProperHint) {
+    auto pDevice = castToObject<ClDevice>(devices[1]);
+    static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager())->turnOnFakingBigAllocations();
 
-INSTANTIATE_TEST_SUITE_P(
-    DriverDiagnosticsTests,
-    PerformanceHintBufferTest,
-    testing::Combine(
-        ::testing::Bool(),
-        ::testing::Bool(),
-        ::testing::Bool()));
-
-INSTANTIATE_TEST_SUITE_P(
-    DriverDiagnosticsTests,
-    PerformanceHintCommandQueueTest,
-    testing::Combine(
-        ::testing::Bool(),
-        ::testing::Bool()));
-
-INSTANTIATE_TEST_SUITE_P(
-    DriverDiagnosticsTests,
-    PerformanceHintKernelTest,
-    testing::Bool());
+    for (bool isZeroSized : ::testing::Bool()) {
+        zeroSized = isZeroSized;
+        for (auto isSimtThread : ::testing::Bool()) {
+            auto size = zeroSized ? 0 : 1024;
+            MockKernelWithInternals mockKernel(*context);
+            mockKernel.kernelInfo.setPrivateMemory(size, isSimtThread, 8, 16, 0);
+            size *= pDevice->getSharedDeviceInfo().computeUnitsUsedForScratch;
+            size *= isSimtThread ? mockKernel.mockKernel->getKernelInfo().getMaxSimdSize() : 1;
+            mockKernel.mockKernel->initialize();
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PRIVATE_MEMORY_USAGE_TOO_HIGH],
+                     mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), size);
+            EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
+        }
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+    }
+}
 
 TEST(PerformanceHintsDebugVariables, givenDefaultDebugManagerWhenPrintDriverDiagnosticsIsCalledThenMinusOneIsReturned) {
     EXPECT_EQ(-1, debugManager.flags.PrintDriverDiagnostics.get());

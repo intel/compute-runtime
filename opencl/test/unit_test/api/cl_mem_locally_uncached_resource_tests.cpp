@@ -58,7 +58,7 @@ const size_t n = 512;
 
 using clMemLocallyUncachedResourceFixture = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, GivenAtLeastOneLocallyUncacheableResourceWhenSettingKernelArgumentsThenKernelIsUncacheable) {
+HWTEST2_F(clMemLocallyUncachedResourceFixture, GivenAtLeastOneLocallyUncacheableResourceWhenSettingKernelArgumentsThenKernelIsUncacheable, IsGen12LP) {
     cl_int retVal = CL_SUCCESS;
     MockKernelWithInternals mockKernel(*context, MockKernelWithInternalsConfig{.addDefaultArgs = true});
 
@@ -133,7 +133,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, GivenAtLeast
     EXPECT_FALSE(kernel->hasUncacheableStatelessArgs());
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateWhenStatelessIsProgrammedThenItIsCached) {
+HWTEST2_F(clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateWhenStatelessIsProgrammedThenItIsCached, IsGen12LP) {
     cl_int retVal = CL_SUCCESS;
 
     MockKernelWithInternals mockKernel(*context, MockKernelWithInternalsConfig{.addDefaultArgs = true});
@@ -207,7 +207,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, givenBuffers
     EXPECT_EQ(mocsCacheable, cmdQueueMocs<FamilyType>(pCmdQ));
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedButKernelDoesntHaveAnyStatelessAccessesThenSurfacesAreNotRecordedAsUncacheable) {
+HWTEST2_F(clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedButKernelDoesntHaveAnyStatelessAccessesThenSurfacesAreNotRecordedAsUncacheable, IsGen12LP) {
     cl_int retVal = CL_SUCCESS;
 
     MockKernelWithInternals mockKernel(*context, MockKernelWithInternalsConfig{.addDefaultArgs = true});
@@ -284,7 +284,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, givenBuffers
     EXPECT_FALSE(kernel->hasUncacheableStatelessArgs());
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, WhenUnsettingUncacheableResourceFromKernelThenKernelContinuesToCorrectlySetMocs) {
+HWTEST2_F(clMemLocallyUncachedResourceFixture, WhenUnsettingUncacheableResourceFromKernelThenKernelContinuesToCorrectlySetMocs, IsGen12LP) {
     cl_int retVal = CL_SUCCESS;
     MockKernelWithInternals mockKernel(*context, MockKernelWithInternalsConfig{.addDefaultArgs = true});
     auto pMultiDeviceKernel = mockKernel.mockMultiDeviceKernel;

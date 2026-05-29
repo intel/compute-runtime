@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,18 +55,6 @@ namespace ULT {
 
 typedef Test<KernelSubGroupInfoFixture> KernelSubGroupInfoTest;
 
-template <typename ParamType>
-struct KernelSubGroupInfoParamFixture : KernelSubGroupInfoFixture,
-                                        ::testing::TestWithParam<ParamType> {
-    void SetUp() override {
-        KernelSubGroupInfoFixture::setUp();
-    }
-
-    void TearDown() override {
-        KernelSubGroupInfoFixture::tearDown();
-    }
-};
-
 static size_t workDimensions[] = {1, 2, 3};
 
 static struct WorkSizeParam {
@@ -85,152 +73,122 @@ static struct WorkSizeParam {
     {1, 510, 1},
     {512, 1, 1}};
 
-typedef KernelSubGroupInfoParamFixture<std::tuple<WorkSizeParam, size_t>> KernelSubGroupInfoReturnSizeTest;
-
-INSTANTIATE_TEST_SUITE_P(wgs,
-                         KernelSubGroupInfoReturnSizeTest,
-                         ::testing::Combine(
-                             ::testing::ValuesIn(kernelSubGroupInfoWGS),
-                             ::testing::ValuesIn(workDimensions)));
-
-TEST_P(KernelSubGroupInfoReturnSizeTest, GivenWorkGroupSizeWhenGettingMaxSubGroupSizeThenReturnIsCalculatedCorrectly) {
+TEST_F(KernelSubGroupInfoTest, GivenWorkGroupSizeWhenGettingMaxSubGroupSizeThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    WorkSizeParam workSize;
-    size_t workDim;
-    std::tie(workSize, workDim) = GetParam();
+    for (const auto &workSize : kernelSubGroupInfoWGS) {
+        for (auto workDim : workDimensions) {
+            memset(inputValue, 0, sizeof(inputValue));
+            inputValue[0] = workSize.x;
+            if (workDim > 1) {
+                inputValue[1] = workSize.y;
+            }
+            if (workDim > 2) {
+                inputValue[2] = workSize.z;
+            }
+            paramValueSizeRet = 0;
 
-    memset(inputValue, 0, sizeof(inputValue));
-    inputValue[0] = workSize.x;
-    if (workDim > 1) {
-        inputValue[1] = workSize.y;
+            retVal = clGetKernelSubGroupInfo(
+                pMultiDeviceKernel,
+                pClDevice,
+                CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
+                sizeof(size_t) * workDim,
+                inputValue,
+                sizeof(size_t),
+                paramValue,
+                &paramValueSizeRet);
+
+            EXPECT_EQ(retVal, CL_SUCCESS);
+            EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
+            EXPECT_EQ(maxSimdSize, paramValue[0]);
+        }
     }
-    if (workDim > 2) {
-        inputValue[2] = workSize.z;
-    }
-    paramValueSizeRet = 0;
-
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
-        sizeof(size_t) * workDim,
-        inputValue,
-        sizeof(size_t),
-        paramValue,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(retVal, CL_SUCCESS);
-
-    EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-
-    EXPECT_EQ(maxSimdSize, paramValue[0]);
 }
 
-typedef KernelSubGroupInfoParamFixture<std::tuple<WorkSizeParam, size_t>> KernelSubGroupInfoReturnCountTest;
-
-INSTANTIATE_TEST_SUITE_P(wgs,
-                         KernelSubGroupInfoReturnCountTest,
-                         ::testing::Combine(
-                             ::testing::ValuesIn(kernelSubGroupInfoWGS),
-                             ::testing::ValuesIn(workDimensions)));
-
-TEST_P(KernelSubGroupInfoReturnCountTest, GivenWorkGroupSizeWhenGettingSubGroupCountThenReturnIsCalculatedCorrectly) {
+TEST_F(KernelSubGroupInfoTest, GivenWorkGroupSizeWhenGettingSubGroupCountThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    WorkSizeParam workSize;
-    size_t workDim;
-    std::tie(workSize, workDim) = GetParam();
+    for (const auto &workSize : kernelSubGroupInfoWGS) {
+        for (auto workDim : workDimensions) {
+            memset(inputValue, 0, sizeof(inputValue));
+            inputValue[0] = workSize.x;
+            if (workDim > 1) {
+                inputValue[1] = workSize.y;
+            }
+            if (workDim > 2) {
+                inputValue[2] = workSize.z;
+            }
+            paramValueSizeRet = 0;
 
-    memset(inputValue, 0, sizeof(inputValue));
-    inputValue[0] = workSize.x;
-    if (workDim > 1) {
-        inputValue[1] = workSize.y;
-    }
-    if (workDim > 2) {
-        inputValue[2] = workSize.z;
-    }
-    paramValueSizeRet = 0;
+            retVal = clGetKernelSubGroupInfo(
+                pMultiDeviceKernel,
+                pClDevice,
+                CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
+                sizeof(size_t) * workDim,
+                inputValue,
+                sizeof(size_t),
+                paramValue,
+                &paramValueSizeRet);
 
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
-        sizeof(size_t) * workDim,
-        inputValue,
-        sizeof(size_t),
-        paramValue,
-        &paramValueSizeRet);
+            EXPECT_EQ(CL_SUCCESS, retVal);
+            EXPECT_EQ(sizeof(size_t), paramValueSizeRet);
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+            auto calculatedWGS = workSize.x;
+            if (workDim > 1) {
+                calculatedWGS *= workSize.y;
+            }
+            if (workDim > 2) {
+                calculatedWGS *= workSize.z;
+            }
 
-    EXPECT_EQ(sizeof(size_t), paramValueSizeRet);
-
-    auto calculatedWGS = workSize.x;
-    if (workDim > 1) {
-        calculatedWGS *= workSize.y;
-    }
-    if (workDim > 2) {
-        calculatedWGS *= workSize.z;
-    }
-
-    if (calculatedWGS % maxSimdSize == 0) {
-        EXPECT_EQ(calculatedWGS / maxSimdSize, paramValue[0]);
-    } else {
-        EXPECT_EQ((calculatedWGS / maxSimdSize) + 1, paramValue[0]);
+            if (calculatedWGS % maxSimdSize == 0) {
+                EXPECT_EQ(calculatedWGS / maxSimdSize, paramValue[0]);
+            } else {
+                EXPECT_EQ((calculatedWGS / maxSimdSize) + 1, paramValue[0]);
+            }
+        }
     }
 }
 
 static size_t subGroupsNumbers[] = {0, 1, 10, 12, 21, 33, 67, 99};
 
-typedef KernelSubGroupInfoParamFixture<std::tuple<size_t, size_t>> KernelSubGroupInfoReturnLocalSizeTest;
-
-INSTANTIATE_TEST_SUITE_P(sgn,
-                         KernelSubGroupInfoReturnLocalSizeTest,
-                         ::testing::Combine(
-                             ::testing::ValuesIn(subGroupsNumbers),
-                             ::testing::ValuesIn(workDimensions)));
-
-TEST_P(KernelSubGroupInfoReturnLocalSizeTest, GivenWorkGroupSizeWhenGettingLocalSizeThenReturnIsCalculatedCorrectly) {
+TEST_F(KernelSubGroupInfoTest, GivenWorkGroupSizeWhenGettingLocalSizeThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    size_t subGroupsNum;
-    size_t workDim;
-    std::tie(subGroupsNum, workDim) = GetParam();
+    for (auto subGroupsNum : subGroupsNumbers) {
+        for (auto workDim : workDimensions) {
+            inputValue[0] = subGroupsNum;
 
-    inputValue[0] = subGroupsNum;
+            retVal = clGetKernelSubGroupInfo(
+                pMultiDeviceKernel,
+                pClDevice,
+                CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT,
+                sizeof(size_t),
+                inputValue,
+                sizeof(size_t) * workDim,
+                paramValue,
+                &paramValueSizeRet);
 
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT,
-        sizeof(size_t),
-        inputValue,
-        sizeof(size_t) * workDim,
-        paramValue,
-        &paramValueSizeRet);
+            EXPECT_EQ(CL_SUCCESS, retVal);
+            EXPECT_EQ(sizeof(size_t) * workDim, paramValueSizeRet);
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+            size_t workGroupSize = subGroupsNum * largestCompiledSIMDSize;
+            if (workGroupSize > calculatedMaxWorkgroupSize) {
+                workGroupSize = 0;
+            }
 
-    EXPECT_EQ(sizeof(size_t) * workDim, paramValueSizeRet);
-
-    size_t workGroupSize = subGroupsNum * largestCompiledSIMDSize;
-    if (workGroupSize > calculatedMaxWorkgroupSize) {
-        workGroupSize = 0;
-    }
-
-    EXPECT_EQ(workGroupSize, paramValue[0]);
-    if (workDim > 1) {
-        EXPECT_EQ(workGroupSize ? 1u : 0u, paramValue[1]);
-    }
-    if (workDim > 2) {
-        EXPECT_EQ(workGroupSize ? 1u : 0u, paramValue[2]);
+            EXPECT_EQ(workGroupSize, paramValue[0]);
+            if (workDim > 1) {
+                EXPECT_EQ(workGroupSize ? 1u : 0u, paramValue[1]);
+            }
+            if (workDim > 2) {
+                EXPECT_EQ(workGroupSize ? 1u : 0u, paramValue[2]);
+            }
+        }
     }
 }
 
-typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnMaxNumberTest;
-
-TEST_F(KernelSubGroupInfoReturnMaxNumberTest, GivenWorkGroupSizeWhenGettingMaxNumSubGroupsThenReturnIsCalculatedCorrectly) {
+TEST_F(KernelSubGroupInfoTest, GivenWorkGroupSizeWhenGettingMaxNumSubGroupsThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
     retVal = clGetKernelSubGroupInfo(
@@ -248,9 +206,7 @@ TEST_F(KernelSubGroupInfoReturnMaxNumberTest, GivenWorkGroupSizeWhenGettingMaxNu
     EXPECT_EQ(paramValue[0], Math::divideAndRoundUp(calculatedMaxWorkgroupSize, largestCompiledSIMDSize));
 }
 
-typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnCompileNumberTest;
-
-TEST_F(KernelSubGroupInfoReturnCompileNumberTest, GivenKernelWhenGettingCompileNumSubGroupThenReturnIsCalculatedCorrectly) {
+TEST_F(KernelSubGroupInfoTest, GivenKernelWhenGettingCompileNumSubGroupThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
     retVal = clGetKernelSubGroupInfo(
@@ -268,9 +224,7 @@ TEST_F(KernelSubGroupInfoReturnCompileNumberTest, GivenKernelWhenGettingCompileN
     EXPECT_EQ(paramValue[0], static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.compiledSubGroupsNumber));
 }
 
-typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnCompileSizeTest;
-
-TEST_F(KernelSubGroupInfoReturnCompileSizeTest, GivenKernelWhenGettingCompileSubGroupSizeThenReturnIsCalculatedCorrectly) {
+TEST_F(KernelSubGroupInfoTest, GivenKernelWhenGettingCompileSubGroupSizeThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
     retVal = clGetKernelSubGroupInfo(
@@ -351,7 +305,7 @@ TEST_F(KernelSubGroupInfoTest, GivenNullDeviceWhenGettingSubGroupInfoFromMultiDe
         nullptr,
         sizeof(size_t),
         paramValue,
-        &paramValueSizeRet);
+        nullptr);
 
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
@@ -372,7 +326,7 @@ TEST_F(KernelSubGroupInfoTest, GivenInvalidParamNameWhenGettingSubGroupInfoThenI
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-uint32_t /*cl_kernel_sub_group_info*/ kernelSubGroupInfoInputParams[] = {
+static uint32_t /*cl_kernel_sub_group_info*/ kernelSubGroupInfoInputParams[] = {
     CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
     CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
     CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT,
@@ -380,173 +334,182 @@ uint32_t /*cl_kernel_sub_group_info*/ kernelSubGroupInfoInputParams[] = {
     CL_KERNEL_COMPILE_NUM_SUB_GROUPS,
     CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL};
 
-typedef KernelSubGroupInfoParamFixture<uint32_t /*cl_kernel_sub_group_info*/> KernelSubGroupInfoInputParamsTest;
-
-INSTANTIATE_TEST_SUITE_P(KernelSubGroupInfoInputParams,
-                         KernelSubGroupInfoInputParamsTest,
-                         ::testing::ValuesIn(kernelSubGroupInfoInputParams));
-
-TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimZeroWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
+TEST_F(KernelSubGroupInfoTest, GivenWorkDimZeroWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                        (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
-                        (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+    for (auto param : kernelSubGroupInfoInputParams) {
+        bool requireInput = (param == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                            (param == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
+                            (param == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
 
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        0,
-        inputValue,
-        0,
-        nullptr,
-        nullptr);
+        retVal = clGetKernelSubGroupInfo(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            0,
+            inputValue,
+            0,
+            nullptr,
+            nullptr);
 
-    EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+        EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+    }
 }
 
-TEST_P(KernelSubGroupInfoInputParamsTest, GivenIndivisibleWorkDimWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
+TEST_F(KernelSubGroupInfoTest, GivenIndivisibleWorkDimWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                        (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
-                        (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
-    size_t workDim = ((GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                      (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
-                         ? maxWorkDim
-                         : 1;
+    for (auto param : kernelSubGroupInfoInputParams) {
+        bool requireInput = (param == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                            (param == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
+                            (param == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+        size_t workDim = ((param == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                          (param == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
+                             ? maxWorkDim
+                             : 1;
 
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        (sizeof(size_t) * workDim) - 1,
-        inputValue,
-        0,
-        nullptr,
-        nullptr);
+        retVal = clGetKernelSubGroupInfo(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            (sizeof(size_t) * workDim) - 1,
+            inputValue,
+            0,
+            nullptr,
+            nullptr);
 
-    EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+        EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+    }
 }
 
-TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimGreaterThanMaxWorkDimWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
+TEST_F(KernelSubGroupInfoTest, GivenWorkDimGreaterThanMaxWorkDimWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                        (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
-                        (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
-    size_t workDim = ((GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                      (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
-                         ? maxWorkDim
-                         : 1;
+    for (auto param : kernelSubGroupInfoInputParams) {
+        bool requireInput = (param == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                            (param == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
+                            (param == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+        size_t workDim = ((param == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                          (param == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
+                             ? maxWorkDim
+                             : 1;
 
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        sizeof(size_t) * (workDim + 1),
-        inputValue,
-        0,
-        nullptr,
-        nullptr);
+        retVal = clGetKernelSubGroupInfo(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            sizeof(size_t) * (workDim + 1),
+            inputValue,
+            0,
+            nullptr,
+            nullptr);
 
-    EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+        EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+    }
 }
 
-TEST_P(KernelSubGroupInfoInputParamsTest, GivenInputValueIsNullWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
+TEST_F(KernelSubGroupInfoTest, GivenInputValueIsNullWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                        (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
-                        (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
-    size_t workDim = ((GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                      (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
-                         ? maxWorkDim
-                         : 1;
+    for (auto param : kernelSubGroupInfoInputParams) {
+        bool requireInput = (param == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                            (param == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
+                            (param == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+        size_t workDim = ((param == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                          (param == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
+                             ? maxWorkDim
+                             : 1;
 
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        sizeof(size_t) * (workDim),
-        nullptr,
-        0,
-        nullptr,
-        nullptr);
+        retVal = clGetKernelSubGroupInfo(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            sizeof(size_t) * workDim,
+            nullptr,
+            0,
+            nullptr,
+            nullptr);
 
-    EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+        EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+    }
 }
 
-TEST_P(KernelSubGroupInfoInputParamsTest, GivenParamValueSizeZeroWhenGettingSubGroupInfoThenInvalidValueErrorIsReturned) {
+TEST_F(KernelSubGroupInfoTest, GivenParamValueSizeZeroWhenGettingSubGroupInfoThenInvalidValueErrorIsReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        sizeof(size_t),
-        inputValue,
-        0,
-        paramValue,
-        nullptr);
+    for (auto param : kernelSubGroupInfoInputParams) {
+        retVal = clGetKernelSubGroupInfo(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            sizeof(size_t),
+            inputValue,
+            0,
+            paramValue,
+            nullptr);
 
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+        EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    }
 }
 
-TEST_P(KernelSubGroupInfoInputParamsTest, GivenUnalignedParamValueSizeWhenGettingSubGroupInfoThenInvalidValueErrorIsReturned) {
+TEST_F(KernelSubGroupInfoTest, GivenUnalignedParamValueSizeWhenGettingSubGroupInfoThenInvalidValueErrorIsReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    size_t workDim = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ? maxWorkDim : 1;
+    for (auto param : kernelSubGroupInfoInputParams) {
+        size_t workDim = (param == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ? maxWorkDim : 1;
 
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        sizeof(size_t),
-        inputValue,
-        (sizeof(size_t) * workDim) - 1,
-        paramValue,
-        nullptr);
+        retVal = clGetKernelSubGroupInfo(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            sizeof(size_t),
+            inputValue,
+            (sizeof(size_t) * workDim) - 1,
+            paramValue,
+            nullptr);
 
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+        EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    }
 }
 
-TEST_P(KernelSubGroupInfoInputParamsTest, GivenTooLargeParamValueSizeWhenGettingSubGroupInfoThenCorrectRetValIsReturned) {
+TEST_F(KernelSubGroupInfoTest, GivenTooLargeParamValueSizeWhenGettingSubGroupInfoThenCorrectRetValIsReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    bool requireOutputArray = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
-    size_t workDim = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ? maxWorkDim : 1;
+    for (auto param : kernelSubGroupInfoInputParams) {
+        bool requireOutputArray = (param == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+        size_t workDim = (param == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ? maxWorkDim : 1;
 
-    // paramValue size / sizeof(size_t) > MaxWorkDim
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        sizeof(size_t),
-        inputValue,
-        sizeof(size_t) * (workDim + 1),
-        paramValue,
-        nullptr);
+        retVal = clGetKernelSubGroupInfo(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            sizeof(size_t),
+            inputValue,
+            sizeof(size_t) * (workDim + 1),
+            paramValue,
+            nullptr);
 
-    EXPECT_EQ(requireOutputArray ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+        EXPECT_EQ(requireOutputArray ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+    }
 }
 
-TEST_P(KernelSubGroupInfoInputParamsTest, GivenNullPtrForReturnWhenGettingKernelSubGroupInfoThenSuccessIsReturned) {
+TEST_F(KernelSubGroupInfoTest, GivenNullPtrForReturnWhenGettingKernelSubGroupInfoThenSuccessIsReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    bool requireOutputArray = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+    for (auto param : kernelSubGroupInfoInputParams) {
+        bool requireOutputArray = (param == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
 
-    retVal = clGetKernelSubGroupInfo(
-        pMultiDeviceKernel,
-        pClDevice,
-        GetParam(),
-        sizeof(size_t),
-        inputValue,
-        0,
-        nullptr,
-        nullptr);
+        retVal = clGetKernelSubGroupInfo(
+            pMultiDeviceKernel,
+            pClDevice,
+            param,
+            sizeof(size_t),
+            inputValue,
+            0,
+            nullptr,
+            nullptr);
 
-    EXPECT_EQ(requireOutputArray ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+        EXPECT_EQ(requireOutputArray ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
+    }
 }
 } // namespace ULT

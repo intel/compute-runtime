@@ -37,85 +37,85 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingReadWhenEnqueueReadBufferI
     alignedFree(ptr);
 }
 
-TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadBufferIsCallingThenContextProvidesHintsAboutAlignments) {
+TEST_F(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadBufferIsCallingThenContextProvidesHintsAboutAlignments) {
+    for (bool addrAligned : ::testing::Bool()) {
+        for (bool szAligned : ::testing::Bool()) {
+            alignedAddress = addrAligned;
+            alignedSize = szAligned;
 
-    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    uintptr_t addressForReadBuffer = (uintptr_t)ptr;
-    size_t sizeForReadBuffer = MemoryConstants::cacheLineSize;
-    if (!alignedAddress) {
-        addressForReadBuffer++;
+            void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+            uintptr_t addressForReadBuffer = (uintptr_t)ptr;
+            size_t sizeForReadBuffer = MemoryConstants::cacheLineSize;
+            if (!alignedAddress) {
+                addressForReadBuffer++;
+            }
+            if (!alignedSize) {
+                sizeForReadBuffer--;
+            }
+            pCmdQ->enqueueReadBuffer(buffer, CL_FALSE, 0, sizeForReadBuffer, (void *)addressForReadBuffer, nullptr, 0, nullptr, nullptr);
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), addressForReadBuffer);
+            EXPECT_TRUE(containsHint(expectedHint, userData));
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadBuffer, sizeForReadBuffer, MemoryConstants::pageSize, MemoryConstants::pageSize);
+            EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+            alignedFree(ptr);
+            memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+        }
     }
-    if (!alignedSize) {
-        sizeForReadBuffer--;
-    }
-    pCmdQ->enqueueReadBuffer(buffer, CL_FALSE,
-                             0,
-                             sizeForReadBuffer,
-                             (void *)addressForReadBuffer,
-                             nullptr,
-                             0,
-                             nullptr,
-                             nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), addressForReadBuffer);
-    EXPECT_TRUE(containsHint(expectedHint, userData));
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadBuffer, sizeForReadBuffer, MemoryConstants::pageSize, MemoryConstants::pageSize);
-    EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
-    alignedFree(ptr);
 }
 
-TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadBufferRectIsCallingThenContextProvidesHintsAboutAlignments) {
+TEST_F(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadBufferRectIsCallingThenContextProvidesHintsAboutAlignments) {
+    for (bool addrAligned : ::testing::Bool()) {
+        for (bool szAligned : ::testing::Bool()) {
+            alignedAddress = addrAligned;
+            alignedSize = szAligned;
 
-    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    uintptr_t addressForReadBufferRect = (uintptr_t)ptr;
-    size_t sizeForReadBufferRect = MemoryConstants::cacheLineSize;
-    if (!alignedAddress) {
-        addressForReadBufferRect++;
+            void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+            uintptr_t addressForReadBufferRect = (uintptr_t)ptr;
+            size_t sizeForReadBufferRect = MemoryConstants::cacheLineSize;
+            if (!alignedAddress) {
+                addressForReadBufferRect++;
+            }
+            if (!alignedSize) {
+                sizeForReadBufferRect--;
+            }
+            size_t bufferOrigin[] = {0, 0, 0};
+            size_t hostOrigin[] = {0, 0, 0};
+            size_t region[] = {sizeForReadBufferRect, 1, 1};
+            pCmdQ->enqueueReadBufferRect(buffer, CL_TRUE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, (void *)addressForReadBufferRect, 0, nullptr, nullptr);
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_RECT_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), addressForReadBufferRect);
+            EXPECT_TRUE(containsHint(expectedHint, userData));
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_RECT_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadBufferRect, sizeForReadBufferRect, MemoryConstants::pageSize, MemoryConstants::pageSize);
+            EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+            alignedFree(ptr);
+            memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+        }
     }
-    if (!alignedSize) {
-        sizeForReadBufferRect--;
-    }
-    size_t bufferOrigin[] = {0, 0, 0};
-    size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {sizeForReadBufferRect, 1, 1};
-
-    pCmdQ->enqueueReadBufferRect(
-        buffer,
-        CL_TRUE,
-        bufferOrigin,
-        hostOrigin,
-        region,
-        0,
-        0,
-        0,
-        0,
-        (void *)addressForReadBufferRect,
-        0,
-        nullptr,
-        nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_RECT_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), addressForReadBufferRect);
-    EXPECT_TRUE(containsHint(expectedHint, userData));
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_RECT_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadBufferRect, sizeForReadBufferRect, MemoryConstants::pageSize, MemoryConstants::pageSize);
-    EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
-    alignedFree(ptr);
 }
 
-TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueStagingReadBufferIsCalledThenContextProvidesHintsAboutAlignments) {
-    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    uintptr_t addressForReadBuffer = (uintptr_t)ptr;
-    size_t sizeForReadBuffer = MemoryConstants::cacheLineSize;
-    if (!alignedAddress) {
-        addressForReadBuffer++;
+TEST_F(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueStagingReadBufferIsCalledThenContextProvidesHintsAboutAlignments) {
+    for (bool addrAligned : ::testing::Bool()) {
+        for (bool szAligned : ::testing::Bool()) {
+            alignedAddress = addrAligned;
+            alignedSize = szAligned;
+
+            void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+            uintptr_t addressForReadBuffer = (uintptr_t)ptr;
+            size_t sizeForReadBuffer = MemoryConstants::cacheLineSize;
+            if (!alignedAddress) {
+                addressForReadBuffer++;
+            }
+            if (!alignedSize) {
+                sizeForReadBuffer--;
+            }
+            pCmdQ->enqueueStagingBufferTransfer(CL_COMMAND_READ_BUFFER, buffer, CL_FALSE, 0, sizeForReadBuffer, (void *)addressForReadBuffer, nullptr);
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), addressForReadBuffer);
+            EXPECT_TRUE(containsHint(expectedHint, userData));
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadBuffer, sizeForReadBuffer, MemoryConstants::pageSize, MemoryConstants::pageSize);
+            EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+            alignedFree(ptr);
+            memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+        }
     }
-    if (!alignedSize) {
-        sizeForReadBuffer--;
-    }
-    pCmdQ->enqueueStagingBufferTransfer(CL_COMMAND_READ_BUFFER, buffer, CL_FALSE,
-                                        0, sizeForReadBuffer, (void *)addressForReadBuffer, nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), addressForReadBuffer);
-    EXPECT_TRUE(containsHint(expectedHint, userData));
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadBuffer, sizeForReadBuffer, MemoryConstants::pageSize, MemoryConstants::pageSize);
-    EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
-    alignedFree(ptr);
 }
 
 TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingReadAndNotSharedMemWhenEnqueueReadBufferRectIsCallingThenContextProvidesProperHint) {
@@ -366,72 +366,70 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndSharedMemWhenEn
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
-TEST_P(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadImageIsCallingThenContextProvidesHintsAboutAlignments) {
+TEST_F(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadImageIsCallingThenContextProvidesHintsAboutAlignments) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-    size_t hostOrigin[] = {0, 0, 0};
-    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    uintptr_t addressForReadImage = (uintptr_t)ptr;
-    size_t sizeForReadImageInPixels = MemoryConstants::cacheLineSize;
-    bool hintWithMisalignment = !(alignedAddress && alignedSize);
-    if (!alignedAddress) {
-        addressForReadImage++;
-    }
-    if (!alignedSize) {
-        sizeForReadImageInPixels--;
-    }
-    size_t region[] = {sizeForReadImageInPixels, 1, 1};
-    pCmdQ->enqueueReadImage(image,
-                            CL_FALSE,
-                            hostOrigin,
-                            region,
-                            0,
-                            0,
-                            (void *)addressForReadImage,
-                            nullptr,
-                            0,
-                            nullptr,
-                            nullptr);
-    size_t sizeForReadImage = sizeForReadImageInPixels * image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
-    ASSERT_EQ(alignedSize, isAligned<MemoryConstants::cacheLineSize>(sizeForReadImage));
+    for (bool addrAligned : ::testing::Bool()) {
+        for (bool szAligned : ::testing::Bool()) {
+            alignedAddress = addrAligned;
+            alignedSize = szAligned;
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadImage, sizeForReadImage, MemoryConstants::pageSize, MemoryConstants::pageSize);
-    EXPECT_EQ(hintWithMisalignment, containsHint(expectedHint, userData));
-    alignedFree(ptr);
+            size_t hostOrigin[] = {0, 0, 0};
+            void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+            uintptr_t addressForReadImage = (uintptr_t)ptr;
+            size_t sizeForReadImageInPixels = MemoryConstants::cacheLineSize;
+            bool hintWithMisalignment = !(alignedAddress && alignedSize);
+            if (!alignedAddress) {
+                addressForReadImage++;
+            }
+            if (!alignedSize) {
+                sizeForReadImageInPixels--;
+            }
+            size_t region[] = {sizeForReadImageInPixels, 1, 1};
+            pCmdQ->enqueueReadImage(image, CL_FALSE, hostOrigin, region, 0, 0, (void *)addressForReadImage, nullptr, 0, nullptr, nullptr);
+            size_t sizeForReadImage = sizeForReadImageInPixels * image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+            ASSERT_EQ(alignedSize, isAligned<MemoryConstants::cacheLineSize>(sizeForReadImage));
+
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadImage, sizeForReadImage, MemoryConstants::pageSize, MemoryConstants::pageSize);
+            EXPECT_EQ(hintWithMisalignment, containsHint(expectedHint, userData));
+            alignedFree(ptr);
+            memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+        }
+    }
 }
 
-TEST_P(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueStagingReadImageIsCallingThenContextProvidesHintsAboutAlignments) {
+TEST_F(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueStagingReadImageIsCallingThenContextProvidesHintsAboutAlignments) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-    size_t hostOrigin[] = {0, 0, 0};
-    size_t sizeForReadImageInPixels = MemoryConstants::cacheLineSize;
-    size_t sizeForReadImage = sizeForReadImageInPixels * image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
-    void *ptr = alignedMalloc(sizeForReadImage + MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    uintptr_t addressForReadImage = (uintptr_t)ptr;
+    for (bool addrAligned : ::testing::Bool()) {
+        for (bool szAligned : ::testing::Bool()) {
+            alignedAddress = addrAligned;
+            alignedSize = szAligned;
 
-    bool hintWithMisalignment = !(alignedAddress && alignedSize);
-    if (!alignedAddress) {
-        addressForReadImage++;
-    }
-    if (!alignedSize) {
-        sizeForReadImageInPixels--;
-        sizeForReadImage -= image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
-    }
-    size_t region[] = {sizeForReadImageInPixels, 1, 1};
-    pCmdQ->enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE,
-                                       image,
-                                       CL_FALSE,
-                                       hostOrigin,
-                                       region,
-                                       0,
-                                       0,
-                                       (void *)addressForReadImage,
-                                       nullptr);
-    ASSERT_EQ(alignedSize, isAligned<MemoryConstants::cacheLineSize>(sizeForReadImage));
+            size_t hostOrigin[] = {0, 0, 0};
+            size_t sizeForReadImageInPixels = MemoryConstants::cacheLineSize;
+            size_t sizeForReadImage = sizeForReadImageInPixels * image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+            void *ptr = alignedMalloc(sizeForReadImage + MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+            uintptr_t addressForReadImage = (uintptr_t)ptr;
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadImage, sizeForReadImage, MemoryConstants::pageSize, MemoryConstants::pageSize);
-    EXPECT_EQ(hintWithMisalignment, containsHint(expectedHint, userData));
-    alignedFree(ptr);
+            bool hintWithMisalignment = !(alignedAddress && alignedSize);
+            if (!alignedAddress) {
+                addressForReadImage++;
+            }
+            if (!alignedSize) {
+                sizeForReadImageInPixels--;
+                sizeForReadImage -= image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+            }
+            size_t region[] = {sizeForReadImageInPixels, 1, 1};
+            pCmdQ->enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, image, CL_FALSE, hostOrigin, region, 0, 0, (void *)addressForReadImage, nullptr);
+            ASSERT_EQ(alignedSize, isAligned<MemoryConstants::cacheLineSize>(sizeForReadImage));
+
+            snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadImage, sizeForReadImage, MemoryConstants::pageSize, MemoryConstants::pageSize);
+            EXPECT_EQ(hintWithMisalignment, containsHint(expectedHint, userData));
+            alignedFree(ptr);
+            memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+        }
+    }
 }
 
 TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingWriteWhenEnqueueWriteImageIsCallingThenContextProvidesProperHint) {
@@ -502,221 +500,159 @@ TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingReadImageSharesStorageWi
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
-TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapBufferIsCallingThenContextProvidesProperHint) {
-
-    Buffer *buffer;
-    void *address;
-    bool zeroCopyBuffer = GetParam();
-    size_t sizeForBuffer = MemoryConstants::cacheLineSize;
-    if (!zeroCopyBuffer) {
-        sizeForBuffer++;
+TEST_F(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapBufferIsCallingThenContextProvidesProperHint) {
+    for (bool zeroCopyBuffer : ::testing::Bool()) {
+        void *address;
+        size_t sizeForBuffer = MemoryConstants::cacheLineSize;
+        if (!zeroCopyBuffer) {
+            sizeForBuffer++;
+        }
+        address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+        Buffer *buf = Buffer::create(context, CL_MEM_USE_HOST_PTR, sizeForBuffer, address, retVal);
+        pCmdQ->enqueueMapBuffer(buf, CL_FALSE, 0, 0, MemoryConstants::cacheLineSize, 0, nullptr, nullptr, retVal);
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buf));
+        EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buf));
+        EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
+        alignedFree(address);
+        delete buf;
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
-
-    address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    buffer = Buffer::create(context, CL_MEM_USE_HOST_PTR, sizeForBuffer, address, retVal);
-
-    pCmdQ->enqueueMapBuffer(buffer, CL_FALSE, 0, 0, MemoryConstants::cacheLineSize, 0, nullptr, nullptr, retVal);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer));
-    EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer));
-    EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
-
-    alignedFree(address);
-    delete buffer;
-}
-TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnqueueMapBufferIsCallingThenContextProvidesProperHint) {
-
-    void *address;
-    bool zeroCopyBuffer = GetParam();
-    UserEvent userEvent(context);
-    cl_event blockedEvent = &userEvent;
-    size_t sizeForBuffer = MemoryConstants::cacheLineSize;
-    if (!zeroCopyBuffer) {
-        sizeForBuffer++;
-    }
-
-    address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    auto buffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_USE_HOST_PTR, sizeForBuffer, address, retVal));
-
-    EXPECT_EQ(buffer->isMemObjZeroCopy(), zeroCopyBuffer);
-
-    pCmdQ->enqueueMapBuffer(buffer.get(), CL_FALSE, 0, 0, MemoryConstants::cacheLineSize, 1, &blockedEvent, nullptr, retVal);
-    EXPECT_TRUE(pCmdQ->isQueueBlocked());
-    userEvent.setStatus(CL_COMPLETE);
-    EXPECT_FALSE(pCmdQ->isQueueBlocked());
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer.get()));
-    EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer.get()));
-    EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
-
-    alignedFree(address);
 }
 
-TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapImageIsCallingThenContextProvidesProperHint) {
-
-    Image *image;
-    bool isZeroCopyImage;
-
-    isZeroCopyImage = GetParam();
-
-    size_t origin[] = {0, 0, 0};
-    size_t region[] = {1, 1, 1};
-
-    if (isZeroCopyImage) {
-        image = ImageHelperUlt<ImageReadOnly<Image1dDefaults>>::create(context);
-    } else {
-        image = ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(context);
+TEST_F(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnqueueMapBufferIsCallingThenContextProvidesProperHint) {
+    for (bool zeroCopyBuffer : ::testing::Bool()) {
+        UserEvent userEvent(context);
+        cl_event blockedEvent = &userEvent;
+        size_t sizeForBuffer = MemoryConstants::cacheLineSize;
+        if (!zeroCopyBuffer) {
+            sizeForBuffer++;
+        }
+        void *address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+        auto buf = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_USE_HOST_PTR, sizeForBuffer, address, retVal));
+        EXPECT_EQ(buf->isMemObjZeroCopy(), zeroCopyBuffer);
+        pCmdQ->enqueueMapBuffer(buf.get(), CL_FALSE, 0, 0, MemoryConstants::cacheLineSize, 1, &blockedEvent, nullptr, retVal);
+        EXPECT_TRUE(pCmdQ->isQueueBlocked());
+        userEvent.setStatus(CL_COMPLETE);
+        EXPECT_FALSE(pCmdQ->isQueueBlocked());
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buf.get()));
+        EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buf.get()));
+        EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
+        alignedFree(address);
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
-    EXPECT_EQ(isZeroCopyImage, image->isMemObjZeroCopy());
-    pCmdQ->enqueueMapImage(
-        image,
-        CL_FALSE,
-        0,
-        origin,
-        region,
-        nullptr,
-        nullptr,
-        0,
-        nullptr,
-        nullptr,
-        retVal);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(image));
-    EXPECT_EQ(isZeroCopyImage, containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_REQUIRES_COPY_DATA], static_cast<cl_mem>(image));
-    EXPECT_EQ(!isZeroCopyImage, containsHint(expectedHint, userData));
-
-    delete image;
 }
 
-TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnqueueMapImageIsCallingThenContextProvidesProperHint) {
-
-    auto image = std::unique_ptr<Image>(ImageHelperUlt<ImageReadOnly<Image1dDefaults>>::create(context));
-    bool isZeroCopyImage = GetParam();
-
-    size_t origin[] = {0, 0, 0};
-    size_t region[] = {1, 1, 1};
-
-    if (!isZeroCopyImage) {
-        image.reset(ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(context));
+TEST_F(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapImageIsCallingThenContextProvidesProperHint) {
+    for (bool isZeroCopyImage : ::testing::Bool()) {
+        size_t origin[] = {0, 0, 0};
+        size_t region[] = {1, 1, 1};
+        Image *img;
+        if (isZeroCopyImage) {
+            img = ImageHelperUlt<ImageReadOnly<Image1dDefaults>>::create(context);
+        } else {
+            img = ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(context);
+        }
+        EXPECT_EQ(isZeroCopyImage, img->isMemObjZeroCopy());
+        pCmdQ->enqueueMapImage(img, CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(img));
+        EXPECT_EQ(isZeroCopyImage, containsHint(expectedHint, userData));
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_REQUIRES_COPY_DATA], static_cast<cl_mem>(img));
+        EXPECT_EQ(!isZeroCopyImage, containsHint(expectedHint, userData));
+        delete img;
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
-    EXPECT_EQ(isZeroCopyImage, image->isMemObjZeroCopy());
-
-    UserEvent userEvent(context);
-    cl_event blockedEvent = &userEvent;
-    void *mapPtr = pCmdQ->enqueueMapImage(
-        image.get(),
-        CL_FALSE,
-        0,
-        origin,
-        region,
-        nullptr,
-        nullptr,
-        1,
-        &blockedEvent,
-        nullptr,
-        retVal);
-    EXPECT_TRUE(pCmdQ->isQueueBlocked());
-    userEvent.setStatus(CL_COMPLETE);
-    pCmdQ->enqueueUnmapMemObject(image.get(), mapPtr, 0, nullptr, nullptr);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(image.get()));
-    EXPECT_EQ(isZeroCopyImage, containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_REQUIRES_COPY_DATA], static_cast<cl_mem>(image.get()));
-    EXPECT_EQ(!isZeroCopyImage, containsHint(expectedHint, userData));
 }
 
-TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCallingWithBufferThenContextProvidesProperHint) {
-
-    Buffer *buffer;
-    void *address;
-    bool zeroCopyBuffer = GetParam();
-    size_t sizeForBuffer = MemoryConstants::cacheLineSize;
-    if (!zeroCopyBuffer) {
-        sizeForBuffer++;
+TEST_F(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnqueueMapImageIsCallingThenContextProvidesProperHint) {
+    for (bool isZeroCopyImage : ::testing::Bool()) {
+        auto img = std::unique_ptr<Image>(ImageHelperUlt<ImageReadOnly<Image1dDefaults>>::create(context));
+        size_t origin[] = {0, 0, 0};
+        size_t region[] = {1, 1, 1};
+        if (!isZeroCopyImage) {
+            img.reset(ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(context));
+        }
+        EXPECT_EQ(isZeroCopyImage, img->isMemObjZeroCopy());
+        UserEvent userEvent(context);
+        cl_event blockedEvent = &userEvent;
+        void *mapPtr = pCmdQ->enqueueMapImage(img.get(), CL_FALSE, 0, origin, region, nullptr, nullptr, 1, &blockedEvent, nullptr, retVal);
+        EXPECT_TRUE(pCmdQ->isQueueBlocked());
+        userEvent.setStatus(CL_COMPLETE);
+        pCmdQ->enqueueUnmapMemObject(img.get(), mapPtr, 0, nullptr, nullptr);
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(img.get()));
+        EXPECT_EQ(isZeroCopyImage, containsHint(expectedHint, userData));
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_REQUIRES_COPY_DATA], static_cast<cl_mem>(img.get()));
+        EXPECT_EQ(!isZeroCopyImage, containsHint(expectedHint, userData));
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
-
-    address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    buffer = Buffer::create(context, CL_MEM_USE_HOST_PTR, sizeForBuffer, address, retVal);
-
-    void *mapPtr = pCmdQ->enqueueMapBuffer(buffer, CL_FALSE, 0, 0, MemoryConstants::cacheLineSize, 0, nullptr, nullptr, retVal);
-    pCmdQ->enqueueUnmapMemObject(buffer, mapPtr, 0, nullptr, nullptr);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA], mapPtr, static_cast<cl_mem>(buffer));
-    EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA], mapPtr);
-    EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
-
-    alignedFree(address);
-    delete buffer;
 }
 
-TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyAndBlockedEventFlagWhenEnqueueUnmapIsCallingWithBufferThenContextProvidesProperHint) {
-
-    void *address;
-    bool zeroCopyBuffer = GetParam();
-    UserEvent userEvent(context);
-    cl_event blockedEvent = &userEvent;
-    size_t sizeForBuffer = MemoryConstants::cacheLineSize;
-    if (!zeroCopyBuffer) {
-        sizeForBuffer++;
+TEST_F(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCallingWithBufferThenContextProvidesProperHint) {
+    for (bool zeroCopyBuffer : ::testing::Bool()) {
+        size_t sizeForBuffer = MemoryConstants::cacheLineSize;
+        if (!zeroCopyBuffer) {
+            sizeForBuffer++;
+        }
+        void *address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+        Buffer *buf = Buffer::create(context, CL_MEM_USE_HOST_PTR, sizeForBuffer, address, retVal);
+        void *mapPtr = pCmdQ->enqueueMapBuffer(buf, CL_FALSE, 0, 0, MemoryConstants::cacheLineSize, 0, nullptr, nullptr, retVal);
+        pCmdQ->enqueueUnmapMemObject(buf, mapPtr, 0, nullptr, nullptr);
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA], mapPtr, static_cast<cl_mem>(buf));
+        EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA], mapPtr);
+        EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
+        alignedFree(address);
+        delete buf;
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
-
-    address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    auto buffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_USE_HOST_PTR, sizeForBuffer, address, retVal));
-    EXPECT_EQ(buffer->isMemObjZeroCopy(), zeroCopyBuffer);
-
-    void *mapPtr = pCmdQ->enqueueMapBuffer(buffer.get(), CL_FALSE, 0, 0, MemoryConstants::cacheLineSize, 1, &blockedEvent, nullptr, retVal);
-    EXPECT_TRUE(pCmdQ->isQueueBlocked());
-
-    pCmdQ->enqueueUnmapMemObject(buffer.get(), mapPtr, 0, nullptr, nullptr);
-    userEvent.setStatus(CL_COMPLETE);
-    EXPECT_FALSE(pCmdQ->isQueueBlocked());
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA], mapPtr, static_cast<cl_mem>(buffer.get()));
-    EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA], mapPtr);
-    EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
-
-    alignedFree(address);
 }
 
-TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCallingWithImageThenContextProvidesProperHint) {
-
-    Image *image;
-    bool isZeroCopyImage;
-
-    isZeroCopyImage = GetParam();
-
-    size_t origin[] = {0, 0, 0};
-    size_t region[] = {1, 1, 1};
-
-    if (isZeroCopyImage) {
-        image = ImageHelperUlt<ImageReadOnly<Image1dDefaults>>::create(context);
-    } else {
-        image = ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(context);
+TEST_F(PerformanceHintEnqueueMapTest, GivenZeroCopyAndBlockedEventFlagWhenEnqueueUnmapIsCallingWithBufferThenContextProvidesProperHint) {
+    for (bool zeroCopyBuffer : ::testing::Bool()) {
+        UserEvent userEvent(context);
+        cl_event blockedEvent = &userEvent;
+        size_t sizeForBuffer = MemoryConstants::cacheLineSize;
+        if (!zeroCopyBuffer) {
+            sizeForBuffer++;
+        }
+        void *address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+        auto buf = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_USE_HOST_PTR, sizeForBuffer, address, retVal));
+        EXPECT_EQ(buf->isMemObjZeroCopy(), zeroCopyBuffer);
+        void *mapPtr = pCmdQ->enqueueMapBuffer(buf.get(), CL_FALSE, 0, 0, MemoryConstants::cacheLineSize, 1, &blockedEvent, nullptr, retVal);
+        EXPECT_TRUE(pCmdQ->isQueueBlocked());
+        pCmdQ->enqueueUnmapMemObject(buf.get(), mapPtr, 0, nullptr, nullptr);
+        userEvent.setStatus(CL_COMPLETE);
+        EXPECT_FALSE(pCmdQ->isQueueBlocked());
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA], mapPtr, static_cast<cl_mem>(buf.get()));
+        EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA], mapPtr);
+        EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
+        alignedFree(address);
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
-    EXPECT_EQ(isZeroCopyImage, image->isMemObjZeroCopy());
+}
 
-    void *mapPtr = pCmdQ->enqueueMapImage(image, CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
-
-    pCmdQ->enqueueUnmapMemObject(image, mapPtr, 0, nullptr, nullptr);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA], mapPtr, static_cast<cl_mem>(image));
-    EXPECT_EQ(!isZeroCopyImage, containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA], mapPtr);
-    EXPECT_EQ(isZeroCopyImage, containsHint(expectedHint, userData));
-
-    delete image;
+TEST_F(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCallingWithImageThenContextProvidesProperHint) {
+    for (bool isZeroCopyImage : ::testing::Bool()) {
+        size_t origin[] = {0, 0, 0};
+        size_t region[] = {1, 1, 1};
+        Image *img;
+        if (isZeroCopyImage) {
+            img = ImageHelperUlt<ImageReadOnly<Image1dDefaults>>::create(context);
+        } else {
+            img = ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(context);
+        }
+        EXPECT_EQ(isZeroCopyImage, img->isMemObjZeroCopy());
+        void *mapPtr = pCmdQ->enqueueMapImage(img, CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
+        pCmdQ->enqueueUnmapMemObject(img, mapPtr, 0, nullptr, nullptr);
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA], mapPtr, static_cast<cl_mem>(img));
+        EXPECT_EQ(!isZeroCopyImage, containsHint(expectedHint, userData));
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA], mapPtr);
+        EXPECT_EQ(isZeroCopyImage, containsHint(expectedHint, userData));
+        delete img;
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
+    }
 }
 
 TEST_F(PerformanceHintEnqueueTest, GivenSVMPointerWhenEnqueueSVMMapIsCallingThenContextProvidesProperHint) {
@@ -818,34 +754,29 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
-TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
-    size_t localWorkGroupSize[3];
-    int badSizeDimension;
-    uint32_t workDim = globalWorkGroupSize[1] == 1 ? 1 : globalWorkGroupSize[2] == 1 ? 2
-                                                                                     : 3;
-
-    DispatchInfo dispatchInfo(&pCmdQ->getClDevice(), kernel, workDim, Vec3<size_t>(globalWorkGroupSize), Vec3<size_t>(0u, 0u, 0u), Vec3<size_t>(0u, 0u, 0u));
-
-    auto computedLocalWorkgroupSize = computeWorkgroupSize(dispatchInfo);
-
-    localWorkGroupSize[0] = computedLocalWorkgroupSize.x;
-    localWorkGroupSize[1] = computedLocalWorkgroupSize.y;
-    localWorkGroupSize[2] = computedLocalWorkgroupSize.z;
-
-    badSizeDimension = GetParam();
-    if (localWorkGroupSize[badSizeDimension] > 1) {
-        localWorkGroupSize[badSizeDimension] /= 2;
-    } else {
-        localWorkGroupSize[0] /= 2;
+TEST_F(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
+    for (int badSizeDimension : {0, 1, 2}) {
+        size_t localWorkGroupSize[3];
+        uint32_t workDim = globalWorkGroupSize[1] == 1 ? 1 : globalWorkGroupSize[2] == 1 ? 2
+                                                                                         : 3;
+        DispatchInfo dispatchInfo(&pCmdQ->getClDevice(), kernel, workDim, Vec3<size_t>(globalWorkGroupSize), Vec3<size_t>(0u, 0u, 0u), Vec3<size_t>(0u, 0u, 0u));
+        auto computedLocalWorkgroupSize = computeWorkgroupSize(dispatchInfo);
+        localWorkGroupSize[0] = computedLocalWorkgroupSize.x;
+        localWorkGroupSize[1] = computedLocalWorkgroupSize.y;
+        localWorkGroupSize[2] = computedLocalWorkgroupSize.z;
+        if (localWorkGroupSize[badSizeDimension] > 1) {
+            localWorkGroupSize[badSizeDimension] /= 2;
+        } else {
+            localWorkGroupSize[0] /= 2;
+        }
+        retVal = pCmdQ->enqueueKernel(kernel, 3, nullptr, globalWorkGroupSize, localWorkGroupSize, 0, nullptr, nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BAD_LOCAL_WORKGROUP_SIZE],
+                 localWorkGroupSize[0], localWorkGroupSize[1], localWorkGroupSize[2], kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
+                 computedLocalWorkgroupSize.x, computedLocalWorkgroupSize.y, computedLocalWorkgroupSize.z);
+        EXPECT_TRUE(containsHint(expectedHint, userData));
+        memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
-
-    retVal = pCmdQ->enqueueKernel(kernel, 3, nullptr, globalWorkGroupSize, localWorkGroupSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BAD_LOCAL_WORKGROUP_SIZE],
-             localWorkGroupSize[0], localWorkGroupSize[1], localWorkGroupSize[2], kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
-             computedLocalWorkgroupSize.x, computedLocalWorkgroupSize.y, computedLocalWorkgroupSize.z);
-    EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
 HWTEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueKernelIsCalledWithWorkDim3ThenContextProvidesProperHint) {
@@ -864,29 +795,3 @@ HWTEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueu
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PRINTF_DETECTED_IN_KERNEL], kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
-
-const int validDimensions[] = {0, 1, 2};
-
-INSTANTIATE_TEST_SUITE_P(
-    DriverDiagnosticsTests,
-    PerformanceHintEnqueueReadBufferTest,
-    testing::Combine(
-        ::testing::Bool(),
-        ::testing::Bool()));
-
-INSTANTIATE_TEST_SUITE_P(
-    DriverDiagnosticsTests,
-    PerformanceHintEnqueueReadImageTest,
-    testing::Combine(
-        ::testing::Bool(),
-        ::testing::Bool()));
-
-INSTANTIATE_TEST_SUITE_P(
-    DriverDiagnosticsTests,
-    PerformanceHintEnqueueMapTest,
-    testing::Bool());
-
-INSTANTIATE_TEST_SUITE_P(
-    DriverDiagnosticsTests,
-    PerformanceHintEnqueueKernelBadSizeTest,
-    testing::ValuesIn(validDimensions));

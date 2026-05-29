@@ -117,7 +117,7 @@ class MockOsTime2 : public OSTime {
 
 int MockOsTime2::instanceNum = 0;
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProfilingAndForWorkloadWithKernelWhenGetCSFromCmdQueueThenEnoughSpaceInCS) {
+HWTEST2_F(ProfilingTests, GivenCommandQueueWithProfilingAndForWorkloadWithKernelWhenGetCSFromCmdQueueThenEnoughSpaceInCS, IsGen12LP) {
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
@@ -161,7 +161,7 @@ HWTEST_F(ProfilingTests, GivenCommandQueueWithProfilingAndForWorkloadWithNoKerne
     EXPECT_GE(commandStreamMarker.getAvailableSpace(), requiredSize);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProfilingAndForWorkloadWithTwoKernelsInMdiWhenGetCSFromCmdQueueThenEnoughSpaceInCS) {
+HWTEST2_F(ProfilingTests, GivenCommandQueueWithProfilingAndForWorkloadWithTwoKernelsInMdiWhenGetCSFromCmdQueueThenEnoughSpaceInCS, IsGen12LP) {
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
@@ -188,7 +188,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProfilingAnd
 #   Two additional PIPE_CONTROLs are expected before first MI_STORE_REGISTER_MEM (which is before GPGPU_WALKER)
 #   and after second MI_STORE_REGISTER_MEM (which is after GPGPU_WALKER).
 */
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProfolingWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS) {
+HWTEST2_F(ProfilingTests, GivenCommandQueueWithProfolingWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS, IsGen12LP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
@@ -237,7 +237,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProfolingWhe
     clReleaseEvent(event);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProfilingWhenNonBlockedEnqueueIsExecutedThenSubmittedTimestampHasGPUTime) {
+HWTEST2_F(ProfilingTests, GivenCommandQueueWithProfilingWhenNonBlockedEnqueueIsExecutedThenSubmittedTimestampHasGPUTime, IsGen12LP) {
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -271,61 +271,12 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProfilingWhe
 #   One additional MI_STORE_REGISTER_MEM is expected before and after GPGPU_WALKER.
 */
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProflingWhenWalkerIsDispatchedThenMiStoreRegisterMemIsPresentInCS) {
-    typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    size_t globalOffsets[3] = {0, 0, 0};
-    size_t workItems[3] = {1, 1, 1};
-    uint32_t dimensions = 1;
-    cl_event event;
-
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
-        &kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
-        0,
-        nullptr,
-        &event);
-
-    parseCommands<FamilyType>(*pCmdQ);
-
-    // Find GPGPU_WALKER
-    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
-    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
-    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
-
-    // Check MI_STORE_REGISTER_MEMs
-    auto itorBeforeMI = reverseFind<MI_STORE_REGISTER_MEM *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
-    ASSERT_NE(cmdList.rbegin(), itorBeforeMI);
-    auto pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
-    pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
-    ASSERT_NE(nullptr, pBeforeMI);
-    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pBeforeMI->getRegisterAddress());
-
-    auto itorAfterMI = find<MI_STORE_REGISTER_MEM *>(itorGPGPUWalkerCmd, cmdList.end());
-    ASSERT_NE(cmdList.end(), itorAfterMI);
-    auto pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
-    ASSERT_NE(nullptr, pAfterMI);
-    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pAfterMI->getRegisterAddress());
-    ++itorAfterMI;
-    pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
-    EXPECT_EQ(nullptr, pAfterMI);
-
-    clReleaseEvent(event);
-}
-
 /*
 #   Two additional PIPE_CONTROLs are expected before first MI_STORE_REGISTER_MEM (which is before GPGPU_WALKER)
 #   and after second MI_STORE_REGISTER_MEM (which is after GPGPU_WALKER).
 #   If queue is blocked commands should be added to event
 */
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueBlockedWithProfilingWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS) {
+HWTEST2_F(ProfilingTests, GivenCommandQueueBlockedWithProfilingWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS, IsGen12LP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
@@ -383,63 +334,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueBlockedWithProfi
 #   If queue is blocked commands should be added to event
 */
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueBlockedWithProfilingWhenWalkerIsDispatchedThenMiStoreRegisterMemIsPresentInCS) {
-    typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-    kernel.incRefInternal();
-
-    size_t globalOffsets[3] = {0, 0, 0};
-    size_t workItems[3] = {1, 1, 1};
-    uint32_t dimensions = 1;
-    cl_event event;
-    cl_event ue = new UserEvent();
-
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
-        &kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
-        1,   // one user event to block queue
-        &ue, // user event not signaled
-        &event);
-
-    // parseCommands<FamilyType>(*pCmdQ);
-    ASSERT_NE(nullptr, pCmdQ->virtualEvent);
-    ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
-    NEO::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();
-    ASSERT_NE(nullptr, eventCommandStream);
-    parseCommands<FamilyType>(*eventCommandStream);
-
-    // Find GPGPU_WALKER
-    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
-    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
-    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
-
-    // Check MI_STORE_REGISTER_MEMs
-    auto itorBeforeMI = reverseFind<MI_STORE_REGISTER_MEM *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
-    ASSERT_NE(cmdList.rbegin(), itorBeforeMI);
-    auto pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
-    pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
-    ASSERT_NE(nullptr, pBeforeMI);
-    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pBeforeMI->getRegisterAddress());
-
-    auto itorAfterMI = find<MI_STORE_REGISTER_MEM *>(itorGPGPUWalkerCmd, cmdList.end());
-    ASSERT_NE(cmdList.end(), itorAfterMI);
-    auto pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
-    ASSERT_NE(nullptr, pAfterMI);
-    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pAfterMI->getRegisterAddress());
-    ++itorAfterMI;
-    EXPECT_EQ(itorAfterMI, cmdList.end());
-    clReleaseEvent(event);
-    ((UserEvent *)ue)->release();
-    pCmdQ->isQueueBlocked();
-}
-
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProflingWhenMarkerIsDispatchedThenPipeControlIsPresentInCS) {
+HWTEST2_F(ProfilingTests, GivenCommandQueueWithProflingWhenMarkerIsDispatchedThenPipeControlIsPresentInCS, IsGen12LP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     cl_event event;
@@ -689,91 +584,7 @@ HWTEST_F(ProfilingTests, givenDebugFlagSetWhenWaitingForTimestampThenPrint) {
 
 using EventProfilingTest = ProfilingTests;
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEndTimestampInCompleteTimestampAndDoesntCallOsTimeMethods) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockOsTime2::instanceNum = 0;
-    device->setOSTime(new MockOsTime2());
-    EXPECT_EQ(1, MockOsTime2::instanceNum);
-    MockContext context;
-    cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
-    MockCommandQueue cmdQ(&context, device.get(), props, false);
-    cmdQ.setProfilingEnabled();
-    cmdQ.device = device.get();
-
-    HwTimeStamps timestamp;
-    timestamp.globalStartTS = 10;
-    timestamp.contextStartTS = 20;
-    timestamp.globalEndTS = 80;
-    timestamp.contextEndTS = 56;
-    timestamp.globalCompleteTS = 0;
-    timestamp.contextCompleteTS = 0;
-
-    MockTagNode<HwTimeStamps> timestampNode;
-    timestampNode.tagForCpuAccess = &timestamp;
-
-    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
-
-    event.setCPUProfilingPath(false);
-    event.timeStampNode = &timestampNode;
-    event.calcProfilingData();
-
-    EXPECT_EQ(timestamp.contextEndTS, timestamp.contextCompleteTS);
-    cmdQ.device = nullptr;
-    event.timeStampNode = nullptr;
-}
-
 using EventProfilingTests = ProfilingTests;
-
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawDataIsReturned) {
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.ReturnRawGpuTimestamps.set(1);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockOsTime2::instanceNum = 0;
-    device->setOSTime(new MockOsTime2());
-    EXPECT_EQ(1, MockOsTime2::instanceNum);
-    MockContext context;
-    cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
-    MockCommandQueue cmdQ(&context, device.get(), props, false);
-    cmdQ.setProfilingEnabled();
-    cmdQ.device = device.get();
-
-    HwTimeStamps timestamp;
-    timestamp.globalStartTS = 10;
-    timestamp.contextStartTS = 20;
-    timestamp.globalEndTS = 80;
-    timestamp.contextEndTS = 56;
-    timestamp.globalCompleteTS = 0;
-    timestamp.contextCompleteTS = 70;
-
-    MockTagNode<HwTimeStamps> timestampNode;
-    timestampNode.tagForCpuAccess = &timestamp;
-
-    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
-    cl_event clEvent = &event;
-
-    event.queueTimeStamp.gpuTimeStamp = 2;
-
-    event.submitTimeStamp.gpuTimeStamp = 4;
-
-    event.setCPUProfilingPath(false);
-    event.timeStampNode = &timestampNode;
-    event.calcProfilingData();
-
-    cl_ulong queued, submitted, start, end, complete;
-
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr);
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submitted, nullptr);
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_COMPLETE, sizeof(cl_ulong), &complete, nullptr);
-
-    EXPECT_EQ(timestamp.contextCompleteTS, complete);
-    EXPECT_EQ(timestamp.contextEndTS, end);
-    EXPECT_EQ(timestamp.contextStartTS, start);
-    EXPECT_EQ(event.submitTimeStamp.gpuTimeStamp, submitted);
-    EXPECT_EQ(event.queueTimeStamp.gpuTimeStamp, queued);
-    event.timeStampNode = nullptr;
-}
 
 TEST_F(EventProfilingTests, givenSubmitTimeMuchGreaterThanQueueTimeWhenCalculatingStartTimeThenItIsGreaterThanSubmitTime) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -818,51 +629,6 @@ TEST_F(EventProfilingTests, givenSubmitTimeMuchGreaterThanQueueTimeWhenCalculati
     EXPECT_LT(submitted, start);
     EXPECT_LT(start, end);
 
-    event.timeStampNode = nullptr;
-}
-
-HWCMDTEST_F(IGFX_GEN12LP_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenStartTimeStampLTQueueTimeStampThenIncreaseStartTimeStamp) {
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.ReturnRawGpuTimestamps.set(1);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockOsTime2::instanceNum = 0;
-    device->setOSTime(new MockOsTime2());
-    EXPECT_EQ(1, MockOsTime2::instanceNum);
-    MockContext context(device.get());
-    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
-    cmdQ.setProfilingEnabled();
-    cmdQ.device = device.get();
-
-    HwTimeStamps timestamp;
-    timestamp.globalStartTS = 0;
-    timestamp.contextStartTS = 20;
-    timestamp.globalEndTS = 80;
-    timestamp.contextEndTS = 56;
-    timestamp.globalCompleteTS = 0;
-    timestamp.contextCompleteTS = 70;
-
-    MockTagNode<HwTimeStamps> timestampNode;
-    timestampNode.tagForCpuAccess = &timestamp;
-
-    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
-    cl_event clEvent = &event;
-
-    event.queueTimeStamp.cpuTimeInNs = 83;
-    event.queueTimeStamp.gpuTimeStamp = 1;
-
-    event.submitTimeStamp.cpuTimeInNs = 83;
-    event.submitTimeStamp.gpuTimeStamp = 1;
-
-    event.setCPUProfilingPath(false);
-    event.timeStampNode = &timestampNode;
-    event.calcProfilingData();
-
-    cl_ulong queued, start;
-
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr);
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
-
-    EXPECT_LT(queued, start);
     event.timeStampNode = nullptr;
 }
 
@@ -952,7 +718,7 @@ HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCount
     EXPECT_GE(commandStreamMarker.getAvailableSpace(), requiredSize);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCountersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS) {
+HWTEST2_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCountersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS, IsGen12LP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
@@ -1003,7 +769,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingWithPerfCountersTests, GivenCommandQueue
     clReleaseEvent(event);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCountersNoUserRegistersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS) {
+HWTEST2_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCountersNoUserRegistersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS, IsGen12LP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
@@ -1054,7 +820,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingWithPerfCountersTests, GivenCommandQueue
     clReleaseEvent(event);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueBlockedWithProflingPerfCounterWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS) {
+HWTEST2_F(ProfilingWithPerfCountersTests, GivenCommandQueueBlockedWithProflingPerfCounterWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS, IsGen12LP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
@@ -1182,40 +948,6 @@ struct FixedGpuAddressTagAllocator : MockTagAllocator<TagType> {
     }
 };
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCountersWhenWalkerIsDispatchedThenRegisterStoresArePresentInCS) {
-    uint64_t timeStampGpuAddress = 0x123456000;
-    uint64_t perfCountersGpuAddress = 0xabcdef000;
-
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.profilingTimeStampAllocator.reset(new FixedGpuAddressTagAllocator<HwTimeStamps>(csr, timeStampGpuAddress));
-    csr.perfCounterAllocator.reset(new FixedGpuAddressTagAllocator<HwPerfCounter>(csr, perfCountersGpuAddress));
-
-    pCmdQ->setPerfCountersEnabled();
-
-    size_t globalOffsets[3] = {0, 0, 0};
-    size_t workItems[3] = {1, 1, 1};
-    uint32_t dimensions = 1;
-    cl_event event;
-
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
-
-    auto pEvent = static_cast<MockEvent<Event> *>(event);
-    EXPECT_EQ(pEvent->getHwTimeStampNode()->getGpuAddress(), timeStampGpuAddress);
-    EXPECT_EQ(pEvent->getHwPerfCounterNode()->getGpuAddress(), perfCountersGpuAddress);
-    ClHardwareParse parse;
-    auto &cmdList = parse.cmdList;
-    parse.parseCommands<FamilyType>(*pCmdQ);
-
-    auto itor = expectStoreRegister<FamilyType>(cmdList, cmdList.begin(), timeStampGpuAddress + offsetof(HwTimeStamps, contextStartTS), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
-    // after WALKER:
-
-    itor = expectStoreRegister<FamilyType>(cmdList, itor, timeStampGpuAddress + offsetof(HwTimeStamps, contextEndTS), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
-
-    EXPECT_TRUE(pEvent->calcProfilingData());
-
-    clReleaseEvent(event);
-}
-
 HWTEST_F(ProfilingWithPerfCountersTests, givenTimestampPacketsEnabledWhenEnqueueIsCalledThenDontAllocateHwTimeStamps) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -1238,7 +970,7 @@ HWTEST_F(ProfilingWithPerfCountersTests, givenTimestampPacketsEnabledWhenEnqueue
     clReleaseEvent(event);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingWithPerfCountersOnCCSTests, givenCommandQueueBlockedWithProfilingPerfCountersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS) {
+HWTEST2_F(ProfilingWithPerfCountersOnCCSTests, givenCommandQueueBlockedWithProfilingPerfCountersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS, IsGen12LP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using MI_REPORT_PERF_COUNT = typename FamilyType::MI_REPORT_PERF_COUNT;
@@ -1292,7 +1024,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingWithPerfCountersOnCCSTests, givenCommand
     clReleaseEvent(userEvent);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingWithPerfCountersOnCCSTests, givenCommandQueueWithProfilingPerfCountersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS) {
+HWTEST2_F(ProfilingWithPerfCountersOnCCSTests, givenCommandQueueWithProfilingPerfCountersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS, IsGen12LP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using MI_REPORT_PERF_COUNT = typename FamilyType::MI_REPORT_PERF_COUNT;

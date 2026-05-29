@@ -603,7 +603,7 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
     EXPECT_EQ(1u, pMultiDeviceKernel->releaseOwnershipCalls);
 }
 
-HWCMDTEST_P(IGFX_GEN12LP_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
+HWTEST2_P(AuxBuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs, IsGen12LP) {
     if (this->pDevice->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();
     }
@@ -1694,7 +1694,7 @@ TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceThenResourc
     EXPECT_EQ(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::count, BuiltIn::AddressingMode{}, BuiltIn::CodeType::source, *pDevice).size);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
+HWTEST2_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceThenResourceSizeIsNonZero, IsGen12LP) {
     auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
     EXPECT_NE(0u, mockBuiltInLibrary->getBuiltinResource(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageBindfulBuffer, BuiltIn::CodeType::binary, *pDevice).size);
