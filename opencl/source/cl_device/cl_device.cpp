@@ -7,6 +7,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -16,14 +17,17 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/required_libs_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/source/program/program.h"
 
 namespace NEO {
 
@@ -72,6 +76,10 @@ ClDevice::ClDevice(Device &device, Platform *platformId) : ClDevice(device, *thi
 }
 
 ClDevice::~ClDevice() {
+    {
+        auto lock = requiredLibsRegistry.lock();
+        requiredLibsRegistry->clear();
+    }
     builtinOpsBuilders.reset();
     for (auto &subDevice : subDevices) {
         subDevice.reset();
@@ -278,6 +286,78 @@ const GTPinGfxCoreHelper &ClDevice::getGTPinGfxCoreHelper() const {
 
 cl_version ClDevice::getExtensionVersion(std::string name) {
     return getOclCExtensionVersion(name, CL_MAKE_VERSION(1u, 0, 0));
+}
+
+Program *ClDevice::getRequiredLibProgram(const std::string &libName) {
+    {
+        auto lock = requiredLibsRegistry.lock();
+        if (auto it = requiredLibsRegistry->find(libName); it != requiredLibsRegistry->end()) {
+            return it->second.get();
+        }
+    }
+
+    cl_int errcodeRet = CL_SUCCESS;
+    std::unique_ptr<Program> created{createRequiredLibProgram(libName, errcodeRet)};
+    if (created == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Creating program from required-lib binary: %s failed (%d)\n",
+                     libName.c_str(), errcodeRet);
+        return nullptr;
+    }
+
+    {
+        auto lock = requiredLibsRegistry.lock();
+        if (auto it = requiredLibsRegistry->find(libName); it != requiredLibsRegistry->end()) {
+            return it->second.get();
+        }
+        auto [it, inserted] = requiredLibsRegistry->emplace(libName, std::move(created));
+        DEBUG_BREAK_IF(!inserted);
+        return it->second.get();
+    }
+}
+
+Program *ClDevice::createRequiredLibProgram(const std::string &libName, cl_int &errcodeRet) {
+    std::string dirPath;
+    if (!RequiredLibsHelpers::getRequiredLibDirPath(libName, requiredLibsOptionalSearchPaths, dirPath)) {
+        errcodeRet = CL_INVALID_BINARY;
+        return nullptr;
+    }
+
+    auto blob = loadRequiredLibBinary(dirPath, libName);
+    if (blob.empty()) {
+        errcodeRet = CL_INVALID_BINARY;
+        return nullptr;
+    }
+
+    ClDeviceVector deviceVector;
+    deviceVector.push_back(this);
+
+    auto *lib = Program::createBuiltInFromGenBinary<Program>(
+        nullptr,
+        deviceVector,
+        blob.data(),
+        blob.size(),
+        &errcodeRet);
+    if (lib == nullptr) {
+        return nullptr;
+    }
+
+    if (auto ret = lib->processGenBinary(*this); ret != CL_SUCCESS) {
+        delete lib;
+        errcodeRet = ret;
+        return nullptr;
+    }
+
+    return lib;
+}
+
+std::vector<char> ClDevice::loadRequiredLibBinary(const std::string &dirPath,
+                                                  const std::string &fileName) const {
+    const auto resource = NEO::BuiltIn::FileStorage(dirPath).load(fileName);
+    if (resource.empty()) {
+        return {};
+    }
+    return std::vector<char>(resource.data, resource.data + resource.size);
 }
 
 } // namespace NEO

@@ -41,6 +41,7 @@ class MockClDevice : public ClDevice {
     using ClDevice::ClDevice;
     using ClDevice::compilerExtensions;
     using ClDevice::compilerExtensionsWithFeatures;
+    using ClDevice::createRequiredLibProgram;
     using ClDevice::deviceExtensions;
     using ClDevice::deviceInfo;
     using ClDevice::driverInfo;
@@ -48,7 +49,10 @@ class MockClDevice : public ClDevice {
     using ClDevice::getQueueFamilyCapabilities;
     using ClDevice::getQueueFamilyCapabilitiesAll;
     using ClDevice::initializeCaps;
+    using ClDevice::loadRequiredLibBinary;
     using ClDevice::name;
+    using ClDevice::requiredLibsOptionalSearchPaths;
+    using ClDevice::requiredLibsRegistry;
     using ClDevice::simultaneousInterops;
     using ClDevice::subDevices;
 

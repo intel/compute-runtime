@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/utilities/lockable.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include "opencl/source/api/cl_types.h"
@@ -16,7 +17,11 @@
 
 #include "neo_igfxfmid.h"
 
+#include <memory>
 #include <mutex>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 #include <vector>
 
 namespace aub_stream {
@@ -35,6 +40,7 @@ class GmmClientContext;
 class MemoryManager;
 class PerformanceCounters;
 class Platform;
+class Program;
 struct DeviceInfo;
 struct EngineControl;
 struct HardwareInfo;
@@ -139,6 +145,8 @@ class ClDevice : public BaseObject<_cl_device_id> {
     using BuilderT = std::pair<std::unique_ptr<BuiltIn::DispatchInfoBuilder>, std::once_flag>;
     BuilderT *peekBuilders() { return rootClDevice.builtinOpsBuilders.get(); }
 
+    MOCKABLE_VIRTUAL Program *getRequiredLibProgram(const std::string &libName);
+
   protected:
     void initializeCaps();
     void initializeExtensionsWithVersion();
@@ -169,6 +177,12 @@ class ClDevice : public BaseObject<_cl_device_id> {
     std::vector<unsigned int> simultaneousInterops = {0};
     std::string compilerExtensions;
     std::string compilerExtensionsWithFeatures;
+
+    MOCKABLE_VIRTUAL Program *createRequiredLibProgram(const std::string &libName, cl_int &errcodeRet);
+    MOCKABLE_VIRTUAL std::vector<char> loadRequiredLibBinary(const std::string &dirPath, const std::string &fileName) const;
+
+    Lockable<std::vector<std::string_view>> requiredLibsOptionalSearchPaths;
+    Lockable<std::unordered_map<std::string, std::unique_ptr<Program>>> requiredLibsRegistry;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<ClDevice>);

@@ -413,8 +413,8 @@ bool Linker::relocateSymbols(const SegmentInfo &globalVariables, const SegmentIn
     return true;
 }
 
-uint32_t addressSizeInBytes(LinkerInput::RelocationInfo::Type relocationtype) {
-    return (relocationtype == LinkerInput::RelocationInfo::Type::address) ? sizeof(uintptr_t) : sizeof(uint32_t);
+uint32_t Linker::addressSizeInBytes(LinkerInput::RelocationInfo::Type relocationType) {
+    return (relocationType == LinkerInput::RelocationInfo::Type::address) ? sizeof(uintptr_t) : sizeof(uint32_t);
 }
 
 void Linker::patchAddress(void *relocAddress, const uint64_t value, const Linker::RelocationInfo &relocation) {
@@ -460,7 +460,7 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
         auto &segment = instructionsSegments[segId];
         for (const auto &relocation : relocationsPerSegment[segId]) {
             UNRECOVERABLE_IF(nullptr == segment.hostPointer);
-            bool invalidRelocation = relocation.offset + addressSizeInBytes(relocation.type) > segment.segmentSize;
+            bool invalidRelocation = relocation.offset + Linker::addressSizeInBytes(relocation.type) > segment.segmentSize;
             if (invalidRelocation) {
                 outUnresolvedExternals.push_back(UnresolvedExternal{relocation, static_cast<uint32_t>(segId), invalidRelocation});
                 DEBUG_BREAK_IF(true);
@@ -531,7 +531,7 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
         }
 
         auto relocType = (LinkerInput::Traits::PointerSize::Ptr32bit == data.getTraits().pointerSize) ? RelocationInfo::Type::addressLow : relocation.type;
-        bool invalidOffset = relocation.offset + addressSizeInBytes(relocType) > dst.size();
+        bool invalidOffset = relocation.offset + Linker::addressSizeInBytes(relocType) > dst.size();
         DEBUG_BREAK_IF(invalidOffset);
         if (invalidOffset) {
             outUnresolvedExternals.push_back(UnresolvedExternal{relocation});

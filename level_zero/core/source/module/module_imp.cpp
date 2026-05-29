@@ -87,6 +87,16 @@ NEO::ConstStringRef enableFP64GenEmu = "-ze-fp64-gen-emu";
 NEO::ConstStringRef registerFileSize = "-ze-exp-register-file-size";
 } // namespace BuildOptions
 
+namespace {
+
+void appendUnresolvedSymbolLog(std::vector<std::string> &log, const ModuleImp *moduleId, const std::string &symbolName) {
+    std::stringstream logMessage;
+    logMessage << "Module <" << moduleId << ">:  Unresolved Symbol <" << symbolName << ">";
+    log.push_back(logMessage.str());
+}
+
+} // namespace
+
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
     : device(device) {
 }
@@ -1679,6 +1689,33 @@ ze_result_t ModuleImp::inspectLinkage(
     return ZE_RESULT_SUCCESS;
 }
 
+bool ModuleImp::tryPatchUnresolvedExternal(const NEO::Linker::UnresolvedExternal &unresolvedExternal,
+                                           const NEO::Linker::PatchableSegments &isaSegmentsForPatching,
+                                           uint32_t numModules,
+                                           ze_module_handle_t *phModules) {
+    if (unresolvedExternal.instructionsSegmentId >= isaSegmentsForPatching.size()) {
+        return false;
+    }
+    const auto &segment = isaSegmentsForPatching[unresolvedExternal.instructionsSegmentId];
+    const auto relocSize = NEO::Linker::addressSizeInBytes(unresolvedExternal.unresolvedRelocation.type);
+    if (unresolvedExternal.unresolvedRelocation.offset + relocSize > segment.segmentSize) {
+        return false;
+    }
+    for (auto i = 0u; i < numModules; i++) {
+        const auto moduleHandle = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
+        const auto symbolIt = moduleHandle->symbols.find(unresolvedExternal.unresolvedRelocation.symbolName);
+        if (symbolIt == moduleHandle->symbols.end()) {
+            continue;
+        }
+        auto *relocAddress = ptrOffset(segment.hostPointer,
+                                       static_cast<uintptr_t>(unresolvedExternal.unresolvedRelocation.offset));
+        const uint64_t patchValue = symbolIt->second.gpuAddress + unresolvedExternal.unresolvedRelocation.addend;
+        NEO::Linker::patchAddress(relocAddress, patchValue, unresolvedExternal.unresolvedRelocation);
+        return true;
+    }
+    return false;
+}
+
 ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                                           ze_module_handle_t *phModules,
                                           ze_module_build_log_handle_t *phLinkLog) {
@@ -1747,30 +1784,11 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                 }
             }
             for (const auto &unresolvedExternal : moduleId->unresolvedExternalsInfo) {
-                if (moduleLinkLog) {
-                    std::stringstream logMessage;
-                    logMessage << "Module <" << moduleId << ">: "
-                               << " Unresolved Symbol <" << unresolvedExternal.unresolvedRelocation.symbolName << ">";
-                    unresolvedSymbolLogMessages.push_back(logMessage.str());
-                }
-                for (auto i = 0u; i < numModules; i++) {
-                    auto moduleHandle = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
-                    auto symbolIt = moduleHandle->symbols.find(unresolvedExternal.unresolvedRelocation.symbolName);
-                    if (symbolIt != moduleHandle->symbols.end()) {
-                        auto relocAddress = ptrOffset(isaSegmentsForPatching[unresolvedExternal.instructionsSegmentId].hostPointer,
-                                                      static_cast<uintptr_t>(unresolvedExternal.unresolvedRelocation.offset));
-
-                        NEO::Linker::patchAddress(relocAddress, symbolIt->second.gpuAddress, unresolvedExternal.unresolvedRelocation);
-                        numPatchedSymbols++;
-
-                        if (moduleLinkLog) {
-                            std::stringstream logMessage;
-                            logMessage << " Successfully Resolved Thru Dynamic Link to Module <" << moduleHandle << ">";
-                            unresolvedSymbolLogMessages.back().append(logMessage.str());
-                        }
-
-                        break;
-                    }
+                const bool isResolved = tryPatchUnresolvedExternal(unresolvedExternal, isaSegmentsForPatching, numModules, phModules);
+                if (isResolved) {
+                    numPatchedSymbols++;
+                } else if (moduleLinkLog) {
+                    appendUnresolvedSymbolLog(unresolvedSymbolLogMessages, moduleId, unresolvedExternal.unresolvedRelocation.symbolName);
                 }
             }
         }
