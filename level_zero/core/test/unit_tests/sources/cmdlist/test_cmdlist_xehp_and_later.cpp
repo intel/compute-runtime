@@ -3352,5 +3352,36 @@ HWTEST2_F(IOHCacheCommandListTest,
     EXPECT_FALSE(commandList->isKernelPatchedWhenWithParamsCalled);
 }
 
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheEnabledAndZeroIndirectSizeWhenAppendLaunchKernelThenKernelNotPrePatchedBeforeAppendLaunchKernelWithParams,
+          IsAtLeastXeCore) {
+    class MockCmdListForPatchCheck : public WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> {
+      public:
+        bool isKernelPatchedWhenWithParamsCalled = false;
+        ze_result_t appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions,
+                                                 Event *event, CmdListKernelLaunchParams &launchParams) override {
+            isKernelPatchedWhenWithParamsCalled = launchParams.isKernelPatched;
+            return ZE_RESULT_SUCCESS;
+        }
+    };
+
+    createKernel();
+
+    auto commandList = std::make_unique<MockCmdListForPatchCheck>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    kernel->privateState.crossThreadData.clear();
+    kernel->privateState.perThreadDataSizeForWholeThreadGroup = 0u;
+    ASSERT_EQ(0u, kernel->getIndirectSize());
+    ASSERT_EQ(nullptr, kernel->getImplicitArgs());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    EXPECT_FALSE(commandList->isKernelPatchedWhenWithParamsCalled);
+}
+
 } // namespace ult
 } // namespace L0

@@ -19,6 +19,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/utilities/thread_data_map.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -1809,6 +1810,7 @@ struct IOHCacheCommandEncodeStatesFixture : public DeviceFixture {
         using CommandContainer::dirtyHeaps;
         using CommandContainer::extractCommonThreadData;
         using CommandContainer::indirectHeaps;
+        using CommandContainer::threadDataTracker;
 
         IndirectHeap *getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment) override {
             getHeapWithRequiredSizeAndAlignmentCalled++;
@@ -1916,4 +1918,71 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, IOHCacheCommandEncodeStatesTest, givenIOHCacheEnabl
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*iohCmdContainer.get(), dispatchArgs);
     EXPECT_EQ(1u, iohCmdContainer->getHeapWithRequiredSizeAndAlignmentCalled);
     EXPECT_EQ(iohUsedAfterFirstDispatch, ioh->getUsed());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, IOHCacheCommandEncodeStatesTest, givenIOHCacheEnabledAndZeroSizeThreadDataWhenDispatchKernelThenThreadDataMapIsNotAccessed) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    dispatchInterface->getCrossThreadDataSizeResult = 0u;
+    dispatchInterface->getPerThreadDataSizeForWholeThreadGroupResult = 0u;
+
+    EncodeDispatchKernelArgs dispatchArgs{
+        .device = pDevice,
+        .dispatchInterface = dispatchInterface.get(),
+        .surfaceStateHeap = nullptr,
+        .dynamicStateHeap = nullptr,
+        .threadGroupDimensions = dims,
+        .outWalkerPtr = nullptr,
+        .outWalkerGpuVa = 0,
+        .cpuWalkerBuffer = nullptr,
+        .cpuPayloadBuffer = nullptr,
+        .outImplicitArgsPtr = nullptr,
+        .outImplicitArgsGpuVa = 0,
+        .additionalCommands = nullptr,
+        .extendedArgs = nullptr,
+        .postSyncArgs = {
+            .eventPacketSize = 32,
+            .eventPacketsCount = 1,
+            .eventAddress = 0,
+            .postSyncImmValue = 0,
+            .inOrderCounterValue = 0,
+            .inOrderIncrementGpuAddress = 0,
+            .inOrderIncrementValue = 0,
+            .device = pDevice,
+            .inOrderExecInfo = nullptr,
+            .tsNode = nullptr,
+            .dcFlushEnable = false,
+            .interruptEvent = false,
+            .isCounterBasedEvent = false,
+            .isFlushL3ForExternalAllocationRequired = false,
+            .isFlushL3ForHostUsmRequired = false,
+            .isHostScopeSignalEvent = false,
+            .isTimestampEvent = false,
+            .isUsingSystemAllocation = false,
+        },
+        .preemptionMode = PreemptionMode::Disabled,
+        .requiredPartitionDim = NEO::RequiredPartitionDim::none,
+        .requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none,
+        .partitionCount = 1,
+        .reserveExtraPayloadSpace = 0,
+        .defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent,
+        .isIndirect = false,
+        .isPredicate = false,
+        .requiresUncachedMocs = false,
+        .isInternal = false,
+        .isCooperative = false,
+        .isKernelDispatchedFromImmediateCmdList = true,
+        .isRcs = false,
+        .isHeaplessModeEnabled = false,
+        .immediateScratchAddressPatching = false,
+        .makeCommandView = false,
+    };
+
+    ASSERT_TRUE(iohCmdContainer->getIOHCacheEnabled());
+    ASSERT_TRUE(iohCmdContainer->threadDataTracker->isEmpty());
+
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*iohCmdContainer.get(), dispatchArgs);
+
+    EXPECT_TRUE(iohCmdContainer->threadDataTracker->isEmpty());
 }

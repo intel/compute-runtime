@@ -530,7 +530,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         return result;
     }
     {
-        const bool isThreadDataMapAllowed = commandContainer.getIOHCacheEnabled() && (kernel->getImplicitArgs() == nullptr);
+        const bool isThreadDataMapAllowed = commandContainer.getIOHCacheEnabled() && (kernel->getIndirectSize() != 0u) && (kernel->getImplicitArgs() == nullptr);
         if (isThreadDataMapAllowed) {
             this->patchKernelProperties(launchParams, *kernel, threadGroupDimensions);
         }
