@@ -10,6 +10,10 @@
 #include "shared/source/built_ins/built_in_ops_base.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
+
+namespace NEO {
+class SVMAllocsManager;
+} // namespace NEO
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -45,6 +49,8 @@ struct MockBuiltInKernelLibImpl : BuiltInKernelLibImpl {
             imageBuiltins[builtId] = loadBuiltIn(NEO::BuiltIn::BaseKernel::copyImage3dToBuffer, mode, "CopyImage3dToBuffer16Bytes");
         }
     }
+
+    NEO::SVMAllocsManager *svmAllocsManagerAtCreation = nullptr;
 
     std::unique_ptr<WhiteBox<::L0::KernelImp>> dummyKernel;
     std::unique_ptr<Module> dummyModule;

@@ -566,6 +566,24 @@ TEST(DriverTestFamilySupport, whenInitializingDriverOnSupportedFamilyThenDriverI
     delete driverHandle;
 }
 
+TEST(DriverTest, givenDriverHandleWhenInitializingThenSvmAllocsManagerIsSetBeforeDeviceCreate) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue)));
+    ASSERT_NE(nullptr, driverHandle);
+
+    auto builtinsLib = static_cast<MockBuiltInKernelLibImpl *>(driverHandle->devices[0]->getBuiltinFunctionsLib());
+    if (builtinsLib) {
+        EXPECT_NE(nullptr, builtinsLib->svmAllocsManagerAtCreation);
+    }
+
+    delete driverHandle;
+}
+
 TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggingIsFalse) {
 
     ze_result_t returnValue;

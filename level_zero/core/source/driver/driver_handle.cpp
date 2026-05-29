@@ -309,6 +309,13 @@ ze_result_t DriverHandle::initialize(std::vector<std::unique_ptr<NEO::Device>> n
             }
         }
 
+        if (this->svmAllocsManager == nullptr) {
+            this->svmAllocsManager = new NEO::SVMAllocsManager(this->memoryManager);
+            if (this->svmAllocsManager == nullptr) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+        }
+
         const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
 
         this->rootDeviceIndices.pushUnique(rootDeviceIndex);
@@ -331,10 +338,6 @@ ze_result_t DriverHandle::initialize(std::vector<std::unique_ptr<NEO::Device>> n
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
-    this->svmAllocsManager = new NEO::SVMAllocsManager(memoryManager);
-    if (this->svmAllocsManager == nullptr) {
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-    }
     if (this->numDevices == 1) {
         this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
     }
