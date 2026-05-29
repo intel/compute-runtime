@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,16 +35,23 @@ constexpr uint32_t defaultWaitCount = 1u;
 constexpr int64_t defaultWaitPkgThresholdForUllsLightInMicroSeconds = 1;
 constexpr uint64_t defaultCounterValueForUllsLight = 16000;
 
+constexpr uint64_t defaultCounterValueForEventHostSync = 2000;
+
 extern WaitpkgUse waitpkgUse;
 extern int64_t waitPkgThresholdInMicroSeconds;
 extern uint64_t waitpkgCounterValue;
+extern uint64_t counterValueForEventHostSync;
 extern uint32_t waitpkgControlValue;
 extern uint32_t waitCount;
 extern bool waitpkgSupport;
 
-inline void tpause() {
-    uint64_t currentCounter = CpuIntrinsics::rdtsc() + waitpkgCounterValue;
+inline void tpause(uint64_t counterValue) {
+    uint64_t currentCounter = CpuIntrinsics::rdtsc() + counterValue;
     CpuIntrinsics::tpause(waitpkgControlValue, currentCounter);
+}
+
+inline void tpause() {
+    tpause(waitpkgCounterValue);
 }
 
 inline bool monitorWait(volatile void const *monitorAddress) {
@@ -54,9 +61,9 @@ inline bool monitorWait(volatile void const *monitorAddress) {
 }
 
 template <typename T>
-inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedValue, std::function<bool(T, T)> predicate, int64_t timeElapsedSinceWaitStarted) {
+inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedValue, std::function<bool(T, T)> predicate, int64_t timeElapsedSinceWaitStarted, uint64_t counterValue) {
     if (waitpkgUse == WaitpkgUse::tpause && timeElapsedSinceWaitStarted > waitPkgThresholdInMicroSeconds) {
-        tpause();
+        tpause(counterValue);
     } else {
         for (uint32_t i = 0; i < waitCount; i++) {
             CpuIntrinsics::pause();
@@ -77,6 +84,11 @@ inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedV
     }
     std::this_thread::yield();
     return false;
+}
+
+template <typename T>
+inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedValue, std::function<bool(T, T)> predicate, int64_t timeElapsedSinceWaitStarted) {
+    return waitFunctionWithPredicate<T>(pollAddress, expectedValue, predicate, timeElapsedSinceWaitStarted, waitpkgCounterValue);
 }
 
 inline void waitFunctionWithoutPredicate(int64_t timeElapsedSinceWaitStarted) {

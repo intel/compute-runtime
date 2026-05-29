@@ -16,16 +16,16 @@
 using namespace NEO;
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLightWhenInitThenUseTpauseWaitpkg) {
-    using CpuIdFuncT = void (*)(int *, int);
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse);
+    VariableBackup<uint64_t> backupWaitpkgCounterValue(&WaitUtils::waitpkgCounterValue);
+    VariableBackup<uint64_t> backupCounterValueForEventHostSync(&WaitUtils::counterValueForEventHostSync);
+    VariableBackup<int64_t> backupWaitPkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds);
+    VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
+    VariableBackup<void (*)(int *, int)> backupCpuidFunc(&CpuInfo::cpuidFunc, mockCpuidEnableAll);
 
     auto mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
     VariableBackup<MockCpuInfo> cpuInfoBackup(mockCpuInfo);
     mockCpuInfo->featuresDetected = false;
-
-    CpuIdFuncT savedCpuIdFunc = CpuInfo::cpuidFunc;
-    CpuInfo::cpuidFunc = mockCpuidEnableAll;
-
-    VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
 
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->stopDirectSubmission(false, false);
@@ -35,26 +35,25 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
 
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
     EXPECT_EQ(WaitUtils::waitpkgCounterValue, WaitUtils::defaultCounterValueForUllsLight);
+    EXPECT_EQ(WaitUtils::counterValueForEventHostSync, WaitUtils::defaultCounterValueForEventHostSync);
     EXPECT_EQ(WaitUtils::waitPkgThresholdInMicroSeconds, WaitUtils::defaultWaitPkgThresholdForUllsLightInMicroSeconds);
-
-    CpuInfo::cpuidFunc = savedCpuIdFunc;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenWaitpkgParamsSetByDebugVariablesAndDirectSubmissionLightWhenInitThenUseTpauseWaitpkg) {
-    using CpuIdFuncT = void (*)(int *, int);
-
     DebugManagerStateRestore restorer;
     debugManager.flags.WaitpkgThreshold.set(35);
     debugManager.flags.WaitpkgCounterValue.set(1000);
 
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse);
+    VariableBackup<uint64_t> backupWaitpkgCounterValue(&WaitUtils::waitpkgCounterValue);
+    VariableBackup<uint64_t> backupCounterValueForEventHostSync(&WaitUtils::counterValueForEventHostSync);
+    VariableBackup<int64_t> backupWaitPkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds);
+    VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
+    VariableBackup<void (*)(int *, int)> backupCpuidFunc(&CpuInfo::cpuidFunc, mockCpuidEnableAll);
+
     auto mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
     VariableBackup<MockCpuInfo> cpuInfoBackup(mockCpuInfo);
     mockCpuInfo->featuresDetected = false;
-
-    CpuIdFuncT savedCpuIdFunc = CpuInfo::cpuidFunc;
-    CpuInfo::cpuidFunc = mockCpuidEnableAll;
-
-    VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
 
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->stopDirectSubmission(false, false);
@@ -64,7 +63,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenWaitpkgParamsSetBy
 
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
     EXPECT_EQ(WaitUtils::waitpkgCounterValue, 1000u);
+    EXPECT_EQ(WaitUtils::counterValueForEventHostSync, 1000u);
     EXPECT_EQ(WaitUtils::waitPkgThresholdInMicroSeconds, 35);
-
-    CpuInfo::cpuidFunc = savedCpuIdFunc;
 }

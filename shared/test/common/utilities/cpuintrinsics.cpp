@@ -32,6 +32,7 @@ std::atomic<uint32_t> umonitorCounter(0u);
 std::atomic<uint32_t> rdtscCounter(0u);
 
 std::atomic_uint32_t tpauseCounter{};
+std::atomic<uint64_t> lastTpauseCounter(0u);
 
 volatile TagAddressType *pauseAddress = nullptr;
 TaskCountType pauseValue = 0u;
@@ -78,6 +79,7 @@ void pause() {
 
 uint8_t tpause(uint32_t control, uint64_t counter) {
     CpuIntrinsicsTests::tpauseCounter++;
+    CpuIntrinsicsTests::lastTpauseCounter = counter;
     if (CpuIntrinsicsTests::controlTpause) {
         CpuIntrinsicsTests::controlTpause();
     }

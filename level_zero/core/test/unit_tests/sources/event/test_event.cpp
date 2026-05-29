@@ -63,6 +63,8 @@ extern TaskCountType pauseValue;
 extern uint32_t pauseOffset;
 extern std::function<void()> setupPauseAddress;
 extern std::atomic_uint32_t tpauseCounter;
+extern std::atomic<uint64_t> lastTpauseCounter;
+extern uint64_t rdtscRetValue;
 extern std::function<void()> controlTpause;
 } // namespace CpuIntrinsicsTests
 
@@ -2155,6 +2157,42 @@ HWTEST_F(EventSynchronizeTest, GivenNotReadyEventAndInfiniteTimeoutWhenHostSynch
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(0u, CpuIntrinsicsTests::tpauseCounter.load());
     CpuIntrinsicsTests::tpauseCounter = 0u;
+}
+
+HWTEST_F(EventSynchronizeTest, GivenNotReadyEventAndInfiniteTimeoutWhenHostSynchronizeIsCalledThenTPauseUsesEventHostSyncCounterValue) {
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    VariableBackup<int64_t> backupWaitpkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds, 0);
+    uint64_t ullsLightCounterValue = WaitUtils::defaultCounterValueForUllsLight;
+    VariableBackup<uint64_t> backupWaitpkgCounterValue(&WaitUtils::waitpkgCounterValue, ullsLightCounterValue);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
+    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
+    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
+    VariableBackup<std::function<void()>> backupControlTpause(&CpuIntrinsicsTests::controlTpause);
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isGpuHangDetectedReturnValue = false;
+
+    CpuIntrinsicsTests::tpauseCounter = 0u;
+    CpuIntrinsicsTests::lastTpauseCounter = 0u;
+
+    auto *hostAddr = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), event->getContextStartOffset()));
+    *hostAddr = Event::STATE_CLEARED;
+
+    CpuIntrinsicsTests::pauseCounter = 0u;
+    CpuIntrinsicsTests::pauseAddress = hostAddr;
+    CpuIntrinsicsTests::setupPauseAddress = []() {};
+    CpuIntrinsicsTests::controlTpause = [hostAddr]() {
+        *hostAddr = Event::STATE_SIGNALED;
+    };
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(0u, CpuIntrinsicsTests::tpauseCounter.load());
+    EXPECT_EQ(CpuIntrinsicsTests::rdtscRetValue + WaitUtils::defaultCounterValueForEventHostSync, CpuIntrinsicsTests::lastTpauseCounter.load());
+    CpuIntrinsicsTests::tpauseCounter = 0u;
+    CpuIntrinsicsTests::lastTpauseCounter = 0u;
 }
 
 TEST_F(EventSynchronizeTest, GivenLongPeriodOfGpuCheckAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {

@@ -333,7 +333,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
         } else {
             const uint64_t *hostAddress = ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset);
             for (uint32_t i = 0; i < inOrderExecHelper.getEventData()->hostPartitions; i++) {
-                if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>(), timeSinceWait)) {
+                if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>(), timeSinceWait, NEO::WaitUtils::counterValueForEventHostSync)) {
                     signaled = false;
                     break;
                 }
@@ -431,7 +431,8 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
                 static_cast<TagSizeT const *>(queryAddress),
                 queryVal,
                 std::not_equal_to<TagSizeT>(),
-                timeSinceWait);
+                timeSinceWait,
+                NEO::WaitUtils::counterValueForEventHostSync);
             if (!ready) {
                 return ZE_RESULT_NOT_READY;
             }
@@ -448,7 +449,8 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
                     static_cast<TagSizeT const *>(queryAddress),
                     queryVal,
                     std::not_equal_to<TagSizeT>(),
-                    timeSinceWait);
+                    timeSinceWait,
+                    NEO::WaitUtils::counterValueForEventHostSync);
                 if (!ready) {
                     return ZE_RESULT_NOT_READY;
                 }

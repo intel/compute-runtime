@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ WaitpkgUse waitpkgUse = WaitpkgUse::uninitialized;
 
 int64_t waitPkgThresholdInMicroSeconds = defaultWaitPkgThresholdInMicroSeconds;
 uint64_t waitpkgCounterValue = defaultCounterValue;
+uint64_t counterValueForEventHostSync = defaultCounterValueForEventHostSync;
 uint32_t waitpkgControlValue = defaultControlValue;
 uint32_t waitCount = defaultWaitCount;
 
@@ -62,6 +63,7 @@ void init(WaitpkgUse inputWaitpkgUse, const HardwareInfo &hwInfo) {
 void overrideWaitpkgParams() {
     if (debugManager.flags.WaitpkgCounterValue.get() != -1) {
         waitpkgCounterValue = debugManager.flags.WaitpkgCounterValue.get();
+        counterValueForEventHostSync = debugManager.flags.WaitpkgCounterValue.get();
     }
 
     if (debugManager.flags.WaitpkgControlValue.get() != -1) {

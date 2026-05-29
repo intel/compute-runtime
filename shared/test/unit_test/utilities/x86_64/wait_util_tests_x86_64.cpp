@@ -35,6 +35,7 @@ struct WaitPkgFixture {
         backupWaitpkgSupport = std::make_unique<VariableBackup<bool>>(&WaitUtils::waitpkgSupport);
         backupWaitpkgUse = std::make_unique<VariableBackup<WaitUtils::WaitpkgUse>>(&WaitUtils::waitpkgUse);
         backupWaitpkgCounter = std::make_unique<VariableBackup<uint64_t>>(&WaitUtils::waitpkgCounterValue);
+        backupCounterValueForEventHostSync = std::make_unique<VariableBackup<uint64_t>>(&WaitUtils::counterValueForEventHostSync);
         backupWaitpkgControl = std::make_unique<VariableBackup<uint32_t>>(&WaitUtils::waitpkgControlValue);
         backupWaitCount = std::make_unique<VariableBackup<uint32_t>>(&WaitUtils::waitCount);
 
@@ -51,6 +52,7 @@ struct WaitPkgFixture {
     std::unique_ptr<VariableBackup<bool>> backupWaitpkgSupport;
     std::unique_ptr<VariableBackup<WaitUtils::WaitpkgUse>> backupWaitpkgUse;
     std::unique_ptr<VariableBackup<uint64_t>> backupWaitpkgCounter;
+    std::unique_ptr<VariableBackup<uint64_t>> backupCounterValueForEventHostSync;
     std::unique_ptr<VariableBackup<uint32_t>> backupWaitpkgControl;
     std::unique_ptr<VariableBackup<uint32_t>> backupWaitCount;
 
@@ -69,6 +71,7 @@ extern std::atomic<uint32_t> umonitorCounter;
 extern std::atomic<uint32_t> rdtscCounter;
 
 extern std::atomic_uint32_t tpauseCounter;
+extern std::atomic<uint64_t> lastTpauseCounter;
 
 extern uint64_t rdtscRetValue;
 extern unsigned char umwaitRetValue;
@@ -305,6 +308,7 @@ TEST_F(WaitPkgTest, givenFullyEnabledWaitPkgAndOverrideCounterValueWhenWaitIniti
     WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(1234u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(1234u, WaitUtils::counterValueForEventHostSync);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::umonitorAndUmwait);
     EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 20 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
@@ -452,4 +456,29 @@ TEST_F(WaitPkgTpauseEnabledTest, givenTimeElapsedSinceWaitStartedAboveThresholdW
 
     WaitUtils::waitFunction(&pollValue, expectedValue, timeElapsedSinceWaitStarted);
     EXPECT_EQ(CpuIntrinsicsTests::tpauseCounter, 1u);
+}
+
+TEST_F(WaitPkgTpauseEnabledTest, givenDefaultOverloadWhenTpauseIsDoneThenWaitpkgCounterValueIsUsed) {
+    volatile TagAddressType pollValue = 0u;
+    TaskCountType expectedValue = 1;
+    int64_t timeElapsedSinceWaitStarted = 5000u;
+    CpuIntrinsicsTests::lastTpauseCounter = 0u;
+
+    WaitUtils::waitFunction(&pollValue, expectedValue, timeElapsedSinceWaitStarted);
+
+    EXPECT_EQ(1u, CpuIntrinsicsTests::tpauseCounter.load());
+    EXPECT_EQ(CpuIntrinsicsTests::rdtscRetValue + WaitUtils::waitpkgCounterValue, CpuIntrinsicsTests::lastTpauseCounter.load());
+}
+
+TEST_F(WaitPkgTpauseEnabledTest, givenExplicitCounterValueWhenTpauseIsDoneThenProvidedCounterValueIsUsed) {
+    volatile TagAddressType pollValue = 0u;
+    TaskCountType expectedValue = 1;
+    int64_t timeElapsedSinceWaitStarted = 5000u;
+    constexpr uint64_t explicitCounterValue = 2345u;
+    CpuIntrinsicsTests::lastTpauseCounter = 0u;
+
+    WaitUtils::waitFunctionWithPredicate<TaskCountType>(&pollValue, expectedValue, std::greater_equal<TaskCountType>(), timeElapsedSinceWaitStarted, explicitCounterValue);
+
+    EXPECT_EQ(1u, CpuIntrinsicsTests::tpauseCounter.load());
+    EXPECT_EQ(CpuIntrinsicsTests::rdtscRetValue + explicitCounterValue, CpuIntrinsicsTests::lastTpauseCounter.load());
 }
