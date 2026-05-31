@@ -13,7 +13,6 @@ volatile bool wasPlatformTeardownCalled = false;
 
 void globalPlatformSetup() {
     platformsImpl = new std::vector<std::unique_ptr<Platform>>;
-    leoSetup();
 }
 
 void globalPlatformTeardown(bool processTermination) {
@@ -24,7 +23,7 @@ void globalPlatformTeardown(bool processTermination) {
         }
         return;
     }
-    leoTeardown();
+    releaseL0Library();
     delete platformsImpl;
     platformsImpl = nullptr;
 }
