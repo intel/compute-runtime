@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,10 @@ inline createReleaseHelperFunctionType releaseHelperFactoryXe3[maxReleaseXe3]{};
 
 EnableReleaseHelperArchitecture<30> enableReleaseHelperArchitecture30(releaseHelperFactoryXe3);
 
-EnableReleaseHelper<ReleaseType::release3000> enablerReleaseHelper3000{releaseHelperFactoryXe3[0]};
-EnableReleaseHelper<ReleaseType::release3001> enablerReleaseHelper3001{releaseHelperFactoryXe3[1]};
-EnableReleaseHelper<ReleaseType::release3003> enablerReleaseHelper3003{releaseHelperFactoryXe3[3]};
-EnableReleaseHelper<ReleaseType::release3004> enablerReleaseHelper3004{releaseHelperFactoryXe3[4]};
-EnableReleaseHelper<ReleaseType::release3005> enablerReleaseHelper3005{releaseHelperFactoryXe3[5]};
+EnableReleaseHelper<ReleaseType::release3000> enablerReleaseHelperPtlH{releaseHelperFactoryXe3[0]};
+EnableReleaseHelper<ReleaseType::release3001> enablerReleaseHelperPtlU{releaseHelperFactoryXe3[1]};
+EnableReleaseHelper<ReleaseType::release3003> enablerReleaseHelperWcl{releaseHelperFactoryXe3[3]};
+EnableReleaseHelper<ReleaseType::release3004> enablerReleaseHelperNvlS{releaseHelperFactoryXe3[4]};
+EnableReleaseHelper<ReleaseType::release3005> enablerReleaseHelperNvlU{releaseHelperFactoryXe3[5]};
 
 } // namespace NEO
