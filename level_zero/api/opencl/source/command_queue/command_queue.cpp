@@ -172,8 +172,10 @@ cl_int CommandQueue::getCmdQInfo(cl_device_info paramName, size_t paramValueSize
         auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, source, sourceSize);
         retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
         GetInfo::setParamValueReturnSize(paramValueSizeRet, sourceSize, getInfoStatus);
+        break;
     }
     default:
+        retVal = CL_INVALID_VALUE;
         break;
     }
 
