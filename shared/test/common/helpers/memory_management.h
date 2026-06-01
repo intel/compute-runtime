@@ -52,7 +52,6 @@ struct AllocationEvent { // NOLINT(clang-analyzer-optin.performance.Padding)
 };
 
 inline constexpr auto maxEvents = 1024 * 1024;
-inline constexpr auto fastEvents = 1024 * 1024;
 
 extern AllocationEvent eventsAllocated[maxEvents];
 extern AllocationEvent eventsDeallocated[maxEvents];
@@ -62,17 +61,15 @@ extern std::atomic<void *> fastEventsDeallocated[maxEvents];
 extern std::atomic<int> fastEventsAllocatedCount;
 extern std::atomic<int> fastEventsDeallocatedCount;
 extern std::atomic<int> fastLeaksDetectionMode;
-extern bool memsetNewAllocations;
-
 extern size_t failingAllocation;
 extern std::atomic<size_t> numAllocations;
 extern std::atomic<size_t> indexAllocation;
 extern std::atomic<size_t> indexDeallocation;
 extern size_t breakOnAllocationEvent;
 extern size_t breakOnDeallocationEvent;
-extern bool logTraces;
-extern bool detailedAllocationLoggingActive;
-extern bool fastLeakDetectionEnabled;
+extern std::atomic_bool logTraces;
+extern std::atomic_bool detailedAllocationLoggingActive;
+extern std::atomic_bool fastLeakDetectionEnabled;
 extern void (*deleteCallback)(void *);
 
 inline constexpr auto nonfailingAllocation = static_cast<size_t>(-1);

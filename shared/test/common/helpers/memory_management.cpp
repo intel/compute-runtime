@@ -42,8 +42,8 @@ size_t failingAllocation = -1;
 std::atomic<size_t> numAllocations(0);
 std::atomic<size_t> indexAllocation(0);
 std::atomic<size_t> indexDeallocation(0);
-bool logTraces = false;
-bool fastLeakDetectionEnabled = false;
+std::atomic_bool logTraces{false};
+std::atomic_bool fastLeakDetectionEnabled{false};
 
 AllocationEvent eventsAllocated[maxEvents];
 AllocationEvent eventsDeallocated[maxEvents];
@@ -57,7 +57,7 @@ std::atomic<int> fastLeaksDetectionMode(LeakDetectionMode::STANDARD);
 size_t breakOnAllocationEvent = -1;
 size_t breakOnDeallocationEvent = -1;
 
-bool detailedAllocationLoggingActive = false;
+std::atomic_bool detailedAllocationLoggingActive{false};
 
 // limit size of single allocation in ULT
 const size_t maxAllowedAllocationSize = 128 * 1024 * 1024 + 4096;
@@ -110,8 +110,8 @@ static void *allocate(size_t size) {
         auto &eventAllocation = eventsAllocated[indexAllocation];
         eventAllocation.size = size;
 
-        while ((p = malloc(size)) == nullptr) {
-            eventAllocation.address = p;
+        if ((p = malloc(size)) == nullptr) {
+            eventAllocation.address = nullptr;
             eventAllocation.event = typeFail;
             throw std::bad_alloc();
         }
@@ -135,7 +135,7 @@ static void *allocate(size_t size) {
     if (fastLeakDetectionEnabled && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
         auto currentIndex = fastEventsAllocatedCount++;
         fastEventsAllocated[currentIndex].store(p, std::memory_order_relaxed);
-        assert(currentIndex <= fastEvents);
+        assert(currentIndex < maxEvents);
     }
 
     return p;
@@ -186,7 +186,7 @@ static void *allocate(size_t size, const std::nothrow_t &) {
     if (fastLeakDetectionEnabled && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
         auto currentIndex = fastEventsAllocatedCount++;
         fastEventsAllocated[currentIndex].store(p, std::memory_order_relaxed);
-        assert(currentIndex <= fastEvents);
+        assert(currentIndex < maxEvents);
     }
 
     return p;
@@ -226,7 +226,7 @@ static void deallocate(void *p) {
         if (fastLeakDetectionEnabled && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
             auto currentIndex = fastEventsDeallocatedCount++;
             fastEventsDeallocated[currentIndex].store(p, std::memory_order_relaxed);
-            assert(currentIndex <= fastEvents);
+            assert(currentIndex < maxEvents);
         }
         free(p);
     }
