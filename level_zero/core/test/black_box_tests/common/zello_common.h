@@ -24,13 +24,13 @@
 
 namespace LevelZeroBlackBoxTests {
 template <bool terminateOnFailure, typename ResulT>
-inline void validate(ResulT result, const char *message);
+inline void validate(ResulT result, const char *message, int line);
 } // namespace LevelZeroBlackBoxTests
 
-#define SUCCESS_OR_TERMINATE(CALL) LevelZeroBlackBoxTests::validate<true>(CALL, #CALL)
-#define SUCCESS_OR_TERMINATE_BOOL(FLAG) LevelZeroBlackBoxTests::validate<true>(!(FLAG), #FLAG)
-#define SUCCESS_OR_WARNING(CALL) LevelZeroBlackBoxTests::validate<false>(CALL, #CALL)
-#define SUCCESS_OR_WARNING_BOOL(FLAG) LevelZeroBlackBoxTests::validate<false>(!(FLAG), #FLAG)
+#define SUCCESS_OR_TERMINATE(CALL) LevelZeroBlackBoxTests::validate<true>(CALL, #CALL, __LINE__)
+#define SUCCESS_OR_TERMINATE_BOOL(FLAG) LevelZeroBlackBoxTests::validate<true>(!(FLAG), #FLAG, __LINE__)
+#define SUCCESS_OR_WARNING(CALL) LevelZeroBlackBoxTests::validate<false>(CALL, #CALL, __LINE__)
+#define SUCCESS_OR_WARNING_BOOL(FLAG) LevelZeroBlackBoxTests::validate<false>(!(FLAG), #FLAG, __LINE__)
 
 namespace LevelZeroBlackBoxTests {
 extern decltype(&zexCounterBasedEventCreate2) zexCounterBasedEventCreate2Func;
@@ -38,17 +38,17 @@ extern decltype(&zexCounterBasedEventCreate2) zexCounterBasedEventCreate2Func;
 extern bool verbose;
 
 template <bool terminateOnFailure, typename ResulT>
-inline void validate(ResulT result, const char *message) {
+inline void validate(ResulT result, const char *message, int line) {
     if (result == ZE_RESULT_SUCCESS) {
         if (verbose) {
-            std::cerr << "SUCCESS : " << message << std::endl;
+            std::cerr << "SUCCESS : " << message << " (line " << line << ")" << std::endl;
         }
         return;
     }
 
     if (verbose) {
         std::cerr << (terminateOnFailure ? "ERROR : " : "WARNING : ") << message << " : " << result
-                  << std::endl;
+                  << " (line " << line << ")" << std::endl;
     }
 
     if (terminateOnFailure) {
