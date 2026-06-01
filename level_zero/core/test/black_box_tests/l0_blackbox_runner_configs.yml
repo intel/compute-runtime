@@ -200,6 +200,10 @@ zello_sysman:
   dg2:
   pvc.b0:
 
+zello_visit:
+  dg2:
+  pvc.b0:
+
 zello_world_global_work_offset:
   dg2:
   pvc.b0:
