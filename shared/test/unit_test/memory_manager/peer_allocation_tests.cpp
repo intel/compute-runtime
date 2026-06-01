@@ -472,3 +472,69 @@ TEST_F(PeerAllocationFdTrackingTest, givenSingleHandleImportFailsWhenGettingPeer
     ASSERT_EQ(1u, memoryManager->closeCalls.size());
     EXPECT_EQ(0xCAFEBABEull, memoryManager->closeCalls[0].handle);
 }
+
+TEST_F(PeerAllocationTest, givenCachedPeerAllocationWhenDecompressRequestedThenDecompressCalledOnSource) {
+    SVMAllocsManager::MapBasedAllocationTracker storage;
+
+    MockGraphicsAllocation source(0u, nullptr, 0u);
+    SvmAllocationData sourceData(numRootDevices);
+    sourceData.gpuAllocations.addAllocation(&source);
+
+    MockGraphicsAllocation cachedAlloc(1u, nullptr, 0u);
+    cachedAlloc.gpuAddress = 0xCAFECAFEull;
+    SvmAllocationData cachedData(numRootDevices);
+    cachedData.gpuAllocations.addAllocation(&cachedAlloc);
+
+    void *basePtr = reinterpret_cast<void *>(0x8000);
+    storage.allocations.insert(std::make_pair(basePtr, cachedData));
+
+    uint32_t importFdCalls = 0, importFdsCalls = 0, decompressCalls = 0;
+    GraphicsAllocation *decompressedAlloc = nullptr;
+    auto deps = makeCountingDeps(importFdCalls, importFdsCalls, decompressCalls);
+    deps.decompressP2P = [&](GraphicsAllocation *alloc) {
+        ++decompressCalls;
+        decompressedAlloc = alloc;
+    };
+
+    uintptr_t peerGpuAddress = 0;
+    SvmAllocationData *peerData = nullptr;
+
+    auto result = memoryManager->getOrImportPeerAllocation(device1.get(), svmAllocsManager.get(),
+                                                           storage, &sourceData, basePtr,
+                                                           &peerGpuAddress, &peerData, true, deps);
+
+    EXPECT_EQ(&cachedAlloc, result);
+    EXPECT_EQ(1u, decompressCalls);
+    EXPECT_EQ(&source, decompressedAlloc);
+    EXPECT_EQ(0u, importFdCalls);
+    EXPECT_EQ(0u, importFdsCalls);
+}
+
+TEST_F(PeerAllocationTest, givenCachedPeerAllocationWhenDecompressNotRequestedThenDecompressNotCalled) {
+    SVMAllocsManager::MapBasedAllocationTracker storage;
+
+    MockGraphicsAllocation source(0u, nullptr, 0u);
+    SvmAllocationData sourceData(numRootDevices);
+    sourceData.gpuAllocations.addAllocation(&source);
+
+    MockGraphicsAllocation cachedAlloc(1u, nullptr, 0u);
+    cachedAlloc.gpuAddress = 0xCAFECAFEull;
+    SvmAllocationData cachedData(numRootDevices);
+    cachedData.gpuAllocations.addAllocation(&cachedAlloc);
+
+    void *basePtr = reinterpret_cast<void *>(0x9000);
+    storage.allocations.insert(std::make_pair(basePtr, cachedData));
+
+    uint32_t importFdCalls = 0, importFdsCalls = 0, decompressCalls = 0;
+    auto deps = makeCountingDeps(importFdCalls, importFdsCalls, decompressCalls);
+
+    uintptr_t peerGpuAddress = 0;
+    SvmAllocationData *peerData = nullptr;
+
+    auto result = memoryManager->getOrImportPeerAllocation(device1.get(), svmAllocsManager.get(),
+                                                           storage, &sourceData, basePtr,
+                                                           &peerGpuAddress, &peerData, false, deps);
+
+    EXPECT_EQ(&cachedAlloc, result);
+    EXPECT_EQ(0u, decompressCalls);
+}
