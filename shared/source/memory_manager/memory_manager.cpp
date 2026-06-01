@@ -1613,10 +1613,6 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
             peerAllocRootDeviceIndex = device->getRootDevice()->getRootDeviceIndex();
         }
 
-        if (decompressP2PAllocation && (alloc->getRootDeviceIndex() != peerAllocRootDeviceIndex) && deps.decompressP2P) {
-            deps.decompressP2P(alloc);
-        }
-
         SvmAllocationData allocDataInternal(peerAllocRootDeviceIndex);
         GraphicsAllocation *originalAlloc = alloc;
 
@@ -1665,6 +1661,13 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
         storage.allocations.emplace(basePtr, *peerAllocDataInternal);
         if (peerMapAddress) {
             peerAllocDataInternal = &storage.allocations.at(basePtr);
+        }
+    }
+
+    if (decompressP2PAllocation && deps.decompressP2P) {
+        const auto sourceAlloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+        if (sourceAlloc && (sourceAlloc->getRootDeviceIndex() != device->getRootDeviceIndex())) {
+            deps.decompressP2P(sourceAlloc);
         }
     }
 
