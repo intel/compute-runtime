@@ -55,10 +55,18 @@ void IpSamplingMetricSourceImp::enable() {
     const auto &hardwareInfo = device.getNEODevice()->getHardwareInfo();
     const auto &productHelper = device.getNEODevice()->getProductHelper();
 
+    isEnabled = false;
     if (productHelper.isIpSamplingSupported(hardwareInfo)) {
-        isEnabled = metricIPSamplingOsInterface->isOsSupportAvailable();
-    } else {
-        isEnabled = false;
+        if (metricIPSamplingOsInterface->isOsSupportAvailable()) {
+            // Confirm whether sample collection is possible
+            uint32_t referenceValues = 100;
+            if (ZE_RESULT_SUCCESS == getMetricOsInterface()->startMeasurement(referenceValues, referenceValues)) {
+                getMetricOsInterface()->stopMeasurement();
+                isEnabled = true;
+            } else {
+                METRICS_LOG_ERR("%s", "Cannot start measurement for IP Sampling");
+            }
+        }
     }
 }
 
@@ -80,9 +88,7 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
             uint32_t count = 1;
             zet_metric_group_handle_t hMetricGroup = {};
             const auto result = source.metricGroupGet(&count, &hMetricGroup);
-            if (result == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
-                return result;
-            }
+
             // Getting MetricGroup from sub-device cannot fail, since RootDevice is successful
             UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
             subDeviceMetricGroup.push_back(static_cast<IpSamplingMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup)));
@@ -110,16 +116,6 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
         metricCount = static_cast<uint32_t>(metrics.size());
         cachedMetricGroup = MultiDeviceIpSamplingMetricGroupImp::create(*this, subDeviceMetricGroup, metrics);
         return ZE_RESULT_SUCCESS;
-    }
-
-    // Confirm whether sample collection is possible
-    uint32_t referenceValues = 100;
-    const ze_result_t sampleCheckResult = getMetricOsInterface()->startMeasurement(referenceValues, referenceValues);
-    if (sampleCheckResult != ZE_RESULT_SUCCESS) {
-        METRICS_LOG_ERR("%s", "Cannot start measurement for IP Sampling");
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else {
-        getMetricOsInterface()->stopMeasurement();
     }
 
     std::vector<IpSamplingMetricImp> metrics = {};
@@ -169,17 +165,13 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
 
 ze_result_t IpSamplingMetricSourceImp::metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) {
 
-    if (!isEnabled) {
-        *pCount = 0;
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     if (cachedMetricGroup == nullptr) {
         auto status = cacheMetricGroup();
 
         if (status != ZE_RESULT_SUCCESS || cachedMetricGroup == nullptr) {
             *pCount = 0;
             isEnabled = false;
+            METRICS_LOG_ERR("Failed to cache metric groups:  %d", status);
             return status;
         }
     }

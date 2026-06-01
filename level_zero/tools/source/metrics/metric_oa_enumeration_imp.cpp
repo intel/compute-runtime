@@ -37,7 +37,7 @@ ze_result_t MetricEnumeration::metricGroupGet(uint32_t &count,
     ze_result_t result = initialize();
     if (result != ZE_RESULT_SUCCESS) {
         METRICS_LOG_ERR("Failed to initialize metric enumeration. Return status received %x ", result);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return result;
     }
 
     if (count == 0) {
@@ -620,7 +620,7 @@ ze_result_t MetricEnumeration::metricProgrammableGet(uint32_t *pCount, zet_metri
     ze_result_t result = initialize();
     if (result != ZE_RESULT_SUCCESS) {
         METRICS_LOG_ERR("Initialization failed. Return status received %x ", result);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return result;
     }
 
     // For Root device, create multi device programmables

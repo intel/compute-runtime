@@ -12,8 +12,10 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_ip_sampling.h"
 
 namespace L0 {
 extern std::vector<_ze_driver_handle_t *> *globalDriverHandles;
@@ -46,9 +48,25 @@ class MetricIpSamplingLinuxTest : public DeviceFixture,
     std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = nullptr;
 };
 
+HWTEST2_F(MetricIpSamplingLinuxTest, GivenEuStallSupportedWhenIsOsSupportAvailableIsCalledThenReturnTrue, HasIPSamplingSupport) {
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
+    auto mockIoctlHelper = static_cast<MockIoctlHelper *>(drm->getIoctlHelper());
+    mockIoctlHelper->isEuStallSupportedResult = true;
+    EXPECT_TRUE(metricIpSamplingOsInterface->isOsSupportAvailable());
+}
+
+HWTEST2_F(MetricIpSamplingLinuxTest, GivenEuStallNotSupportedWhenIsOsSupportAvailableIsCalledThenReturnFalse, HasIPSamplingSupport) {
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
+    auto mockIoctlHelper = static_cast<MockIoctlHelper *>(drm->getIoctlHelper());
+    mockIoctlHelper->isEuStallSupportedResult = false;
+    EXPECT_FALSE(metricIpSamplingOsInterface->isOsSupportAvailable());
+}
+
 HWTEST2_F(MetricIpSamplingLinuxTest, GivenLinuxSupportIsAvailableThenIpSamplingSourceIsAvailable, HasIPSamplingSupport) {
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
-    metricSource.setMetricOsInterface(metricIpSamplingOsInterface);
+    auto mockOsInterface = new MockMetricIpSamplingOsInterface();
+    std::unique_ptr<MetricIpSamplingOsInterface> mockOsInterfacePtr(mockOsInterface);
+    metricSource.setMetricOsInterface(mockOsInterfacePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
     EXPECT_TRUE(metricSource.isAvailable());
 }

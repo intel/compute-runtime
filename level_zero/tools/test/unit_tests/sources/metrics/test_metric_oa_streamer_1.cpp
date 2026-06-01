@@ -395,7 +395,7 @@ TEST_F(MetricStreamerTest, givenInValidOaInformationSymbolNameWhenZetMetricGroup
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(metricGroupCount, 0u);
 }
 
@@ -454,7 +454,7 @@ TEST_F(MetricStreamerTest, givenInValidInformationElementCountWhenZetMetricGroup
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(metricGroupCount, 0u);
 }
 
@@ -512,7 +512,7 @@ TEST_F(MetricStreamerTest, givenInValidInformationElementTypeWhenZetMetricGroupG
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(metricGroupCount, 0u);
 }
 

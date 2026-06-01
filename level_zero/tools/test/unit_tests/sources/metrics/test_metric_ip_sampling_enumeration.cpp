@@ -80,8 +80,10 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricG
 
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesNotAvailableWhenMetricGroupGetIsCalledThenNoMetricGroupIsReturned, HasIPSamplingSupport) {
 
-    for (auto &osInterface : osInterfaceVector) {
-        osInterface->startMeasurementReturn = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    for (size_t i = 0; i < testDevices.size(); i++) {
+        osInterfaceVector[i]->startMeasurementReturn = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        // Re-run enable() so the source re-evaluates its availability with the updated mock state.
+        testDevices[i]->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>().enable();
     }
 
     for (auto device : rootOneSubDev) {

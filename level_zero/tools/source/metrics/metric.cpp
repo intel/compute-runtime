@@ -192,6 +192,8 @@ ze_result_t MetricDeviceContext::metricGroupGet(uint32_t *pCount, zet_metric_gro
     if (!metricScopesInitialized) {
         auto status = initMetricScopes();
         if (status != ZE_RESULT_SUCCESS) {
+            METRICS_LOG_ERR("initialization Metric Scopes failed with status %d", status);
+            *pCount = 0;
             return status;
         }
     }
@@ -204,12 +206,9 @@ ze_result_t MetricDeviceContext::metricGroupGet(uint32_t *pCount, zet_metric_gro
         }
 
         result = metricSource->metricGroupGet(&requestCount, phMetricGroups);
-        if (result == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
-            result = ZE_RESULT_SUCCESS;
-            continue;
-        }
 
         if (result != ZE_RESULT_SUCCESS) {
+            METRICS_LOG_ERR("Failed to get metrics from source:  %d", result);
             break;
         }
         availableCount += requestCount;
@@ -224,10 +223,10 @@ ze_result_t MetricDeviceContext::metricGroupGet(uint32_t *pCount, zet_metric_gro
             }
         }
     }
-
+    // If no source is avaialable, this condition is detected during initMetricScopes.
     if ((result == ZE_RESULT_SUCCESS) && (availableCount == 0)) {
         METRICS_LOG_ERR("%s", "No metric groups available");
-        result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        result = ZE_RESULT_ERROR_UNKNOWN;
     }
 
     *pCount = availableCount;
@@ -766,12 +765,14 @@ std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_pr
 
 ze_result_t MetricDeviceContext::initMetricScopes() {
 
+    bool anySourceAvailable = false;
     for (auto const &entry : metricSources) {
         auto const &metricSource = entry.second;
 
         if (!metricSource->isAvailable()) {
             continue;
         }
+        anySourceAvailable = true;
         ze_result_t status = metricSource->initMetricScopes(*this);
         if (status != ZE_RESULT_SUCCESS) {
             metricScopesInitialized = true;
@@ -779,6 +780,10 @@ ze_result_t MetricDeviceContext::initMetricScopes() {
         }
     }
 
+    if (!anySourceAvailable) {
+        METRICS_LOG_ERR("%s", "initialization of metric scopes failed since no metric source is available");
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
     metricScopesInitialized = true;
     return ZE_RESULT_SUCCESS;
 }
@@ -789,6 +794,8 @@ ze_result_t MetricDeviceContext::metricScopesGet(zet_context_handle_t hContext, 
     if (!metricScopesInitialized) {
         auto status = initMetricScopes();
         if (status != ZE_RESULT_SUCCESS) {
+            *pMetricScopesCount = 0;
+            METRICS_LOG_ERR("initialization of metric scopes failed with status %d", status);
             return status;
         }
     }

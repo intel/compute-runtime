@@ -125,9 +125,9 @@ TEST_F(OaMetricProgrammableTests, givenEnumerationHasErroreWhenmetricProgrammabl
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
-    metricEnumeration->setInitializationState(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    metricEnumeration->setInitializationState(ZE_RESULT_ERROR_UNKNOWN);
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, oaMetricSource->metricProgrammableGet(&count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, oaMetricSource->metricProgrammableGet(&count, nullptr));
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
