@@ -13,34 +13,10 @@
 #include "opencl/source/api/leo_forwarding.h"
 
 namespace NEO {
-extern std::unique_ptr<OsLibrary> l0Library;
-extern bool l0LibraryLoaded;
-extern decltype(&clGetPlatformIDs) l0ClGetPlatformIDs;
-extern decltype(&clGetPlatformInfo) l0ClGetPlatformInfo;
-extern decltype(&clGetDeviceIDs) l0ClGetDeviceIDs;
-extern decltype(&clGetExtensionFunctionAddress) l0ClGetExtensionFunctionAddress;
-
-using pfnClEnqueueMarkerWithSyncObjectINTEL = cl_int(CL_API_CALL *)(cl_command_queue, cl_event *, cl_context *);
-using pfnClGetCLObjectInfoINTEL = cl_int(CL_API_CALL *)(cl_mem, void *);
-using pfnClGetCLEventInfoINTEL = cl_int(CL_API_CALL *)(cl_event, void **, cl_context *);
-using pfnClReleaseGlSharedEventINTEL = cl_int(CL_API_CALL *)(cl_event);
-
-extern pfnClEnqueueMarkerWithSyncObjectINTEL l0ClEnqueueMarkerWithSyncObjectINTEL;
-extern pfnClGetCLObjectInfoINTEL l0ClGetCLObjectInfoINTEL;
-extern pfnClGetCLEventInfoINTEL l0ClGetCLEventInfoINTEL;
-extern pfnClReleaseGlSharedEventINTEL l0ClReleaseGlSharedEventINTEL;
 
 static void resetL0Library() {
-    l0Library.reset();
-    l0LibraryLoaded = false;
-    l0ClGetPlatformIDs = nullptr;
-    l0ClGetPlatformInfo = nullptr;
-    l0ClGetDeviceIDs = nullptr;
-    l0ClGetExtensionFunctionAddress = nullptr;
-    l0ClEnqueueMarkerWithSyncObjectINTEL = nullptr;
-    l0ClGetCLObjectInfoINTEL = nullptr;
-    l0ClGetCLEventInfoINTEL = nullptr;
-    l0ClReleaseGlSharedEventINTEL = nullptr;
+    leoTeardown();
+    leoSetup();
 }
 
 TEST(AdditionalExtension, whenCheckIsLEOEnabledThenReturnProperValue) {
@@ -58,7 +34,7 @@ TEST(AdditionalExtension, whenCheckIsLEOEnabledThenReturnProperValue) {
         cl_uint numPlatforms = 0;
         clGetPlatformIDs(0, nullptr, &numPlatforms);
         EXPECT_EQ(numPlatforms, 0u);
-        resetL0Library();
+        leoTeardown();
     }
     {
         debugManager.flags.EnableLEO.set(0);
@@ -74,7 +50,7 @@ struct L0LibraryLoadTest : public ::testing::Test {
         resetL0Library();
     }
     void TearDown() override {
-        resetL0Library();
+        leoTeardown();
     }
     DebugManagerStateRestore restorer;
 };

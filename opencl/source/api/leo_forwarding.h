@@ -10,7 +10,12 @@
 #include "config.h"
 #include <CL/cl.h>
 
+#include <memory>
+#include <mutex>
+
 namespace NEO {
+
+class OsLibrary;
 
 bool isLEOEnabled();
 
@@ -23,6 +28,28 @@ cl_int forwardClGetCLObjectInfoINTEL(cl_mem memObj, void *pResourceInfo);
 cl_int forwardClGetCLEventInfoINTEL(cl_event event, void **pSyncInfoHandleRet, cl_context *pClContextRet);
 cl_int forwardClReleaseGlSharedEventINTEL(cl_event event);
 
-void releaseL0Library();
+using pfnClEnqueueMarkerWithSyncObjectINTEL = cl_int(CL_API_CALL *)(cl_command_queue, cl_event *, cl_context *);
+using pfnClGetCLObjectInfoINTEL = cl_int(CL_API_CALL *)(cl_mem, void *);
+using pfnClGetCLEventInfoINTEL = cl_int(CL_API_CALL *)(cl_event, void **, cl_context *);
+using pfnClReleaseGlSharedEventINTEL = cl_int(CL_API_CALL *)(cl_event);
+
+struct L0ForwardingState {
+    std::mutex mutex;
+    bool loaded = false;
+    std::unique_ptr<OsLibrary> library;
+    decltype(&clGetPlatformIDs) clGetPlatformIDsFunc = nullptr;
+    decltype(&clGetPlatformInfo) clGetPlatformInfoFunc = nullptr;
+    decltype(&clGetDeviceIDs) clGetDeviceIDsFunc = nullptr;
+    decltype(&clGetExtensionFunctionAddress) clGetExtensionFunctionAddressFunc = nullptr;
+    pfnClEnqueueMarkerWithSyncObjectINTEL clEnqueueMarkerWithSyncObjectINTELFunc = nullptr;
+    pfnClGetCLObjectInfoINTEL clGetCLObjectInfoINTELFunc = nullptr;
+    pfnClGetCLEventInfoINTEL clGetCLEventInfoINTELFunc = nullptr;
+    pfnClReleaseGlSharedEventINTEL clReleaseGlSharedEventINTELFunc = nullptr;
+};
+
+extern L0ForwardingState *l0ForwardingState;
+
+void leoSetup();
+void leoTeardown();
 
 } // namespace NEO
