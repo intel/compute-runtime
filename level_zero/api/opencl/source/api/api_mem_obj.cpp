@@ -234,7 +234,8 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         }
 
         ze_custom_pitch_exp_desc_t customPitchDesc{ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC};
-        if (imageDesc->mem_object && (imageDesc->image_row_pitch != 0 || imageDesc->image_slice_pitch != 0)) {
+        if (imageDesc->mem_object && (imageDesc->image_row_pitch != 0 || imageDesc->image_slice_pitch != 0) &&
+            imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
             customPitchDesc.rowPitch = imageDesc->image_row_pitch;
             customPitchDesc.slicePitch = imageDesc->image_slice_pitch;
             customPitchDesc.pNext = l0imageDesc.pNext;
@@ -269,7 +270,8 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
         {
             auto lock = pContext->lockInternalCopy();
-            ze_image_region_t region{0u, 0u, 0u, static_cast<uint32_t>(l0imageDesc.width), l0imageDesc.height, l0imageDesc.depth};
+            ze_image_region_t region{0u, 0u, 0u, static_cast<uint32_t>(l0imageDesc.width),
+                                     std::max(l0imageDesc.height, 1u), std::max(l0imageDesc.depth, 1u)};
             ret = zeCommandListAppendImageCopyFromMemoryExt(NEO::LEO::castToObject<NEO::LEO::Context>(context)->getInternalCopyCmdList(),
                                                             imageHandle,
                                                             hostPtr,

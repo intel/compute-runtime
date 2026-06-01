@@ -933,9 +933,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         remoteCopy = true;
     }
 
-    bool imageToBuffer = false;
+    bool imageToBuffer = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
     bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), remoteCopy, false, imgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), remoteCopy, imageToBuffer, imgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
@@ -945,10 +945,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         size_t imgSlicePitch = imgInfo.slicePitch;
         this->commandContainer.addToResidencyContainer(allocationStruct.alloc);
         auto ptr = ptrOffset(allocationStruct.alignedAllocationPtr, allocationStruct.offset);
+        Vec3<size_t> region = {pDstRegion->width, pDstRegion->height, pDstRegion->depth};
+        Vec3<size_t> imgSizeBlit = imgSize;
+        Vec3<size_t> dstOffsets = {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ};
+        auto bpp = bytesPerPixel;
+        if (imageToBuffer) {
+            dstOffsets.x *= bpp;
+            region.x *= bpp;
+            imgSizeBlit.x *= bpp;
+            bpp = 1;
+        }
         auto status = appendCopyImageBlit(ptr, nullptr, ptrOffset(image->getAllocation()->getGpuAddress(), imgInfo.offset), image->getAllocation(),
-                                          {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, srcRowPitch, srcSlicePitchCalculated,
-                                          imgRowPitch, imgSlicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize,
-                                          event, numWaitEvents, phWaitEvents, memoryCopyParams);
+                                          {0, 0, 0}, dstOffsets, srcRowPitch, srcSlicePitchCalculated,
+                                          imgRowPitch, imgSlicePitch, bpp, region, region, imgSizeBlit,
+                                          event, numWaitEvents, phWaitEvents, memoryCopyParams, imageToBuffer);
         addToMappedEventList(Event::fromHandle(hEvent));
         return status;
     }
@@ -1172,10 +1182,21 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         size_t imgSlicePitch = imgInfo.slicePitch;
         this->commandContainer.addToResidencyContainer(allocationStruct.alloc);
         auto ptr = ptrOffset(allocationStruct.alignedAllocationPtr, allocationStruct.offset);
+        Vec3<size_t> srcOffsets = {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ};
+        Vec3<size_t> region = {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth};
+        Vec3<size_t> imgSizeBlit = imgSize;
+        auto bpp = bytesPerPixel;
+        bool isImageFromBuffer = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
+        if (isImageFromBuffer) {
+            srcOffsets.x *= bpp;
+            region.x *= bpp;
+            imgSizeBlit.x *= bpp;
+            bpp = 1;
+        }
         auto status = appendCopyImageBlit(ptrOffset(image->getAllocation()->getGpuAddress(), imgInfo.offset), image->getAllocation(), ptr, nullptr,
-                                          {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, imgRowPitch, imgSlicePitch,
-                                          destRowPitch, destSlicePitchCalculated, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth},
-                                          imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event, numWaitEvents, phWaitEvents, memoryCopyParams);
+                                          srcOffsets, {0, 0, 0}, imgRowPitch, imgSlicePitch,
+                                          destRowPitch, destSlicePitchCalculated, bpp, region,
+                                          imgSizeBlit, region, event, numWaitEvents, phWaitEvents, memoryCopyParams, isImageFromBuffer);
         addToMappedEventList(event);
         return status;
     }
@@ -1385,9 +1406,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     const auto &srcImgInfo = srcImage->getImageInfo();
     const auto &dstImgInfo = dstImage->getImageInfo();
 
-    bool imageToBuffer = false;
+    bool imageToBuffer = (srcImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer) ||
+                         (dstImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
     bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), remoteCopy, false, srcImgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), remoteCopy, imageToBuffer, srcImgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImgInfo.surfaceFormat->imageElementSizeInBytes);
@@ -1406,10 +1428,29 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         auto dstSlicePitch =
             (dstImgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : dstRegion.height) * dstRowPitch;
 
+        bool src1DBuffer = (srcImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
+        bool dst1DBuffer = (dstImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
+        bool isImageFromBuffer = src1DBuffer || dst1DBuffer;
+        Vec3<size_t> srcOff = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
+        Vec3<size_t> dstOff = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
+        Vec3<size_t> copySz = {srcRegion.width, srcRegion.height, srcRegion.depth};
+        auto bpp = bytesPerPixel;
+        if (isImageFromBuffer) {
+            if (src1DBuffer) {
+                srcOff.x *= bpp;
+                srcImgSize.x *= bpp;
+            }
+            if (dst1DBuffer) {
+                dstOff.x *= bpp;
+                dstImgSize.x *= bpp;
+            }
+            copySz.x *= bpp;
+            bpp = 1;
+        }
         auto status = appendCopyImageBlit(ptrOffset(srcImage->getAllocation()->getGpuAddress(), srcImgInfo.offset), srcImage->getAllocation(), ptrOffset(dstImage->getAllocation()->getGpuAddress(), dstImgInfo.offset), dstImage->getAllocation(),
-                                          {srcRegion.originX, srcRegion.originY, srcRegion.originZ}, {dstRegion.originX, dstRegion.originY, dstRegion.originZ}, srcRowPitch, srcSlicePitch,
-                                          dstRowPitch, dstSlicePitch, bytesPerPixel, {srcRegion.width, srcRegion.height, srcRegion.depth}, srcImgSize, dstImgSize,
-                                          event, numWaitEvents, phWaitEvents, memoryCopyParams);
+                                          srcOff, dstOff, srcRowPitch, srcSlicePitch,
+                                          dstRowPitch, dstSlicePitch, bpp, copySz, srcImgSize, dstImgSize,
+                                          event, numWaitEvents, phWaitEvents, memoryCopyParams, isImageFromBuffer);
         addToMappedEventList(event);
         return status;
     }
@@ -1817,7 +1858,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
                                                                       size_t bytesPerPixel, const Vec3<size_t> &copySize,
                                                                       const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                                                       Event *signalEvent, uint32_t numWaitEvents,
-                                                                      ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
+                                                                      ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams,
+                                                                      bool isImageFromBuffer) {
     const bool dualStreamCopyOffloadOperation = isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed);
 
     auto ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, memoryCopyParams.relaxedOrderingDispatch, false, true, false, dualStreamCopyOffloadOperation);
@@ -1852,7 +1894,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
     }
     blitProperties.transform1DArrayTo2DArrayIfNeeded();
 
-    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
+    if (isImageFromBuffer) {
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
+    } else {
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
+    }
     if (arePostBlitWACmdsRequired()) {
         NEO::BlitCommandsHelper<GfxFamily>::dispatchPostBlitWaCommands(*commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
     }

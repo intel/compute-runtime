@@ -505,6 +505,25 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
         memcpy(&packedFillColor[ch * perChannelSize], &convertedFillColor[ch], perChannelSize);
     }
 
+    auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_FILL_IMAGE, pCommandQueue);
+
+    if (pImage->getClObjectType() == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+        auto elementSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
+        auto dstPtr = reinterpret_cast<void *>(l0ImageImp->getAllocation()->getGpuAddress() + imgInfo.offset + origin[0] * elementSize);
+        auto fillSize = region[0] * elementSize;
+
+        auto queueLock = pCommandQueue->takeOwnership();
+        ze_result_t ret = zeCommandListAppendMemoryFill(pCommandQueue->getL0Handle(),
+                                                        dstPtr,
+                                                        packedFillColor,
+                                                        elementSize,
+                                                        fillSize,
+                                                        hSignalEvent,
+                                                        waitEvents.size(),
+                                                        waitEvents.data());
+        return L0ToClResultMapper(ret);
+    }
+
     auto l0Device = pCommandQueue->getDevice()->getL0Object();
     auto builtInMode = l0Device->getCompilerProductHelper().getDefaultBuiltInAddressingMode(
         NEO::ApiSpecificConfig::getBindlessMode(*l0Device->getNEODevice()));
@@ -530,8 +549,6 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
     uint32_t dispatchY = static_cast<uint32_t>(std::max(region[1], static_cast<size_t>(1))) / groupSizeY;
     uint32_t dispatchZ = static_cast<uint32_t>(std::max(region[2], static_cast<size_t>(1))) / groupSizeZ;
     ze_group_count_t groupCount{dispatchX, dispatchY, dispatchZ};
-
-    auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_FILL_IMAGE, pCommandQueue);
 
     auto queueLock = pCommandQueue->takeOwnership();
     ze_result_t ret = zeCommandListAppendLaunchKernel(pCommandQueue->getL0Handle(),

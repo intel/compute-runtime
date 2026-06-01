@@ -163,8 +163,10 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                     size_t bytesPerPixel, const Vec3<size_t> &copySize,
                                     const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                     L0::Event *signalEvent, uint32_t numWaitEvents,
-                                    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override {
+                                    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams,
+                                    bool isImageFromBuffer) override {
         appendCopyImageBlitCalledTimes++;
+        appendCopyImageBlitIsImageFromBuffer = isImageFromBuffer;
         appendCopyImageSrcRowPitch = srcRowPitch;
         appendCopyImageSrcSlicePitch = srcSlicePitch;
         appendCopyImageDstRowPitch = dstRowPitch;
@@ -213,6 +215,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     uint32_t appendMemoryCopyKernel3dCalledTimes = 0;
     uint32_t appendBlitFillCalledTimes = 0;
     uint32_t appendCopyImageBlitCalledTimes = 0;
+    bool appendCopyImageBlitIsImageFromBuffer = false;
     uint32_t getAlignedAllocationCalledTimes = 0;
     bool failOnFirstCopy = false;
     bool useEvents = false;
@@ -3145,6 +3148,80 @@ HWTEST2_F(CommandListCreateTests, givenImmediateCopyCommandListWhenEstimatingIma
     auto estimatedSizeSmall = whiteBoxCmdList->estimateCommandSizeForImageCopyBlit(imageHW->toHandle(), &smallRegion);
     EXPECT_GE(estimatedSizeSmall, commonImmediateCommandSize + 1 * sizePerBlit);
     EXPECT_LT(estimatedSizeSmall, estimatedSize);
+}
+
+HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyFromMemoryToImage1dBufferThenImageBlitCalledWithLinearCopy, ImageSupport) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_1D;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+    imageHW->imgInfo.imgDesc.imageType = NEO::ImageType::image1DBuffer;
+
+    ze_image_region_t dstRegion = {0, 0, 0, 4, 1, 1};
+    cmdList.appendImageCopyFromMemory(imageHW->toHandle(), srcPtr, &dstRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_GT(cmdList.appendCopyImageBlitCalledTimes, 0u);
+    EXPECT_TRUE(cmdList.appendCopyImageBlitIsImageFromBuffer);
+}
+
+HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyFromImage1dBufferToMemoryThenImageBlitCalledWithLinearCopy, ImageSupport) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_1D;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+    imageHW->imgInfo.imgDesc.imageType = NEO::ImageType::image1DBuffer;
+
+    ze_image_region_t srcRegion = {0, 0, 0, 4, 1, 1};
+    cmdList.appendImageCopyToMemory(dstPtr, imageHW->toHandle(), &srcRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_GT(cmdList.appendCopyImageBlitCalledTimes, 0u);
+    EXPECT_TRUE(cmdList.appendCopyImageBlitIsImageFromBuffer);
+}
+
+HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyBetweenImage1dBuffersThenImageBlitCalledWithLinearCopy, ImageSupport) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_1D;
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHWSrc->initialize(device, &zeDesc);
+    imageHWDst->initialize(device, &zeDesc);
+    imageHWSrc->imgInfo.imgDesc.imageType = NEO::ImageType::image1DBuffer;
+    imageHWDst->imgInfo.imgDesc.imageType = NEO::ImageType::image1DBuffer;
+
+    ze_image_region_t srcRegion = {0, 0, 0, 4, 1, 1};
+    ze_image_region_t dstRegion = {0, 0, 0, 4, 1, 1};
+    cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_GT(cmdList.appendCopyImageBlitCalledTimes, 0u);
+    EXPECT_TRUE(cmdList.appendCopyImageBlitIsImageFromBuffer);
+}
+
+HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyFromRegular1dImageToMemoryThenImageBlitCalledWithoutLinearCopy, ImageSupport) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_1D;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    ze_image_region_t srcRegion = {4, 0, 0, 2, 1, 1};
+    cmdList.appendImageCopyToMemory(dstPtr, imageHW->toHandle(), &srcRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_GT(cmdList.appendCopyImageBlitCalledTimes, 0u);
+    EXPECT_FALSE(cmdList.appendCopyImageBlitIsImageFromBuffer);
 }
 
 } // namespace ult

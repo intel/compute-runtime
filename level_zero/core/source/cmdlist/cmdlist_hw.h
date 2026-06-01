@@ -332,7 +332,8 @@ struct CommandListCoreFamily : public CommandList {
                                                      size_t bytesPerPixel, const Vec3<size_t> &copySize,
                                                      const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                                      Event *signalEvent, uint32_t numWaitEvents,
-                                                     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams);
+                                                     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams,
+                                                     bool isImageFromBuffer);
 
     virtual ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
                                                      const ze_group_count_t &threadGroupDimensions,
