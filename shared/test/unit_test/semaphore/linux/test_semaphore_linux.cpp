@@ -18,6 +18,7 @@
 
 #include "gtest/gtest.h"
 
+#include <limits>
 #include <vector>
 
 namespace NEO {
@@ -522,6 +523,94 @@ TEST_F(DrmExternalSemaphoreTest, givenPrintExternalSemaphoreTimelineDefaultWhenT
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineWait, 1);
     EXPECT_EQ(mockDrm->ioctlCnt.syncObjTimelineSignal, 1);
     EXPECT_EQ("", output);
+}
+
+TEST_F(DrmExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledWhenEnqueueWaitIsCalledThenSyncObjWaitIsBlocking) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(1);
+
+    auto mockDrm = static_cast<DrmMockCustom *>(
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+
+    auto externalSemaphore = ExternalSemaphore::create(
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+        ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr);
+    ASSERT_NE(externalSemaphore, nullptr);
+
+    uint64_t fenceValue = 0u;
+    EXPECT_EQ(0, mockDrm->ioctlCnt.syncObjWait);
+
+    auto result = externalSemaphore->enqueueWait(&fenceValue);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1, mockDrm->ioctlCnt.syncObjWait);
+    EXPECT_EQ(std::numeric_limits<int64_t>::max(), mockDrm->syncObjWaitTimeoutNs);
+    EXPECT_EQ(0x2u, mockDrm->syncObjWaitFlags & 0x2u);
+}
+
+TEST_F(DrmExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresDisabledWhenEnqueueWaitIsCalledThenSyncObjWaitIsNonBlocking) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
+    auto mockDrm = static_cast<DrmMockCustom *>(
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+
+    auto externalSemaphore = ExternalSemaphore::create(
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+        ExternalSemaphore::Type::OpaqueFd, nullptr, 0u, nullptr);
+    ASSERT_NE(externalSemaphore, nullptr);
+
+    uint64_t fenceValue = 0u;
+    auto result = externalSemaphore->enqueueWait(&fenceValue);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1, mockDrm->ioctlCnt.syncObjWait);
+    EXPECT_EQ(0, mockDrm->syncObjWaitTimeoutNs);
+    EXPECT_EQ(0u, mockDrm->syncObjWaitFlags);
+}
+
+TEST_F(DrmExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledWhenEnqueueWaitIsCalledOnTimelineSemaphoreThenSyncObjTimelineWaitIsBlocking) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(1);
+
+    auto mockDrm = static_cast<DrmMockCustom *>(
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+
+    auto externalSemaphore = ExternalSemaphore::create(
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+        ExternalSemaphore::Type::TimelineSemaphoreFd, nullptr, 0u, nullptr);
+    ASSERT_NE(externalSemaphore, nullptr);
+
+    uint64_t fenceValue = 1u;
+    EXPECT_EQ(0, mockDrm->ioctlCnt.syncObjTimelineWait);
+
+    auto result = externalSemaphore->enqueueWait(&fenceValue);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1, mockDrm->ioctlCnt.syncObjTimelineWait);
+    EXPECT_EQ(std::numeric_limits<int64_t>::max(), mockDrm->syncObjTimelineWaitTimeoutNs);
+    EXPECT_EQ(0x2u, mockDrm->syncObjTimelineWaitFlags & 0x2u);
+}
+
+TEST_F(DrmExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresDisabledWhenEnqueueWaitIsCalledOnTimelineSemaphoreThenSyncObjTimelineWaitIsNonBlocking) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
+    auto mockDrm = static_cast<DrmMockCustom *>(
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+
+    auto externalSemaphore = ExternalSemaphore::create(
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+        ExternalSemaphore::Type::TimelineSemaphoreFd, nullptr, 0u, nullptr);
+    ASSERT_NE(externalSemaphore, nullptr);
+
+    uint64_t fenceValue = 1u;
+    auto result = externalSemaphore->enqueueWait(&fenceValue);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1, mockDrm->ioctlCnt.syncObjTimelineWait);
+    EXPECT_EQ(0, mockDrm->syncObjTimelineWaitTimeoutNs);
+    EXPECT_EQ(0u, mockDrm->syncObjTimelineWaitFlags);
 }
 
 } // namespace NEO

@@ -119,6 +119,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     removeMemoryPrefetchAllocations();
     commandContainer.reset();
     clearCommandsToPatch();
+    externalSemaphoreHostFunctionData.clear();
 
     if (!isCopyOnly(false)) {
         printfKernelContainer.clear();
@@ -4723,6 +4724,26 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                                                                                const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                                                uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    if (NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.get() == 1) {
+        ExternalSemaphoreOperationData operationData{};
+        operationData.semaphores.reserve(numExternalSemaphores);
+        for (uint32_t i = 0; i < numExternalSemaphores; ++i) {
+            operationData.semaphores.push_back(std::pair(static_cast<ExternalSemaphoreImp *>(hSemaphores[i]), params[i].value));
+        }
+
+        void *pHostFunctionData = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(externalSemaphoreHostFunctionDataMutex);
+            auto &hostFunctionData = externalSemaphoreHostFunctionData.emplace_back(*this, std::move(operationData));
+            hostFunctionData.self = std::prev(externalSemaphoreHostFunctionData.end());
+            pHostFunctionData = &hostFunctionData;
+        }
+
+        CmdListHostFunctionParameters parameters{};
+
+        return this->appendHostFunction(semaphoreWaitHostFunction, pHostFunctionData, nullptr, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
+    }
+
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -4730,6 +4751,26 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                                                                                  const ze_external_semaphore_signal_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                                                  uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    if (NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.get() == 1) {
+        ExternalSemaphoreOperationData operationData{};
+        operationData.semaphores.reserve(numExternalSemaphores);
+        for (uint32_t i = 0; i < numExternalSemaphores; ++i) {
+            operationData.semaphores.push_back(std::pair(static_cast<ExternalSemaphoreImp *>(hSemaphores[i]), params[i].value));
+        }
+
+        void *pHostFunctionData = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(externalSemaphoreHostFunctionDataMutex);
+            auto &hostFunctionData = externalSemaphoreHostFunctionData.emplace_back(*this, std::move(operationData));
+            hostFunctionData.self = std::prev(externalSemaphoreHostFunctionData.end());
+            pHostFunctionData = &hostFunctionData;
+        }
+
+        CmdListHostFunctionParameters parameters{};
+
+        return this->appendHostFunction(semaphoreSignalHostFunction, pHostFunctionData, nullptr, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
+    }
+
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

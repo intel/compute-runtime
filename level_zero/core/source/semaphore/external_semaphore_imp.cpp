@@ -7,11 +7,35 @@
 
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 
 namespace L0 {
+
+void ExternalSemaphoreImp::semaphoreWait(const ExternalSemaphoreOperationData &operationData) {
+    for (auto [semaphore, value] : operationData.semaphores) {
+        bool result = semaphore->neoExternalSemaphore->enqueueWait(&value);
+        PRINT_STRING(NEO::debugManager.flags.PrintExternalSemaphoreOperationResults.get(), stdout,
+                     "ExternalSemaphoreImp::semaphoreWait semaphore=%p value=%llu result=%d\n",
+                     static_cast<void *>(semaphore),
+                     static_cast<unsigned long long>(value),
+                     static_cast<int>(result));
+    }
+};
+
+void ExternalSemaphoreImp::semaphoreSignal(const ExternalSemaphoreOperationData &operationData) {
+    for (auto [semaphore, value] : operationData.semaphores) {
+        bool result = semaphore->neoExternalSemaphore->enqueueSignal(&value);
+        PRINT_STRING(NEO::debugManager.flags.PrintExternalSemaphoreOperationResults.get(), stdout,
+                     "ExternalSemaphoreImp::semaphoreSignal semaphore=%p value=%llu result=%d\n",
+                     static_cast<void *>(semaphore),
+                     static_cast<unsigned long long>(value),
+                     static_cast<int>(result));
+    }
+};
 
 ze_result_t
 ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device, const ze_external_semaphore_ext_desc_t *semaphoreDesc, ze_external_semaphore_ext_handle_t *phSemaphore) {

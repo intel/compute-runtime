@@ -19,6 +19,7 @@
 #include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/private_allocs_to_reuse_container.h"
+#include "shared/source/host_function/host_function.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -27,6 +28,7 @@
 #include "level_zero/core/source/cmdlist/command_to_patch.h"
 #include "level_zero/core/source/device/bcs_split_params.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
+#include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/include/level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/include/level_zero/ze_intel_gpu.h"
@@ -36,6 +38,7 @@
 #include "copy_offload_mode.h"
 
 #include <map>
+#include <mutex>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -655,6 +658,31 @@ struct CommandList : _ze_command_list_handle_t {
 
     virtual void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) = 0;
 
+    static void NEO_HOST_FUNCTION_CALLBACK semaphoreWaitHostFunction(void *data) {
+        DEBUG_BREAK_IF(data == nullptr);
+        auto extSemaphoreHostFnData = static_cast<ExternalSemaphoreHostFunctionData *>(data);
+        auto &cmdList = extSemaphoreHostFnData->cmdList;
+
+        ExternalSemaphoreImp::semaphoreWait(extSemaphoreHostFnData->operationData);
+
+        if (cmdList.isImmediateType()) {
+            std::lock_guard<std::mutex> lock(cmdList.externalSemaphoreHostFunctionDataMutex);
+            cmdList.externalSemaphoreHostFunctionData.erase(extSemaphoreHostFnData->self);
+        }
+    };
+    static void NEO_HOST_FUNCTION_CALLBACK semaphoreSignalHostFunction(void *data) {
+        DEBUG_BREAK_IF(data == nullptr);
+        auto extSemaphoreHostFnData = static_cast<ExternalSemaphoreHostFunctionData *>(data);
+        auto &cmdList = extSemaphoreHostFnData->cmdList;
+
+        ExternalSemaphoreImp::semaphoreSignal(extSemaphoreHostFnData->operationData);
+
+        if (cmdList.isImmediateType()) {
+            std::lock_guard<std::mutex> lock(cmdList.externalSemaphoreHostFunctionDataMutex);
+            cmdList.externalSemaphoreHostFunctionData.erase(extSemaphoreHostFnData->self);
+        }
+    };
+
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload, bool *nonUsmHostPtrPartialOverlapFound);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
@@ -685,6 +713,14 @@ struct CommandList : _ze_command_list_handle_t {
     std::vector<Event *> interruptEvents;
     std::vector<const BcsSplitParams::MarkerEvent *> eventsForRecordedBcsSplit;
     std::vector<CommandList *> subCmdListsForRecordedBcsSplit;
+
+    struct ExternalSemaphoreHostFunctionData {
+        CommandList &cmdList;
+        const ExternalSemaphoreOperationData operationData;
+        std::list<ExternalSemaphoreHostFunctionData>::iterator self;
+    };
+    std::list<ExternalSemaphoreHostFunctionData> externalSemaphoreHostFunctionData;
+    std::mutex externalSemaphoreHostFunctionDataMutex;
 
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
 

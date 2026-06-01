@@ -278,6 +278,12 @@ struct DrmMockCustom : public Drm {
     uint32_t mmapOffsetPad = 0;
     uint64_t mmapOffsetExpected = 0;
     uint64_t mmapOffsetFlags = 0;
+    // DRM_IOCTL_SYNCOBJ_WAIT
+    int64_t syncObjWaitTimeoutNs = 0;
+    uint32_t syncObjWaitFlags = 0;
+    // DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT
+    int64_t syncObjTimelineWaitTimeoutNs = 0;
+    uint32_t syncObjTimelineWaitFlags = 0;
     bool failOnMmapOffset = false;
     bool failOnPrimeFdToHandle = false;
     bool failOnSecondPrimeFdToHandle = false;

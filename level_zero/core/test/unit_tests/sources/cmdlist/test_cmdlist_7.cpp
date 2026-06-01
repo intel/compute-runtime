@@ -18,6 +18,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -95,6 +96,19 @@ HWTEST_F(CommandListCreate, GivenSingleTileDeviceWhenCommandListIsResetThenParti
     returnValue = commandList->reset();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(1u, commandList->getPartitionCount());
+}
+
+HWTEST_F(CommandListCreate, givenExternalSemaphoreHostFunctionDataWhenResettingCommandListThenItIsCleared) {
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    commandList->externalSemaphoreHostFunctionData.emplace_back(*commandList, ExternalSemaphoreOperationData{});
+
+    returnValue = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(0u, commandList->externalSemaphoreHostFunctionData.size());
 }
 
 HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {

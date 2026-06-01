@@ -1097,6 +1097,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
                                                                                         const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                                                         uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
+    if (NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.get() == 1) {
+        return CommandListCoreFamily<gfxCoreFamily>::appendWaitExternalSemaphores(numExternalSemaphores, hSemaphores, params, hSignalEvent, numWaitEvents, phWaitEvents);
+    }
+
     checkAvailableSpace(0, false, commonImmediateCommandSize, false);
 
     auto signalEvent = Event::fromHandle(hSignalEvent);
@@ -1151,6 +1155,10 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                                                                                           const ze_external_semaphore_signal_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+
+    if (NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.get() == 1) {
+        return CommandListCoreFamily<gfxCoreFamily>::appendSignalExternalSemaphores(numExternalSemaphores, hSemaphores, params, hSignalEvent, numWaitEvents, phWaitEvents);
+    }
 
     checkAvailableSpace(0, false, commonImmediateCommandSize, false);
 

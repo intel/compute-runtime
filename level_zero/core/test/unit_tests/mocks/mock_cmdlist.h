@@ -91,6 +91,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::estimateBufferSizeMultiTileBarrier;
     using BaseClass::eventsForRecordedBcsSplit;
     using BaseClass::eventSignalPipeControl;
+    using BaseClass::externalSemaphoreHostFunctionData;
     using BaseClass::finalStreamState;
     using BaseClass::flags;
     using BaseClass::forceStateless;
@@ -242,6 +243,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::engineGroupType;
     using BaseClass::estimateCommandSizeForImageCopyBlit;
     using BaseClass::eventSignalPipeControl;
+    using BaseClass::externalSemaphoreHostFunctionData;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
     using BaseClass::getCmdQImmediate;
@@ -984,10 +986,35 @@ class MockCommandListForExecuteMemAdvise : public WhiteBox<::L0::CommandListCore
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+struct MockCommandListExtSem : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+    using BaseClass = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
+
+    using BaseClass::semaphoreSignalHostFunction;
+    using BaseClass::semaphoreWaitHostFunction;
+    using typename BaseClass::ExternalSemaphoreHostFunctionData;
+
+    ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction, void *pUserData, void *pNext,
+                                   ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                   CmdListHostFunctionParameters &parameters) override {
+        appendHostFunctionCalledTimes++;
+        capturedHostFunction = pHostFunction;
+        capturedUserData = pUserData;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    uint32_t appendHostFunctionCalledTimes = 0u;
+    ze_host_function_callback_t capturedHostFunction = nullptr;
+    void *capturedUserData = nullptr;
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
     using BaseClass = WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
 
     using BaseClass::enableInOrderExecution;
+    using BaseClass::semaphoreSignalHostFunction;
+    using BaseClass::semaphoreWaitHostFunction;
+    using typename BaseClass::ExternalSemaphoreHostFunctionData;
 
     MockCommandListImmediateExtSem() : WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>() {}
 
@@ -1027,10 +1054,22 @@ struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFam
         BaseClass::appendSignalInOrderDependencyCounter(signalEvent, copyOffloadOperation, stall, textureFlushRequired, skipAggregatedEventSignaling);
     }
 
+    ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction, void *pUserData, void *pNext,
+                                   ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                   CmdListHostFunctionParameters &parameters) override {
+        appendHostFunctionCalledTimes++;
+        capturedHostFunction = pHostFunction;
+        capturedUserData = pUserData;
+        return ZE_RESULT_SUCCESS;
+    }
+
     uint32_t appendWaitOnEventsCalledTimes = 0;
     uint32_t appendSignalEventCalledTimes = 0;
     uint16_t appendSignalEventPostWalkerCalledTimes = 0;
     uint32_t appendSignalInOrderDependencyCounterCalledTimes = 0;
+    uint32_t appendHostFunctionCalledTimes = 0u;
+    ze_host_function_callback_t capturedHostFunction = nullptr;
+    void *capturedUserData = nullptr;
     bool failingWaitOnEvents = false;
     bool failingSignalEvent = false;
     bool failOnSecondSignalEvent = false;

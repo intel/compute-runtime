@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <cinttypes>
+#include <limits>
 
 namespace NEO {
 
@@ -85,6 +86,12 @@ bool ExternalSemaphoreLinux::enqueueWait(uint64_t *fenceValue) {
         args.countHandles = 1u;
         args.flags = 0;
 
+        if (debugManager.flags.EnableHostFunctionBasedExternalSemaphores.get() == 1) {
+            // Make the IOCTL call blocking
+            args.timeoutNs = std::numeric_limits<decltype(args.timeoutNs)>::max();
+            args.flags |= 0x2; // DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT
+        }
+
         PRINT_STRING(debugManager.flags.PrintExternalSemaphoreTimeline.get() == 1, stdout,
                      "ExternalSemaphore timeline wait: handle=0x%x, value=%" PRIu64 "\n",
                      this->syncHandle,
@@ -100,6 +107,12 @@ bool ExternalSemaphoreLinux::enqueueWait(uint64_t *fenceValue) {
         args.timeoutNs = 0;
         args.countHandles = 1u;
         args.flags = 0;
+
+        if (debugManager.flags.EnableHostFunctionBasedExternalSemaphores.get() == 1) {
+            // Make the IOCTL call blocking
+            args.timeoutNs = std::numeric_limits<decltype(args.timeoutNs)>::max();
+            args.flags |= 0x2; // DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT
+        }
 
         int ret = ioctlHelper->ioctl(DrmIoctl::syncObjWait, &args);
         if (ret != 0) {

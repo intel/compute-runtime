@@ -165,6 +165,9 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         }
     } break;
     case DrmIoctl::syncObjWait: {
+        auto waitArgs = static_cast<NEO::SyncObjWait *>(arg);
+        syncObjWaitTimeoutNs = waitArgs->timeoutNs;
+        syncObjWaitFlags = waitArgs->flags;
         ioctlCnt.syncObjWait++;
         if (failOnSyncObjWait == true) {
             return -1;
@@ -177,6 +180,9 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         }
     } break;
     case DrmIoctl::syncObjTimelineWait: {
+        auto waitArgs = static_cast<SyncObjTimelineWait *>(arg);
+        syncObjTimelineWaitTimeoutNs = waitArgs->timeoutNs;
+        syncObjTimelineWaitFlags = waitArgs->flags;
         ioctlCnt.syncObjTimelineWait++;
         if (failOnSyncObjTimelineWait == true) {
             return -1;

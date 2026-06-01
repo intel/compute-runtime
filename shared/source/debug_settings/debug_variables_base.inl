@@ -418,6 +418,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintMclData, false, "Print all parameters used for
 DECLARE_DEBUG_VARIABLE(bool, PrintSecondaryContextEngineInfo, false, "Print info about used secondary contexts engine");
 DECLARE_DEBUG_VARIABLE(bool, PrintLateMidThreadPreemptionStartInfo, false, "Print info related to late mid thread preemption start feature")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintExternalSemaphoreTimeline, -1, "-1: default, 0: disabled, 1: enabled. If set, print external semaphore timeline values for wait/signal ioctls")
+DECLARE_DEBUG_VARIABLE(int32_t, PrintExternalSemaphoreOperationResults, false, "Print results of wait/signal external semaphore operations")
 
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")
@@ -760,6 +761,7 @@ DECLARE_DEBUG_VARIABLE(std::string, IgcLibraryName, std::string("unk"), "Library
 DECLARE_DEBUG_VARIABLE(std::string, RequiredLibsBinarySearchPath, std::string("none"), "Custom filesystem location to search the required-libs binary")
 DECLARE_DEBUG_SCOPED_V(int32_t, UseIgcAsFcl, 0, S_RT | S_OCLOC, "0: platform default, 1: force use IGC, 2: force use FCL")
 DECLARE_DEBUG_VARIABLE(bool, EnableGlobalTimestampViaSubmission, 0, "0: OS Interface, 1: Submission. This flag sets the type of method to get timestamp for getGlobalTimestamps");
+DECLARE_DEBUG_VARIABLE(bool, EnableHostFunctionBasedExternalSemaphores, 0, "0: Use legacy controller based ext semaphore mediation, 1: Use Host Function based ext semaphore mediation");
 
 /* Binary Cache */
 DECLARE_DEBUG_VARIABLE(bool, BinaryCacheTrace, false, "enable cl_cache to produce .trace files with information about hash computation")
