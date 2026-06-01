@@ -36,10 +36,6 @@ export NEO_SKIP_AUB_TESTS_RUN="${NEO_SKIP_AUB_TESTS_RUN:-TRUE}"
 source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/functions.sh"
 source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/versions.sh"
 
-if [ -f "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/exports.sh" ]; then
-    source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/exports.sh"
-fi
-
 get_api_version # API_VERSION-API_VERSION_SRC and API_DEB_MODEL_LINK
 get_neo_version # NEO_VERSION_MAJOR.NEO_VERSION_MINOR.NEO_VERSION_BUILD.NEO_VERSION_HOTFIX
 
@@ -76,9 +72,6 @@ if [ -f "${SHLIBS}" ]; then
 fi
 if [ -f "${DEV_INSTALL}" ]; then
     cp -v $DEV_INSTALL $BUILD_DIR/debian/
-fi
-if [ -f "${LIBZE_INSTALL}" ]; then
-    cp -v $LIBZE_INSTALL $BUILD_DIR/debian/
 fi
 
 if [ "${NEO_BUILD_WITH_L0}" != "TRUE" ]; then
