@@ -50,7 +50,14 @@ struct MockGraphCmdListWithContext : Mock<CommandList> {
 
 struct MockGraphContextReturningSpecificCmdList : ContextStubMock {
     std::vector<Mock<CommandList> *> cmdListsToReturn;
+    DriverHandle *driverHandleToReturn = nullptr;
+
+    DriverHandle *getDriverHandle() override {
+        return driverHandleToReturn;
+    }
+
     ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
+        UNRECOVERABLE_IF(cmdListsToReturn.empty());
         *commandList = cmdListsToReturn.front();
         cmdListsToReturn.erase(cmdListsToReturn.begin());
         return ZE_RESULT_SUCCESS;
@@ -69,6 +76,12 @@ struct MockGraphContextReturningSpecificCmdList : ContextStubMock {
 };
 
 struct MockGraphContextReturningNewCmdList : ContextStubMock {
+    DriverHandle *driverHandleToReturn = nullptr;
+
+    DriverHandle *getDriverHandle() override {
+        return driverHandleToReturn;
+    }
+
     ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
         *commandList = new Mock<CommandList>;
         return ZE_RESULT_SUCCESS;

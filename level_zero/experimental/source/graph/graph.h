@@ -61,16 +61,17 @@ struct Graph;
 struct VisitContext;
 
 struct ForkInfo {
-    CapturedCommandId forkCommandId = 0;
+    CapturedCommandId forkSignalCommandId = 0;
     ze_event_handle_t forkEvent = nullptr;
 };
 
 struct ForkJoinInfo {
-    CapturedCommandId forkCommandId = 0;
-    CapturedCommandId joinCommandId = 0;
+    CapturedCommandId forkSignalCommandId = 0; // parent
+    CapturedCommandId joinWaitCommandId = 0;   // parent
+    CapturedCommandId joinSignalCommandId = 0; // child
     ze_event_handle_t forkEvent = nullptr;
     ze_event_handle_t joinEvent = nullptr;
-    Graph *forkDestiny = nullptr;
+    Graph *forkDestiny = nullptr; // child
 };
 
 // Contigous commands in the order of recording (i.e. in the order of host API invocations)
@@ -258,6 +259,10 @@ struct Graph : _ze_graph_handle_t {
         return potentialJoins;
     }
 
+    const std::unordered_map<Graph *, ForkJoinInfo> &getResolvedJoins() const {
+        return resolvedJoins;
+    }
+
     const std::unordered_map<L0::CommandList *, ForkInfo> &getUnjoinedForks() const {
         return unjoinedForks;
     }
@@ -341,6 +346,10 @@ struct Graph : _ze_graph_handle_t {
         return true;
     }
 
+    bool isLastCommand(CapturedCommandId commandId) const {
+        return (commandId + 1 == recordedApiCommands.size());
+    }
+
     const OrderedCommandsRegistry &getOrderedCommands() const {
         return *orderedCommands;
     }
@@ -384,6 +393,7 @@ struct Graph : _ze_graph_handle_t {
     std::unordered_map<L0::Event *, CapturedCommandId> recordedSignals;
     std::unordered_map<L0::CommandList *, ForkInfo> unjoinedForks;
     std::unordered_map<CapturedCommandId, ForkJoinInfo> potentialJoins;
+    std::unordered_map<Graph *, ForkJoinInfo> resolvedJoins;
 
     L0::CommandList *captureSrc = nullptr;
     L0::CommandList *primaryCaptureSrc = nullptr;
@@ -481,7 +491,12 @@ using OrderedExecutableSegmentsList = std::vector<OrderedCommandsExecutableSegme
 
 struct ExecGraphBuilder final {
     ExecGraphBuilder(Graph &rootSrc, ExecutableGraph &rootDst);
-    void finalize();
+    ~ExecGraphBuilder();
+    ExecGraphBuilder(const ExecGraphBuilder &) = delete;
+    ExecGraphBuilder &operator=(const ExecGraphBuilder &) = delete;
+    ExecGraphBuilder(ExecGraphBuilder &&) = delete;
+    ExecGraphBuilder &operator=(ExecGraphBuilder &&) = delete;
+    void finalize(const GraphInstatiateSettings &settings);
 
     L0::CommandList *getFlatCommandList() const {
         return flatCommandList;
@@ -497,16 +512,35 @@ struct ExecGraphBuilder final {
         return it->second;
     }
 
+    L0::EventPool *releaseTrailingEventsPool() {
+        auto ret = this->trailingEventsPool;
+        this->trailingEventsPool = nullptr;
+        return ret;
+    }
+
+    std::vector<ze_event_handle_t> releaseTrailingEvents() {
+        return {std::move(this->trailingEvents)};
+    }
+
   protected:
+    void createEventPoolForTrailingEvents(size_t numEvents);
+    L0::Event *createTrailingEvent();
+
     Graph &rootSrc;
     ExecutableGraph &rootDst;
     L0::CommandList *flatCommandList = nullptr;
     std::unordered_map<const Graph *, ExecSubGraphBuilder> subgraphs;
+    L0::EventPool *trailingEventsPool = nullptr;
+    std::vector<ze_event_handle_t> trailingEvents;
 };
 
 struct ExecutableGraph : _ze_executable_graph_handle_t {
     ExecutableGraph(WeaklyShared<OrderedExecutableSegmentsList> &&orderedSegments);
     ExecutableGraph() : ExecutableGraph(WeaklyShared(new OrderedExecutableSegmentsList)) {}
+    ExecutableGraph(const ExecutableGraph &) = delete;
+    ExecutableGraph &operator=(const ExecutableGraph &) = delete;
+    ExecutableGraph(ExecutableGraph &&) = delete;
+    ExecutableGraph &operator=(ExecutableGraph &&) = delete;
 
     ze_result_t instantiateFrom(Graph &rootSrc, const GraphInstatiateSettings &settings);
     ze_result_t instantiateFrom(Graph &rootSrc) {
@@ -569,6 +603,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     bool usePatchingPreamble = true;
     WeaklyShared<OrderedExecutableSegmentsList> orderedCommands; // shared between graph and subgraphs
+    L0::EventPool *trailingEventsPool = nullptr;
+    std::vector<ze_event_handle_t> trailingEvents;
 };
 
 constexpr size_t maxVariantSize = 2 * 64;

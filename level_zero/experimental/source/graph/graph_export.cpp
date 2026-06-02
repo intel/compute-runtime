@@ -129,10 +129,10 @@ void GraphDotExporter::writeForkJoinEdges(std::ostringstream &dot, const Graph &
         const auto subgraphIndex = findSubgraphIndex(subGraphs, forkJoinInfo.forkDestiny);
         if (subgraphIndex && !forkJoinInfo.forkDestiny->getCapturedCommands().empty()) {
             const auto &subgraphCommands = forkJoinInfo.forkDestiny->getCapturedCommands();
-            const std::string forkNode = generateNodeId(level, subgraphId, forkJoinInfo.forkCommandId);
+            const std::string forkNode = generateNodeId(level, subgraphId, forkJoinInfo.forkSignalCommandId);
             const std::string subgraphFirstNode = generateNodeId(level + 1, *subgraphIndex, 0);
             const std::string subgraphLastNode = generateNodeId(level + 1, *subgraphIndex, static_cast<uint32_t>(subgraphCommands.size()) - 1);
-            const std::string joinNode = generateNodeId(level, subgraphId, forkJoinInfo.joinCommandId);
+            const std::string joinNode = generateNodeId(level, subgraphId, forkJoinInfo.joinWaitCommandId);
 
             dot << indent << forkNode << " -> " << subgraphFirstNode << ";\n";
             dot << indent << subgraphLastNode << " -> " << joinNode << ";\n";
@@ -154,7 +154,7 @@ void GraphDotExporter::writeUnjoinedForkEdges(std::ostringstream &dot, const Gra
     for (const auto &[cmdList, forkInfo] : unjoinedForks) {
         const auto subgraphIndex = findSubgraphIndexByCommandList(subGraphs, cmdList);
         if (subgraphIndex && !subGraphs[*subgraphIndex]->getCapturedCommands().empty()) {
-            const std::string forkNode = generateNodeId(level, subgraphId, forkInfo.forkCommandId);
+            const std::string forkNode = generateNodeId(level, subgraphId, forkInfo.forkSignalCommandId);
             const std::string subgraphFirstNode = generateNodeId(level + 1, *subgraphIndex, 0);
             dot << indent << forkNode << " -> " << subgraphFirstNode << " [color=red, label=\"unjoined fork\"];\n";
         }

@@ -261,6 +261,89 @@ bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_
     return validRet;
 }
 
+bool testMultiGraphPostJoinTrailingSync(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
+    bool validRet = true;
+    ze_graph_handle_t virtualGraph = nullptr;
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+
+    constexpr size_t allocSize = 4096;
+    uint8_t *sharedBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc, allocSize, 4096, device, reinterpret_cast<void **>(&sharedBuffer)));
+    std::memset(sharedBuffer, 0, allocSize);
+
+    ze_command_list_handle_t cmdListMain;
+    ze_command_list_handle_t cmdListSub;
+
+    ze_event_pool_handle_t eventPool = nullptr;
+    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 3;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
+
+    ze_event_handle_t eventFork = nullptr;
+    ze_event_handle_t eventJoin = nullptr;
+    ze_event_handle_t eventPostJoinSignal = nullptr;
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &eventFork));
+
+    eventDesc.index = 1;
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &eventJoin));
+
+    eventDesc.index = 2;
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &eventPostJoinSignal));
+
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListMain);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListSub);
+
+    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListMain, virtualGraph, nullptr));
+
+    // parent: signal fork
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListMain, eventFork, 0, nullptr));
+    uint8_t pattern = 0x5A;
+    // child: wait fork
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdListSub, sharedBuffer, &pattern, sizeof(pattern), allocSize, nullptr, 1, &eventFork));
+    // child: signal join
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListSub, eventJoin, 0, nullptr));
+    // child: post-join command
+    SUCCESS_OR_TERMINATE(zeCommandListAppendSignalEvent(cmdListSub, eventPostJoinSignal));
+    // parent: wait join
+    SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdListMain, 1, &eventJoin));
+
+    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListMain, nullptr, nullptr));
+    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+
+    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListMain, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListMain, std::numeric_limits<uint64_t>::max()));
+
+    // Checks post-join signal, should be signaled at this point
+    SUCCESS_OR_TERMINATE(zeEventQueryStatus(eventPostJoinSignal));
+
+    if (aubMode == false) {
+        validRet = LevelZeroBlackBoxTests::validateToValue(pattern, sharedBuffer, allocSize);
+    }
+
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+
+    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListSub));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListMain));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(eventPostJoinSignal));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(eventJoin));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(eventFork));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, sharedBuffer));
+    return validRet;
+}
+
 inline auto allocateDispatchTraits(ze_context_handle_t context, bool indirect) {
 
     auto dispatchTraitsDeleter = [context, indirect](ze_group_count_t *ptr) noexcept {
@@ -1662,7 +1745,14 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestStandardMemoryCopyMultigraph)) {
         currentTest = "Standard Memory Copy - multigraph";
+        std::cout << "Starting test: " << currentTest << std::endl;
         casePass = testMultiGraph(graphApi, context, device0, aubMode, graphDumpSettings);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
+
+        currentTest = "Standard Memory Copy - multigraph post-join trailing synchronization";
+        std::cout << "Starting test: " << currentTest << std::endl;
+        casePass = testMultiGraphPostJoinTrailingSync(graphApi, context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }

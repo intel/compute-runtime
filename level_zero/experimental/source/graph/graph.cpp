@@ -22,6 +22,7 @@
 
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace L0 {
 
@@ -294,20 +295,18 @@ void Graph::stopCapturing() {
     this->captureSrc = nullptr;
     StackVec<std::pair<L0::CommandList *, ForkInfo>, 1> neverJoinedForks; // should stay empty for valid graphs
     for (auto &unjFork : this->unjoinedForks) {
-        auto forkCmdId = unjFork.second.forkCommandId;
+        auto forkCmdId = unjFork.second.forkSignalCommandId;
         auto potentialJoin = this->potentialJoins.find(forkCmdId);
         if (this->potentialJoins.end() == potentialJoin) {
             neverJoinedForks.push_back({unjFork.first, unjFork.second});
             continue; // no join-like sequences found
         }
-        auto potentialJoinEvent = static_cast<L0::Event *>(potentialJoin->second.joinEvent);
-        auto potentialJoinRecordedSignal = potentialJoin->second.forkDestiny->recordedSignals.find(potentialJoinEvent);
-        UNRECOVERABLE_IF(potentialJoin->second.forkDestiny->recordedSignals.end() == potentialJoinRecordedSignal);
-        auto potentialJoinSignalId = potentialJoinRecordedSignal->second;
+        auto potentialJoinSignalId = potentialJoin->second.joinSignalCommandId;
         if (false == potentialJoin->second.forkDestiny->isValidJoinCommand(potentialJoinSignalId)) {
             neverJoinedForks.push_back({unjFork.first, unjFork.second});
             continue; // join-like sequence found but is succeeded by unjoined commands
         }
+        resolvedJoins[potentialJoin->second.forkDestiny] = potentialJoin->second;
     }
     this->unjoinedForks.clear();
     this->unjoinedForks.insert(neverJoinedForks.begin(), neverJoinedForks.end());
@@ -326,12 +325,15 @@ void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinE
     }
 
     ForkJoinInfo forkJoinInfo = {};
-    forkJoinInfo.forkCommandId = forkInfo->second.forkCommandId;
+    forkJoinInfo.forkSignalCommandId = forkInfo->second.forkSignalCommandId;
     forkJoinInfo.forkEvent = forkInfo->second.forkEvent;
-    forkJoinInfo.joinCommandId = static_cast<CapturedCommandId>(this->recordedApiCommands.size());
+    forkJoinInfo.joinWaitCommandId = static_cast<CapturedCommandId>(this->recordedApiCommands.size());
     forkJoinInfo.joinEvent = &joinEvent;
     forkJoinInfo.forkDestiny = childCmdList.getGraphCaptureTarget();
-    this->potentialJoins[forkInfo->second.forkCommandId] = forkJoinInfo;
+    auto joinRecordedSignal = forkJoinInfo.forkDestiny->recordedSignals.find(&joinEvent);
+    UNRECOVERABLE_IF(forkJoinInfo.forkDestiny->recordedSignals.end() == joinRecordedSignal);
+    forkJoinInfo.joinSignalCommandId = joinRecordedSignal->second;
+    this->potentialJoins[forkInfo->second.forkSignalCommandId] = forkJoinInfo;
 }
 
 void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent) {
@@ -344,7 +346,7 @@ void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &fork
 
     auto forkEventInfo = this->recordedSignals.find(&forkEvent);
     UNRECOVERABLE_IF(this->recordedSignals.end() == forkEventInfo);
-    this->unjoinedForks[&childCmdList] = ForkInfo{.forkCommandId = forkEventInfo->second,
+    this->unjoinedForks[&childCmdList] = ForkInfo{.forkSignalCommandId = forkEventInfo->second,
                                                   .forkEvent = &forkEvent};
 }
 
@@ -1040,7 +1042,14 @@ ExecutableGraph::ExecutableGraph(WeaklyShared<OrderedExecutableSegmentsList> &&o
     }
 }
 
-ExecutableGraph::~ExecutableGraph() = default;
+ExecutableGraph::~ExecutableGraph() {
+    for (auto hEvent : trailingEvents) {
+        Event::fromHandle(hEvent)->destroy();
+    }
+    if (trailingEventsPool) {
+        trailingEventsPool->destroy();
+    }
+}
 
 L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode() {
     ze_command_list_handle_t newCmdListHandle = nullptr;
@@ -1069,15 +1078,85 @@ ExecGraphBuilder::ExecGraphBuilder(Graph &rootSrc, ExecutableGraph &rootDst) : r
     }
 }
 
-void ExecGraphBuilder::finalize() {
+ExecGraphBuilder::~ExecGraphBuilder() {
+    for (auto hEvent : trailingEvents) {
+        Event::fromHandle(hEvent)->destroy();
+    }
+    if (trailingEventsPool) {
+        trailingEventsPool->destroy();
+    }
+}
+
+inline void getSubgraphsWithPostJoinCommands(Graph &graph, std::unordered_set<const Graph *> &subgraphsWithPostJoinCommands) {
+    const auto &resolvedJoins = graph.getResolvedJoins();
+    for (auto *subgraph : graph.getSubgraphs()) {
+        auto resolvedSubgraphJoinIt = resolvedJoins.find(subgraph);
+        if ((resolvedSubgraphJoinIt == resolvedJoins.end()) || (false == subgraph->isLastCommand(resolvedSubgraphJoinIt->second.joinSignalCommandId))) {
+            subgraphsWithPostJoinCommands.insert(subgraph);
+        }
+        getSubgraphsWithPostJoinCommands(*subgraph, subgraphsWithPostJoinCommands);
+    }
+}
+
+void ExecGraphBuilder::createEventPoolForTrailingEvents(size_t numEvents) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
+    eventPoolDesc.count = static_cast<uint32_t>(numEvents);
+
+    ze_device_handle_t hDevice = rootSrc.getCaptureTargetDesc().hDevice;
+    uint32_t numDevices = hDevice ? 1u : 0u;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    this->trailingEventsPool = EventPool::create(rootSrc.getContext()->getDriverHandle(), rootSrc.getContext(), numDevices, &hDevice, &eventPoolDesc, result);
+    UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
+    trailingEvents.reserve(numEvents);
+}
+
+L0::Event *ExecGraphBuilder::createTrailingEvent() {
+    UNRECOVERABLE_IF(nullptr == this->trailingEventsPool);
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.index = static_cast<uint32_t>(this->trailingEvents.size());
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+
+    ze_event_handle_t hEvent = nullptr;
+    auto result = this->trailingEventsPool->createEvent(&eventDesc, &hEvent);
+    UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
+
+    auto *event = L0::Event::fromHandle(hEvent);
+    this->trailingEvents.push_back(event);
+    return event;
+}
+
+void ExecGraphBuilder::finalize(const GraphInstatiateSettings &settings) {
+    std::unordered_set<const Graph *> subgraphsWithPostJoinCommands;
+    if (settings.forkPolicy == GraphInstatiateSettings::ForkPolicyMonolythicLevels) {
+        getSubgraphsWithPostJoinCommands(this->rootSrc, subgraphsWithPostJoinCommands);
+        if (false == subgraphsWithPostJoinCommands.empty()) {
+            createEventPoolForTrailingEvents(subgraphsWithPostJoinCommands.size());
+        }
+    }
     if (this->flatCommandList) {
         this->flatCommandList->close();
-    } else {
+    } else if (this->subgraphs[&rootSrc].currCmdList != nullptr) {
         for (auto &subgraph : this->subgraphs) {
+            if (subgraph.first == &rootSrc) {
+                continue; // finalize root level as last
+            }
             if (subgraph.second.currCmdList) {
+                if (subgraphsWithPostJoinCommands.count(subgraph.first)) {
+                    auto *event = this->createTrailingEvent();
+                    subgraph.second.currCmdList->appendSignalEvent(event->toHandle(), false);
+                }
                 subgraph.second.currCmdList->close();
             }
         }
+        if (this->trailingEvents.size() > 0) {
+            this->subgraphs[&rootSrc].currCmdList->appendWaitOnEvents(static_cast<uint32_t>(this->trailingEvents.size()), this->trailingEvents.data(), nullptr, false, true, true, false, false, false);
+            for (auto &ev : this->trailingEvents) {
+                this->subgraphs[&rootSrc].currCmdList->appendEventReset(ev);
+            }
+        }
+        this->subgraphs[&rootSrc].currCmdList->close(); // finalize root level
     }
 
     auto orderedExecutableCommands = rootDst.getOrderedCommands();
@@ -1099,7 +1178,9 @@ ze_result_t ExecutableGraph::instantiateFrom(Graph &rootSrc, const GraphInstatia
             return err;
         }
     }
-    builder.finalize();
+    builder.finalize(settings);
+    this->trailingEventsPool = builder.releaseTrailingEventsPool();
+    this->trailingEvents = builder.releaseTrailingEvents();
     return ZE_RESULT_SUCCESS;
 }
 
