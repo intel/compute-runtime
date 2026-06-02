@@ -929,6 +929,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
+    mockCsr->taskCount = 5;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -943,16 +944,16 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
 
     // Three more surfaces from preemptionAllocation, SipKernel and clearColorAllocation
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
-    csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
+    size_t dshSurfaceCount = pDevice->getHardwareInfo().capabilityTable.supportsImages ? 1 : 0;
     auto isWalkerPostSyncSkipEnabled = pDevice->getGfxCoreHelper().isWalkerPostSyncSkipEnabled(pDevice->getProductHelper().isResolveDependenciesByPipeControlsSupported());
-    size_t timestampPacketSurfacesCount = (!isWalkerPostSyncSkipEnabled && mockCsr->peekTimestampPacketWriteEnabled() && !mockCsr->heaplessPrologProgrammed) ? 1 : 0;
+    size_t timestampPacketSurfacesCount = (!isWalkerPostSyncSkipEnabled && mockCsr->peekTimestampPacketWriteEnabled()) ? 1 : 0;
     size_t fenceSurfaceCount = mockCsr->globalFenceAllocation ? 1 : 0;
     size_t clearColorSize = mockCsr->clearColorAllocation ? 1 : 0;
-    size_t commandBufferCount = pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0 ? 0 : 1;
+    size_t commandBufferCount = 1;
     size_t rtSurface = pDevice->getRTMemoryBackedBuffer() ? 1u : 0u;
 
-    EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 1u : 0u, mockCsr->flushCalledCount);
-    EXPECT_EQ(4u + csrSurfaceCount + timestampPacketSurfacesCount + fenceSurfaceCount + clearColorSize + commandBufferCount + rtSurface, cmdBuffer->surfaces.size());
+    EXPECT_EQ(0u, mockCsr->flushCalledCount);
+    EXPECT_EQ(3u + csrSurfaceCount + dshSurfaceCount + timestampPacketSurfacesCount + fenceSurfaceCount + clearColorSize + commandBufferCount + rtSurface, cmdBuffer->surfaces.size());
 }
 
 HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtrWithL3FlushRequiredWhenEnqueueKernelIsCalledThenFlushIsCalledForReducedAddressSpacePlatforms) {

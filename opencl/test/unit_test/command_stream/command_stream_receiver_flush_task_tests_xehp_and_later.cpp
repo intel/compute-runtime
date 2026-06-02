@@ -588,7 +588,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(mockCsr->getHeaplessModeEnabled() ? 1u : 0u, mockCsr->flushCalledCount);
+    EXPECT_EQ(0u, mockCsr->flushCalledCount);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 

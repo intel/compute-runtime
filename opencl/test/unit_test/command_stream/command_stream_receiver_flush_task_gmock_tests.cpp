@@ -128,11 +128,11 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2,
     auto batchBufferStart = genCmdCast<MI_BATCH_BUFFER_START *>(bbEndLocation);
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_EQ(lastBatchBufferAddress, batchBufferStart->getBatchBufferStartAddress());
-    EXPECT_EQ(heaplessModeEnabled ? 2u : 1u, mockCsr->flushCalledCount);
+    EXPECT_EQ(1u, mockCsr->flushCalledCount);
     EXPECT_EQ(expectedCallsCount, mockHelper->setPatchInfoDataCalled);
     EXPECT_EQ(static_cast<unsigned int>(removePatchInfoDataCount), mockHelper->removePatchInfoDataCalled);
-    EXPECT_EQ(heaplessModeEnabled ? 3u : 4u, mockHelper->registerCommandChunkCalled);
-    EXPECT_EQ(heaplessModeEnabled ? 2u : 3u, mockHelper->registerBatchBufferStartAddressCalled);
+    EXPECT_EQ(4u, mockHelper->registerCommandChunkCalled);
+    EXPECT_EQ(3u, mockHelper->registerBatchBufferStartAddressCalled);
 }
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoDataIsNotCollected) {

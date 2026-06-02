@@ -101,13 +101,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
     void *epiloguePipeControlLocation = nullptr;
     this->isWalkerWithProfilingEnqueued |= dispatchFlags.isWalkerWithProfilingEnqueued;
 
-    if (!heaplessPrologProgrammed) {
-        bool isHeaplessPrologRequired = EngineHelpers::isCcs(this->osContext->getEngineType());
-        if (isHeaplessPrologRequired) {
-            initializeDeviceWithFirstSubmission(device);
-        }
-        heaplessPrologProgrammed = true;
-    }
     if (this->ucResourceRequiresTagUpdate) {
         this->emitTagUpdateWithoutDCFlush(commandStream);
     }
@@ -126,6 +119,14 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
     auto estimatedSize = getRequiredCmdStreamHeaplessSizeAligned(dispatchFlags, device);
     auto &commandStreamCSR = this->getCS(estimatedSize);
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
+
+    if (!heaplessPrologProgrammed) {
+        bool isHeaplessPrologRequired = EngineHelpers::isCcs(this->osContext->getEngineType()) && (this->osContext->getPrimaryContext() == nullptr);
+        if (isHeaplessPrologRequired) {
+            programHeaplessStateProlog(device, commandStreamCSR);
+        }
+        heaplessPrologProgrammed = true;
+    }
 
     if (isProgramActivePartitionConfigRequired()) {
         programActivePartitionConfig(commandStreamCSR);
@@ -164,6 +165,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamHeaplessSize(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = 0u;
+
+    if (heaplessPrologProgrammed == false && EngineHelpers::isCcs(this->osContext->getEngineType()) && this->osContext->getPrimaryContext() == nullptr) {
+        size += getCmdSizeForHeaplessPrologue(device);
+    }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
     size += getCmdSizeForEpilogue(dispatchFlags);
@@ -211,16 +216,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskHeapless(
 
     this->isWalkerWithProfilingEnqueued |= dispatchFlags.isWalkerWithProfilingEnqueued;
     ImmediateFlushData flushData{};
+    bool isHeaplessPrologRequired = !heaplessPrologProgrammed && EngineHelpers::isCcs(this->osContext->getEngineType()) && (this->osContext->getPrimaryContext() == nullptr);
 
     if (dispatchFlags.dispatchOperation != AppendOperations::cmdList) {
-        if (!heaplessPrologProgrammed) {
-            bool isHeaplessPrologRequired = EngineHelpers::isCcs(this->osContext->getEngineType());
-            if (isHeaplessPrologRequired) {
-                initializeDeviceWithFirstSubmission(device);
-            }
-            heaplessPrologProgrammed = true;
+        if (isHeaplessPrologRequired) {
+            flushData.estimatedSize += getCmdSizeForHeaplessPrologue(device);
         }
-
         flushData.stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
         if (flushData.stateCacheFlushRequired) {
             flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
@@ -246,6 +247,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskHeapless(
     flushData.csrStartOffset = csrCommandStream.getUsed();
 
     if (dispatchFlags.dispatchOperation != AppendOperations::cmdList) {
+        if (isHeaplessPrologRequired) {
+            programHeaplessStateProlog(device, csrCommandStream);
+            heaplessPrologProgrammed = true;
+        }
+
         if (isPerQueuePrologueEnabled()) {
             programEnginePrologue(csrCommandStream);
         }

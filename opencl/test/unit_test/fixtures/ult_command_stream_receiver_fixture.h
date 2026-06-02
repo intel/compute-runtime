@@ -154,6 +154,9 @@ struct UltCommandStreamReceiverTest
         auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
         auto mocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
 
+        if (this->heaplessStateEnabled) {
+            commandStreamReceiver.heaplessPrologProgrammed = true;
+        }
         commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex;
         configureCSRHeapStatesToNonDirty<GfxFamily>();
         commandStreamReceiver.taskLevel = taskLevel;

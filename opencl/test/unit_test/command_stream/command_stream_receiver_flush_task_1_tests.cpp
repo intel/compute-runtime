@@ -1027,7 +1027,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenFlu
     commandStream.getSpace(sizeof(typename FamilyType::MI_NOOP));
 
     flushTask(commandStreamReceiver);
-    EXPECT_EQ(commandStreamReceiver.getHeaplessModeEnabled() + 1, commandStreamReceiver.flushCount);
+    EXPECT_EQ(1, commandStreamReceiver.flushCount);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenChainWithBatchBufferStart) {
