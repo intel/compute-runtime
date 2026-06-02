@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008-2020 The Khronos Group Inc.
+ * Copyright (c) 2008-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,9 @@ typedef cl_uint             cl_khronos_vendor_id;
 typedef cl_properties cl_mem_properties;
 #endif
 typedef cl_uint cl_version;
+#ifdef CL_VERSION_3_1
+typedef cl_bitfield         cl_device_integer_dot_product_capabilities;
+#endif
 
 typedef struct _cl_image_format {
     cl_channel_order        image_channel_order;
@@ -139,11 +142,11 @@ typedef struct _cl_image_desc {
     size_t                  image_slice_pitch;
     cl_uint                 num_mip_levels;
     cl_uint                 num_samples;
-#if defined(CL_VERSION_2_0) && __CL_HAS_ANON_STRUCT__
-    __CL_ANON_STRUCT__ union {
+#if defined(CL_VERSION_2_0) && __CL_HAS_ANON_UNION__
+    __CL_ANON_UNION__ union {
 #endif
       cl_mem                  buffer;
-#if defined(CL_VERSION_2_0) && __CL_HAS_ANON_STRUCT__
+#if defined(CL_VERSION_2_0) && __CL_HAS_ANON_UNION__
       cl_mem                  mem_object;
     };
 #endif
@@ -168,6 +171,19 @@ typedef struct _cl_name_version {
     cl_version              version;
     char                    name[CL_NAME_VERSION_MAX_NAME_SIZE];
 } cl_name_version;
+
+#endif
+
+#ifdef CL_VERSION_3_1
+
+typedef struct _cl_device_integer_dot_product_acceleration_properties {
+    cl_bool signed_accelerated;
+    cl_bool unsigned_accelerated;
+    cl_bool mixed_signedness_accelerated;
+    cl_bool accumulating_saturating_signed_accelerated;
+    cl_bool accumulating_saturating_unsigned_accelerated;
+    cl_bool accumulating_saturating_mixed_signedness_accelerated;
+} cl_device_integer_dot_product_acceleration_properties;
 
 #endif
 
@@ -290,7 +306,10 @@ typedef struct _cl_name_version {
 #define CL_DEVICE_MAX_COMPUTE_UNITS                      0x1002
 #define CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS               0x1003
 #define CL_DEVICE_MAX_WORK_GROUP_SIZE                    0x1004
-#define CL_DEVICE_MAX_WORK_ITEM_SIZES                    0x1005
+#define CL_DEVICE_MAX_WORK_ITEM_SIZES                    0x1005    /* deprecated */
+#ifdef CL_VERSION_3_1
+#define CL_DEVICE_MAX_WORK_GROUP_SIZES                   0x1005
+#endif
 #define CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR            0x1006
 #define CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT           0x1007
 #define CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT             0x1008
@@ -344,7 +363,7 @@ typedef struct _cl_name_version {
 /* 0x1033 reserved for CL_DEVICE_HALF_FP_CONFIG which is already defined in "cl_ext.h" */
 #ifdef CL_VERSION_1_1
 #define CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF            0x1034
-#define CL_DEVICE_HOST_UNIFIED_MEMORY                    0x1035   /* deprecated */
+#define CL_DEVICE_HOST_UNIFIED_MEMORY                    0x1035
 #define CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR               0x1036
 #define CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT              0x1037
 #define CL_DEVICE_NATIVE_VECTOR_WIDTH_INT                0x1038
@@ -404,11 +423,27 @@ typedef struct _cl_name_version {
 #define CL_DEVICE_PREFERRED_WORK_GROUP_SIZE_MULTIPLE     0x1067
 #define CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT 0x1068
 #define CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT          0x1069
-/* 0x106A to 0x106E - Reserved for upcoming KHR extension */
+#endif
+#ifdef CL_VERSION_3_1
+#define CL_DEVICE_UUID                                   0x106A
+#define CL_DRIVER_UUID                                   0x106B
+#define CL_DEVICE_LUID_VALID                             0x106C
+#define CL_DEVICE_LUID                                   0x106D
+#define CL_DEVICE_NODE_MASK                              0x106E
+#endif
+#ifdef CL_VERSION_3_0
 #define CL_DEVICE_OPENCL_C_FEATURES                      0x106F
 #define CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES            0x1070
 #define CL_DEVICE_PIPE_SUPPORT                           0x1071
 #define CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED      0x1072
+#endif
+#ifdef CL_VERSION_3_1
+#define CL_DEVICE_INTEGER_DOT_PRODUCT_CAPABILITIES       0x1073
+#define CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_8BIT 0x1074
+#define CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_4x8BIT_PACKED 0x1075
+#define CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS        0x12B9
+#define CL_DEVICE_SPIRV_EXTENSIONS                       0x12BA
+#define CL_DEVICE_SPIRV_CAPABILITIES                     0x12BB
 #endif
 
 /* cl_device_fp_config - bitfield */
@@ -917,6 +952,18 @@ typedef struct _cl_name_version {
        << (CL_VERSION_MINOR_BITS + CL_VERSION_PATCH_BITS)) |      \
    (((minor) & CL_VERSION_MINOR_MASK) << CL_VERSION_PATCH_BITS) | \
    ((patch) & CL_VERSION_PATCH_MASK))
+
+#ifdef CL_VERSION_3_1
+
+/* Size Constants */
+#define CL_UUID_SIZE 16
+#define CL_LUID_SIZE 8
+
+/* cl_device_integer_dot_product_capabilities - bitfield */
+#define CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED   (1 << 0)
+#define CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT          (1 << 1)
+
+#endif
 
 /********************************************************************************************************/
 
@@ -1809,6 +1856,18 @@ clEnqueueSVMMigrateMem(cl_command_queue         command_queue,
                        cl_uint                  num_events_in_wait_list,
                        const cl_event *         event_wait_list,
                        cl_event *               event) CL_API_SUFFIX__VERSION_2_1;
+
+#endif
+
+#ifdef CL_VERSION_3_1
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clGetKernelSuggestedLocalWorkSize(cl_command_queue command_queue,
+                                  cl_kernel        kernel,
+                                  cl_uint          work_dim,
+                                  const size_t *   global_work_offset,
+                                  const size_t *   global_work_size,
+                                  size_t *         suggested_local_work_size) CL_API_SUFFIX__VERSION_3_1;
 
 #endif
 

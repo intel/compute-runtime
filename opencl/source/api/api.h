@@ -6,8 +6,6 @@
  */
 
 #pragma once
-#include "opencl/extensions/public/cl_next.h"
-
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
 #include "CL/cl_gl.h"

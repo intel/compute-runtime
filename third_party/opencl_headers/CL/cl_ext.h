@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008-2023 The Khronos Group Inc.
+ * Copyright (c) 2008-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ extern "C" {
     "cl_khr_command_buffer"
 
 
-#define CL_KHR_COMMAND_BUFFER_EXTENSION_VERSION CL_MAKE_VERSION(0, 9, 7)
+#define CL_KHR_COMMAND_BUFFER_EXTENSION_VERSION CL_MAKE_VERSION(0, 9, 8)
 
 typedef cl_bitfield         cl_device_command_buffer_capabilities_khr;
 typedef struct _cl_command_buffer_khr* cl_command_buffer_khr;
@@ -74,13 +74,9 @@ typedef struct _cl_mutable_command_khr* cl_mutable_command_khr;
 /* cl_device_command_buffer_capabilities_khr - bitfield */
 #define CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR      (1 << 0)
 #define CL_COMMAND_BUFFER_CAPABILITY_DEVICE_SIDE_ENQUEUE_KHR (1 << 1)
-#define CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR   (1 << 2)
 
 /* cl_command_buffer_properties_khr */
 #define CL_COMMAND_BUFFER_FLAGS_KHR                         0x1293
-
-/* cl_command_buffer_flags_khr - bitfield */
-#define CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR              (1 << 0)
 
 /* Error codes */
 #define CL_INVALID_COMMAND_BUFFER_KHR                       -1138
@@ -98,7 +94,6 @@ typedef struct _cl_mutable_command_khr* cl_mutable_command_khr;
 /* cl_command_buffer_state_khr */
 #define CL_COMMAND_BUFFER_STATE_RECORDING_KHR               0
 #define CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR              1
-#define CL_COMMAND_BUFFER_STATE_PENDING_KHR                 2
 
 /* cl_command_type */
 #define CL_COMMAND_COMMAND_BUFFER_KHR                       0x12A8
@@ -633,7 +628,7 @@ clRemapCommandBufferKHR(
     "cl_khr_command_buffer_mutable_dispatch"
 
 
-#define CL_KHR_COMMAND_BUFFER_MUTABLE_DISPATCH_EXTENSION_VERSION CL_MAKE_VERSION(0, 9, 3)
+#define CL_KHR_COMMAND_BUFFER_MUTABLE_DISPATCH_EXTENSION_VERSION CL_MAKE_VERSION(0, 9, 5)
 
 typedef cl_uint             cl_command_buffer_update_type_khr;
 typedef cl_bitfield         cl_mutable_dispatch_fields_khr;
@@ -664,7 +659,11 @@ typedef struct _cl_mutable_dispatch_config_khr {
 typedef cl_bitfield         cl_mutable_dispatch_asserts_khr;
 
 /* cl_command_buffer_flags_khr - bitfield */
+#define CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR              (1 << 0)
 #define CL_COMMAND_BUFFER_MUTABLE_KHR                       (1 << 1)
+
+/* cl_device_command_buffer_capabilities_khr - bitfield */
+#define CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR   (1 << 2)
 
 /* Error codes */
 #define CL_INVALID_MUTABLE_COMMAND_KHR                      -1141
@@ -745,6 +744,9 @@ clGetMutableCommandInfoKHR(
     size_t* param_value_size_ret) ;
 
 #endif /* !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES) */
+
+/* cl_command_buffer_state_khr */
+#define CL_COMMAND_BUFFER_STATE_FINALIZED_KHR               2
 
 #endif /* defined(CL_ENABLE_BETA_EXTENSIONS) */
 
@@ -881,7 +883,7 @@ clLogMessagesToStderrAPPLE(
     "cl_khr_icd"
 
 
-#define CL_KHR_ICD_EXTENSION_VERSION CL_MAKE_VERSION(2, 0, 0)
+#define CL_KHR_ICD_EXTENSION_VERSION CL_MAKE_VERSION(2, 0, 1)
 
 /* cl_platform_info */
 #define CL_PLATFORM_ICD_SUFFIX_KHR                          0x0920
@@ -941,6 +943,19 @@ clIcdSetPlatformDispatchDataKHR(
     void* dispatch_data) ;
 
 #endif /* !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES) */
+
+/***************************************************************
+* cl_khr_icd_unloadable
+***************************************************************/
+#define cl_khr_icd_unloadable 1
+#define CL_KHR_ICD_UNLOADABLE_EXTENSION_NAME \
+    "cl_khr_icd_unloadable"
+
+
+#define CL_KHR_ICD_UNLOADABLE_EXTENSION_VERSION CL_MAKE_VERSION(1, 0, 0)
+
+/* cl_platform_info */
+#define CL_PLATFORM_UNLOADABLE_KHR                          0x0921
 
 /***************************************************************
 * cl_khr_il_program
@@ -4265,6 +4280,222 @@ typedef cl_bitfield         cl_device_kernel_clock_capabilities_khr;
 #define CL_KHR_SUBGROUP_SHUFFLE_RELATIVE_EXTENSION_VERSION CL_MAKE_VERSION(1, 0, 0)
 
 /***************************************************************
+* cl_khr_unified_svm (beta)
+***************************************************************/
+#if defined(CL_ENABLE_BETA_EXTENSIONS)
+
+#if defined(CL_VERSION_2_0)
+
+#define cl_khr_unified_svm 1
+#define CL_KHR_UNIFIED_SVM_EXTENSION_NAME \
+    "cl_khr_unified_svm"
+
+
+#define CL_KHR_UNIFIED_SVM_EXTENSION_VERSION CL_MAKE_VERSION(0, 9, 0)
+
+/* cl_platform_info */
+#define CL_PLATFORM_SVM_TYPE_CAPABILITIES_KHR               0x0909
+
+/* cl_device_info */
+#define CL_DEVICE_SVM_TYPE_CAPABILITIES_KHR                 0x1077
+
+typedef cl_bitfield         cl_svm_capabilities_khr;
+
+/* cl_svm_capabilities_khr - bitfield */
+#define CL_SVM_CAPABILITY_SINGLE_ADDRESS_SPACE_KHR          (1 << 0)
+#define CL_SVM_CAPABILITY_SYSTEM_ALLOCATED_KHR              (1 << 1)
+#define CL_SVM_CAPABILITY_DEVICE_OWNED_KHR                  (1 << 2)
+#define CL_SVM_CAPABILITY_DEVICE_UNASSOCIATED_KHR           (1 << 3)
+#define CL_SVM_CAPABILITY_CONTEXT_ACCESS_KHR                (1 << 4)
+#define CL_SVM_CAPABILITY_HOST_OWNED_KHR                    (1 << 5)
+#define CL_SVM_CAPABILITY_HOST_READ_KHR                     (1 << 6)
+#define CL_SVM_CAPABILITY_HOST_WRITE_KHR                    (1 << 7)
+#define CL_SVM_CAPABILITY_HOST_MAP_KHR                      (1 << 8)
+#define CL_SVM_CAPABILITY_DEVICE_READ_KHR                   (1 << 9)
+#define CL_SVM_CAPABILITY_DEVICE_WRITE_KHR                  (1 << 10)
+#define CL_SVM_CAPABILITY_DEVICE_ATOMIC_ACCESS_KHR          (1 << 11)
+#define CL_SVM_CAPABILITY_CONCURRENT_ACCESS_KHR             (1 << 12)
+#define CL_SVM_CAPABILITY_CONCURRENT_ATOMIC_ACCESS_KHR      (1 << 13)
+#define CL_SVM_CAPABILITY_INDIRECT_ACCESS_KHR               (1 << 14)
+
+typedef cl_properties       cl_svm_alloc_properties_khr;
+typedef cl_bitfield         cl_svm_alloc_access_flags_khr;
+typedef cl_properties       cl_svm_free_properties_khr;
+typedef cl_bitfield         cl_svm_free_flags_khr;
+typedef cl_uint             cl_svm_pointer_info_khr;
+
+/* cl_svm_alloc_properties_khr */
+#define CL_SVM_ALLOC_ASSOCIATED_DEVICE_HANDLE_KHR           0x2078
+#define CL_SVM_ALLOC_ACCESS_FLAGS_KHR                       0x2079
+#define CL_SVM_ALLOC_ALIGNMENT_KHR                          0x207A
+
+/* cl_svm_alloc_access_flags_khr */
+#define CL_SVM_ALLOC_ACCESS_HOST_NOREAD_KHR                 (1 << 0)
+#define CL_SVM_ALLOC_ACCESS_HOST_NOWRITE_KHR                (1 << 1)
+#define CL_SVM_ALLOC_ACCESS_DEVICE_NOREAD_KHR               (1 << 8)
+#define CL_SVM_ALLOC_ACCESS_DEVICE_NOWRITE_KHR              (1 << 9)
+
+/* cl_svm_pointer_info_khr */
+#define CL_SVM_INFO_TYPE_INDEX_KHR                          0x2088
+#define CL_SVM_INFO_CAPABILITIES_KHR                        0x2089
+#define CL_SVM_INFO_PROPERTIES_KHR                          0x208A
+#define CL_SVM_INFO_ACCESS_FLAGS_KHR                        0x208B
+#define CL_SVM_INFO_BASE_PTR_KHR                            0x419B
+#define CL_SVM_INFO_SIZE_KHR                                0x419C
+#define CL_SVM_INFO_ASSOCIATED_DEVICE_HANDLE_KHR            0x419D
+
+/* cl_kernel_exec_info */
+#define CL_KERNEL_EXEC_INFO_SVM_INDIRECT_ACCESS_KHR         0x11BB
+
+/* SVM type convenience macros */
+#define CL_SVM_TYPE_MACRO_COARSE_GRAIN_BUFFER_KHR \
+    (CL_SVM_CAPABILITY_SINGLE_ADDRESS_SPACE_KHR | \
+    CL_SVM_CAPABILITY_DEVICE_UNASSOCIATED_KHR   | \
+    CL_SVM_CAPABILITY_CONTEXT_ACCESS_KHR        | \
+    CL_SVM_CAPABILITY_HOST_MAP_KHR              | \
+    CL_SVM_CAPABILITY_DEVICE_READ_KHR           | \
+    CL_SVM_CAPABILITY_DEVICE_WRITE_KHR          | \
+    CL_SVM_CAPABILITY_DEVICE_ATOMIC_ACCESS_KHR)
+#define CL_SVM_TYPE_MACRO_FINE_GRAIN_BUFFER_KHR \
+    (CL_SVM_CAPABILITY_SINGLE_ADDRESS_SPACE_KHR | \
+    CL_SVM_CAPABILITY_DEVICE_UNASSOCIATED_KHR   | \
+    CL_SVM_CAPABILITY_CONTEXT_ACCESS_KHR        | \
+    CL_SVM_CAPABILITY_HOST_READ_KHR             | \
+    CL_SVM_CAPABILITY_HOST_WRITE_KHR            | \
+    CL_SVM_CAPABILITY_HOST_MAP_KHR              | \
+    CL_SVM_CAPABILITY_DEVICE_READ_KHR           | \
+    CL_SVM_CAPABILITY_DEVICE_WRITE_KHR          | \
+    CL_SVM_CAPABILITY_DEVICE_ATOMIC_ACCESS_KHR  | \
+    CL_SVM_CAPABILITY_CONCURRENT_ACCESS_KHR)
+#define CL_SVM_TYPE_MACRO_DEVICE_KHR \
+    (CL_SVM_CAPABILITY_SINGLE_ADDRESS_SPACE_KHR | \
+    CL_SVM_CAPABILITY_DEVICE_OWNED_KHR          | \
+    CL_SVM_CAPABILITY_DEVICE_READ_KHR           | \
+    CL_SVM_CAPABILITY_DEVICE_WRITE_KHR          | \
+    CL_SVM_CAPABILITY_DEVICE_ATOMIC_ACCESS_KHR  | \
+    CL_SVM_CAPABILITY_INDIRECT_ACCESS_KHR)
+#define CL_SVM_TYPE_MACRO_HOST_KHR \
+    (CL_SVM_CAPABILITY_SINGLE_ADDRESS_SPACE_KHR | \
+    CL_SVM_CAPABILITY_DEVICE_UNASSOCIATED_KHR   | \
+    CL_SVM_CAPABILITY_CONTEXT_ACCESS_KHR        | \
+    CL_SVM_CAPABILITY_HOST_OWNED_KHR            | \
+    CL_SVM_CAPABILITY_HOST_READ_KHR             | \
+    CL_SVM_CAPABILITY_HOST_WRITE_KHR            | \
+    CL_SVM_CAPABILITY_DEVICE_READ_KHR           | \
+    CL_SVM_CAPABILITY_DEVICE_WRITE_KHR          | \
+    CL_SVM_CAPABILITY_INDIRECT_ACCESS_KHR)
+#define CL_SVM_TYPE_MACRO_SINGLE_DEVICE_SHARED_KHR \
+    (CL_SVM_CAPABILITY_SINGLE_ADDRESS_SPACE_KHR | \
+    CL_SVM_CAPABILITY_HOST_READ_KHR             | \
+    CL_SVM_CAPABILITY_HOST_WRITE_KHR            | \
+    CL_SVM_CAPABILITY_DEVICE_READ_KHR           | \
+    CL_SVM_CAPABILITY_DEVICE_WRITE_KHR          | \
+    CL_SVM_CAPABILITY_INDIRECT_ACCESS_KHR)
+#define CL_SVM_TYPE_MACRO_SYSTEM_KHR \
+    (CL_SVM_CAPABILITY_SINGLE_ADDRESS_SPACE_KHR | \
+    CL_SVM_CAPABILITY_SYSTEM_ALLOCATED_KHR      | \
+    CL_SVM_CAPABILITY_DEVICE_UNASSOCIATED_KHR   | \
+    CL_SVM_CAPABILITY_CONTEXT_ACCESS_KHR        | \
+    CL_SVM_CAPABILITY_HOST_READ_KHR             | \
+    CL_SVM_CAPABILITY_HOST_WRITE_KHR            | \
+    CL_SVM_CAPABILITY_HOST_MAP_KHR              | \
+    CL_SVM_CAPABILITY_DEVICE_READ_KHR           | \
+    CL_SVM_CAPABILITY_DEVICE_WRITE_KHR          | \
+    CL_SVM_CAPABILITY_DEVICE_ATOMIC_ACCESS_KHR  | \
+    CL_SVM_CAPABILITY_CONCURRENT_ACCESS_KHR     | \
+    CL_SVM_CAPABILITY_CONCURRENT_ATOMIC_ACCESS_KHR | \
+    CL_SVM_CAPABILITY_INDIRECT_ACCESS_KHR)
+
+
+typedef void* CL_API_CALL
+clSVMAllocWithPropertiesKHR_t(
+    cl_context context,
+    const cl_svm_alloc_properties_khr* properties,
+    cl_uint svm_type_index,
+    size_t size,
+    cl_int* errcode_ret);
+
+typedef clSVMAllocWithPropertiesKHR_t *
+clSVMAllocWithPropertiesKHR_fn ;
+
+typedef cl_int CL_API_CALL
+clSVMFreeWithPropertiesKHR_t(
+    cl_context context,
+    const cl_svm_free_properties_khr* properties,
+    cl_svm_free_flags_khr flags,
+    void* ptr);
+
+typedef clSVMFreeWithPropertiesKHR_t *
+clSVMFreeWithPropertiesKHR_fn ;
+
+typedef cl_int CL_API_CALL
+clGetSVMPointerInfoKHR_t(
+    cl_context context,
+    cl_device_id device,
+    const void* ptr,
+    cl_svm_pointer_info_khr param_name,
+    size_t param_value_size,
+    void* param_value,
+    size_t* param_value_size_ret);
+
+typedef clGetSVMPointerInfoKHR_t *
+clGetSVMPointerInfoKHR_fn ;
+
+typedef cl_int CL_API_CALL
+clGetSVMSuggestedTypeIndexKHR_t(
+    cl_context context,
+    cl_svm_capabilities_khr required_capabilities,
+    cl_svm_capabilities_khr desired_capabilities,
+    const cl_svm_alloc_properties_khr* properties,
+    size_t size,
+    cl_uint* suggested_svm_type_index);
+
+typedef clGetSVMSuggestedTypeIndexKHR_t *
+clGetSVMSuggestedTypeIndexKHR_fn ;
+
+#if !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES)
+
+extern CL_API_ENTRY void* CL_API_CALL
+clSVMAllocWithPropertiesKHR(
+    cl_context context,
+    const cl_svm_alloc_properties_khr* properties,
+    cl_uint svm_type_index,
+    size_t size,
+    cl_int* errcode_ret) ;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clSVMFreeWithPropertiesKHR(
+    cl_context context,
+    const cl_svm_free_properties_khr* properties,
+    cl_svm_free_flags_khr flags,
+    void* ptr) ;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clGetSVMPointerInfoKHR(
+    cl_context context,
+    cl_device_id device,
+    const void* ptr,
+    cl_svm_pointer_info_khr param_name,
+    size_t param_value_size,
+    void* param_value,
+    size_t* param_value_size_ret) ;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clGetSVMSuggestedTypeIndexKHR(
+    cl_context context,
+    cl_svm_capabilities_khr required_capabilities,
+    cl_svm_capabilities_khr desired_capabilities,
+    const cl_svm_alloc_properties_khr* properties,
+    size_t size,
+    cl_uint* suggested_svm_type_index) ;
+
+#endif /* !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES) */
+
+#endif /* defined(CL_VERSION_2_0) */
+
+#endif /* defined(CL_ENABLE_BETA_EXTENSIONS) */
+
+/***************************************************************
 * cl_khr_work_group_uniform_arithmetic
 ***************************************************************/
 #define cl_khr_work_group_uniform_arithmetic 1
@@ -4389,6 +4620,78 @@ clCancelCommandsIMG(
     size_t num_events_in_list) ;
 
 #endif /* !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES) */
+
+/***************************************************************
+* cl_img_safety_mechanisms
+***************************************************************/
+#define cl_img_safety_mechanisms 1
+#define CL_IMG_SAFETY_MECHANISMS_EXTENSION_NAME \
+    "cl_img_safety_mechanisms"
+
+
+#define CL_IMG_SAFETY_MECHANISMS_EXTENSION_VERSION CL_MAKE_VERSION(1, 0, 0)
+
+/* cl_context_properties */
+#define CL_CONTEXT_SAFETY_PROPERTIES_IMG                    0x40D9
+
+/* Types */
+typedef cl_bitfield         cl_context_safety_properties_img;
+
+/* cl_context_safety_properties_img */
+#define CL_CONTEXT_WORKGROUP_PROTECTION_IMG                 (1 << 0)
+#define CL_CONTEXT_ENHANCED_EVENT_EXECUTION_STATUS_IMG      (1 << 1)
+
+/* cl_device_info */
+#define CL_DEVICE_WORKGROUP_PROTECTION_SVM_CAPABILITIES_IMG 0x40DA
+#define CL_DEVICE_WORKGROUP_PROTECTION_DEVICE_ENQUEUE_CAPABILITIES_IMG 0x40DB
+#define CL_DEVICE_SAFETY_MEM_SIZE_IMG                       0x40DC
+
+/* Error codes */
+#define CL_ECC_RECOVERED_IMG                                0x40DD
+#define CL_PAGE_FAULT_IMG                                   -1127
+#define CL_SAFETY_FAULT_IMG                                 -1128
+#define CL_GENERAL_FAULT_IMG                                -1129
+#define CL_ECC_UNRECOVERED_IMG                              -1130
+
+/***************************************************************
+* cl_img_unified_svm_external_memory_dma_buf (beta)
+***************************************************************/
+#if defined(CL_ENABLE_BETA_EXTENSIONS)
+
+#define cl_img_unified_svm_external_memory_dma_buf 1
+#define CL_IMG_UNIFIED_SVM_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME \
+    "cl_img_unified_svm_external_memory_dma_buf"
+
+
+#define CL_IMG_UNIFIED_SVM_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_VERSION CL_MAKE_VERSION(1, 1, 0)
+
+/* cl_svm_alloc_properties_khr */
+#define CL_SVM_ALLOC_EXTERNAL_MEMORY_DMA_BUF_VIRTUAL_ADDRESS_IMG 0x4220
+#define CL_SVM_ALLOC_EXTERNAL_MEMORY_DMA_BUF_IMG            0x4221
+
+#endif /* defined(CL_ENABLE_BETA_EXTENSIONS) */
+
+/***************************************************************
+* cl_intel_kernel_allocations_info
+***************************************************************/
+#define cl_intel_kernel_allocations_info 1
+#define CL_INTEL_KERNEL_ALLOCATIONS_INFO_EXTENSION_NAME \
+    "cl_intel_kernel_allocations_info"
+
+
+#define CL_INTEL_KERNEL_ALLOCATIONS_INFO_EXTENSION_VERSION CL_MAKE_VERSION(1, 0, 0)
+
+/* type cl_unified_shared_memory_type_intel */
+
+typedef struct _cl_kernel_allocation_info_intel {
+    void* base;
+    size_t size;
+    cl_unified_shared_memory_type_intel type;
+    cl_int arg_index;
+} cl_kernel_allocation_info_intel;
+
+/* cl_kernel_workgroup_info */
+#define CL_KERNEL_ALLOCATIONS_INFO_INTEL                    0x425A
 
 /***************************************************************
 * cl_qcom_perf_hint
