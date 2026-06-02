@@ -2662,17 +2662,20 @@ TEST_F(WddmMemoryManagerSimpleTest, givenResourceTagInStorageInfoWhenAllocateHug
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
     AllocationData allocationData{};
-    allocationData.size = 100 * MemoryConstants::megaByte;
+    allocationData.size = 4 * memoryManager->hugeGfxMemoryChunkSize;
     allocationData.type = AllocationType::buffer;
     strcpy_s(allocationData.storageInfo.resourceTag, sizeof(allocationData.storageInfo.resourceTag), "HUGEBUF");
 
     auto allocation = memoryManager->allocateHugeGraphicsMemory(allocationData, false);
     EXPECT_NE(nullptr, allocation);
 
+    EXPECT_EQ(4u, allocation->getNumGmms());
     EXPECT_STREQ("HUGEBUF", allocation->storageInfo.resourceTag);
 
-    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
-    EXPECT_EQ(0, compareResourceTag(gmmResourceParams, "HUGEBUF"));
+    for (auto gmmId = 0u; gmmId < allocation->getNumGmms(); ++gmmId) {
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getGmm(gmmId)->resourceParamsData.data());
+        EXPECT_EQ(0, compareResourceTag(gmmResourceParams, "HUGEBUF")) << "GMM index " << gmmId;
+    }
 
     memoryManager->freeGraphicsMemory(allocation);
 }
