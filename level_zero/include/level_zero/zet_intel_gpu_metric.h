@@ -322,6 +322,8 @@ typedef struct _zet_metric_entry_exp2_t {
                             ///< If the array of metrics scopes submitted to ::zetMetricTracerDecode()
                             ///< is the same as the one returned by zetMetricScopesGet(), then expect
                             ///< the ID to be equal to the index of the metric scope in the array.
+    uint32_t duration;      ///< [out] Event duration in nanoseconds: 0 for
+                            ///< instant events, UINT32_MAX if the duration is unknown.
 } zet_metric_entry_exp2_t;
 
 #ifndef ZET_INTEL_METRIC_TRACER_DECODE_EXP2_NAME
