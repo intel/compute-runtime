@@ -264,10 +264,13 @@ Int64Params longValues[] = {
     {"%ld", "%lld", INT64_MAX},
     {"%ld", "%lld", INT64_MIN},
     {"%lld", "%lld", INT64_MIN},
+    {"%zd", "%lld", INT64_MIN},
+    {"%td", "%lld", INT64_MIN},
     {"%llx", "%llx", INT64_MAX},
     {"%lx", "%llx", INT64_MAX},
     {"%lx", "%llx", INT64_MIN},
     {"%llx", "%llx", INT64_MIN},
+    {"%tx", "%llx", INT64_MIN},
     {"%d", "%d", INT32_MAX},
     {"%x", "%x", INT32_MAX}};
 
@@ -298,6 +301,7 @@ INSTANTIATE_TEST_SUITE_P(PrintfInt64Test,
 Uint64Params ulongValues[] = {
     {"%llu", "%llu", UINT64_MAX},
     {"%lu", "%llu", UINT64_MAX},
+    {"%zu", "%llu", UINT64_MAX},
     {"%llux", "%llux", UINT64_MAX},
     {"%lux", "%llux", UINT64_MAX}};
 

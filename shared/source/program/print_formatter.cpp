@@ -107,6 +107,11 @@ void PrintFormatter::stripVectorTypeConversion(char *format) {
 
 template <>
 void PrintFormatter::adjustFormatString<int64_t>(std::string &formatString) {
+    auto sizeTOrPtrdiffTModifierPosition = formatString.find_first_of("zt");
+    if (sizeTOrPtrdiffTModifierPosition != std::string::npos) {
+        formatString[sizeTOrPtrdiffTModifierPosition] = 'l';
+    }
+
     auto longPosition = formatString.find('l');
 
     if (longPosition == std::string::npos) {
