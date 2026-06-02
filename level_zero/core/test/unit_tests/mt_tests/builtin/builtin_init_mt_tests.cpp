@@ -36,6 +36,7 @@ TEST_F(BuiltinLibAsyncInitMtTest, givenAsyncInitEnabledWhenBuiltinLibInitialized
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useinitBuiltinsAsyncEnabled = true;
+    MemoryManagement::pendingDetachedThreadCleanup = true;
     MockBuiltInKernelLibImpl lib(device, device->getNEODevice()->getBuiltIns());
     EXPECT_FALSE(lib.initAsyncComplete);
     lib.ensureInitCompletion();
@@ -52,10 +53,6 @@ TEST_F(BuiltinLibAsyncInitMtTest, givenAsyncInitEnabledWhenBuiltinLibInitialized
     }
     uint32_t builtId = static_cast<uint32_t>(BufferBuiltIn::count) + 1;
     EXPECT_THROW(lib.initBuiltinKernel(static_cast<L0::BufferBuiltIn>(builtId), defaultMode), std::exception);
-
-    /* std::async may create a detached thread - completion of the scheduled task can be ensured,
-       but there is no way to ensure that actual OS thread exited and its resources are freed */
-    MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
 }
 
 TEST(DriverHandleBuiltinInitMtTest, givenAsyncInitEnabledWhenDriverHandleCreatedThenBuiltinsInitIsComplete) {
@@ -84,10 +81,6 @@ TEST(DriverHandleBuiltinInitMtTest, givenAsyncInitEnabledWhenDriverHandleCreated
     }
 
     delete driverHandle;
-
-    /* std::async may create a detached thread - completion of the scheduled task can be ensured,
-       but there is no way to ensure that actual OS thread exited and its resources are freed */
-    MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
 }
 
 } // namespace ult

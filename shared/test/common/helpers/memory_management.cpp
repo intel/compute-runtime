@@ -44,6 +44,7 @@ std::atomic<size_t> indexAllocation(0);
 std::atomic<size_t> indexDeallocation(0);
 std::atomic_bool logTraces{false};
 std::atomic_bool fastLeakDetectionEnabled{false};
+std::atomic_bool pendingDetachedThreadCleanup{false};
 
 AllocationEvent eventsAllocated[maxEvents];
 AllocationEvent eventsDeallocated[maxEvents];

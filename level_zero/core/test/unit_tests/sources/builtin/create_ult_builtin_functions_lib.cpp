@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
@@ -17,6 +18,9 @@ namespace L0 {
 
 std::unique_ptr<BuiltInKernelLib> BuiltInKernelLib::create(Device *device,
                                                            NEO::BuiltIns *builtins) {
+    if (BuiltInKernelLibImpl::initBuiltinsAsyncEnabled(device)) {
+        MemoryManagement::pendingDetachedThreadCleanup = true;
+    }
     auto lib = std::make_unique<ult::MockBuiltInKernelLibImpl>(device, builtins);
     lib->svmAllocsManagerAtCreation = device->getDriverHandle()->getSvmAllocsManager();
     return lib;

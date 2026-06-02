@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "memory_leak_listener.h"
 
 #include "shared/test/common/helpers/memory_management.h"
+
+#include <thread>
 
 using ::testing::TestInfo;
 using namespace NEO;
@@ -21,6 +23,14 @@ void MemoryLeakListener::OnTestStart(const TestInfo &testInfo) {
 }
 
 void MemoryLeakListener::OnTestEnd(const TestInfo &testInfo) {
+    if (MemoryManagement::pendingDetachedThreadCleanup.load()) {
+        while (MemoryManagement::fastEventsAllocatedCount.load() !=
+               MemoryManagement::fastEventsDeallocatedCount.load()) {
+            std::this_thread::yield();
+        }
+        MemoryManagement::pendingDetachedThreadCleanup = false;
+    }
+
     MemoryManagement::fastLeakDetectionEnabled = false;
 
     if (testInfo.result()->Passed()) {

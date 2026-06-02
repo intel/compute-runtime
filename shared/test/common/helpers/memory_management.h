@@ -70,6 +70,7 @@ extern size_t breakOnDeallocationEvent;
 extern std::atomic_bool logTraces;
 extern std::atomic_bool detailedAllocationLoggingActive;
 extern std::atomic_bool fastLeakDetectionEnabled;
+extern std::atomic_bool pendingDetachedThreadCleanup;
 extern void (*deleteCallback)(void *);
 
 inline constexpr auto nonfailingAllocation = static_cast<size_t>(-1);
