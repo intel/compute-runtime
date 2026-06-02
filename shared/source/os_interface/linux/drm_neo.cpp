@@ -1572,7 +1572,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, compressed, cacheable);
     patIndex = productHelper.overridePatIndex(isUncachedType, patIndex, allocationType);
 
-    if (isSystemMemory) {
+    if (isSystemMemory && cacheable) {
         patIndex = productHelper.overrideSystemMemoryPatIndex(patIndex);
     }
 
