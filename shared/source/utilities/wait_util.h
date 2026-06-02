@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <functional>
 #include <thread>
+#include <utility>
 
 namespace NEO {
 
@@ -88,7 +89,7 @@ inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedV
 
 template <typename T>
 inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedValue, std::function<bool(T, T)> predicate, int64_t timeElapsedSinceWaitStarted) {
-    return waitFunctionWithPredicate<T>(pollAddress, expectedValue, predicate, timeElapsedSinceWaitStarted, waitpkgCounterValue);
+    return waitFunctionWithPredicate<T>(pollAddress, expectedValue, std::move(predicate), timeElapsedSinceWaitStarted, waitpkgCounterValue);
 }
 
 inline void waitFunctionWithoutPredicate(int64_t timeElapsedSinceWaitStarted) {
