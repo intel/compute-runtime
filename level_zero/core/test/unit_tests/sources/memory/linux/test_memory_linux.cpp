@@ -9,6 +9,7 @@
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_fabric.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -193,6 +194,7 @@ struct MemoryExportImportObtainFdTest : public ::testing::Test {
             mockMemRegions[0] = {{memoryClassSystem, 0}, 1024};
             mockMemRegions[1] = {{memoryClassDevice, 0}, 2048};
             drmMock->memoryInfo.reset(new MemoryInfo{mockMemRegions, *drmMock});
+            drmMock->drmFabric = std::make_unique<NEO::DrmFabricStub>();
 
             executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
         }
@@ -627,6 +629,7 @@ struct MemoryObtainFdTest : public ::testing::Test {
             mockMemRegions[0] = {{memoryClassSystem, 0}, 1024};
             mockMemRegions[1] = {{memoryClassDevice, 0}, 2048};
             drmMock->memoryInfo.reset(new MemoryInfo{mockMemRegions, *drmMock});
+            drmMock->drmFabric = std::make_unique<NEO::DrmFabricStub>();
 
             executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
         }

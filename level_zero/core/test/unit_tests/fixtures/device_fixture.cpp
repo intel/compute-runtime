@@ -153,6 +153,10 @@ void MultiDeviceFixture::setUp() {
     context = Context::fromHandle(hContext);
 }
 
+void MultiDeviceFixture::setupOsSpecificDriverModels() {
+    setupFabricDriverModels(*driverHandle);
+}
+
 void MultiDeviceFixture::tearDown() {
     context->destroy();
 }
@@ -172,6 +176,8 @@ void MultiDeviceFixtureHierarchy::setUp() {
     if (devices.size()) {
         ze_result_t res = driverHandle->initialize(std::move(devices));
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        setupOsSpecificDriverModels();
 
         ze_context_handle_t hContext;
         ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};

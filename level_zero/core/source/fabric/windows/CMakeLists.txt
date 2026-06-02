@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,7 @@ if(WIN32)
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/fabric.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/fabric_discover_vertices.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_iaf.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_iaf.cpp
   )

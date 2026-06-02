@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/os_interface/linux/drm_fabric.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -41,6 +42,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
         auto osInterface = new OSInterface();
         auto drmMock = new DrmMockResources(*rootDeviceEnvironment);
         drmMock->ioctlHelper.reset(new MockIoctlHelperIafTest(*drmMock));
+        drmMock->drmFabric = std::make_unique<NEO::DrmFabricStub>();
         rootDeviceEnvironment->osInterface.reset(osInterface);
         executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
     }
@@ -348,6 +350,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
         auto osInterface = new OSInterface();
         auto drmMock = new DrmMockResources(*rootDeviceEnvironment);
         drmMock->ioctlHelper.reset(new MockIoctlHelperIafTest(*drmMock));
+        drmMock->drmFabric = std::make_unique<NEO::DrmFabricStub>();
         rootDeviceEnvironment->osInterface.reset(osInterface);
         executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
     }

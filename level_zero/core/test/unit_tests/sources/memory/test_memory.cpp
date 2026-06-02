@@ -4474,6 +4474,7 @@ struct MultipleDevicePeerAllocationFailTest : public ::testing::Test {
         }
         driverHandle = std::make_unique<DriverHandleFailGetFdMock>();
         driverHandle->initialize(std::move(devices));
+        setupFabricDriverModels(*driverHandle);
         driverHandle->setMemoryManager(driverHandle->getMemoryManager());
 
         context = std::make_unique<ContextShareableMock>(driverHandle.get());
@@ -4561,6 +4562,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         }
         driverHandle = std::make_unique<DriverHandle>();
         driverHandle->initialize(std::move(devices));
+        setupFabricDriverModels(*driverHandle);
         prevMemoryManager = driverHandle->getMemoryManager();
         currMemoryManager = new MemoryManagerOpenIpcMock(*executionEnvironment);
         driverHandle->setMemoryManager(currMemoryManager);

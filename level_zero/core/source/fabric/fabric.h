@@ -7,9 +7,12 @@
 
 #pragma once
 
+#include "shared/source/os_interface/fabric_vertex_info.h"
+
 #include "level_zero/core/source/fabric/fabric_device_interface.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
+#include <limits>
 #include <map>
 #include <memory>
 #include <vector>
@@ -27,6 +30,8 @@ struct FabricVertex : _ze_fabric_vertex_handle_t {
 
   public:
     static FabricVertex *createFromDevice(Device *device);
+    static FabricVertex *createFromVertexInfo(Device *device, const NEO::FabricVertexInfo &vertexInfo);
+    static void discoverFabricVertices(std::vector<Device *> &devices, std::vector<FabricVertex *> &fabricVertices);
     virtual ~FabricVertex();
     ze_result_t getSubVertices(uint32_t *pCount, ze_fabric_vertex_handle_t *phSubvertices);
     ze_result_t getProperties(ze_fabric_vertex_exp_properties_t *pVertexProperties) const;
@@ -38,6 +43,7 @@ struct FabricVertex : _ze_fabric_vertex_handle_t {
     std::map<FabricDeviceInterface::Type, std::unique_ptr<FabricDeviceInterface>> pFabricDeviceInterfaces;
     std::vector<FabricVertex *> subVertices = {};
     struct Device *device = nullptr;
+    uint16_t fabricId = std::numeric_limits<uint16_t>::max();
 
   private:
     ze_fabric_vertex_exp_properties_t properties = {};

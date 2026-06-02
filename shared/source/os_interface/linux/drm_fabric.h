@@ -7,7 +7,11 @@
 
 #pragma once
 
+#include "shared/source/os_interface/fabric_vertex_info.h"
+
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace NEO {
 
@@ -22,6 +26,8 @@ class DrmFabric {
     virtual int fdToHandle(int32_t dmabufFd, void *reservedHandleData) = 0;
     virtual int handleToFd(const void *reservedHandleData, int32_t &dmabufFd) = 0;
     virtual int handleClose(const void *reservedHandleData) = 0;
+
+    virtual bool queryVertexList(std::vector<FabricVertexInfo> &vertices) { return false; }
 
     static std::unique_ptr<DrmFabric> create(Drm &drm);
 };

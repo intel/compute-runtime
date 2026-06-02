@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,5 +11,6 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_pci_bus_info_linux.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_pci_speed_info_linux.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_drm_device.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_device_fabric_linux.cpp
   )
 endif()

@@ -28,13 +28,9 @@ FabricVertex::~FabricVertex() {
 FabricVertex *FabricVertex::createFromDevice(Device *device) {
 
     auto fabricVertex = new FabricVertex();
-    UNRECOVERABLE_IF(fabricVertex == nullptr);
 
     for (auto &subDevice : device->subDevices) {
         auto subVertex = FabricVertex::createFromDevice(subDevice);
-        if (subVertex == nullptr) {
-            continue;
-        }
 
         subDevice->setFabricVertex(subVertex);
         fabricVertex->subVertices.push_back(subVertex);
@@ -71,6 +67,25 @@ FabricVertex *FabricVertex::createFromDevice(Device *device) {
     for (auto const &fabricDeviceInterface : fabricVertex->pFabricDeviceInterfaces) {
         fabricDeviceInterface.second->enumerate();
     }
+
+    return fabricVertex;
+}
+
+FabricVertex *FabricVertex::createFromVertexInfo(Device *device, const NEO::FabricVertexInfo &vertexInfo) {
+
+    auto fabricVertex = new FabricVertex();
+
+    fabricVertex->properties.stype = ZE_STRUCTURE_TYPE_FABRIC_VERTEX_EXP_PROPERTIES;
+    memcpy_s(fabricVertex->properties.uuid.id, ZE_MAX_UUID_SIZE, vertexInfo.uuid, sizeof(vertexInfo.uuid));
+
+    fabricVertex->properties.type = static_cast<ze_fabric_vertex_exp_type_t>(vertexInfo.type);
+    fabricVertex->properties.remote = false;
+    fabricVertex->device = device;
+    fabricVertex->fabricId = vertexInfo.fabricId;
+    fabricVertex->properties.address.domain = (vertexInfo.pciBdf >> 16) & 0xffff;
+    fabricVertex->properties.address.bus = (vertexInfo.pciBdf >> 8) & 0xff;
+    fabricVertex->properties.address.device = (vertexInfo.pciBdf >> 3) & 0x1f;
+    fabricVertex->properties.address.function = vertexInfo.pciBdf & 0x7;
 
     return fabricVertex;
 }

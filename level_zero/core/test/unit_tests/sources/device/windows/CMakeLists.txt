@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,5 +9,6 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_pci_bus_info_windows.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_pci_speed_info_windows.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_device_fabric_windows.cpp
   )
 endif()

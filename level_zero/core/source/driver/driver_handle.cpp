@@ -892,14 +892,7 @@ std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_dev
 }
 
 void DriverHandle::initializeVertexes() {
-    for (auto &device : this->devices) {
-        auto fabricVertex = FabricVertex::createFromDevice(device);
-        if (fabricVertex == nullptr) {
-            continue;
-        }
-        device->setFabricVertex(fabricVertex);
-        this->fabricVertices.push_back(fabricVertex);
-    }
+    FabricVertex::discoverFabricVertices(this->devices, this->fabricVertices);
 
     FabricEdge::createEdgesFromVertices(this->fabricVertices, this->fabricEdges, this->fabricIndirectEdges);
 }

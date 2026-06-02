@@ -1165,6 +1165,7 @@ HWTEST_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCa
     }
     auto driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
     driverHandle->initialize(std::move(devices));
+    setupFabricDriverModels(*driverHandle);
     auto device0 = driverHandle->devices[0];
     auto device1 = driverHandle->devices[1];
 

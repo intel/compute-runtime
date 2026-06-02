@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/linux/drm_fabric.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -188,6 +189,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
         auto osInterface = new OSInterface();
         auto drmMock = new DrmMockResources(*rootDeviceEnvironment);
         drmMock->ioctlHelper.reset(new MockIoctlHelperIafTest(*drmMock));
+        drmMock->drmFabric = std::make_unique<NEO::DrmFabricStub>();
         rootDeviceEnvironment->osInterface.reset(osInterface);
         executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
     }
@@ -493,6 +495,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenLatencyRequest
         auto mockIoctlHelper = new MockIoctlHelperIafTest(*drmMock);
         mockIoctlHelper->mockFabricLatencyReturn = false;
         drmMock->ioctlHelper.reset(mockIoctlHelper);
+        drmMock->drmFabric = std::make_unique<NEO::DrmFabricStub>();
         rootDeviceEnvironment->osInterface.reset(osInterface);
         executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
     }

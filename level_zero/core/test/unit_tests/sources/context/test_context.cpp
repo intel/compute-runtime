@@ -43,7 +43,7 @@ struct CommandListCoreFamily;
 
 namespace ult {
 
-using MultiDeviceContextTests = Test<MultiDeviceFixture>;
+using MultiDeviceContextTests = Test<MultiDeviceWithFabricFixture>;
 
 TEST_F(MultiDeviceContextTests,
        whenCreatingContextWithZeroNumDevicesThenAllDevicesAreAssociatedWithTheContext) {

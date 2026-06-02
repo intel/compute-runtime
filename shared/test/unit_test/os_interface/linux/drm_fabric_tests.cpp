@@ -46,4 +46,25 @@ TEST(DrmFabricStubTest, givenDrmFabricStubWhenHandleToFdCalledThenReturnsMinusOn
     EXPECT_EQ(0, outFd);
 }
 
+TEST(DrmFabricStubTest, givenDrmFabricStubWhenQueryVertexListCalledThenReturnsFalse) {
+    DrmFabricStub fabricStub;
+    std::vector<FabricVertexInfo> vertices;
+    vertices.push_back({});
+
+    bool result = fabricStub.queryVertexList(vertices);
+
+    EXPECT_FALSE(result);
+}
+
+TEST(DrmFabricBaseTest, givenDrmFabricBaseClassWhenQueryVertexListCalledThenReturnsFalseAndDoesNotModifyVector) {
+    DrmFabricStub fabricStub;
+    std::vector<FabricVertexInfo> vertices;
+    const std::size_t initialSize = 0u;
+
+    bool result = fabricStub.queryVertexList(vertices);
+
+    EXPECT_FALSE(result);
+    EXPECT_EQ(initialSize, vertices.size());
+}
+
 } // namespace NEO

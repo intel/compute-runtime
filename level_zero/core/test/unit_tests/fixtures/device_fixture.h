@@ -134,6 +134,7 @@ struct MultiDeviceFixture {
 
     void setUp();
     void tearDown();
+    void setupOsSpecificDriverModels();
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandle>> driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
@@ -141,6 +142,16 @@ struct MultiDeviceFixture {
     uint32_t numSubDevices = 2u;
     L0::Context *context = nullptr;
     NEO::DeviceHierarchyMode deviceHierarchyMode = NEO::DeviceHierarchyMode::composite;
+};
+
+void setupFabricDriverModels(Mock<L0::DriverHandle> &driverHandle);
+void setupFabricDriverModels(L0::DriverHandle &driverHandle);
+
+struct MultiDeviceWithFabricFixture : public MultiDeviceFixture {
+    void setUp() {
+        MultiDeviceFixture::setUp();
+        setupOsSpecificDriverModels();
+    }
 };
 
 struct MultiDeviceFixtureHierarchy : public MultiDeviceFixture {

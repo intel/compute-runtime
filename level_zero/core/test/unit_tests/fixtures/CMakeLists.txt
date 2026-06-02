@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -28,6 +28,18 @@ set(L0_FIXTURES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_tile_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_tile_fixture.h
 )
+
+if(UNIX)
+  list(APPEND L0_FIXTURES_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/os/linux/device_fixture_linux.cpp
+  )
+endif()
+
+if(WIN32)
+  list(APPEND L0_FIXTURES_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/os/windows/device_fixture_windows.cpp
+  )
+endif()
 
 add_library(${TARGET_NAME} OBJECT ${L0_FIXTURES_SOURCES} ${NEO_CORE_tests_compiler_mocks})
 
