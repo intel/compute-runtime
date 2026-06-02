@@ -349,7 +349,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, sipFifoValidNodeMaxTimeoutMs, -1, "-1: default 1
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideLatePreemptionStart, 0, "-1: default. >=0: override late preemption start mode")
 
 /*POWER AND CPU EFFICIENCY FLAGS*/
-DECLARE_DEBUG_VARIABLE(int32_t, EventHostSynchronizeWaitStrategy, 1, "Power/CPU efficiency mode for zeEventHostSynchronize on WDDM. 0: disabled, 1: enabled, 2: enabled only when AC line is disconnected")
+DECLARE_DEBUG_VARIABLE(int32_t, EventHostSynchronizeWaitStrategy, 0, "Power/CPU efficiency mode for zeEventHostSynchronize on WDDM. 0: disabled, 1: enabled, 2: enabled only when AC line is disconnected")
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeInitialPollMicroseconds, 5000, "Power/CPU efficiency mode for zeEventHostSynchronize: initial active polling duration in microseconds")
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizePollMicroseconds, 750, "Power/CPU efficiency mode for zeEventHostSynchronize: poll phase duration in microseconds after initial active polling")
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeSleepMicroseconds, 50, "Power/CPU efficiency mode for zeEventHostSynchronize: sleep phase duration in microseconds after initial active polling")
