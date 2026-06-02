@@ -237,6 +237,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, CreateContextWithAccessCounters, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersTrigger, -1, "-1: default - disabled, 0: disabled, >= 0: triggering thresholds")
 DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersGranularity, -1, "-1: default - ACG_2MB, >= 0: granularities - 0: ACG_128K, 1: ACG_2M, 2: ACG_16M, 3: ACG_16M")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndex, -1, "-1: default, >=0: PatIndex to override")
+DECLARE_DEBUG_VARIABLE(int64_t, OverridePatIndexForAllocations, 0, "0: default, >0: (bitmask), apply OverridePatIndex only for given Allocation Types")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndexForSystemMemory, -1, "-1: default, >=0: PatIndex to override. Applicable only for System memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndexForDeviceMemory, -1, "-1: default, >=0: PatIndex to override. Applicable only for Device memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndexForUncachedTypes, -1, "-1: default, >=0: PatIndex to override for uncached resource types. Applicable only on Linux.")

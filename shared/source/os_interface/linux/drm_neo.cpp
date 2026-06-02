@@ -1536,8 +1536,14 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         return static_cast<uint64_t>(debugManager.flags.OverridePatIndexForDeviceMemory.get());
     }
 
-    if (debugManager.flags.OverridePatIndex.get() != -1) {
-        return static_cast<uint64_t>(debugManager.flags.OverridePatIndex.get());
+    if (auto overridePatIndex = debugManager.flags.OverridePatIndex.get(); overridePatIndex != -1) {
+        if (debugManager.flags.OverridePatIndexForAllocations.get() != 0) {
+            if ((1llu << (static_cast<int64_t>(allocationType))) & debugManager.flags.OverridePatIndexForAllocations.get()) {
+                return static_cast<uint64_t>(overridePatIndex);
+            }
+        } else {
+            return static_cast<uint64_t>(overridePatIndex);
+        }
     }
 
     auto &productHelper = rootDeviceEnvironment.getProductHelper();

@@ -1286,6 +1286,50 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
     EXPECT_EQ(3u, mock->context.receivedVmUnbindPatIndex.value());
 }
 
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndexForAllocationsMatchingBitmask) {
+    debugManager.flags.UseVmBind.set(1);
+    debugManager.flags.ClosEnabled.set(1);
+    debugManager.flags.OverridePatIndex.set(7);
+    debugManager.flags.OverridePatIndexForAllocations.set(1 << static_cast<int32_t>(AllocationType::buffer));
+
+    mock->bindAvailable = true;
+    mock->vmBindPatIndexProgrammingSupported = true;
+
+    auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(*osContext);
+
+    auto patIndex = mock->getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false);
+    EXPECT_EQ(7u, patIndex);
+
+    MockBufferObject bo(0, mock, patIndex, 0, 0, 1);
+    DrmAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, &bo, nullptr, 0x1234000, 1, MemoryPool::localMemory);
+
+    GraphicsAllocation *allocPtr = &allocation;
+
+    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false, false);
+
+    EXPECT_EQ(7u, mock->context.receivedVmBindPatIndex.value());
+
+    operationHandler->evict(device, allocation);
+
+    EXPECT_EQ(7u, mock->context.receivedVmUnbindPatIndex.value());
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenDoNotOverridePatIndexForAllocationsNotMatchingBitmask) {
+    debugManager.flags.UseVmBind.set(1);
+    debugManager.flags.OverridePatIndex.set(7);
+    // bitmask matches AllocationType::bufferHostMemory, not AllocationType::buffer queried below
+    debugManager.flags.OverridePatIndexForAllocations.set(1 << static_cast<int32_t>(AllocationType::bufferHostMemory));
+
+    mock->bindAvailable = true;
+    mock->vmBindPatIndexProgrammingSupported = false;
+
+    auto patIndex = mock->getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false);
+    EXPECT_NE(7u, patIndex);
+    EXPECT_EQ(CommonConstants::unsupportedPatIndex, patIndex);
+}
+
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCachedInCacheRegionWhenVmBindIsCalledThenSetPatIndexCorrespondingToRequestedRegion) {
     debugManager.flags.UseVmBind.set(1);
     debugManager.flags.ClosEnabled.set(1);
