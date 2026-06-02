@@ -4427,7 +4427,23 @@ HWTEST_F(EventContextGroupTests, givenSecondaryCsrWhenDownloadingAllocationThenU
     event->destroy();
 }
 
-HWTEST_F(EventContextGroupTests, givenPendingSecondaryCsrTaskWhenHostSynchronizeRequiresCacheFlushThenFlushAndWaitForTaskCountAreCalledOnPrimaryCsr) {
+template <typename GfxFamily>
+struct CacheFlushTrackingCsr : public UltCommandStreamReceiver<GfxFamily> {
+    using BaseClass = UltCommandStreamReceiver<GfxFamily>;
+
+    CacheFlushTrackingCsr(NEO::ExecutionEnvironment &executionEnvironment,
+                          uint32_t rootDeviceIndex,
+                          const NEO::DeviceBitfield deviceBitfield)
+        : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+
+    NEO::SubmissionStatus flushTagUpdate() override {
+        this->flushTagUpdateCalled = true;
+        this->latestFlushedTaskCount = this->taskCount.load();
+        return NEO::SubmissionStatus::success;
+    }
+};
+
+HWTEST_F(EventContextGroupTests, givenPendingSelectedSecondaryCsrTaskWhenHostSynchronizeRequiresCacheFlushThenFlushAndWaitAreCalledOnSelectedCsrOnly) {
     if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
         GTEST_SKIP();
     }
@@ -4446,9 +4462,8 @@ HWTEST_F(EventContextGroupTests, givenPendingSecondaryCsrTaskWhenHostSynchronize
     defaultCsr->flushTagUpdateCalled = false;
     defaultCsr->waitForTaskCountCalled = false;
     defaultCsr->waitForTaskCountReturnValue = NEO::WaitStatus::ready;
-    defaultCsr->callFlushTagUpdate = true;
 
-    auto secondaryCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
+    auto secondaryCsr = std::make_unique<CacheFlushTrackingCsr<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
 
     OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
     secondaryCsr->setupContext(osContext);
@@ -4457,26 +4472,28 @@ HWTEST_F(EventContextGroupTests, givenPendingSecondaryCsrTaskWhenHostSynchronize
 
     secondaryCsr->taskCount = 1;
     secondaryCsr->latestFlushedTaskCount = 0;
+    secondaryCsr->flushTagUpdateCalled = false;
+    secondaryCsr->waitForTaskCountCalled = false;
+    secondaryCsr->waitForTaskCountReturnValue = NEO::WaitStatus::ready;
 
-    neoDevice->secondaryCsrs.clear();
-    neoDevice->secondaryCsrs.push_back(std::move(secondaryCsr));
+    auto secondaryCsrPtr = secondaryCsr.get();
 
-    event->isDualCopyOffloadEvent = true;
+    event->setCsrForCacheFlush(secondaryCsrPtr);
+    event->setDualCopyOffload(true);
     *static_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_SIGNALED;
 
     auto result = event->hostSynchronize(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_TRUE(defaultCsr->flushTagUpdateCalled);
-    EXPECT_EQ(1u, defaultCsr->taskCount);
-    EXPECT_EQ(1u, defaultCsr->latestFlushedTaskCount);
+    EXPECT_FALSE(defaultCsr->flushTagUpdateCalled);
+    EXPECT_FALSE(defaultCsr->waitForTaskCountCalled);
 
-    EXPECT_TRUE(defaultCsr->waitForTaskCountCalled);
-
-    neoDevice->secondaryCsrs.clear();
+    EXPECT_TRUE(secondaryCsrPtr->flushTagUpdateCalled);
+    EXPECT_TRUE(secondaryCsrPtr->waitForTaskCountCalled);
+    EXPECT_EQ(1u, secondaryCsrPtr->peekLatestFlushedTaskCount());
 }
 
-HWTEST_F(EventContextGroupTests, givenNoPendingTaskInCsrGroupWhenHostSynchronizeRequiresCacheFlushThenFlushAndWaitForTaskCountAreNotCalledOnPrimaryCsr) {
+HWTEST_F(EventContextGroupTests, givenNoPendingTaskOnSelectedSecondaryCsrWhenHostSynchronizeRequiresCacheFlushThenFlushAndWaitAreNotCalled) {
     if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
         GTEST_SKIP();
     }
@@ -4495,89 +4512,60 @@ HWTEST_F(EventContextGroupTests, givenNoPendingTaskInCsrGroupWhenHostSynchronize
     defaultCsr->flushTagUpdateCalled = false;
     defaultCsr->waitForTaskCountCalled = false;
     defaultCsr->waitForTaskCountReturnValue = NEO::WaitStatus::ready;
-    defaultCsr->callFlushTagUpdate = true;
 
-    auto secondaryCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
+    auto secondaryCsr = std::make_unique<CacheFlushTrackingCsr<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
 
     OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
     secondaryCsr->setupContext(osContext);
     secondaryCsr->initializeResources(false, device->getDevicePreemptionMode());
     secondaryCsr->setPrimaryCsr(defaultCsr);
 
-    secondaryCsr->taskCount = 1;
-    secondaryCsr->latestFlushedTaskCount = 1;
+    secondaryCsr->taskCount = 0;
+    secondaryCsr->latestFlushedTaskCount = 0;
+    secondaryCsr->flushTagUpdateCalled = false;
+    secondaryCsr->waitForTaskCountCalled = false;
+    secondaryCsr->waitForTaskCountReturnValue = NEO::WaitStatus::ready;
 
-    neoDevice->secondaryCsrs.clear();
-    neoDevice->secondaryCsrs.push_back(std::move(secondaryCsr));
+    auto secondaryCsrPtr = secondaryCsr.get();
 
-    event->isDualCopyOffloadEvent = true;
+    event->setCsrForCacheFlush(secondaryCsrPtr);
+    event->setDualCopyOffload(true);
     *static_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_SIGNALED;
 
     auto result = event->hostSynchronize(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_FALSE(defaultCsr->flushTagUpdateCalled);
-    EXPECT_EQ(0u, defaultCsr->taskCount);
-    EXPECT_EQ(0u, defaultCsr->latestFlushedTaskCount);
-
     EXPECT_FALSE(defaultCsr->waitForTaskCountCalled);
 
-    neoDevice->secondaryCsrs.clear();
+    EXPECT_FALSE(secondaryCsrPtr->flushTagUpdateCalled);
+    EXPECT_FALSE(secondaryCsrPtr->waitForTaskCountCalled);
 }
 
-HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenAllocationIsDownloaded) {
-    std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
-
-    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::tbx;
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
-        std::make_unique<NEO::MockMemoryOperations>();
-    ze_result_t result;
-    auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result));
-
-    ASSERT_NE(event, nullptr);
-    ASSERT_NE(nullptr, event->csrs[0]);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csrs[0]);
-
-    size_t eventCompletionOffset = event->getContextStartOffset();
-    if (event->isEventTimestampFlagSet()) {
-        eventCompletionOffset = event->getContextEndOffset();
+HWTEST_F(EventContextGroupTests, givenNullCsrForCacheFlushWhenHostSynchronizeRequiresCacheFlushThenDefaultCsrIsUsed) {
+    if (!event->isDcFlushAllowed) {
+        GTEST_SKIP();
     }
-    TagAddressType *eventAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
-    *eventAddress = Event::STATE_SIGNALED;
 
-    EXPECT_LT(1u, neoDevice->getAllEngines().size());
+    auto defaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_NE(nullptr, defaultCsr);
 
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(neoDevice->getAllEngines()[1].commandStreamReceiver);
-    ultCsr->initializeResources(false, device->getDevicePreemptionMode());
-    EXPECT_NE(event->csrs[0], ultCsr);
+    defaultCsr->taskCount = 1;
+    defaultCsr->latestFlushedTaskCount = 0;
+    defaultCsr->flushTagUpdateCalled = false;
+    defaultCsr->waitForTaskCountCalled = false;
+    defaultCsr->waitForTaskCountReturnValue = NEO::WaitStatus::ready;
+    defaultCsr->callFlushTagUpdate = false;
 
-    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
-    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
-        downloadAllocationTrack[&gfxAllocation]++;
-    };
+    event->setCsrForCacheFlush(nullptr);
+    event->setDualCopyOffload(true);
+    *static_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_SIGNALED;
 
-    auto eventAllocation = event->getAllocation(device);
-    constexpr uint64_t timeout = 0;
-    result = event->hostSynchronize(timeout);
+    auto result = event->hostSynchronize(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    uint32_t downloadedAllocations = downloadAllocationTrack[eventAllocation];
-    EXPECT_EQ(0u, downloadedAllocations);
-    EXPECT_EQ(0u, ultCsr->downloadAllocationsCalledCount);
-
-    *eventAddress = Event::STATE_SIGNALED;
-
-    ultCsr->downloadAllocationsCalledCount = 0;
-
-    eventAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
-
-    result = event->hostSynchronize(timeout);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    downloadedAllocations = downloadAllocationTrack[eventAllocation];
-    EXPECT_EQ(1u, downloadedAllocations);
-
-    event->destroy();
+    EXPECT_TRUE(defaultCsr->flushTagUpdateCalled);
+    EXPECT_FALSE(defaultCsr->waitForTaskCountCalled);
 }
 
 HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeMultipleTimesWithTagAllocatorThenTagAddedToAdditionalTimestampNodeVectorOnce) {

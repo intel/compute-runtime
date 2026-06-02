@@ -805,7 +805,11 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         if (ret == ZE_RESULT_SUCCESS) {
             if (cacheFlushRequiredForHostSync) {
                 if (device->getGfxCoreHelper().areSecondaryContextsSupported()) {
-                    taskCountToWaitForL3Flush = csrForCacheFlush->flushTagUpdateIfRequiredForCsrGroup();
+                    auto *selectedCsrForCacheFlush = this->getCsrForCacheFlush();
+                    if (selectedCsrForCacheFlush != nullptr) {
+                        csrForCacheFlush = selectedCsrForCacheFlush;
+                    }
+                    taskCountToWaitForL3Flush = csrForCacheFlush->flushTagUpdateIfRequired();
                 }
             }
             if (this->getKernelWithPrintfDeviceMutex() != nullptr) {

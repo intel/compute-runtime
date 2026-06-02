@@ -369,8 +369,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         return this->peekLatestFlushedTaskCount();
     }
 
-    TaskCountType flushTagUpdateIfRequiredForCsrGroup();
-
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();
     }

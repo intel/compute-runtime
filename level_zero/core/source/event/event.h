@@ -267,6 +267,12 @@ struct Event : _ze_event_handle_t {
         }
         csrs.push_back(additionalCsr);
     }
+    void setCsrForCacheFlush(NEO::CommandStreamReceiver *csr) {
+        this->csrForCacheFlush = csr;
+    }
+    NEO::CommandStreamReceiver *getCsrForCacheFlush() const {
+        return this->csrForCacheFlush;
+    }
 
     void increaseKernelCount();
     uint32_t getKernelCount() const {
@@ -467,6 +473,7 @@ struct Event : _ze_event_handle_t {
     NEO::TagNodeBase *perfCounterNode = nullptr;
     NEO::MultiGraphicsAllocation *eventPoolAllocation = nullptr;
     StackVec<NEO::CommandStreamReceiver *, 1> csrs;
+    NEO::CommandStreamReceiver *csrForCacheFlush = nullptr;
     StackVec<uint64_t, 3> exportedIpcServerHandles;
     void *hostAddressFromPool = nullptr;
     Device *device = nullptr;

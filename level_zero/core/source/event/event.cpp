@@ -1020,6 +1020,7 @@ void Event::resetPackets(bool resetAllPackets) {
     gpuEndTimestamp = 0;
     this->csrs.clear();
     this->csrs.push_back(this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    this->csrForCacheFlush = nullptr;
 }
 
 void Event::setIsCompleted() {

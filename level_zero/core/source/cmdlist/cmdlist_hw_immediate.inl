@@ -1380,6 +1380,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 
     if (signalEvent) {
         signalEvent->setCsr(queue->getCsr(), isInOrderExecutionEnabled());
+        signalEvent->setCsrForCacheFlush(this->getCsr(false));
+
         if (!this->latestFlushIsDualCopyOffload) {
             this->latestFlushIsHostVisible |= signalEvent->isFlushRequiredForSignal() || (this->isHeaplessModeEnabled() && signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
         }
