@@ -42,6 +42,8 @@
 #include <thread>
 #if !defined(__linux__)
 #include <regex>
+#else
+#include <sys/prctl.h>
 #endif
 
 #include "shared/source/os_interface/performance_counters.h"
@@ -191,6 +193,13 @@ int main(int argc, char **argv) {
         printf("FATAL ERROR: cannot self-exec test: %s!, errno: %d\n", argv[0], errno);
         return -1;
     }
+
+    bool allowAttach = false;
+    if (allowAttach) {
+        std::cout << "Allow attaching to process" << std::endl;
+        prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY);
+    }
+
 #endif
 
     ::testing::InitGoogleTest(&argc, argv);
