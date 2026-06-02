@@ -117,6 +117,7 @@ struct ModuleTranslationUnit {
 
     std::unique_ptr<char[]> irBinary;
     size_t irBinarySize = 0U;
+    IGC::CodeType::CodeType_t irCodeType = IGC::CodeType::invalid;
 
     std::unique_ptr<char[]> unpackedDeviceBinary;
     size_t unpackedDeviceBinarySize = 0U;

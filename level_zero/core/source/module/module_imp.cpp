@@ -304,6 +304,7 @@ ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &input
     }
     this->irBinary = std::move(compilerOuput.intermediateRepresentation.mem);
     this->irBinarySize = compilerOuput.intermediateRepresentation.size;
+    this->irCodeType = compilerOuput.intermediateCodeType;
     this->unpackedDeviceBinary = std::move(compilerOuput.deviceBinary.mem);
     this->unpackedDeviceBinarySize = compilerOuput.deviceBinary.size;
     this->debugData = std::move(compilerOuput.debugData.mem);
@@ -470,6 +471,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
     } else {
         this->irBinary = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.intermediateRepresentation.begin()), singleDeviceBinary.intermediateRepresentation.size());
         this->irBinarySize = singleDeviceBinary.intermediateRepresentation.size();
+        this->irCodeType = singleDeviceBinary.intermediateRepresentationCodeType;
         this->options = singleDeviceBinary.buildOptions.str();
 
         this->specConstantsValues = NEO::getSpecConstantsFromBinary(singleDeviceBinary);
@@ -510,7 +512,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
             updateBuildLog(NEO::CompilerWarnings::recompiledFromIr.str());
         }
 
-        return buildFromSpirV(this->irBinary.get(), static_cast<uint32_t>(this->irBinarySize), this->options.c_str(), internalBuildOptions, nullptr);
+        return buildFromIntermediate(this->irCodeType, this->irBinary.get(), static_cast<uint32_t>(this->irBinarySize), this->options.c_str(), internalBuildOptions, nullptr);
     } else {
         if (processUnpackedBinary() != ZE_RESULT_SUCCESS) {
             driverHandle->clearErrorDescription();
