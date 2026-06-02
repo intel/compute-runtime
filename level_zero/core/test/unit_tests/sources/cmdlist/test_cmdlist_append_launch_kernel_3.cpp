@@ -12,7 +12,9 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/kernel/implicit_args_helper.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/mem_lifetime.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -1240,6 +1242,91 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
 
     auto itorSemaphoreWait = find<MI_SEMAPHORE_WAIT *>(itorBbStart, cmdList.end());
     EXPECT_EQ(cmdList.end(), itorSemaphoreWait);
+}
+
+namespace {
+class MockMetricsLibrary : public NEO::MetricsLibrary {
+  public:
+    bool open() override { return true; }
+    bool contextCreate(const MetricsLibraryApi::ClientType_1_0 &client,
+                       MetricsLibraryApi::ClientOptionsSubDeviceData_1_0 &subDevice,
+                       MetricsLibraryApi::ClientOptionsSubDeviceIndexData_1_0 &subDeviceIndex,
+                       MetricsLibraryApi::ClientOptionsSubDeviceCountData_1_0 &subDeviceCount,
+                       MetricsLibraryApi::ClientData_1_0 &clientData,
+                       MetricsLibraryApi::ContextCreateData_1_0 &createData,
+                       MetricsLibraryApi::ContextHandle_1_0 &handle) override {
+        handle.data = this;
+        return true;
+    }
+    bool contextDelete(const MetricsLibraryApi::ContextHandle_1_0 &handle) override { return true; }
+    bool hwCountersCreate(const MetricsLibraryApi::ContextHandle_1_0 &context, const uint32_t slots,
+                          const MetricsLibraryApi::ConfigurationHandle_1_0 mmio,
+                          MetricsLibraryApi::QueryHandle_1_0 &handle) override {
+        handle.data = this;
+        return true;
+    }
+    bool hwCountersDelete(const MetricsLibraryApi::QueryHandle_1_0 &handle) override { return true; }
+    uint32_t hwCountersGetGpuReportSize() override { return 256u; }
+    bool commandBufferGetSize(const MetricsLibraryApi::CommandBufferData_1_0 &commandBufferData,
+                              MetricsLibraryApi::CommandBufferSize_1_0 &commandBufferSize) override {
+        commandBufferSize.GpuMemorySize = 64u;
+        return true;
+    }
+    bool commandBufferGet(MetricsLibraryApi::CommandBufferData_1_0 &commandBufferData) override { return true; }
+};
+
+class MockPerformanceCounters : public NEO::PerformanceCounters {
+  public:
+    MockPerformanceCounters() {
+        setMetricsLibraryInterface(std::make_unique<MockMetricsLibrary>());
+    }
+    bool enableCountersConfiguration() override { return true; }
+    void releaseCountersConfiguration() override {}
+};
+} // namespace
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenEventWithPerfCounterNodeWhenAppendLaunchKernelThenCommandStreamGrows, IsAtLeastXeCore) {
+    neoDevice->setPerfCounters(std::make_unique<MockPerformanceCounters>());
+
+    createKernel();
+
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_group_count_t groupCount{1, 1, 1};
+
+    std::unique_ptr<L0::CommandList> baselineCmdList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    CmdListKernelLaunchParams baselineParams = {};
+    auto baselineUsedBefore = baselineCmdList->getCmdContainer().getCommandStream()->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, baselineCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, baselineParams));
+    auto baselineConsumed = baselineCmdList->getCmdContainer().getCommandStream()->getUsed() - baselineUsedBefore;
+
+    std::unique_ptr<L0::CommandList> perfCmdList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+
+    const uint32_t gpuReportSize = NEO::HwPerfCounter::getSize(*neoDevice->getPerformanceCounters());
+    auto perfCounterNode = perfCmdList->getCsr(false)->getEventPerfCountAllocator(gpuReportSize)->getTag();
+    event->setPerfCounterNode(perfCounterNode);
+
+    CmdListKernelLaunchParams perfParams = {};
+    auto perfUsedBefore = perfCmdList->getCmdContainer().getCommandStream()->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, perfCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, perfParams));
+    auto perfConsumed = perfCmdList->getCmdContainer().getCommandStream()->getUsed() - perfUsedBefore;
+
+    EXPECT_GT(perfConsumed, baselineConsumed);
+
+    event->setPerfCounterNode(nullptr);
+    perfCounterNode->returnTag();
 }
 
 } // namespace ult

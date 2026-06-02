@@ -12,6 +12,10 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 
 namespace NEO {
+class PerformanceCounters;
+}
+
+namespace NEO {
 namespace LEO {
 
 template <>
@@ -56,6 +60,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     }
 
     bool isProfilingEnabled() { return NEO::LEO::CommandQueue::getCmdQueueProperties<cl_command_queue_properties>(this->queueProperties.data()) & static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE); };
+    bool isPerfCountersEnabled() const { return perfCountersEnabled; };
+    bool setPerfCountersEnabled();
+    PerformanceCounters *getPerfCounters();
     Context *getContext() const { return this->context; };
     ClDevice *getDevice() const { return this->clDevice; };
 
@@ -97,6 +104,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     const bool externalHandle = false;
 
     ze_command_list_handle_t cmdListHandle = nullptr;
+    bool perfCountersEnabled = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandQueue>);

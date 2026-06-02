@@ -7,9 +7,13 @@
 
 #include "level_zero/api/opencl/source/event/event.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/os_interface/performance_counters.h"
+#include "shared/source/utilities/perf_counter.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/api/internal/l0_event.h"
 #include "level_zero/api/opencl/source/helpers/get_info_status_mapper.h"
@@ -58,6 +62,7 @@ Event::Event(cl_command_type commandType, NEO::LEO::CommandQueue *commandQueue) 
     L0::zexCounterBasedEventCreate2(contextHandle, deviceHandle, &eventDesc, &hSignalEvent);
 
     this->eventHandle = hSignalEvent;
+    this->perfCountersEnabled = commandQueue->isPerfCountersEnabled();
 }
 
 Event::Event(NEO::LEO::Context *context) : commandType(CL_COMMAND_USER), oclObj(context) {
@@ -70,6 +75,14 @@ Event::Event(NEO::LEO::Context *context) : commandType(CL_COMMAND_USER), oclObj(
 
 Event::~Event() {
     this->arbEvent.reset(nullptr);
+
+    if (perfCounterNode != nullptr) {
+        UNRECOVERABLE_IF(!std::holds_alternative<CommandQueue *>(oclObj));
+        auto cmdQ = std::get<CommandQueue *>(oclObj);
+        cmdQ->getPerfCounters()->deleteQuery(perfCounterNode->getQueryHandleRef());
+        perfCounterNode->getQueryHandleRef() = {};
+        perfCounterNode->returnTag();
+    }
 
     zeEventDestroy(this->eventHandle);
 
@@ -110,6 +123,20 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
         break;
 
     case CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL:
+        if (!perfCountersEnabled) {
+            return CL_INVALID_VALUE;
+        }
+        {
+            auto cmdQ = getCommandQueue();
+            if (!cmdQ->getPerfCounters()->getApiReport(perfCounterNode,
+                                                       paramValueSize,
+                                                       paramValue,
+                                                       paramValueSizeRet,
+                                                       queryAndUpdateEventStatus() == CL_COMPLETE)) {
+                return CL_PROFILING_INFO_NOT_AVAILABLE;
+            }
+            return CL_SUCCESS;
+        }
     default:
         return CL_INVALID_VALUE;
     }
@@ -230,6 +257,21 @@ std::pair<EventHandleSpan, ze_event_handle_t> Event::setupEvents(cl_uint numEven
     }
 
     return {std::move(waitEvents), signalEvent};
+}
+
+TagNodeBase *Event::getHwPerfCounterNode() {
+    if (!perfCounterNode) {
+        auto cmdQ = getCommandQueue();
+        auto perfCounters = cmdQ->getPerfCounters();
+        if (perfCounters) {
+            const uint32_t gpuReportSize = HwPerfCounter::getSize(*perfCounters);
+            auto csr = cmdQ->getL0Object()->getCsr(false);
+            if (csr) {
+                perfCounterNode = csr->getEventPerfCountAllocator(gpuReportSize)->getTag();
+            }
+        }
+    }
+    return perfCounterNode;
 }
 
 } // namespace LEO

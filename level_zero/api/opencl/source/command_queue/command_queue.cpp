@@ -7,7 +7,11 @@
 
 #include "level_zero/api/opencl/source/command_queue/command_queue.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/performance_counters.h"
 
 #include "level_zero/api/internal/l0_cmdlist.h"
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
@@ -91,10 +95,37 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
 }
 
 CommandQueue::~CommandQueue() {
+    if (perfCountersEnabled) {
+        getPerfCounters()->shutdown();
+    }
     if (!externalHandle) {
         zeCommandListDestroy(this->cmdListHandle);
     }
     context->decRefInternal();
+}
+
+bool CommandQueue::setPerfCountersEnabled() {
+    DEBUG_BREAK_IF(clDevice == nullptr);
+
+    auto perfCounters = getPerfCounters();
+    if (!perfCounters) {
+        return false;
+    }
+
+    auto csr = getL0Object()->getCsr(false);
+    bool isCcsEngine = csr ? NEO::EngineHelpers::isCcs(csr->getOsContext().getEngineType()) : false;
+
+    perfCountersEnabled = perfCounters->enable(isCcsEngine);
+
+    if (!perfCountersEnabled) {
+        perfCounters->shutdown();
+    }
+
+    return perfCountersEnabled;
+}
+
+PerformanceCounters *CommandQueue::getPerfCounters() {
+    return clDevice->getDevice().getPerformanceCounters();
 }
 
 cl_int CommandQueue::getCmdQInfo(cl_device_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) {

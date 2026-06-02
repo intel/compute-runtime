@@ -18,12 +18,14 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/wait_util.h"
 
@@ -601,7 +603,20 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     bool relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
     bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
 
-    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
+    size_t perfCountersCommandsSize = 0;
+    auto *signalEvent = hSignalEvent ? Event::fromHandle(hSignalEvent) : nullptr;
+    if (signalEvent && signalEvent->getPerfCounterNode() != nullptr && !launchParams.makeKernelCommandView) {
+        auto perfCounters = this->device->getNEODevice()->getPerformanceCounters();
+        if (perfCounters) {
+            auto commandBufferType = NEO::EngineHelpers::isCcs(this->getCsr(false)->getOsContext().getEngineType())
+                                         ? MetricsLibraryApi::GpuCommandBufferType::Compute
+                                         : MetricsLibraryApi::GpuCommandBufferType::Render;
+            perfCountersCommandsSize = perfCounters->getGpuCommandsSize(commandBufferType, true) +
+                                       perfCounters->getGpuCommandsSize(commandBufferType, false);
+        }
+    }
+
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize + perfCountersCommandsSize, false);
     launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernelHandle, threadGroupDimensions,
                                                                         hSignalEvent, numWaitEvents, phWaitEvents,

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
@@ -14,6 +15,7 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/device/device.h"
@@ -386,8 +388,38 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     setAdditionalDispatchKernelArgsFromLaunchParams(dispatchKernelArgs, launchParams);
     setAdditionalDispatchKernelArgsFromKernel(dispatchKernelArgs, kernel);
 
+    auto *perfCounterNode = (event != nullptr && !launchParams.makeKernelCommandView)
+                                ? event->getPerfCounterNode()
+                                : nullptr;
+    auto *perfCounters = (perfCounterNode != nullptr)
+                             ? this->device->getNEODevice()->getPerformanceCounters()
+                             : nullptr;
+    const bool dispatchPerfCounters = perfCounters != nullptr && perfCounterNode != nullptr;
+    MetricsLibraryApi::GpuCommandBufferType perfCounterCmdBufferType = MetricsLibraryApi::GpuCommandBufferType::Render;
+    if (dispatchPerfCounters) {
+        auto csr = this->getCsr(false);
+        perfCounterCmdBufferType = NEO::EngineHelpers::isCcs(csr->getOsContext().getEngineType())
+                                       ? MetricsLibraryApi::GpuCommandBufferType::Compute
+                                       : MetricsLibraryApi::GpuCommandBufferType::Render;
+        commandContainer.addToResidencyContainer(perfCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(csr->getRootDeviceIndex()));
+
+        auto beginSize = perfCounters->getGpuCommandsSize(perfCounterCmdBufferType, true);
+        if (beginSize > 0) {
+            auto beginBuffer = commandContainer.getCommandStream()->getSpace(beginSize);
+            perfCounters->getGpuCommands(perfCounterCmdBufferType, *perfCounterNode, true, beginSize, beginBuffer);
+        }
+    }
+
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
     launchParams.outWalker = dispatchKernelArgs.outWalkerPtr;
+
+    if (dispatchPerfCounters) {
+        auto endSize = perfCounters->getGpuCommandsSize(perfCounterCmdBufferType, false);
+        if (endSize > 0) {
+            auto endBuffer = commandContainer.getCommandStream()->getSpace(endSize);
+            perfCounters->getGpuCommands(perfCounterCmdBufferType, *perfCounterNode, false, endSize, endBuffer);
+        }
+    }
 
     addPatchScratchAddressInInlineData(commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, kernelNeedsScratchSpace, kernelNeedsImplicitArgs);
 

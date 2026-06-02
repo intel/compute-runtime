@@ -42,6 +42,9 @@ Context::~Context() {
     if (this->internalCopyCmdList) {
         zeCommandListDestroy(this->internalCopyCmdList);
     }
+    for (auto &userEventPool : this->userEventPools) {
+        zeEventPoolDestroy(userEventPool);
+    }
     if (!externalHandle && this->contextHandle) {
         zeContextDestroy(this->contextHandle);
     }

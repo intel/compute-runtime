@@ -416,6 +416,9 @@ struct Event : _ze_event_handle_t {
 
     ze_result_t getCounterBasedFlags(ze_event_counter_based_flags_t *pFlags) const;
 
+    void setPerfCounterNode(NEO::TagNodeBase *node) { this->perfCounterNode = node; }
+    NEO::TagNodeBase *getPerfCounterNode() const { return this->perfCounterNode; }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
@@ -461,6 +464,7 @@ struct Event : _ze_event_handle_t {
 
     // Metric instance associated with the event.
     MetricCollectorEventNotify *metricNotification = nullptr;
+    NEO::TagNodeBase *perfCounterNode = nullptr;
     NEO::MultiGraphicsAllocation *eventPoolAllocation = nullptr;
     StackVec<NEO::CommandStreamReceiver *, 1> csrs;
     StackVec<uint64_t, 3> exportedIpcServerHandles;

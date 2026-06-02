@@ -17,6 +17,10 @@
 #include <variant>
 
 namespace NEO {
+class TagNodeBase;
+}
+
+namespace NEO {
 namespace LEO {
 
 template <>
@@ -116,6 +120,9 @@ class Event : public BaseObject<_cl_event> {
     ze_event_handle_t getL0Handle() const { return this->eventHandle; };
     L0::Event *getL0Object() const { return L0::Event::fromHandle(this->eventHandle); };
 
+    bool isPerfCountersEnabled() const { return perfCountersEnabled; };
+    TagNodeBase *getHwPerfCounterNode();
+
   protected:
     void setQueueTimeStamp();
     void setSubmitTimeStamp();
@@ -131,6 +138,8 @@ class Event : public BaseObject<_cl_event> {
 
     ze_event_handle_t eventHandle = nullptr;
     std::variant<CommandQueue *, Context *> oclObj{};
+    TagNodeBase *perfCounterNode = nullptr;
+    bool perfCountersEnabled = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Event>);

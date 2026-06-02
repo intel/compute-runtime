@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/api/api.h"
@@ -169,5 +170,40 @@ clCreatePerfCountersCommandQueueINTEL(
     cl_command_queue_properties properties,
     cl_uint configuration,
     cl_int *errcodeRet) {
-    return nullptr;
+    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
+
+    auto [retVal, pContext, pDevice] = NEO::LEO::validateAndCast(std::make_tuple(context, device));
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        err.set(retVal);
+        return nullptr;
+    }
+
+    if (!pDevice->getHardwareInfo().capabilityTable.instrumentationEnabled) {
+        err.set(CL_INVALID_DEVICE);
+        return nullptr;
+    }
+
+    if ((properties & CL_QUEUE_PROFILING_ENABLE) == 0 ||
+        (properties & CL_QUEUE_ON_DEVICE) != 0 ||
+        (properties & CL_QUEUE_ON_DEVICE_DEFAULT) != 0) {
+        err.set(CL_INVALID_QUEUE_PROPERTIES);
+        return nullptr;
+    }
+
+    if (configuration != 0) {
+        err.set(CL_INVALID_OPERATION);
+        return nullptr;
+    }
+
+    cl_command_queue commandQueue = clCreateCommandQueue(context, device, properties, errcodeRet);
+    if (commandQueue != nullptr) {
+        auto pCommandQueue = NEO::LEO::castToObject<NEO::LEO::CommandQueue>(commandQueue);
+
+        if (!pCommandQueue->setPerfCountersEnabled()) {
+            clReleaseCommandQueue(commandQueue);
+            commandQueue = nullptr;
+            err.set(CL_OUT_OF_RESOURCES);
+        }
+    }
+    return commandQueue;
 }

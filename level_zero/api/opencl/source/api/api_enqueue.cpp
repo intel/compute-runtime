@@ -11,7 +11,6 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/ptr_math.h"
 
-#include "level_zero/api/internal/l0_cmdlist.h"
 #include "level_zero/api/opencl/source/api/api.h"
 #include "level_zero/api/opencl/source/command_queue/command_queue.h"
 #include "level_zero/api/opencl/source/context/context.h"
@@ -1021,6 +1020,17 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     for (cl_uint i = 0; i < workDim; ++i) {
         if (static_cast<uint32_t>(globalWorkSize[i]) % lws[i] != 0) [[unlikely]] {
             return CL_INVALID_WORK_GROUP_SIZE;
+        }
+    }
+
+    if (pCommandQueue->isPerfCountersEnabled() && event) {
+        auto pEvent = NEO::LEO::castToObject<NEO::LEO::Event>(*event);
+        auto perfCounterNode = pEvent->getHwPerfCounterNode();
+        auto perfCounters = pCommandQueue->getPerfCounters();
+
+        if (perfCounterNode && perfCounters) {
+            auto l0Event = L0::Event::fromHandle(hSignalEvent);
+            l0Event->setPerfCounterNode(perfCounterNode);
         }
     }
 
