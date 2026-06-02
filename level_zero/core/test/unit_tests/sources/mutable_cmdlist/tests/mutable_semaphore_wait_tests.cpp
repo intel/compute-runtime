@@ -38,7 +38,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
                                                              false, true, false, false, false, useSemaphore64bCmd);
 
     // prepare noop buffer for comparison
-    uint8_t noopSpace[sizeof(MI_SEMAPHORE_WAIT)];
+    alignas(uint32_t) uint8_t noopSpace[sizeof(MI_SEMAPHORE_WAIT)];
     memset(noopSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
 
     // initialize command and mutable object

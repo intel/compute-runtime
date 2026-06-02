@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     size_t offset = 0x10;
 
     // prepare noop buffer for comparison
-    uint8_t noopSpace[sizeof(MI_STORE_DATA_IMM)];
+    alignas(uint32_t) uint8_t noopSpace[sizeof(MI_STORE_DATA_IMM)];
     memset(noopSpace, 0, sizeof(MI_STORE_DATA_IMM));
 
     // initialize command and mutable object

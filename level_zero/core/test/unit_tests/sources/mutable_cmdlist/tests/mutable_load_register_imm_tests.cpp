@@ -25,7 +25,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     uint32_t registerAddress = 0x2600;
     uint32_t value = 0x8;
 
-    uint8_t noopSpace[sizeof(MI_LOAD_REGISTER_IMM)];
+    alignas(uint32_t) uint8_t noopSpace[sizeof(MI_LOAD_REGISTER_IMM)];
 
     // prepare noop buffer for comparison
     memset(noopSpace, 0, sizeof(MI_LOAD_REGISTER_IMM));

@@ -649,7 +649,7 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
 
 ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     Event *newEvent = const_cast<Event *>(reinterpret_cast<const Event *>(argVal));
-    if (newEvent == this->desc.eventValue.event) {
+    if (newEvent == this->desc.eventValue.event && !this->desc.eventValue.counterBasedEvent) {
         return ZE_RESULT_SUCCESS;
     }
     auto device = cmdList->getBase()->getDevice();

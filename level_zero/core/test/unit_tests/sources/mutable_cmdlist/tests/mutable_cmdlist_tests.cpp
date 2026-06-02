@@ -1674,7 +1674,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenKernelWithWaitRegularEventWhenNoopAndMutateIntoEventThenDataIsUpdatedAndCommandNoopedAndRestored) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    uint8_t semWaitNoop[sizeof(MI_SEMAPHORE_WAIT)] = {0};
+    alignas(uint32_t) uint8_t semWaitNoop[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
     auto event = createTestEvent(false, false, false, false);
     auto eventHandle = event->toHandle();
@@ -1753,7 +1753,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenKernelWithTwoWaitRegularEventWhenNoopFirstAndMutateSecondThenDataIsUpdatedAndCommandsAreNoopedAndUpdated) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    uint8_t semWaitNoop[sizeof(MI_SEMAPHORE_WAIT)] = {0};
+    alignas(uint32_t) uint8_t semWaitNoop[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
     auto event = createTestEvent(false, false, true, false);
     auto eventHandle = event->toHandle();
@@ -2515,8 +2515,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     bool qwordInUse = mutableCommandList->isQwordInOrderCounter();
 
-    uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
-    uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
+    alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
+    alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
     auto signalEvent = createTestEvent(false, false, false, false);
     auto signalEventHandle = signalEvent->toHandle();
@@ -2602,8 +2602,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     bool qwordInUse = mutableCommandList->isQwordInOrderCounter();
 
-    uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
-    uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
+    alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
+    alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
     auto event = createTestEvent(true, false, false, false);
     auto eventHandle = event->toHandle();
@@ -2676,8 +2676,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     bool qwordInUse = mutableCommandList->isQwordInOrderCounter();
 
-    uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
-    uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
+    alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
+    alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
     auto event = createTestEvent(true, false, false, false);
     auto eventHandle = event->toHandle();
@@ -2824,8 +2824,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     bool qwordInUse = mutableCommandList->isQwordInOrderCounter();
 
-    uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
-    uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
+    alignas(uint32_t) uint8_t lriNoopSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {0};
+    alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
     auto event = createTestEvent(true, false, false, false);
     auto eventHandle = event->toHandle();
@@ -2928,10 +2928,67 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListInOrderTest,
+            givenKernelWithWaitCbEventBelongingToDifferentCmdListWhenAssigningCbEventToThirdCmdListAndMutateWaitEventThenPerformMutationCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto event = createTestEvent(true, false, false, false);
+    auto eventHandle = event->toHandle();
+
+    auto externalCmdList = createMutableCmdList();
+    auto thirdCmdList = createMutableCmdList();
+    // attach event 1 to the external command list
+    auto result = externalCmdList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = externalCmdList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // mutation point
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // use event as wait event
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+
+    auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+    auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+    auto waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+
+    // use cb event from third command list as wait event - will be attached to other in order exec info
+    result = thirdCmdList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = thirdCmdList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // mutate same event handle - should update the wait event to point to the new in order exec info
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+
+    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
             givenKernelWithWaitRegularEventWhenWhenNoopedAndMutatedIntoDifferentEventThenDataIsUpdatedAndCommandNoopedAndRestoredIntoDifferentCompletion) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
+    alignas(uint32_t) uint8_t semWaitNoopSpace[sizeof(MI_SEMAPHORE_WAIT)] = {0};
 
     auto event = createTestEvent(false, false, false, false);
     auto eventHandle = event->toHandle();

@@ -1157,7 +1157,12 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
     if (this->empty()) {
         return executionTarget->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, false);
     } else {
-        UNRECOVERABLE_IF(this->orderedCommands->empty())
+        UNRECOVERABLE_IF(this->orderedCommands->empty());
+
+        if (this->externalCbEventStorage.externalCbEventsPresent()) {
+            this->externalCbEventStorage.attachExternalCbEventsToExecutableGraph();
+        }
+
         auto segmentIt = this->getOrderedCommands()->begin();
         if (this->orderedCommands->size() == 1) {
             segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, hSignalEvent, numWaitEvents, phWaitEvents);
@@ -1185,10 +1190,6 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
 ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     if (nullptr != this->executionTarget) {
         executionTarget = this->executionTarget;
-    }
-
-    if (this->externalCbEventStorage.externalCbEventsPresent()) {
-        this->externalCbEventStorage.attachExternalCbEventsToExecutableGraph();
     }
 
     auto segmentIt = this->myOrderedSegments.find(segmentStart);

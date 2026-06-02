@@ -538,7 +538,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandWaitEventsExp(uint64_t co
         UNRECOVERABLE_IF(mutableWaitEventDesc.waitEventIndex != eventNum);
         auto waitEventHandle = toInternalType(phWaitEvents[eventNum]);
         auto inputEvent = Event::fromHandle(waitEventHandle);
-        if (mutableWaitEventDesc.event == inputEvent) {
+        if (mutableWaitEventDesc.event == inputEvent && !mutableWaitEventDesc.eventVariable->getDesc().eventValue.counterBasedEvent) {
             continue;
         }
 
