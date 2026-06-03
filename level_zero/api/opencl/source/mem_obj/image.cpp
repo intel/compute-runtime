@@ -19,10 +19,10 @@ namespace LEO {
 
 Image::~Image() {
     if (!externalHandle && this->imageHandle) {
-        zeImageDestroy(this->imageHandle);
+        UNRECOVERABLE_IF(zeImageDestroy(this->imageHandle) != ZE_RESULT_SUCCESS);
     }
     if (this->baseImageHandle) {
-        zeImageDestroy(this->baseImageHandle);
+        UNRECOVERABLE_IF(zeImageDestroy(this->baseImageHandle) != ZE_RESULT_SUCCESS);
     }
 }
 

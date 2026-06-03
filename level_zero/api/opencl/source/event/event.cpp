@@ -17,6 +17,7 @@
 
 #include "level_zero/api/internal/l0_event.h"
 #include "level_zero/api/opencl/source/helpers/get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/driver_experimental/zex_event.h"
 
@@ -110,7 +111,10 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
     uint64_t timestamp = 0;
 
     ze_kernel_timestamp_result_t ts{};
-    zeEventQueryKernelTimestamp(eventHandle, &ts);
+    auto queryResult = zeEventQueryKernelTimestamp(eventHandle, &ts);
+    if (queryResult != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(queryResult);
+    }
 
     auto device = getL0Object()->getDevice();
     auto resolution = device->getNEODevice()->getOSTime()->getDynamicDeviceTimerResolution();

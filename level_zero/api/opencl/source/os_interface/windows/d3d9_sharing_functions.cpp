@@ -105,12 +105,12 @@ void D3DSharingFunctions<D3DTypesHelper::D3D9>::release(IUnknown *resource) {
 
 template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D9>::lockRect(D3DTexture2d *d3dresource, D3DLOCKED_RECT *lockedRect, uint32_t flags) {
-    d3dresource->LockRect(lockedRect, nullptr, flags);
+    UNRECOVERABLE_IF(d3dresource->LockRect(lockedRect, nullptr, flags) != S_OK);
 }
 
 template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D9>::unlockRect(D3DTexture2d *d3dresource) {
-    d3dresource->UnlockRect();
+    UNRECOVERABLE_IF(d3dresource->UnlockRect() != S_OK);
 }
 
 template <>
