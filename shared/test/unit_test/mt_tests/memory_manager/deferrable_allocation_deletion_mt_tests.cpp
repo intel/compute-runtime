@@ -109,16 +109,14 @@ HWTEST_F(DeferrableAllocationDeletionMtTest, givenDeferrableAllocationDeletionWh
     while (!applyCalled) {
         std::this_thread::yield();
     }
+    asyncDeleter->allowExit = true;
     *hwTag = 2u;
     *nonDefaultCommandStreamReceiver.getTagAddress() = 2u;
     EXPECT_FALSE(nonDefaultCommandStreamReceiver.flushBatchedSubmissionsCalled);
     EXPECT_EQ(used, nonDefaultCommandStreamReceiver.getCS(0u).getUsed());
     EXPECT_FALSE(static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver)->flushBatchedSubmissionsCalled);
     EXPECT_EQ(usedDefault, device->getDefaultEngine().commandStreamReceiver->getCS(0u).getUsed());
-    asyncDeleter->allowExit = true;
-    *hwTag = 2u;
-    *nonDefaultCommandStreamReceiver.getTagAddress() = 2u;
-    while (memoryManager->freeGraphicsMemoryCalled == 0u) { // wait for deletion to complete before applyCalled goes out of scope
+    while (!asyncDeleter->shouldStopReached) {
         std::this_thread::yield();
     }
 }
