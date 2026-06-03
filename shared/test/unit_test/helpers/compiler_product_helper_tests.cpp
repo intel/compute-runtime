@@ -139,25 +139,6 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpcThenMatrixMultiplyAccumulat
     EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateTF32Supported(hwInfo));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultiplyAccumulateIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto releaseHelper = pDevice->getReleaseHelper();
-
-    if (releaseHelper) {
-
-        EXPECT_EQ(releaseHelper->isSplitMatrixMultiplyAccumulateSupported(), compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper));
-    } else {
-        EXPECT_FALSE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper));
-    }
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultiplyAccumulateIsNotSupported, IsXeHpcCore) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto releaseHelper = pDevice->getReleaseHelper();
-
-    EXPECT_FALSE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper));
-}
-
 HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenBindlessAddressingIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto releaseHelper = pDevice->getReleaseHelper();

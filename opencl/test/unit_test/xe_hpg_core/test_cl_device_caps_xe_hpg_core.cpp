@@ -28,7 +28,6 @@ XE_HPG_CORETEST_F(XeHpgCoreClDeviceCaps, givenXeHpgCoreWhenCheckExtensionsThenDe
 }
 
 XE_HPG_CORETEST_F(XeHpgCoreClDeviceCaps, giveDeviceExtensionsWhenDeviceCapsInitializedThenAddProperExtensions) {
-    const auto &compilerProductHelper = getHelper<CompilerProductHelper>();
     const auto &caps = pClDevice->getDeviceInfo();
     auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
 
@@ -37,7 +36,7 @@ XE_HPG_CORETEST_F(XeHpgCoreClDeviceCaps, giveDeviceExtensionsWhenDeviceCapsIniti
 
     bool expectMatrixMultiplyAccumulateExtensions = releaseHelper->isMatrixMultiplyAccumulateSupported();
     EXPECT_EQ(expectMatrixMultiplyAccumulateExtensions, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
-    bool expectSpliyMatrixMultiplyAccumulateExtensions = compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper);
+    bool expectSpliyMatrixMultiplyAccumulateExtensions = releaseHelper->isSplitMatrixMultiplyAccumulateSupported();
     EXPECT_EQ(expectSpliyMatrixMultiplyAccumulateExtensions, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
 
     bool expectBFloat16ConversionsExtension = releaseHelper->isBFloat16ConversionSupported();
