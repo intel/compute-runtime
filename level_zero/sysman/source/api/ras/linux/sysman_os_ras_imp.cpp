@@ -169,7 +169,7 @@ ze_result_t LinuxRasImp::osRasGetSupportedCategoriesExp(uint32_t *pCount, zes_ra
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxRasImp::osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t LinuxRasImp::osRasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) {
     bool anySourceSucceeded = false;
     for (auto &rasSource : rasSources) {
         ze_result_t result = rasSource->osRasGetConfigExp(count, pConfig);
@@ -182,7 +182,7 @@ ze_result_t LinuxRasImp::osRasGetConfigExp(const uint32_t count, zes_intel_ras_c
     return anySourceSucceeded ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) {
     bool anySourceSucceeded = false;
     for (auto &rasSource : rasSources) {
         ze_result_t result = rasSource->osRasSetConfigExp(count, pConfig);
@@ -195,14 +195,14 @@ ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_intel
     return anySourceSucceeded ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t LinuxRasImp::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+ze_result_t LinuxRasImp::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) {
     // Initialize all output error counters to zero
     for (uint32_t i = 0; i < categoryCount; i++) {
         pStates[i].errorCounter = 0;
     }
 
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    std::vector<zes_intel_ras_state_exp2_t> sourceStates(categoryCount);
+    std::vector<zes_ras_state_exp2_t> sourceStates(categoryCount);
     for (auto &rasSource : rasSources) {
         for (uint32_t i = 0; i < categoryCount; i++) {
             sourceStates[i].errorCounter = 0;

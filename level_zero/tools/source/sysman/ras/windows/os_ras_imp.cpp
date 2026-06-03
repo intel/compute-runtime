@@ -17,9 +17,9 @@ class WddmRasImp : public OsRas {
     ze_result_t osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState) override;
     ze_result_t osRasClearStateExp(zes_ras_error_category_exp_t category) override;
     ze_result_t osRasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) override;
-    ze_result_t osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) override;
-    ze_result_t osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) override;
-    ze_result_t osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) override;
+    ze_result_t osRasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) override;
+    ze_result_t osRasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) override;
+    ze_result_t osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) override;
 };
 
 void OsRas::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle) {}
@@ -52,15 +52,15 @@ ze_result_t WddmRasImp::osRasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmRasImp::osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t WddmRasImp::osRasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmRasImp::osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t WddmRasImp::osRasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmRasImp::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+ze_result_t WddmRasImp::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

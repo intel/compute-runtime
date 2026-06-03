@@ -60,7 +60,7 @@ ze_result_t GscRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t GscRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+ze_result_t GscRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) {
     bool memoryErrorRequested = false;
     for (uint32_t i = 0; i < count; i++) {
         pStates[i].errorCounter = 0;

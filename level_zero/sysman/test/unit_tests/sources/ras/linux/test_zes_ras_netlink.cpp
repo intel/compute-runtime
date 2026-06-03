@@ -272,9 +272,9 @@ TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenCallingGetSuppor
     EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS) != categories.end());
     EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) != categories.end());
     EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS) != categories.end());
-    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS)) != categories.end());
-    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS)) != categories.end());
-    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS)) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS) != categories.end());
 }
 
 TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenCallingGetSupportedErrorCategoriesExpForUncorrectableErrorsThenAllSixCategoriesAreReturned) {
@@ -286,9 +286,9 @@ TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenCallingGetSuppor
     EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS) != categories.end());
     EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) != categories.end());
     EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS) != categories.end());
-    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS)) != categories.end());
-    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS)) != categories.end());
-    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS)) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS) != categories.end());
 }
 
 TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenErrorListContainsSubsetOfCategoriesThenOnlyMatchingCategoriesAreReturned) {
@@ -299,7 +299,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenErrorListContain
     auto categories = rasNetlinkUtil->getSupportedErrorCategoriesExp();
     EXPECT_EQ(2u, categories.size());
     EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS) != categories.end());
-    EXPECT_TRUE(std::find(categories.begin(), categories.end(), static_cast<zes_ras_error_category_exp_t>(ZES_INTEL_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS)) != categories.end());
+    EXPECT_TRUE(std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS) != categories.end());
 }
 
 TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndGetErrorListFailsWhenCallingRasGetStateExp2ThenErrorIsReturned) {
@@ -307,7 +307,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndGetErrorListFails
     pDrmNlApi->getErrorsListReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
     pRasNetlinkUtil->drmNl = std::move(pDrmNlApi);
     std::vector<zes_ras_error_category_exp_t> categories = {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS};
-    std::vector<zes_intel_ras_state_exp2_t> states(categories.size());
+    std::vector<zes_ras_state_exp2_t> states(categories.size());
     auto result = pRasNetlinkUtil->rasGetStateExp2(static_cast<uint32_t>(categories.size()), categories.data(), states.data());
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
 }
@@ -317,7 +317,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceWhenCallingRasGetSta
         ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS,
         ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS,
     };
-    std::vector<zes_intel_ras_state_exp2_t> states(categories.size());
+    std::vector<zes_ras_state_exp2_t> states(categories.size());
     auto result = pRasNetlinkUtil->rasGetStateExp2(static_cast<uint32_t>(categories.size()), categories.data(), states.data());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(states[0].errorCounter, 10u);
@@ -326,7 +326,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceWhenCallingRasGetSta
 
 TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceWhenCallingRasGetStateExp2WithCategoryNotInMapThenZeroCounterIsReturned) {
     std::vector<zes_ras_error_category_exp_t> categories = {ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS};
-    std::vector<zes_intel_ras_state_exp2_t> states(categories.size());
+    std::vector<zes_ras_state_exp2_t> states(categories.size());
     auto result = pRasNetlinkUtil->rasGetStateExp2(static_cast<uint32_t>(categories.size()), categories.data(), states.data());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(states[0].errorCounter, 0u);
@@ -392,7 +392,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndErrorListNotFound
     auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
     rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
 
-    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 100};
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 100};
     auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
@@ -407,7 +407,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndValidConfigWhenCa
     auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
     rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
 
-    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 500};
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 500};
     auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
@@ -421,7 +421,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndUnknownCategoryWh
     auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
     rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
 
-    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS, .threshold = 500};
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS, .threshold = 500};
     auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
@@ -435,7 +435,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndCounterNotFoundWh
     auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
     rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
 
-    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 500};
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 500};
     auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
@@ -450,7 +450,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndSetThresholdFails
     auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
     rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
 
-    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 500};
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 500};
     auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
 
@@ -464,7 +464,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndErrorListNotFound
     auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
     rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
 
-    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
     auto result = rasNetlinkUtil->rasGetConfigExp(1, &config);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
@@ -479,7 +479,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndValidConfigWhenCa
     auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
     rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
 
-    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
     auto result = rasNetlinkUtil->rasGetConfigExp(1, &config);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(config.threshold, 200u);
@@ -494,7 +494,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndUnknownCategoryWh
     auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
     rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
 
-    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS, .threshold = 0};
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS, .threshold = 0};
     auto result = rasNetlinkUtil->rasGetConfigExp(1, &config);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
@@ -508,7 +508,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndCounterNotFoundWh
     auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
     rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
 
-    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
     auto result = rasNetlinkUtil->rasGetConfigExp(1, &config);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
@@ -523,7 +523,7 @@ TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceAndGetThresholdFails
     auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
     rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
 
-    zes_intel_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0};
     auto result = rasNetlinkUtil->rasGetConfigExp(1, &config);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
 

@@ -34,30 +34,33 @@ ze_result_t ZE_APICALL zesIntelRasGetSupportedCategoriesExp(zes_ras_handle_t hRa
 }
 
 ze_result_t ZE_APICALL zesIntelRasGetConfigExp(zes_ras_handle_t hRas, const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+    auto *pConfigTmp = reinterpret_cast<zes_ras_config_exp_t *>(pConfig);
     if (L0::sysmanInitFromCore) {
-        return L0::Ras::fromHandle(hRas)->rasGetConfigExp(count, pConfig);
+        return L0::Ras::fromHandle(hRas)->rasGetConfigExp(count, pConfigTmp);
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::Ras::fromHandle(hRas)->rasGetConfigExp(count, pConfig);
+        return L0::Sysman::Ras::fromHandle(hRas)->rasGetConfigExp(count, pConfigTmp);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
 ze_result_t ZE_APICALL zesIntelRasSetConfigExp(zes_ras_handle_t hRas, const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+    const auto *pConfigTmp = reinterpret_cast<const zes_ras_config_exp_t *>(pConfig);
     if (L0::sysmanInitFromCore) {
-        return L0::Ras::fromHandle(hRas)->rasSetConfigExp(count, pConfig);
+        return L0::Ras::fromHandle(hRas)->rasSetConfigExp(count, pConfigTmp);
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::Ras::fromHandle(hRas)->rasSetConfigExp(count, pConfig);
+        return L0::Sysman::Ras::fromHandle(hRas)->rasSetConfigExp(count, pConfigTmp);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 }
 
 ze_result_t ZE_APICALL zesIntelRasGetStateExp2(zes_ras_handle_t hRas, const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+    auto *pStatesTmp = reinterpret_cast<zes_ras_state_exp2_t *>(pStates);
     if (L0::sysmanInitFromCore) {
-        return L0::Ras::fromHandle(hRas)->rasGetStateExp2(categoryCount, pCategories, pStates);
+        return L0::Ras::fromHandle(hRas)->rasGetStateExp2(categoryCount, pCategories, pStatesTmp);
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::Ras::fromHandle(hRas)->rasGetStateExp2(categoryCount, pCategories, pStates);
+        return L0::Sysman::Ras::fromHandle(hRas)->rasGetStateExp2(categoryCount, pCategories, pStatesTmp);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }

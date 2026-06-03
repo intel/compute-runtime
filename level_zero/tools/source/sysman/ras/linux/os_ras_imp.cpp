@@ -157,7 +157,7 @@ ze_result_t LinuxRasImp::osRasGetSupportedCategoriesExp(uint32_t *pCount, zes_ra
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxRasImp::osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t LinuxRasImp::osRasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) {
 
     for (uint32_t i = 0; i < count; i++) {
         auto it = std::find_if(categoryExpThresholds.begin(), categoryExpThresholds.end(),
@@ -173,7 +173,7 @@ ze_result_t LinuxRasImp::osRasGetConfigExp(const uint32_t count, zes_intel_ras_c
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) {
 
     if (pFsAccess->isRootUser() == true) {
         categoryExpThresholds.clear();
@@ -186,13 +186,13 @@ ze_result_t LinuxRasImp::osRasSetConfigExp(const uint32_t count, const zes_intel
     return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 }
 
-ze_result_t LinuxRasImp::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+ze_result_t LinuxRasImp::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) {
     for (uint32_t i = 0; i < categoryCount; i++) {
         pStates[i].errorCounter = 0;
     }
 
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    std::vector<zes_intel_ras_state_exp2_t> localStates(categoryCount);
+    std::vector<zes_ras_state_exp2_t> localStates(categoryCount);
     for (auto &rasSource : rasSources) {
         for (uint32_t i = 0; i < categoryCount; i++) {
             localStates[i].errorCounter = 0;

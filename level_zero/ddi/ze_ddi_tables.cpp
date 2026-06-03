@@ -531,6 +531,10 @@ DriverDispatch::DriverDispatch() {
     this->sysmanRas.pfnGetState = L0::zesRasGetState;
     this->sysmanRasExp.pfnGetStateExp = L0::zesRasGetStateExp;
     this->sysmanRasExp.pfnClearStateExp = L0::zesRasClearStateExp;
+    this->sysmanRasExp.pfnGetSupportedCategoriesExp = L0::zesRasGetSupportedCategoriesExp;
+    this->sysmanRasExp.pfnGetStateExp2 = L0::zesRasGetStateExp2;
+    this->sysmanRasExp.pfnGetConfigExp = L0::zesRasGetConfigExp;
+    this->sysmanRasExp.pfnSetConfigExp = L0::zesRasSetConfigExp;
     this->sysmanDiagnostics.pfnGetProperties = L0::zesDiagnosticsGetProperties;
     this->sysmanDiagnostics.pfnGetTests = L0::zesDiagnosticsGetTests;
     this->sysmanDiagnostics.pfnRunTests = L0::zesDiagnosticsRunTests;

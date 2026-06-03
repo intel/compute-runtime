@@ -8,7 +8,6 @@
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_nl_api_stub.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
-#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <map>
 #include <string>
@@ -37,7 +36,7 @@ ze_result_t NetlinkRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t NetlinkRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+ze_result_t NetlinkRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -45,11 +44,11 @@ ze_result_t NetlinkRasUtil::rasClearStateExp(zes_ras_error_category_exp_t catego
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

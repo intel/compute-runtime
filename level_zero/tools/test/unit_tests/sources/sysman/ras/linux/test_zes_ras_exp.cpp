@@ -696,7 +696,7 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesRasClearStateExpAnd
     }
 }
 
-TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetSupportedCategoriesExpWithZeroCountThenValidCountAndCategoriesAreReturned) {
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetSupportedCategoriesExpWithZeroCountThenValidCountAndCategoriesAreReturned) {
 
     VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
     pLinuxSysmanImp->pFsAccess = pFsAccess.get();
@@ -713,7 +713,7 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetSupporte
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         uint32_t count = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetSupportedCategoriesExp(handle, &count, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetSupportedCategoriesExp(handle, &count, nullptr));
         if (properties.type == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
             EXPECT_EQ(count, mockSupportedCorrectableErrors);
         } else if (properties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
@@ -721,11 +721,11 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetSupporte
         }
 
         std::vector<zes_ras_error_category_exp_t> categories(count);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetSupportedCategoriesExp(handle, &count, categories.data()));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetSupportedCategoriesExp(handle, &count, categories.data()));
     }
 }
 
-TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasSetConfigExpAndZesIntelRasGetConfigExpThenSuccessIsReturnedAndCorrectValuesAreSet) {
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasSetConfigExpAndZesRasGetConfigExpThenSuccessIsReturnedAndCorrectValuesAreSet) {
 
     VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
     pLinuxSysmanImp->pFsAccess = pFsAccess.get();
@@ -734,17 +734,17 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasSetConfigEx
     auto handles = getRasHandles(mockHandleCount);
     for (const auto &handle : handles) {
         ASSERT_NE(nullptr, handle);
-        std::vector<zes_intel_ras_config_exp_t> config(mockCategoryCount);
+        std::vector<zes_ras_config_exp_t> config(mockCategoryCount);
         config[0].category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
         config[0].threshold = 100;
         config[1].category = ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS;
         config[1].threshold = 200;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasSetConfigExp(handle, static_cast<uint32_t>(config.size()), config.data()));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasSetConfigExp(handle, static_cast<uint32_t>(config.size()), config.data()));
 
-        std::vector<zes_intel_ras_config_exp_t> readConfig(mockCategoryCount);
+        std::vector<zes_ras_config_exp_t> readConfig(mockCategoryCount);
         readConfig[0].category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
         readConfig[1].category = ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetConfigExp(handle, static_cast<uint32_t>(readConfig.size()), readConfig.data()));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetConfigExp(handle, static_cast<uint32_t>(readConfig.size()), readConfig.data()));
         EXPECT_EQ(ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, readConfig[0].category);
         EXPECT_EQ(config[0].threshold, readConfig[0].threshold);
         EXPECT_EQ(ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS, readConfig[1].category);
@@ -752,7 +752,7 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasSetConfigEx
     }
 }
 
-TEST_F(SysmanRasExpFixture, GivenNonRootUserWhenCallingZesIntelRasSetConfigExpThenErrorIsReturned) {
+TEST_F(SysmanRasExpFixture, GivenNonRootUserWhenCallingZesRasSetConfigExpThenErrorIsReturned) {
     pFsAccess->mockIsNonRootUser = true;
     VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
     pLinuxSysmanImp->pFsAccess = pFsAccess.get();
@@ -762,15 +762,15 @@ TEST_F(SysmanRasExpFixture, GivenNonRootUserWhenCallingZesIntelRasSetConfigExpTh
     for (const auto &handle : handles) {
         ASSERT_NE(nullptr, handle);
 
-        std::vector<zes_intel_ras_config_exp_t> config(mockCategoryCount);
+        std::vector<zes_ras_config_exp_t> config(mockCategoryCount);
         config[0].category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
         config[0].threshold = 100;
 
-        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelRasSetConfigExp(handle, 1, config.data()));
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesRasSetConfigExp(handle, 1, config.data()));
     }
 }
 
-TEST_F(SysmanRasExpFixture, GivenUnconfiguredCategoryWhenCallingZesIntelRasGetConfigExpThenZeroThresholdIsReturned) {
+TEST_F(SysmanRasExpFixture, GivenUnconfiguredCategoryWhenCallingZesRasGetConfigExpThenZeroThresholdIsReturned) {
     VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
     pLinuxSysmanImp->pFsAccess = pFsAccess.get();
     uint32_t mockCategoryCount = 1u;
@@ -779,20 +779,20 @@ TEST_F(SysmanRasExpFixture, GivenUnconfiguredCategoryWhenCallingZesIntelRasGetCo
     for (const auto &handle : handles) {
         ASSERT_NE(nullptr, handle);
 
-        std::vector<zes_intel_ras_config_exp_t> config(mockCategoryCount);
+        std::vector<zes_ras_config_exp_t> config(mockCategoryCount);
         config[0].category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
         config[0].threshold = 100;
 
-        std::vector<zes_intel_ras_config_exp_t> readConfig(mockCategoryCount);
+        std::vector<zes_ras_config_exp_t> readConfig(mockCategoryCount);
         readConfig[0].category = ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetConfigExp(handle, 1, readConfig.data()));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetConfigExp(handle, 1, readConfig.data()));
         EXPECT_EQ(ZES_RAS_ERROR_CATEGORY_EXP_CACHE_ERRORS, readConfig[0].category);
         EXPECT_EQ(0u, readConfig[0].threshold);
     }
 }
 
-TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExp2ForGtThenSuccessIsReturned) {
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExp2ForGtThenSuccessIsReturned) {
     pRasFwUtilInterface->mockMemorySuccess = false;
 
     VariableBackup<L0::FsAccess *> fsBackup(&pLinuxSysmanImp->pFsAccess);
@@ -815,16 +815,16 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExp
     ASSERT_EQ(handles.size(), mockHandleCount);
 
     zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
-    zes_intel_ras_state_exp2_t state2 = {};
-    state2.stype = static_cast<zes_structure_type_ext_t>(ZES_INTEL_STRUCTURE_TYPE_RAS_STATE_EXP2);
+    zes_ras_state_exp2_t state2 = {};
+    state2.stype = ZES_STRUCTURE_TYPE_RAS_STATE_EXP2;
     state2.pNext = nullptr;
     state2.errorCounter = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp2(handles[0], 1u, &category, &state2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetStateExp2(handles[0], 1u, &category, &state2));
     uint64_t expectedErrCount = correctableGrfErrorCount + correctableEuErrorCount + initialCorrectableComputeErrors;
     EXPECT_EQ(state2.errorCounter, expectedErrCount);
 }
 
-TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExp2WithUnsupportedCategoryForGtThenZeroCounterIsReturned) {
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExp2WithUnsupportedCategoryForGtThenZeroCounterIsReturned) {
     // LinuxRasSourceGt::osRasGetStateExp2 returns 0 for a category absent from its counter map.
     pRasFwUtilInterface->mockMemorySuccess = false;
 
@@ -848,15 +848,15 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExp
     ASSERT_EQ(handles.size(), mockHandleCount);
 
     zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS;
-    zes_intel_ras_state_exp2_t state2 = {};
-    state2.stype = static_cast<zes_structure_type_ext_t>(ZES_INTEL_STRUCTURE_TYPE_RAS_STATE_EXP2);
+    zes_ras_state_exp2_t state2 = {};
+    state2.stype = ZES_STRUCTURE_TYPE_RAS_STATE_EXP2;
     state2.pNext = nullptr;
     state2.errorCounter = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp2(handles[0], 1u, &category, &state2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetStateExp2(handles[0], 1u, &category, &state2));
     EXPECT_EQ(state2.errorCounter, 0u);
 }
 
-TEST_F(SysmanRasExpFixture, GivenPmuReadFailsWhenCallingZesIntelRasGetStateExp2ForGtThenErrorIsReturned) {
+TEST_F(SysmanRasExpFixture, GivenPmuReadFailsWhenCallingZesRasGetStateExp2ForGtThenErrorIsReturned) {
     VariableBackup<L0::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
 
@@ -872,12 +872,12 @@ TEST_F(SysmanRasExpFixture, GivenPmuReadFailsWhenCallingZesIntelRasGetStateExp2F
     for (const auto &handle : handles) {
         ASSERT_NE(nullptr, handle);
         zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
-        zes_intel_ras_state_exp2_t state2 = {};
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelRasGetStateExp2(handle, 1u, &category, &state2));
+        zes_ras_state_exp2_t state2 = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetStateExp2(handle, 1u, &category, &state2));
     }
 }
 
-TEST_F(SysmanRasExpFixture, GivenPmuReadReturnsNegativeWhenCallingZesIntelRasGetStateExp2ForGtThenUnsupportedFeatureIsReturned) {
+TEST_F(SysmanRasExpFixture, GivenPmuReadReturnsNegativeWhenCallingZesRasGetStateExp2ForGtThenUnsupportedFeatureIsReturned) {
     VariableBackup<L0::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
 
@@ -902,12 +902,12 @@ TEST_F(SysmanRasExpFixture, GivenPmuReadReturnsNegativeWhenCallingZesIntelRasGet
 
     for (const auto &handle : handles) {
         zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
-        zes_intel_ras_state_exp2_t state2 = {};
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelRasGetStateExp2(handle, 1u, &category, &state2));
+        zes_ras_state_exp2_t state2 = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetStateExp2(handle, 1u, &category, &state2));
     }
 }
 
-TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExp2ForHbmThenSuccessIsReturned) {
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExp2ForHbmThenSuccessIsReturned) {
     pRasFwUtilInterface->mockMemorySuccess = true;
     VariableBackup<L0::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
@@ -924,20 +924,20 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExp
     ASSERT_EQ(handles.size(), mockHandleCount);
 
     zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS;
-    zes_intel_ras_state_exp2_t state2 = {};
-    state2.stype = static_cast<zes_structure_type_ext_t>(ZES_INTEL_STRUCTURE_TYPE_RAS_STATE_EXP2);
+    zes_ras_state_exp2_t state2 = {};
+    state2.stype = ZES_STRUCTURE_TYPE_RAS_STATE_EXP2;
     state2.pNext = nullptr;
     state2.errorCounter = 0;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp2(handles[0], 1u, &category, &state2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetStateExp2(handles[0], 1u, &category, &state2));
     EXPECT_EQ(state2.errorCounter, hbmCorrectableErrorCount);
 
     state2.errorCounter = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp2(handles[1], 1u, &category, &state2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetStateExp2(handles[1], 1u, &category, &state2));
     EXPECT_EQ(state2.errorCounter, hbmUncorrectableErrorCount);
 }
 
-TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExp2WithNonMemoryErrorCategoryForHbmThenZeroCounterIsReturned) {
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExp2WithNonMemoryErrorCategoryForHbmThenZeroCounterIsReturned) {
     pRasFwUtilInterface->mockMemorySuccess = true;
     VariableBackup<L0::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
@@ -954,11 +954,11 @@ TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesIntelRasGetStateExp
     ASSERT_EQ(handles.size(), mockHandleCount);
 
     zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
-    zes_intel_ras_state_exp2_t state2 = {};
-    state2.stype = static_cast<zes_structure_type_ext_t>(ZES_INTEL_STRUCTURE_TYPE_RAS_STATE_EXP2);
+    zes_ras_state_exp2_t state2 = {};
+    state2.stype = ZES_STRUCTURE_TYPE_RAS_STATE_EXP2;
     state2.pNext = nullptr;
     state2.errorCounter = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelRasGetStateExp2(handles[0], 1u, &category, &state2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetStateExp2(handles[0], 1u, &category, &state2));
     EXPECT_EQ(state2.errorCounter, 0u);
 }
 

@@ -48,15 +48,15 @@ ze_result_t RasImp::rasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error
     return pOsRas->osRasGetSupportedCategoriesExp(pCount, pCategories);
 }
 
-ze_result_t RasImp::rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t RasImp::rasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) {
     return pOsRas->osRasGetConfigExp(count, pConfig);
 }
 
-ze_result_t RasImp::rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t RasImp::rasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) {
     return pOsRas->osRasSetConfigExp(count, pConfig);
 }
 
-ze_result_t RasImp::rasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+ze_result_t RasImp::rasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) {
     return pOsRas->osRasGetStateExp2(categoryCount, pCategories, pStates);
 }
 

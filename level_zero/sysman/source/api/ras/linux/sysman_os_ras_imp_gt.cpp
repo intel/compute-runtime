@@ -40,7 +40,7 @@ ze_result_t LinuxRasSourceGt::osRasGetStateExp(uint32_t numCategoriesRequested, 
     return pRasUtil->rasGetStateExp(numCategoriesRequested, pState);
 }
 
-ze_result_t LinuxRasSourceGt::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+ze_result_t LinuxRasSourceGt::osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) {
     return pRasUtil->rasGetStateExp2(categoryCount, pCategories, pStates);
 }
 
@@ -56,11 +56,11 @@ std::vector<zes_ras_error_category_exp_t> LinuxRasSourceGt::getSupportedErrorCat
     return pRasUtil->getSupportedErrorCategoriesExp();
 }
 
-ze_result_t LinuxRasSourceGt::osRasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t LinuxRasSourceGt::osRasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) {
     return pRasUtil->rasSetConfigExp(count, pConfig);
 }
 
-ze_result_t LinuxRasSourceGt::osRasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t LinuxRasSourceGt::osRasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) {
     return pRasUtil->rasGetConfigExp(count, pConfig);
 }
 

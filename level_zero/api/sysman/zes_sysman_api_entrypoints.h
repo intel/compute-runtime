@@ -982,6 +982,43 @@ ze_result_t ZE_APICALL zesRasClearStateExp(
         [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasClearStateExp(category); });
 }
 
+ze_result_t ZE_APICALL zesRasGetSupportedCategoriesExp(
+    zes_ras_handle_t hRas,
+    uint32_t *pCount,
+    zes_ras_error_category_exp_t *pCategories) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return L0::Ras::fromHandle(hRas)->rasGetSupportedCategoriesExp(pCount, pCategories); },
+        [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasGetSupportedCategoriesExp(pCount, pCategories); });
+}
+
+ze_result_t ZE_APICALL zesRasGetStateExp2(
+    zes_ras_handle_t hRas,
+    const uint32_t count,
+    const zes_ras_error_category_exp_t *pCategories,
+    zes_ras_state_exp2_t *pState) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return L0::Ras::fromHandle(hRas)->rasGetStateExp2(count, pCategories, pState); },
+        [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasGetStateExp2(count, pCategories, pState); });
+}
+
+ze_result_t ZE_APICALL zesRasGetConfigExp(
+    zes_ras_handle_t hRas,
+    const uint32_t count,
+    zes_ras_config_exp_t *pConfig) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return L0::Ras::fromHandle(hRas)->rasGetConfigExp(count, pConfig); },
+        [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasGetConfigExp(count, pConfig); });
+}
+
+ze_result_t ZE_APICALL zesRasSetConfigExp(
+    zes_ras_handle_t hRas,
+    const uint32_t count,
+    const zes_ras_config_exp_t *pConfig) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return L0::Ras::fromHandle(hRas)->rasSetConfigExp(count, pConfig); },
+        [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasSetConfigExp(count, pConfig); });
+}
+
 ze_result_t ZE_APICALL zesDeviceEventRegister(
     zes_device_handle_t hDevice,
     zes_event_type_flags_t events) {
@@ -2178,6 +2215,48 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesRasClearStateExp(
     return L0::zesRasClearStateExp(
         hRas,
         category);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesRasGetSupportedCategoriesExp(
+    zes_ras_handle_t hRas,
+    uint32_t *pCount,
+    zes_ras_error_category_exp_t *pCategories) {
+    return L0::zesRasGetSupportedCategoriesExp(
+        hRas,
+        pCount,
+        pCategories);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesRasGetStateExp2(
+    zes_ras_handle_t hRas,
+    const uint32_t count,
+    const zes_ras_error_category_exp_t *pCategories,
+    zes_ras_state_exp2_t *pState) {
+    return L0::zesRasGetStateExp2(
+        hRas,
+        count,
+        pCategories,
+        pState);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesRasGetConfigExp(
+    zes_ras_handle_t hRas,
+    const uint32_t count,
+    zes_ras_config_exp_t *pConfig) {
+    return L0::zesRasGetConfigExp(
+        hRas,
+        count,
+        pConfig);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesRasSetConfigExp(
+    zes_ras_handle_t hRas,
+    const uint32_t count,
+    const zes_ras_config_exp_t *pConfig) {
+    return L0::zesRasSetConfigExp(
+        hRas,
+        count,
+        pConfig);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumSchedulers(

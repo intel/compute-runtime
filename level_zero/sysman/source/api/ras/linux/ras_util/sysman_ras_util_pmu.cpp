@@ -248,7 +248,7 @@ ze_result_t PmuRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_ras_
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t PmuRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+ze_result_t PmuRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) {
     initRasErrors(false);
     if (groupFd < 0) {
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;

@@ -103,7 +103,7 @@ ze_result_t NetlinkRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t NetlinkRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_intel_ras_state_exp2_t *pStates) {
+ze_result_t NetlinkRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) {
     std::vector<DrmErrorCounter> errorList;
     ze_result_t result = drmNl->getErrorsList(rasNodeId, errorList);
     if (result != ZE_RESULT_SUCCESS) {
@@ -156,7 +156,7 @@ ze_result_t NetlinkRasUtil::rasClearStateExp(zes_ras_error_category_exp_t catego
     return drmNl->clearErrorCounter(rasNodeId, errorId);
 }
 
-ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) {
     // For each requested category, look up the corresponding DRM error name via categoryToErrorNameMap,
     // then find the matching error counter in the cached error list and call getErrorThreshold on the
     // DRM netlink interface to populate pConfig[i].threshold.
@@ -193,7 +193,7 @@ ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_intel_ras_
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_intel_ras_config_exp_t *pConfig) {
+ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) {
     // For each requested category, look up the corresponding DRM error name via categoryToErrorNameMap,
     // then find the matching error counter in the cached error list and call setErrorThreshold on the
     // DRM netlink interface.
