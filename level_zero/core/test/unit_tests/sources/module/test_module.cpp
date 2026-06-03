@@ -3239,14 +3239,18 @@ using ModuleTranslationUnitTest = Test<DeviceFixture>;
 struct MockModuleTU : public L0::ModuleTranslationUnit {
     MockModuleTU(L0::Device *device) : L0::ModuleTranslationUnit(device) {}
 
+    ze_result_t buildFromIntermediate(IGC::CodeType::CodeType_t intermediateType, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
+                                      const ze_module_constants_t *pConstants) override {
+        wasBuildFromIntermediateCalled = true;
+        if (callRealBuildFromIntermediate) {
+            return L0::ModuleTranslationUnit::buildFromIntermediate(intermediateType, input, inputSize, buildOptions, internalBuildOptions, pConstants);
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
     ze_result_t buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
                                const ze_module_constants_t *pConstants) override {
-        wasBuildFromSpirVCalled = true;
-        if (callRealBuildFromSpirv) {
-            return L0::ModuleTranslationUnit::buildFromSpirV(input, inputSize, buildOptions, internalBuildOptions, pConstants);
-        } else {
-            return ZE_RESULT_SUCCESS;
-        }
+        return buildFromIntermediate(IGC::CodeType::spirV, input, inputSize, buildOptions, internalBuildOptions, pConstants);
     }
 
     ze_result_t createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions) override {
@@ -3262,8 +3266,8 @@ struct MockModuleTU : public L0::ModuleTranslationUnit {
         return L0::ModuleTranslationUnit::processUnpackedBinary();
     }
 
-    bool callRealBuildFromSpirv = false;
-    bool wasBuildFromSpirVCalled = false;
+    bool callRealBuildFromIntermediate = false;
+    bool wasBuildFromIntermediateCalled = false;
     bool wasCreateFromNativeBinaryCalled = false;
     bool processUnpackedBinaryReturnSuccess = false;
     DebugManagerStateRestore restore;
@@ -3289,7 +3293,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     result = module.initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
-    EXPECT_FALSE(tu->wasBuildFromSpirVCalled);
+    EXPECT_FALSE(tu->wasBuildFromIntermediateCalled);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWithoutIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleHasSymbolSupportBooleans) {
@@ -3336,7 +3340,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     result = module.initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
-    EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+    EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromIntermediateCalled);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCodeBuildWithOldCachePolicyAndOldVersionWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiled) {
@@ -3383,10 +3387,10 @@ HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCo
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
     if (device->getNEODevice()->getRootDeviceEnvironment().getProductHelper().isL1PolicyMissmatchCheckNeeded()) {
-        EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+        EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromIntermediateCalled);
         EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-store-cache-default=2 -cl-load-cache-default=2 -cl-example-untouched-option-second=2") != std::string::npos);
     } else {
-        EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+        EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromIntermediateCalled);
         EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-store-cache-default=9 -cl-load-cache-default=9 -cl-example-untouched-option-second=2") != std::string::npos);
     }
 }
@@ -3435,9 +3439,9 @@ HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCo
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
     if (device->getNEODevice()->getRootDeviceEnvironment().getProductHelper().isL1PolicyMissmatchCheckNeeded()) {
-        EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+        EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromIntermediateCalled);
     } else {
-        EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+        EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromIntermediateCalled);
     }
     EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-example-untouched-option-second=2") != std::string::npos);
 }
@@ -3485,7 +3489,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCo
     result = module.initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
-    EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+    EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromIntermediateCalled);
     EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-example-untouched-option-second=2") != std::string::npos);
 }
 
@@ -3528,7 +3532,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenBinaryWithoutZeInfoVersionWhenCreatingM
     result = module.initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
-    EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+    EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromIntermediateCalled);
     EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-example-untouched-option-second=2") != std::string::npos);
 }
 
@@ -3570,7 +3574,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenNewCachePolicyAndFileWithIntermediateCo
     result = module.initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
-    EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+    EXPECT_NE(tu->irBinarySize != 0, tu->wasBuildFromIntermediateCalled);
     EXPECT_TRUE(tu->options.find("-cl-example-untouched-option-first=1 -cl-store-cache-default=2 -cl-load-cache-default=2 -cl-example-untouched-option-second=2") != std::string::npos);
 }
 
@@ -3623,6 +3627,42 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNative
 
     const auto containsWarning{buildLog.find(CompilerWarnings::recompiledFromIr.data()) != std::string::npos};
     EXPECT_TRUE(containsWarning);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNativeBinaryWithPisaThenModuleRecompilationWarningIsIssued) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
+
+    auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::pisa};
+    bool forceRecompilation = true;
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections, forceRecompilation);
+    const auto &src = zebinData->storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+    Module module(device, moduleBuildLog.get(), ModuleType::user);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = module.initialize(&moduleDesc, neoDevice);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    size_t buildLogSize{};
+    const auto querySizeResult{moduleBuildLog->getString(&buildLogSize, nullptr)};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, querySizeResult);
+
+    std::string buildLog(buildLogSize, '\0');
+    const auto queryBuildLogResult{moduleBuildLog->getString(&buildLogSize, buildLog.data())};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, queryBuildLogResult);
+
+    const auto containsWarning{buildLog.find(CompilerWarnings::recompiledFromIr.data()) != std::string::npos};
+    EXPECT_TRUE(containsWarning);
+    EXPECT_TRUE(tu->wasBuildFromIntermediateCalled);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenNativeBinaryWhenRebuildingFromIntermediateThenCorrectInternalOptionsAreUsed) {
@@ -3843,7 +3883,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenOneApiPvcSendWarWaEnvFalseAndFileWithIn
 
     Module module(device, nullptr, ModuleType::user);
     MockModuleTU *tu = new MockModuleTU(device);
-    tu->callRealBuildFromSpirv = true;
+    tu->callRealBuildFromIntermediate = true;
     tu->processUnpackedBinaryReturnSuccess = true;
     module.translationUnit.reset(tu);
 
@@ -3851,7 +3891,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenOneApiPvcSendWarWaEnvFalseAndFileWithIn
     result = module.initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
-    EXPECT_TRUE(tu->wasBuildFromSpirVCalled);
+    EXPECT_TRUE(tu->wasBuildFromIntermediateCalled);
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-ze-opt-disable-sendwarwa"), std::string::npos);
 }
 

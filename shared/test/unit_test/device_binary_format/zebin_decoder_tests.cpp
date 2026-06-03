@@ -168,6 +168,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     elfEncoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Zebin::Elf::SectionNames::symtab, std::string{});
     elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, std::string{});
     elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, std::string{});
+    elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_PISA, NEO::Zebin::Elf::SectionNames::pisa, std::string{});
     elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_GTPIN_INFO, NEO::Zebin::Elf::SectionNames::gtpinInfo.str() + "someKernel", std::string{});
     elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_GTPIN_INFO, NEO::Zebin::Elf::SectionNames::gtpinInfo.str() + "someOtherKernel", std::string{});
     elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_VISA_ASM, NEO::Zebin::Elf::SectionNames::vIsaAsmPrefix.str() + "someKernel", std::string{});
@@ -203,6 +204,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     ASSERT_EQ(1U, sections.zeInfoSections.size());
     ASSERT_EQ(1U, sections.symtabSections.size());
     ASSERT_EQ(1U, sections.spirvSections.size());
+    ASSERT_EQ(1U, sections.pisaSections.size());
     ASSERT_EQ(1U, sections.buildOptionsSection.size());
     ASSERT_EQ(1U, sections.specConstantsIdsSection.size());
     ASSERT_EQ(1U, sections.specConstantsValuesSection.size());
@@ -222,6 +224,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::zeInfo.data(), strings + sections.zeInfoSections[0]->header->name);
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::symtab.data(), strings + sections.symtabSections[0]->header->name);
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::spv.data(), strings + sections.spirvSections[0]->header->name);
+    EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::pisa.data(), strings + sections.pisaSections[0]->header->name);
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::dataConstZeroInit.data(), strings + sections.constZeroInitDataSections[0]->header->name);
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::dataGlobalZeroInit.data(), strings + sections.globalZeroInitDataSections[0]->header->name);
 }
@@ -346,6 +349,7 @@ TEST(ValidateZebinSectionsCount, GivenCorrectNumberOfSectionsThenReturnSuccess) 
     sections.constDataSections.resize(1);
     sections.globalDataSections.resize(1);
     sections.spirvSections.resize(1);
+    sections.pisaSections.resize(1);
     sections.symtabSections.resize(1);
     sections.textKernelSections.resize(10U);
     sections.zeInfoSections.resize(1U);
@@ -407,6 +411,17 @@ TEST(ValidateZebinSectionsCount, GivenTwoSpirvSectionsThenFail) {
     auto err = validateZebinSectionsCount(sections, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::zebin : Expected at most 1 of .spv section, got : 2\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(ValidateZebinSectionsCount, GivenTwoPisaSectionsThenFail) {
+    ZebinSections sections;
+    std::string errors;
+    std::string warnings;
+    sections.pisaSections.resize(2);
+    auto err = validateZebinSectionsCount(sections, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
+    EXPECT_STREQ("DeviceBinaryFormat::zebin : Expected at most 1 of .pisa section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 

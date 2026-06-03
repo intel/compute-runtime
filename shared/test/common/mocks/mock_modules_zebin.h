@@ -31,6 +31,7 @@ namespace ZebinTestData {
 enum class AppendElfAdditionalSection {
     none,
     spirv,
+    pisa,
     global,
     constant,
     constantString

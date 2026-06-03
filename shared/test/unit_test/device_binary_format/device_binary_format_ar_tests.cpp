@@ -482,6 +482,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryMatchedButHasNoIrAndGenericIrFi
 
     const auto isSpirvSameAsInGenericIr = std::memcmp(customSprivContent.data(), unpacked.intermediateRepresentation.begin(), customSprivContent.size()) == 0;
     EXPECT_TRUE(isSpirvSameAsInGenericIr);
+    EXPECT_EQ(IGC::CodeType::spirV, unpacked.intermediateRepresentationCodeType);
 
     EXPECT_FALSE(unpacked.deviceBinary.empty());
 }

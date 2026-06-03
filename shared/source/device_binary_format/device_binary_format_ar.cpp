@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,6 +83,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(co
                                                                     requestedTargetDevice, irErrors, irWarnings);
                     if (!genericIrResult.intermediateRepresentation.empty()) {
                         unpacked.intermediateRepresentation = genericIrResult.intermediateRepresentation;
+                        unpacked.intermediateRepresentationCodeType = IGC::CodeType::spirV;
                     }
                 }
                 unpacked.packedTargetDeviceBinary =

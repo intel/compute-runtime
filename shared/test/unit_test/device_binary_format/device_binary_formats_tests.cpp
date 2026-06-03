@@ -160,6 +160,12 @@ TEST(IsAnyPackedDeviceBinaryFormat, GivenZebinFormatThenReturnsTrue) {
     EXPECT_TRUE(NEO::isAnyPackedDeviceBinaryFormat(zebinProgram.storage));
 }
 
+TEST(SingleDeviceBinary, WhenDefaultConstructedThenIrCodeTypeIsSpirV) {
+    NEO::SingleDeviceBinary binary;
+
+    EXPECT_EQ(IGC::CodeType::spirV, binary.intermediateRepresentationCodeType);
+}
+
 TEST(DecodeSingleDeviceBinary, GivenUnknownFormatThenReturnFalse) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
