@@ -513,54 +513,9 @@ bool CommandStreamReceiver::isGpuHangDetected() const {
     return isGpuHang;
 }
 
-WaitStatus CommandStreamReceiver::pollForCompletionDuringCleanup(TaskCountType taskCountToWait) {
-    auto pollAddress = getTagAddress();
-    if (skipResourceCleanup() || pollAddress == nullptr) {
-        return WaitStatus::ready;
-    }
-
-    this->downloadTagAllocation(taskCountToWait);
-
-    auto waitStartTime = std::chrono::high_resolution_clock::now();
-    auto lastHangCheckTime = waitStartTime;
-    int64_t timeDiff = 0;
-
-    for (uint32_t partitionId = 0; partitionId < activePartitions; partitionId++) {
-        while (*pollAddress < taskCountToWait) {
-            this->downloadTagAllocation(taskCountToWait);
-            if (WaitUtils::waitFunction(pollAddress, taskCountToWait, timeDiff)) {
-                break;
-            }
-
-            auto currentTime = std::chrono::high_resolution_clock::now();
-            auto elapsedSinceHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
-            if (elapsedSinceHangCheck.count() >= gpuHangCheckPeriod.count()) {
-                lastHangCheckTime = currentTime;
-                if (this->CommandStreamReceiver::isGpuHangDetected()) {
-                    return WaitStatus::gpuHang;
-                }
-            }
-
-            timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime).count();
-        }
-
-        pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
-    }
-
-    return WaitStatus::ready;
-}
-
 void CommandStreamReceiver::cleanupResources() {
-    if (!internalAllocationStorage->getTemporaryAllocations().peekIsEmpty() || !internalAllocationStorage->getDeferredAllocations().peekIsEmpty()) {
-        pollForCompletionDuringCleanup(this->latestFlushedTaskCount);
-    }
-    internalAllocationStorage->cleanAllocationList(this->latestFlushedTaskCount, TEMPORARY_ALLOCATION);
-    internalAllocationStorage->cleanAllocationList(this->latestFlushedTaskCount, DEFERRED_DEALLOCATION);
-
-    if (!internalAllocationStorage->getAllocationsForReuse().peekIsEmpty()) {
-        pollForCompletionDuringCleanup(this->latestFlushedTaskCount);
-    }
-    internalAllocationStorage->cleanAllocationList(this->latestFlushedTaskCount, REUSABLE_ALLOCATION);
+    waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, TEMPORARY_ALLOCATION);
+    waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, REUSABLE_ALLOCATION);
 
     if (debugSurface) {
         getMemoryManager()->freeGraphicsMemory(debugSurface);

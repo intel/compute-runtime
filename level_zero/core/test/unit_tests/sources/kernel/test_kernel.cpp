@@ -12,7 +12,6 @@
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
-#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
@@ -4138,12 +4137,6 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
 
         EXPECT_STREQ(expectedString, output.c_str());
         EXPECT_STREQ("Failed to copy printf buffer.\n", error.c_str());
-
-        for (auto *allocation : device->getMemoryManager()->getTemporaryAllocationsList().peekAllocations()) {
-            while (allocation->getHostPtrTaskCountAssignment() > 0) {
-                allocation->decrementHostPtrTaskCountAssignment();
-            }
-        }
     }
 }
 

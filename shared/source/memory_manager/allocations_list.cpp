@@ -13,13 +13,10 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include <algorithm>
-
-namespace NEO {
-
+namespace {
 struct ReusableAllocationRequirements {
     ReusableAllocationRequirements() = delete;
-    ReusableAllocationRequirements(CommandStreamReceiver *csr, const void *requiredPtr, size_t requiredMinimalSize, AllocationType allocationType, bool forceSystemMemoryFlag, bool *nonUsmHostPtrPartialOverlapFound)
+    ReusableAllocationRequirements(NEO::CommandStreamReceiver *csr, const void *requiredPtr, size_t requiredMinimalSize, NEO::AllocationType allocationType, bool forceSystemMemoryFlag, bool *nonUsmHostPtrPartialOverlapFound)
         : requiredPtr(requiredPtr), requiredMinimalSize(requiredMinimalSize), allocationType(allocationType), forceSystemMemoryFlag(forceSystemMemoryFlag), nonUsmHostPtrPartialOverlapFound(nonUsmHostPtrPartialOverlapFound) {
 
         if (csr) {
@@ -36,8 +33,8 @@ struct ReusableAllocationRequirements {
     size_t requiredMinimalSize = 0;
     volatile TagAddressType *csrTagAddress = nullptr;
     volatile TagAddressType *csrUcTagAddress = nullptr;
-    AllocationType allocationType = AllocationType::unknown;
-    DeviceBitfield deviceBitfield = 1;
+    NEO::AllocationType allocationType = NEO::AllocationType::unknown;
+    NEO::DeviceBitfield deviceBitfield = 1;
     uint32_t contextId = std::numeric_limits<uint32_t>::max();
     uint32_t rootDeviceIndex = 0;
     uint32_t tagOffset = 0;
@@ -45,104 +42,34 @@ struct ReusableAllocationRequirements {
     bool *nonUsmHostPtrPartialOverlapFound = nullptr;
 };
 
-namespace {
-bool checkTagAddressReady(const ReusableAllocationRequirements &requirements, GraphicsAllocation *gfxAllocation, volatile TagAddressType *tagAddress) {
-    auto taskCount = gfxAllocation->getTaskCount(requirements.contextId);
-    for (uint32_t count = 0; count < requirements.deviceBitfield.count(); count++) {
+bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation, volatile TagAddressType *tagAddress) {
+    auto taskCount = gfxAllocation->getTaskCount(requirements->contextId);
+    for (uint32_t count = 0; count < requirements->deviceBitfield.count(); count++) {
         if (*tagAddress < taskCount) {
             return false;
         }
-        tagAddress = ptrOffset(tagAddress, requirements.tagOffset);
+        tagAddress = ptrOffset(tagAddress, requirements->tagOffset);
     }
 
     return true;
 }
 
-bool checkTagAddressReady(const ReusableAllocationRequirements &requirements, GraphicsAllocation *gfxAllocation) {
-    if (gfxAllocation->isUsedByOsContext(requirements.contextId) == false) {
+bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation) {
+    if (gfxAllocation->isUsedByOsContext(requirements->contextId) == false) {
         return true;
     }
-    if (requirements.allocationType == AllocationType::commandBuffer) {
-        if (checkTagAddressReady(requirements, gfxAllocation, requirements.csrUcTagAddress)) {
+    if (requirements->allocationType == NEO::AllocationType::commandBuffer) {
+        if (checkTagAddressReady(requirements, gfxAllocation, requirements->csrUcTagAddress)) {
             return true;
         }
     }
-    return checkTagAddressReady(requirements, gfxAllocation, requirements.csrTagAddress);
+    return checkTagAddressReady(requirements, gfxAllocation, requirements->csrTagAddress);
 }
 } // namespace
 
-AllocationsList::AllocationsList() = default;
-
+namespace NEO {
 AllocationsList::AllocationsList(AllocationUsage allocationUsage)
     : allocationUsage(allocationUsage) {}
-
-AllocationsList::~AllocationsList() {
-    UNRECOVERABLE_IF(!allocations.empty());
-}
-
-void AllocationsList::pushTailOne(GraphicsAllocation &allocation) {
-    std::lock_guard<std::mutex> lock(mutex);
-    allocations.push_back(&allocation);
-}
-
-void AllocationsList::pushFrontOne(GraphicsAllocation &allocation) {
-    std::lock_guard<std::mutex> lock(mutex);
-    allocations.insert(allocations.begin(), &allocation);
-}
-
-std::unique_ptr<GraphicsAllocation> AllocationsList::removeOne(GraphicsAllocation &allocation) {
-    std::lock_guard<std::mutex> lock(mutex);
-    auto it = std::find(allocations.begin(), allocations.end(), &allocation);
-    if (it == allocations.end()) {
-        return nullptr;
-    }
-    allocations.erase(it);
-    return std::unique_ptr<GraphicsAllocation>(&allocation);
-}
-
-GraphicsAllocation *AllocationsList::peekHead() {
-    std::lock_guard<std::mutex> lock(mutex);
-    if (allocations.empty()) {
-        return nullptr;
-    }
-    return allocations.front();
-}
-
-GraphicsAllocation *AllocationsList::peekTail() {
-    std::lock_guard<std::mutex> lock(mutex);
-    if (allocations.empty()) {
-        return nullptr;
-    }
-    return allocations.back();
-}
-
-bool AllocationsList::peekIsEmpty() {
-    std::lock_guard<std::mutex> lock(mutex);
-    return allocations.empty();
-}
-
-bool AllocationsList::peekContains(GraphicsAllocation &allocation) {
-    std::lock_guard<std::mutex> lock(mutex);
-    return std::find(allocations.begin(), allocations.end(), &allocation) != allocations.end();
-}
-
-void AllocationsList::transferAllAllocationsTo(AllocationsList &target) {
-    if (this == &target) {
-        return;
-    }
-    std::scoped_lock<std::mutex, std::mutex> lock(this->mutex, target.mutex);
-    if (target.allocations.empty()) {
-        target.allocations = std::move(allocations);
-    } else {
-        target.allocations.insert(target.allocations.end(), allocations.begin(), allocations.end());
-    }
-    allocations.clear();
-}
-
-std::vector<GraphicsAllocation *> AllocationsList::peekAllocations() {
-    std::lock_guard<std::mutex> lock(mutex);
-    return allocations;
-}
 
 std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType) {
     return this->detachAllocation(requiredMinimalSize, requiredPtr, false, commandStreamReceiver, allocationType);
@@ -157,71 +84,70 @@ std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t req
 }
 
 std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, bool forceSystemMemoryFlag, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType, bool *nonUsmHostPtrPartialOverlapFound) {
-    ReusableAllocationRequirements requirements(commandStreamReceiver, requiredPtr, requiredMinimalSize, allocationType, forceSystemMemoryFlag, nonUsmHostPtrPartialOverlapFound);
-    return detachMatchingAllocation(requirements);
+    ReusableAllocationRequirements req(commandStreamReceiver, requiredPtr, requiredMinimalSize, allocationType, forceSystemMemoryFlag, nonUsmHostPtrPartialOverlapFound);
+
+    GraphicsAllocation *a = nullptr;
+    GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
+    return std::unique_ptr<GraphicsAllocation>(retAlloc);
 }
 
-std::unique_ptr<GraphicsAllocation> AllocationsList::detachMatchingAllocation(ReusableAllocationRequirements &requirements) {
-    std::lock_guard<std::mutex> lock(mutex);
-    for (auto it = allocations.begin(); it != allocations.end(); ++it) {
-        auto *candidate = *it;
-        bool typeMatch = (requirements.allocationType == candidate->getAllocationType());
-        if (!typeMatch) {
-            continue;
-        }
-        auto availableSize = candidate->getUnderlyingBufferSize();
-        if (candidate->getAllocationType() == AllocationType::externalHostPtr) {
-            availableSize = alignSizeWholePage(candidate->getUnderlyingBuffer(), candidate->getUnderlyingBufferSize()) - static_cast<size_t>(candidate->getAllocationOffset());
-        }
-        bool sizeMatch = (availableSize >= requirements.requiredMinimalSize);
-        bool memMatch = (candidate->storageInfo.systemMemoryForced == requirements.forceSystemMemoryFlag);
+GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, void *data) {
+    ReusableAllocationRequirements *req = static_cast<ReusableAllocationRequirements *>(data);
 
-        if (!memMatch) {
-            continue;
+    auto *curr = head;
+    while (curr != nullptr) {
+        bool typeMatch = (req->allocationType == curr->getAllocationType());
+        auto availableSize = curr->getUnderlyingBufferSize();
+        if (typeMatch && curr->getAllocationType() == NEO::AllocationType::externalHostPtr) {
+            availableSize = alignSizeWholePage(curr->getUnderlyingBuffer(), curr->getUnderlyingBufferSize()) - static_cast<size_t>(curr->getAllocationOffset());
         }
-        if (sizeMatch) {
-            if (requirements.csrTagAddress == nullptr) {
-                allocations.erase(it);
-                return std::unique_ptr<GraphicsAllocation>(candidate);
-            }
+        bool sizeMatch = (availableSize >= req->requiredMinimalSize);
+        bool memMatch = (curr->storageInfo.systemMemoryForced == req->forceSystemMemoryFlag);
 
-            bool usageMatch = (this->allocationUsage == TEMPORARY_ALLOCATION || checkTagAddressReady(requirements, candidate));
-            bool ptrMatch = (requirements.requiredPtr == nullptr || requirements.requiredPtr == candidate->getUnderlyingBuffer());
-            bool tileMatch = (requirements.deviceBitfield == candidate->storageInfo.subDeviceBitfield) || (candidate->storageInfo.subDeviceBitfield == 0);
-            bool placementMatch = (requirements.rootDeviceIndex == candidate->getRootDeviceIndex()) && tileMatch;
-
-            if (usageMatch && ptrMatch && placementMatch) {
-                if (this->allocationUsage == TEMPORARY_ALLOCATION) {
-                    candidate->updateTaskCount(CompletionStamp::notReady, requirements.contextId);
+        if (typeMatch && memMatch) {
+            if (sizeMatch) {
+                if (req->csrTagAddress == nullptr) {
+                    return removeOneImpl(curr, nullptr);
                 }
-                allocations.erase(it);
-                return std::unique_ptr<GraphicsAllocation>(candidate);
-            }
-        } else {
-            bool detectPartialOverlap = (requirements.nonUsmHostPtrPartialOverlapFound != nullptr && candidate->getAllocationType() == AllocationType::externalHostPtr && this->allocationUsage == TEMPORARY_ALLOCATION);
-            if (detectPartialOverlap) {
-                auto importedStartPtr = candidate->getUnderlyingBuffer();
-                auto importedEndPtr = ptrOffset(importedStartPtr, availableSize);
-                auto requiredStartPtr = requirements.requiredPtr;
-                auto requiredEndPtr = ptrOffset(requiredStartPtr, requirements.requiredMinimalSize);
-                if (importedStartPtr <= requiredEndPtr && importedEndPtr >= requiredStartPtr) {
-                    *requirements.nonUsmHostPtrPartialOverlapFound = true;
+
+                bool usageMatch = (this->allocationUsage == TEMPORARY_ALLOCATION || checkTagAddressReady(req, curr));
+                bool ptrMatch = (req->requiredPtr == nullptr || req->requiredPtr == curr->getUnderlyingBuffer());
+                bool tileMatch = (req->deviceBitfield == curr->storageInfo.subDeviceBitfield) || (curr->storageInfo.subDeviceBitfield == 0);
+                bool placementMatch = (req->rootDeviceIndex == curr->getRootDeviceIndex()) && tileMatch;
+
+                if (usageMatch && ptrMatch && placementMatch) {
+                    if (this->allocationUsage == TEMPORARY_ALLOCATION) {
+                        // We may not have proper task count yet, so set notReady to avoid releasing in a different thread
+                        curr->updateTaskCount(CompletionStamp::notReady, req->contextId);
+                    }
+                    return removeOneImpl(curr, nullptr);
+                }
+            } else {
+                bool detectPartialOverlap = (req->nonUsmHostPtrPartialOverlapFound != nullptr && curr->getAllocationType() == NEO::AllocationType::externalHostPtr && this->allocationUsage == TEMPORARY_ALLOCATION);
+                if (detectPartialOverlap) {
+                    auto importedStartPtr = curr->getUnderlyingBuffer();
+                    auto importedEndPtr = ptrOffset(importedStartPtr, availableSize);
+                    auto requiredStartPtr = req->requiredPtr;
+                    auto requiredEndPtr = ptrOffset(requiredStartPtr, req->requiredMinimalSize);
+                    if (importedStartPtr <= requiredEndPtr && importedEndPtr >= requiredStartPtr) {
+                        *req->nonUsmHostPtrPartialOverlapFound = true;
+                    }
                 }
             }
         }
+        curr = curr->next;
     }
     return nullptr;
 }
 
 void AllocationsList::freeAllGraphicsAllocations(Device *neoDevice) {
-    auto memoryManager = neoDevice->getMemoryManager();
-    std::vector<GraphicsAllocation *> allocationsToFree;
-    {
-        std::lock_guard<std::mutex> lock(mutex);
-        allocationsToFree.swap(allocations);
+    auto *curr = head;
+    while (curr != nullptr) {
+        auto currNext = curr->next;
+        neoDevice->getMemoryManager()->freeGraphicsMemory(curr);
+        curr = currNext;
     }
-    for (auto *allocation : allocationsToFree) {
-        memoryManager->freeGraphicsMemory(allocation);
-    }
+    head = nullptr;
+    tail = nullptr;
 }
 } // namespace NEO

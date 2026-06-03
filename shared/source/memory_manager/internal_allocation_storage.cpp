@@ -60,19 +60,22 @@ void InternalAllocationStorage::freeAllocationsList(TaskCountType waitTaskCount,
 
     auto lock = memoryManager->getHostPtrManager()->obtainOwnership();
 
-    if (allocationsList.peekIsEmpty()) {
-        return;
+    GraphicsAllocation *curr = allocationsList.detachNodes();
+
+    IDList<GraphicsAllocation, false, true> allocationsLeft;
+    while (curr != nullptr) {
+        auto *next = curr->next;
+        if (curr->getHostPtrTaskCountAssignment() == 0 && curr->getTaskCount(commandStreamReceiver.getOsContext().getContextId()) <= waitTaskCount) {
+            memoryManager->freeGraphicsMemory(curr);
+        } else {
+            allocationsLeft.pushTailOne(*curr);
+        }
+        curr = next;
     }
 
-    const auto contextId = commandStreamReceiver.getOsContext().getContextId();
-    allocationsList.removeMatching(
-        [&](GraphicsAllocation *currentAlloc) {
-            return currentAlloc->getHostPtrTaskCountAssignment() == 0 &&
-                   currentAlloc->getTaskCount(contextId) <= waitTaskCount;
-        },
-        [&](GraphicsAllocation *currentAlloc) {
-            memoryManager->freeGraphicsMemory(currentAlloc);
-        });
+    if (allocationsLeft.peekIsEmpty() == false) {
+        allocationsList.splice(*allocationsLeft.detachNodes());
+    }
 }
 
 std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAllocation(size_t requiredSize, AllocationType allocationType) {
