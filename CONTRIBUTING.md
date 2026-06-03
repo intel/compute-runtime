@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -22,6 +22,7 @@ Make sure you adhere to our
 [coding standard](https://github.com/intel/compute-runtime/blob/master/GUIDELINES.md);
 this will be verified by clang-format and clang-tidy
 (tool configuration is already included in NEO repository).
+For every file you modify, make sure the copyright header year range is up to date.
 
 ### 2. Certificate of origin
 
@@ -41,6 +42,8 @@ the requirements above. Make sure your commit message follows these rules:
 * title (first line) should be self-contained (i.e. make sense without looking at the body)
 * additional description can be provided in the body
 * title and body need to be separated by an empty line
+* avoid Unicode characters in the title and body
+* do not include a "Test plan" section in the commit message; there is no need to document a ULT plan there
 
 ### 5. Initial (cursory) review
 
