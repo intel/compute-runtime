@@ -12,8 +12,12 @@
 #include "level_zero/api/opencl/source/sharings/sharing.h"
 #include "level_zero/core/source/context/context.h"
 
+#include <memory>
+
 namespace NEO {
 namespace LEO {
+
+class RegularEventsManager;
 
 template <>
 struct OpenCLObjectMapper<_cl_context> {
@@ -73,7 +77,8 @@ class Context : public BaseObject<_cl_context> {
         cl_image_format *imageFormats,
         cl_uint *numImageFormatsReturned);
 
-    ze_event_handle_t createUserEvent();
+    ze_event_handle_t obtainRegularEvent(bool timestamp);
+    void returnRegularEvent(ze_event_handle_t event, bool timestamp);
 
     void registerCallback(CallbackT func, void *userData) { this->callbacks.emplace_back(func, userData); };
 
@@ -118,8 +123,7 @@ class Context : public BaseObject<_cl_context> {
     std::vector<std::unique_ptr<SharingFunctions>> sharingFunctions;
     cl_bool preferD3dSharedResources = 0u;
 
-    std::vector<ze_event_pool_handle_t> userEventPools{};
-    uint32_t createdFromLatestPool = 0u;
+    std::unique_ptr<RegularEventsManager> regularEventsManager;
 
     std::vector<cl_context_properties> contextProperties{};
 

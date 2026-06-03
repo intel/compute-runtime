@@ -124,6 +124,10 @@ class Event : public BaseObject<_cl_event> {
     TagNodeBase *getHwPerfCounterNode();
 
   protected:
+    enum class EventBacking { counterBased,
+                              regular,
+                              regularTimestamp };
+
     void setQueueTimeStamp();
     void setSubmitTimeStamp();
     void setupRelativeProfilingInfo(ProfilingInfo &profilingInfo);
@@ -137,6 +141,7 @@ class Event : public BaseObject<_cl_event> {
     std::unique_ptr<GlArbSyncEvent> arbEvent = nullptr;
 
     ze_event_handle_t eventHandle = nullptr;
+    EventBacking backing = EventBacking::counterBased;
     std::variant<CommandQueue *, Context *> oclObj{};
     TagNodeBase *perfCounterNode = nullptr;
     bool perfCountersEnabled = false;

@@ -45,23 +45,29 @@ Event::Event(cl_command_type commandType, NEO::LEO::CommandQueue *commandQueue) 
     }
     commandQueue->incRefInternal();
 
-    if (commandQueue->isProfilingEnabled()) {
+    const bool profiling = commandQueue->isProfilingEnabled();
+    if (profiling) {
         this->setQueueTimeStamp();
     }
 
-    ze_event_handle_t hSignalEvent{};
-    auto l0CmdList = commandQueue->getL0Object();
-    auto deviceHandle = l0CmdList->getDevice();
-    auto contextHandle = l0CmdList->getCmdListContext();
+    if (commandQueue->isOutOfOrder()) {
+        this->backing = profiling ? EventBacking::regularTimestamp : EventBacking::regular;
+        this->eventHandle = commandQueue->getContext()->obtainRegularEvent(profiling);
+    } else {
+        auto l0CmdList = commandQueue->getL0Object();
+        auto deviceHandle = l0CmdList->getDevice();
+        auto contextHandle = l0CmdList->getCmdListContext();
 
-    zex_counter_based_event_desc_t eventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, nullptr, ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_DEVICE};
-    if (commandQueue->isProfilingEnabled()) {
-        eventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+        zex_counter_based_event_desc_t eventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, nullptr, ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_DEVICE};
+        if (profiling) {
+            eventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+        }
+
+        ze_event_handle_t hSignalEvent{};
+        L0::zexCounterBasedEventCreate2(contextHandle, deviceHandle, &eventDesc, &hSignalEvent);
+        this->eventHandle = hSignalEvent;
     }
 
-    L0::zexCounterBasedEventCreate2(contextHandle, deviceHandle, &eventDesc, &hSignalEvent);
-
-    this->eventHandle = hSignalEvent;
     this->perfCountersEnabled = commandQueue->isPerfCountersEnabled();
 }
 
@@ -70,7 +76,8 @@ Event::Event(NEO::LEO::Context *context) : commandType(CL_COMMAND_USER), oclObj(
         UNRECOVERABLE_IF(true);
     }
     context->incRefInternal();
-    this->eventHandle = context->createUserEvent();
+    this->backing = EventBacking::regular;
+    this->eventHandle = context->obtainRegularEvent(false);
 }
 
 Event::~Event() {
@@ -84,7 +91,11 @@ Event::~Event() {
         perfCounterNode->returnTag();
     }
 
-    zeEventDestroy(this->eventHandle);
+    if (this->backing == EventBacking::counterBased) {
+        zeEventDestroy(this->eventHandle);
+    } else {
+        this->getContext()->returnRegularEvent(this->eventHandle, this->backing == EventBacking::regularTimestamp);
+    }
 
     std::visit([](auto &baseObject) { baseObject->decRefInternal(); }, oclObj);
 }

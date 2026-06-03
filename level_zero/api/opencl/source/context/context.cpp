@@ -11,6 +11,7 @@
 #include "shared/source/helpers/hw_info.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
+#include "level_zero/api/opencl/source/event/regular_events_manager.h"
 #include "level_zero/api/opencl/source/helpers/get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/surface_formats.h"
@@ -33,6 +34,13 @@ Context::Context(const cl_context_properties *properties, ze_context_handle_t co
     }
 
     this->storeProperties(properties);
+
+    std::vector<ze_device_handle_t> l0Devices;
+    l0Devices.reserve(this->clDevices.size());
+    for (auto *clDevice : this->clDevices) {
+        l0Devices.push_back(clDevice->getL0Handle());
+    }
+    this->regularEventsManager = std::make_unique<RegularEventsManager>(contextHandle, std::move(l0Devices));
 }
 
 Context::~Context() {
@@ -42,9 +50,9 @@ Context::~Context() {
     if (this->internalCopyCmdList) {
         zeCommandListDestroy(this->internalCopyCmdList);
     }
-    for (auto &userEventPool : this->userEventPools) {
-        zeEventPoolDestroy(userEventPool);
-    }
+
+    this->regularEventsManager.reset();
+
     if (!externalHandle && this->contextHandle) {
         zeContextDestroy(this->contextHandle);
     }
@@ -332,25 +340,12 @@ cl_int Context::getSupportedImageFormats(
     return CL_SUCCESS;
 }
 
-ze_event_handle_t Context::createUserEvent() {
-    constexpr uint32_t eventCountInPool = 8192;
+ze_event_handle_t Context::obtainRegularEvent(bool timestamp) {
+    return this->regularEventsManager->obtainEvent(timestamp);
+}
 
-    static std::mutex mtx;
-    std::lock_guard<std::mutex> lock(mtx);
-
-    if (this->userEventPools.empty() || this->createdFromLatestPool == eventCountInPool) {
-        std::vector<ze_device_handle_t> l0Devices(clDevices.size());
-        std::transform(clDevices.begin(), clDevices.end(), l0Devices.begin(), [](ClDevice *clDevice) { return clDevice->getL0Handle(); });
-        ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, eventCountInPool};
-        zeEventPoolCreate(this->contextHandle, &eventPoolDesc, static_cast<uint32_t>(l0Devices.size()), l0Devices.data(), &this->userEventPools.emplace_back());
-        this->createdFromLatestPool = 0;
-    }
-
-    ze_event_handle_t event{};
-    ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, this->createdFromLatestPool++, ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_HOST};
-    zeEventCreate(this->userEventPools.back(), &eventDesc, &event);
-
-    return event;
+void Context::returnRegularEvent(ze_event_handle_t event, bool timestamp) {
+    this->regularEventsManager->returnEvent(event, timestamp);
 }
 
 void Context::storeProperties(const cl_context_properties *properties) {

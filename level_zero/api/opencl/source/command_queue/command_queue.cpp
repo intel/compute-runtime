@@ -58,7 +58,11 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         }
     }
 
-    ze_command_queue_flags_t l0CmdListFlags = ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT | ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    ze_command_queue_flags_t l0CmdListFlags = ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT;
+    const bool outOfOrder = getCmdQueueProperties<cl_command_queue_properties>(properties) & static_cast<cl_command_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    if (!outOfOrder) {
+        l0CmdListFlags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    }
 
     uint32_t l0QueueOrdinal = 0;
     uint32_t l0QueueIndex = 0;

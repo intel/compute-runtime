@@ -64,6 +64,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     }
 
     bool isProfilingEnabled() { return NEO::LEO::CommandQueue::getCmdQueueProperties<cl_command_queue_properties>(this->queueProperties.data()) & static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE); };
+    bool isOutOfOrder() const { return !this->getL0Object()->isInOrderExecutionEnabled(); };
     bool isPerfCountersEnabled() const { return perfCountersEnabled; };
     bool setPerfCountersEnabled();
     PerformanceCounters *getPerfCounters();
