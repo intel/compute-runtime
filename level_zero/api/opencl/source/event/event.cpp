@@ -245,6 +245,8 @@ std::pair<EventHandleSpan, ze_event_handle_t> Event::setupEvents(cl_uint numEven
     EventHandleSpan waitEvents{numEventsInWaitList, eventWaitList};
     ze_event_handle_t signalEvent = nullptr;
 
+    commandQueue->storeDependencies(numEventsInWaitList, eventWaitList);
+
     if (event) {
         auto e = std::make_unique<NEO::LEO::Event>(commandType, commandQueue);
         signalEvent = e->eventHandle;

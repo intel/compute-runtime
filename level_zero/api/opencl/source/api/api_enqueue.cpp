@@ -143,7 +143,7 @@ cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
                                                     waitEvents.data());
     if (blockingRead) {
         lock.unlock();
-        ret = zeCommandListHostSynchronize(pCommandQueue->getL0Handle(), std::numeric_limits<uint64_t>::max());
+        ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
     return L0ToClResultMapper(ret);
@@ -194,7 +194,7 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
                                                           waitEvents.data());
     if (blockingRead) {
         lock.unlock();
-        ret = zeCommandListHostSynchronize(pCommandQueue->getL0Handle(), std::numeric_limits<uint64_t>::max());
+        ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
     return L0ToClResultMapper(ret);
@@ -232,7 +232,7 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
                                                     waitEvents.data());
     if (blockingWrite) {
         lock.unlock();
-        ret = zeCommandListHostSynchronize(pCommandQueue->getL0Handle(), std::numeric_limits<uint64_t>::max());
+        ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
     return L0ToClResultMapper(ret);
@@ -283,7 +283,7 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
                                                           waitEvents.data());
     if (blockingWrite) {
         lock.unlock();
-        ret = zeCommandListHostSynchronize(pCommandQueue->getL0Handle(), std::numeric_limits<uint64_t>::max());
+        ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
     return L0ToClResultMapper(ret);
@@ -426,7 +426,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
                                                               waitEvents.data());
     if (blockingRead) {
         lock.unlock();
-        ret = zeCommandListHostSynchronize(pCommandQueue->getL0Handle(), std::numeric_limits<uint64_t>::max());
+        ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
     return L0ToClResultMapper(ret);
@@ -470,7 +470,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
                                                                 waitEvents.data());
     if (blockingWrite) {
         lock.unlock();
-        ret = zeCommandListHostSynchronize(pCommandQueue->getL0Handle(), std::numeric_limits<uint64_t>::max());
+        ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
     return L0ToClResultMapper(ret);
@@ -806,7 +806,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
                                                                                          waitEvents.data())));
         }
         if (blockingMap && errcodeHelper.localErrcode == CL_SUCCESS) {
-            errcodeHelper.set(L0ToClResultMapper(zeCommandListHostSynchronize(pCommandQueue->getL0Handle(), std::numeric_limits<uint64_t>::max())));
+            errcodeHelper.set(L0ToClResultMapper(pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max())));
         }
     }
     if (errcodeHelper.localErrcode != CL_SUCCESS) {
@@ -1049,6 +1049,7 @@ cl_int CL_API_CALL clEnqueueWaitForEvents(cl_command_queue commandQueue,
         return CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
     }
     NEO::LEO::EventHandleSpan waitEvents{numEvents, eventList};
+    pCommandQueue->storeDependencies(numEvents, eventList);
     auto lock = pCommandQueue->takeOwnership();
     return L0ToClResultMapper(zeCommandListAppendWaitOnEvents(pCommandQueue->getL0Handle(), waitEvents.size(), waitEvents.data()));
 }
@@ -1274,7 +1275,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemcpyINTEL(
                                                     waitEvents.data());
     if (blocking) {
         lock.unlock();
-        ret = zeCommandListHostSynchronize(pCommandQueue->getL0Handle(), std::numeric_limits<uint64_t>::max());
+        ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
     return L0ToClResultMapper(ret);

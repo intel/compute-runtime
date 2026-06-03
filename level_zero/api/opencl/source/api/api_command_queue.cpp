@@ -121,6 +121,10 @@ cl_int CL_API_CALL clReleaseCommandQueue(cl_command_queue commandQueue) {
         return retVal;
     }
 
+    if (pCommandQueue->getReference() == 1 && pCommandQueue->hasDependencies()) {
+        pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    }
+
     pCommandQueue->decRefApi();
     return CL_SUCCESS;
 }
@@ -160,7 +164,7 @@ cl_int CL_API_CALL clFinish(cl_command_queue commandQueue) {
         return retVal;
     }
 
-    return L0ToClResultMapper(zeCommandListHostSynchronize(pCommandQueue->getL0Handle(), std::numeric_limits<uint64_t>::max()));
+    return L0ToClResultMapper(pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max()));
 }
 
 CL_API_ENTRY cl_command_queue CL_API_CALL

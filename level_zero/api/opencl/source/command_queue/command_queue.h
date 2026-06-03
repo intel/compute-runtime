@@ -11,12 +11,16 @@
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 
+#include <vector>
+
 namespace NEO {
 class PerformanceCounters;
 }
 
 namespace NEO {
 namespace LEO {
+
+class Event;
 
 template <>
 struct OpenCLObjectMapper<_cl_command_queue> {
@@ -83,6 +87,11 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                        cl_event *oclEvent,
                                        cl_uint cmdType);
 
+    void storeDependencies(cl_uint numEvents, const cl_event *eventWaitList);
+    void clearDependencies();
+    bool hasDependencies();
+    ze_result_t hostSynchronize(uint64_t timeout);
+
   protected:
     void storeProperties(const cl_queue_properties *properties);
     cl_queue_properties getCommandQueueProperties() const { return getCmdQueueProperties<cl_queue_properties>(this->queueProperties.data()); };
@@ -99,12 +108,13 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     static void releaseHelper(void *userData);
 
     std::vector<cl_queue_properties> queueProperties{};
+    std::vector<NEO::LEO::Event *> dependencyEvents{};
     ClDevice *clDevice = nullptr;
     Context *context = nullptr;
     const bool externalHandle = false;
+    bool perfCountersEnabled = false;
 
     ze_command_list_handle_t cmdListHandle = nullptr;
-    bool perfCountersEnabled = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandQueue>);

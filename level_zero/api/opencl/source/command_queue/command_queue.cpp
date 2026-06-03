@@ -22,6 +22,8 @@
 #include "level_zero/api/opencl/source/mem_obj/mem_obj.h"
 #include "level_zero/core/source/cmdqueue/internal_queue_throttle_ext.h"
 
+#include <limits>
+
 namespace NEO {
 namespace LEO {
 
@@ -95,6 +97,9 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
 }
 
 CommandQueue::~CommandQueue() {
+    if (this->hasDependencies()) {
+        this->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    }
     if (perfCountersEnabled) {
         getPerfCounters()->shutdown();
     }
@@ -262,6 +267,42 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects,
                                                                   hSignalEvent,
                                                                   waitEvents.size(),
                                                                   waitEvents.data()));
+}
+
+void CommandQueue::storeDependencies(cl_uint numEvents, const cl_event *eventWaitList) {
+    if (numEvents == 0) {
+        return;
+    }
+
+    for (cl_uint i = 0; i < numEvents; ++i) {
+        NEO::LEO::castToObject<NEO::LEO::Event>(eventWaitList[i])->incRefInternal();
+    }
+
+    auto lock = this->takeOwnership();
+    for (cl_uint i = 0; i < numEvents; ++i) {
+        this->dependencyEvents.push_back(NEO::LEO::castToObject<NEO::LEO::Event>(eventWaitList[i]));
+    }
+}
+
+void CommandQueue::clearDependencies() {
+    for (auto *pEvent : this->dependencyEvents) {
+        pEvent->decRefInternal();
+    }
+    auto lock = this->takeOwnership();
+    this->dependencyEvents.clear();
+}
+
+bool CommandQueue::hasDependencies() {
+    auto lock = this->takeOwnership();
+    return !this->dependencyEvents.empty();
+}
+
+ze_result_t CommandQueue::hostSynchronize(uint64_t timeout) {
+    auto result = zeCommandListHostSynchronize(this->cmdListHandle, timeout);
+    if (result == ZE_RESULT_SUCCESS) {
+        this->clearDependencies();
+    }
+    return result;
 }
 
 } // namespace LEO
