@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
 
 namespace NEO {
+extern unsigned int testCaseMaxTimeInMs;
 
 TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenNewSubmissionThenDirectSubmissionsAreChecked) {
     MockExecutionEnvironment executionEnvironment;
@@ -99,6 +100,55 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenShutt
     std::this_thread::yield();
     controller.stopThread();
     EXPECT_EQ(controller.directSubmissionControllingThread.get(), nullptr);
+}
+
+TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerInSleepWhenStopThreadCalledThenThreadExitsPromptly) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
+
+    DeviceBitfield deviceBitfield(1);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    csr.setupContext(*osContext.get());
+
+    DirectSubmissionControllerMock controller;
+    controller.callBaseSleepMethod = true;
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+
+    controller.registerDirectSubmission(&csr);
+    controller.startThread();
+    controller.waitTillSleep();
+
+    csr.taskCount = 1;
+    controller.waitOnConditionVar.store(false);
+    controller.notifyNewSubmission(&csr);
+    controller.waitTillSleep();
+
+    // Thread is now in wait() -> will go through sleep() with timeout using base implementation.
+    // Trigger another cycle so it enters sleep() with a real timed wait.
+    controller.sleepCalled.store(false);
+    controller.waitOnConditionVar.store(false);
+    controller.timeout = std::chrono::microseconds(1000 * testCaseMaxTimeInMs);
+    controller.notifyNewSubmission(&csr);
+
+    // Give the thread time to enter sleep()
+    while (!controller.sleepCalled.load()) {
+        std::this_thread::yield();
+    }
+
+    auto startTime = std::chrono::high_resolution_clock::now();
+    controller.stopThread();
+    auto elapsed = std::chrono::high_resolution_clock::now() - startTime;
+
+    // stopThread should complete within the sleep timeout
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count(), testCaseMaxTimeInMs);
+    EXPECT_EQ(controller.directSubmissionControllingThread.get(), nullptr);
+
+    controller.unregisterDirectSubmission(&csr);
 }
 
 TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenEnqueuedWaitForPagingFenceThenRequestHandled) {

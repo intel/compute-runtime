@@ -15,7 +15,7 @@
 namespace NEO {
 bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
     SysCalls::timeBeginPeriod(1u);
-    bool returnValue = NEO::waitOnConditionWithPredicate(condVar, lock, getSleepValue(), [&] { return !pagingFenceRequests.empty(); });
+    bool returnValue = NEO::waitOnConditionWithPredicate(condVar, lock, getSleepValue(), [&] { return !keepControlling.load() || !pagingFenceRequests.empty(); });
     SysCalls::timeEndPeriod(1u);
     return returnValue;
 }
