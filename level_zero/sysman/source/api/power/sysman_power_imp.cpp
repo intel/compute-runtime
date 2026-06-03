@@ -55,16 +55,16 @@ ze_result_t PowerImp::powerSetLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
     return pOsPower->setLimitsExt(pCount, pSustained);
 }
 
-ze_result_t PowerImp::powerGetLimitsExp(uint32_t *pLimit) {
-    return pOsPower->getLimitsExp(pLimit);
+ze_result_t PowerImp::powerGetLimitsExt2(uint32_t *pLimit) {
+    return pOsPower->getLimitsExt2(pLimit);
 }
 
-ze_result_t PowerImp::powerSetLimitsExp(const uint32_t limit) {
-    return pOsPower->setLimitsExp(limit);
+ze_result_t PowerImp::powerSetLimitsExt2(const uint32_t limit) {
+    return pOsPower->setLimitsExt2(limit);
 }
 
-ze_result_t PowerImp::powerGetUsageExp(uint32_t *pInstantPower, uint32_t *pAveragePower) {
-    return pOsPower->getPowerUsageExp(pInstantPower, pAveragePower);
+ze_result_t PowerImp::powerGetUsage(uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    return pOsPower->getPowerUsage(pInstantPower, pAveragePower);
 }
 
 ze_result_t PowerImp::powerGetEnergyThreshold(zes_energy_threshold_t *pThreshold) {

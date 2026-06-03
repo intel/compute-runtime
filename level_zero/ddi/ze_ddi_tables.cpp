@@ -469,6 +469,9 @@ DriverDispatch::DriverDispatch() {
     this->sysmanPower.pfnSetEnergyThreshold = L0::zesPowerSetEnergyThreshold;
     this->sysmanPower.pfnGetLimitsExt = L0::zesPowerGetLimitsExt;
     this->sysmanPower.pfnSetLimitsExt = L0::zesPowerSetLimitsExt;
+    this->sysmanPower.pfnGetUsage = L0::zesPowerGetUsage;
+    this->sysmanPower.pfnGetLimitsExt2 = L0::zesPowerGetLimitsExt2;
+    this->sysmanPower.pfnSetLimitsExt2 = L0::zesPowerSetLimitsExt2;
     this->sysmanFrequency.pfnGetProperties = L0::zesFrequencyGetProperties;
     this->sysmanFrequency.pfnGetAvailableClocks = L0::zesFrequencyGetAvailableClocks;
     this->sysmanFrequency.pfnGetRange = L0::zesFrequencyGetRange;

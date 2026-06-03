@@ -283,7 +283,7 @@ int32_t SysmanProductHelperHw<gfxProduct>::getPowerMinLimit(const int32_t &defau
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getLimitsExp(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint64_t powerLimit = 0;
 
@@ -314,7 +314,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getLimitsExp(SysmanKmdInterface *
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExp(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint64_t val = static_cast<uint64_t>(limit);
     bool anyLimitSet = false;
@@ -447,7 +447,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsageExp(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) {
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();

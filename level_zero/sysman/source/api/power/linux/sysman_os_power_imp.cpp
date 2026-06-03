@@ -344,9 +344,9 @@ ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxPowerImp::getLimitsExp(uint32_t *pLimit) {
+ze_result_t LinuxPowerImp::getLimitsExt2(uint32_t *pLimit) {
     if (isSubdevice) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getLimitsExp() is not supported for Subdevices, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): getLimitsExt2() is not supported for Subdevices, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -354,12 +354,12 @@ ze_result_t LinuxPowerImp::getLimitsExp(uint32_t *pLimit) {
         {"sustainedLimitFile", {sustainedPowerLimitFile, sustainedPowerLimitFileExists}},
         {"burstLimitFile", {burstPowerLimitFile, burstPowerLimitFileExists}}};
 
-    return pSysmanProductHelper->getLimitsExp(pSysmanKmdInterface, pSysfsAccess, powerLimitFiles, pLimit);
+    return pSysmanProductHelper->getLimitsExt2(pSysmanKmdInterface, pSysfsAccess, powerLimitFiles, pLimit);
 }
 
-ze_result_t LinuxPowerImp::setLimitsExp(const uint32_t limit) {
+ze_result_t LinuxPowerImp::setLimitsExt2(const uint32_t limit) {
     if (isSubdevice) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): setLimitsExp() is not supported for Subdevices, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): setLimitsExt2() is not supported for Subdevices, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -368,11 +368,11 @@ ze_result_t LinuxPowerImp::setLimitsExp(const uint32_t limit) {
         {"burstLimitFile", {burstPowerLimitFile, burstPowerLimitFileExists}},
         {"criticalLimitFile", {criticalPowerLimitFile, criticalPowerLimitFileExists}}};
 
-    return pSysmanProductHelper->setLimitsExp(pSysmanKmdInterface, pSysfsAccess, powerLimitFiles, powerDomain, limit);
+    return pSysmanProductHelper->setLimitsExt2(pSysmanKmdInterface, pSysfsAccess, powerLimitFiles, powerDomain, limit);
 }
 
-ze_result_t LinuxPowerImp::getPowerUsageExp(uint32_t *pInstantPower, uint32_t *pAveragePower) {
-    return pSysmanProductHelper->getPowerUsageExp(pLinuxSysmanImp, powerDomain, pInstantPower, pAveragePower);
+ze_result_t LinuxPowerImp::getPowerUsage(uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    return pSysmanProductHelper->getPowerUsage(pLinuxSysmanImp, powerDomain, pInstantPower, pAveragePower);
 }
 
 bool LinuxPowerImp::isIntelGraphicsHwmonDir(const std::string &name) {

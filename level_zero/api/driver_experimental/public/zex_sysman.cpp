@@ -70,7 +70,7 @@ ze_result_t ZE_APICALL zesIntelPowerGetLimitsExp(zes_pwr_handle_t hPower, uint32
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::Power::fromHandle(hPower)->powerGetLimitsExp(pLimit);
+        return L0::Sysman::Power::fromHandle(hPower)->powerGetLimitsExt2(pLimit);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -80,7 +80,7 @@ ze_result_t ZE_APICALL zesIntelPowerSetLimitsExp(zes_pwr_handle_t hPower, const 
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::Power::fromHandle(hPower)->powerSetLimitsExp(limit);
+        return L0::Sysman::Power::fromHandle(hPower)->powerSetLimitsExt2(limit);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -90,7 +90,7 @@ ze_result_t ZE_APICALL zesIntelDeviceGetPowerUsageExp(zes_pwr_handle_t hPower, u
     if (L0::sysmanInitFromCore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::Power::fromHandle(hPower)->powerGetUsageExp(pInstantPower, pAveragePower);
+        return L0::Sysman::Power::fromHandle(hPower)->powerGetUsage(pInstantPower, pAveragePower);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }

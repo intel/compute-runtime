@@ -226,30 +226,6 @@ std::string getPowerLimitSourceType(zes_power_source_t type) {
     return powerLimitsSourceTypeMap.at(type);
 }
 
-// Experimental Power APIs function pointers
-typedef ze_result_t(ZE_APICALL *zesIntelPowerGetLimitsExp_pfn)(
-    zes_pwr_handle_t hPower,
-    uint32_t *pLimit);
-
-typedef ze_result_t(ZE_APICALL *zesIntelPowerSetLimitsExp_pfn)(
-    zes_pwr_handle_t hPower,
-    const uint32_t limit);
-
-typedef ze_result_t(ZE_APICALL *zesIntelDeviceGetPowerUsageExp_pfn)(
-    zes_pwr_handle_t hPower,
-    uint32_t *pInstantPower,
-    uint32_t *pAveragePower);
-
-zesIntelPowerGetLimitsExp_pfn zesIntelPowerGetLimitsExpPtr = nullptr;
-zesIntelPowerSetLimitsExp_pfn zesIntelPowerSetLimitsExpPtr = nullptr;
-zesIntelDeviceGetPowerUsageExp_pfn zesIntelDeviceGetPowerUsageExpPtr = nullptr;
-
-void getPowerExpFunctionPointers(zes_driver_handle_t driverHandle) {
-    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelPowerGetLimitsExp", reinterpret_cast<void **>(&zesIntelPowerGetLimitsExpPtr)));
-    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelPowerSetLimitsExp", reinterpret_cast<void **>(&zesIntelPowerSetLimitsExpPtr)));
-    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceGetPowerUsageExp", reinterpret_cast<void **>(&zesIntelDeviceGetPowerUsageExpPtr)));
-}
-
 void getPowerLimits(const zes_pwr_handle_t &handle) {
     uint32_t limitCount = 0;
     VALIDATECALL(zesPowerGetLimitsExt(handle, &limitCount, nullptr));
@@ -331,12 +307,12 @@ void setPowerLimitExp(const zes_pwr_handle_t &handle, std::vector<std::string> &
     uint32_t limitValue = static_cast<uint32_t>(std::stoi(buf[3]));
 
     // Set the Global power limit
-    VALIDATECALL(zesIntelPowerSetLimitsExpPtr(handle, limitValue));
+    VALIDATECALL(zesPowerSetLimitsExt2(handle, limitValue));
     std::cout << "Power limit set to " << limitValue << " successfully." << std::endl;
 
     // Read back the Global power limit to verify that the set operation took effect
     uint32_t readBackLimit = 0;
-    VALIDATECALL(zesIntelPowerGetLimitsExpPtr(handle, &readBackLimit));
+    VALIDATECALL(zesPowerGetLimitsExt2(handle, &readBackLimit));
     if (verbose && (readBackLimit != limitValue)) {
         std::cout << "Warning: Requested global power limit " << limitValue
                   << " does not match applied limit " << readBackLimit << std::endl;
@@ -444,9 +420,9 @@ void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, 
             getPowerLimits(handle);
 
             // Test Global Power Limit APIs
-            if (zesIntelPowerGetLimitsExpPtr && zesIntelPowerSetLimitsExpPtr) {
+            {
                 uint32_t currentLimit = 0;
-                VALIDATECALL(zesIntelPowerGetLimitsExpPtr(handle, &currentLimit));
+                VALIDATECALL(zesPowerGetLimitsExt2(handle, &currentLimit));
                 if (verbose) {
                     std::cout << " --- Global Power Limit --- " << std::endl;
                     std::cout << "powerLimit = " << currentLimit << " mW" << std::endl;
@@ -465,13 +441,13 @@ void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, 
             }
 
             // Test Power Usage API
-            if (zesIntelDeviceGetPowerUsageExpPtr) {
+            {
                 std::cout << std::endl
                           << " --- Testing Power Usage API --- " << std::endl;
 
                 uint32_t instantPower = 0;
                 uint32_t averagePower = 0;
-                VALIDATECALL(zesIntelDeviceGetPowerUsageExpPtr(handle, &instantPower, &averagePower));
+                VALIDATECALL(zesPowerGetUsage(handle, &instantPower, &averagePower));
 
                 if (verbose) {
                     std::cout << " --- Power Usage for " << getPowerDomainType(extProperties.domain) << " --- " << std::endl;
@@ -2424,7 +2400,6 @@ int main(int argc, char *argv[]) {
         });
     }
     if (isParamEnabled(argc, argv, "-o", "--power", &optind)) {
-        getPowerExpFunctionPointers(driver);
         deviceIndex = 0;
         optind = optind + 1;
         while (optind < argc) {

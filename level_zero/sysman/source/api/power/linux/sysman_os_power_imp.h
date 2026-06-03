@@ -32,9 +32,9 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
     ze_result_t setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
     ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtProperties) override;
-    ze_result_t getLimitsExp(uint32_t *pLimit) override;
-    ze_result_t setLimitsExp(const uint32_t limit) override;
-    ze_result_t getPowerUsageExp(uint32_t *pInstantPower, uint32_t *pAveragePower) override;
+    ze_result_t getLimitsExt2(uint32_t *pLimit) override;
+    ze_result_t setLimitsExt2(const uint32_t limit) override;
+    ze_result_t getPowerUsage(uint32_t *pInstantPower, uint32_t *pAveragePower) override;
 
     bool isPowerModuleSupported() override;
     bool isIntelGraphicsHwmonDir(const std::string &name);

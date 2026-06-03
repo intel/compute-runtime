@@ -323,6 +323,22 @@ ze_result_t ZE_APICALL zesPowerSetLimitsExt(
         [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerSetLimitsExt(pCount, pSustained); });
 }
 
+ze_result_t ZE_APICALL zesPowerGetLimitsExt2(
+    zes_pwr_handle_t hPower,
+    uint32_t *pLimit) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerGetLimitsExt2(pLimit); });
+}
+
+ze_result_t ZE_APICALL zesPowerSetLimitsExt2(
+    zes_pwr_handle_t hPower,
+    const uint32_t limit) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerSetLimitsExt2(limit); });
+}
+
 ze_result_t ZE_APICALL zesPowerGetEnergyThreshold(
     zes_pwr_handle_t hPower,
     zes_energy_threshold_t *pThreshold) {
@@ -337,6 +353,15 @@ ze_result_t ZE_APICALL zesPowerSetEnergyThreshold(
     return L0::Sysman::dispatchSysmanApi(
         [&]() { return L0::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold); },
         [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold); });
+}
+
+ze_result_t ZE_APICALL zesPowerGetUsage(
+    zes_pwr_handle_t hPower,
+    uint32_t *pInstantPower,
+    uint32_t *pAveragePower) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerGetUsage(pInstantPower, pAveragePower); });
 }
 
 ze_result_t ZE_APICALL zesDeviceEnumFrequencyDomains(
@@ -2113,6 +2138,22 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesPowerSetLimitsExt(
         pSustained);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL zesPowerGetLimitsExt2(
+    zes_pwr_handle_t hPower,
+    uint32_t *pLimit) {
+    return L0::zesPowerGetLimitsExt2(
+        hPower,
+        pLimit);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesPowerSetLimitsExt2(
+    zes_pwr_handle_t hPower,
+    const uint32_t limit) {
+    return L0::zesPowerSetLimitsExt2(
+        hPower,
+        limit);
+}
+
 ZE_APIEXPORT ze_result_t ZE_APICALL zesPowerGetEnergyThreshold(
     zes_pwr_handle_t hPower,
     zes_energy_threshold_t *pThreshold) {
@@ -2127,6 +2168,16 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesPowerSetEnergyThreshold(
     return L0::zesPowerSetEnergyThreshold(
         hPower,
         threshold);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesPowerGetUsage(
+    zes_pwr_handle_t hPower,
+    uint32_t *pInstantPower,
+    uint32_t *pAveragePower) {
+    return L0::zesPowerGetUsage(
+        hPower,
+        pInstantPower,
+        pAveragePower);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumPsus(

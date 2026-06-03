@@ -28,9 +28,9 @@ class Power : _zes_pwr_handle_t {
     virtual ze_result_t powerSetEnergyThreshold(double threshold) = 0;
     virtual ze_result_t powerGetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) = 0;
     virtual ze_result_t powerSetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) = 0;
-    virtual ze_result_t powerGetLimitsExp(uint32_t *pLimit) = 0;
-    virtual ze_result_t powerSetLimitsExp(const uint32_t limit) = 0;
-    virtual ze_result_t powerGetUsageExp(uint32_t *pInstantPower, uint32_t *pAveragePower) = 0;
+    virtual ze_result_t powerGetLimitsExt2(uint32_t *pLimit) = 0;
+    virtual ze_result_t powerSetLimitsExt2(const uint32_t limit) = 0;
+    virtual ze_result_t powerGetUsage(uint32_t *pInstantPower, uint32_t *pAveragePower) = 0;
 
     static Power *fromHandle(zes_pwr_handle_t handle) {
         return static_cast<Power *>(handle);

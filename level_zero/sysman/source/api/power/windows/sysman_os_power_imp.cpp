@@ -284,15 +284,15 @@ ze_result_t WddmPowerImp::setLimits(const zes_power_sustained_limit_t *pSustaine
     return status;
 }
 
-ze_result_t WddmPowerImp::getLimitsExp(uint32_t *pLimit) {
+ze_result_t WddmPowerImp::getLimitsExt2(uint32_t *pLimit) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmPowerImp::setLimitsExp(const uint32_t limit) {
+ze_result_t WddmPowerImp::setLimitsExt2(const uint32_t limit) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmPowerImp::getPowerUsageExp(uint32_t *pInstantPower, uint32_t *pAveragePower) {
+ze_result_t WddmPowerImp::getPowerUsage(uint32_t *pInstantPower, uint32_t *pAveragePower) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
