@@ -1188,6 +1188,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false);
 
     auto expectedIndex = productHelper.overridePatIndex(true, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::uncached), allocation->getAllocationType());
+    if (!allocation->isAllocatedInLocalMemoryPool()) {
+        expectedIndex = productHelper.overrideSystemMemoryPatIndex(expectedIndex);
+    }
 
     EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 
