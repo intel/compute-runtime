@@ -98,13 +98,13 @@ class NoCompilerInterfaceRootDeviceEnvironment : public RootDeviceEnvironment {
 class FailingGenBinaryProgram : public MockProgram {
   public:
     using MockProgram::MockProgram;
-    cl_int processGenBinary(ClDevice &clDevice) override { return CL_INVALID_BINARY; }
+    cl_int processGenBinary(const ClDevice &clDevice) override { return CL_INVALID_BINARY; }
 };
 
 class SucceedingGenBinaryProgram : public MockProgram {
   public:
     using MockProgram::MockProgram;
-    cl_int processGenBinary(ClDevice &clDevice) override { return CL_SUCCESS; }
+    cl_int processGenBinary(const ClDevice &clDevice) override { return CL_SUCCESS; }
 };
 
 using ProgramFromBinaryTest = ProgramFromBinaryFixture;
@@ -2067,7 +2067,7 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
             this->buildInfos[0].kernelInfoArray.push_back(kernelInfo.release());
         }
 
-        cl_int processGenBinary(ClDevice &clDevice) override {
+        cl_int processGenBinary(const ClDevice &clDevice) override {
             return CL_SUCCESS;
         }
     };

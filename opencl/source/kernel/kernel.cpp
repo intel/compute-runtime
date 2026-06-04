@@ -1316,10 +1316,6 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
         commandStreamReceiver.makeResident(*(program->getExportedFunctionsSurface(rootDeviceIndex)));
     }
 
-    for (auto *libSurface : program->getRequiredLibsExportedSurfaces(rootDeviceIndex)) {
-        commandStreamReceiver.makeResident(*libSurface);
-    }
-
     for (auto gfxAlloc : kernelSvmGfxAllocations) {
         commandStreamReceiver.makeResident(*gfxAlloc);
     }
@@ -1376,10 +1372,6 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
     if (program->getExportedFunctionsSurface(rootDeviceIndex)) {
         GeneralSurface *surface = new GeneralSurface(program->getExportedFunctionsSurface(rootDeviceIndex));
         dst.push_back(surface);
-    }
-
-    for (auto *libSurface : program->getRequiredLibsExportedSurfaces(rootDeviceIndex)) {
-        dst.push_back(new GeneralSurface(libSurface));
     }
 
     for (auto gfxAlloc : kernelSvmGfxAllocations) {
@@ -1443,13 +1435,6 @@ void Kernel::getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &al
     if (auto exportedFunctionsSurface = program->getExportedFunctionsSurface(rootDeviceIndex)) {
         allocationsInfo.push_back({.base = reinterpret_cast<void *>(exportedFunctionsSurface->getGpuAddress()),
                                    .size = exportedFunctionsSurface->getUnderlyingBufferSize(),
-                                   .type = CL_MEM_TYPE_UNKNOWN_INTEL,
-                                   .arg_index = -1});
-    }
-
-    for (auto *libSurface : program->getRequiredLibsExportedSurfaces(rootDeviceIndex)) {
-        allocationsInfo.push_back({.base = reinterpret_cast<void *>(libSurface->getGpuAddress()),
-                                   .size = libSurface->getUnderlyingBufferSize(),
                                    .type = CL_MEM_TYPE_UNKNOWN_INTEL,
                                    .arg_index = -1});
     }

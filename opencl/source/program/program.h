@@ -142,8 +142,8 @@ class Program : public BaseObject<_cl_program> {
                  std::unordered_map<std::string, BuiltIn::DispatchInfoBuilder *> &builtinsMap);
 
     cl_int processGenBinaries(const ClDeviceVector &clDevices, std::unordered_map<uint32_t, BuildPhase> &phaseReached);
-    MOCKABLE_VIRTUAL cl_int processGenBinary(ClDevice &clDevice);
-    MOCKABLE_VIRTUAL cl_int processProgramInfo(ProgramInfo &dst, ClDevice &clDevice);
+    MOCKABLE_VIRTUAL cl_int processGenBinary(const ClDevice &clDevice);
+    MOCKABLE_VIRTUAL cl_int processProgramInfo(ProgramInfo &dst, const ClDevice &clDevice);
 
     cl_int compile(const ClDeviceVector &deviceVector, const char *buildOptions,
                    cl_uint numInputHeaders, const cl_program *inputHeaders, const char **headerIncludeNames);
@@ -200,7 +200,6 @@ class Program : public BaseObject<_cl_program> {
     NEO::SharedPoolAllocation *getGlobalSurface(uint32_t rootDeviceIndex) const;
     NEO::GraphicsAllocation *getGlobalSurfaceGA(uint32_t rootDeviceIndex) const;
     NEO::GraphicsAllocation *getExportedFunctionsSurface(uint32_t rootDeviceIndex) const;
-    const std::vector<NEO::GraphicsAllocation *> &getRequiredLibsExportedSurfaces(uint32_t rootDeviceIndex) const;
 
     MOCKABLE_VIRTUAL bool isIsaPoolingEnabled(Device &neoDevice);
     cl_int setIsaGraphicsAllocations(
@@ -314,12 +313,6 @@ class Program : public BaseObject<_cl_program> {
                                        size_t variablesInitDataSize, const ProgramInfo::GlobalSurfaceInfo &stringInfo,
                                        std::vector<NEO::ExternalFunctionInfo> &extFuncInfos);
 
-    MOCKABLE_VIRTUAL cl_int resolveRequiredLibs(ClDevice &clDevice, const ProgramInfo &programInfo);
-
-    MOCKABLE_VIRTUAL LinkingStatus linkAgainstRequiredLibs(uint32_t rootDeviceIndex,
-                                                           Linker::PatchableSegments &isaSegmentsForPatching,
-                                                           Linker::UnresolvedExternals &unresolvedExternalsInfo);
-
     void updateNonUniformFlag();
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
 
@@ -381,8 +374,6 @@ class Program : public BaseObject<_cl_program> {
         std::unique_ptr<char[]> debugData;
         size_t debugDataSize = 0U;
         size_t kernelMiscInfoPos = std::string::npos;
-        std::vector<Program *> requiredLibPrograms;
-        std::vector<NEO::GraphicsAllocation *> requiredLibsExportedSurfaces;
     };
 
     std::vector<BuildInfo> buildInfos;

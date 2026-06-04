@@ -244,7 +244,6 @@ struct Linker {
                        ExternalFunctionsT &externalFunctions);
 
     static void patchAddress(void *relocAddress, const uint64_t value, const RelocationInfo &relocation);
-    static uint32_t addressSizeInBytes(RelocationInfo::Type relocationType);
     void removeLocalSymbolsFromRelocatedSymbols();
     RelocatedSymbolsMap extractRelocatedSymbols() {
         return RelocatedSymbolsMap(std::move(relocatedSymbols));

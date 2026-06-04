@@ -6,7 +6,6 @@
 
 set(IGDRCL_SRCS_tests_device
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_device_required_libs_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_timers_tests.cpp
