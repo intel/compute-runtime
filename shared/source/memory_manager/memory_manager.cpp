@@ -104,30 +104,42 @@ void MemoryManager::storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation>
     temporaryAllocations->pushTailOne(*gfxAllocation.release());
 }
 
-void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, TaskCountType waitedTaskCount, bool cleanHostPtrAssigned) {
+void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, TaskCountType waitedTaskCount) {
     auto lock = getHostPtrManager()->obtainOwnership();
 
-    if (temporaryAllocations->peekIsEmpty()) {
-        return;
+    GraphicsAllocation *currentAlloc = temporaryAllocations->detachNodes();
+
+    IDList<GraphicsAllocation, false, true> allocationsLeft;
+
+    while (currentAlloc != nullptr) {
+        const auto waitedOsContextId = csr.getOsContext().getContextId();
+        auto *nextAlloc = currentAlloc->next;
+        bool freeAllocation = false;
+
+        if (currentAlloc->getHostPtrTaskCountAssignment() == 0) {
+            if (currentAlloc->isUsedByOsContext(waitedOsContextId)) {
+                if (currentAlloc->getTaskCount(waitedOsContextId) <= waitedTaskCount) {
+                    if (!currentAlloc->isUsedByManyOsContexts() || !allocInUse(*currentAlloc)) {
+                        freeAllocation = true;
+                    }
+                }
+            } else if (!allocInUse(*currentAlloc)) {
+                freeAllocation = true;
+            }
+        }
+
+        if (freeAllocation) {
+            freeGraphicsMemory(currentAlloc);
+        } else {
+            allocationsLeft.pushTailOne(*currentAlloc);
+        }
+
+        currentAlloc = nextAlloc;
     }
 
-    const auto waitedOsContextId = csr.getOsContext().getContextId();
-    temporaryAllocations->removeMatching(
-        [&](GraphicsAllocation *currentAlloc) -> bool {
-            if (!cleanHostPtrAssigned && currentAlloc->getHostPtrTaskCountAssignment() != 0) {
-                return false;
-            }
-            if (currentAlloc->isUsedByOsContext(waitedOsContextId)) {
-                if (currentAlloc->getTaskCount(waitedOsContextId) > waitedTaskCount) {
-                    return false;
-                }
-                return !currentAlloc->isUsedByManyOsContexts() || !allocInUse(*currentAlloc);
-            }
-            return !allocInUse(*currentAlloc);
-        },
-        [&](GraphicsAllocation *currentAlloc) {
-            freeGraphicsMemory(currentAlloc);
-        });
+    if (!allocationsLeft.peekIsEmpty()) {
+        temporaryAllocations->splice(*allocationsLeft.detachNodes());
+    }
 }
 
 std::unique_ptr<GraphicsAllocation> MemoryManager::obtainTemporaryAllocationWithPtr(CommandStreamReceiver *csr, size_t requiredSize, const void *requiredPtr, AllocationType allocationType, bool *nonUsmHostPtrPartialOverlapFound) {

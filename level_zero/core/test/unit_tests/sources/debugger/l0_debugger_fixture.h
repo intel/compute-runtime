@@ -67,7 +67,8 @@ struct L0DebuggerFixture {
         }
     }
 
-    void tearDown() {}
+    void tearDown() {
+    }
 
     std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;

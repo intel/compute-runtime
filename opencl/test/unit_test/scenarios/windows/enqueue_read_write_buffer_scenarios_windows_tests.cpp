@@ -95,12 +95,13 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
     ASSERT_NE(0u, cmdQ->lastEnqueuedKernels.size());
     Kernel *kernel = cmdQ->lastEnqueuedKernels[0];
 
-    GraphicsAllocation *hostPtrAllocation = nullptr;
-    for (auto *candidate : cmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage()->getTemporaryAllocations().peekAllocations()) {
-        if (candidate->getUnderlyingBuffer() == misalignedPtr) {
-            hostPtrAllocation = candidate;
+    auto hostPtrAllocation = cmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage()->getTemporaryAllocations().peekHead();
+
+    while (hostPtrAllocation != nullptr) {
+        if (hostPtrAllocation->getUnderlyingBuffer() == misalignedPtr) {
             break;
         }
+        hostPtrAllocation = hostPtrAllocation->next;
     }
     ASSERT_NE(nullptr, hostPtrAllocation);
 
