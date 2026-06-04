@@ -144,7 +144,7 @@ void usage() {
                  "\n        [--set-threshold <value>]                                                                 optionally set threshold value for RAS exp test"
                  "\n  -v,   --vftelemetry                                                                             selectively run vf telemetry API black box test"
                  "\n"
-                 "\n  All L0 Syman APIs that set values require root privileged execution"
+                 "\n  All L0 Sysman APIs that set values require root privileged execution"
                  "\n"
                  "\n";
 }
