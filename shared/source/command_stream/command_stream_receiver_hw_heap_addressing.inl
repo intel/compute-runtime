@@ -65,6 +65,12 @@ void CommandStreamReceiverHw<GfxFamily>::programHeaplessStateProlog(Device &devi
 }
 
 template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::isHeaplessStatePrologRequiredForContext() const {
+    UNRECOVERABLE_IF(true);
+    return false;
+}
+
+template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForHeaplessPrologue(Device &device) const {
     UNRECOVERABLE_IF(true);
     return 0;

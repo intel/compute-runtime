@@ -199,6 +199,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     SubmissionStatus programHeaplessProlog(Device &device);
     MOCKABLE_VIRTUAL void programHeaplessStateProlog(Device &device, LinearStream &commandStream);
+    bool isHeaplessStatePrologRequiredForContext() const;
     void programStateBaseAddressHeapless(Device &device, LinearStream &commandStream);
     void programComputeModeHeapless(Device &device, LinearStream &commandStream);
     void handleAllocationsResidencyForFlushTaskHeapless(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, Device &device);
