@@ -15,6 +15,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 namespace L0 {
 
@@ -25,6 +26,7 @@ struct CmdListKernelLaunchParams {
     CommandToPatchInCmdList *outSyncCommand = nullptr;
     CommandToPatchContainer *outListCommands = nullptr;
     CmdListKernelLaunchParamsExt launchParamsExt{};
+    std::optional<uint64_t> cachedIohOffset = std::nullopt;
     size_t syncBufferPatchIndex = std::numeric_limits<size_t>::max();
     size_t scratchAddressPatchIndex = std::numeric_limits<size_t>::max();
     uint32_t externalPerThreadScratchSize[2] = {0U, 0U};

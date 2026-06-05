@@ -3167,7 +3167,8 @@ HWTEST2_F(IOHCacheCommandListTest,
 
     EXPECT_FALSE(commandList->commandContainer.getIOHCacheEnabled());
 
-    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, false);
+    CmdListKernelLaunchParams launchParams = {};
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, launchParams, false);
 
     auto regularIoh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
     ASSERT_NE(nullptr, regularIoh);
@@ -3186,7 +3187,8 @@ HWTEST2_F(IOHCacheCommandListTest,
 
     EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
 
-    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true);
+    CmdListKernelLaunchParams launchParams = {};
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, launchParams, true);
 
     auto regularIoh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
     ASSERT_NE(nullptr, regularIoh);
@@ -3213,12 +3215,64 @@ HWTEST2_F(IOHCacheCommandListTest,
     commandList->commandContainer.registerThreadData(hash, crossThreadSpan);
     static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer).extractCommonThreadData();
 
-    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true);
+    CmdListKernelLaunchParams launchParams = {};
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, launchParams, true);
 
     auto cacheStorage = commandList->commandContainer.getThreadDataMapStorage();
     ASSERT_NE(nullptr, cacheStorage);
     EXPECT_EQ(cacheStorage->getGraphicsAllocation(), iohAllocation);
     EXPECT_NE(cacheStorage->getGraphicsAllocation(), commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getGraphicsAllocation());
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheEnabledWhenNoCacheHitThenGetIohAllocationAndOffsetForPrefetchLeavesCachedIohOffsetEmpty,
+          IsAtLeastXeCore) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->getIohAllocationAndOffsetForPrefetch(kernel, launchParams, true);
+
+    EXPECT_FALSE(launchParams.cachedIohOffset.has_value());
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheEnabledWhenCacheHitThenGetIohAllocationAndOffsetForPrefetchStoresOffsetInLaunchParams,
+          IsAtLeastXeCore) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    uint32_t inlineDataProgrammingOffset = 0u;
+    if (NEO::EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernel.getKernelDescriptor())) {
+        inlineDataProgrammingOffset = std::min(static_cast<uint32_t>(FamilyType::DefaultWalkerType::getInlineDataSize()), kernel.getCrossThreadDataSize());
+    }
+    const std::span<const uint8_t> crossThreadSpan(kernel.getCrossThreadData() + inlineDataProgrammingOffset, kernel.getCrossThreadDataSize() - inlineDataProgrammingOffset);
+    const std::span<const uint8_t> perThreadSpan(kernel.getPerThreadData(), kernel.getPerThreadDataSizeForWholeThreadGroup());
+    const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
+
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan);
+    static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer).extractCommonThreadData();
+
+    const auto expectedOffset = commandList->commandContainer.getCachedIohOffset(hash, crossThreadSpan, perThreadSpan);
+    ASSERT_TRUE(expectedOffset.has_value());
+
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->getIohAllocationAndOffsetForPrefetch(kernel, launchParams, true);
+
+    ASSERT_TRUE(launchParams.cachedIohOffset.has_value());
+    EXPECT_EQ(*expectedOffset, *launchParams.cachedIohOffset);
 }
 
 HWTEST2_F(IOHCacheCommandListTest,

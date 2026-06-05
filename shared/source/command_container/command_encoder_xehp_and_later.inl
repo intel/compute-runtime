@@ -261,10 +261,14 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             uint64_t threadDataHash = 0ull;
             const bool isThreadDataMapAllowed = container.getIOHCacheEnabled() && (sizeThreadData != 0u) && !args.isIndirect && (pImplicitArgs == nullptr);
             if (isThreadDataMapAllowed) {
-                const std::span<const uint8_t> crossThreadSpan(crossThreadData, sizeCrossThreadData);
-                const std::span<const uint8_t> perThreadSpan(perThreadDataPtr, sizePerThreadDataForWholeGroup);
-                threadDataHash = ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
-                cachedThreadDataOffset = container.getCachedIohOffset(threadDataHash, crossThreadSpan, perThreadSpan);
+                if (args.cachedIohOffset.has_value()) {
+                    cachedThreadDataOffset = args.cachedIohOffset;
+                } else {
+                    const std::span<const uint8_t> crossThreadSpan(crossThreadData, sizeCrossThreadData);
+                    const std::span<const uint8_t> perThreadSpan(perThreadDataPtr, sizePerThreadDataForWholeGroup);
+                    threadDataHash = ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
+                    cachedThreadDataOffset = container.getCachedIohOffset(threadDataHash, crossThreadSpan, perThreadSpan);
+                }
                 if (cachedThreadDataOffset) {
                     offsetThreadData = *cachedThreadDataOffset;
                     container.makeThreadDataMapResident();
