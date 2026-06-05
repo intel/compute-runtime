@@ -321,6 +321,13 @@ struct MockDebugSession : public L0::DebugSessionImp {
         writeRegistersCallCount++;
         writeRegistersReg = type;
 
+        if (captureWrittenRegisters) {
+            const auto sizeToCapture = std::min<size_t>(sizeof(writtenRegisters), getRegisterSize(type));
+            if (sizeToCapture > 0) {
+                memcpy_s(writtenRegisters, sizeof(writtenRegisters), pRegisterValues, sizeToCapture);
+            }
+        }
+
         if (writeRegistersResult != ZE_RESULT_FORCE_UINT32) {
             return writeRegistersResult;
         }
@@ -643,6 +650,8 @@ struct MockDebugSession : public L0::DebugSessionImp {
     uint32_t readRegistersReg = 0;
     uint32_t writeRegistersCallCount = 0;
     uint32_t writeRegistersReg = 0;
+    uint32_t writtenRegisters[64] = {};
+    bool captureWrittenRegisters = false;
 
     uint32_t readGpuMemoryCallCount = 0;
     uint32_t forcereadGpuMemoryFailOnCount = 0;

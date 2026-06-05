@@ -1526,7 +1526,49 @@ TEST(DebugSessionTest, givenThreadsStoppedWithPageFaultWhenCallingfillResumeAndS
     sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
     EXPECT_EQ(1u, resumeThreads.size());
     EXPECT_EQ(0u, stoppedThreads.size());
+    EXPECT_EQ(2u, sessionMock->writeRegistersCallCount);
+    EXPECT_EQ(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, sessionMock->writeRegistersReg);
+}
+
+TEST(DebugSessionTest, givenAccidentallyStoppedThreadWhenCallingfillResumeAndStoppedThreadsFromNewlyStoppedThenForcedExceptionBitsAreClearedBeforeResume) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp mockDevice(neoDevice);
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
+    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    sessionMock->captureWrittenRegisters = true;
+
+    EuThread::ThreadId thread = {0, 0, 0, 0, 1};
+    sessionMock->newlyStoppedThreads.push_back(thread);
+
+    // thread was stopped only because of forced exception / forced external halt -> must be resumed
+    sessionMock->onlyForceException = true;
+
+    // CR0.1 read back from the thread has both forced bits set (0x44000000)
+    const uint32_t cr0ForcedExceptionBitmask = 0x44000000;
+    sessionMock->regs[0] = static_cast<uint64_t>(cr0ForcedExceptionBitmask) << 32;
+    sessionMock->readRegistersSizeToFill = 64;
+    sessionMock->readRegistersResult = ZE_RESULT_SUCCESS;
+    sessionMock->writeRegistersResult = ZE_RESULT_SUCCESS;
+
+    std::vector<EuThread::ThreadId> resumeThreads;
+    std::vector<EuThread::ThreadId> stoppedThreads;
+    std::vector<EuThread::ThreadId> interruptedThreads;
+
+    sessionMock->allThreads[thread]->stopThread(1u);
+
+    sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
+
+    ASSERT_EQ(1u, resumeThreads.size());
+    EXPECT_EQ(0u, stoppedThreads.size());
     EXPECT_EQ(1u, sessionMock->writeRegistersCallCount);
+    EXPECT_EQ(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, sessionMock->writeRegistersReg);
+    // forced exception and forced external halt bits must be cleared in CR0.1 before resuming
+    EXPECT_EQ(0u, sessionMock->writtenRegisters[1] & cr0ForcedExceptionBitmask);
 }
 
 TEST(DebugSessionTest, givenNoThreadsStoppedWhenCallingfillResumeAndStoppedThreadsFromNewlyStoppedThenReadStateSaveAreaNotCalled) {

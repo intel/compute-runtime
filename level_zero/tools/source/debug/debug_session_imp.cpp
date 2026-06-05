@@ -955,6 +955,9 @@ void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<Eu
                     interruptedThreads.push_back(newlyStopped);
                 } else {
                     PRINT_DEBUGGER_THREAD_LOG("RESUME accidentally stopped thread = %s\n", allThreads[newlyStopped]->toString().c_str());
+                    const uint32_t cr0ForcedExceptionBitmask = 0x44000000;
+                    reg[1] = reg[1] & (~cr0ForcedExceptionBitmask);
+                    writeRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
                     resumeThreads.push_back(newlyStopped);
                 }
             } else {
