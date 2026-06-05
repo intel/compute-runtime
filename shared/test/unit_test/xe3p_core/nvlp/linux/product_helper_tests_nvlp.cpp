@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/xe3p_core/hw_cmds_nvlp.h"
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"
@@ -105,4 +106,13 @@ NVLPTEST_F(NvlProductHelperLinux, givenSystemMemoryWhenGetPatIndexThenReturnOver
     bool isSystemMem = true;
     auto patIndex = drm->getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMem, false);
     EXPECT_EQ(19u, patIndex);
+}
+
+NVLPTEST_F(NvlProductHelperLinux, givenUncachedSystemMemoryAllocationTypeWhenGetPatIndexThenDoNotOverridePat) {
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    drm->vmBindPatIndexProgrammingSupported = true;
+    bool isSystemMem = true;
+    AllocationType allocationType = AllocationType::tagBuffer; // uncached
+    auto patIndex = drm->getPatIndex(nullptr, allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMem, false);
+    EXPECT_NE(19u, patIndex);
 }
