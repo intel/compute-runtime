@@ -290,9 +290,6 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
         case Elf::SHT_ZEBIN_SPIRV:
             out.spirvSections.push_back(&elfSectionHeader);
             break;
-        case Elf::SHT_ZEBIN_PISA:
-            out.pisaSections.push_back(&elfSectionHeader);
-            break;
         case NEO::Elf::SHT_NOTE:
             if (sectionName == Elf::SectionNames::noteIntelGT) {
                 out.noteIntelGTSections.push_back(&elfSectionHeader);
@@ -368,7 +365,6 @@ DecodeError validateZebinSectionsCount(const ZebinSections<numBits> &sections, s
     valid &= validateZebinSectionsCountAtMost(sections.constDataStringSections, Elf::SectionNames::dataConstString, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.symtabSections, Elf::SectionNames::symtab, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.spirvSections, Elf::SectionNames::spv, 1U, outErrReason, outWarning);
-    valid &= validateZebinSectionsCountAtMost(sections.pisaSections, Elf::SectionNames::pisa, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.noteIntelGTSections, Elf::SectionNames::noteIntelGT, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.textSections, Elf::SectionNames::text, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.specConstantsIdsSection, Elf::SectionNames::specConstantsIds, 1U, outErrReason, outWarning);

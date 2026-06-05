@@ -50,10 +50,6 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
     for (size_t sectionId = 0U; sectionId < elf.sectionHeaders.size(); sectionId++) {
         auto &elfSH = elf.sectionHeaders[sectionId];
         if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_SPIRV) {
-            ret.intermediateRepresentationCodeType = IGC::CodeType::spirV;
-            ret.intermediateRepresentation = elfSH.data;
-        } else if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_PISA) {
-            ret.intermediateRepresentationCodeType = IGC::CodeType::CodeTypeCoder::Enc("PISA");
             ret.intermediateRepresentation = elfSH.data;
         } else if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_MISC &&
                    Zebin::Elf::SectionNames::buildOptions == elf.getSectionName(static_cast<uint32_t>(sectionId))) {

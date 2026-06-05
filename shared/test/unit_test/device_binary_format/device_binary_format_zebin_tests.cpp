@@ -471,48 +471,6 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithSpirvAndBuildOptionsThenUnpack
     EXPECT_EQ(spirvPtr, unpackResult.intermediateRepresentation.begin());
 }
 
-TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithPisaAndBuildOptionsThenUnpackThemProperly) {
-    ZebinTestData::ValidEmptyProgram zebin;
-    const uint8_t pisaData[30] = {0xd};
-    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_PISA, NEO::Zebin::Elf::SectionNames::pisa, pisaData);
-
-    NEO::ConstStringRef buildOptions = "-cl-kernel-arg-info -cl-fast-relaxed-math";
-    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::buildOptions,
-                        {reinterpret_cast<const uint8_t *>(buildOptions.data()), buildOptions.size()});
-
-    auto elfHdrs = reinterpret_cast<NEO::Elf::ElfSectionHeader<NEO::Elf::EI_CLASS_64> *>(
-        ptrOffset(zebin.storage.data(), static_cast<size_t>(zebin.elfHeader->shOff)));
-    auto pisaHdr = elfHdrs[3];
-    auto buildOptionsHdr = elfHdrs[4];
-    ASSERT_EQ(NEO::Zebin::Elf::SHT_ZEBIN_PISA, pisaHdr.type);
-    ASSERT_EQ(NEO::Zebin::Elf::SHT_ZEBIN_MISC, buildOptionsHdr.type);
-
-    zebin.elfHeader->type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    zebin.elfHeader->machine = IGFX_BMG;
-    NEO::TargetDevice targetDevice = {};
-    targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.elfHeader->machine);
-    targetDevice.maxPointerSizeInBytes = 8;
-
-    std::string unpackErrors;
-    std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
-    EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
-    EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
-
-    EXPECT_FALSE(unpackResult.deviceBinary.empty());
-    EXPECT_EQ(zebin.storage.data(), unpackResult.deviceBinary.begin());
-
-    EXPECT_FALSE(unpackResult.buildOptions.empty());
-    auto buildOptionsPtr = reinterpret_cast<const char *>(ptrOffset(zebin.storage.data(), static_cast<size_t>(buildOptionsHdr.offset)));
-    EXPECT_EQ(buildOptionsPtr, unpackResult.buildOptions.begin());
-
-    EXPECT_FALSE(unpackResult.intermediateRepresentation.empty());
-    auto pisaPtr = ptrOffset(zebin.storage.data(), static_cast<size_t>(pisaHdr.offset));
-    EXPECT_EQ(pisaPtr, unpackResult.intermediateRepresentation.begin());
-    EXPECT_EQ(IGC::CodeType::CodeTypeCoder::Enc("PISA"), unpackResult.intermediateRepresentationCodeType);
-}
-
 TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithSpecConstantsIdsThenUnpackThemProperly) {
     ZebinTestData::ValidEmptyProgram zebin;
     const uint32_t specConstIds[] = {1u, 2u, 3u};

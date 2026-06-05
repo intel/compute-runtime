@@ -213,9 +213,6 @@ ZebinWithL0TestCommonModule::ZebinWithL0TestCommonModule(const NEO::HardwareInfo
         case AppendElfAdditionalSection::spirv:
             elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, testAdditionalSectionsData);
             break;
-        case AppendElfAdditionalSection::pisa:
-            elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_PISA, NEO::Zebin::Elf::SectionNames::pisa, testAdditionalSectionsData);
-            break;
         case AppendElfAdditionalSection::global:
             elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, testAdditionalSectionsData);
             break;

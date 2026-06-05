@@ -42,7 +42,6 @@ struct ZebinSections {
     StackVec<SectionHeaderData *, 1> constDataStringSections;
     StackVec<SectionHeaderData *, 1> symtabSections;
     StackVec<SectionHeaderData *, 1> spirvSections;
-    StackVec<SectionHeaderData *, 1> pisaSections;
     StackVec<SectionHeaderData *, 1> noteIntelGTSections;
     StackVec<SectionHeaderData *, 1> buildOptionsSection;
     StackVec<SectionHeaderData *, 1> specConstantsIdsSection;

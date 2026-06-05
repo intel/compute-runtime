@@ -23,8 +23,7 @@ enum SectionHeaderTypeZebin : uint32_t {
     SHT_ZEBIN_ZEINFO = 0xff000011,     // .ze_info section
     SHT_ZEBIN_GTPIN_INFO = 0xff000012, // .gtpin_info section
     SHT_ZEBIN_VISA_ASM = 0xff000013,   // .visaasm sections
-    SHT_ZEBIN_MISC = 0xff000014,       // .misc section
-    SHT_ZEBIN_PISA = 0xff000015        // .pisa section
+    SHT_ZEBIN_MISC = 0xff000014        // .misc section
 };
 
 enum RelocTypeZebin : uint32_t {
@@ -49,7 +48,6 @@ inline constexpr ConstStringRef symtab = ".symtab";
 inline constexpr ConstStringRef relTablePrefix = ".rel.";
 inline constexpr ConstStringRef relaTablePrefix = ".rela.";
 inline constexpr ConstStringRef spv = ".spv";
-inline constexpr ConstStringRef pisa = ".pisa";
 inline constexpr ConstStringRef debugPrefix = ".debug_";
 inline constexpr ConstStringRef debugInfo = ".debug_info";
 inline constexpr ConstStringRef debugAbbrev = ".debug_abbrev";

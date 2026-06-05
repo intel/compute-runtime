@@ -269,7 +269,6 @@ cl_int Program::createProgramFromBinary(
             this->irBinarySize = singleDeviceBinary.intermediateRepresentation.size();
             this->isSpirV = NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize));
             this->options = singleDeviceBinary.buildOptions.str();
-            this->intermediateRepresentation = singleDeviceBinary.intermediateRepresentationCodeType;
 
             this->specConstantsValues = NEO::getSpecConstantsFromBinary(singleDeviceBinary);
 

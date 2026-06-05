@@ -13,8 +13,6 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
-#include "ocl_igc_interface/code_type.h"
-
 #include <cstdint>
 #include <igfxfmid.h>
 #include <vector>
@@ -90,7 +88,6 @@ struct SingleDeviceBinary {
     ArrayRef<const uint8_t> deviceBinary;
     ArrayRef<const uint8_t> debugData;
     ArrayRef<const uint8_t> intermediateRepresentation;
-    IGC::CodeType::CodeType_t intermediateRepresentationCodeType = IGC::CodeType::invalid;
     ArrayRef<const uint8_t> packedTargetDeviceBinary;
     ConstStringRef buildOptions;
     ArrayRef<const uint8_t> specConstantsIds;
