@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/os_interface/fabric_vertex_info.h"
+#include "shared/source/os_interface/fabric_info.h"
 
 #include "level_zero/core/source/fabric/fabric_device_interface.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
