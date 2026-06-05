@@ -1722,6 +1722,39 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
     EXPECT_EQ(desc.index, expectedIndex);
 }
 
+HWTEST2_F(DeviceTest, givenNodeOrdinalForcedToZeroWhenCallAdjustCommandQueueDescThenEngineTypeIsRemappedToCccs, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restore;
+
+    int nodeOrdinal = static_cast<int>(aub_stream::EngineType::ENGINE_RCS);
+    EXPECT_EQ(0, nodeOrdinal);
+
+    auto remappedEngineType = NEO::EngineHelpers::remapEngineTypeToHwSpecific(static_cast<aub_stream::EngineType>(nodeOrdinal), neoDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_CCCS, remappedEngineType);
+
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto remappedEngineGroupType = gfxCoreHelper.getEngineGroupType(remappedEngineType, NEO::EngineUsage::regular, neoDevice->getHardwareInfo());
+    EXPECT_EQ(NEO::EngineGroupType::renderCompute, remappedEngineGroupType);
+
+    debugManager.flags.NodeOrdinal.set(nodeOrdinal);
+
+    auto *mockDevice = static_cast<MockDeviceImp *>(device);
+    ze_command_queue_desc_t desc = {};
+    EXPECT_EQ(desc.ordinal, 0u);
+
+    auto &engineGroups = device->getActiveDevice()->getRegularEngineGroups();
+    engineGroups.clear();
+    NEO::EngineGroupT engineGroupCompute{};
+    engineGroupCompute.engineGroupType = NEO::EngineGroupType::compute;
+    NEO::EngineGroupT engineGroupRender{};
+    engineGroupRender.engineGroupType = NEO::EngineGroupType::renderCompute;
+    engineGroups.push_back(engineGroupCompute);
+    engineGroups.push_back(engineGroupRender);
+
+    uint32_t expectedOrdinal = 1u;
+    mockDevice->adjustCommandQueueDesc(desc.ordinal, desc.index);
+    EXPECT_EQ(desc.ordinal, expectedOrdinal);
+}
+
 TEST_F(DeviceTest, givenNodeOrdinalFlagNotSetWhenCallAdjustCommandQueueDescThenDescOrdinalIsNotModified) {
     DebugManagerStateRestore restore;
     int nodeOrdinal = -1;
