@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2025 Intel Corporation
+# Copyright (C) 2019-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,6 +7,7 @@
 target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_memory_operations_handler_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/fabric_info_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_memory_operations_handler_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.cpp

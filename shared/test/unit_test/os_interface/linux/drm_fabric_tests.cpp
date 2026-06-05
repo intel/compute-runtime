@@ -67,4 +67,23 @@ TEST(DrmFabricBaseTest, givenDrmFabricBaseClassWhenQueryVertexListCalledThenRetu
     EXPECT_EQ(initialSize, vertices.size());
 }
 
+TEST(DrmFabricBaseTest, givenDrmFabricStubWhenQueryEdgeListCalledThenReturnsFalse) {
+    DrmFabricStub fabricStub;
+    std::vector<FabricEdgeInfo> edges;
+
+    bool result = fabricStub.queryEdgeList(edges);
+
+    EXPECT_FALSE(result);
+    EXPECT_TRUE(edges.empty());
+}
+
+TEST(DrmFabricBaseTest, givenDrmFabricStubWhenQueryEdgePropsCalledThenReturnsFalse) {
+    DrmFabricStub fabricStub;
+    FabricEdgeInfo edge{};
+
+    bool result = fabricStub.queryEdgeProps(edge);
+
+    EXPECT_FALSE(result);
+}
+
 } // namespace NEO
