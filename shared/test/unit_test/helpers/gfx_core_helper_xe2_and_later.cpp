@@ -55,7 +55,7 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDepe
     EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 }
 
-HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenEncodeAdditionalTimestampOffsetsThenOffsetsEncoded, IsAtLeastXe2HpgCore) {
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenEncodeAdditionalTimestampOffsetsThenOffsetsEncoded, IsWithinXe2HpgCoreAndXe3Core) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     constexpr static auto bufferSize = sizeof(MI_STORE_REGISTER_MEM) * 2;
 

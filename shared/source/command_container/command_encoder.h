@@ -815,4 +815,10 @@ struct EncodeCommandLevelMocs {
     static void apply(CmdType &cmd);
 };
 
+template <typename GfxFamily>
+struct ContextTimestampRegister {
+    static uint32_t getRegisterOffsetLow();
+    static uint32_t getRegisterOffsetHigh();
+};
+
 } // namespace NEO

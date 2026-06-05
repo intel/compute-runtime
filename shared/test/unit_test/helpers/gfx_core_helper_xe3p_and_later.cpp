@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -44,4 +46,30 @@ HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenAllocDataWhenSetExtraAllocationDa
             }
         }
     }
+}
+
+HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenAtLeastXe3pWhenEncodeAdditionalTimestampOffsetsThenOffsetsEncoded, IsAtLeastXe3pCore) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    constexpr static auto bufferSize = sizeof(MI_STORE_REGISTER_MEM) * 2;
+
+    char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+    uint64_t fstAddress = 12;
+    uint64_t sndAddress = 100;
+    MemorySynchronizationCommands<FamilyType>::encodeAdditionalTimestampOffsets(stream, fstAddress, sndAddress, false);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList storeRegMemList = hwParser.getCommandsList<MI_STORE_REGISTER_MEM>();
+    EXPECT_EQ(2u, storeRegMemList.size());
+    auto storeRegMemIt = find<MI_STORE_REGISTER_MEM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_NE(storeRegMemIt, hwParser.cmdList.end());
+
+    auto storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*storeRegMemIt);
+    EXPECT_EQ(storeRegMem->getRegisterAddress(), ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh());
+    EXPECT_EQ(storeRegMem->getMemoryAddress(), fstAddress + sizeof(uint32_t));
+
+    storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*(++storeRegMemIt));
+    EXPECT_EQ(storeRegMem->getRegisterAddress(), RegisterOffsets::globalTimestampUn);
+    EXPECT_EQ(storeRegMem->getMemoryAddress(), sndAddress + sizeof(uint32_t));
 }

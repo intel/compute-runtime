@@ -268,10 +268,6 @@ HWTEST2_F(ProfilingTests, GivenCommandQueueWithProfilingWhenNonBlockedEnqueueIsE
 }
 
 /*
-#   One additional MI_STORE_REGISTER_MEM is expected before and after GPGPU_WALKER.
-*/
-
-/*
 #   Two additional PIPE_CONTROLs are expected before first MI_STORE_REGISTER_MEM (which is before GPGPU_WALKER)
 #   and after second MI_STORE_REGISTER_MEM (which is after GPGPU_WALKER).
 #   If queue is blocked commands should be added to event
@@ -328,11 +324,6 @@ HWTEST2_F(ProfilingTests, GivenCommandQueueBlockedWithProfilingWhenWalkerIsDispa
     ((UserEvent *)ue)->release();
     pCmdQ->isQueueBlocked();
 }
-
-/*
-#   One additional MI_STORE_REGISTER_MEM is expected before and after GPGPU_WALKER.
-#   If queue is blocked commands should be added to event
-*/
 
 HWTEST2_F(ProfilingTests, GivenCommandQueueWithProflingWhenMarkerIsDispatchedThenPipeControlIsPresentInCS, IsGen12LP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;

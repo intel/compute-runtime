@@ -337,6 +337,16 @@ template <typename Family>
 template <typename CommandType>
 void EncodePostSync<Family>::setCommandLevelInterrupt(CommandType &cmd, bool interrupt) {}
 
+template <>
+uint32_t ContextTimestampRegister<Family>::getRegisterOffsetLow() {
+    return RegisterOffsets::queueTimestampRegAddressOffsetLow;
+}
+
+template <>
+uint32_t ContextTimestampRegister<Family>::getRegisterOffsetHigh() {
+    return RegisterOffsets::queueTimestampRegAddressOffsetHigh;
+}
+
 } // namespace NEO
 
 #include "shared/source/command_container/command_encoder_enablers.inl"

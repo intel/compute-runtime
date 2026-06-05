@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t a
         postSyncCmdBuffer = &postSyncCmd;
     }
 
-    uint32_t registerOffset = globalTimestamp ? RegisterOffsets::globalTimestampUn : RegisterOffsets::gpThreadTimeRegAddressOffsetHigh;
+    uint32_t registerOffset = globalTimestamp ? RegisterOffsets::globalTimestampUn : NEO::ContextTimestampRegister<GfxFamily>::getRegisterOffsetHigh();
     writeTimestamp(commandContainer, registerOffset, highAddress, false, workloadPartition, postSyncCmdBuffer, copyOperation);
     pushTimestampPatch(outTimeStampSyncCmds, highAddress - baseAddress, postSyncCmd);
 }

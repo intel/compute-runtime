@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 
 template struct NEO::EncodeDispatchKernel<Family>;
+
 template void NEO::EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields<Family::DefaultWalkerType>(const RootDeviceEnvironment &rootDeviceEnvironment, Family::DefaultWalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 template void NEO::EncodeDispatchKernel<Family>::setGrfInfo<Family::DefaultWalkerType::InterfaceDescriptorType>(Family::DefaultWalkerType::InterfaceDescriptorType *pInterfaceDescriptor, uint32_t grfCount, const size_t &sizeCrossThreadData, const size_t &sizePerThreadData, const RootDeviceEnvironment &rootDeviceEnvironment);
 template void NEO::EncodeDispatchKernel<Family>::setupPreferredSlmSize<Family::DefaultWalkerType::InterfaceDescriptorType>(Family::DefaultWalkerType::InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
@@ -55,3 +56,6 @@ template struct NEO::EncodeStoreMemory<Family>;
 template struct NEO::EncodeDataMemory<Family>;
 template struct NEO::EncodeMemoryFence<Family>;
 template struct NEO::EncodeUserInterrupt<Family>;
+
+template uint32_t NEO::ContextTimestampRegister<Family>::getRegisterOffsetLow();
+template uint32_t NEO::ContextTimestampRegister<Family>::getRegisterOffsetHigh();

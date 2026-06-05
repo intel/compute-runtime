@@ -120,11 +120,11 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pCoreTests, givenProfilingEnabledWhenBli
     };
 
     {
-        verifyLri(cmdIterator, RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, timestampContextStartGpuAddress + sizeof(uint32_t));
+        verifyLri(cmdIterator, RegisterOffsets::queueTimestampRegAddressOffsetHigh, timestampContextStartGpuAddress + sizeof(uint32_t));
 
         verifyLri(++cmdIterator, RegisterOffsets::globalTimestampUn, timestampGlobalStartAddress + sizeof(uint32_t));
 
-        verifyLri(++cmdIterator, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, timestampContextStartGpuAddress);
+        verifyLri(++cmdIterator, RegisterOffsets::queueTimestampRegAddressOffsetLow, timestampContextStartGpuAddress);
 
         verifyLri(++cmdIterator, RegisterOffsets::globalTimestampLdw, timestampGlobalStartAddress);
     }
@@ -137,11 +137,11 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pCoreTests, givenProfilingEnabledWhenBli
 
     {
 
-        verifyLri(++cmdIterator, RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, timestampContextEndGpuAddress + sizeof(uint32_t));
+        verifyLri(++cmdIterator, RegisterOffsets::queueTimestampRegAddressOffsetHigh, timestampContextEndGpuAddress + sizeof(uint32_t));
 
         verifyLri(++cmdIterator, RegisterOffsets::globalTimestampUn, timestampGlobalEndAddress + sizeof(uint32_t));
 
-        verifyLri(++cmdIterator, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, timestampContextEndGpuAddress);
+        verifyLri(++cmdIterator, RegisterOffsets::queueTimestampRegAddressOffsetLow, timestampContextEndGpuAddress);
 
         verifyLri(++cmdIterator, RegisterOffsets::globalTimestampLdw, timestampGlobalEndAddress);
     }

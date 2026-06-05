@@ -928,6 +928,11 @@ HWTEST2_F(CommandEncoderTestXe3pAndLater, GivenMiSemaphoreWaitLegacyWhenProgramm
     EXPECT_EQ(MI_SEMAPHORE_WAIT_LEGACY::WAIT_MODE::WAIT_MODE_SIGNAL_MODE, miSemaphoreLegacy->getWaitMode());
 }
 
+HWTEST2_F(CommandEncoderTestXe3pAndLater, WhenGettingContextTimestampRegisterOffsetsThenQueueTimestampRegisterIsReturned, IsAtLeastXe3pCore) {
+    EXPECT_EQ(RegisterOffsets::queueTimestampRegAddressOffsetHigh, ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh());
+    EXPECT_EQ(RegisterOffsets::queueTimestampRegAddressOffsetLow, ContextTimestampRegister<FamilyType>::getRegisterOffsetLow());
+}
+
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenPipelinedEuThreadArbitrationPolicyWhenEncodeEuSchedulingPolicyIsCalledThenIddContainsCorrectEuSchedulingPolicy, IsAtLeastXe3pCore) {
     using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
 

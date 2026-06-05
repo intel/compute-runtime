@@ -864,15 +864,15 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
                                                    startCmdList,
                                                    RegisterOffsets::globalTimestampLdw, globalStartAddress,
                                                    RegisterOffsets::globalTimestampUn, globalStartAddressHigh,
-                                                   RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
-                                                   RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, contextStartAddressHigh,
+                                                   ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), contextStartAddress,
+                                                   ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh(), contextStartAddressHigh,
                                                    true,
                                                    true);
     } else {
         validateTimestampRegisters<FamilyType>(cmdList,
                                                startCmdList,
                                                RegisterOffsets::globalTimestampLdw, globalStartAddress,
-                                               RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
+                                               ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), contextStartAddress,
                                                true,
                                                true);
     }
@@ -884,15 +884,15 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
                                                    startCmdList,
                                                    RegisterOffsets::globalTimestampLdw, globalEndAddress,
                                                    RegisterOffsets::globalTimestampUn, globalEndAddressHigh,
-                                                   RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
-                                                   RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, contextEndAddressHigh,
+                                                   ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), contextEndAddress,
+                                                   ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh(), contextEndAddressHigh,
                                                    true,
                                                    true);
     } else {
         validateTimestampRegisters<FamilyType>(cmdList,
                                                startCmdList,
                                                RegisterOffsets::globalTimestampLdw, globalEndAddress,
-                                               RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
+                                               ContextTimestampRegister<FamilyType>::getRegisterOffsetLow(), contextEndAddress,
                                                true,
                                                true);
     }

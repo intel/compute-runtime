@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,18 +107,18 @@ struct CommandListXe2AndLaterFixture : public DeviceFixture {
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[0]), globalAddress, RegisterOffsets::csGprR12);
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[1]), globalAddress + sizeof(uint32_t), RegisterOffsets::globalTimestampUn);
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), contextAddress, RegisterOffsets::csGprR12);
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[3]), contextAddress + sizeof(uint32_t), RegisterOffsets::gpThreadTimeRegAddressOffsetHigh);
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[3]), contextAddress + sizeof(uint32_t), ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh());
 
             validateLrrCommand<FamilyType>(reinterpret_cast<MI_LOAD_REGISTER_REG *>(*srmCommands[4]), RegisterOffsets::globalTimestampLdw);
-            validateLrrCommand<FamilyType>(reinterpret_cast<MI_LOAD_REGISTER_REG *>(*srmCommands[5]), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
+            validateLrrCommand<FamilyType>(reinterpret_cast<MI_LOAD_REGISTER_REG *>(*srmCommands[5]), ContextTimestampRegister<FamilyType>::getRegisterOffsetLow());
 
         } else {
             ASSERT_EQ(4u, srmCommands.size());
 
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[0]), globalAddress, RegisterOffsets::globalTimestampLdw);
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[1]), globalAddress + sizeof(uint32_t), RegisterOffsets::globalTimestampUn);
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), contextAddress, RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[3]), contextAddress + sizeof(uint32_t), RegisterOffsets::gpThreadTimeRegAddressOffsetHigh);
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), contextAddress, ContextTimestampRegister<FamilyType>::getRegisterOffsetLow());
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[3]), contextAddress + sizeof(uint32_t), ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh());
         }
     }
 
