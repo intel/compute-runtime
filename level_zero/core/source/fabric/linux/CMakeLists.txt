@@ -8,8 +8,6 @@ if(UNIX)
 
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/fabric_create_edges_from_device_interfaces.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}fabric_create_edges.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}fabric_discover_vertices.cpp
   )
 
@@ -17,6 +15,7 @@ if(UNIX)
     target_sources(${L0_STATIC_LIB_NAME}
                    PRIVATE
                    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                   ${CMAKE_CURRENT_SOURCE_DIR}/fabric.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_iaf.h
                    ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_iaf.cpp
     )
@@ -24,6 +23,7 @@ if(UNIX)
     target_sources(${L0_STATIC_LIB_NAME}
                    PRIVATE
                    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                   ${CMAKE_CURRENT_SOURCE_DIR}/fabric.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_iaf_stub.h
                    ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_iaf_stub.cpp
     )

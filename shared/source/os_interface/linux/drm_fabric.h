@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/os_interface/fabric_info.h"
+#include "shared/source/os_interface/fabric_vertex_info.h"
 
 #include <cstdint>
 #include <memory>
@@ -28,8 +28,6 @@ class DrmFabric {
     virtual int handleClose(const void *reservedHandleData) = 0;
 
     virtual bool queryVertexList(std::vector<FabricVertexInfo> &vertices) { return false; }
-    virtual bool queryEdgeList(std::vector<FabricEdgeInfo> &edges) { return false; }
-    virtual bool queryEdgeProps(FabricEdgeInfo &edge) { return false; }
 
     static std::unique_ptr<DrmFabric> create(Drm &drm);
 };

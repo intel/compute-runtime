@@ -5,11 +5,9 @@
  *
  */
 
-#include "level_zero/core/source/fabric/linux/fabric_create_edges_from_device_interfaces.h"
+#include "level_zero/core/source/fabric/fabric.h"
 
 #include "shared/source/helpers/debug_helpers.h"
-
-#include "level_zero/core/source/fabric/fabric.h"
 
 #include <algorithm>
 #include <cstring>
@@ -21,9 +19,8 @@
 
 namespace L0 {
 
-void createEdgesFromFabricDeviceInterfaces(const std::vector<FabricVertex *> &vertices,
-                                           std::vector<FabricEdge *> &edges,
-                                           std::vector<FabricEdge *> &indirectEdges) {
+void FabricEdge::createEdgesFromVertices(const std::vector<FabricVertex *> &vertices, std::vector<FabricEdge *> &edges, std::vector<FabricEdge *> &indirectEdges) {
+
     // Get all vertices and sub-vertices
     std::vector<FabricVertex *> allVertices = {};
     for (auto &fabricVertex : vertices) {
@@ -47,7 +44,7 @@ void createEdgesFromFabricDeviceInterfaces(const std::vector<FabricVertex *> &ve
                 bool isConnected =
                     fabricDeviceInterface.second->getEdgeProperty(vertexB, edgeProperty);
                 if (isConnected) {
-                    edges.push_back(FabricEdge::create(vertexA, vertexB, edgeProperty));
+                    edges.push_back(create(vertexA, vertexB, edgeProperty));
                     adjacentVerticesMap[vertexAIndex].emplace_back(vertexBIndex, &edges.back()->properties);
                     adjacentVerticesMap[vertexBIndex].emplace_back(vertexAIndex, &edges.back()->properties);
                     isAdjacent = true;
@@ -152,7 +149,7 @@ void createEdgesFromFabricDeviceInterfaces(const std::vector<FabricVertex *> &ve
                         properties.latency = 0;
                         properties.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
                     }
-                    indirectEdges.push_back(FabricEdge::create(allVertices[vertexAIndex], allVertices[vertexBIndex], properties));
+                    indirectEdges.push_back(create(allVertices[vertexAIndex], allVertices[vertexBIndex], properties));
                     break;
                 }
             }
