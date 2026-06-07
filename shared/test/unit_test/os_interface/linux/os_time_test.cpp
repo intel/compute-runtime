@@ -357,13 +357,63 @@ TEST_F(DrmTimeTest, whenGettingGpuTimeStampValueWithinIntervalThenReuseFromPrevi
     EXPECT_EQ(gpuTimestampAfter, gpuTimestampBefore + gpuTimestampDiff);
 }
 
+TEST_F(DrmTimeTest, whenGettingGpuTimeStampValueAfterIntervalThenCallToKmdAndAdaptTimeout) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableReusingGpuTimestamps.set(true);
+
+    // Recreate mock to apply debug flag
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    osTime = MockOSTimeLinux::create(*rootDeviceEnvironment.osInterface);
+    osTime->setResolutionFunc(resolutionFuncTrue);
+    osTime->setGetTimeFunc(getTimeFuncTrue);
+    osTime->setDeviceTimerResolution();
+    auto deviceTime = osTime->getDeviceTime();
+    deviceTime->callBaseGetGpuCpuTimeImpl = false;
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 0u);
+
+    const auto initialExpectedTimeoutNS = NSEC_PER_MSEC * 100;
+    EXPECT_EQ(initialExpectedTimeoutNS, osTime->getTimestampRefreshTimeout());
+
+    auto setTimestamps = [&](uint64_t cpuTimeNS, uint64_t cpuTimeFromKmdNS, uint64_t gpuTimestamp) {
+        actualTime = cpuTimeNS;
+        deviceTime->gpuCpuTimeValue.cpuTimeinNS = cpuTimeFromKmdNS;
+        deviceTime->gpuCpuTimeValue.gpuTimeStamp = gpuTimestamp;
+    };
+    setTimestamps(0, 0ull, 0ull);
+
+    TimeStampData gpuCpuTime;
+    osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 1u);
+
+    // Error is smaller than 5%, timeout can be increased
+    auto newTimeAfterInterval = actualTime + osTime->getTimestampRefreshTimeout();
+    setTimestamps(newTimeAfterInterval, newTimeAfterInterval + 10, newTimeAfterInterval + 10);
+
+    osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 2u);
+
+    auto diff = (gpuCpuTime.gpuTimeStamp - actualTime);
+    EXPECT_EQ(initialExpectedTimeoutNS + diff, osTime->getTimestampRefreshTimeout());
+    EXPECT_GT(initialExpectedTimeoutNS + diff, initialExpectedTimeoutNS);
+
+    // Error is larger than 5%, timeout should be decreased
+    newTimeAfterInterval = actualTime + osTime->getTimestampRefreshTimeout() + 10;
+    setTimestamps(newTimeAfterInterval, newTimeAfterInterval * 2, newTimeAfterInterval * 2);
+
+    osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 3u);
+
+    EXPECT_LT(osTime->getTimestampRefreshTimeout(), initialExpectedTimeoutNS);
+}
+
 TEST_F(DrmTimeTest, whenGettingMaxGpuTimeStampValueAfterFlagSetThenCallToKmd) {
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 0u);
     TimeStampData gpuCpuTime;
     osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 1u);
 
-    osTime->getGpuCpuTime(&gpuCpuTime, true);
+    osTime->setRefreshTimestampsFlag();
+    osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 2u);
 }
 

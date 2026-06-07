@@ -889,11 +889,12 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
     MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
     auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
+    auto osTime = pClDevice->getDevice().getOSTime();
 
     HwTimeStamps timestamp{};
     timestamp.globalStartTS = 3;
     event.queueTimeStamp.gpuTimeStamp = 2;
-    event.submitTimeStamp.gpuTimeStamp = 4;
+    event.submitTimeStamp.gpuTimeStamp = osTime->getTimestampRefreshTimeout() + 4;
     event.submitTimeStamp.gpuTimeInNs = static_cast<uint64_t>(4 * resolution);
     TagNode<HwTimeStamps> timestampNode{};
     timestampNode.tagForCpuAccess = &timestamp;
@@ -905,6 +906,64 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
     auto refStartTime = static_cast<uint64_t>((timestamp.globalStartTS + (1ULL << gfxCoreHelper.getGlobalTimeStampBits())) * resolution);
     EXPECT_EQ(start, refStartTime);
+
+    event.timeStampNode = nullptr;
+}
+
+TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmallerThanQueueTSWithinRecalculationLimitWhenCalculateStartTimestampThenAdjustTimestmaps) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
+    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
+    auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
+
+    HwTimeStamps timestamp{};
+    timestamp.globalStartTS = 3;
+    event.queueTimeStamp.gpuTimeStamp = 2;
+    event.submitTimeStamp.gpuTimeStamp = 4;
+    event.submitTimeStamp.gpuTimeInNs = static_cast<uint64_t>(4 * resolution);
+    TagNode<HwTimeStamps> timestampNode{};
+    timestampNode.tagForCpuAccess = &timestamp;
+    event.timeStampNode = &timestampNode;
+
+    uint64_t start = 0u;
+    uint64_t submit = 0u;
+    uint64_t queue = 0u;
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submit, nullptr);
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queue, nullptr);
+
+    EXPECT_EQ(start, static_cast<uint64_t>(timestamp.globalStartTS * resolution));
+    EXPECT_EQ(submit, static_cast<uint64_t>((timestamp.globalStartTS - 1) * resolution));
+    EXPECT_EQ(queue, static_cast<uint64_t>((timestamp.globalStartTS - 2) * resolution));
+
+    event.timeStampNode = nullptr;
+}
+
+TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmallerThanQueueTSWithinRecalculationLimitAndStartTSBelowOneWhenCalculateStartTimestampThenAdjustTimestmaps) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
+    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
+    auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
+
+    HwTimeStamps timestamp{};
+    timestamp.globalStartTS = 2;
+    event.queueTimeStamp.gpuTimeStamp = 2;
+    event.submitTimeStamp.gpuTimeStamp = 4;
+    event.submitTimeStamp.gpuTimeInNs = static_cast<uint64_t>(4 * resolution);
+    TagNode<HwTimeStamps> timestampNode{};
+    timestampNode.tagForCpuAccess = &timestamp;
+    event.timeStampNode = &timestampNode;
+
+    uint64_t start = 0u;
+    uint64_t submit = 0u;
+    uint64_t queue = 0u;
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submit, nullptr);
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queue, nullptr);
+
+    EXPECT_EQ(start, static_cast<uint64_t>(timestamp.globalStartTS * resolution));
+    EXPECT_EQ(submit, 0ul);
+    EXPECT_EQ(queue, 0ul);
 
     event.timeStampNode = nullptr;
 }

@@ -40,6 +40,12 @@ class DeviceTime {
     virtual bool isTimestampsRefreshEnabled() const;
     TimeQueryStatus getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall);
     void setDeviceTimerResolution();
+    void setRefreshTimestampsFlag() {
+        refreshTimestamps = true;
+    }
+    uint64_t getTimestampRefreshTimeout() const {
+        return timestampRefreshTimeoutNS;
+    };
 
     std::optional<uint64_t> initialGpuTimeStamp{};
     bool waitingForGpuTimeStampOverflow = false;
@@ -48,6 +54,7 @@ class DeviceTime {
     double deviceTimerResolution = 0;
     const uint64_t timestampRefreshMinTimeoutNS = NSEC_PER_MSEC; // 1ms
     const uint64_t timestampRefreshMaxTimeoutNS = NSEC_PER_SEC;  // 1s
+    uint64_t timestampRefreshTimeoutNS = NSEC_PER_MSEC * 100;    // 100ms
     bool refreshTimestamps = true;
     TimeStampData fetchedTimestamps{};
 };
@@ -85,6 +92,14 @@ class OSTime {
 
     void setDeviceTimerResolution() const {
         deviceTime->setDeviceTimerResolution();
+    }
+
+    void setRefreshTimestampsFlag() const {
+        deviceTime->setRefreshTimestampsFlag();
+    }
+
+    uint64_t getTimestampRefreshTimeout() const {
+        return deviceTime->getTimestampRefreshTimeout();
     }
 
   protected:
