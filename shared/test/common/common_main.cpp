@@ -25,6 +25,7 @@
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
+#include "shared/test/common/mocks/mock_os_thread.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/test_stats.h"
@@ -102,6 +103,8 @@ void populateApiSpecificVirtualFileList(const NEO::HardwareInfo &hwInfo);
 bool generateRandomInput = false;
 extern std::optional<uint32_t> blitterMaskOverride;
 
+extern bool threadsAllowed;
+
 std::string getRunPath(char *argv0) {
     std::string res(argv0);
 
@@ -140,11 +143,17 @@ void applyCommonWorkarounds() {
     // initialize rand
     srand(static_cast<unsigned int>(time(nullptr)));
 
-    // Create at least on thread to prevent false memory leaks in tests using threads
-    std::thread t([&]() {
-    });
-    tempThreadID = t.get_id();
-    t.join();
+    if (threadsAllowed) {
+        // Create at least on thread to prevent false memory leaks in tests using threads
+        std::thread t([&]() {
+        });
+        tempThreadID = t.get_id();
+        t.join();
+    } else {
+        NEO::Thread::createFunc = [](void *(*func)(void *), void *arg) -> std::unique_ptr<NEO::Thread> {
+            return std::make_unique<NEO::MockThread>();
+        };
+    }
 
     // Create FileLogger to prevent false memory leaks
     {

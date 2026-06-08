@@ -566,7 +566,6 @@ TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenSipExternalLibWithFailingCreateRegisterDescriptorMapWhenCreatingDebugSessionThenNullptrIsReturned) {
-
     // Mock SipExternalLib that fails to create register descriptor map
     class MockSipExternalLibFailingCreateMap : public MockSipExternalLib {
       public:
@@ -756,76 +755,6 @@ TEST_F(DebugApiLinuxTestXe, GivenMoreThan1EventsInQueueThenInternalEventsOnlyRea
     EXPECT_EQ(1, handler->ioctlCalled);
     EXPECT_EQ(DebugSessionLinuxXe::maxEventSize, handler->debugEventInput.len);
     EXPECT_EQ(static_cast<decltype(NEO::EuDebugEvent::type)>(static_cast<uint16_t>(NEO::EuDebugParam::eventTypeRead)), handler->debugEventInput.type);
-}
-
-TEST_F(DebugApiLinuxTestXe, GivenEventInInternalEventQueueWhenAsyncThreadFunctionIsExecutedThenEventIsHandled) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    auto session = std::make_unique<MockAsyncThreadDebugSessionLinuxXe>(config, device, 10);
-    ASSERT_NE(nullptr, session);
-
-    session->clientHandleToConnection.clear();
-
-    uint8_t eventClientData[sizeof(NEO::EuDebugEventClient)];
-    auto client = reinterpret_cast<NEO::EuDebugEventClient *>(&eventClientData);
-    client->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
-    client->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
-    client->base.len = sizeof(NEO::EuDebugEventClient);
-    client->clientHandle = 0x123456789;
-
-    auto memory = std::make_unique<uint64_t[]>(sizeof(NEO::EuDebugEventClient) / sizeof(uint64_t));
-    memcpy(memory.get(), client, sizeof(NEO::EuDebugEventClient));
-
-    // Clear the event queue before using it
-    while (!session->internalEventQueue.empty()) {
-        session->internalEventQueue.pop();
-    }
-    session->internalEventQueue.push(std::move(memory));
-
-    session->startAsyncThread();
-
-    while (session->getInternalEventCounter == 0) {
-        ;
-    }
-    EXPECT_TRUE(session->asyncThread.threadActive);
-    EXPECT_FALSE(session->asyncThreadFinished);
-
-    session->closeAsyncThread();
-
-    EXPECT_FALSE(session->asyncThread.threadActive);
-    EXPECT_TRUE(session->asyncThreadFinished);
-    EXPECT_EQ(session->clientHandleToConnection.size(), 1ul);
-    EXPECT_NE(session->clientHandleToConnection.find(client->clientHandle), session->clientHandleToConnection.end());
-
-    uint64_t wrongClientHandle = 34;
-    EXPECT_EQ(session->clientHandleToConnection.find(wrongClientHandle), session->clientHandleToConnection.end());
-}
-
-TEST_F(DebugApiLinuxTestXe, GivenNoEventInInternalEventQueueWhenAsyncThreadFunctionIsExecutedThenEventsAreCheckedForAvailability) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    auto session = std::make_unique<MockAsyncThreadDebugSessionLinuxXe>(config, device, 10);
-    ASSERT_NE(nullptr, session);
-
-    // Clear the event queue before using it
-    while (!session->internalEventQueue.empty()) {
-        session->internalEventQueue.pop();
-    }
-
-    session->startAsyncThread();
-
-    while (session->getInternalEventCounter == 0) {
-        ;
-    }
-    EXPECT_TRUE(session->asyncThread.threadActive);
-    EXPECT_FALSE(session->asyncThreadFinished);
-
-    session->closeAsyncThread();
-
-    EXPECT_FALSE(session->asyncThread.threadActive);
-    EXPECT_TRUE(session->asyncThreadFinished);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenOneEuDebugOpenEventAndOneIncorrectEventWhenHandleEventThenEventsAreHandled) {
@@ -3949,43 +3878,6 @@ TEST_F(DebugApiLinuxTestXe, GivenNoElfDataImplementationThenGetElfDataReturnsNul
 
     ASSERT_EQ(reinterpret_cast<char *>(clientConnection->metaDataMap[11].data.get()), sessionMock->getClientConnection(MockDebugSessionLinuxXe::mockClientHandle)->getElfData(11));
     ASSERT_EQ(clientConnection->metaDataMap[11].metadata.len, sessionMock->getClientConnection(MockDebugSessionLinuxXe::mockClientHandle)->getElfSize(11));
-}
-
-TEST_F(DebugApiLinuxTestXe, GivenInterruptedThreadsWhenNoAttentionEventIsReadThenThreadUnavailableEventIsGenerated) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
-    ASSERT_NE(nullptr, session);
-
-    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
-
-    auto handler = new MockIoctlHandlerXe;
-    session->ioctlHandler.reset(handler);
-    session->returnTimeDiff = session->interruptTimeout * 10;
-    session->synchronousInternalEventRead = true;
-
-    ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
-
-    auto result = session->interrupt(thread);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    session->startAsyncThread();
-
-    while (session->getInternalEventCounter < 2) {
-        ;
-    }
-
-    session->closeAsyncThread();
-
-    EXPECT_EQ(session->apiEvents.size(), 1u);
-    if (session->apiEvents.size() > 0) {
-        auto event = session->apiEvents.front();
-        EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, event.type);
-        EXPECT_EQ(0u, event.info.thread.thread.slice);
-        EXPECT_EQ(0u, event.info.thread.thread.subslice);
-        EXPECT_EQ(0u, event.info.thread.thread.eu);
-        EXPECT_EQ(UINT32_MAX, event.info.thread.thread.thread);
-    }
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenBindInfoForVmHandleWhenReadingModuleDebugAreaThenGpuMemoryIsRead) {

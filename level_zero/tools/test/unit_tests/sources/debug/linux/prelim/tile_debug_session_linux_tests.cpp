@@ -148,39 +148,6 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenReadingContextState
     EXPECT_TRUE(session->sipSupportsSlm);
 }
 
-template <bool blockOnFence = false>
-struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxi915Helper {
-    void setUp() {
-        NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
-
-        DebugApiLinuxMultiDeviceFixture::setUp();
-
-        zet_debug_config_t config = {};
-        config.pid = 0x1234;
-        auto session = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 10);
-        ASSERT_NE(nullptr, session);
-        session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
-        session->createTileSessionsIfEnabled();
-        rootSession = session.get();
-        rootSession->blockOnFenceMode = blockOnFence;
-
-        tileSessions[0] = static_cast<MockTileDebugSessionLinuxi915 *>(rootSession->tileSessions[0].first);
-        tileSessions[1] = static_cast<MockTileDebugSessionLinuxi915 *>(rootSession->tileSessions[1].first);
-
-        setupSessionClassHandlesAndUuidMap(session.get());
-        setupVmToTile(session.get());
-
-        l0Device->setDebugSession(session.release());
-    }
-
-    void tearDown() {
-        DebugApiLinuxMultiDeviceFixture::tearDown();
-    }
-    DebugManagerStateRestore restorer;
-    MockDebugSessionLinuxi915 *rootSession = nullptr;
-    MockTileDebugSessionLinuxi915 *tileSessions[2];
-};
-
 using TileAttachTest = Test<TileAttachFixture<>>;
 
 TEST_F(TileAttachTest, GivenTileAttachEnabledAndMultitileDeviceWhenInitializingDebugSessionThenTileSessionsAreCreated) {
@@ -1144,36 +1111,6 @@ TEST_F(TileAttachBlockOnFenceTest, GivenMultipleVmBindEventsForFirstZebinSegment
     addZebinVmBindEvent(rootSession, vm0 + 20, true, true, 1);
     EXPECT_EQ(1u, tileSessions[0]->apiEvents.size());
     EXPECT_EQ(2u, rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
-}
-
-using TileAttachAsyncThreadTest = Test<TileAttachFixture<>>;
-
-TEST_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsReadThenThreadUnavailableEventIsGenerated) {
-    rootSession->tileSessions[0].second = true;
-    tileSessions[0]->returnTimeDiff = rootSession->interruptTimeout * 10;
-
-    ze_device_thread_t thread = {0, 0, 0, 0};
-    auto result = tileSessions[0]->interrupt(thread);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    rootSession->synchronousInternalEventRead = true;
-    rootSession->startAsyncThread();
-
-    while (rootSession->getInternalEventCounter < 2) {
-        ;
-    }
-
-    rootSession->closeAsyncThread();
-
-    zet_debug_event_t event = {};
-    result = zetDebugReadEvent(tileSessions[0]->toHandle(), 0, &event);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, event.type);
-    EXPECT_EQ(0u, event.info.thread.thread.slice);
-    EXPECT_EQ(0u, event.info.thread.thread.subslice);
-    EXPECT_EQ(0u, event.info.thread.thread.eu);
-    EXPECT_EQ(0u, event.info.thread.thread.thread);
 }
 
 TEST_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoadAndUnloadEventsAreReportedForLastKernel) {

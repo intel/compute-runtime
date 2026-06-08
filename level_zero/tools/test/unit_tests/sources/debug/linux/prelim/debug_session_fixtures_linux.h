@@ -850,5 +850,38 @@ struct MockDebugSessionLinuxi915Helper {
     const uint32_t elfSize = 10;
 };
 
+template <bool blockOnFence = false>
+struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxi915Helper {
+    void setUp() {
+        NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
+
+        DebugApiLinuxMultiDeviceFixture::setUp();
+
+        zet_debug_config_t config = {};
+        config.pid = 0x1234;
+        auto session = std::make_unique<MockDebugSessionLinuxi915>(config, l0Device, 10);
+        ASSERT_NE(nullptr, session);
+        session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
+        session->createTileSessionsIfEnabled();
+        rootSession = session.get();
+        rootSession->blockOnFenceMode = blockOnFence;
+
+        tileSessions[0] = static_cast<MockTileDebugSessionLinuxi915 *>(rootSession->tileSessions[0].first);
+        tileSessions[1] = static_cast<MockTileDebugSessionLinuxi915 *>(rootSession->tileSessions[1].first);
+
+        setupSessionClassHandlesAndUuidMap(session.get());
+        setupVmToTile(session.get());
+
+        l0Device->setDebugSession(session.release());
+    }
+
+    void tearDown() {
+        DebugApiLinuxMultiDeviceFixture::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+    MockDebugSessionLinuxi915 *rootSession = nullptr;
+    MockTileDebugSessionLinuxi915 *tileSessions[2];
+};
+
 } // namespace ult
 } // namespace L0

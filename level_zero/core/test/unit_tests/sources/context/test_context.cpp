@@ -18,7 +18,6 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
-#include "shared/test/common/mocks/mock_os_thread.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -3593,13 +3592,8 @@ class ContextWhiteboxForIpcTesting : public ::L0::Context {
 
 class ContextIpcSocketTest : public Test<DeviceFixture> {
   public:
-    VariableBackup<decltype(NEO::Thread::createFunc)> threadCreateBackup{&NEO::Thread::createFunc};
-
     void SetUp() override {
         DeviceFixture::setUp();
-        NEO::Thread::createFunc = [](void *(*)(void *), void *) -> std::unique_ptr<NEO::Thread> {
-            return std::make_unique<NEO::MockThread>();
-        };
     }
 
     void TearDown() override {

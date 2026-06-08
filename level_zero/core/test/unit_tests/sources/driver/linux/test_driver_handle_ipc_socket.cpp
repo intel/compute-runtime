@@ -7,7 +7,6 @@
 
 #include "shared/source/os_interface/linux/ipc_socket_server.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_os_thread.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -57,9 +56,6 @@ class DriverHandleIpcSocketTest : public Test<DeviceFixture> {
   public:
     void SetUp() override {
         DeviceFixture::setUp();
-        NEO::Thread::createFunc = [](void *(*)(void *), void *) -> std::unique_ptr<NEO::Thread> {
-            return std::make_unique<NEO::MockThread>();
-        };
         NEO::SysCalls::sysCallsSocket = [](int, int, int) -> int { return mockSocketFd; };
         NEO::SysCalls::sysCallsBind = [](int, const struct sockaddr *, socklen_t) -> int { return 0; };
         NEO::SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
@@ -70,7 +66,6 @@ class DriverHandleIpcSocketTest : public Test<DeviceFixture> {
         DeviceFixture::tearDown();
     }
 
-    VariableBackup<decltype(NEO::Thread::createFunc)> threadCreateBackup{&NEO::Thread::createFunc};
     VariableBackup<decltype(NEO::SysCalls::sysCallsSocket)> socketBackup{&NEO::SysCalls::sysCallsSocket};
     VariableBackup<decltype(NEO::SysCalls::sysCallsBind)> bindBackup{&NEO::SysCalls::sysCallsBind};
     VariableBackup<decltype(NEO::SysCalls::sysCallsListen)> listenBackup{&NEO::SysCalls::sysCallsListen};

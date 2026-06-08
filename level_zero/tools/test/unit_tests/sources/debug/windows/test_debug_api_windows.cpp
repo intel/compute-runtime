@@ -5,9 +5,7 @@
  *
  */
 
-#include "shared/source/built_ins/sip.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
-#include "shared/source/os_interface/windows/wddm_debug.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
@@ -15,182 +13,16 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
-#include "level_zero/tools/source/debug/windows/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/windows/debug_session_fixtures_windows.h"
 
 #include "StateSaveAreaHeaderWrapper.h"
 
 namespace L0 {
 namespace ult {
-
-struct MockDebugSessionWindows : DebugSessionWindows {
-    using DebugSessionWindows::acknowledgeEventImp;
-    using DebugSessionWindows::allContexts;
-    using DebugSessionWindows::allElfs;
-    using DebugSessionWindows::allModules;
-    using DebugSessionWindows::allThreads;
-    using DebugSessionWindows::asyncThread;
-    using DebugSessionWindows::attentionEventContext;
-    using DebugSessionWindows::calculateThreadSlotOffset;
-    using DebugSessionWindows::closeAsyncThread;
-    using DebugSessionWindows::continueExecutionImp;
-    using DebugSessionWindows::debugArea;
-    using DebugSessionWindows::debugAreaVA;
-    using DebugSessionWindows::debugHandle;
-    using DebugSessionWindows::ElfRange;
-    using DebugSessionWindows::eventsToAck;
-    using DebugSessionWindows::getSbaBufferGpuVa;
-    using DebugSessionWindows::initialize;
-    using DebugSessionWindows::interruptContextImp;
-    using DebugSessionWindows::interruptImp;
-    using DebugSessionWindows::invalidHandle;
-    using DebugSessionWindows::moduleDebugAreaCaptured;
-    using DebugSessionWindows::processId;
-    using DebugSessionWindows::pushApiEvent;
-    using DebugSessionWindows::readAllocationDebugData;
-    using DebugSessionWindows::readAndHandleEvent;
-    using DebugSessionWindows::readGpuMemory;
-    using DebugSessionWindows::readModuleDebugArea;
-    using DebugSessionWindows::readSbaBuffer;
-    using DebugSessionWindows::readStateSaveAreaHeader;
-    using DebugSessionWindows::resumeContextImp;
-    using DebugSessionWindows::resumeImp;
-    using DebugSessionWindows::runEscape;
-    using DebugSessionWindows::startAsyncThread;
-    using DebugSessionWindows::stateSaveAreaCaptured;
-    using DebugSessionWindows::stateSaveAreaSize;
-    using DebugSessionWindows::stateSaveAreaVA;
-    using DebugSessionWindows::wddm;
-    using DebugSessionWindows::writeGpuMemory;
-    using L0::DebugSessionImp::apiEvents;
-    using L0::DebugSessionImp::attachTile;
-    using L0::DebugSessionImp::cleanRootSessionAfterDetach;
-    using L0::DebugSessionImp::detachTile;
-    using L0::DebugSessionImp::getStateSaveAreaHeader;
-    using L0::DebugSessionImp::interruptSent;
-    using L0::DebugSessionImp::isValidGpuAddress;
-    using L0::DebugSessionImp::sipSupportsSlm;
-    using L0::DebugSessionImp::stateSaveAreaHeader;
-    using L0::DebugSessionImp::triggerEvents;
-    using L0::DebugSessionWindows::newlyStoppedThreads;
-    using L0::DebugSessionWindows::pendingInterrupts;
-
-    MockDebugSessionWindows(const zet_debug_config_t &config, L0::Device *device) : DebugSessionWindows(config, device) {}
-
-    ~MockDebugSessionWindows() override {
-        closeAsyncThread();
-    }
-
-    ze_result_t initialize() override {
-        if (resultInitialize != ZE_RESULT_FORCE_UINT32) {
-            return resultInitialize;
-        }
-        return DebugSessionWindows::initialize();
-    }
-
-    ze_result_t readAndHandleEvent(uint64_t timeoutMs) override {
-        if (resultReadAndHandleEvent != ZE_RESULT_FORCE_UINT32) {
-            return resultReadAndHandleEvent;
-        }
-        return DebugSessionWindows::readAndHandleEvent(timeoutMs);
-    }
-
-    NTSTATUS runEscape(KM_ESCAPE_INFO &escapeInfo) override {
-        if (shouldEscapeReturnStatusNotSuccess) {
-            escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus = DBGUMD_RETURN_DEBUGGER_ATTACH_DEVICE_BUSY;
-            return STATUS_SUCCESS;
-        }
-        if (shouldEscapeCallFail) {
-            return STATUS_WAIT_1;
-        }
-
-        return L0::DebugSessionWindows::runEscape(escapeInfo);
-    }
-
-    void ensureThreadStopped(ze_device_thread_t thread, uint64_t context) {
-        auto threadId = convertToThreadId(thread);
-        if (allThreads.find(threadId) == allThreads.end()) {
-            allThreads[threadId] = std::make_unique<EuThread>(threadId);
-        }
-        allThreads[threadId]->stopThread(context);
-        allThreads[threadId]->reportAsStopped();
-    }
-
-    bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) override {
-        srIdent.count = 0;
-        if (stoppedThreads.size()) {
-            auto entry = stoppedThreads.find(thread->getThreadId());
-            if (entry != stoppedThreads.end()) {
-                srIdent.count = entry->second;
-            }
-            return true;
-        }
-        return L0::DebugSessionImp::readSystemRoutineIdent(thread, vmHandle, srIdent);
-    }
-    bool readSystemRoutineIdentFromMemory(EuThread *thread, const void *stateSaveArea, SIP::sr_ident &srIdent) override {
-        readSystemRoutineIdentFromMemoryCallCount++;
-        srIdent.count = 0;
-        if (stoppedThreads.size()) {
-            auto entry = stoppedThreads.find(thread->getThreadId());
-            if (entry != stoppedThreads.end()) {
-                srIdent.count = entry->second;
-            }
-            return true;
-        }
-        return L0::DebugSessionImp::readSystemRoutineIdentFromMemory(thread, stateSaveArea, srIdent);
-    }
-
-    ze_result_t resultInitialize = ZE_RESULT_FORCE_UINT32;
-    ze_result_t resultReadAndHandleEvent = ZE_RESULT_FORCE_UINT32;
-    static constexpr uint64_t mockDebugHandle = 1;
-    bool shouldEscapeReturnStatusNotSuccess = false;
-    bool shouldEscapeCallFail = false;
-    std::unordered_map<uint64_t, uint8_t> stoppedThreads;
-
-    uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
-};
-
-struct MockAsyncThreadDebugSessionWindows : public MockDebugSessionWindows {
-    using MockDebugSessionWindows::MockDebugSessionWindows;
-
-    static void *mockAsyncThreadFunction(void *arg) {
-        DebugSessionWindows::asyncThreadFunction(arg);
-        reinterpret_cast<MockAsyncThreadDebugSessionWindows *>(arg)->asyncThreadFinished = true;
-        return nullptr;
-    }
-
-    void startAsyncThread() override {
-        asyncThread.thread = NEO::Thread::createFunc(mockAsyncThreadFunction, reinterpret_cast<void *>(this));
-    }
-
-    std::atomic<bool> asyncThreadFinished{false};
-};
-
-struct DebugApiWindowsFixture : public DeviceFixture {
-    void setUp() {
-        DeviceFixture::setUp();
-        mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
-    }
-
-    void tearDown() {
-        DeviceFixture::tearDown();
-    }
-
-    void copyBitmaskToEventParams(READ_EVENT_PARAMS_BUFFER *params, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) {
-        auto bitsetParams = reinterpret_cast<DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS *>(params);
-        auto bitmapDst = reinterpret_cast<uint8_t *>(&bitsetParams->BitmaskArrayPtr);
-        bitsetParams->BitMaskSizeInBytes = static_cast<uint32_t>(bitmaskSize);
-        memcpy_s(bitmapDst, bitmaskSize, bitmask.get(), bitmaskSize);
-    }
-    static constexpr uint8_t bufferSize = 16;
-    WddmEuDebugInterfaceMock *mockWddm = nullptr;
-};
 
 extern CreateDebugSessionHelperFunc createDebugSessionFunc;
 using DebugApiWindowsAttentionTest = Test<DebugApiWindowsFixture>;
@@ -1373,54 +1205,6 @@ TEST(DebugSessionWindowsTest, whenTranslateEscapeErrorStatusCalledThenCorrectZeR
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_PERMISSION_DENIED));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_EU_DEBUG_NOT_SUPPORTED));
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_TYPE_MAX));
-}
-
-using DebugApiWindowsAsyncThreadTest = Test<DebugApiWindowsFixture>;
-
-TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAsyncThreadThenThreadIsStarted) {
-    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
-    ASSERT_NE(nullptr, session);
-    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
-    session->wddm = mockWddm;
-    session->startAsyncThread();
-
-    EXPECT_TRUE(session->asyncThread.threadActive);
-
-    session->closeAsyncThread();
-
-    EXPECT_FALSE(session->asyncThread.threadActive);
-}
-
-TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyncThreadThenThreadIsStartedAndFinishes) {
-    auto session = std::make_unique<MockAsyncThreadDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
-    ASSERT_NE(nullptr, session);
-    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
-    session->wddm = mockWddm;
-    session->startAsyncThread();
-
-    EXPECT_TRUE(session->asyncThread.threadActive);
-    EXPECT_FALSE(session->asyncThreadFinished);
-
-    session->closeAsyncThread();
-
-    EXPECT_FALSE(session->asyncThread.threadActive);
-    EXPECT_TRUE(session->asyncThreadFinished);
-}
-
-TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosingConnectionThenAsyncThreadIsTerminated) {
-    auto session = std::make_unique<MockAsyncThreadDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
-    ASSERT_NE(nullptr, session);
-    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
-    session->wddm = mockWddm;
-    session->startAsyncThread();
-
-    EXPECT_TRUE(session->asyncThread.threadActive);
-    EXPECT_FALSE(session->asyncThreadFinished);
-
-    session->closeConnection();
-
-    EXPECT_FALSE(session->asyncThread.threadActive);
-    EXPECT_TRUE(session->asyncThreadFinished);
 }
 
 TEST_F(DebugApiWindowsTest, WhenCallingReadGpuMemoryThenMemoryIsRead) {
