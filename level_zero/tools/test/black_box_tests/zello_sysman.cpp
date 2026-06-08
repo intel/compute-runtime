@@ -690,6 +690,32 @@ void testSysmanSurvivability(ze_device_handle_t &device) {
     }
     std::cout << std::endl;
 
+    // Get device state with extension to check wedged, survivability, and flash override status
+    zes_intel_device_state_exp_t extDeviceState = {};
+    extDeviceState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    extDeviceState.pNext = nullptr;
+
+    zes_device_state_t deviceState = {};
+    deviceState.pNext = &extDeviceState;
+
+    ze_result_t stateResult = zesDeviceGetState(device, &deviceState);
+    if (stateResult == ZE_RESULT_SUCCESS && verbose) {
+        std::cout << "--- Device State ---" << std::endl;
+        std::cout << "Device reset status: 0x" << std::hex << deviceState.reset << std::dec << std::endl;
+        std::cout << "Device repaired status: " << deviceState.repaired << std::endl;
+
+        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED) {
+            std::cout << "Device is WEDGED" << std::endl;
+        }
+        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY) {
+            std::cout << "Device is in SURVIVABILITY mode" << std::endl;
+        }
+        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE) {
+            std::cout << "Device has FLASH OVERRIDE enabled" << std::endl;
+        }
+        std::cout << std::endl;
+    }
+
     if ((result == ZE_RESULT_SUCCESS) && verbose) {
         std::cout << "Device is in Normal operations Mode. Device properties retrieved successfully. " << std::endl;
         std::cout << "Device Name = " << properties.core.name << std::endl;

@@ -14,6 +14,15 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
+// Map of errno values to expected Sysman error codes as defined in LinuxSysmanImp::getResult
+static const std::map<int, ze_result_t> errnoToSysmanErrorMap = {
+    {EPERM, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS},
+    {EACCES, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS},
+    {ENOENT, ZE_RESULT_ERROR_NOT_AVAILABLE},
+    {EBUSY, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE},
+    {EIO, ZE_RESULT_ERROR_UNKNOWN} // Any other errno maps to UNKNOWN
+};
+
 // Helper functions to get default values from the map
 inline const std::string &getMockMtdFilePath() {
     return mockMtdPathToFdMap.begin()->first;
@@ -50,30 +59,50 @@ TEST_F(SysmanMtdFixture, GivenValidParametersWhenErasingMtdDeviceThenSuccessIsRe
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-// Test erase method - open fails
 TEST_F(SysmanMtdFixture, GivenOpenFailsWhenErasingMtdDeviceThenErrorIsReturned) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        errno = ENOENT;
+    static thread_local int currentErrno = 0;
+    auto mockOpenWithErrno = [](const char *pathname, int flags) -> int {
+        errno = currentErrno;
         return -1;
-    });
+    };
 
-    ze_result_t result = pMtdDevice->erase(getMockMtdFilePath(), mockMtdOffset, mockMtdSize);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, mockOpenWithErrno);
+    size_t iterationCount = 0;
+
+    for (const auto &[errnoValue, expectedSysmanError] : errnoToSysmanErrorMap) {
+        currentErrno = errnoValue;
+        iterationCount++;
+
+        ze_result_t result = pMtdDevice->erase(getMockMtdFilePath(), mockMtdOffset, mockMtdSize);
+        EXPECT_EQ(result, expectedSysmanError);
+    }
+
+    EXPECT_EQ(iterationCount, errnoToSysmanErrorMap.size());
 }
 
 TEST_F(SysmanMtdFixture, GivenIoctlFailsWhenErasingMtdDeviceThenErrorIsReturned) {
+    static thread_local int currentErrno = 0;
+
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, &mockCloseSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, [](int fd, unsigned long request, void *arg) -> int {
         if (fd == getMockMtdFd() && request == memEraseCmd) {
-            errno = EIO;
+            errno = currentErrno;
             return -1;
         }
         return -1;
     });
 
-    ze_result_t result = pMtdDevice->erase(getMockMtdFilePath(), mockMtdOffset, mockMtdSize);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    size_t iterationCount = 0;
+    for (const auto &[errnoValue, expectedSysmanError] : errnoToSysmanErrorMap) {
+        currentErrno = errnoValue;
+        iterationCount++;
+
+        ze_result_t result = pMtdDevice->erase(getMockMtdFilePath(), mockMtdOffset, mockMtdSize);
+        EXPECT_EQ(result, expectedSysmanError);
+    }
+
+    EXPECT_EQ(iterationCount, errnoToSysmanErrorMap.size());
 }
 
 TEST_F(SysmanMtdFixture, GivenValidParametersWhenWritingToMtdDeviceThenSuccessIsReturned) {
@@ -88,26 +117,48 @@ TEST_F(SysmanMtdFixture, GivenValidParametersWhenWritingToMtdDeviceThenSuccessIs
 }
 
 TEST_F(SysmanMtdFixture, GivenOpenFailsWhenWritingToMtdDeviceThenErrorIsReturned) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        errno = ENOENT;
+    static thread_local int currentErrno = 0;
+    auto mockOpenWithErrno = [](const char *pathname, int flags) -> int {
+        errno = currentErrno;
         return -1;
-    });
+    };
 
-    uint8_t testData[] = {0x01, 0x02, 0x03, 0x04};
-    ze_result_t result = pMtdDevice->write(getMockMtdFilePath(), mockMtdOffset, testData, sizeof(testData));
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, mockOpenWithErrno);
+    size_t iterationCount = 0;
+
+    for (const auto &[errnoValue, expectedSysmanError] : errnoToSysmanErrorMap) {
+        currentErrno = errnoValue;
+        iterationCount++;
+
+        uint8_t testData[] = {0x01, 0x02, 0x03, 0x04};
+        ze_result_t result = pMtdDevice->write(getMockMtdFilePath(), mockMtdOffset, testData, sizeof(testData));
+        EXPECT_EQ(result, expectedSysmanError);
+    }
+
+    EXPECT_EQ(iterationCount, errnoToSysmanErrorMap.size());
 }
 
 TEST_F(SysmanMtdFixture, GivenLseekFailsWhenWritingToMtdDeviceThenErrorIsReturned) {
+    static thread_local int currentErrno = 0;
+
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, &mockCloseSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsLseek)> mockLseek(&NEO::SysCalls::sysCallsLseek, [](int fd, off_t offset, int whence) -> off_t {
-        return -1; // Always fail
+        errno = currentErrno;
+        return -1;
     });
 
-    uint8_t testData[] = {0x01, 0x02, 0x03, 0x04};
-    ze_result_t result = pMtdDevice->write(getMockMtdFilePath(), mockMtdOffset, testData, sizeof(testData));
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    size_t iterationCount = 0;
+    for (const auto &[errnoValue, expectedSysmanError] : errnoToSysmanErrorMap) {
+        currentErrno = errnoValue;
+        iterationCount++;
+
+        uint8_t testData[] = {0x01, 0x02, 0x03, 0x04};
+        ze_result_t result = pMtdDevice->write(getMockMtdFilePath(), mockMtdOffset, testData, sizeof(testData));
+        EXPECT_EQ(result, expectedSysmanError);
+    }
+
+    EXPECT_EQ(iterationCount, errnoToSysmanErrorMap.size());
 }
 
 TEST_F(SysmanMtdFixture, GivenPartialWriteWhenWritingToMtdDeviceThenErrorIsReturned) {
@@ -116,6 +167,7 @@ TEST_F(SysmanMtdFixture, GivenPartialWriteWhenWritingToMtdDeviceThenErrorIsRetur
     VariableBackup<decltype(NEO::SysCalls::sysCallsLseek)> mockLseek(&NEO::SysCalls::sysCallsLseek, &mockLseekWriteSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsWrite)> mockWrite(&NEO::SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         if (fd == getMockMtdFd()) {
+            errno = ENOENT;
             return static_cast<ssize_t>(count / 2); // Simulate partial write
         }
         return -1;
@@ -123,7 +175,7 @@ TEST_F(SysmanMtdFixture, GivenPartialWriteWhenWritingToMtdDeviceThenErrorIsRetur
 
     uint8_t testData[] = {0x01, 0x02, 0x03, 0x04};
     ze_result_t result = pMtdDevice->write(getMockMtdFilePath(), mockMtdOffset, testData, sizeof(testData));
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 TEST_F(SysmanMtdFixture, GivenWriteFailsWhenWritingToMtdDeviceThenErrorIsReturned) {
@@ -132,7 +184,7 @@ TEST_F(SysmanMtdFixture, GivenWriteFailsWhenWritingToMtdDeviceThenErrorIsReturne
     VariableBackup<decltype(NEO::SysCalls::sysCallsLseek)> mockLseek(&NEO::SysCalls::sysCallsLseek, &mockLseekWriteSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsWrite)> mockWrite(&NEO::SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         if (fd == getMockMtdFd()) {
-            errno = EIO;
+            errno = ENOENT;
             return -1;
         }
         return -1;
@@ -140,7 +192,7 @@ TEST_F(SysmanMtdFixture, GivenWriteFailsWhenWritingToMtdDeviceThenErrorIsReturne
 
     uint8_t testData[] = {0x01, 0x02, 0x03, 0x04};
     ze_result_t result = pMtdDevice->write(getMockMtdFilePath(), mockMtdOffset, testData, sizeof(testData));
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 TEST_F(SysmanMtdFixture, GivenValidParametersWhenGettingDeviceInfoThenSuccessIsReturned) {
@@ -178,7 +230,7 @@ TEST_F(SysmanMtdFixture, GivenOpenFailsWhenGettingDeviceInfoThenErrorIsReturned)
 
     std::map<std::string, std::map<uint32_t, uint32_t>> regionInfoMap;
     ze_result_t result = pMtdDevice->getDeviceInfo(getMockMtdFilePath(), regionInfoMap);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 TEST_F(SysmanMtdFixture, GivenLseekFailsWhenGettingDeviceInfoThenRegionsAreSkipped) {
@@ -199,7 +251,7 @@ TEST_F(SysmanMtdFixture, GivenReadFailsWhenGettingDeviceInfoThenRegionsAreSkippe
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, &mockCloseSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, [](int fd, void *buf, size_t count) -> ssize_t {
         if (fd == getMockMtdFd()) {
-            errno = EIO;
+            errno = ENOENT;
             return -1;
         }
         return -1;

@@ -7,6 +7,9 @@
 
 #include "level_zero/sysman/source/shared/linux/mtd/sysman_mtd.h"
 
+#include "level_zero/sysman/source/shared/linux/sysman_sys_calls_wrapper.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+
 #include <cstring>
 #include <sys/ioctl.h>
 
@@ -25,52 +28,58 @@ std::unique_ptr<MemoryTechnologyDeviceInterface> MemoryTechnologyDeviceInterface
 }
 
 ze_result_t MemoryTechnologyDeviceInterface::erase(const std::string &filePath, uint32_t offset, size_t size) {
-    int fd = NEO::SysCalls::open(filePath.c_str(), O_RDWR);
+    int errorNum = 0;
+    int fd = SysmanSysCallsWrapper::open(filePath.c_str(), O_RDWR, errorNum);
     if (fd < 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return LinuxSysmanImp::getResult(errorNum);
     }
 
     erase_info_t eraseInfo;
     eraseInfo.start = offset;
     eraseInfo.length = static_cast<uint32_t>(size);
 
-    int result = NEO::SysCalls::ioctl(fd, MEMERASE, &eraseInfo);
-    NEO::SysCalls::close(fd);
+    int result = SysmanSysCallsWrapper::ioctl(fd, MEMERASE, &eraseInfo, errorNum);
+    int savedErrno = errorNum;
+    SysmanSysCallsWrapper::close(fd, errorNum);
 
     if (result < 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return LinuxSysmanImp::getResult(savedErrno);
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t MemoryTechnologyDeviceInterface::write(const std::string &filePath, uint32_t offset, const uint8_t *data, size_t size) {
-    int fd = NEO::SysCalls::open(filePath.c_str(), O_RDWR);
+    int errorNum = 0;
+    int fd = SysmanSysCallsWrapper::open(filePath.c_str(), O_RDWR, errorNum);
     if (fd < 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return LinuxSysmanImp::getResult(errorNum);
     }
 
     // Seek to the specified offset
-    if (NEO::SysCalls::lseek(fd, offset, SEEK_SET) != static_cast<off_t>(offset)) {
-        NEO::SysCalls::close(fd);
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (SysmanSysCallsWrapper::lseek(fd, offset, SEEK_SET, errorNum) != static_cast<off_t>(offset)) {
+        int savedErrno = errorNum;
+        SysmanSysCallsWrapper::close(fd, errorNum);
+        return LinuxSysmanImp::getResult(savedErrno);
     }
 
     // Write the data
-    ssize_t bytesWritten = NEO::SysCalls::write(fd, data, size);
-    NEO::SysCalls::close(fd);
+    ssize_t bytesWritten = SysmanSysCallsWrapper::write(fd, data, size, errorNum);
+    int savedErrno = errorNum;
+    SysmanSysCallsWrapper::close(fd, errorNum);
 
     if (bytesWritten != static_cast<ssize_t>(size)) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return LinuxSysmanImp::getResult(savedErrno);
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t MemoryTechnologyDeviceInterface::getDeviceInfo(const std::string &filePath, std::map<std::string, std::map<uint32_t, uint32_t>> &mtdRegionDeviceInfoMap) {
-    int fd = NEO::SysCalls::open(filePath.c_str(), O_RDONLY);
+    int errorNum = 0;
+    int fd = SysmanSysCallsWrapper::open(filePath.c_str(), O_RDONLY, errorNum);
     if (fd < 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return LinuxSysmanImp::getResult(errorNum);
     }
 
     // Iterate over the mtdRegionToOffsetMap to get region information
@@ -80,11 +89,11 @@ ze_result_t MemoryTechnologyDeviceInterface::getDeviceInfo(const std::string &fi
 
         // Read the SPI descriptor region data
         MtdSysman::SpiDescRegionBar value;
-        if (NEO::SysCalls::lseek(fd, spiOffset, SEEK_SET) != static_cast<off_t>(spiOffset)) {
+        if (SysmanSysCallsWrapper::lseek(fd, spiOffset, SEEK_SET, errorNum) != static_cast<off_t>(spiOffset)) {
             continue; // Skip this region if seek fails
         }
 
-        ssize_t bytesRead = NEO::SysCalls::read(fd, &value, sizeof(value));
+        ssize_t bytesRead = SysmanSysCallsWrapper::read(fd, &value, sizeof(value), errorNum);
         if (bytesRead != sizeof(value)) {
             continue; // Skip this region if read fails
         }
@@ -103,7 +112,7 @@ ze_result_t MemoryTechnologyDeviceInterface::getDeviceInfo(const std::string &fi
         mtdRegionDeviceInfoMap[regionName][1] = regionEnd;   // Use 1 for regionEnd
     }
 
-    NEO::SysCalls::close(fd);
+    SysmanSysCallsWrapper::close(fd, errorNum);
     return ZE_RESULT_SUCCESS;
 }
 

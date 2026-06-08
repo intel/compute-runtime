@@ -448,6 +448,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMtdDeviceCreateFailsWhenFlashingExtended
 
     // Mock system calls - fail the open call to simulate MTD device creation failure
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        errno = ENOENT;
         return -1; // Fail open for MTD device
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, &mockCloseSuccess);
@@ -462,7 +463,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMtdDeviceCreateFailsWhenFlashingExtended
 
     std::vector<uint8_t> firmwareData(1024, 0xAA);
     ze_result_t result = zesFirmwareFlash(handles[0], firmwareData.data(), static_cast<uint32_t>(firmwareData.size()));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenGetDeviceInfoSkipsRegionsWhenFlashingExtendedFirmwareThenSuccessIsReturned) {
@@ -507,6 +508,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenEraseFailsWhenFlashingExtendedFirmwareTh
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, &mockReadSpiDescriptorSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, [](int fd, unsigned long request, void *arg) -> int {
         if (request == memEraseCmd) {
+            errno = ENOENT;
             return -1; // Fail only the erase operation
         }
         return 0; // Success for other ioctl calls
@@ -518,7 +520,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenEraseFailsWhenFlashingExtendedFirmwareTh
 
     std::vector<uint8_t> firmwareData(0x800000, 0xAA); // Full size needed for erase operation testing
     ze_result_t result = zesFirmwareFlash(handles[0], firmwareData.data(), static_cast<uint32_t>(firmwareData.size()));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenWriteFailsWhenFlashingExtendedFirmwareThenErrorIsReturned) {
@@ -537,6 +539,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenWriteFailsWhenFlashingExtendedFirmwareTh
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockRead(&NEO::SysCalls::sysCallsRead, &mockReadSpiDescriptorSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, &mockIoctlEraseSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsWrite)> mockWrite(&NEO::SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
+        errno = ENOENT;
         return -1; // Fail write operation
     });
 
@@ -546,7 +549,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenWriteFailsWhenFlashingExtendedFirmwareTh
 
     std::vector<uint8_t> firmwareData(0x800000, 0xAA); // Full size needed for write operation testing
     ze_result_t result = zesFirmwareFlash(handles[0], firmwareData.data(), static_cast<uint32_t>(firmwareData.size()));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenMultipleRegionsWhenFlashingExtendedFirmwareThenSuccessIsReturned) {
@@ -732,9 +735,6 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMalformedQuotesInMtdNamesWhenFlashingExt
     auto handles = getFirmwareHandles(mockFwHandlesCountFdo);
     ASSERT_NE(nullptr, handles[0]);
 
-    // Mock fs access to return MTD entries with mismatched quotes
-    // One entry starts with quote but doesn't end with quote - tests name.front() == '"'
-    // Another entry ends with quote but doesn't start with quote - tests name.back() == '"'
     pMockFsAccess->regionMode = MockFirmwareFsAccess::MtdRegionMode::malformedQuotes;
 
     // Mock successful system calls for MTD operations
@@ -752,7 +752,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMalformedQuotesInMtdNamesWhenFlashingExt
     std::vector<uint8_t> firmwareData(1024, 0xAA);
 
     ze_result_t result = zesFirmwareFlash(handles[0], firmwareData.data(), static_cast<uint32_t>(firmwareData.size()));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result); // Should fail - covers both quote conditions (name.front() == '"' and name.back() == '"')
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenMalformedMtdLinesWhenFlashingExtendedFirmwareThenCoversParsingFailureCondition) {
@@ -773,7 +773,7 @@ TEST_F(SysmanFirmwareFdoFixtureXe, GivenMalformedMtdLinesWhenFlashingExtendedFir
     std::vector<uint8_t> firmwareData(1024, 0xAA);
 
     ze_result_t result = zesFirmwareFlash(handles[0], firmwareData.data(), static_cast<uint32_t>(firmwareData.size()));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result); // Should fail - malformed lines are skipped, no valid DESCRIPTOR found
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
 TEST_F(SysmanFirmwareFdoFixtureXe, GivenDeviceInFdoModeWhenFlashingFdoFirmwareThenSuccessIsReturned) {
