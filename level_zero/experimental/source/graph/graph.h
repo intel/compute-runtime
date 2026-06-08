@@ -459,7 +459,7 @@ struct ExecutableGraph;
 using GraphSubmissionSegment = std::variant<L0::CommandList *, ExecutableGraph *>;
 using GraphSubmissionChain = std::vector<GraphSubmissionSegment>;
 
-void handleExternalCbEvent(L0::Event *event, ExternalCbEventInfoContainer &container);
+void handleExternalCbEvent(L0::Event *event, CbExternalEventInstantiateContext &cbEventContext);
 
 struct GraphInstatiateSettings {
     GraphInstatiateSettings() = default;
@@ -535,8 +535,10 @@ struct ExecGraphBuilder final {
 };
 
 struct ExecutableGraph : _ze_executable_graph_handle_t {
-    ExecutableGraph(WeaklyShared<OrderedExecutableSegmentsList> &&orderedSegments);
-    ExecutableGraph() : ExecutableGraph(WeaklyShared(new OrderedExecutableSegmentsList)) {}
+    ExecutableGraph(WeaklyShared<OrderedExecutableSegmentsList> &&orderedSegments,
+                    WeaklyShared<ExternalCbEventInfoContainer> &&externalCbEvent);
+    ExecutableGraph() : ExecutableGraph(WeaklyShared(new OrderedExecutableSegmentsList),
+                                        WeaklyShared(new ExternalCbEventInfoContainer)) {}
     ExecutableGraph(const ExecutableGraph &) = delete;
     ExecutableGraph &operator=(const ExecutableGraph &) = delete;
     ExecutableGraph(ExecutableGraph &&) = delete;
@@ -572,7 +574,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     ze_result_t execute(L0::CommandList *executionTarget, void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
-    ExternalCbEventInfoContainer &getExternalCbEventInfoContainer() {
+
+    WeaklyShared<ExternalCbEventInfoContainer> getExternalCbEventInfoContainer() {
         return externalCbEventStorage;
     }
 
@@ -597,14 +600,16 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     L0::CommandList *executionTarget = nullptr;
     std::vector<std::unique_ptr<L0::CommandList>> myCommandLists;
     std::unordered_map<GraphCommandId, L0::CommandList *> myOrderedSegments;
-    ExternalCbEventInfoContainer externalCbEventStorage;
 
     StackVec<std::unique_ptr<ExecutableGraph>, 16> subGraphs;
 
-    bool usePatchingPreamble = true;
     WeaklyShared<OrderedExecutableSegmentsList> orderedCommands; // shared between graph and subgraphs
+    WeaklyShared<ExternalCbEventInfoContainer> externalCbEventStorage;
+
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;
+
+    bool usePatchingPreamble = true;
 };
 
 constexpr size_t maxVariantSize = 2 * 64;

@@ -1728,6 +1728,8 @@ TEST_F(GraphTestInstantiationTest, givenEventResetClosureAndEnforcedEventsWhenIn
     ClosureExternalStorage externalStorage;
     ExternalCbEventInfoContainer externalCbEventStorage;
 
+    CbExternalEventInstantiateContext cbEventContext = {&externalCbEventStorage, nullptr};
+
     Closure<CaptureApi::zeCommandListAppendEventReset>::ApiArgs apiArgs = {
         sourceCmdList.toHandle(),
         capturedEvent.toHandle()};
@@ -1738,7 +1740,7 @@ TEST_F(GraphTestInstantiationTest, givenEventResetClosureAndEnforcedEventsWhenIn
         0u,
         nullptr};
 
-    auto result = closure.instantiateTo(&executionCmdList, externalStorage, externalCbEventStorage, enforcedEvents);
+    auto result = closure.instantiateTo(&executionCmdList, externalStorage, cbEventContext, enforcedEvents);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, executionCmdList.appendEventResetCalled);
@@ -1780,7 +1782,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventWhenInsta
     execGraph.instantiateFrom(*(srcGraph.get()));
 
     auto event = L0::Event::fromHandle(eventHandle);
-    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer().getCbEventInfos();
+    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbEventInfos();
     EXPECT_EQ(0u, externalCbEventContainer.size());
     srcGraph.reset();
     event->destroy();
@@ -1821,11 +1823,12 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenInst
     execGraph.instantiateFrom(*(srcGraph.get()));
 
     auto event = L0::Event::fromHandle(eventHandle);
-    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer().getCbEventInfos();
+    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbEventInfos();
     // event used twice in the graph, but should be recorded only once
     EXPECT_EQ(1u, externalCbEventContainer.size());
     bool externalCbEventFound = false;
     for (const auto &entry : externalCbEventContainer) {
+        EXPECT_EQ(nullptr, entry.executorCommandList);
         if (event == entry.event) {
             externalCbEventFound = true;
             break;
@@ -1873,7 +1876,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     execGraph.instantiateFrom(*(srcGraph.get()));
 
     const NEO::InOrderExecEventHelper *graphExecHelper = nullptr;
-    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer().getCbEventInfos();
+    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbEventInfos();
     for (const auto &entry : externalCbEventContainer) {
         if (event == entry.event) {
             graphExecHelper = &entry.inOrderExecEventHelper;
@@ -1890,7 +1893,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     execGraph2.instantiateFrom(*(srcGraph.get()));
 
     const NEO::InOrderExecEventHelper *graphExecHelper2 = nullptr;
-    auto &externalCbEventContainer2 = execGraph2.getExternalCbEventInfoContainer().getCbEventInfos();
+    auto &externalCbEventContainer2 = execGraph2.getExternalCbEventInfoContainer()->getCbEventInfos();
     for (const auto &entry : externalCbEventContainer2) {
         if (event == entry.event) {
             graphExecHelper2 = &entry.inOrderExecEventHelper;
@@ -1923,6 +1926,68 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
 
     srcGraph.reset();
     event->destroy();
+}
+
+TEST_F(GraphTestInstantiationTest, WhenForkJoinCbExternalEventsAreUsedThenParentExecutorIsNullChildIsObject) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    subCommandList->setOrdinal(0);
+    auto subCommandListHandle = subCommandList->toHandle();
+
+    zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+
+    ze_event_handle_t forkEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventDesc, &forkEventHandle));
+    auto forkEvent = L0::Event::fromHandle(forkEventHandle);
+
+    ze_event_handle_t joinEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventDesc, &joinEventHandle));
+    auto joinEvent = L0::Event::fromHandle(joinEventHandle);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, forkEventHandle, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(subCommandListHandle, joinEventHandle, 1U, &forkEventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 1U, &joinEventHandle));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*srcGraph.get());
+
+    bool forkEventFound = false;
+    bool joinEventFound = false;
+
+    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbEventInfos();
+    for (const auto &entry : externalCbEventContainer) {
+        if (entry.event == forkEvent) {
+            EXPECT_EQ(nullptr, entry.executorCommandList);
+            forkEventFound = true;
+        }
+        if (entry.event == joinEvent) {
+            EXPECT_NE(nullptr, entry.executorCommandList);
+            joinEventFound = true;
+        }
+    }
+
+    EXPECT_TRUE(forkEventFound);
+    EXPECT_TRUE(joinEventFound);
+
+    srcGraph.reset();
+    forkEvent->destroy();
+    joinEvent->destroy();
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
