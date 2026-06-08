@@ -88,6 +88,7 @@ class Wddm : public DriverModel {
 
     MOCKABLE_VIRTUAL bool destroyContext(D3DKMT_HANDLE context);
     MOCKABLE_VIRTUAL bool queryAdapterInfo();
+    MOCKABLE_VIRTUAL void adjustProductFamily();
     MOCKABLE_VIRTUAL NTSTATUS createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle);
     MOCKABLE_VIRTUAL HANDLE getSharedHandle(const MemoryManager::OsHandleData &osHandleData);
 

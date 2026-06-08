@@ -328,6 +328,7 @@ bool Wddm::queryAdapterInfo() {
         timestampFrequency = adapterInfo.GfxTimeStampFreq;
         instrumentationEnabled = adapterInfo.Caps.InstrumentationIsEnabled != 0;
 
+        adjustProductFamily();
         populateAdditionalAdapterInfoOptions(adapterInfo);
     }
 

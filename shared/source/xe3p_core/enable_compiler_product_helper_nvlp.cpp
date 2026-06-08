@@ -24,6 +24,8 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
     return AOT::NVL_P_B0;
 }
 
+#include "compiler_product_helper_nvlp_additional.inl"
+
 static EnableCompilerProductHelper<gfxProduct> enableCompilerProductHelperNVL;
 
 } // namespace NEO
