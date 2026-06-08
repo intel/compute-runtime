@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
@@ -476,6 +477,107 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContext
         auto engineType = static_cast<aub_stream::EngineType>(engineBase + engineIndex);
         givenBcsEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(drm, engineType, numBcsSiblings, engineIndex, 0u);
     }
+}
+
+HWTEST2_F(DrmTestXeHPCAndLater, givenHpCopyEngineWhenCreatingBcsVirtualEngineContextThenHpEngineIsExcludedFromBalancer, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
+
+    HardwareInfo localHwInfo = *defaultHwInfo;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
+
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+        aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const override {
+            return hpEngine;
+        }
+        aub_stream::EngineType hpEngine = aub_stream::EngineType::NUM_ENGINES;
+    };
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    // Set HP engine to BCS8 (highest link copy engine)
+    raii.mockGfxCoreHelper->hpEngine = aub_stream::ENGINE_BCS8;
+
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->supportedCopyEnginesMask = maxNBitValue(9); // BCS0..BCS8
+    drm->queryEngineInfo();
+    EXPECT_NE(nullptr, drm->engineInfo);
+    auto hwInfo = drm->rootDeviceEnvironment.getHardwareInfo();
+    EXPECT_EQ(drm->supportedCopyEnginesMask.count(), hwInfo->featureTable.ftrBcsInfo.count());
+
+    auto totalBcs = drm->supportedCopyEnginesMask.count();
+    EXPECT_EQ(9u, totalBcs);
+
+    // Test with BCS1 context (linked copy engine) - the HP engine should not be in the balancer
+    drm->receivedContextParamRequestCount = 0u;
+    auto drmContextId = 42u;
+    auto engineType = aub_stream::ENGINE_BCS1;
+    auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType);
+    EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
+    EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
+
+    auto extensions = drm->receivedContextParamEngines.extensions;
+    EXPECT_NE(0ull, extensions);
+    EXPECT_EQ(static_cast<__u32>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE), drm->receivedContextEnginesLoadBalance.base.name);
+
+    // numSiblings should be (totalBcs - 1) for linked context, minus 1 for HP exclusion
+    auto expectedLinkedSiblings = totalBcs - 1 - 1;
+    EXPECT_EQ(expectedLinkedSiblings, drm->receivedContextEnginesLoadBalance.numSiblings);
+
+    // Verify HP engine (instance 8) is not in the balancer
+    for (size_t i = 0; i < drm->receivedContextEnginesLoadBalance.numSiblings; i++) {
+        auto instance = DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[i].engineInstance);
+        EXPECT_NE(8u, instance);
+    }
+}
+
+HWTEST2_F(DrmTestXeHPCAndLater, givenHpCopyEngineAndOnlyTwoBcsWhenCreatingContextThenVirtualEnginesAreDisabled, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
+
+    HardwareInfo localHwInfo = *defaultHwInfo;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
+
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+        aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const override {
+            return hpEngine;
+        }
+        aub_stream::EngineType hpEngine = aub_stream::EngineType::NUM_ENGINES;
+    };
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    // Set HP engine to BCS1
+    raii.mockGfxCoreHelper->hpEngine = aub_stream::ENGINE_BCS1;
+
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    // Only BCS0 and BCS1 available
+    drm->supportedCopyEnginesMask = 0b11;
+    drm->queryEngineInfo();
+    EXPECT_NE(nullptr, drm->engineInfo);
+
+    // With only 2 BCS and one being HP, after excluding HP only 1 remains -> no virtual engines
+    drm->receivedContextParamRequestCount = 0u;
+    auto drmContextId = 42u;
+    auto engineType = aub_stream::ENGINE_BCS1;
+    auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType);
+    EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
+    EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
+
+    // No load balancing should be set up
+    auto extensions = drm->receivedContextParamEngines.extensions;
+    EXPECT_EQ(0ull, extensions);
+    EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
 }
 
 HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesDisabledWhenCreatingContextThenDisableLoadBalancing, IsXeHpcCore) {

@@ -1384,6 +1384,9 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
 
     ioctlHelper->insertEngineToContextParams(contextEngines, 0u, engine, deviceIndex, false);
 
+    const auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    const auto hpCopyEngineType = gfxCoreHelper.getDefaultHpCopyEngine(*rootDeviceEnvironment.getHardwareInfo());
+
     bool setupVirtualEngines = false;
     unsigned int engineCount = static_cast<unsigned int>(numberOfCCS);
     if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute) && numberOfCCS > 1u) {
@@ -1405,6 +1408,17 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
             balancer.numSiblings = numberOfBCS - 1;
             numEnginesInContext = static_cast<uint32_t>(numberOfBCS);
         }
+
+        if (hpCopyEngineType != aub_stream::EngineType::NUM_ENGINES &&
+            rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.test(EngineHelpers::getBcsIndex(hpCopyEngineType))) {
+            if (balancer.numSiblings <= 1) {
+                setupVirtualEngines = false;
+                numEnginesInContext = 1;
+            } else {
+                balancer.numSiblings--;
+                numEnginesInContext--;
+            }
+        }
     }
 
     if (setupVirtualEngines) {
@@ -1418,6 +1432,10 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
                 bool isBcsEnabled = rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.test(EngineHelpers::getBcsIndex(mappedBcsEngineType));
 
                 if (!isBcsEnabled) {
+                    continue;
+                }
+
+                if (mappedBcsEngineType == hpCopyEngineType) {
                     continue;
                 }
 
