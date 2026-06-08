@@ -4575,6 +4575,17 @@ TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenEnabledImplicitScalingWhen
     EXPECT_EQ(defaultEngine.commandStreamReceiver, csr);
 }
 
+TEST_F(MultiSubDeviceEnabledImplicitScalingAndSingleDeviceModeTest, GivenSingleDeviceModeWhenGettingLowPriorityCsrForComputeEngineThenLowPriorityCsrIsReturned) {
+    EXPECT_TRUE(device->isImplicitScalingCapable());
+    EXPECT_TRUE(neoDevice->getRootDeviceEnvironment().isExposeSingleDeviceMode());
+
+    NEO::CommandStreamReceiver *csr = nullptr;
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_NE(nullptr, csr);
+    EXPECT_TRUE(csr->getOsContext().isLowPriority());
+}
+
 HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceWhenGettingLowPriorityCsrForComputeEngineThenDefaultCsrReturned, IsAtLeastXeCore) {
     auto &defaultEngine = device->getActiveDevice()->getDefaultEngine();
 

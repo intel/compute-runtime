@@ -2021,7 +2021,7 @@ ze_result_t Device::getCsrForHighPriority(NEO::CommandStreamReceiver **csr, bool
 }
 
 bool Device::isSuitableForLowPriority(ze_command_queue_priority_t priority, bool copyOnly) {
-    bool engineSuitable = copyOnly ? getGfxCoreHelper().areSecondaryContextsSupported() : !this->implicitScalingCapable;
+    bool engineSuitable = copyOnly ? getGfxCoreHelper().areSecondaryContextsSupported() : (!this->implicitScalingCapable || neoDevice->getRootDeviceEnvironment().isExposeSingleDeviceMode());
 
     return (priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && engineSuitable);
 }

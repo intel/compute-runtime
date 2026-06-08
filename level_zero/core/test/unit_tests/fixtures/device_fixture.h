@@ -346,6 +346,25 @@ struct MultiSubDeviceWithContextGroupAndImplicitScalingTest : public MultiSubDev
     HardwareInfo hardwareInfo;
 };
 
+struct MultiSubDeviceEnabledImplicitScalingAndSingleDeviceModeTest : public DeviceFixture, public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.CreateMultipleSubDevices.set(2);
+        debugManager.flags.EnableImplicitScaling.set(1);
+        apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, true);
+
+        auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0u);
+        executionEnvironment->rootDeviceEnvironments[0]->setExposeSingleDeviceMode(true);
+        setupWithExecutionEnvironment(*executionEnvironment);
+    }
+
+    void TearDown() override {
+        DeviceFixture::tearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
+};
+
 struct ExtensionFixture : public DeviceFixture {
     void setUp();
     void tearDown();
