@@ -358,7 +358,7 @@ void CommandContainer::createAndAssignNewHeap(HeapType heapType, size_t size) {
 
 void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
     if (immediateReusableAllocationList != nullptr && !immediateReusableAllocationList->peekIsEmpty() && reusableAllocationList != nullptr) {
-        reusableAllocationList->splice(*immediateReusableAllocationList->detachNodes());
+        immediateReusableAllocationList->transferAllAllocationsTo(*reusableAllocationList);
     }
     auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
     for (size_t i = startIndex; i < cmdBufferAllocations.size(); i++) {

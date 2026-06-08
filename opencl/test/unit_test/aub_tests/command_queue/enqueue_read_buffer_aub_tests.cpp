@@ -78,9 +78,12 @@ HWTEST_P(AUBReadBuffer, WhenReadingBufferThenExpectationsAreMet) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    allocation = csr->getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != pDestMemory) {
-        allocation = allocation->next;
+    allocation = nullptr;
+    for (auto *candidate : csr->getTemporaryAllocations().peekAllocations()) {
+        if (candidate->getUnderlyingBuffer() == pDestMemory) {
+            allocation = candidate;
+            break;
+        }
     }
     retVal = pCmdQ->flush();
     EXPECT_EQ(CL_SUCCESS, retVal);

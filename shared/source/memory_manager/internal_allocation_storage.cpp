@@ -47,35 +47,36 @@ void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<Gra
 }
 
 void InternalAllocationStorage::cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage) {
-    freeAllocationsList(waitTaskCount, allocationLists[allocationUsage]);
+    cleanAllocationList(waitTaskCount, allocationUsage, false);
 }
 
-void InternalAllocationStorage::freeAllocationsList(TaskCountType waitTaskCount, AllocationsList &allocationsList) {
+void InternalAllocationStorage::cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage, bool cleanHostPtrAssigned) {
+    freeAllocationsList(waitTaskCount, allocationLists[allocationUsage], cleanHostPtrAssigned);
+}
+
+void InternalAllocationStorage::freeAllocationsList(TaskCountType waitTaskCount, AllocationsList &allocationsList, bool cleanHostPtrAssigned) {
     auto memoryManager = commandStreamReceiver.getMemoryManager();
 
     if (&allocationsList == &allocationLists[TEMPORARY_ALLOCATION]) {
-        memoryManager->cleanTemporaryAllocations(commandStreamReceiver, waitTaskCount);
+        memoryManager->cleanTemporaryAllocations(commandStreamReceiver, waitTaskCount, cleanHostPtrAssigned);
         return;
     }
 
     auto lock = memoryManager->getHostPtrManager()->obtainOwnership();
 
-    GraphicsAllocation *curr = allocationsList.detachNodes();
-
-    IDList<GraphicsAllocation, false, true> allocationsLeft;
-    while (curr != nullptr) {
-        auto *next = curr->next;
-        if (curr->getHostPtrTaskCountAssignment() == 0 && curr->getTaskCount(commandStreamReceiver.getOsContext().getContextId()) <= waitTaskCount) {
-            memoryManager->freeGraphicsMemory(curr);
-        } else {
-            allocationsLeft.pushTailOne(*curr);
-        }
-        curr = next;
+    if (allocationsList.peekIsEmpty()) {
+        return;
     }
 
-    if (allocationsLeft.peekIsEmpty() == false) {
-        allocationsList.splice(*allocationsLeft.detachNodes());
-    }
+    const auto contextId = commandStreamReceiver.getOsContext().getContextId();
+    allocationsList.removeMatching(
+        [&](GraphicsAllocation *currentAlloc) {
+            return (cleanHostPtrAssigned || currentAlloc->getHostPtrTaskCountAssignment() == 0) &&
+                   currentAlloc->getTaskCount(contextId) <= waitTaskCount;
+        },
+        [&](GraphicsAllocation *currentAlloc) {
+            memoryManager->freeGraphicsMemory(currentAlloc);
+        });
 }
 
 std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAllocation(size_t requiredSize, AllocationType allocationType) {

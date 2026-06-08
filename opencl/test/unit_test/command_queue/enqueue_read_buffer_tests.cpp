@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
+#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_builtins.h"
@@ -1056,4 +1057,10 @@ HWTEST_F(EnqueueReadBufferTypeTest, given4gbBufferAndIsForceStatelessIsFalseWhen
         BuiltIn::BaseKernel::copyBufferToBuffer, copyMode,
         std::move(oldBuilder));
     EXPECT_EQ(mockBuilder, newBuilder.get());
+
+    for (auto *allocation : pCmdQ->getDevice().getMemoryManager()->getTemporaryAllocationsList().peekAllocations()) {
+        while (allocation->getHostPtrTaskCountAssignment() > 0) {
+            allocation->decrementHostPtrTaskCountAssignment();
+        }
+    }
 }

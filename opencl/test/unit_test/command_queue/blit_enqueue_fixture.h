@@ -12,6 +12,7 @@
 #include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/vec.h"
+#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -113,7 +114,15 @@ struct BlitEnqueueTests : public ::testing::Test {
     }
 
     template <typename FamilyType>
-    void tearDownT() {}
+    void tearDownT() {
+        if (device != nullptr) {
+            for (auto *allocation : device->getMemoryManager()->getTemporaryAllocationsList().peekAllocations()) {
+                while (allocation->getHostPtrTaskCountAssignment() > 0) {
+                    allocation->decrementHostPtrTaskCountAssignment();
+                }
+            }
+        }
+    }
 
     template <size_t n>
     void setMockKernelArgs(std::array<Buffer *, n> buffers) {

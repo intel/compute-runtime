@@ -1262,6 +1262,9 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     if (areResourcesInitialized != csr.resourcesInitialized) {
         expectedResursiveLockCount++;
     }
+    // the host-ptr temporary allocation is freed during the flush; cleanTemporaryAllocations
+    // takes the csr ownership to serialize the free with residency processing
+    expectedResursiveLockCount++;
     EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
 
     HardwareParse hwParser;
