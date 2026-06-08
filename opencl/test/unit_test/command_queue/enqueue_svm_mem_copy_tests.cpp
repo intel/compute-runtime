@@ -214,13 +214,11 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     GraphicsAllocation *srcSvmAlloc = nullptr;
 
-    auto head = ultCsr.getTemporaryAllocations().peekHead();
-    while (head) {
-        if (ptrOffset(srcHostPtr, hostPtrOffset) == head->getUnderlyingBuffer()) {
-            srcSvmAlloc = head;
+    for (auto *candidate : ultCsr.getTemporaryAllocations().peekAllocations()) {
+        if (ptrOffset(srcHostPtr, hostPtrOffset) == candidate->getUnderlyingBuffer()) {
+            srcSvmAlloc = candidate;
             break;
         }
-        head = head->next;
     }
     EXPECT_NE(nullptr, srcSvmAlloc);
 
@@ -294,13 +292,11 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     GraphicsAllocation *dstSvmAlloc = nullptr;
 
-    auto head = ultCsr.getTemporaryAllocations().peekHead();
-    while (head) {
-        if (ptrOffset(dstHostPtr, hostPtrOffset) == head->getUnderlyingBuffer()) {
-            dstSvmAlloc = head;
+    for (auto *candidate : ultCsr.getTemporaryAllocations().peekAllocations()) {
+        if (ptrOffset(dstHostPtr, hostPtrOffset) == candidate->getUnderlyingBuffer()) {
+            dstSvmAlloc = candidate;
             break;
         }
-        head = head->next;
     }
     EXPECT_NE(nullptr, dstSvmAlloc);
 

@@ -8,6 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
+#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -621,6 +622,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenGpuHangOnFlushBcsTaskAndLo
     ultBcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     EXPECT_EQ(BlitOperationResult::gpuHang, BlitHelper::blitMemoryToAllocation(buffer->getContext()->getDevice(0)->getDevice(), memory, buffer->getOffset(), hostMemory, {1, 1, 1}));
+
+    for (auto *allocation : testedDevice->getMemoryManager()->getTemporaryAllocationsList().peekAllocations()) {
+        while (allocation->getHostPtrTaskCountAssignment() > 0) {
+            allocation->decrementHostPtrTaskCountAssignment();
+        }
+    }
 }
 
 struct AllocationReuseContextTest : ContextTest {
