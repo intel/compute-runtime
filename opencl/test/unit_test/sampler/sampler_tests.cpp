@@ -12,84 +12,52 @@
 
 #include "gtest/gtest.h"
 
-#include <tuple>
-
 using namespace NEO;
 
-struct CreateSampler : public ::testing::TestWithParam<
-                           std::tuple<uint32_t /*cl_bool*/, uint32_t /*cl_addressing_mode*/, uint32_t /*cl_filter_mode*/>> {
-    CreateSampler() {
-    }
-
-    void SetUp() override {
-        std::tie(normalizedCoords, addressingMode, filterMode) = GetParam();
-        context = new MockContext();
-    }
-
-    void TearDown() override {
-        delete context;
-    }
-
-    MockContext *context;
+struct CreateSampler : public ::testing::Test {
+    MockContext context;
     cl_int retVal = CL_INVALID_VALUE;
-    cl_bool normalizedCoords;
-    cl_addressing_mode addressingMode;
-    cl_filter_mode filterMode;
 };
 
-TEST_P(CreateSampler, WhenSamplerIsCreatedThenSuccessIsReturned) {
-    auto sampler = Sampler::create(
-        context,
-        normalizedCoords,
-        addressingMode,
-        filterMode,
-        retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, sampler);
-    delete sampler;
+TEST_F(CreateSampler, WhenSamplerIsCreatedThenSuccessIsReturned) {
+    const cl_bool normalizedCoordModes[] = {CL_FALSE, CL_TRUE};
+    const cl_addressing_mode addressingModes[] = {CL_ADDRESS_MIRRORED_REPEAT, CL_ADDRESS_REPEAT,
+                                                  CL_ADDRESS_CLAMP_TO_EDGE, CL_ADDRESS_CLAMP, CL_ADDRESS_NONE};
+    const cl_filter_mode filterModes[] = {CL_FILTER_NEAREST, CL_FILTER_LINEAR};
+    for (auto normalizedCoords : normalizedCoordModes) {
+        for (auto addressingMode : addressingModes) {
+            for (auto filterMode : filterModes) {
+                retVal = CL_INVALID_VALUE;
+                std::unique_ptr<Sampler> sampler(Sampler::create(&context, normalizedCoords, addressingMode, filterMode, retVal));
+                EXPECT_EQ(CL_SUCCESS, retVal);
+                EXPECT_NE(nullptr, sampler);
+            }
+        }
+    }
 }
 
-TEST_P(CreateSampler, GivenModeWhenSamplerIsCreatedThenParamsAreSetCorrectly) {
-    auto sampler = new MockSampler(
-        context,
-        normalizedCoords,
-        addressingMode,
-        filterMode);
-    ASSERT_NE(nullptr, sampler); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+TEST_F(CreateSampler, GivenModeWhenSamplerIsCreatedThenParamsAreSetCorrectly) {
+    const cl_bool normalizedCoordModes[] = {CL_FALSE, CL_TRUE};
+    const cl_addressing_mode addressingModes[] = {CL_ADDRESS_MIRRORED_REPEAT, CL_ADDRESS_REPEAT,
+                                                  CL_ADDRESS_CLAMP_TO_EDGE, CL_ADDRESS_CLAMP, CL_ADDRESS_NONE};
+    const cl_filter_mode filterModes[] = {CL_FILTER_NEAREST, CL_FILTER_LINEAR};
+    for (auto normalizedCoords : normalizedCoordModes) {
+        for (auto addressingMode : addressingModes) {
+            for (auto filterMode : filterModes) {
+                std::unique_ptr<MockSampler> sampler(new MockSampler(&context, normalizedCoords, addressingMode, filterMode));
+                ASSERT_NE(nullptr, sampler);
 
-    EXPECT_EQ(context, sampler->getContext());
-    EXPECT_EQ(normalizedCoords, sampler->getNormalizedCoordinates());
-    EXPECT_EQ(addressingMode, sampler->getAddressingMode());
-    EXPECT_EQ(filterMode, sampler->getFilterMode());
+                EXPECT_EQ(&context, sampler->getContext());
+                EXPECT_EQ(normalizedCoords, sampler->getNormalizedCoordinates());
+                EXPECT_EQ(addressingMode, sampler->getAddressingMode());
+                EXPECT_EQ(filterMode, sampler->getFilterMode());
 
-    // check for SnapWA
-    bool snapWaNeeded = addressingMode == CL_ADDRESS_CLAMP && filterMode == CL_FILTER_NEAREST;
-    EXPECT_EQ(snapWaNeeded, sampler->getSnapWaValue() != 0u);
-
-    delete sampler;
+                bool snapWaNeeded = addressingMode == CL_ADDRESS_CLAMP && filterMode == CL_FILTER_NEAREST;
+                EXPECT_EQ(snapWaNeeded, sampler->getSnapWaValue() != 0u);
+            }
+        }
+    }
 }
-
-static cl_bool normalizedCoordModes[] = {
-    CL_FALSE,
-    CL_TRUE};
-
-static cl_addressing_mode addressingModes[] = {
-    CL_ADDRESS_MIRRORED_REPEAT,
-    CL_ADDRESS_REPEAT,
-    CL_ADDRESS_CLAMP_TO_EDGE,
-    CL_ADDRESS_CLAMP,
-    CL_ADDRESS_NONE};
-
-static cl_filter_mode filterModes[] = {
-    CL_FILTER_NEAREST,
-    CL_FILTER_LINEAR};
-
-INSTANTIATE_TEST_SUITE_P(Sampler,
-                         CreateSampler,
-                         ::testing::Combine(
-                             ::testing::ValuesIn(normalizedCoordModes),
-                             ::testing::ValuesIn(addressingModes),
-                             ::testing::ValuesIn(filterModes)));
 
 TEST(castToSamplerTest, GivenGenericPointerWhichHoldsSamplerObjectWhenCastToSamplerIsCalledThenCastWithSuccess) {
     cl_int retVal;

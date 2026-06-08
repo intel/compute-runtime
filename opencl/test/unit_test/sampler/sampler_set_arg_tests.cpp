@@ -8,6 +8,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/utilities/numeric.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/helpers/sampler_helpers.h"
 #include "opencl/source/kernel/kernel.h"
@@ -60,10 +61,9 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     }
 
     void tearDown() {
-        delete pMultiDeviceKernel;
+        pMultiDeviceKernel->release();
         program.reset();
-        delete sampler;
-        delete context;
+        context->release();
         ClDeviceFixture::tearDown();
     }
 
@@ -77,13 +77,8 @@ class SamplerSetArgFixture : public ClDeviceFixture {
         return true;
     }
 
-    void createSampler() {
-        sampler = Sampler::create(
-            context,
-            CL_TRUE,
-            CL_ADDRESS_MIRRORED_REPEAT,
-            CL_FILTER_NEAREST,
-            retVal);
+    ReleaseableObjectPtr<Sampler> createSampler() {
+        return clUniquePtr(Sampler::create(context, CL_TRUE, CL_ADDRESS_MIRRORED_REPEAT, CL_FILTER_NEAREST, retVal));
     }
 
     static const uint32_t crossThreadDataSize = 0x40;
@@ -95,15 +90,14 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     std::unique_ptr<MockKernelInfo> pKernelInfo;
     char samplerStateHeap[0x80];
     MockContext *context;
-    Sampler *sampler = nullptr;
 };
 
 typedef Test<SamplerSetArgFixture> SamplerSetArgTest;
 HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
-    createSampler();
+    auto sampler = createSampler();
 
-    cl_sampler samplerObj = sampler;
+    cl_sampler samplerObj = sampler.get();
 
     retVal = clSetKernelArg(
         pMultiDeviceKernel,
@@ -130,8 +124,8 @@ HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorre
 }
 
 HWTEST_F(SamplerSetArgTest, WhenGettingKernelArgThenSamplerIsReturned) {
-    createSampler();
-    cl_sampler samplerObj = sampler;
+    auto sampler = createSampler();
+    cl_sampler samplerObj = sampler.get();
 
     retVal = pKernel->setArg(
         0,
@@ -285,14 +279,9 @@ HWTEST_F(SamplerSetArgTest, GivenIncorrentSamplerObjectWhenSetKernelArgSamplerIs
 
 HWTEST_F(SamplerSetArgTest, GivenFilteringNearestAndAddressingClampWhenSettingKernelArgumentThenConstantBufferIsSet) {
 
-    sampler = Sampler::create(
-        context,
-        CL_TRUE,
-        CL_ADDRESS_CLAMP,
-        CL_FILTER_NEAREST,
-        retVal);
+    auto sampler = clUniquePtr(Sampler::create(context, CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST, retVal));
 
-    cl_sampler samplerObj = sampler;
+    cl_sampler samplerObj = sampler.get();
 
     retVal = pKernel->setArg(
         0,
@@ -310,12 +299,7 @@ HWTEST_F(SamplerSetArgTest, GivenFilteringNearestAndAddressingClampWhenSettingKe
 
 HWTEST_F(SamplerSetArgTest, GivenKernelWithoutObjIdOffsetWhenSettingArgThenObjIdNotPatched) {
 
-    sampler = Sampler::create(
-        context,
-        CL_TRUE,
-        CL_ADDRESS_CLAMP,
-        CL_FILTER_NEAREST,
-        retVal);
+    auto *sampler = Sampler::create(context, CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST, retVal);
 
     cl_sampler samplerObj = sampler;
 
@@ -327,11 +311,12 @@ HWTEST_F(SamplerSetArgTest, GivenKernelWithoutObjIdOffsetWhenSettingArgThenObjId
 
     EXPECT_EQ(samplerObj, pKernel->getKernelArg(1));
     EXPECT_TRUE(crossThreadDataUnchanged());
+    delete sampler;
 }
 
 HWTEST_F(SamplerSetArgTest, GivenNullWhenSettingKernelArgThenInvalidSamplerErrorIsReturned) {
-    createSampler();
-    cl_sampler samplerObj = sampler;
+    auto sampler = createSampler();
+    cl_sampler samplerObj = sampler.get();
 
     retVal = pKernel->setArg(
         0,
@@ -341,8 +326,8 @@ HWTEST_F(SamplerSetArgTest, GivenNullWhenSettingKernelArgThenInvalidSamplerError
 }
 
 HWTEST_F(SamplerSetArgTest, GivenArgSizeSmallerThanSamplerSizeWhenSettingKernelArgThenInvalidArgSizeErrorIsReturned) {
-    createSampler();
-    cl_sampler samplerObj = sampler;
+    auto sampler = createSampler();
+    cl_sampler samplerObj = sampler.get();
 
     retVal = pKernel->setArg(
         0,
@@ -352,8 +337,8 @@ HWTEST_F(SamplerSetArgTest, GivenArgSizeSmallerThanSamplerSizeWhenSettingKernelA
 }
 
 HWTEST_F(SamplerSetArgTest, GivenArgSizeLargerThanSamplerSizeWhenSettingKernelArgThenInvalidArgSizeErrorIsReturned) {
-    createSampler();
-    cl_sampler samplerObj = sampler;
+    auto sampler = createSampler();
+    cl_sampler samplerObj = sampler.get();
 
     retVal = pKernel->setArg(
         0,
@@ -363,8 +348,8 @@ HWTEST_F(SamplerSetArgTest, GivenArgSizeLargerThanSamplerSizeWhenSettingKernelAr
 }
 
 HWTEST_F(SamplerSetArgTest, GivenInvalidSamplerWhenSettingKernelArgThenInvalidSamplerErrorIsReturned) {
-    createSampler();
-    cl_sampler samplerObj = sampler;
+    auto sampler = createSampler();
+    cl_sampler samplerObj = sampler.get();
 
     const void *notASampler = reinterpret_cast<const void *>(pKernel);
 
@@ -402,142 +387,103 @@ TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndAndIsSamplerFalseWhenInitializeK
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-struct NormalizedTest
-    : public SamplerSetArgFixture,
-      public ::testing::TestWithParam<uint32_t /*cl_bool*/> {
-    void SetUp() override {
-        SamplerSetArgFixture::setUp();
-    }
-    void TearDown() override {
-        SamplerSetArgFixture::tearDown();
-    }
-};
-
-HWTEST_P(NormalizedTest, WhenSettingKernelArgSamplerThenCoordsAreCorrect) {
+HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenCoordsAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
-    auto normalizedCoordinates = GetParam();
-    sampler = Sampler::create(
-        context,
-        normalizedCoordinates,
-        CL_ADDRESS_MIRRORED_REPEAT,
-        CL_FILTER_NEAREST,
-        retVal);
+    for (cl_bool normalizedCoordinates : {CL_FALSE, CL_TRUE}) {
+        auto sampler = clUniquePtr(Sampler::create(
+            context,
+            normalizedCoordinates,
+            CL_ADDRESS_MIRRORED_REPEAT,
+            CL_FILTER_NEAREST,
+            retVal));
 
-    cl_sampler samplerObj = sampler;
+        cl_sampler samplerObj = sampler.get();
 
-    retVal = pKernel->setArg(
-        0,
-        sizeof(samplerObj),
-        &samplerObj);
-    ASSERT_EQ(CL_SUCCESS, retVal);
+        retVal = pKernel->setArg(
+            0,
+            sizeof(samplerObj),
+            &samplerObj);
+        ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
-        ptrOffset(pKernel->getDynamicStateHeap(),
-                  pKernelInfo->argAsSmp(0).bindful));
+        auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
+            ptrOffset(pKernel->getDynamicStateHeap(),
+                      pKernelInfo->argAsSmp(0).bindful));
 
-    EXPECT_EQ(normalizedCoordinates, static_cast<cl_bool>(!samplerState->getNonNormalizedCoordinateEnable()));
+        EXPECT_EQ(normalizedCoordinates, static_cast<cl_bool>(!samplerState->getNonNormalizedCoordinateEnable()));
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
-    auto normalizedCoordsAddress = ptrOffset(crossThreadData, 0x10);
-    unsigned int normalizedCoordsValue = getNormCoordsEnum(normalizedCoordinates);
+        auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+        auto normalizedCoordsAddress = ptrOffset(crossThreadData, 0x10);
+        unsigned int normalizedCoordsValue = getNormCoordsEnum(normalizedCoordinates);
 
-    EXPECT_EQ(normalizedCoordsValue, *normalizedCoordsAddress);
+        EXPECT_EQ(normalizedCoordsValue, *normalizedCoordsAddress);
+    }
 }
-
-cl_bool normalizedCoordinatesCases[] = {
-    CL_FALSE,
-    CL_TRUE};
-
-INSTANTIATE_TEST_SUITE_P(SamplerSetArg,
-                         NormalizedTest,
-                         ::testing::ValuesIn(normalizedCoordinatesCases));
 
 ////////////////////////////////////////////////////////////////////////////////
-struct AddressingModeTest
-    : public SamplerSetArgFixture,
-      public ::testing::TestWithParam<uint32_t /*cl_addressing_mode*/> {
-    void SetUp() override {
-        SamplerSetArgFixture::setUp();
-    }
-    void TearDown() override {
-        SamplerSetArgFixture::tearDown();
-    }
-};
-
-HWTEST_P(AddressingModeTest, WhenSettingKernelArgSamplerThenModesAreCorrect) {
+HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenModesAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
-    auto addressingMode = GetParam();
-    sampler = Sampler::create(
-        context,
-        CL_TRUE,
-        addressingMode,
-        CL_FILTER_NEAREST,
-        retVal);
+    for (cl_addressing_mode addressingMode : {CL_ADDRESS_NONE, CL_ADDRESS_CLAMP_TO_EDGE, CL_ADDRESS_CLAMP, CL_ADDRESS_REPEAT, CL_ADDRESS_MIRRORED_REPEAT}) {
+        auto sampler = clUniquePtr(Sampler::create(
+            context,
+            CL_TRUE,
+            addressingMode,
+            CL_FILTER_NEAREST,
+            retVal));
 
-    cl_sampler samplerObj = sampler;
+        cl_sampler samplerObj = sampler.get();
 
-    retVal = pKernel->setArg(
-        0,
-        sizeof(samplerObj),
-        &samplerObj);
-    ASSERT_EQ(CL_SUCCESS, retVal);
+        retVal = pKernel->setArg(
+            0,
+            sizeof(samplerObj),
+            &samplerObj);
+        ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
-        ptrOffset(pKernel->getDynamicStateHeap(),
-                  pKernelInfo->argAsSmp(0).bindful));
+        auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
+            ptrOffset(pKernel->getDynamicStateHeap(),
+                      pKernelInfo->argAsSmp(0).bindful));
 
-    auto expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
-    auto expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
-    auto expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+        auto expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+        auto expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+        auto expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
 
-    // clang-format off
-    switch (addressingMode) {
-    case CL_ADDRESS_NONE:
-    case CL_ADDRESS_CLAMP:
-        expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
-        expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
-        expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
-        break;
-    case CL_ADDRESS_CLAMP_TO_EDGE:
-        expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
-        expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
-        expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
-        break;
-    case CL_ADDRESS_MIRRORED_REPEAT:
-        expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
-        expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
-        expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
-        break;
-    case CL_ADDRESS_REPEAT:
-        expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
-        expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
-        expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
-        break;
+        // clang-format off
+        switch (addressingMode) {
+        case CL_ADDRESS_NONE:
+        case CL_ADDRESS_CLAMP:
+            expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
+            expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
+            expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
+            break;
+        case CL_ADDRESS_CLAMP_TO_EDGE:
+            expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+            expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+            expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+            break;
+        case CL_ADDRESS_MIRRORED_REPEAT:
+            expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+            expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+            expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+            break;
+        case CL_ADDRESS_REPEAT:
+            expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
+            expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
+            expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
+            break;
+        }
+        // clang-format on
+
+        EXPECT_EQ(expectedModeX, samplerState->getTcxAddressControlMode());
+        EXPECT_EQ(expectedModeY, samplerState->getTcyAddressControlMode());
+        EXPECT_EQ(expectedModeZ, samplerState->getTczAddressControlMode());
+
+        auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+        auto addressingModeAddress = ptrOffset(crossThreadData, 0x8);
+
+        unsigned int addressingValue = getAddrModeEnum(addressingMode);
+
+        EXPECT_EQ(addressingValue, *addressingModeAddress);
     }
-    // clang-format on
-
-    EXPECT_EQ(expectedModeX, samplerState->getTcxAddressControlMode());
-    EXPECT_EQ(expectedModeY, samplerState->getTcyAddressControlMode());
-    EXPECT_EQ(expectedModeZ, samplerState->getTczAddressControlMode());
-
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
-    auto addressingModeAddress = ptrOffset(crossThreadData, 0x8);
-
-    unsigned int addressingValue = getAddrModeEnum(addressingMode);
-
-    EXPECT_EQ(addressingValue, *addressingModeAddress);
 }
-
-cl_addressing_mode addressingModeCases[] = {
-    CL_ADDRESS_NONE,
-    CL_ADDRESS_CLAMP_TO_EDGE,
-    CL_ADDRESS_CLAMP,
-    CL_ADDRESS_REPEAT,
-    CL_ADDRESS_MIRRORED_REPEAT};
-
-INSTANTIATE_TEST_SUITE_P(SamplerSetArg,
-                         AddressingModeTest,
-                         ::testing::ValuesIn(addressingModeCases));
 
 HWTEST_F(SamplerSetArgTest, GivenMipmapsWhenSettingKernelArgSamplerThenLodAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
@@ -545,16 +491,16 @@ HWTEST_F(SamplerSetArgTest, GivenMipmapsWhenSettingKernelArgSamplerThenLodAreCor
     FixedU4D8 minLod = 2.0f;
     FixedU4D8 maxLod = 3.0f;
 
-    sampler = Sampler::create(
+    auto sampler = clUniquePtr(Sampler::create(
         context,
         CL_TRUE,
         CL_ADDRESS_NONE,
         CL_FILTER_NEAREST,
         CL_FILTER_LINEAR,
         minLod.asFloat(), maxLod.asFloat(),
-        retVal);
+        retVal));
 
-    cl_sampler samplerObj = sampler;
+    cl_sampler samplerObj = sampler.get();
 
     retVal = pKernel->setArg(
         0,
@@ -572,60 +518,44 @@ HWTEST_F(SamplerSetArgTest, GivenMipmapsWhenSettingKernelArgSamplerThenLodAreCor
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-struct FilterModeTest
-    : public SamplerSetArgFixture,
-      public ::testing::TestWithParam<uint32_t /*cl_filter_mode*/> {
-    void SetUp() override {
-        SamplerSetArgFixture::setUp();
-    }
-    void TearDown() override {
-        SamplerSetArgFixture::tearDown();
-    }
-};
+using SamplerFilterModeTest = Test<ClDeviceFixture>;
 
-HWTEST_P(FilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect) {
+HWTEST_F(SamplerFilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
-    auto filterMode = GetParam();
-    sampler = Sampler::create(
-        context,
-        CL_TRUE,
-        CL_ADDRESS_NONE,
-        filterMode,
-        retVal);
+    MockContext context(pClDevice);
+    cl_int retVal = CL_INVALID_VALUE;
+    SAMPLER_STATE samplerStateBuffer = {};
 
-    auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
-        ptrOffset(pKernel->getDynamicStateHeap(),
-                  pKernelInfo->argAsSmp(0).bindful));
+    for (cl_filter_mode filterMode : {CL_FILTER_NEAREST, CL_FILTER_LINEAR}) {
+        auto sampler = clUniquePtr(Sampler::create(
+            &context,
+            CL_TRUE,
+            CL_ADDRESS_NONE,
+            filterMode,
+            retVal));
 
-    sampler->setArg(const_cast<SAMPLER_STATE *>(samplerState), pClDevice->getRootDeviceEnvironment());
+        sampler->setArg(&samplerStateBuffer, pClDevice->getRootDeviceEnvironment());
 
-    if (CL_FILTER_NEAREST == filterMode) {
-        EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST, samplerState->getMinModeFilter());
-        EXPECT_EQ(SAMPLER_STATE::MAG_MODE_FILTER_NEAREST, samplerState->getMagModeFilter());
-        EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_NEAREST, samplerState->getMipModeFilter());
-        EXPECT_FALSE(samplerState->getUAddressMinFilterRoundingEnable());
-        EXPECT_FALSE(samplerState->getUAddressMagFilterRoundingEnable());
-        EXPECT_FALSE(samplerState->getVAddressMinFilterRoundingEnable());
-        EXPECT_FALSE(samplerState->getVAddressMagFilterRoundingEnable());
-        EXPECT_FALSE(samplerState->getRAddressMagFilterRoundingEnable());
-        EXPECT_FALSE(samplerState->getRAddressMinFilterRoundingEnable());
-    } else {
-        EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_LINEAR, samplerState->getMinModeFilter());
-        EXPECT_EQ(SAMPLER_STATE::MAG_MODE_FILTER_LINEAR, samplerState->getMagModeFilter());
-        EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_NEAREST, samplerState->getMipModeFilter());
-        EXPECT_TRUE(samplerState->getUAddressMinFilterRoundingEnable());
-        EXPECT_TRUE(samplerState->getUAddressMagFilterRoundingEnable());
-        EXPECT_TRUE(samplerState->getVAddressMinFilterRoundingEnable());
-        EXPECT_TRUE(samplerState->getVAddressMagFilterRoundingEnable());
-        EXPECT_TRUE(samplerState->getRAddressMagFilterRoundingEnable());
-        EXPECT_TRUE(samplerState->getRAddressMinFilterRoundingEnable());
+        if (CL_FILTER_NEAREST == filterMode) {
+            EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST, samplerStateBuffer.getMinModeFilter());
+            EXPECT_EQ(SAMPLER_STATE::MAG_MODE_FILTER_NEAREST, samplerStateBuffer.getMagModeFilter());
+            EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_NEAREST, samplerStateBuffer.getMipModeFilter());
+            EXPECT_FALSE(samplerStateBuffer.getUAddressMinFilterRoundingEnable());
+            EXPECT_FALSE(samplerStateBuffer.getUAddressMagFilterRoundingEnable());
+            EXPECT_FALSE(samplerStateBuffer.getVAddressMinFilterRoundingEnable());
+            EXPECT_FALSE(samplerStateBuffer.getVAddressMagFilterRoundingEnable());
+            EXPECT_FALSE(samplerStateBuffer.getRAddressMagFilterRoundingEnable());
+            EXPECT_FALSE(samplerStateBuffer.getRAddressMinFilterRoundingEnable());
+        } else {
+            EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_LINEAR, samplerStateBuffer.getMinModeFilter());
+            EXPECT_EQ(SAMPLER_STATE::MAG_MODE_FILTER_LINEAR, samplerStateBuffer.getMagModeFilter());
+            EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_NEAREST, samplerStateBuffer.getMipModeFilter());
+            EXPECT_TRUE(samplerStateBuffer.getUAddressMinFilterRoundingEnable());
+            EXPECT_TRUE(samplerStateBuffer.getUAddressMagFilterRoundingEnable());
+            EXPECT_TRUE(samplerStateBuffer.getVAddressMinFilterRoundingEnable());
+            EXPECT_TRUE(samplerStateBuffer.getVAddressMagFilterRoundingEnable());
+            EXPECT_TRUE(samplerStateBuffer.getRAddressMagFilterRoundingEnable());
+            EXPECT_TRUE(samplerStateBuffer.getRAddressMinFilterRoundingEnable());
+        }
     }
 }
-
-cl_filter_mode filterModeCase[] = {
-    CL_FILTER_NEAREST,
-    CL_FILTER_LINEAR};
-
-INSTANTIATE_TEST_SUITE_P(SamplerSetArg,
-                         FilterModeTest,
-                         ::testing::ValuesIn(filterModeCase));

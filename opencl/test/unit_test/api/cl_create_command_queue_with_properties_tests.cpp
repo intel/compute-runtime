@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,25 +27,14 @@ using namespace NEO;
 namespace ULT {
 
 struct CommandQueueWithPropertiesTest : public ApiFixture,
-                                        public ::testing::WithParamInterface<std::tuple<uint64_t, uint32_t, uint32_t, uint32_t>>,
                                         public ::testing::Test {
-    CommandQueueWithPropertiesTest()
-        : queuePriority(CL_QUEUE_PRIORITY_MED_KHR), queueThrottle(CL_QUEUE_THROTTLE_MED_KHR) {
-    }
-
     void SetUp() override {
-        std::tie(commandQueueProperties, queueSize, queuePriority, queueThrottle) = GetParam();
         ApiFixture::setUp();
     }
 
     void TearDown() override {
         ApiFixture::tearDown();
     }
-
-    cl_command_queue_properties commandQueueProperties = 0;
-    cl_uint queueSize = 0;
-    cl_queue_priority_khr queuePriority;
-    cl_queue_throttle_khr queueThrottle;
 };
 
 struct ClCreateCommandQueueWithPropertiesApi : public ApiFixture,
@@ -68,104 +57,80 @@ struct ClCreateCommandQueueWithPropertiesApi : public ApiFixture,
 
 typedef CommandQueueWithPropertiesTest clCreateCommandQueueWithPropertiesTests;
 
-TEST_P(clCreateCommandQueueWithPropertiesTests, GivenPropertiesWhenCreatingCommandQueueThenExpectedResultIsReturned) {
-    cl_command_queue cmdQ = nullptr;
-    cl_queue_properties properties[] =
-        {
-            CL_QUEUE_PROPERTIES, 0,
-            CL_QUEUE_SIZE, 0,
-            CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_HIGH_KHR,
-            CL_QUEUE_THROTTLE_KHR, CL_QUEUE_THROTTLE_MED_KHR,
-            0};
+TEST_F(clCreateCommandQueueWithPropertiesTests, GivenPropertiesWhenCreatingCommandQueueThenExpectedResultIsReturned) {
+    const cl_command_queue_properties commandQueueProperties[] = {0, CL_QUEUE_PROFILING_ENABLE};
+    const cl_uint queueSizes[] = {0, 2000};
+    const cl_queue_priority_khr queuePriorities[] = {0, CL_QUEUE_PRIORITY_LOW_KHR, CL_QUEUE_PRIORITY_MED_KHR, CL_QUEUE_PRIORITY_HIGH_KHR};
+    const cl_queue_throttle_khr queueThrottles[] = {0, CL_QUEUE_THROTTLE_LOW_KHR, CL_QUEUE_THROTTLE_MED_KHR, CL_QUEUE_THROTTLE_HIGH_KHR};
 
-    bool queueOnDeviceUsed = false;
-    bool priorityHintsUsed = false;
-    bool throttleHintsUsed = false;
+    for (auto commandQueueProperty : commandQueueProperties) {
+        for (auto queueSize : queueSizes) {
+            for (auto queuePriority : queuePriorities) {
+                for (auto queueThrottle : queueThrottles) {
+                    cl_command_queue cmdQ = nullptr;
+                    cl_queue_properties properties[] =
+                        {
+                            CL_QUEUE_PROPERTIES, 0,
+                            CL_QUEUE_SIZE, 0,
+                            CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_HIGH_KHR,
+                            CL_QUEUE_THROTTLE_KHR, CL_QUEUE_THROTTLE_MED_KHR,
+                            0};
 
-    cl_queue_properties *pProp = &properties[0];
-    if (commandQueueProperties) {
-        *pProp++ = CL_QUEUE_PROPERTIES;
-        *pProp++ = (cl_queue_properties)commandQueueProperties;
-    }
-    if ((commandQueueProperties & CL_QUEUE_ON_DEVICE) &&
-        queueSize) {
-        *pProp++ = CL_QUEUE_SIZE;
-        *pProp++ = queueSize;
-    }
-    if (commandQueueProperties & CL_QUEUE_ON_DEVICE) {
-        queueOnDeviceUsed = true;
-    }
-    if (queuePriority) {
-        *pProp++ = CL_QUEUE_PRIORITY_KHR;
-        *pProp++ = queuePriority;
-        priorityHintsUsed = true;
-    }
-    if (queueThrottle) {
-        *pProp++ = CL_QUEUE_THROTTLE_KHR;
-        *pProp++ = queueThrottle;
-        throttleHintsUsed = true;
-    }
-    *pProp++ = 0;
+                    bool queueOnDeviceUsed = false;
+                    bool priorityHintsUsed = false;
+                    bool throttleHintsUsed = false;
 
-    cmdQ = clCreateCommandQueueWithProperties(
-        pContext,
-        testedClDevice,
-        properties,
-        &retVal);
-    if (queueOnDeviceUsed && priorityHintsUsed) {
-        EXPECT_EQ(nullptr, cmdQ);
-        EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
-        return;
-    } else if (queueOnDeviceUsed && throttleHintsUsed) {
-        EXPECT_EQ(nullptr, cmdQ);
-        EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
-        return;
-    } else {
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        ASSERT_NE(nullptr, cmdQ);
+                    cl_queue_properties *pProp = &properties[0];
+                    if (commandQueueProperty) {
+                        *pProp++ = CL_QUEUE_PROPERTIES;
+                        *pProp++ = (cl_queue_properties)commandQueueProperty;
+                    }
+                    if ((commandQueueProperty & CL_QUEUE_ON_DEVICE) && queueSize) {
+                        *pProp++ = CL_QUEUE_SIZE;
+                        *pProp++ = queueSize;
+                    }
+                    if (commandQueueProperty & CL_QUEUE_ON_DEVICE) {
+                        queueOnDeviceUsed = true;
+                    }
+                    if (queuePriority) {
+                        *pProp++ = CL_QUEUE_PRIORITY_KHR;
+                        *pProp++ = queuePriority;
+                        priorityHintsUsed = true;
+                    }
+                    if (queueThrottle) {
+                        *pProp++ = CL_QUEUE_THROTTLE_KHR;
+                        *pProp++ = queueThrottle;
+                        throttleHintsUsed = true;
+                    }
+                    *pProp++ = 0;
+
+                    cmdQ = clCreateCommandQueueWithProperties(pContext, testedClDevice, properties, &retVal);
+                    if (queueOnDeviceUsed && priorityHintsUsed) {
+                        EXPECT_EQ(nullptr, cmdQ);
+                        EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
+                        continue;
+                    } else if (queueOnDeviceUsed && throttleHintsUsed) {
+                        EXPECT_EQ(nullptr, cmdQ);
+                        EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
+                        continue;
+                    } else {
+                        EXPECT_EQ(CL_SUCCESS, retVal);
+                        ASSERT_NE(nullptr, cmdQ);
+                    }
+                    auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
+                    ASSERT_NE(commandQueueObj, nullptr);
+
+                    retVal = clReleaseCommandQueue(cmdQ);
+                    EXPECT_EQ(CL_SUCCESS, retVal);
+
+                    auto icdStoredFunction = icdGlobalDispatchTable.clCreateCommandQueueWithProperties;
+                    auto pFunction = &clCreateCommandQueueWithProperties;
+                    EXPECT_EQ(icdStoredFunction, pFunction);
+                }
+            }
+        }
     }
-    auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
-
-    ASSERT_NE(commandQueueObj, nullptr);
-
-    retVal = clReleaseCommandQueue(cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto icdStoredFunction = icdGlobalDispatchTable.clCreateCommandQueueWithProperties;
-    auto pFunction = &clCreateCommandQueueWithProperties;
-    EXPECT_EQ(icdStoredFunction, pFunction);
 }
-
-static cl_command_queue_properties commandQueueProperties[] =
-    {
-        0,
-        CL_QUEUE_PROFILING_ENABLE};
-
-static cl_uint queueSizes[] =
-    {
-        0, 2000};
-
-cl_queue_priority_khr queuePriorities[] =
-    {
-        0,
-        CL_QUEUE_PRIORITY_LOW_KHR,
-        CL_QUEUE_PRIORITY_MED_KHR,
-        CL_QUEUE_PRIORITY_HIGH_KHR};
-
-cl_queue_throttle_khr queueThrottles[] =
-    {
-        0,
-        CL_QUEUE_THROTTLE_LOW_KHR,
-        CL_QUEUE_THROTTLE_MED_KHR,
-        CL_QUEUE_THROTTLE_HIGH_KHR};
-
-INSTANTIATE_TEST_SUITE_P(api,
-                         clCreateCommandQueueWithPropertiesTests,
-                         ::testing::Combine(
-                             ::testing::ValuesIn(commandQueueProperties),
-                             ::testing::ValuesIn(queueSizes),
-                             ::testing::ValuesIn(queuePriorities),
-                             ::testing::ValuesIn(queueThrottles)));
 
 TEST_F(ClCreateCommandQueueWithPropertiesApi, GivenNullContextWhenCreatingCommandQueueWithPropertiesThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;

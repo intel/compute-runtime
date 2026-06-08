@@ -3575,43 +3575,42 @@ TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaul
     EXPECT_EQ(gfxCoreHelper.getDefaultThreadArbitrationPolicy(), mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
 }
 
-using ThreadArbitrationPolicyKernelTest = ::testing::TestWithParam<ThreadArbitrationPolicy>;
-TEST_P(ThreadArbitrationPolicyKernelTest, givenThreadArbitrationPolicyAndIFPRequiredWhenKernelIsInitializedThenThreadArbitrationPolicyIsSetToRoundRobinPolicy) {
-    struct MockKernelWithTAP : public MockKernelWithInternals {
-        MockKernelWithTAP(Context &ctx, bool ifpRequired) : MockKernelWithInternals(ctx, MockKernelWithInternalsConfig{.requiresSubgroupIndependentForwardProgress = ifpRequired, .threadArbitrationPolicy = GetParam()}) {
-        }
-    };
-    UltClDeviceFactory deviceFactory{1, 0};
-
-    MockContext mockCtx(deviceFactory.rootDevices[0]);
-    MockKernelWithTAP mockKernelWithTAP{mockCtx, true};
-
-    auto &mockKernel = *mockKernelWithTAP.mockKernel;
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
-}
-
-TEST_P(ThreadArbitrationPolicyKernelTest, givenThreadArbitrationPolicyAndIFPNotRequiredWhenKernelIsInitializedThenThreadArbitrationPolicyIsSetCorrectly) {
-    struct MockKernelWithTAP : public MockKernelWithInternals {
-        MockKernelWithTAP(Context &ctx, bool ifpRequired) : MockKernelWithInternals(ctx, MockKernelWithInternalsConfig{.requiresSubgroupIndependentForwardProgress = ifpRequired, .threadArbitrationPolicy = GetParam()}) {
-        }
-    };
-    UltClDeviceFactory deviceFactory{1, 0};
-
-    MockContext mockCtx(deviceFactory.rootDevices[0]);
-    MockKernelWithTAP mockKernelWithTAP{mockCtx, false};
-
-    auto &mockKernel = *mockKernelWithTAP.mockKernel;
-    EXPECT_EQ(GetParam(), mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
-}
-
 static ThreadArbitrationPolicy threadArbitrationPolicies[] = {
     ThreadArbitrationPolicy::AgeBased,
     ThreadArbitrationPolicy::RoundRobin,
     ThreadArbitrationPolicy::RoundRobinAfterDependency};
 
-INSTANTIATE_TEST_SUITE_P(ThreadArbitrationPolicyKernelInitializationTests,
-                         ThreadArbitrationPolicyKernelTest,
-                         testing::ValuesIn(threadArbitrationPolicies));
+using ThreadArbitrationPolicyKernelTest = ::testing::Test;
+
+TEST_F(ThreadArbitrationPolicyKernelTest, givenThreadArbitrationPolicyAndIFPRequiredWhenKernelIsInitializedThenThreadArbitrationPolicyIsSetToRoundRobinPolicy) {
+    for (auto policy : threadArbitrationPolicies) {
+        struct MockKernelWithTAP : public MockKernelWithInternals {
+            MockKernelWithTAP(Context &ctx, bool ifpRequired, ThreadArbitrationPolicy tap) : MockKernelWithInternals(ctx, MockKernelWithInternalsConfig{.requiresSubgroupIndependentForwardProgress = ifpRequired, .threadArbitrationPolicy = tap}) {
+            }
+        };
+        UltClDeviceFactory deviceFactory{1, 0};
+        MockContext mockCtx(deviceFactory.rootDevices[0]);
+        MockKernelWithTAP mockKernelWithTAP{mockCtx, true, policy};
+
+        auto &mockKernel = *mockKernelWithTAP.mockKernel;
+        EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
+    }
+}
+
+TEST_F(ThreadArbitrationPolicyKernelTest, givenThreadArbitrationPolicyAndIFPNotRequiredWhenKernelIsInitializedThenThreadArbitrationPolicyIsSetCorrectly) {
+    for (auto policy : threadArbitrationPolicies) {
+        struct MockKernelWithTAP : public MockKernelWithInternals {
+            MockKernelWithTAP(Context &ctx, bool ifpRequired, ThreadArbitrationPolicy tap) : MockKernelWithInternals(ctx, MockKernelWithInternalsConfig{.requiresSubgroupIndependentForwardProgress = ifpRequired, .threadArbitrationPolicy = tap}) {
+            }
+        };
+        UltClDeviceFactory deviceFactory{1, 0};
+        MockContext mockCtx(deviceFactory.rootDevices[0]);
+        MockKernelWithTAP mockKernelWithTAP{mockCtx, false, policy};
+
+        auto &mockKernel = *mockKernelWithTAP.mockKernel;
+        EXPECT_EQ(policy, mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
+    }
+}
 
 TEST(KernelTest, givenKernelWhenSettingAdditionalKernelExecInfoThenCorrectValueIsSet) {
     UltClDeviceFactory deviceFactory{1, 0};

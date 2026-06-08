@@ -114,11 +114,7 @@ class BuiltInTests
     DebugManagerStateRestore restore;
 };
 
-struct AuxBuiltInTests : BuiltInTests, public ::testing::WithParamInterface<KernelObjForAuxTranslation::Type> {
-    void SetUp() override {
-        BuiltInTests::SetUp();
-        kernelObjType = GetParam();
-    }
+struct AuxBuiltInTests : BuiltInTests {
     KernelObjForAuxTranslation::Type kernelObjType;
 };
 
@@ -148,73 +144,72 @@ class MockAuxBuilInOp : public AuxTranslationBuiltin {
     using BaseClass::usedKernels;
 };
 
-INSTANTIATE_TEST_SUITE_P(,
-                         AuxBuiltInTests,
-                         testing::ValuesIn({KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}));
-
-HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
 
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
+        using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+        MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
 
-    BuiltIn::OpParams builtinOpParamsToAux;
-    builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
+        BuiltIn::OpParams builtinOpParamsToAux;
+        builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
-    BuiltIn::OpParams builtinOpParamsToNonAux;
-    builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
+        BuiltIn::OpParams builtinOpParamsToNonAux;
+        builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
-    std::unique_ptr<Buffer> buffer = nullptr;
-    std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
+        std::unique_ptr<Buffer> buffer = nullptr;
+        std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
 
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
-        cl_int retVal = CL_SUCCESS;
-        buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
-    } else {
-        gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation.get()});
-    }
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
+            cl_int retVal = CL_SUCCESS;
+            buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
+            kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
+        } else {
+            gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
+            kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation.get()});
+        }
 
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
-    mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToAux);
-    mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToNonAux);
+        mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToAux);
+        mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToNonAux);
 
-    {
-        // read args
-        auto argNum = 0;
-        auto expectedMocs = pDevice->getGmmHelper()->getUncachedMOCS();
-        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
-        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+        {
+            // read args
+            auto argNum = 0;
+            auto expectedMocs = pDevice->getGmmHelper()->getUncachedMOCS();
+            auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+            auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
 
-        sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
-        sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
-    }
+            sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+            sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+        }
 
-    {
-        // write args
-        auto argNum = 1;
-        auto expectedMocs = pDevice->getGmmHelper()->getL1EnabledMOCS();
-        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
-        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+        {
+            // write args
+            auto argNum = 1;
+            auto expectedMocs = pDevice->getGmmHelper()->getL1EnabledMOCS();
+            auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+            auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
 
-        sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
-        sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+            sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+            sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+        }
     }
 }
 
@@ -316,195 +311,211 @@ TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreated
     delete dstPtr;
 }
 
-HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels, AuxBuiltinsMatcher) {
-    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
-    auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
+HWTEST2_F(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels, AuxBuiltinsMatcher) {
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
 
-    std::vector<Kernel *> builtinKernels;
-    std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
-    mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x1000));
-    mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x20000));
-    mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x30000));
+        BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
+        auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
 
-    BuiltIn::OpParams builtinOpsParams;
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
+        std::vector<Kernel *> builtinKernels;
+        std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
+        mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x1000));
+        mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x20000));
+        mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x30000));
 
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    for (auto &kernelObj : mockKernelObjForAuxTranslation) {
-        kernelObjsForAuxTranslation->insert(kernelObj);
-    }
-    auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
+        BuiltIn::OpParams builtinOpsParams;
+        builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
-
-    EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
-    EXPECT_EQ(3u, multiDispatchInfo.size());
-
-    for (auto &dispatchInfo : multiDispatchInfo) {
-        auto kernel = dispatchInfo.getKernel();
-        builtinKernels.push_back(kernel);
-
-        if (kernelObjType == KernelObjForAuxTranslation::Type::memObj) {
-            auto buffer = castToObject<Buffer>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::memObj, buffer});
-            EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::memObj, kernelObj.type);
-            kernelObjsForAuxTranslationPtr->erase(kernelObj);
-
-            cl_mem clMem = buffer;
-            EXPECT_EQ(clMem, kernel->getKernelArguments().at(0).object);
-            EXPECT_EQ(clMem, kernel->getKernelArguments().at(1).object);
-
-            EXPECT_EQ(1u, dispatchInfo.getDim());
-            size_t xGws = alignUp(buffer->getSize(), 512) / 16;
-            Vec3<size_t> gws = {xGws, 1, 1};
-            EXPECT_EQ(gws, dispatchInfo.getGWS());
-        } else {
-            auto gfxAllocation = static_cast<GraphicsAllocation *>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation});
-            EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::gfxAlloc, kernelObj.type);
-            kernelObjsForAuxTranslationPtr->erase(kernelObj);
-
-            EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(0).object);
-            EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(1).object);
-
-            EXPECT_EQ(1u, dispatchInfo.getDim());
-            size_t xGws = alignUp(gfxAllocation->getUnderlyingBufferSize(), 512) / 16;
-            Vec3<size_t> gws = {xGws, 1, 1};
-            EXPECT_EQ(gws, dispatchInfo.getGWS());
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        for (auto &kernelObj : mockKernelObjForAuxTranslation) {
+            kernelObjsForAuxTranslation->insert(kernelObj);
         }
-    }
-    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
-    // always pick different kernel
-    EXPECT_EQ(3u, builtinKernels.size());
-    EXPECT_NE(builtinKernels[0], builtinKernels[1]);
-    EXPECT_NE(builtinKernels[0], builtinKernels[2]);
-    EXPECT_NE(builtinKernels[1], builtinKernels[2]);
-}
+        auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
 
-HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels, AuxBuiltinsMatcher) {
-    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
-    auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
-    std::vector<Kernel *> builtinKernels;
-    std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
-    mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x1000));
-    mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x20000));
-    mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x30000));
+        EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
+        EXPECT_EQ(3u, multiDispatchInfo.size());
 
-    BuiltIn::OpParams builtinOpsParams;
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
+        for (auto &dispatchInfo : multiDispatchInfo) {
+            auto kernel = dispatchInfo.getKernel();
+            builtinKernels.push_back(kernel);
 
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
-    for (auto &kernelObj : mockKernelObjForAuxTranslation) {
-        kernelObjsForAuxTranslation->insert(kernelObj);
-    }
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+            if (kernelObjType == KernelObjForAuxTranslation::Type::memObj) {
+                auto buffer = castToObject<Buffer>(kernel->getKernelArguments().at(0).object);
+                auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::memObj, buffer});
+                EXPECT_NE(nullptr, kernelObj.object);
+                EXPECT_EQ(KernelObjForAuxTranslation::Type::memObj, kernelObj.type);
+                kernelObjsForAuxTranslationPtr->erase(kernelObj);
 
-    EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
-    EXPECT_EQ(3u, multiDispatchInfo.size());
+                cl_mem clMem = buffer;
+                EXPECT_EQ(clMem, kernel->getKernelArguments().at(0).object);
+                EXPECT_EQ(clMem, kernel->getKernelArguments().at(1).object);
 
-    for (auto &dispatchInfo : multiDispatchInfo) {
-        auto kernel = dispatchInfo.getKernel();
-        builtinKernels.push_back(kernel);
+                EXPECT_EQ(1u, dispatchInfo.getDim());
+                size_t xGws = alignUp(buffer->getSize(), 512) / 16;
+                Vec3<size_t> gws = {xGws, 1, 1};
+                EXPECT_EQ(gws, dispatchInfo.getGWS());
+            } else {
+                auto gfxAllocation = static_cast<GraphicsAllocation *>(kernel->getKernelArguments().at(0).object);
+                auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation});
+                EXPECT_NE(nullptr, kernelObj.object);
+                EXPECT_EQ(KernelObjForAuxTranslation::Type::gfxAlloc, kernelObj.type);
+                kernelObjsForAuxTranslationPtr->erase(kernelObj);
 
-        if (kernelObjType == KernelObjForAuxTranslation::Type::memObj) {
-            auto buffer = castToObject<Buffer>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::memObj, buffer});
-            EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::memObj, kernelObj.type);
-            kernelObjsForAuxTranslationPtr->erase(kernelObj);
+                EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(0).object);
+                EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(1).object);
 
-            cl_mem clMem = buffer;
-            EXPECT_EQ(clMem, kernel->getKernelArguments().at(0).object);
-            EXPECT_EQ(clMem, kernel->getKernelArguments().at(1).object);
-
-            EXPECT_EQ(1u, dispatchInfo.getDim());
-            size_t xGws = alignUp(buffer->getSize(), 4) / 4;
-            Vec3<size_t> gws = {xGws, 1, 1};
-            EXPECT_EQ(gws, dispatchInfo.getGWS());
-        } else {
-            auto gfxAllocation = static_cast<GraphicsAllocation *>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation});
-            EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::gfxAlloc, kernelObj.type);
-            kernelObjsForAuxTranslationPtr->erase(kernelObj);
-
-            EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(0).object);
-            EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(1).object);
-
-            EXPECT_EQ(1u, dispatchInfo.getDim());
-            size_t xGws = alignUp(gfxAllocation->getUnderlyingBufferSize(), 512) / 16;
-            Vec3<size_t> gws = {xGws, 1, 1};
-            EXPECT_EQ(gws, dispatchInfo.getGWS());
+                EXPECT_EQ(1u, dispatchInfo.getDim());
+                size_t xGws = alignUp(gfxAllocation->getUnderlyingBufferSize(), 512) / 16;
+                Vec3<size_t> gws = {xGws, 1, 1};
+                EXPECT_EQ(gws, dispatchInfo.getGWS());
+            }
         }
+        EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+        // always pick different kernel
+        EXPECT_EQ(3u, builtinKernels.size());
+        EXPECT_NE(builtinKernels[0], builtinKernels[1]);
+        EXPECT_NE(builtinKernels[0], builtinKernels[2]);
+        EXPECT_NE(builtinKernels[1], builtinKernels[2]);
     }
-    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
-    // always pick different kernel
-    EXPECT_EQ(3u, builtinKernels.size());
-    EXPECT_NE(builtinKernels[0], builtinKernels[1]);
-    EXPECT_NE(builtinKernels[0], builtinKernels[2]);
-    EXPECT_NE(builtinKernels[1], builtinKernels[2]);
 }
 
-HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickDifferentKernelsDependingOnRequest, AuxBuiltinsMatcher) {
-    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
-    auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
+HWTEST2_F(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels, AuxBuiltinsMatcher) {
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
 
-    std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
-    for (int i = 0; i < 3; i++) {
-        mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType));
+        BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
+        auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
+
+        std::vector<Kernel *> builtinKernels;
+        std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
+        mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x1000));
+        mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x20000));
+        mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x30000));
+
+        BuiltIn::OpParams builtinOpsParams;
+        builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
+
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
+        for (auto &kernelObj : mockKernelObjForAuxTranslation) {
+            kernelObjsForAuxTranslation->insert(kernelObj);
+        }
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+
+        EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
+        EXPECT_EQ(3u, multiDispatchInfo.size());
+
+        for (auto &dispatchInfo : multiDispatchInfo) {
+            auto kernel = dispatchInfo.getKernel();
+            builtinKernels.push_back(kernel);
+
+            if (kernelObjType == KernelObjForAuxTranslation::Type::memObj) {
+                auto buffer = castToObject<Buffer>(kernel->getKernelArguments().at(0).object);
+                auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::memObj, buffer});
+                EXPECT_NE(nullptr, kernelObj.object);
+                EXPECT_EQ(KernelObjForAuxTranslation::Type::memObj, kernelObj.type);
+                kernelObjsForAuxTranslationPtr->erase(kernelObj);
+
+                cl_mem clMem = buffer;
+                EXPECT_EQ(clMem, kernel->getKernelArguments().at(0).object);
+                EXPECT_EQ(clMem, kernel->getKernelArguments().at(1).object);
+
+                EXPECT_EQ(1u, dispatchInfo.getDim());
+                size_t xGws = alignUp(buffer->getSize(), 4) / 4;
+                Vec3<size_t> gws = {xGws, 1, 1};
+                EXPECT_EQ(gws, dispatchInfo.getGWS());
+            } else {
+                auto gfxAllocation = static_cast<GraphicsAllocation *>(kernel->getKernelArguments().at(0).object);
+                auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation});
+                EXPECT_NE(nullptr, kernelObj.object);
+                EXPECT_EQ(KernelObjForAuxTranslation::Type::gfxAlloc, kernelObj.type);
+                kernelObjsForAuxTranslationPtr->erase(kernelObj);
+
+                EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(0).object);
+                EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(1).object);
+
+                EXPECT_EQ(1u, dispatchInfo.getDim());
+                size_t xGws = alignUp(gfxAllocation->getUnderlyingBufferSize(), 512) / 16;
+                Vec3<size_t> gws = {xGws, 1, 1};
+                EXPECT_EQ(gws, dispatchInfo.getGWS());
+            }
+        }
+        EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+        // always pick different kernel
+        EXPECT_EQ(3u, builtinKernels.size());
+        EXPECT_NE(builtinKernels[0], builtinKernels[1]);
+        EXPECT_NE(builtinKernels[0], builtinKernels[2]);
+        EXPECT_NE(builtinKernels[1], builtinKernels[2]);
     }
-    std::vector<Kernel *> builtinKernels;
-
-    BuiltIn::OpParams builtinOpsParams;
-
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    for (auto &kernelObj : mockKernelObjForAuxTranslation) {
-        kernelObjsForAuxTranslation->insert(kernelObj);
-    }
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
-
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
-    EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
-
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
-    EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
-
-    EXPECT_EQ(6u, multiDispatchInfo.size());
-
-    for (auto &dispatchInfo : multiDispatchInfo) {
-        builtinKernels.push_back(dispatchInfo.getKernel());
-    }
-    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
-    // nonAux vs Aux instance
-    EXPECT_EQ(6u, builtinKernels.size());
-    EXPECT_NE(builtinKernels[0], builtinKernels[3]);
-    EXPECT_NE(builtinKernels[1], builtinKernels[4]);
-    EXPECT_NE(builtinKernels[2], builtinKernels[5]);
 }
 
-HWTEST2_P(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchInfosThenAbort, AuxBuiltinsMatcher) {
-    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
-    auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
+HWTEST2_F(AuxBuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickDifferentKernelsDependingOnRequest, AuxBuiltinsMatcher) {
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
 
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
-    MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
+        BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
+        auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
 
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
-    BuiltIn::OpParams builtinOpsParams;
+        std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
+        for (int i = 0; i < 3; i++) {
+            mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType));
+        }
+        std::vector<Kernel *> builtinKernels;
 
-    kernelObjsForAuxTranslationPtr->insert(mockKernelObjForAuxTranslation);
+        BuiltIn::OpParams builtinOpsParams;
 
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::none;
-    EXPECT_THROW(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams), std::exception);
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        for (auto &kernelObj : mockKernelObjForAuxTranslation) {
+            kernelObjsForAuxTranslation->insert(kernelObj);
+        }
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+
+        builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
+        EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
+
+        builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
+        EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
+
+        EXPECT_EQ(6u, multiDispatchInfo.size());
+
+        for (auto &dispatchInfo : multiDispatchInfo) {
+            builtinKernels.push_back(dispatchInfo.getKernel());
+        }
+        EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+        // nonAux vs Aux instance
+        EXPECT_EQ(6u, builtinKernels.size());
+        EXPECT_NE(builtinKernels[0], builtinKernels[3]);
+        EXPECT_NE(builtinKernels[1], builtinKernels[4]);
+        EXPECT_NE(builtinKernels[2], builtinKernels[5]);
+    }
+}
+
+HWTEST2_F(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchInfosThenAbort, AuxBuiltinsMatcher) {
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
+
+        BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
+        auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
+
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
+        MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
+
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+        BuiltIn::OpParams builtinOpsParams;
+
+        kernelObjsForAuxTranslationPtr->insert(mockKernelObjForAuxTranslation);
+
+        builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::none;
+        EXPECT_THROW(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams), std::exception);
+    }
 }
 
 HWTEST2_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5, AuxBuiltinsMatcher) {
@@ -513,29 +524,33 @@ HWTEST2_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5,
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 }
 
-HWTEST2_P(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInstancesWhenDispatchingThenResize, AuxBuiltinsMatcher) {
-    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
-    EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
-    EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
+HWTEST2_F(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInstancesWhenDispatchingThenResize, AuxBuiltinsMatcher) {
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
 
-    std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
-    for (int i = 0; i < 7; i++) {
-        mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType));
+        MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+        EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
+        EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
+
+        std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
+        for (int i = 0; i < 7; i++) {
+            mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType));
+        }
+
+        BuiltIn::OpParams builtinOpsParams;
+        builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
+
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        for (auto &kernelObj : mockKernelObjForAuxTranslation) {
+            kernelObjsForAuxTranslation->insert(kernelObj);
+        }
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+
+        EXPECT_TRUE(mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
+        EXPECT_EQ(7u, mockAuxBuiltInOp.convertToAuxKernel.size());
+        EXPECT_EQ(7u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
     }
-
-    BuiltIn::OpParams builtinOpsParams;
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
-
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    for (auto &kernelObj : mockKernelObjForAuxTranslation) {
-        kernelObjsForAuxTranslation->insert(kernelObj);
-    }
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
-
-    EXPECT_TRUE(mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
-    EXPECT_EQ(7u, mockAuxBuiltInOp.convertToAuxKernel.size());
-    EXPECT_EQ(7u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 }
 
 HWTEST2_F(BuiltInTests, givenAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesFromBaseKernel, AuxBuiltinsMatcher) {
@@ -554,228 +569,244 @@ HWTEST2_F(BuiltInTests, givenAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstance
     }
 }
 
-HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin, AuxBuiltinsMatcher) {
-    BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
-    auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pBuiltIns, *pClDevice, defaultMode);
-    pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, std::unique_ptr<MockAuxBuilInOp>(mockAuxBuiltInOp));
+HWTEST2_F(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin, AuxBuiltinsMatcher) {
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
 
-    auto mockProgram = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
-    auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
-    auto kernelInfos = MockKernel::toKernelInfoContainer(mockBuiltinKernel->getKernelInfo(), rootDeviceIndex);
-    auto pMultiDeviceKernel = new MockMultiDeviceKernel(MockMultiDeviceKernel::toKernelVector(mockBuiltinKernel), kernelInfos);
-    mockAuxBuiltInOp->usedKernels.at(0).reset(pMultiDeviceKernel);
+        BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, *pClDevice);
+        auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pBuiltIns, *pClDevice, defaultMode);
+        pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, defaultMode, std::unique_ptr<MockAuxBuilInOp>(mockAuxBuiltInOp));
 
-    MockKernelWithInternals mockKernel(*pContext);
-    MockCommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, nullptr);
-    size_t gws[3] = {1, 0, 0};
+        auto mockProgram = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
+        auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
+        auto kernelInfos = MockKernel::toKernelInfoContainer(mockBuiltinKernel->getKernelInfo(), rootDeviceIndex);
+        auto pMultiDeviceKernel = new MockMultiDeviceKernel(MockMultiDeviceKernel::toKernelVector(mockBuiltinKernel), kernelInfos);
+        mockAuxBuiltInOp->usedKernels.at(0).reset(pMultiDeviceKernel);
 
-    mockKernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *));
-    mockKernel.mockKernel->initialize();
+        MockKernelWithInternals mockKernel(*pContext);
+        MockCommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, nullptr);
+        size_t gws[3] = {1, 0, 0};
 
-    std::unique_ptr<Gmm> gmm;
+        mockKernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *));
+        mockKernel.mockKernel->initialize();
 
-    MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
-    if (kernelObjType == KernelObjForAuxTranslation::Type::memObj) {
-        MockBuffer::setAllocationType(mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(0), pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
+        std::unique_ptr<Gmm> gmm;
 
-        cl_mem clMem = mockKernelObjForAuxTranslation.mockBuffer.get();
-        mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
-    } else {
-        auto gfxAllocation = mockKernelObjForAuxTranslation.mockGraphicsAllocation.get();
+        MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
+        if (kernelObjType == KernelObjForAuxTranslation::Type::memObj) {
+            MockBuffer::setAllocationType(mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(0), pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
-        MockBuffer::setAllocationType(gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
+            cl_mem clMem = mockKernelObjForAuxTranslation.mockBuffer.get();
+            mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
+        } else {
+            auto gfxAllocation = mockKernelObjForAuxTranslation.mockGraphicsAllocation.get();
 
-        auto ptr = reinterpret_cast<void *>(gfxAllocation->getGpuAddressToPatch());
-        mockKernel.mockKernel->setArgSvmAlloc(0, ptr, gfxAllocation, 0u);
+            MockBuffer::setAllocationType(gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
-        gmm.reset(gfxAllocation->getDefaultGmm());
+            auto ptr = reinterpret_cast<void *>(gfxAllocation->getGpuAddressToPatch());
+            mockKernel.mockKernel->setArgSvmAlloc(0, ptr, gfxAllocation, 0u);
+
+            gmm.reset(gfxAllocation->getDefaultGmm());
+        }
+
+        mockKernel.mockKernel->auxTranslationRequired = false;
+        cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+        EXPECT_EQ(0u, pMultiDeviceKernel->takeOwnershipCalls);
+        EXPECT_EQ(0u, pMultiDeviceKernel->releaseOwnershipCalls);
+
+        mockKernel.mockKernel->auxTranslationRequired = true;
+        cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+        EXPECT_EQ(1u, pMultiDeviceKernel->takeOwnershipCalls);
+        EXPECT_EQ(1u, pMultiDeviceKernel->releaseOwnershipCalls);
     }
-
-    mockKernel.mockKernel->auxTranslationRequired = false;
-    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, pMultiDeviceKernel->takeOwnershipCalls);
-    EXPECT_EQ(0u, pMultiDeviceKernel->releaseOwnershipCalls);
-
-    mockKernel.mockKernel->auxTranslationRequired = true;
-    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-
-    EXPECT_EQ(1u, pMultiDeviceKernel->takeOwnershipCalls);
-    EXPECT_EQ(1u, pMultiDeviceKernel->releaseOwnershipCalls);
 }
 
-HWTEST2_P(AuxBuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs, IsGen12LP) {
+HWTEST2_F(AuxBuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs, IsGen12LP) {
+
     if (this->pDevice->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();
     }
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+        using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+        MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
 
-    BuiltIn::OpParams builtinOpParamsToAux;
-    builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
+        BuiltIn::OpParams builtinOpParamsToAux;
+        builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
-    BuiltIn::OpParams builtinOpParamsToNonAux;
-    builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
+        BuiltIn::OpParams builtinOpParamsToNonAux;
+        builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
-    std::unique_ptr<Buffer> buffer = nullptr;
-    std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
+        std::unique_ptr<Buffer> buffer = nullptr;
+        std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
 
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
 
-    if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
-        cl_int retVal = CL_SUCCESS;
-        buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
-    } else {
-        gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation.get()});
-    }
+        if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
+            cl_int retVal = CL_SUCCESS;
+            buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
+            kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
+        } else {
+            gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
+            kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation.get()});
+        }
 
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
-    mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToAux);
-    mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToNonAux);
+        mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToAux);
+        mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToNonAux);
 
-    {
-        // read args
-        auto argNum = 0;
-        auto expectedMocs = pDevice->getGmmHelper()->getUncachedMOCS();
-        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
-        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+        {
+            // read args
+            auto argNum = 0;
+            auto expectedMocs = pDevice->getGmmHelper()->getUncachedMOCS();
+            auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+            auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
 
-        sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
-        sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
-    }
+            sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+            sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+        }
 
-    {
-        // write args
-        auto argNum = 1;
-        auto expectedMocs = pDevice->getGmmHelper()->getL3EnabledMOCS();
-        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
-        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+        {
+            // write args
+            auto argNum = 1;
+            auto expectedMocs = pDevice->getGmmHelper()->getL3EnabledMOCS();
+            auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+            auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
 
-        sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
-        sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+            sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+            sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+        }
     }
 }
 
-HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
+HWTEST2_F(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
+
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+        using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+        using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+        MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
 
-    BuiltIn::OpParams builtinOpParams;
-    builtinOpParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
+        BuiltIn::OpParams builtinOpParams;
+        builtinOpParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
-    std::unique_ptr<Buffer> buffer = nullptr;
-    std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
-    gmm->setCompressionEnabled(true);
+        std::unique_ptr<Buffer> buffer = nullptr;
+        std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
+        GmmRequirements gmmRequirements{};
+        gmmRequirements.allowLargePages = true;
+        gmmRequirements.preferCompressed = false;
+        auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
+        gmm->setCompressionEnabled(true);
 
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
 
-    if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
-        cl_int retVal = CL_SUCCESS;
-        buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
-        buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
+        if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
+            cl_int retVal = CL_SUCCESS;
+            buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
+            buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
 
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
-    } else {
-        gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
-        gfxAllocation->setDefaultGmm(gmm.get());
+            kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
+        } else {
+            gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
+            gfxAllocation->setDefaultGmm(gmm.get());
 
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation.get()});
-    }
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
-    mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParams);
+            kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation.get()});
+        }
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+        mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParams);
 
-    {
-        // read arg
-        auto argNum = 0;
-        auto sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
-        auto sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E, surfaceState->getAuxiliarySurfaceMode());
-    }
+        {
+            // read arg
+            auto argNum = 0;
+            auto sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+            auto sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E, surfaceState->getAuxiliarySurfaceMode());
+        }
 
-    {
-        // write arg
-        auto argNum = 1;
-        auto sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
-        auto sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState->getAuxiliarySurfaceMode());
+        {
+            // write arg
+            auto argNum = 1;
+            auto sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+            auto sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState->getAuxiliarySurfaceMode());
+        }
     }
 }
 
-HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
+HWTEST2_F(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
+
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+        using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+        using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
+        MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice, defaultMode);
 
-    BuiltIn::OpParams builtinOpParams;
-    builtinOpParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
+        BuiltIn::OpParams builtinOpParams;
+        builtinOpParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
-    MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    auto gmm = std::make_unique<Gmm>(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements);
-    gmm->setCompressionEnabled(true);
-    if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
-        mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
-    } else {
-        mockKernelObjForAuxTranslation.mockGraphicsAllocation->setDefaultGmm(gmm.get());
-    }
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    kernelObjsForAuxTranslation->insert(mockKernelObjForAuxTranslation);
+        MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
+        GmmRequirements gmmRequirements{};
+        gmmRequirements.allowLargePages = true;
+        gmmRequirements.preferCompressed = false;
+        auto gmm = std::make_unique<Gmm>(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements);
+        gmm->setCompressionEnabled(true);
+        if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
+            mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
+        } else {
+            mockKernelObjForAuxTranslation.mockGraphicsAllocation->setDefaultGmm(gmm.get());
+        }
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        kernelObjsForAuxTranslation->insert(mockKernelObjForAuxTranslation);
 
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
-    mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParams);
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+        mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParams);
 
-    {
-        // read arg
-        auto argNum = 0;
-        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
-        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState->getAuxiliarySurfaceMode());
-    }
+        {
+            // read arg
+            auto argNum = 0;
+            auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+            auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState->getAuxiliarySurfaceMode());
+        }
 
-    {
-        // write arg
-        auto argNum = 1;
-        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
-        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
-        auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
-        EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E, surfaceState->getAuxiliarySurfaceMode());
+        {
+            // write arg
+            auto argNum = 1;
+            auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+            auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+            auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+            EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E, surfaceState->getAuxiliarySurfaceMode());
+        }
     }
 }
 

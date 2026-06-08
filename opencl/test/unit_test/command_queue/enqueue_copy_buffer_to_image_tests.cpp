@@ -209,88 +209,89 @@ HWTEST2_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenMediaVfeStat
 
 typedef EnqueueCopyBufferToImageMipMapTest MipMapCopyBufferToImageTest;
 
-HWTEST_P(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBufferToImageIsCalledThenProperMipLevelIsSet) {
-    auto imageType = (cl_mem_object_type)GetParam();
-    auto builtIns = new MockBuiltins();
+HWTEST_F(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBufferToImageIsCalledThenProperMipLevelIsSet) {
+    const cl_mem_object_type imageTypes[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY,
+                                             CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY,
+                                             CL_MEM_OBJECT_IMAGE3D};
+    for (auto imageType : imageTypes) {
+        auto builtIns = new MockBuiltins();
 
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    bool isStateless = compilerProductHelper.isForceToStatelessRequired();
-    auto builtInMode = getBuiltinMode(isStateless);
+        auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+        bool isStateless = compilerProductHelper.isForceToStatelessRequired();
+        auto builtInMode = getBuiltinMode(isStateless);
 
-    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
-    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode,
-        pCmdQ->getClDevice());
+        MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
+        auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+            BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode,
+            pCmdQ->getClDevice());
 
-    // substitute original builder with mock builder
-    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
-        BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode,
-        std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuiltInDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
+        // substitute original builder with mock builder
+        auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
+            BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode,
+            std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuiltInDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
-    cl_int retVal = CL_SUCCESS;
-    cl_image_desc imageDesc = {};
-    uint32_t expectedMipLevel = 3;
-    imageDesc.image_type = imageType;
-    imageDesc.num_mip_levels = 10;
-    imageDesc.image_width = 4;
-    imageDesc.image_height = 1;
-    imageDesc.image_depth = 1;
-    size_t origin[] = {0, 0, 0, 0};
-    size_t region[] = {imageDesc.image_width, 1, 1};
-    std::unique_ptr<Image> image;
-    switch (imageType) {
-    case CL_MEM_OBJECT_IMAGE1D:
-        origin[1] = expectedMipLevel;
-        image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(context, &imageDesc));
-        break;
-    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-        imageDesc.image_array_size = 2;
-        origin[2] = expectedMipLevel;
-        image = std::unique_ptr<Image>(ImageHelperUlt<Image1dArrayDefaults>::create(context, &imageDesc));
-        break;
-    case CL_MEM_OBJECT_IMAGE2D:
-        origin[2] = expectedMipLevel;
-        image = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(context, &imageDesc));
-        break;
-    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-        imageDesc.image_array_size = 2;
-        origin[3] = expectedMipLevel;
-        image = std::unique_ptr<Image>(ImageHelperUlt<Image2dArrayDefaults>::create(context, &imageDesc));
-        break;
-    case CL_MEM_OBJECT_IMAGE3D:
-        origin[3] = expectedMipLevel;
-        image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(context, &imageDesc));
-        break;
+        cl_int retVal = CL_SUCCESS;
+        cl_image_desc imageDesc = {};
+        uint32_t expectedMipLevel = 3;
+        imageDesc.image_type = imageType;
+        imageDesc.num_mip_levels = 10;
+        imageDesc.image_width = 4;
+        imageDesc.image_height = 1;
+        imageDesc.image_depth = 1;
+        size_t origin[] = {0, 0, 0, 0};
+        size_t region[] = {imageDesc.image_width, 1, 1};
+        std::unique_ptr<Image> image;
+        switch (imageType) {
+        case CL_MEM_OBJECT_IMAGE1D:
+            origin[1] = expectedMipLevel;
+            image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(context, &imageDesc));
+            break;
+        case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+            imageDesc.image_array_size = 2;
+            origin[2] = expectedMipLevel;
+            image = std::unique_ptr<Image>(ImageHelperUlt<Image1dArrayDefaults>::create(context, &imageDesc));
+            break;
+        case CL_MEM_OBJECT_IMAGE2D:
+            origin[2] = expectedMipLevel;
+            image = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(context, &imageDesc));
+            break;
+        case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+            imageDesc.image_array_size = 2;
+            origin[3] = expectedMipLevel;
+            image = std::unique_ptr<Image>(ImageHelperUlt<Image2dArrayDefaults>::create(context, &imageDesc));
+            break;
+        case CL_MEM_OBJECT_IMAGE3D:
+            origin[3] = expectedMipLevel;
+            image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(context, &imageDesc));
+            break;
+        }
+        EXPECT_NE(nullptr, image.get());
+
+        std::unique_ptr<uint32_t[]> ptr = std::unique_ptr<uint32_t[]>(new uint32_t[3]);
+        retVal = pCmdQ->enqueueCopyBufferToImage(srcBuffer,
+                                                 image.get(),
+                                                 0,
+                                                 origin,
+                                                 region,
+                                                 0,
+                                                 nullptr,
+                                                 nullptr);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        auto &mockBuilder = static_cast<MockBuiltInDispatchInfoBuilder &>(BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode,
+                                                                                                                                    pCmdQ->getClDevice()));
+        auto params = mockBuilder.getBuiltinOpParams();
+
+        EXPECT_EQ(expectedMipLevel, params->dstMipLevel);
+
+        // restore original builder and retrieve mock builder
+        auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
+            BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode,
+            std::move(oldBuilder));
+        EXPECT_NE(nullptr, newBuilder);
     }
-    EXPECT_NE(nullptr, image.get());
-
-    std::unique_ptr<uint32_t[]> ptr = std::unique_ptr<uint32_t[]>(new uint32_t[3]);
-    retVal = pCmdQ->enqueueCopyBufferToImage(srcBuffer,
-                                             image.get(),
-                                             0,
-                                             origin,
-                                             region,
-                                             0,
-                                             nullptr,
-                                             nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto &mockBuilder = static_cast<MockBuiltInDispatchInfoBuilder &>(BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode,
-                                                                                                                                pCmdQ->getClDevice()));
-    auto params = mockBuilder.getBuiltinOpParams();
-
-    EXPECT_EQ(expectedMipLevel, params->dstMipLevel);
-
-    // restore original builder and retrieve mock builder
-    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
-        BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode,
-        std::move(oldBuilder));
-    EXPECT_NE(nullptr, newBuilder);
 }
-
-INSTANTIATE_TEST_SUITE_P(MipMapCopyBufferToImageTest_GivenImageWithMipLevelNonZeroWhenCopyBufferToImageIsCalledThenProperMipLevelIsSet,
-                         MipMapCopyBufferToImageTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
 
 struct EnqueueCopyBufferToImageHw : public ::testing::Test {
 

@@ -1300,10 +1300,9 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2DebugFlag, 
     EXPECT_EQ(dispatchFlags.threadArbitrationPolicy, mockCsr->streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
-class CommandStreamReceiverFlushTaskMemoryCompressionTests : public UltCommandStreamReceiverTest,
-                                                             public ::testing::WithParamInterface<MemoryCompressionState> {};
+using CommandStreamReceiverFlushTaskMemoryCompressionTests = UltCommandStreamReceiverTest;
 
-HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemoryCompressionStateNotApplicableWhenFlushTaskIsCalledThenUseLastMemoryCompressionState) {
+HWTEST_F(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemoryCompressionStateNotApplicableWhenFlushTaskIsCalledThenUseLastMemoryCompressionState) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
@@ -1312,21 +1311,14 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.memoryCompressionState = MemoryCompressionState::notApplicable;
 
-    mockCsr.lastMemoryCompressionState = GetParam();
-    MemoryCompressionState lastMemoryCompressionState = mockCsr.lastMemoryCompressionState;
-
-    mockCsr.flushTask(commandStream,
-                      0,
-                      &dsh,
-                      &ioh,
-                      &ssh,
-                      taskLevel,
-                      dispatchFlags,
-                      *pDevice);
-    EXPECT_EQ(lastMemoryCompressionState, mockCsr.lastMemoryCompressionState);
+    for (auto lastState : {MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled}) {
+        mockCsr.lastMemoryCompressionState = lastState;
+        mockCsr.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
+        EXPECT_EQ(lastState, mockCsr.lastMemoryCompressionState);
+    }
 }
 
-HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemoryCompressionStateApplicableWhenFlushTaskIsCalledThenUpdateLastMemoryCompressionState) {
+HWTEST_F(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemoryCompressionStateApplicableWhenFlushTaskIsCalledThenUpdateLastMemoryCompressionState) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (mockCsr.getHeaplessModeEnabled()) {
         GTEST_SKIP();
@@ -1334,43 +1326,19 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
-    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    dispatchFlags.memoryCompressionState = GetParam();
+    for (auto dispatchState : {MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled}) {
+        DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+        dispatchFlags.memoryCompressionState = dispatchState;
 
-    if (dispatchFlags.memoryCompressionState == MemoryCompressionState::notApplicable) {
-
-        for (auto memoryCompressionState : {MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled}) {
-            mockCsr.lastMemoryCompressionState = memoryCompressionState;
-            MemoryCompressionState lastMemoryCompressionState = mockCsr.lastMemoryCompressionState;
-            mockCsr.flushTask(commandStream,
-                              0,
-                              &dsh,
-                              &ioh,
-                              &ssh,
-                              taskLevel,
-                              dispatchFlags,
-                              *pDevice);
-            EXPECT_EQ(lastMemoryCompressionState, mockCsr.lastMemoryCompressionState);
-        }
-    } else {
-
-        for (auto memoryCompressionState : {MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled}) {
-            mockCsr.lastMemoryCompressionState = memoryCompressionState;
-            mockCsr.flushTask(commandStream,
-                              0,
-                              &dsh,
-                              &ioh,
-                              &ssh,
-                              taskLevel,
-                              dispatchFlags,
-                              *pDevice);
-            EXPECT_EQ(dispatchFlags.memoryCompressionState, mockCsr.lastMemoryCompressionState);
+        for (auto lastState : {MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled}) {
+            mockCsr.lastMemoryCompressionState = lastState;
+            mockCsr.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
+            if (dispatchState == MemoryCompressionState::notApplicable) {
+                EXPECT_EQ(lastState, mockCsr.lastMemoryCompressionState);
+            } else {
+                EXPECT_EQ(dispatchState, mockCsr.lastMemoryCompressionState);
+            }
         }
     }
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    CommandStreamReceiverFlushTaskMemoryCompressionTestsValues,
-    CommandStreamReceiverFlushTaskMemoryCompressionTests,
-    testing::Values(MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled));

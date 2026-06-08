@@ -84,7 +84,7 @@ struct CommandQueueTest
     : public CommandQueueMemoryDevice,
       public ContextFixture,
       public CommandQueueFixture,
-      ::testing::TestWithParam<uint64_t /*cl_command_queue_properties*/> {
+      ::testing::Test {
 
     using CommandQueueFixture::setUp;
     using ContextFixture::setUp;
@@ -94,7 +94,6 @@ struct CommandQueueTest
 
     void SetUp() override {
         CommandQueueMemoryDevice::setUp();
-        properties = GetParam();
 
         cl_device_id device = pClDevice;
         ContextFixture::setUp(1, &device);
@@ -107,35 +106,34 @@ struct CommandQueueTest
         CommandQueueMemoryDevice::tearDown();
     }
 
-    cl_command_queue_properties properties;
+    cl_command_queue_properties properties = 0;
     const HardwareInfo *pHwInfo = nullptr;
 };
 
-TEST_P(CommandQueueTest, GivenNonFailingAllocationWhenCreatingCommandQueueThenCommandQueueIsCreated) {
-    InjectedFunction method = [this](size_t failureIndex) {
-        auto retVal = CL_INVALID_VALUE;
-        auto pCmdQ = CommandQueue::create(
-            pContext,
-            pClDevice,
-            nullptr,
-            false,
-            retVal);
+TEST_F(CommandQueueTest, GivenNonFailingAllocationWhenCreatingCommandQueueThenCommandQueueIsCreated) {
+    for (cl_command_queue_properties queueProps : allCommandQueueProperties) {
+        this->properties = queueProps;
+        InjectedFunction method = [this](size_t failureIndex) {
+            auto retVal = CL_INVALID_VALUE;
+            auto pCmdQ = CommandQueue::create(
+                pContext,
+                pClDevice,
+                nullptr,
+                false,
+                retVal);
 
-        if (MemoryManagement::nonfailingAllocation == failureIndex) {
-            EXPECT_EQ(CL_SUCCESS, retVal);
-            EXPECT_NE(nullptr, pCmdQ);
-        } else {
-            EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal) << "for allocation " << failureIndex;
-            EXPECT_EQ(nullptr, pCmdQ);
-        }
-        delete pCmdQ;
-    };
-    injectFailures(method);
+            if (MemoryManagement::nonfailingAllocation == failureIndex) {
+                EXPECT_EQ(CL_SUCCESS, retVal);
+                EXPECT_NE(nullptr, pCmdQ);
+            } else {
+                EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal) << "for allocation " << failureIndex;
+                EXPECT_EQ(nullptr, pCmdQ);
+            }
+            delete pCmdQ;
+        };
+        injectFailures(method);
+    }
 }
-
-INSTANTIATE_TEST_SUITE_P(CommandQueue,
-                         CommandQueueTest,
-                         ::testing::ValuesIn(allCommandQueueProperties));
 
 TEST(CommandQueue, WhenGettingErrorCodeFromTaskCountThenProperValueIsReturned) {
     EXPECT_EQ(CL_SUCCESS, CommandQueue::getErrorCodeFromTaskCount(0));
@@ -620,7 +618,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenGetCSIsCalledThenComm
 }
 
 struct CommandQueueIndirectHeapTest : public CommandQueueMemoryDevice,
-                                      public ::testing::TestWithParam<IndirectHeap::Type> {
+                                      public ::testing::Test {
     void SetUp() override {
         CommandQueueMemoryDevice::setUp();
         context.reset(new MockContext(pClDevice));
@@ -632,279 +630,323 @@ struct CommandQueueIndirectHeapTest : public CommandQueueMemoryDevice,
     }
     std::unique_ptr<MockContext> context;
     DebugManagerStateRestore restorer;
+    static constexpr IndirectHeap::Type heapTypes[] = {
+        IndirectHeap::Type::dynamicState,
+        IndirectHeap::Type::indirectObject,
+        IndirectHeap::Type::surfaceState};
 };
 
-TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenValidObjectIsReturned) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+TEST_F(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenValidObjectIsReturned) {
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
-    auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 8192);
-    EXPECT_NE(nullptr, &indirectHeap);
-}
-
-HWTEST_P(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedForInternalAllocationThenTrueIsReturned) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
-    auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 8192);
-    if (this->GetParam() == IndirectHeap::Type::indirectObject && commandStreamReceiver.canUse4GbHeaps()) {
-        EXPECT_TRUE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
-    } else {
-        EXPECT_FALSE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
+        auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 8192);
+        EXPECT_NE(nullptr, &indirectHeap);
     }
 }
 
-HWTEST_P(CommandQueueIndirectHeapTest, GivenIndirectHeapWhenGettingAvailableSpaceThenCorrectSizeIsReturned) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+HWTEST_F(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedForInternalAllocationThenTrueIsReturned) {
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+        auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), sizeof(uint32_t));
-    if (this->GetParam() == IndirectHeap::Type::surfaceState) {
-        size_t expectedSshUse = cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize - UnitTestHelper<FamilyType>::getDefaultSshUsage();
-        EXPECT_EQ(expectedSshUse, indirectHeap.getAvailableSpace());
-    } else {
-        EXPECT_EQ(64 * MemoryConstants::kiloByte, indirectHeap.getAvailableSpace());
+        auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 8192);
+        if (heapType == IndirectHeap::Type::indirectObject && commandStreamReceiver.canUse4GbHeaps()) {
+            EXPECT_TRUE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
+        } else {
+            EXPECT_FALSE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
+        }
     }
 }
 
-TEST_P(CommandQueueIndirectHeapTest, GivenRequiredSizeWhenGettingIndirectHeapThenIndirectHeapHasRequiredSize) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+HWTEST_F(CommandQueueIndirectHeapTest, GivenIndirectHeapWhenGettingAvailableSpaceThenCorrectSizeIsReturned) {
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
-    size_t requiredSize = 16384;
-    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), requiredSize);
-    ASSERT_NE(nullptr, &indirectHeap);
-    EXPECT_GE(indirectHeap.getMaxAvailableSpace(), requiredSize);
-}
-
-TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapWithNewSizeThenMaxAvailableSpaceIsEqualOrGreaterThanNewSize) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
-
-    auto &indirectHeapInitial = cmdQ.getIndirectHeap(this->GetParam(), 10);
-    size_t requiredSize = indirectHeapInitial.getMaxAvailableSpace() + 42;
-
-    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), requiredSize);
-    ASSERT_NE(nullptr, &indirectHeap);
-    if (this->GetParam() == IndirectHeap::Type::surfaceState) {
-        // no matter what SSH is always capped
-        EXPECT_EQ(cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
-                  indirectHeap.getMaxAvailableSpace());
-    } else {
-        EXPECT_LE(requiredSize, indirectHeap.getMaxAvailableSpace());
+        auto &indirectHeap = cmdQ.getIndirectHeap(heapType, sizeof(uint32_t));
+        if (heapType == IndirectHeap::Type::surfaceState) {
+            size_t expectedSshUse = cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize - UnitTestHelper<FamilyType>::getDefaultSshUsage();
+            EXPECT_EQ(expectedSshUse, indirectHeap.getAvailableSpace());
+        } else {
+            EXPECT_EQ(64 * MemoryConstants::kiloByte, indirectHeap.getAvailableSpace());
+        }
     }
 }
 
-TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenSizeIsAlignedToCacheLine) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
-    size_t minHeapSize = 64 * MemoryConstants::kiloByte;
+TEST_F(CommandQueueIndirectHeapTest, GivenRequiredSizeWhenGettingIndirectHeapThenIndirectHeapHasRequiredSize) {
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
-    auto &indirectHeapInitial = cmdQ.getIndirectHeap(this->GetParam(), 2 * minHeapSize + 1);
-
-    EXPECT_TRUE(isAligned<MemoryConstants::cacheLineSize>(indirectHeapInitial.getAvailableSpace()));
-
-    indirectHeapInitial.getSpace(indirectHeapInitial.getAvailableSpace()); // use whole space to force obtain reusable
-
-    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), minHeapSize + 1);
-
-    ASSERT_NE(nullptr, &indirectHeap);
-    EXPECT_TRUE(isAligned<MemoryConstants::cacheLineSize>(indirectHeap.getAvailableSpace()));
+        size_t requiredSize = 16384;
+        const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, requiredSize);
+        ASSERT_NE(nullptr, &indirectHeap);
+        EXPECT_GE(indirectHeap.getMaxAvailableSpace(), requiredSize);
+    }
 }
 
-HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForHeapAllocationThenAllocationFromReusablePoolIsReturned) {
+TEST_F(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapWithNewSizeThenMaxAvailableSpaceIsEqualOrGreaterThanNewSize) {
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+
+        auto &indirectHeapInitial = cmdQ.getIndirectHeap(heapType, 10);
+        size_t requiredSize = indirectHeapInitial.getMaxAvailableSpace() + 42;
+
+        const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, requiredSize);
+        ASSERT_NE(nullptr, &indirectHeap);
+        if (heapType == IndirectHeap::Type::surfaceState) {
+            // no matter what SSH is always capped
+            EXPECT_EQ(cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
+                      indirectHeap.getMaxAvailableSpace());
+        } else {
+            EXPECT_LE(requiredSize, indirectHeap.getMaxAvailableSpace());
+        }
+    }
+}
+
+TEST_F(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenSizeIsAlignedToCacheLine) {
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+        size_t minHeapSize = 64 * MemoryConstants::kiloByte;
+
+        auto &indirectHeapInitial = cmdQ.getIndirectHeap(heapType, 2 * minHeapSize + 1);
+
+        EXPECT_TRUE(isAligned<MemoryConstants::cacheLineSize>(indirectHeapInitial.getAvailableSpace()));
+
+        indirectHeapInitial.getSpace(indirectHeapInitial.getAvailableSpace()); // use whole space to force obtain reusable
+
+        const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, minHeapSize + 1);
+
+        ASSERT_NE(nullptr, &indirectHeap);
+        EXPECT_TRUE(isAligned<MemoryConstants::cacheLineSize>(indirectHeap.getAvailableSpace()));
+    }
+}
+
+HWTEST_F(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForHeapAllocationThenAllocationFromReusablePoolIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
     debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+    debugManager.flags.ContextGroupSize.set(0);
+    for (auto heapType : heapTypes) {
+        auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
+        *commandStreamReceiver.getTagAddress() = commandStreamReceiver.peekTaskCount();
+        commandStreamReceiver.getInternalAllocationStorage()->cleanAllocationList(commandStreamReceiver.peekTaskCount(), REUSABLE_ALLOCATION);
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
-    auto memoryManager = pDevice->getMemoryManager();
+        auto memoryManager = pDevice->getMemoryManager();
 
-    auto allocationSize = NEO::HeapSize::getDefaultHeapSize(this->GetParam()) * 2;
+        auto allocationSize = NEO::HeapSize::getDefaultHeapSize(heapType) * 2;
 
-    GraphicsAllocation *allocation = nullptr;
+        GraphicsAllocation *allocation = nullptr;
+        auto allocationType = AllocationType::linearStream;
+        if (heapType == IndirectHeap::Type::indirectObject && commandStreamReceiver.canUse4GbHeaps()) {
+            allocationType = AllocationType::internalHeap;
+        }
+        allocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), allocationSize, allocationType, pDevice->getDeviceBitfield()});
+        if (heapType == IndirectHeap::Type::surfaceState) {
+            allocation->setSize(commandStreamReceiver.defaultSshSize * 2);
+        }
 
-    auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto allocationType = AllocationType::linearStream;
-    if (this->GetParam() == IndirectHeap::Type::indirectObject && commandStreamReceiver.canUse4GbHeaps()) {
-        allocationType = AllocationType::internalHeap;
+        commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+
+        EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
+        EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekContains(*allocation));
+
+        const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
+
+        EXPECT_EQ(indirectHeap.getGraphicsAllocation(), allocation);
+
+        // if we obtain heap from reusable pool, we need to keep the size of allocation
+        // surface state heap is an exception, it is capped at (max_ssh_size_for_HW - page_size)
+        if (heapType == IndirectHeap::Type::surfaceState) {
+            EXPECT_EQ(commandStreamReceiver.defaultSshSize - MemoryConstants::pageSize, indirectHeap.getMaxAvailableSpace());
+        } else {
+            EXPECT_EQ(allocationSize, indirectHeap.getMaxAvailableSpace());
+        }
+
+        EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
     }
-    allocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), allocationSize, allocationType, pDevice->getDeviceBitfield()});
-    if (this->GetParam() == IndirectHeap::Type::surfaceState) {
-        allocation->setSize(commandStreamReceiver.defaultSshSize * 2);
-    }
-
-    commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-
-    EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
-    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekContains(*allocation));
-
-    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
-
-    EXPECT_EQ(indirectHeap.getGraphicsAllocation(), allocation);
-
-    // if we obtain heap from reusable pool, we need to keep the size of allocation
-    // surface state heap is an exception, it is capped at (max_ssh_size_for_HW - page_size)
-    if (this->GetParam() == IndirectHeap::Type::surfaceState) {
-        EXPECT_EQ(commandStreamReceiver.defaultSshSize - MemoryConstants::pageSize, indirectHeap.getMaxAvailableSpace());
-    } else {
-        EXPECT_EQ(allocationSize, indirectHeap.getMaxAvailableSpace());
-    }
-
-    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
 }
 
-HWTEST_P(CommandQueueIndirectHeapTest, WhenAskedForNewHeapThenOldHeapIsStoredForReuse) {
+HWTEST_F(CommandQueueIndirectHeapTest, WhenAskedForNewHeapThenOldHeapIsStoredForReuse) {
+    DebugManagerStateRestore restorer;
     debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
     debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
-
+    debugManager.flags.ContextGroupSize.set(0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
-    *commandStreamReceiver.getTagAddress() = 1u;
-    commandStreamReceiver.taskCount = 2u;
+    for (auto heapType : heapTypes) {
+        *commandStreamReceiver.getTagAddress() = commandStreamReceiver.peekTaskCount();
+        commandStreamReceiver.getInternalAllocationStorage()->cleanAllocationList(commandStreamReceiver.peekTaskCount(), REUSABLE_ALLOCATION);
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
-    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
-    auto heapSize = indirectHeap.getAvailableSpace();
+        *commandStreamReceiver.getTagAddress() = 1u;
+        commandStreamReceiver.taskCount = 2u;
 
-    auto graphicsAllocation = indirectHeap.getGraphicsAllocation();
+        const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
+        auto heapSize = indirectHeap.getAvailableSpace();
 
-    // Request a larger heap than the first.
-    cmdQ.getIndirectHeap(this->GetParam(), heapSize + 6000);
+        auto graphicsAllocation = indirectHeap.getGraphicsAllocation();
 
-    EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
+        // Request a larger heap than the first.
+        cmdQ.getIndirectHeap(heapType, heapSize + 6000);
 
-    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekContains(*graphicsAllocation));
-    *commandStreamReceiver.getTagAddress() = 2u;
-}
+        EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
 
-HWTEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocationWhenAskedForNewHeapThenNewAllocationIsAcquiredWithoutStoring) {
-    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
-    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
-
-    auto memoryManager = pDevice->getMemoryManager();
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
-
-    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
-    auto heapSize = indirectHeap.getAvailableSpace();
-
-    auto graphicsAllocation = indirectHeap.getGraphicsAllocation();
-
-    csr.indirectHeap[this->GetParam()]->replaceGraphicsAllocation(nullptr);
-    csr.indirectHeap[this->GetParam()]->replaceBuffer(nullptr, 0);
-
-    // Request a larger heap than the first.
-    cmdQ.getIndirectHeap(this->GetParam(), heapSize + 6000);
-
-    EXPECT_NE(graphicsAllocation, indirectHeap.getGraphicsAllocation());
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
-}
-
-TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWithResourceCachingActiveWhenQueueIsDestroyedThenIndirectHeapIsNotOnReuseList) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
-    auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0, false);
-    cmdQ->getIndirectHeap(this->GetParam(), 100);
-    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
-
-    // now destroy command queue, heap should NOT go to reusable list
-    delete cmdQ;
-    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
-}
-
-HWTEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapAllocatedWhenIndirectHeapIsReleasedThenHeapAllocationAndHeapBufferIsSetToNullptr) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
-
-    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
-
-    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
-    auto heapSize = indirectHeap.getMaxAvailableSpace();
-
-    EXPECT_NE(0u, heapSize);
-
-    auto graphicsAllocation = indirectHeap.getGraphicsAllocation();
-    EXPECT_NE(nullptr, graphicsAllocation);
-
-    cmdQ.releaseIndirectHeap(this->GetParam());
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    EXPECT_EQ(nullptr, csr.indirectHeap[this->GetParam()]->getGraphicsAllocation());
-
-    EXPECT_EQ(nullptr, indirectHeap.getCpuBase());
-    EXPECT_EQ(0u, indirectHeap.getMaxAvailableSpace());
-}
-
-HWTEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocatedWhenIndirectHeapIsReleasedThenIndirectHeapAllocationStaysNull) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
-
-    cmdQ.releaseIndirectHeap(this->GetParam());
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    EXPECT_EQ(nullptr, csr.indirectHeap[this->GetParam()]);
-}
-
-HWTEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocationIsNullThenNothingOnReuseList) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
-    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
-    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
-
-    auto &ih = cmdQ.getIndirectHeap(this->GetParam(), 0u);
-    auto allocation = ih.getGraphicsAllocation();
-    EXPECT_NE(nullptr, allocation);
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    csr.indirectHeap[this->GetParam()]->replaceGraphicsAllocation(nullptr);
-    csr.indirectHeap[this->GetParam()]->replaceBuffer(nullptr, 0);
-
-    cmdQ.releaseIndirectHeap(this->GetParam());
-
-    auto memoryManager = pDevice->getMemoryManager();
-    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCalledThenIndirectHeapAllocationTypeShouldBeSetToInternalHeapForIohAndLinearStreamForOthers) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
-    auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    auto heapType = this->GetParam();
-
-    bool requireInternalHeap = IndirectHeap::Type::indirectObject == heapType && commandStreamReceiver.canUse4GbHeaps();
-    const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
-    auto indirectHeapAllocation = indirectHeap.getGraphicsAllocation();
-    ASSERT_NE(nullptr, indirectHeapAllocation);
-    auto expectedAllocationType = AllocationType::linearStream;
-    if (requireInternalHeap) {
-        expectedAllocationType = AllocationType::internalHeap;
+        EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekContains(*graphicsAllocation));
+        *commandStreamReceiver.getTagAddress() = 2u;
     }
-    EXPECT_EQ(expectedAllocationType, indirectHeapAllocation->getAllocationType());
 }
 
-HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledThenHeapIsCreated) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+HWTEST_F(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocationWhenAskedForNewHeapThenNewAllocationIsAcquiredWithoutStoring) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+    debugManager.flags.ContextGroupSize.set(0);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
+    for (auto heapType : heapTypes) {
+        *csr.getTagAddress() = csr.peekTaskCount();
+        csr.getInternalAllocationStorage()->cleanAllocationList(csr.peekTaskCount(), REUSABLE_ALLOCATION);
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
-    IndirectHeap *indirectHeap = nullptr;
-    cmdQ.allocateHeapMemory(this->GetParam(), 100, indirectHeap);
-    EXPECT_NE(nullptr, indirectHeap);
-    EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
+        auto memoryManager = pDevice->getMemoryManager();
 
-    auto &csr = pClDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.indirectHeap[this->GetParam()] = indirectHeap;
+        const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
+        auto heapSize = indirectHeap.getAvailableSpace();
+
+        auto graphicsAllocation = indirectHeap.getGraphicsAllocation();
+
+        csr.indirectHeap[heapType]->replaceGraphicsAllocation(nullptr);
+        csr.indirectHeap[heapType]->replaceBuffer(nullptr, 0);
+
+        // Request a larger heap than the first.
+        cmdQ.getIndirectHeap(heapType, heapSize + 6000);
+
+        EXPECT_NE(graphicsAllocation, indirectHeap.getGraphicsAllocation());
+        memoryManager->freeGraphicsMemory(graphicsAllocation);
+    }
+}
+
+TEST_F(CommandQueueIndirectHeapTest, givenCommandQueueWithResourceCachingActiveWhenQueueIsDestroyedThenIndirectHeapIsNotOnReuseList) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    for (auto heapType : heapTypes) {
+        auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0, false);
+        cmdQ->getIndirectHeap(heapType, 100);
+        EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+
+        // now destroy command queue, heap should NOT go to reusable list
+        delete cmdQ;
+        EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    }
+}
+
+HWTEST_F(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapAllocatedWhenIndirectHeapIsReleasedThenHeapAllocationAndHeapBufferIsSetToNullptr) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ContextGroupSize.set(0);
+    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+
+        const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
+        auto heapSize = indirectHeap.getMaxAvailableSpace();
+
+        EXPECT_NE(0u, heapSize);
+
+        auto graphicsAllocation = indirectHeap.getGraphicsAllocation();
+        EXPECT_NE(nullptr, graphicsAllocation);
+
+        cmdQ.releaseIndirectHeap(heapType);
+        auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+        EXPECT_EQ(nullptr, csr.indirectHeap[heapType]->getGraphicsAllocation());
+
+        EXPECT_EQ(nullptr, indirectHeap.getCpuBase());
+        EXPECT_EQ(0u, indirectHeap.getMaxAvailableSpace());
+    }
+}
+
+HWTEST_F(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocatedWhenIndirectHeapIsReleasedThenIndirectHeapAllocationStaysNull) {
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+
+        cmdQ.releaseIndirectHeap(heapType);
+        auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+        EXPECT_EQ(nullptr, csr.indirectHeap[heapType]);
+    }
+}
+
+HWTEST_F(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocationIsNullThenNothingOnReuseList) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+    debugManager.flags.ContextGroupSize.set(0);
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+
+        auto &ih = cmdQ.getIndirectHeap(heapType, 0u);
+        auto allocation = ih.getGraphicsAllocation();
+        EXPECT_NE(nullptr, allocation);
+        auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+        csr.indirectHeap[heapType]->replaceGraphicsAllocation(nullptr);
+        csr.indirectHeap[heapType]->replaceBuffer(nullptr, 0);
+
+        cmdQ.releaseIndirectHeap(heapType);
+
+        auto memoryManager = pDevice->getMemoryManager();
+        EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+}
+
+HWTEST_F(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCalledThenIndirectHeapAllocationTypeShouldBeSetToInternalHeapForIohAndLinearStreamForOthers) {
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+        auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
+
+        bool requireInternalHeap = IndirectHeap::Type::indirectObject == heapType && commandStreamReceiver.canUse4GbHeaps();
+        const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
+        auto indirectHeapAllocation = indirectHeap.getGraphicsAllocation();
+        ASSERT_NE(nullptr, indirectHeapAllocation);
+        auto expectedAllocationType = AllocationType::linearStream;
+        if (requireInternalHeap) {
+            expectedAllocationType = AllocationType::internalHeap;
+        }
+        EXPECT_EQ(expectedAllocationType, indirectHeapAllocation->getAllocationType());
+    }
+}
+
+HWTEST_F(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledThenHeapIsCreated) {
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+
+        IndirectHeap *indirectHeap = nullptr;
+        cmdQ.allocateHeapMemory(heapType, 100, indirectHeap);
+        EXPECT_NE(nullptr, indirectHeap);
+        EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
+
+        auto &csr = pClDevice->getUltCommandStreamReceiver<FamilyType>();
+        csr.indirectHeap[heapType] = indirectHeap;
+    }
 }
 
 HWTEST_F(CommandQueueIndirectHeapTest, givenForceDefaultHeapSizeWhenGetHeapMemoryIsCalledThenHeapIsCreatedWithProperSize) {
@@ -924,29 +966,23 @@ HWTEST_F(CommandQueueIndirectHeapTest, givenForceDefaultHeapSizeWhenGetHeapMemor
     csr.indirectHeap[IndirectHeap::Type::indirectObject] = indirectHeap;
 }
 
-HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledWithAlreadyAllocatedHeapThenGraphicsAllocationIsCreated) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+HWTEST_F(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledWithAlreadyAllocatedHeapThenGraphicsAllocationIsCreated) {
+    for (auto heapType : heapTypes) {
+        const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+        MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
-    IndirectHeap heap(nullptr, size_t{100});
+        IndirectHeap heap(nullptr, size_t{100});
 
-    IndirectHeap *indirectHeap = &heap;
-    cmdQ.allocateHeapMemory(this->GetParam(), 100, indirectHeap);
-    EXPECT_EQ(&heap, indirectHeap);
-    EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
+        IndirectHeap *indirectHeap = &heap;
+        cmdQ.allocateHeapMemory(heapType, 100, indirectHeap);
+        EXPECT_EQ(&heap, indirectHeap);
+        EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
 
-    auto allocation = indirectHeap->getGraphicsAllocation();
-    auto &csr = pClDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.indirectHeap[this->GetParam()] = new IndirectHeap(allocation);
+        auto allocation = indirectHeap->getGraphicsAllocation();
+        auto &csr = pClDevice->getUltCommandStreamReceiver<FamilyType>();
+        csr.indirectHeap[heapType] = new IndirectHeap(allocation);
+    }
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    Device,
-    CommandQueueIndirectHeapTest,
-    testing::Values(
-        IndirectHeap::Type::dynamicState,
-        IndirectHeap::Type::indirectObject,
-        IndirectHeap::Type::surfaceState));
 
 using CommandQueueTests = ::testing::Test;
 HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGraphicsAllocationIsReused) {

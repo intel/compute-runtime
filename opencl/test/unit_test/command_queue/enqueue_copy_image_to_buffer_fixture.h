@@ -60,8 +60,7 @@ struct EnqueueCopyImageToBufferTest : public CommandEnqueueFixture,
 };
 
 struct EnqueueCopyImageToBufferMipMapTest : public CommandEnqueueFixture,
-                                            public ::testing::Test,
-                                            public ::testing::WithParamInterface<uint32_t> {
+                                            public ::testing::Test {
 
     void SetUp(void) override {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);

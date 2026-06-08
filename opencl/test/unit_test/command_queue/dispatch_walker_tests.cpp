@@ -99,17 +99,9 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
     DebugManagerStateRestore dbgRestore;
 };
 
-struct DispatchWalkerTestForAuxTranslation : DispatchWalkerTest, public ::testing::WithParamInterface<KernelObjForAuxTranslation::Type> {
-    void SetUp() override {
-        DispatchWalkerTest::SetUp();
-        kernelObjType = GetParam();
-    }
+struct DispatchWalkerTestForAuxTranslation : DispatchWalkerTest {
     KernelObjForAuxTranslation::Type kernelObjType;
 };
-
-INSTANTIATE_TEST_SUITE_P(,
-                         DispatchWalkerTestForAuxTranslation,
-                         testing::ValuesIn({KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}));
 
 HWTEST_F(DispatchWalkerTest, WhenGettingComputeDimensionsThenCorrectNumberOfDimensionsIsReturned) {
     const size_t workItems1D[] = {100, 1, 1};
@@ -1109,100 +1101,108 @@ TEST(DispatchWalker, WhenCalculatingDispatchDimensionsThenCorrectValuesAreReturn
 
 using IsAuxTranslationSupported = IsAtMostXeCore;
 
-HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded, IsAuxTranslationSupported) {
-    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, pCmdQ->getDefaultBuiltInMode(), *pClDevice);
-    auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
+HWTEST2_F(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded, IsAuxTranslationSupported) {
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
 
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+        BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, pCmdQ->getDefaultBuiltInMode(), *pClDevice);
+        auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
 
-    auto &cmdStream = pCmdQ->getCS(0);
-    void *buffer = cmdStream.getCpuBase();
-    kernel.auxTranslationRequired = true;
-    MockKernelObjForAuxTranslation mockKernelObj1(kernelObjType);
-    MockKernelObjForAuxTranslation mockKernelObj2(kernelObjType);
+        MockKernel kernel(program.get(), kernelInfo, *pClDevice);
+        kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
+        ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    kernelObjsForAuxTranslation->insert(mockKernelObj1);
-    kernelObjsForAuxTranslation->insert(mockKernelObj2);
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+        auto &cmdStream = pCmdQ->getCS(0);
+        auto startOffset = cmdStream.getUsed();
+        kernel.auxTranslationRequired = true;
+        MockKernelObjForAuxTranslation mockKernelObj1(kernelObjType);
+        MockKernelObjForAuxTranslation mockKernelObj2(kernelObjType);
 
-    BuiltIn::OpParams builtinOpsParams;
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        kernelObjsForAuxTranslation->insert(mockKernelObj1);
+        kernelObjsForAuxTranslation->insert(mockKernelObj2);
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
-    builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);
-    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
-    HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
-        *pCmdQ,
-        multiDispatchInfo,
-        CsrDependencies(),
-        walkerArgs);
+        BuiltIn::OpParams builtinOpsParams;
+        builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
-    auto sizeUsed = cmdStream.getUsed();
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, buffer, sizeUsed));
+        builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);
+        HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+        HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
+            *pCmdQ,
+            multiDispatchInfo,
+            CsrDependencies(),
+            walkerArgs);
 
-    auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+        auto sizeUsed = cmdStream.getUsed() - startOffset;
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream.getCpuBase(), startOffset), sizeUsed));
 
-    ASSERT_EQ(2u, pipeControls.size());
+        auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
-    auto beginPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[0]));
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pClDevice->getRootDeviceEnvironment()), beginPipeControl->getDcFlushEnable());
-    EXPECT_TRUE(beginPipeControl->getCommandStreamerStallEnable());
+        ASSERT_EQ(2u, pipeControls.size());
 
-    auto endPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[1]));
-    EXPECT_FALSE(endPipeControl->getDcFlushEnable());
-    EXPECT_TRUE(endPipeControl->getCommandStreamerStallEnable());
+        auto beginPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[0]));
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pClDevice->getRootDeviceEnvironment()), beginPipeControl->getDcFlushEnable());
+        EXPECT_TRUE(beginPipeControl->getCommandStreamerStallEnable());
+
+        auto endPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[1]));
+        EXPECT_FALSE(endPipeControl->getDcFlushEnable());
+        EXPECT_TRUE(endPipeControl->getCommandStreamerStallEnable());
+    }
 }
 
-HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded, IsAuxTranslationSupported) {
-    BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, pCmdQ->getDefaultBuiltInMode(), *pClDevice);
-    auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
+HWTEST2_F(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded, IsAuxTranslationSupported) {
+    for (auto kernelObjTypeParam : {KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}) {
+        kernelObjType = kernelObjTypeParam;
 
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+        BuiltIn::DispatchInfoBuilder &baseBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::auxTranslation, pCmdQ->getDefaultBuiltInMode(), *pClDevice);
+        auto &builder = static_cast<AuxTranslationBuiltin &>(baseBuilder);
 
-    auto &cmdStream = pCmdQ->getCS(0);
-    void *buffer = cmdStream.getCpuBase();
-    kernel.auxTranslationRequired = true;
-    MockKernelObjForAuxTranslation mockKernelObj1(kernelObjType);
-    MockKernelObjForAuxTranslation mockKernelObj2(kernelObjType);
+        MockKernel kernel(program.get(), kernelInfo, *pClDevice);
+        kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
+        ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    kernelObjsForAuxTranslation->insert(mockKernelObj1);
-    kernelObjsForAuxTranslation->insert(mockKernelObj2);
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+        auto &cmdStream = pCmdQ->getCS(0);
+        auto startOffset = cmdStream.getUsed();
+        kernel.auxTranslationRequired = true;
+        MockKernelObjForAuxTranslation mockKernelObj1(kernelObjType);
+        MockKernelObjForAuxTranslation mockKernelObj2(kernelObjType);
 
-    BuiltIn::OpParams builtinOpsParams;
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
+        auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+        kernelObjsForAuxTranslation->insert(mockKernelObj1);
+        kernelObjsForAuxTranslation->insert(mockKernelObj2);
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
-    builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);
-    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
-    HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
-        *pCmdQ,
-        multiDispatchInfo,
-        CsrDependencies(),
-        walkerArgs);
+        BuiltIn::OpParams builtinOpsParams;
+        builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
-    auto sizeUsed = cmdStream.getUsed();
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, buffer, sizeUsed));
+        builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);
+        HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+        HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
+            *pCmdQ,
+            multiDispatchInfo,
+            CsrDependencies(),
+            walkerArgs);
 
-    auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+        auto sizeUsed = cmdStream.getUsed() - startOffset;
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream.getCpuBase(), startOffset), sizeUsed));
 
-    ASSERT_EQ(2u, pipeControls.size());
+        auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
-    auto beginPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[0]));
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pClDevice->getRootDeviceEnvironment()), beginPipeControl->getDcFlushEnable());
-    EXPECT_TRUE(beginPipeControl->getCommandStreamerStallEnable());
+        ASSERT_EQ(2u, pipeControls.size());
 
-    auto endPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[1]));
-    EXPECT_FALSE(endPipeControl->getDcFlushEnable());
-    EXPECT_TRUE(endPipeControl->getCommandStreamerStallEnable());
+        auto beginPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[0]));
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pClDevice->getRootDeviceEnvironment()), beginPipeControl->getDcFlushEnable());
+        EXPECT_TRUE(beginPipeControl->getCommandStreamerStallEnable());
+
+        auto endPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[1]));
+        EXPECT_FALSE(endPipeControl->getDcFlushEnable());
+        EXPECT_TRUE(endPipeControl->getCommandStreamerStallEnable());
+    }
 }
 
 struct ProfilingCommandsTest : public DispatchWalkerTest, ::testing::WithParamInterface<bool> {

@@ -21,7 +21,7 @@ using namespace NEO;
 #include "shared/test/common/test_macros/heapless_matchers.h"
 
 struct KernelSLMAndBarrierTest : public ClDeviceFixture,
-                                 public ::testing::TestWithParam<uint32_t> {
+                                 public ::testing::Test {
     void SetUp() override {
         ClDeviceFixture::setUp();
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
@@ -52,84 +52,78 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
     uint32_t perThreadData[8];
 };
 
-static uint32_t slmSizeInKb[] = {1, 4, 8, 16, 32, 64};
+HWTEST2_F(KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgrammingSlmThenProgrammingIsCorrect, IsGen12LP) {
+    for (uint32_t slmSizeInKb : {1u, 4u, 8u, 16u, 32u, 64u}) {
+        ASSERT_NE(nullptr, pClDevice);
+        CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
+        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+        using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+        DefaultWalkerType walkerCmd{};
+        kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
+        kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = slmSizeInKb * MemoryConstants::kiloByte;
 
-HWTEST2_P(KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgrammingSlmThenProgrammingIsCorrect, IsGen12LP) {
-    ASSERT_NE(nullptr, pClDevice);
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    DefaultWalkerType walkerCmd{};
-    // define kernel info
-    kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
-    kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = GetParam() * MemoryConstants::kiloByte;
+        MockKernel kernel(program.get(), kernelInfo, *pClDevice);
+        ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+        // After creating Mock Kernel now create Indirect Heap
+        auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::dynamicState, 8192);
 
-    // After creating Mock Kernel now create Indirect Heap
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::dynamicState, 8192);
+        const uint32_t threadGroupCount = 1u;
+        uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
 
-    const uint32_t threadGroupCount = 1u;
-    uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
+        size_t offsetInterfaceDescriptorData = HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<DefaultWalkerType, INTERFACE_DESCRIPTOR_DATA>(
+            indirectHeap,
+            interfaceDescriptorOffset,
+            0,
+            sizeof(crossThreadData),
+            sizeof(perThreadData),
+            0,
+            0,
+            0,
+            threadGroupCount,
+            1,
+            kernel,
+            4u,
+            pDevice->getPreemptionMode(),
+            *pDevice,
+            &walkerCmd,
+            nullptr);
 
-    size_t offsetInterfaceDescriptorData = HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<DefaultWalkerType, INTERFACE_DESCRIPTOR_DATA>(
-        indirectHeap,
-        interfaceDescriptorOffset,
-        0,
-        sizeof(crossThreadData),
-        sizeof(perThreadData),
-        0,
-        0,
-        0,
-        threadGroupCount,
-        1,
-        kernel,
-        4u,
-        pDevice->getPreemptionMode(),
-        *pDevice,
-        &walkerCmd,
-        nullptr);
+        // add the heap base + offset
+        uint32_t *pIdData = (uint32_t *)indirectHeap.getCpuBase() + offsetInterfaceDescriptorData;
 
-    // add the heap base + offset
-    uint32_t *pIdData = (uint32_t *)indirectHeap.getCpuBase() + offsetInterfaceDescriptorData;
+        INTERFACE_DESCRIPTOR_DATA *pSrcIDData = (INTERFACE_DESCRIPTOR_DATA *)pIdData;
 
-    INTERFACE_DESCRIPTOR_DATA *pSrcIDData = (INTERFACE_DESCRIPTOR_DATA *)pIdData;
+        uint32_t expectedSlmSize = 0;
 
-    uint32_t expectedSlmSize = 0;
+        if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (1 * 1024)) // its a power of "2" +1 for example 1 is 2^0 ( 0+1); 2 is 2^1 is (1+1) etc.
+        {
+            expectedSlmSize = 1;
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (2 * 1024)) {
+            expectedSlmSize = 2;
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (4 * 1024)) {
+            expectedSlmSize = 3;
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (8 * 1024)) {
+            expectedSlmSize = 4;
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (16 * 1024)) {
+            expectedSlmSize = 5;
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (32 * 1024)) {
+            expectedSlmSize = 6;
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (64 * 1024)) {
+            expectedSlmSize = 7;
+        }
+        ASSERT_GT(expectedSlmSize, 0u);
+        EXPECT_EQ(expectedSlmSize, pSrcIDData->getSharedLocalMemorySize());
+        EXPECT_EQ(kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers(), pSrcIDData->getBarrierEnable());
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_FTZ, pSrcIDData->getDenormMode());
 
-    if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (1 * 1024)) // its a power of "2" +1 for example 1 is 2^0 ( 0+1); 2 is 2^1 is (1+1) etc.
-    {
-        expectedSlmSize = 1;
-    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (2 * 1024)) {
-        expectedSlmSize = 2;
-    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (4 * 1024)) {
-        expectedSlmSize = 3;
-    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (8 * 1024)) {
-        expectedSlmSize = 4;
-    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (16 * 1024)) {
-        expectedSlmSize = 5;
-    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (32 * 1024)) {
-        expectedSlmSize = 6;
-    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (64 * 1024)) {
-        expectedSlmSize = 7;
-    }
-    ASSERT_GT(expectedSlmSize, 0u);
-    EXPECT_EQ(expectedSlmSize, pSrcIDData->getSharedLocalMemorySize());
-    EXPECT_EQ(kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers(), pSrcIDData->getBarrierEnable());
-    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_FTZ, pSrcIDData->getDenormMode());
-
-    if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
-        EXPECT_EQ(4u, pSrcIDData->getBindingTableEntryCount());
-    } else {
-        EXPECT_EQ(0u, pSrcIDData->getBindingTableEntryCount());
+        if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
+            EXPECT_EQ(4u, pSrcIDData->getBindingTableEntryCount());
+        } else {
+            EXPECT_EQ(0u, pSrcIDData->getBindingTableEntryCount());
+        }
     }
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    SlmSizes,
-    KernelSLMAndBarrierTest,
-    testing::ValuesIn(slmSizeInKb));
 
 HWTEST2_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverrideSlmAllocationSizeIsSetThenSlmSizeIsOverwritten, IsHeapfulRequired) {
 

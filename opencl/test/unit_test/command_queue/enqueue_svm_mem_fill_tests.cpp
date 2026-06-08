@@ -130,13 +130,11 @@ HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBui
 }
 
 struct EnqueueSvmMemFillTest : public BaseEnqueueSvmMemFillFixture,
-                               public ::testing::TestWithParam<size_t> {
+                               public ::testing::Test {
     typedef CommandQueueHwFixture CommandQueueFixture;
 
     void SetUp() override {
         BaseEnqueueSvmMemFillFixture::setUp();
-        patternSize = (size_t)GetParam();
-        ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
     }
 
     void TearDown() override {
@@ -144,88 +142,87 @@ struct EnqueueSvmMemFillTest : public BaseEnqueueSvmMemFillFixture,
     }
 };
 
-HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilderThenItIsConfiguredWithBuitinOpParamsAndProducesDispatchInfo) {
-    struct MockFillBufferBuilder : MockBuiltInDispatchInfoBuilder {
-        MockFillBufferBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltIn::DispatchInfoBuilder *origBuilder, const void *pattern, size_t patternSize)
-            : MockBuiltInDispatchInfoBuilder(kernelLib, clDevice, origBuilder),
-              pattern(pattern), patternSize(patternSize) {
-        }
-        void validateInput(const BuiltIn::OpParams &conf) const override {
-            auto patternAllocation = conf.srcMemObj->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
-            EXPECT_EQ(MemoryConstants::pageSize, patternAllocation->getUnderlyingBufferSize());
-            EXPECT_EQ(0, memcmp(pattern, patternAllocation->getUnderlyingBuffer(), patternSize));
+HWTEST_F(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilderThenItIsConfiguredWithBuitinOpParamsAndProducesDispatchInfo) {
+    for (auto ps : {1u, 2u, 4u, 8u, 16u, 32u, 64u, 128u}) {
+        patternSize = ps;
+        struct MockFillBufferBuilder : MockBuiltInDispatchInfoBuilder {
+            MockFillBufferBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltIn::DispatchInfoBuilder *origBuilder, const void *pattern, size_t patternSize)
+                : MockBuiltInDispatchInfoBuilder(kernelLib, clDevice, origBuilder),
+                  pattern(pattern), patternSize(patternSize) {
+            }
+            void validateInput(const BuiltIn::OpParams &conf) const override {
+                auto patternAllocation = conf.srcMemObj->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
+                EXPECT_EQ(MemoryConstants::pageSize, patternAllocation->getUnderlyingBufferSize());
+                EXPECT_EQ(0, memcmp(pattern, patternAllocation->getUnderlyingBuffer(), patternSize));
+            };
+            const void *pattern;
+            size_t patternSize;
         };
-        const void *pattern;
-        size_t patternSize;
-    };
 
-    auto builtInMode = getBuiltinMode();
+        auto builtInMode = getBuiltinMode();
 
-    auto builtIns = new MockBuiltins();
-    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
+        auto builtIns = new MockBuiltins();
+        MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
-    // retrieve original builder
-    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, builtInMode,
-                                                                                  pCmdQ->getClDevice());
-    ASSERT_NE(nullptr, &origBuilder);
-
-    // substitute original builder with mock builder
-    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, builtInMode,
-                                                               std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
-    EXPECT_EQ(&origBuilder, oldBuilder.get());
-
-    // call enqueue on mock builder
-    auto retVal = pCmdQ->enqueueSVMMemFill(
-        svmPtr,      // void *svm_ptr
-        pattern,     // const void *pattern
-        patternSize, // size_t pattern_size
-        256,         // size_t size
-        0,           // cl_uint num_events_in_wait_list
-        nullptr,     // cl_event *event_wait_list
-        nullptr      // cL_event *event
-    );
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // restore original builder and retrieve mock builder
-    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, builtInMode,
-                                                               std::move(oldBuilder));
-    EXPECT_NE(nullptr, newBuilder);
-
-    // check if original builder is restored correctly
-    auto &restoredBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, builtInMode,
+        // retrieve original builder
+        auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, builtInMode,
                                                                                       pCmdQ->getClDevice());
-    EXPECT_EQ(&origBuilder, &restoredBuilder);
+        ASSERT_NE(nullptr, &origBuilder);
 
-    // use mock builder to validate builder's input / output
-    auto mockBuilder = static_cast<MockFillBufferBuilder *>(newBuilder.get());
+        // substitute original builder with mock builder
+        auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, builtInMode,
+                                                                   std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
+        EXPECT_EQ(&origBuilder, oldBuilder.get());
 
-    // validate builder's input - builtin ops
-    auto params = mockBuilder->getBuiltinOpParams();
-    EXPECT_EQ(nullptr, params->srcPtr);
-    EXPECT_EQ(svmPtr, params->dstPtr);
-    EXPECT_NE(nullptr, params->srcMemObj);
-    EXPECT_EQ(nullptr, params->dstMemObj);
-    EXPECT_EQ(nullptr, params->srcSvmAlloc);
-    EXPECT_EQ(svmAlloc, params->dstSvmAlloc);
-    EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->srcOffset);
-    EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->dstOffset);
-    EXPECT_EQ(Vec3<size_t>(256, 0, 0), params->size);
+        // call enqueue on mock builder
+        auto retVal = pCmdQ->enqueueSVMMemFill(
+            svmPtr,      // void *svm_ptr
+            pattern,     // const void *pattern
+            patternSize, // size_t pattern_size
+            256,         // size_t size
+            0,           // cl_uint num_events_in_wait_list
+            nullptr,     // cl_event *event_wait_list
+            nullptr      // cL_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // validate builder's output - multi dispatch info
-    auto mdi = mockBuilder->getMultiDispatchInfo();
-    EXPECT_EQ(1u, mdi->size());
+        // restore original builder and retrieve mock builder
+        auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, builtInMode,
+                                                                   std::move(oldBuilder));
+        EXPECT_NE(nullptr, newBuilder);
 
-    auto di = mdi->begin();
-    size_t middleElSize = sizeof(uint32_t);
-    EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
+        // check if original builder is restored correctly
+        auto &restoredBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, builtInMode,
+                                                                                          pCmdQ->getClDevice());
+        EXPECT_EQ(&origBuilder, &restoredBuilder);
 
-    auto kernel = di->getKernel();
-    EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+        // use mock builder to validate builder's input / output
+        auto mockBuilder = static_cast<MockFillBufferBuilder *>(newBuilder.get());
+
+        // validate builder's input - builtin ops
+        auto params = mockBuilder->getBuiltinOpParams();
+        EXPECT_EQ(nullptr, params->srcPtr);
+        EXPECT_EQ(svmPtr, params->dstPtr);
+        EXPECT_NE(nullptr, params->srcMemObj);
+        EXPECT_EQ(nullptr, params->dstMemObj);
+        EXPECT_EQ(nullptr, params->srcSvmAlloc);
+        EXPECT_EQ(svmAlloc, params->dstSvmAlloc);
+        EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->srcOffset);
+        EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->dstOffset);
+        EXPECT_EQ(Vec3<size_t>(256, 0, 0), params->size);
+
+        // validate builder's output - multi dispatch info
+        auto mdi = mockBuilder->getMultiDispatchInfo();
+        EXPECT_EQ(1u, mdi->size());
+
+        auto di = mdi->begin();
+        size_t middleElSize = sizeof(uint32_t);
+        EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
+
+        auto kernel = di->getKernel();
+        EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+    }
 }
-
-INSTANTIATE_TEST_SUITE_P(size_t,
-                         EnqueueSvmMemFillTest,
-                         ::testing::Values(1, 2, 4, 8, 16, 32, 64, 128));
 
 struct EnqueueSvmMemFillHw : public ::testing::Test {
 

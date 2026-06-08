@@ -25,7 +25,7 @@ using ClCreateBufferTests = ApiTests;
 namespace ULT {
 
 class ClCreateBufferTemplateTests : public ApiFixture,
-                                    public testing::TestWithParam<uint64_t> {
+                                    public testing::Test {
     void SetUp() override {
         ApiFixture::setUp();
     }
@@ -39,116 +39,96 @@ struct ClCreateBufferValidFlagsTests : public ClCreateBufferTemplateTests {
     cl_uchar pHostPtr[64];
 };
 
-TEST_P(ClCreateBufferValidFlagsTests, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
-    cl_mem_flags flags = GetParam() | CL_MEM_USE_HOST_PTR;
+TEST_F(ClCreateBufferValidFlagsTests, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
+    const cl_mem_flags validFlags[] = {
+        CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY,
+        CL_MEM_WRITE_ONLY,
+        CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY,
+        CL_MEM_HOST_READ_ONLY,
+        CL_MEM_HOST_WRITE_ONLY,
+        CL_MEM_HOST_NO_ACCESS,
+        CL_MEM_FORCE_HOST_MEMORY_INTEL};
+    for (auto flag : validFlags) {
+        cl_mem_flags flags = flag | CL_MEM_USE_HOST_PTR;
 
-    auto buffer = clCreateBuffer(pContext, flags, 64, pHostPtr, &retVal);
-    EXPECT_NE(nullptr, buffer);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    clReleaseMemObject(buffer);
+        auto buffer = clCreateBuffer(pContext, flags, 64, pHostPtr, &retVal);
+        EXPECT_NE(nullptr, buffer);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        clReleaseMemObject(buffer);
 
-    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, flags, 0};
-    buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, pHostPtr, &retVal);
-    EXPECT_NE(nullptr, buffer);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    clReleaseMemObject(buffer);
+        cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, flags, 0};
+        buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, pHostPtr, &retVal);
+        EXPECT_NE(nullptr, buffer);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        clReleaseMemObject(buffer);
 
-    buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, flags, 64, pHostPtr, &retVal);
-    EXPECT_NE(nullptr, buffer);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    clReleaseMemObject(buffer);
+        buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, flags, 64, pHostPtr, &retVal);
+        EXPECT_NE(nullptr, buffer);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        clReleaseMemObject(buffer);
+    }
 };
-
-static cl_mem_flags validFlags[] = {
-    CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY,
-    CL_MEM_WRITE_ONLY,
-    CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY,
-    CL_MEM_HOST_READ_ONLY,
-    CL_MEM_HOST_WRITE_ONLY,
-    CL_MEM_HOST_NO_ACCESS,
-    CL_MEM_FORCE_HOST_MEMORY_INTEL};
-
-INSTANTIATE_TEST_SUITE_P(
-    CreateBufferCheckFlags,
-    ClCreateBufferValidFlagsTests,
-    testing::ValuesIn(validFlags));
 
 using clCreateBufferInvalidFlagsTests = ClCreateBufferTemplateTests;
 
-TEST_P(clCreateBufferInvalidFlagsTests, GivenInvalidFlagsWhenCreatingBufferThenBufferIsNotCreated) {
-    cl_mem_flags flags = GetParam();
+TEST_F(clCreateBufferInvalidFlagsTests, GivenInvalidFlagsWhenCreatingBufferThenBufferIsNotCreated) {
+    const cl_mem_flags invalidFlags[] = {
+        CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY,
+        CL_MEM_READ_WRITE | CL_MEM_READ_ONLY,
+        CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY,
+        CL_MEM_ALLOC_HOST_PTR | CL_MEM_USE_HOST_PTR,
+        CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR,
+        CL_MEM_HOST_NO_ACCESS | CL_MEM_HOST_WRITE_ONLY,
+        CL_MEM_HOST_NO_ACCESS | CL_MEM_HOST_READ_ONLY,
+        CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY,
+        0xffccULL,
+    };
+    for (auto flags : invalidFlags) {
+        auto buffer = clCreateBuffer(pContext, flags, 64, nullptr, &retVal);
+        EXPECT_EQ(nullptr, buffer);
+        EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    auto buffer = clCreateBuffer(pContext, flags, 64, nullptr, &retVal);
-    EXPECT_EQ(nullptr, buffer);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+        cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, flags, 0};
+        buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, nullptr, &retVal);
+        EXPECT_EQ(nullptr, buffer);
+        EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
 
-    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, flags, 0};
-    buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, nullptr, &retVal);
-    EXPECT_EQ(nullptr, buffer);
-    EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
-
-    buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, flags, 64, nullptr, &retVal);
-    EXPECT_EQ(nullptr, buffer);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+        buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, flags, 64, nullptr, &retVal);
+        EXPECT_EQ(nullptr, buffer);
+        EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    }
 };
-
-cl_mem_flags invalidFlags[] = {
-    CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY,
-    CL_MEM_READ_WRITE | CL_MEM_READ_ONLY,
-    CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY,
-    CL_MEM_ALLOC_HOST_PTR | CL_MEM_USE_HOST_PTR,
-    CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR,
-    CL_MEM_HOST_NO_ACCESS | CL_MEM_HOST_WRITE_ONLY,
-    CL_MEM_HOST_NO_ACCESS | CL_MEM_HOST_READ_ONLY,
-    CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY,
-    0xffcc,
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    CreateBufferCheckFlags,
-    clCreateBufferInvalidFlagsTests,
-    testing::ValuesIn(invalidFlags));
 
 using clCreateBufferValidFlagsIntelTests = ClCreateBufferTemplateTests;
 
-TEST_P(clCreateBufferValidFlagsIntelTests, GivenValidFlagsIntelWhenCreatingBufferThenBufferIsCreated) {
-    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, GetParam(), 0};
+TEST_F(clCreateBufferValidFlagsIntelTests, GivenValidFlagsIntelWhenCreatingBufferThenBufferIsCreated) {
+    const cl_mem_flags validFlagsIntel[] = {
+        CL_MEM_LOCALLY_UNCACHED_RESOURCE,
+        CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE,
+        CL_MEM_48BIT_RESOURCE_INTEL};
+    for (auto flag : validFlagsIntel) {
+        cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, flag, 0};
 
-    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, nullptr, &retVal);
-    EXPECT_NE(nullptr, buffer);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, nullptr, &retVal);
+        EXPECT_NE(nullptr, buffer);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    clReleaseMemObject(buffer);
+        clReleaseMemObject(buffer);
+    }
 };
-
-static cl_mem_flags validFlagsIntel[] = {
-    CL_MEM_LOCALLY_UNCACHED_RESOURCE,
-    CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE,
-    CL_MEM_48BIT_RESOURCE_INTEL};
-
-INSTANTIATE_TEST_SUITE_P(
-    CreateBufferCheckFlagsIntel,
-    clCreateBufferValidFlagsIntelTests,
-    testing::ValuesIn(validFlagsIntel));
 
 using clCreateBufferInvalidFlagsIntelTests = ClCreateBufferTemplateTests;
 
-TEST_P(clCreateBufferInvalidFlagsIntelTests, GivenInvalidFlagsIntelWhenCreatingBufferThenBufferIsNotCreated) {
-    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, GetParam(), 0};
+TEST_F(clCreateBufferInvalidFlagsIntelTests, GivenInvalidFlagsIntelWhenCreatingBufferThenBufferIsNotCreated) {
+    const cl_mem_flags invalidFlagsIntel[] = {0xffccULL};
+    for (auto flag : invalidFlagsIntel) {
+        cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, flag, 0};
 
-    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, nullptr, &retVal);
-    EXPECT_EQ(nullptr, buffer);
-    EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
+        auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, nullptr, &retVal);
+        EXPECT_EQ(nullptr, buffer);
+        EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
+    }
 };
-
-cl_mem_flags invalidFlagsIntel[] = {
-    0xffcc,
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    CreateBufferCheckFlagsIntel,
-    clCreateBufferInvalidFlagsIntelTests,
-    testing::ValuesIn(invalidFlagsIntel));
 
 using clCreateBufferInvalidProperties = ClCreateBufferTemplateTests;
 
@@ -598,53 +578,46 @@ TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsWhenMi
 
 using clCreateBufferWithMultiDeviceContextTests = ClCreateBufferTemplateTests;
 
-TEST_P(clCreateBufferWithMultiDeviceContextTests, GivenBufferCreatedWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyFilled) {
-    UltClDeviceFactoryWithPlatform deviceFactory{2, 0};
+TEST_F(clCreateBufferWithMultiDeviceContextTests, GivenBufferCreatedWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyFilled) {
+    DebugManagerStateRestore restorer;
     debugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    const cl_mem_flags validFlagsForMultiDeviceContextBuffer[] = {CL_MEM_USE_HOST_PTR, CL_MEM_COPY_HOST_PTR, 0};
+    for (auto flags : validFlagsForMultiDeviceContextBuffer) {
+        UltClDeviceFactoryWithPlatform deviceFactory{2, 0};
 
-    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
-    auto context = clCreateContext(nullptr, 2u, devices, nullptr, nullptr, &retVal);
-    EXPECT_NE(nullptr, context);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+        auto context = clCreateContext(nullptr, 2u, devices, nullptr, nullptr, &retVal);
+        EXPECT_NE(nullptr, context);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pContext = castToObject<Context>(context);
+        auto pContext = castToObject<Context>(context);
 
-    EXPECT_EQ(1u, pContext->getMaxRootDeviceIndex());
+        EXPECT_EQ(1u, pContext->getMaxRootDeviceIndex());
 
-    constexpr auto bufferSize = 64u;
+        constexpr auto bufferSize = 64u;
 
-    auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
-    auto ptrHostBuffer = static_cast<uint8_t *>(hostBuffer);
+        auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
+        auto ptrHostBuffer = static_cast<uint8_t *>(hostBuffer);
 
-    cl_mem_flags flags = GetParam();
+        auto buffer = clCreateBuffer(context, flags, bufferSize, flags == 0 ? nullptr : ptrHostBuffer, &retVal);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, buffer);
 
-    auto buffer = clCreateBuffer(context, flags, bufferSize, flags == 0 ? nullptr : ptrHostBuffer, &retVal);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, buffer);
+        Buffer *bufferObj = NEO::castToObject<Buffer>(buffer);
 
-    Buffer *bufferObj = NEO::castToObject<Buffer>(buffer);
+        EXPECT_EQ(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocations().size(), 2u);
+        EXPECT_NE(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(0u), nullptr);
+        EXPECT_NE(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(1u), nullptr);
+        EXPECT_NE(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(0u), bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(1u));
 
-    EXPECT_EQ(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocations().size(), 2u);
-    EXPECT_NE(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(0u), nullptr);
-    EXPECT_NE(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(1u), nullptr);
-    EXPECT_NE(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(0u), bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(1u));
+        alignedFree(hostBuffer);
 
-    alignedFree(hostBuffer);
+        retVal = clReleaseMemObject(buffer);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clReleaseMemObject(buffer);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    clReleaseContext(context);
+        clReleaseContext(context);
+    }
 }
-
-static cl_mem_flags validFlagsForMultiDeviceContextBuffer[] = {
-    CL_MEM_USE_HOST_PTR,
-    CL_MEM_COPY_HOST_PTR, 0};
-
-INSTANTIATE_TEST_SUITE_P(
-    CreateBufferWithMultiDeviceContextCheckFlags,
-    clCreateBufferWithMultiDeviceContextTests,
-    testing::ValuesIn(validFlagsForMultiDeviceContextBuffer));
 
 using clCreateBufferWithMultiDeviceContextFaillingAllocationTests = ClCreateBufferTemplateTests;
 

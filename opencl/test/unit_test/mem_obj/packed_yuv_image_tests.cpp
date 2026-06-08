@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,8 +25,7 @@ using namespace NEO;
 
 typedef decltype(&Image::redescribe) RedescribeMethod;
 
-class PackedYuvImageTest : public testing::Test,
-                           public testing::WithParamInterface<unsigned int> {
+class PackedYuvImageTest : public testing::Test {
   public:
     PackedYuvImageTest() {
     }
@@ -34,7 +33,7 @@ class PackedYuvImageTest : public testing::Test,
   protected:
     void SetUp() override {
         imageFormat.image_channel_data_type = CL_UNORM_INT8;
-        imageFormat.image_channel_order = GetParam();
+        flags = CL_MEM_READ_ONLY;
 
         imageDesc.mem_object = nullptr;
         imageDesc.image_array_size = 0;
@@ -72,48 +71,49 @@ class PackedYuvImageTest : public testing::Test,
 
 cl_channel_order packedYuvChannels[] = {CL_YUYV_INTEL, CL_UYVY_INTEL, CL_YVYU_INTEL, CL_VYUY_INTEL};
 
-TEST_P(PackedYuvImageTest, GivenValidPackedYuvImageFormatAndDescriptorWhenCreatingImageThenIsPackYuvImageReturnsTrue) {
-
-    flags = CL_MEM_READ_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto image = Image::create(
-        &context,
-        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
-        flags,
-        0,
-        surfaceFormat,
-        &imageDesc,
-        nullptr,
-        retVal);
-    ASSERT_NE(nullptr, image);
-    EXPECT_TRUE(isPackedYuvImage(&image->getImageFormat()));
-    delete image;
+TEST_F(PackedYuvImageTest, GivenValidPackedYuvImageFormatAndDescriptorWhenCreatingImageThenIsPackYuvImageReturnsTrue) {
+    for (auto channel : packedYuvChannels) {
+        imageFormat.image_channel_order = channel;
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+        std::unique_ptr<Image> image(Image::create(
+            &context,
+            ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+            flags,
+            0,
+            surfaceFormat,
+            &imageDesc,
+            nullptr,
+            retVal));
+        ASSERT_NE(nullptr, image);
+        EXPECT_TRUE(isPackedYuvImage(&image->getImageFormat()));
+    }
 }
 
-TEST_P(PackedYuvImageTest, GivenValidPackedYuvImageFormatAndDescriptorWhenValidatingImageFormatThenValidImageIsReturned) {
-    flags = CL_MEM_READ_ONLY;
-    validateFormat();
-    EXPECT_EQ(CL_SUCCESS, retVal);
+TEST_F(PackedYuvImageTest, GivenValidPackedYuvImageFormatAndDescriptorWhenValidatingImageFormatThenValidImageIsReturned) {
+    for (auto channel : packedYuvChannels) {
+        imageFormat.image_channel_order = channel;
+        validateFormat();
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
 }
 
-TEST_P(PackedYuvImageTest, GivenInvalidFormatWhenValidatingImageFormatThenInvalidFormatDescriptorErrorIsReturned) {
+TEST_F(PackedYuvImageTest, GivenInvalidFormatWhenValidatingImageFormatThenInvalidFormatDescriptorErrorIsReturned) {
     imageFormat.image_channel_data_type = CL_SNORM_INT16;
-    flags = CL_MEM_READ_ONLY;
-    validateFormat();
-    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+    for (auto channel : packedYuvChannels) {
+        imageFormat.image_channel_order = channel;
+        validateFormat();
+        EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+    }
 }
 
-TEST_P(PackedYuvImageTest, GivenInvalidWidthWhenValidatingImageFormatThenInvalidImageDescriptorErrorIsReturned) {
+TEST_F(PackedYuvImageTest, GivenInvalidWidthWhenValidatingImageFormatThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc.image_width = 17;
-    flags = CL_MEM_READ_ONLY;
-    validateFormat();
-    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+    for (auto channel : packedYuvChannels) {
+        imageFormat.image_channel_order = channel;
+        validateFormat();
+        EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+    }
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    PackedYuvImageTests,
-    PackedYuvImageTest,
-    testing::ValuesIn(packedYuvChannels));
 
 class PackedYUVImageTest : public testing::Test {
   protected:

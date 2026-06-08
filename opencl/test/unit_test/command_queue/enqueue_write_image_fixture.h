@@ -60,7 +60,6 @@ struct EnqueueWriteImageTest : public CommandEnqueueFixture,
     bool initialized = false;
 };
 
-struct EnqueueWriteImageMipMapTest : public EnqueueWriteImageTest,
-                                     public ::testing::WithParamInterface<uint32_t> {
+struct EnqueueWriteImageMipMapTest : public EnqueueWriteImageTest {
 };
 } // namespace NEO

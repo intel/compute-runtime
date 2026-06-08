@@ -61,7 +61,6 @@ struct EnqueueReadImageTest : public CommandEnqueueFixture,
     bool initialized = false;
 };
 
-struct EnqueueReadImageMipMapTest : public EnqueueReadImageTest,
-                                    public ::testing::WithParamInterface<uint32_t> {
+struct EnqueueReadImageMipMapTest : public EnqueueReadImageTest {
 };
 } // namespace NEO

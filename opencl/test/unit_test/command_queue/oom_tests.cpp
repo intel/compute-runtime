@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ static OOMSetting oomSettings[] = {
 
 struct OOMCommandQueueTest : public ClDeviceFixture,
                              public CommandQueueFixture,
-                             public ::testing::TestWithParam<OOMSetting> {
+                             public ::testing::Test {
 
     using CommandQueueFixture::setUp;
 
@@ -40,24 +40,6 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
         ClDeviceFixture::setUp();
         context = new MockContext(pClDevice);
         CommandQueueFixture::setUp(context, pClDevice, 0);
-
-        const auto &oomSetting = GetParam();
-        auto oomSize = 10u;
-        if (oomSetting.oomCS) {
-            auto &cs = pCmdQ->getCS(oomSize);
-
-            // CommandStream may be larger than requested so grab what was not requested
-            cs.getSpace(cs.getAvailableSpace() - oomSize);
-            ASSERT_EQ(oomSize, cs.getAvailableSpace());
-        }
-
-        if (oomSetting.oomISH) {
-            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, oomSize);
-
-            // IndirectHeap may be larger than requested so grab what was not requested
-            ish.getSpace(ish.getAvailableSpace() - oomSize);
-            ASSERT_EQ(oomSize, ish.getAvailableSpace());
-        }
     }
 
     void TearDown() override {
@@ -69,69 +51,97 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
     MockContext *context;
 };
 
-HWTEST_P(OOMCommandQueueTest, WhenFinishingThenMaxAvailableSpaceIsNotExceeded) {
-    auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
-    auto usedBeforeCS = commandStream.getUsed();
-    auto usedBeforeISH = indirectHeap.getUsed();
+HWTEST_F(OOMCommandQueueTest, WhenFinishingThenMaxAvailableSpaceIsNotExceeded) {
+    for (const auto &oomSetting : oomSettings) {
+        auto oomSize = 10u;
+        if (oomSetting.oomCS) {
+            auto &cs = pCmdQ->getCS(oomSize);
+            cs.getSpace(cs.getAvailableSpace() - oomSize);
+        }
+        if (oomSetting.oomISH) {
+            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, oomSize);
+            ish.getSpace(ish.getAvailableSpace() - oomSize);
+        }
+        auto &commandStream = pCmdQ->getCS(1024);
+        auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
+        auto usedBeforeCS = commandStream.getUsed();
+        auto usedBeforeISH = indirectHeap.getUsed();
 
-    auto retVal = pCmdQ->finish(false);
+        auto retVal = pCmdQ->finish(false);
 
-    auto usedAfterCS = commandStream.getUsed();
-    auto usedAfterISH = indirectHeap.getUsed();
-    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+        auto usedAfterCS = commandStream.getUsed();
+        auto usedAfterISH = indirectHeap.getUsed();
+        EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
+        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
 }
 
-HWTEST_P(OOMCommandQueueTest, WhenEnqueingMarkerThenMaxAvailableSpaceIsNotExceeded) {
-    auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
-    auto usedBeforeCS = commandStream.getUsed();
-    auto usedBeforeISH = indirectHeap.getUsed();
+HWTEST_F(OOMCommandQueueTest, WhenEnqueingMarkerThenMaxAvailableSpaceIsNotExceeded) {
+    for (const auto &oomSetting : oomSettings) {
+        auto oomSize = 10u;
+        if (oomSetting.oomCS) {
+            auto &cs = pCmdQ->getCS(oomSize);
+            cs.getSpace(cs.getAvailableSpace() - oomSize);
+        }
+        if (oomSetting.oomISH) {
+            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, oomSize);
+            ish.getSpace(ish.getAvailableSpace() - oomSize);
+        }
+        auto &commandStream = pCmdQ->getCS(1024);
+        auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
+        auto usedBeforeCS = commandStream.getUsed();
+        auto usedBeforeISH = indirectHeap.getUsed();
 
-    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
-    cl_event eventBeingWaitedOn = &event1;
-    cl_event eventReturned = nullptr;
-    auto retVal = pCmdQ->enqueueMarkerWithWaitList(
-        1,
-        &eventBeingWaitedOn,
-        &eventReturned);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
+        cl_event eventBeingWaitedOn = &event1;
+        cl_event eventReturned = nullptr;
+        auto retVal = pCmdQ->enqueueMarkerWithWaitList(
+            1,
+            &eventBeingWaitedOn,
+            &eventReturned);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto usedAfterCS = commandStream.getUsed();
-    auto usedAfterISH = indirectHeap.getUsed();
-    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+        auto usedAfterCS = commandStream.getUsed();
+        auto usedAfterISH = indirectHeap.getUsed();
+        EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
+        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
 
-    delete (Event *)eventReturned;
+        delete (Event *)eventReturned;
+    }
 }
 
-HWTEST_P(OOMCommandQueueTest, WhenEnqueingBarrierThenMaxAvailableSpaceIsNotExceeded) {
-    auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
-    auto usedBeforeCS = commandStream.getUsed();
-    auto usedBeforeISH = indirectHeap.getUsed();
+HWTEST_F(OOMCommandQueueTest, WhenEnqueingBarrierThenMaxAvailableSpaceIsNotExceeded) {
+    for (const auto &oomSetting : oomSettings) {
+        auto oomSize = 10u;
+        if (oomSetting.oomCS) {
+            auto &cs = pCmdQ->getCS(oomSize);
+            cs.getSpace(cs.getAvailableSpace() - oomSize);
+        }
+        if (oomSetting.oomISH) {
+            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, oomSize);
+            ish.getSpace(ish.getAvailableSpace() - oomSize);
+        }
+        auto &commandStream = pCmdQ->getCS(1024);
+        auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
+        auto usedBeforeCS = commandStream.getUsed();
+        auto usedBeforeISH = indirectHeap.getUsed();
 
-    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
-    cl_event eventBeingWaitedOn = &event1;
-    cl_event eventReturned = nullptr;
-    auto retVal = pCmdQ->enqueueBarrierWithWaitList(
-        1,
-        &eventBeingWaitedOn,
-        &eventReturned);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
+        cl_event eventBeingWaitedOn = &event1;
+        cl_event eventReturned = nullptr;
+        auto retVal = pCmdQ->enqueueBarrierWithWaitList(
+            1,
+            &eventBeingWaitedOn,
+            &eventReturned);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto usedAfterCS = commandStream.getUsed();
-    auto usedAfterISH = indirectHeap.getUsed();
-    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+        auto usedAfterCS = commandStream.getUsed();
+        auto usedAfterISH = indirectHeap.getUsed();
+        EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
+        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
 
-    delete (Event *)eventReturned;
+        delete (Event *)eventReturned;
+    }
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    OOM,
-    OOMCommandQueueTest,
-    testing::ValuesIn(oomSettings));

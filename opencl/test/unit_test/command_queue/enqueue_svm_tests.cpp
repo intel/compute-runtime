@@ -2075,14 +2075,7 @@ HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
     }
 }
 
-struct MemoryAllocationTypeArray {
-    const InternalMemoryType allocationType[3] = {InternalMemoryType::hostUnifiedMemory,
-                                                  InternalMemoryType::deviceUnifiedMemory,
-                                                  InternalMemoryType::sharedUnifiedMemory};
-};
-
-struct UpdateResidencyContainerMultipleDevicesTest : public ::testing::WithParamInterface<std::tuple<InternalMemoryType, InternalMemoryType>>,
-                                                     public ::testing::Test {
+struct UpdateResidencyContainerMultipleDevicesTest : public ::testing::Test {
     void SetUp() override {
         device = context.pRootDevice0;
         subDevice0 = context.pSubDevice00;
@@ -2117,38 +2110,40 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     EXPECT_EQ(0u, residencyContainer.size());
 }
 
-HWTEST_P(UpdateResidencyContainerMultipleDevicesTest, givenAllocationThenItIsAddedToContainerOnlyIfMaskMatches) {
-    uint32_t pCmdBuffer[1024];
-    MockGraphicsAllocation gfxAllocation(device->getDevice().getRootDeviceIndex(),
-                                         static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
+HWTEST_F(UpdateResidencyContainerMultipleDevicesTest, givenAllocationThenItIsAddedToContainerOnlyIfMaskMatches) {
+    const InternalMemoryType memoryTypes[] = {InternalMemoryType::hostUnifiedMemory,
+                                              InternalMemoryType::deviceUnifiedMemory,
+                                              InternalMemoryType::sharedUnifiedMemory};
+    for (auto type : memoryTypes) {
+        uint32_t pCmdBuffer[1024];
+        MockGraphicsAllocation gfxAllocation(device->getDevice().getRootDeviceIndex(),
+                                             static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
+        SvmAllocationData allocData(maxRootDeviceIndex);
+        allocData.gpuAllocations.addAllocation(&gfxAllocation);
+        allocData.memoryType = type;
+        allocData.device = &device->getDevice();
 
-    InternalMemoryType type = std::get<0>(GetParam());
-    uint32_t mask = static_cast<uint32_t>(std::get<1>(GetParam()));
+        svmManager->insertSVMAlloc(allocData);
+        EXPECT_EQ(1u, svmManager->getNumAllocs());
 
-    SvmAllocationData allocData(maxRootDeviceIndex);
-    allocData.gpuAllocations.addAllocation(&gfxAllocation);
-    allocData.memoryType = type;
-    allocData.device = &device->getDevice();
+        ResidencyContainer matchingContainer;
+        svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                               matchingContainer,
+                                                               static_cast<uint32_t>(type));
+        EXPECT_EQ(1u, matchingContainer.size());
+        EXPECT_EQ(matchingContainer[0]->getGpuAddress(), gfxAllocation.getGpuAddress());
 
-    svmManager->insertSVMAlloc(allocData);
-    EXPECT_EQ(1u, svmManager->getNumAllocs());
+        ResidencyContainer nonMatchingContainer;
+        svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                               nonMatchingContainer,
+                                                               ~static_cast<uint32_t>(type));
+        EXPECT_EQ(0u, nonMatchingContainer.size());
 
-    ResidencyContainer residencyContainer;
-    EXPECT_EQ(0u, residencyContainer.size());
-
-    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
-                                                           residencyContainer,
-                                                           mask);
-
-    if (mask == static_cast<uint32_t>(type)) {
-        EXPECT_EQ(1u, residencyContainer.size());
-        EXPECT_EQ(residencyContainer[0]->getGpuAddress(), gfxAllocation.getGpuAddress());
-    } else {
-        EXPECT_EQ(0u, residencyContainer.size());
+        svmManager->removeSVMAlloc(allocData);
     }
 }
 
-HWTEST_P(UpdateResidencyContainerMultipleDevicesTest,
+HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
          whenUsingRootDeviceIndexGreaterThanMultiGraphicsAllocationSizeThenNoAllocationsAreAdded) {
     uint32_t pCmdBuffer[1024];
     MockGraphicsAllocation gfxAllocation(device->getDevice().getRootDeviceIndex(),
@@ -2184,13 +2179,6 @@ HWTEST_P(UpdateResidencyContainerMultipleDevicesTest,
     EXPECT_EQ(1u, residencyContainer.size());
     EXPECT_EQ(residencyContainer[0]->getGpuAddress(), gfxAllocation.getGpuAddress());
 }
-
-MemoryAllocationTypeArray memoryTypeArray;
-INSTANTIATE_TEST_SUITE_P(UpdateResidencyContainerMultipleDevicesTests,
-                         UpdateResidencyContainerMultipleDevicesTest,
-                         ::testing::Combine(
-                             ::testing::ValuesIn(memoryTypeArray.allocationType),
-                             ::testing::ValuesIn(memoryTypeArray.allocationType)));
 
 HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
          whenInternalAllocationsAreAddedToResidencyContainerThenOnlyAllocationsFromSameDeviceAreAdded) {

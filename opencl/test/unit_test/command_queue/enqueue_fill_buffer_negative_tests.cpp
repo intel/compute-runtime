@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,48 +121,22 @@ HWTEST_F(EnqueueFillBuffer, GivenGpuHangAndBlockingCallWhenFillingBufferThenOutO
     EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
-} // namespace ULT
-
-namespace ULT {
-
-struct InvalidPatternSize : public EnqueueFillBufferFixture,
-                            public ::testing::TestWithParam<size_t> {
-    typedef EnqueueFillBufferFixture BaseClass;
-
-    InvalidPatternSize() {
+TEST_F(EnqueueFillBuffer, GivenInvalidPatternSizeWhenFillingBufferThenInvalidValueErrorIsReturned) {
+    const size_t invalidSizes[] = {0, 3, 5, 256, 512, 1024};
+    for (auto patternSize : invalidSizes) {
+        char patternData[1] = {};
+        auto retVal = clEnqueueFillBuffer(
+            BaseClass::pCmdQ,
+            buffer,
+            patternData,
+            patternSize,
+            0,
+            patternSize,
+            0,
+            nullptr,
+            nullptr);
+        EXPECT_EQ(CL_INVALID_VALUE, retVal);
     }
-
-    void SetUp() override {
-        BaseClass::setUp();
-        patternSize = GetParam();
-        pattern = new char[patternSize];
-    }
-
-    void TearDown() override {
-        delete[] pattern;
-        BaseClass::tearDown();
-    }
-
-    size_t patternSize = 0;
-    char *pattern = nullptr;
-};
-
-TEST_P(InvalidPatternSize, GivenInvalidPatternSizeWhenFillingBufferThenInvalidValueErrorIsReturned) {
-    auto retVal = clEnqueueFillBuffer(
-        BaseClass::pCmdQ,
-        buffer,
-        &pattern,
-        patternSize,
-        0,
-        patternSize,
-        0,
-        nullptr,
-        nullptr);
-
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-INSTANTIATE_TEST_SUITE_P(EnqueueFillBuffer,
-                         InvalidPatternSize,
-                         ::testing::Values(0, 3, 5, 256, 512, 1024));
 } // namespace ULT

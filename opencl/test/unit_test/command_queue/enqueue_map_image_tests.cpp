@@ -65,8 +65,7 @@ struct EnqueueMapImageTest : public ClDeviceFixture,
     bool initialized = false;
 };
 
-struct EnqueueMapImageParamsTest : public EnqueueMapImageTest,
-                                   public ::testing::WithParamInterface<uint32_t> {
+struct EnqueueMapImageParamsTest : public EnqueueMapImageTest {
 };
 
 TEST_F(EnqueueMapImageTest, GivenTiledImageWhenMappingImageThenPointerIsReused) {
@@ -125,68 +124,69 @@ HWTEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCal
 
 typedef EnqueueMapImageParamsTest MipMapMapImageParamsTest;
 
-TEST_P(MipMapMapImageParamsTest, givenAllocatedMapPtrWhenMapsWithDifferentMipMapsAreCalledThenReturnDifferentPointers) {
-    auto imageType = (cl_mem_object_type)GetParam();
-    cl_int retVal = CL_SUCCESS;
-    cl_image_desc imageDesc = {};
-    imageDesc.image_type = imageType;
-    imageDesc.num_mip_levels = 10;
-    imageDesc.image_width = 4;
-    imageDesc.image_height = 1;
-    imageDesc.image_depth = 1;
-    const size_t origin1[4] = {0, 0, 0, 0};
-    size_t origin2[4] = {0, 0, 0, 0};
-    std::unique_ptr<Image> image;
-    size_t mapOffset = 16u;
-    switch (imageType) {
-    case CL_MEM_OBJECT_IMAGE1D:
-        origin2[1] = 1;
-        image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(context, &imageDesc));
-        break;
-    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-        origin2[2] = 1;
-        imageDesc.image_array_size = 2;
-        image = std::unique_ptr<Image>(ImageHelperUlt<Image1dArrayDefaults>::create(context, &imageDesc));
-        break;
-    case CL_MEM_OBJECT_IMAGE2D:
-        origin2[2] = 1;
-        image = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(context, &imageDesc));
-        break;
-    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-        origin2[3] = 1;
-        imageDesc.image_array_size = 2;
-        image = std::unique_ptr<Image>(ImageHelperUlt<Image2dArrayDefaults>::create(context, &imageDesc));
-        break;
-    case CL_MEM_OBJECT_IMAGE3D:
-        origin2[3] = 1;
-        image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(context, &imageDesc));
-        break;
+TEST_F(MipMapMapImageParamsTest, givenAllocatedMapPtrWhenMapsWithDifferentMipMapsAreCalledThenReturnDifferentPointers) {
+    const cl_mem_object_type imageTypes[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY,
+                                             CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY,
+                                             CL_MEM_OBJECT_IMAGE3D};
+    for (auto imageType : imageTypes) {
+        cl_int retVal = CL_SUCCESS;
+        cl_image_desc imageDesc = {};
+        imageDesc.image_type = imageType;
+        imageDesc.num_mip_levels = 10;
+        imageDesc.image_width = 4;
+        imageDesc.image_height = 1;
+        imageDesc.image_depth = 1;
+        const size_t origin1[4] = {0, 0, 0, 0};
+        size_t origin2[4] = {0, 0, 0, 0};
+        std::unique_ptr<Image> image;
+        size_t mapOffset = 16u;
+        switch (imageType) {
+        case CL_MEM_OBJECT_IMAGE1D:
+            origin2[1] = 1;
+            image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(context, &imageDesc));
+            break;
+        case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+            origin2[2] = 1;
+            imageDesc.image_array_size = 2;
+            image = std::unique_ptr<Image>(ImageHelperUlt<Image1dArrayDefaults>::create(context, &imageDesc));
+            break;
+        case CL_MEM_OBJECT_IMAGE2D:
+            origin2[2] = 1;
+            image = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(context, &imageDesc));
+            break;
+        case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+            origin2[3] = 1;
+            imageDesc.image_array_size = 2;
+            image = std::unique_ptr<Image>(ImageHelperUlt<Image2dArrayDefaults>::create(context, &imageDesc));
+            break;
+        case CL_MEM_OBJECT_IMAGE3D:
+            origin2[3] = 1;
+            image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(context, &imageDesc));
+            break;
+        }
+        EXPECT_NE(nullptr, image.get());
+
+        auto mapFlags = CL_MAP_READ;
+        const size_t region[3] = {1, 1, 1};
+
+        auto ptr1 = pCmdQ->enqueueMapImage(image.get(), true, mapFlags, origin1,
+                                           region, nullptr, nullptr, 0,
+                                           nullptr, nullptr, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        auto ptr2 = pCmdQ->enqueueMapImage(image.get(), true, mapFlags, origin2,
+                                           region, nullptr, nullptr, 0,
+                                           nullptr, nullptr, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_NE(ptr1, ptr2);
+        if (image->mappingOnCpuAllowed() == false) {
+            EXPECT_NE(nullptr, image->getAllocatedMapPtr());
+        }
+
+        EXPECT_EQ(ptr2, ptrOffset(ptr1, mapOffset));
     }
-    EXPECT_NE(nullptr, image.get());
-
-    auto mapFlags = CL_MAP_READ;
-    const size_t region[3] = {1, 1, 1};
-
-    auto ptr1 = pCmdQ->enqueueMapImage(image.get(), true, mapFlags, origin1,
-                                       region, nullptr, nullptr, 0,
-                                       nullptr, nullptr, retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto ptr2 = pCmdQ->enqueueMapImage(image.get(), true, mapFlags, origin2,
-                                       region, nullptr, nullptr, 0,
-                                       nullptr, nullptr, retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_NE(ptr1, ptr2);
-    if (image->mappingOnCpuAllowed() == false) {
-        EXPECT_NE(nullptr, image->getAllocatedMapPtr());
-    }
-
-    EXPECT_EQ(ptr2, ptrOffset(ptr1, mapOffset));
 }
-
-INSTANTIATE_TEST_SUITE_P(MipMapMapImageParamsTest_givenAllocatedMapPtrAndMapWithDifferentMipMapsIsCalledThenReturnDifferentPointers,
-                         MipMapMapImageParamsTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
 
 template <typename GfxFamily>
 struct MockedImage : public ImageHw<GfxFamily> {

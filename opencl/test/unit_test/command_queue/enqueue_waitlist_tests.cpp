@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ typedef HelloWorldTestWithParam<HelloWorldFixtureFactory> EnqueueWaitlistFixture
 typedef void (*ExecuteEnqueue)(EnqueueWaitlistTest *, uint32_t /*cl_uint*/, cl_event *, cl_event *, bool);
 
 struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
-                             public ::testing::TestWithParam<ExecuteEnqueue> {
+                             public ::testing::Test {
   public:
     typedef CommandQueueHwFixture CommandQueueFixture;
     using CommandQueueHwFixture::pCmdQ;
@@ -163,85 +163,52 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
     }
 };
 
-TEST_P(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenWaitingForOutputEventThenOutputEventIsCompleted) {
+const ExecuteEnqueue enqueues[] = {
+    &EnqueueWaitlistTest::enqueueNDRange,
+    &EnqueueWaitlistTest::enqueueMapBuffer,
+    &EnqueueWaitlistTest::enqueueUnMapBuffer,
+    &EnqueueWaitlistTest::enqueueMapImage};
 
-    // Set up a user event, which we use as a gate for the second event
-    ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
-    testError(error, "Unable to set up user gate event");
-
-    // Set up the execution of the action with its actual event
-    ClEventWrapper actualEvent;
-
-    // call the function to execute
-    GetParam()(this, 1, &gateEvent, &actualEvent, false);
-
-    // Now release the user event, which will allow our actual action to run
-    error = clSetUserEventStatus(gateEvent, CL_COMPLETE);
-    testError(error, "Unable to trigger gate event");
-
-    // Now we wait for completion. Note that we can actually wait on the event itself, at least at first
-    error = clWaitForEvents(1, &actualEvent);
-    testError(error, "Unable to wait for actual test event");
-}
+const ExecuteEnqueue twoEnqueueMap[] = {
+    &EnqueueWaitlistTest::twoEnqueueMapBuffer,
+    &EnqueueWaitlistTest::twoEnqueueMapImage};
 
 typedef EnqueueWaitlistTest EnqueueWaitlistTestTwoMapEnqueues;
-TEST_P(EnqueueWaitlistTestTwoMapEnqueues, GivenCompletedUserEventOnWaitlistWhenWaitingForOutputEventThenOutputEventIsCompleted) {
 
-    // Set up a user event, which we use as a gate for the second event
-    ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
-    testError(error, "Unable to set up user gate event");
-
-    // Set up the execution of the action with its actual event
-    ClEventWrapper actualEvent;
-
-    // call the function to execute
-    GetParam()(this, 1, &gateEvent, &actualEvent, false);
-
-    // Now release the user event, which will allow our actual action to run
-    error = clSetUserEventStatus(gateEvent, CL_COMPLETE);
-
-    // Now we wait for completion. Note that we can actually wait on the event itself, at least at first
-    error = clWaitForEvents(1, &actualEvent);
-    testError(error, "Unable to wait for actual test event");
+TEST_F(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenWaitingForOutputEventThenOutputEventIsCompleted) {
+    for (auto enqueue : enqueues) {
+        ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
+        testError(error, "Unable to set up user gate event");
+        ClEventWrapper actualEvent;
+        enqueue(this, 1, &gateEvent, &actualEvent, false);
+        error = clSetUserEventStatus(gateEvent, CL_COMPLETE);
+        testError(error, "Unable to trigger gate event");
+        error = clWaitForEvents(1, &actualEvent);
+        testError(error, "Unable to wait for actual test event");
+    }
 }
 
-TEST_P(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenFinishingCommandQueueThenSuccessIsReturned) {
-
-    // Set up a user event, which we use as a gate for the second event
-    ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
-    testError(error, "Unable to set up user gate event");
-
-    // call the function to execute
-    GetParam()(this, 1, &gateEvent, nullptr, false);
-
-    // Now release the user event, which will allow our actual action to run
-    error = clSetUserEventStatus(gateEvent, CL_COMPLETE);
-    testError(error, "Unable to trigger gate event");
-
-    // Now we wait for completion. Note that we can actually wait on the event itself, at least at first
-    error = clFinish(pCmdQ);
-    testError(error, "Finish FAILED");
+TEST_F(EnqueueWaitlistTestTwoMapEnqueues, GivenCompletedUserEventOnWaitlistWhenWaitingForOutputEventThenOutputEventIsCompleted) {
+    for (auto enqueue : twoEnqueueMap) {
+        ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
+        testError(error, "Unable to set up user gate event");
+        ClEventWrapper actualEvent;
+        enqueue(this, 1, &gateEvent, &actualEvent, false);
+        error = clSetUserEventStatus(gateEvent, CL_COMPLETE);
+        error = clWaitForEvents(1, &actualEvent);
+        testError(error, "Unable to wait for actual test event");
+    }
 }
 
-ExecuteEnqueue enqueues[] =
-    {
-        &EnqueueWaitlistTest::enqueueNDRange,
-        &EnqueueWaitlistTest::enqueueMapBuffer,
-        &EnqueueWaitlistTest::enqueueUnMapBuffer,
-        &EnqueueWaitlistTest::enqueueMapImage};
-
-ExecuteEnqueue twoEnqueueMap[] =
-    {
-        &EnqueueWaitlistTest::twoEnqueueMapBuffer,
-        &EnqueueWaitlistTest::twoEnqueueMapImage};
-
-INSTANTIATE_TEST_SUITE_P(
-    UnblockedEvent,
-    EnqueueWaitlistTest,
-    ::testing::ValuesIn(enqueues));
-
-INSTANTIATE_TEST_SUITE_P(
-    TwoEnqueueMap,
-    EnqueueWaitlistTestTwoMapEnqueues,
-    ::testing::ValuesIn(twoEnqueueMap));
+TEST_F(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenFinishingCommandQueueThenSuccessIsReturned) {
+    for (auto enqueue : enqueues) {
+        ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
+        testError(error, "Unable to set up user gate event");
+        enqueue(this, 1, &gateEvent, nullptr, false);
+        error = clSetUserEventStatus(gateEvent, CL_COMPLETE);
+        testError(error, "Unable to trigger gate event");
+        error = clFinish(pCmdQ);
+        testError(error, "Finish FAILED");
+    }
+}
 } // namespace ULT

@@ -293,8 +293,7 @@ TEST(MultiDeviceContextTest, givenContextWithMultipleDevicesWhenGettingInfoAbout
     EXPECT_FALSE(context3.containsMultipleSubDevices(2));
 }
 
-class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
-                                    public ::testing::Test {
+class ContextWithAsyncDeleterTest : public ::testing::Test {
   public:
     void SetUp() override {
         memoryManager = new MockMemoryManager();
@@ -318,29 +317,26 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
     UltClDeviceFactoryWithPlatform *deviceFactory;
 };
 
-TEST_P(ContextWithAsyncDeleterTest, givenContextWithMemoryManagerWhenAsyncDeleterIsEnabledThenUsesDeletersMethods) {
+TEST_F(ContextWithAsyncDeleterTest, givenContextWithMemoryManagerWhenAsyncDeleterIsEnabledThenUsesDeletersMethods) {
     cl_device_id clDevice = device;
     cl_int retVal;
     ClDeviceVector deviceVector(&clDevice, 1);
-    bool asyncDeleterEnabled = GetParam();
-    memoryManager->overrideAsyncDeleterFlag(asyncDeleterEnabled);
+    for (bool asyncDeleterEnabled : {false, true}) {
+        memoryManager->overrideAsyncDeleterFlag(asyncDeleterEnabled);
 
-    EXPECT_EQ(0, deleter->getClientsNum());
-    context = Context::create<Context>(0, deviceVector, nullptr, nullptr, retVal);
+        EXPECT_EQ(0, deleter->getClientsNum());
+        context = Context::create<Context>(0, deviceVector, nullptr, nullptr, retVal);
 
-    if (asyncDeleterEnabled) {
-        EXPECT_EQ(1, deleter->getClientsNum());
-    } else {
+        if (asyncDeleterEnabled) {
+            EXPECT_EQ(1, deleter->getClientsNum());
+        } else {
+            EXPECT_EQ(0, deleter->getClientsNum());
+        }
+        delete context;
+
         EXPECT_EQ(0, deleter->getClientsNum());
     }
-    delete context;
-
-    EXPECT_EQ(0, deleter->getClientsNum());
 }
-
-INSTANTIATE_TEST_SUITE_P(ContextTests,
-                         ContextWithAsyncDeleterTest,
-                         ::testing::Bool());
 
 TEST(DefaultContext, givenDefaultContextWhenItIsQueriedForTypeThenDefaultTypeIsReturned) {
     MockContext context;

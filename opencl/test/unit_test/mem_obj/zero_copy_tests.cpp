@@ -19,35 +19,22 @@
 using namespace NEO;
 
 class ZeroCopyBufferTest : public ClDeviceFixture,
-                           public testing::TestWithParam<std::tuple<uint64_t /*cl_mem_flags*/, size_t, size_t, int, bool, bool>> {
-  public:
-    ZeroCopyBufferTest() {
-    }
-
+                           public testing::Test {
   protected:
     void SetUp() override {
-        size_t sizeToAlloc;
-        size_t alignment;
-        hostPtr = nullptr;
-        std::tie(flags, sizeToAlloc, alignment, size, shouldBeZeroCopy, misalignPointer) = GetParam();
-        if (sizeToAlloc > 0) {
-            hostPtr = (void *)alignedMalloc(sizeToAlloc, alignment);
-        }
         ClDeviceFixture::setUp();
     }
 
     void TearDown() override {
         ClDeviceFixture::tearDown();
-        alignedFree(hostPtr);
     }
 
     cl_int retVal = CL_SUCCESS;
     MockContext context;
     cl_mem_flags flags = 0;
-    void *hostPtr;
-    bool shouldBeZeroCopy;
-    cl_int size;
-    bool misalignPointer;
+    bool shouldBeZeroCopy = false;
+    cl_int size = 0;
+    bool misalignPointer = false;
 };
 
 static const int multiplier = 1000;
@@ -67,38 +54,31 @@ std::tuple<uint64_t, size_t, size_t, int, bool, bool> inputs[] = {std::make_tupl
                                                                   std::make_tuple(0, 0, 0, cacheLinedMisAlignedSize, true, false),
                                                                   std::make_tuple(0, 0, 0, cacheLinedAlignedSize, true, true)};
 
-TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCopy) {
+TEST_F(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCopy) {
+    void *hostPtr = alignedMalloc(pageAlignSize, MemoryConstants::preferredAlignment);
 
-    char *passedPtr = (char *)hostPtr;
-    // misalign the pointer
-    if (misalignPointer && passedPtr) {
-        passedPtr += 1;
+    for (const auto &input : inputs) {
+        size_t sizeToAlloc, alignment;
+        std::tie(flags, sizeToAlloc, alignment, size, shouldBeZeroCopy, misalignPointer) = input;
+
+        char *passedPtr = (sizeToAlloc > 0) ? (char *)hostPtr : nullptr;
+        if (misalignPointer && passedPtr) {
+            passedPtr += 1;
+        }
+
+        auto buffer = Buffer::create(&context, flags, size, passedPtr, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(shouldBeZeroCopy, buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
+        if (!shouldBeZeroCopy && flags & CL_MEM_USE_HOST_PTR) {
+            EXPECT_NE(buffer->getCpuAddress(), hostPtr);
+        }
+        EXPECT_NE(nullptr, buffer->getCpuAddress());
+        EXPECT_EQ(alignUp(buffer->getCpuAddress(), MemoryConstants::cacheLineSize), buffer->getCpuAddress());
+        delete buffer;
     }
 
-    auto buffer = Buffer::create(
-        &context,
-        flags,
-        size,
-        passedPtr,
-        retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(shouldBeZeroCopy, buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
-    if (!shouldBeZeroCopy && flags & CL_MEM_USE_HOST_PTR) {
-        EXPECT_NE(buffer->getCpuAddress(), hostPtr);
-    }
-
-    EXPECT_NE(nullptr, buffer->getCpuAddress());
-
-    // check if buffer always have properly aligned storage ( PAGE )
-    EXPECT_EQ(alignUp(buffer->getCpuAddress(), MemoryConstants::cacheLineSize), buffer->getCpuAddress());
-
-    delete buffer;
+    alignedFree(hostPtr);
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    ZeroCopyBufferTests,
-    ZeroCopyBufferTest,
-    testing::ValuesIn(inputs));
 
 TEST(ZeroCopyWithDebugFlag, GivenInputsThatWouldResultInZeroCopyAndUseHostptrDisableZeroCopyFlagWhenBufferIsCreatedThenNonZeroCopyBufferIsReturned) {
     DebugManagerStateRestore stateRestore;

@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/mipmap.h"
@@ -54,7 +55,7 @@ auto channelOrder = CL_RGBA;
 auto const elementSize = 4; // sizeof CL_RGBA * CL_UNORM_INT8
 
 class CreateImageTest : public ClDeviceFixture,
-                        public testing::TestWithParam<uint64_t /*cl_mem_flags*/>,
+                        public testing::Test,
                         public CommandQueueHwFixture {
     typedef CommandQueueHwFixture CommandQueueFixture;
 
@@ -75,7 +76,6 @@ class CreateImageTest : public ClDeviceFixture,
         ClDeviceFixture::setUp();
 
         CommandQueueFixture::setUp(pClDevice, 0);
-        flags = GetParam();
 
         // clang-format off
         imageFormat.image_channel_data_type = channelType;
@@ -102,11 +102,23 @@ class CreateImageTest : public ClDeviceFixture,
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
     cl_int retVal = CL_SUCCESS;
-    cl_mem_flags flags = 0;
     unsigned char pHostPtr[testImageDimensions * testImageDimensions * elementSize * 4];
 };
 
 typedef CreateImageTest CreateImageNoHostPtr;
+
+static const cl_mem_flags noHostPtrFlags[] = {CL_MEM_READ_WRITE, CL_MEM_WRITE_ONLY, CL_MEM_READ_ONLY,
+                                              CL_MEM_HOST_READ_ONLY, CL_MEM_HOST_WRITE_ONLY, CL_MEM_HOST_NO_ACCESS};
+
+static const cl_mem_flags validHostPtrFlags[] = {
+    0 | CL_MEM_USE_HOST_PTR, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+    CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+    CL_MEM_HOST_READ_ONLY | CL_MEM_USE_HOST_PTR, CL_MEM_HOST_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
+    CL_MEM_HOST_NO_ACCESS | CL_MEM_USE_HOST_PTR,
+    0 | CL_MEM_COPY_HOST_PTR, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+    CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+    CL_MEM_HOST_READ_ONLY | CL_MEM_COPY_HOST_PTR, CL_MEM_HOST_WRITE_ONLY | CL_MEM_COPY_HOST_PTR,
+    CL_MEM_HOST_NO_ACCESS | CL_MEM_COPY_HOST_PTR};
 
 TEST(TestSliceAndRowPitch, Given1dImageWithZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
@@ -547,7 +559,7 @@ TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemory
     cl_mem_flags flags = CL_MEM_HOST_NO_ACCESS | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     for (int i = 0; i < 4; i++) {
-        auto image = Image::create(
+        auto image = clUniquePtr(Image::create(
             &context,
             ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
             flags,
@@ -555,7 +567,7 @@ TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemory
             surfaceFormat,
             &imageDesc,
             hostPtr[i],
-            retVal);
+            retVal));
         ASSERT_NE(nullptr, image);
 
         auto address = image->getCpuAddress();
@@ -564,7 +576,6 @@ TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemory
         } else {
             EXPECT_NE(hostPtr[i], address);
         }
-        delete image;
     }
     alignedFree(pageAlignedPointer);
 }
@@ -606,54 +617,41 @@ TEST(TestCreateImageUseHostPtr, givenZeroCopyImageValuesWhenUsingHostPtrThenZero
     alignedFree(hostPtr);
 }
 
-TEST_P(CreateImageNoHostPtr, GivenMissingPitchWhenImageIsCreatedThenConstructorFillsMissingData) {
-    auto image = createImageWithFlags(flags);
+TEST_F(CreateImageNoHostPtr, GivenMissingPitchWhenImageIsCreatedThenConstructorFillsMissingData) {
+    for (auto flags : noHostPtrFlags) {
+        std::unique_ptr<Image> image(createImageWithFlags(flags));
 
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, image);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, image);
 
-    const auto &imageDesc = image->getImageDesc();
+        const auto &imageDesc = image->getImageDesc();
 
-    // Sometimes the user doesn't pass image_row/slice_pitch during a create.
-    // Ensure the driver fills in the missing data.
-    EXPECT_NE(0u, imageDesc.image_row_pitch);
-    EXPECT_GE(imageDesc.image_slice_pitch, imageDesc.image_row_pitch);
-    delete image;
+        // Sometimes the user doesn't pass image_row/slice_pitch during a create.
+        // Ensure the driver fills in the missing data.
+        EXPECT_NE(0u, imageDesc.image_row_pitch);
+        EXPECT_GE(imageDesc.image_slice_pitch, imageDesc.image_row_pitch);
+    }
 }
 
-TEST_P(CreateImageNoHostPtr, whenImageIsCreatedThenItHasProperAccessAndCacheProperties) {
+TEST_F(CreateImageNoHostPtr, whenImageIsCreatedThenItHasProperAccessAndCacheProperties) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleSubDevices.set(2);
-    auto context = std::make_unique<MockContext>();
-    auto image = createImageWithFlags(flags, context.get());
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, image);
+    for (auto flags : noHostPtrFlags) {
+        auto context = std::make_unique<MockContext>();
+        std::unique_ptr<Image> image(createImageWithFlags(flags, context.get()));
+        ASSERT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, image);
 
-    auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    EXPECT_TRUE(allocation->getAllocationType() == AllocationType::image);
+        auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+        EXPECT_TRUE(allocation->getAllocationType() == AllocationType::image);
 
-    auto isImageWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
-    EXPECT_EQ(isImageWritable, allocation->isMemObjectsAllocationWithWritableFlags());
+        auto isImageWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
+        EXPECT_EQ(isImageWritable, allocation->isMemObjectsAllocationWithWritableFlags());
 
-    auto isReadOnly = isValueSet(flags, CL_MEM_READ_ONLY);
-    EXPECT_NE(isReadOnly, allocation->isFlushL3Required());
-    delete image;
+        auto isReadOnly = isValueSet(flags, CL_MEM_READ_ONLY);
+        EXPECT_NE(isReadOnly, allocation->isFlushL3Required());
+    }
 }
-
-// Parameterized test that tests image creation with all flags that should be
-// valid with a nullptr host ptr
-static cl_mem_flags noHostPtrFlags[] = {
-    CL_MEM_READ_WRITE,
-    CL_MEM_WRITE_ONLY,
-    CL_MEM_READ_ONLY,
-    CL_MEM_HOST_READ_ONLY,
-    CL_MEM_HOST_WRITE_ONLY,
-    CL_MEM_HOST_NO_ACCESS};
-
-INSTANTIATE_TEST_SUITE_P(
-    CreateImageTest_Create,
-    CreateImageNoHostPtr,
-    testing::ValuesIn(noHostPtrFlags));
 
 struct CreateImageHostPtr
     : public CreateImageTest,
@@ -669,13 +667,12 @@ struct CreateImageHostPtr
     }
 
     void TearDown() override {
-        delete image;
         BaseClass::TearDown();
         platformsImpl->clear();
         MemoryManagementFixture::tearDown();
     }
 
-    Image *createImage(cl_int &retVal) {
+    Image *createImageWithFlags(cl_mem_flags flags) {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         return Image::create(
             context,
@@ -689,67 +686,71 @@ struct CreateImageHostPtr
     }
 
     cl_int retVal = CL_INVALID_VALUE;
-    Image *image = nullptr;
 };
 
-TEST_P(CreateImageHostPtr, WhenImageIsCreatedThenResidencyIsFalse) {
-    image = createImage(retVal);
-    ASSERT_NE(nullptr, image);
+TEST_F(CreateImageHostPtr, WhenImageIsCreatedThenResidencyIsFalse) {
+    for (auto flags : validHostPtrFlags) {
+        auto image = clUniquePtr(createImageWithFlags(flags));
+        ASSERT_NE(nullptr, image);
 
-    auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    EXPECT_FALSE(allocation->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
+        auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+        EXPECT_FALSE(allocation->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
+    }
 }
 
-TEST_P(CreateImageHostPtr, WhenCheckingAddressThenAlllocationDependsOnSizeRelativeToPage) {
-    image = createImage(retVal);
-    auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    ASSERT_NE(nullptr, image);
+TEST_F(CreateImageHostPtr, WhenCheckingAddressThenAlllocationDependsOnSizeRelativeToPage) {
+    for (auto flags : validHostPtrFlags) {
+        auto image = clUniquePtr(createImageWithFlags(flags));
+        auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+        ASSERT_NE(nullptr, image);
 
-    auto address = image->getBasePtrForMap(0);
-    EXPECT_NE(nullptr, address);
+        auto address = image->getBasePtrForMap(0);
+        EXPECT_NE(nullptr, address);
 
-    if (!(flags & CL_MEM_USE_HOST_PTR)) {
-        EXPECT_EQ(nullptr, image->getHostPtr());
-    }
-
-    if (flags & CL_MEM_USE_HOST_PTR) {
-        // if size fits within a page then zero copy can be applied, if not RT needs to do a copy of image
-        auto computedSize = imageDesc.image_width * elementSize * alignUp(imageDesc.image_height, 4) * imageDesc.image_array_size;
-        auto ptrSize = imageDesc.image_width * elementSize * imageDesc.image_height * imageDesc.image_array_size;
-        auto alignedRequiredSize = alignSizeWholePage(static_cast<void *>(pHostPtr), computedSize);
-        auto alignedPtrSize = alignSizeWholePage(static_cast<void *>(pHostPtr), ptrSize);
-
-        size_t halignReq = imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 64 : 1;
-        auto rowPitch = imageDesc.image_width * elementSize;
-        auto slicePitch = rowPitch * imageDesc.image_height;
-        auto requiredRowPitch = alignUp(imageDesc.image_width, halignReq) * elementSize;
-        auto requiredSlicePitch = requiredRowPitch * alignUp(imageDesc.image_height, 4);
-
-        bool copyRequired = (alignedRequiredSize > alignedPtrSize) | (requiredRowPitch != rowPitch) | (slicePitch != requiredSlicePitch);
-
-        EXPECT_EQ(pHostPtr, address);
-        EXPECT_EQ(pHostPtr, image->getHostPtr());
-
-        if (copyRequired) {
-            EXPECT_FALSE(image->isMemObjZeroCopy());
+        if (!(flags & CL_MEM_USE_HOST_PTR)) {
+            EXPECT_EQ(nullptr, image->getHostPtr());
         }
-    } else {
-        EXPECT_NE(pHostPtr, address);
-    }
 
-    if (flags & CL_MEM_COPY_HOST_PTR && image->isMemObjZeroCopy()) {
-        // Buffer should contain a copy of host memory
-        EXPECT_EQ(0, memcmp(pHostPtr, allocation->getUnderlyingBuffer(), sizeof(testImageDimensions)));
+        if (flags & CL_MEM_USE_HOST_PTR) {
+            // if size fits within a page then zero copy can be applied, if not RT needs to do a copy of image
+            auto computedSize = imageDesc.image_width * elementSize * alignUp(imageDesc.image_height, 4) * imageDesc.image_array_size;
+            auto ptrSize = imageDesc.image_width * elementSize * imageDesc.image_height * imageDesc.image_array_size;
+            auto alignedRequiredSize = alignSizeWholePage(static_cast<void *>(pHostPtr), computedSize);
+            auto alignedPtrSize = alignSizeWholePage(static_cast<void *>(pHostPtr), ptrSize);
+
+            size_t halignReq = imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 64 : 1;
+            auto rowPitch = imageDesc.image_width * elementSize;
+            auto slicePitch = rowPitch * imageDesc.image_height;
+            auto requiredRowPitch = alignUp(imageDesc.image_width, halignReq) * elementSize;
+            auto requiredSlicePitch = requiredRowPitch * alignUp(imageDesc.image_height, 4);
+
+            bool copyRequired = (alignedRequiredSize > alignedPtrSize) | (requiredRowPitch != rowPitch) | (slicePitch != requiredSlicePitch);
+
+            EXPECT_EQ(pHostPtr, address);
+            EXPECT_EQ(pHostPtr, image->getHostPtr());
+
+            if (copyRequired) {
+                EXPECT_FALSE(image->isMemObjZeroCopy());
+            }
+        } else {
+            EXPECT_NE(pHostPtr, address);
+        }
+
+        if (flags & CL_MEM_COPY_HOST_PTR && image->isMemObjZeroCopy()) {
+            // Buffer should contain a copy of host memory
+            EXPECT_EQ(0, memcmp(pHostPtr, allocation->getUnderlyingBuffer(), sizeof(testImageDimensions)));
+        }
     }
 }
 
-TEST_P(CreateImageHostPtr, WhenGettingImageDescThenCorrectValuesAreReturned) {
-    image = createImage(retVal);
-    ASSERT_NE(nullptr, image);
-    auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+TEST_F(CreateImageHostPtr, WhenGettingImageDescThenCorrectValuesAreReturned) {
+    for (auto flags : validHostPtrFlags) {
+        auto image = clUniquePtr(createImageWithFlags(flags));
+        ASSERT_NE(nullptr, image);
+        auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
 
-    const auto &imageDesc = image->getImageDesc();
-    // clang-format off
+        const auto &imageDesc = image->getImageDesc();
+        // clang-format off
     EXPECT_EQ(this->imageDesc.image_type,        imageDesc.image_type);
     EXPECT_EQ(this->imageDesc.image_width,       imageDesc.image_width);
     EXPECT_EQ(this->imageDesc.image_height,      imageDesc.image_height);
@@ -761,92 +762,92 @@ TEST_P(CreateImageHostPtr, WhenGettingImageDescThenCorrectValuesAreReturned) {
     EXPECT_EQ(this->imageDesc.num_samples,       imageDesc.num_samples);
     EXPECT_EQ(this->imageDesc.buffer,            imageDesc.buffer);
     EXPECT_EQ(this->imageDesc.mem_object,        imageDesc.mem_object);
-    // clang-format on
+        // clang-format on
 
-    EXPECT_EQ(image->getHostPtrRowPitch(), static_cast<size_t>(imageDesc.image_width * elementSize));
-    // Only 3D, and array images can have slice pitch
-    int isArrayOr3DType = 0;
-    if (this->imageDesc.image_type == CL_MEM_OBJECT_IMAGE3D ||
-        this->imageDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY ||
-        this->imageDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-        isArrayOr3DType = 1;
-    }
-
-    EXPECT_EQ(image->getHostPtrSlicePitch(), static_cast<size_t>(imageDesc.image_width * elementSize * imageDesc.image_height) * isArrayOr3DType);
-    EXPECT_EQ(image->getImageCount(), 1u);
-    EXPECT_NE(0u, image->getSize());
-    EXPECT_FALSE(image->getIsDisplayable());
-    EXPECT_NE(nullptr, allocation);
-}
-
-TEST_P(CreateImageHostPtr, GivenFailedAllocationInjectionWhenCheckingAllocationThenOnlyFailedAllocationReturnsNull) {
-    InjectedFunction method = [this](size_t failureIndex) {
-        // System under test
-        image = createImage(retVal);
-
-        if (MemoryManagement::nonfailingAllocation == failureIndex) {
-            EXPECT_EQ(CL_SUCCESS, retVal);
-            EXPECT_NE(nullptr, image);
-        } else {
-            EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal) << "for allocation " << failureIndex;
-            EXPECT_EQ(nullptr, image);
+        EXPECT_EQ(image->getHostPtrRowPitch(), static_cast<size_t>(imageDesc.image_width * elementSize));
+        // Only 3D, and array images can have slice pitch
+        int isArrayOr3DType = 0;
+        if (this->imageDesc.image_type == CL_MEM_OBJECT_IMAGE3D ||
+            this->imageDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY ||
+            this->imageDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+            isArrayOr3DType = 1;
         }
 
-        delete image;
-        image = nullptr;
-    };
-    injectFailures(method, 4); // check only first 5 allocations - avoid checks on writeImg call allocations for tiled imgs
+        EXPECT_EQ(image->getHostPtrSlicePitch(), static_cast<size_t>(imageDesc.image_width * elementSize * imageDesc.image_height) * isArrayOr3DType);
+        EXPECT_EQ(image->getImageCount(), 1u);
+        EXPECT_NE(0u, image->getSize());
+        EXPECT_FALSE(image->getIsDisplayable());
+        EXPECT_NE(nullptr, allocation);
+    }
 }
 
-TEST_P(CreateImageHostPtr, givenLinearImageWhenFailedAtCreationThenReturnError) {
+TEST_F(CreateImageHostPtr, GivenFailedAllocationInjectionWhenCheckingAllocationThenOnlyFailedAllocationReturnsNull) {
+    for (auto flags : validHostPtrFlags) {
+        InjectedFunction method = [this, flags](size_t failureIndex) {
+            // System under test
+            auto image = clUniquePtr(createImageWithFlags(flags));
+
+            if (MemoryManagement::nonfailingAllocation == failureIndex) {
+                EXPECT_EQ(CL_SUCCESS, retVal);
+                EXPECT_NE(nullptr, image);
+            } else {
+                EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal) << "for allocation " << failureIndex;
+                EXPECT_EQ(nullptr, image);
+            }
+        };
+        injectFailures(method, 4); // check only first 5 allocations - avoid checks on writeImg call allocations for tiled imgs
+    }
+}
+
+TEST_F(CreateImageHostPtr, givenLinearImageWhenFailedAtCreationThenReturnError) {
     DebugManagerStateRestore restore;
     debugManager.flags.ForceLinearImages.set(true);
+    for (auto flags : validHostPtrFlags) {
+        InjectedFunction method = [this, flags](size_t failureIndex) {
+            // System under test
+            auto image = clUniquePtr(createImageWithFlags(flags));
 
-    InjectedFunction method = [this](size_t failureIndex) {
-        // System under test
-        image = createImage(retVal);
-
-        if (MemoryManagement::nonfailingAllocation == failureIndex) {
-            EXPECT_EQ(CL_SUCCESS, retVal);
-            EXPECT_NE(nullptr, image);
-        } else {
-            EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal) << "for allocation " << failureIndex;
-            EXPECT_EQ(nullptr, image);
-        }
-
-        delete image;
-        image = nullptr;
-    };
-    injectFailures(method, 4); // check only first 5 allocations - avoid checks on writeImg call allocations for tiled imgs
+            if (MemoryManagement::nonfailingAllocation == failureIndex) {
+                EXPECT_EQ(CL_SUCCESS, retVal);
+                EXPECT_NE(nullptr, image);
+            } else {
+                EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal) << "for allocation " << failureIndex;
+                EXPECT_EQ(nullptr, image);
+            }
+        };
+        injectFailures(method, 4); // check only first 5 allocations - avoid checks on writeImg call allocations for tiled imgs
+    }
 }
 
-TEST_P(CreateImageHostPtr, WhenWritingOutsideAllocatedMemoryWhileCreatingImageThenWriteIsHandledCorrectly) {
-    pClDevice->getPlatform()->getSVMAllocsManager()->cleanupUSMAllocCaches();
-    auto mockMemoryManager = new MockMemoryManager(*pDevice->executionEnvironment);
-    pDevice->injectMemoryManager(mockMemoryManager);
-    context->memoryManager = mockMemoryManager;
-    mockMemoryManager->redundancyRatio = 2;
-    memset(pHostPtr, 1, testImageDimensions * testImageDimensions * elementSize * 4);
-    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
-    imageDesc.image_height = 1;
-    imageDesc.image_row_pitch = elementSize * imageDesc.image_width + 1;
-    image = createImage(retVal);
-    auto allocation = image->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+TEST_F(CreateImageHostPtr, WhenWritingOutsideAllocatedMemoryWhileCreatingImageThenWriteIsHandledCorrectly) {
+    for (auto flags : validHostPtrFlags) {
+        pClDevice->getPlatform()->getSVMAllocsManager()->cleanupUSMAllocCaches();
+        auto mockMemoryManager = new MockMemoryManager(*pDevice->executionEnvironment);
+        pDevice->injectMemoryManager(mockMemoryManager);
+        context->memoryManager = mockMemoryManager;
+        mockMemoryManager->redundancyRatio = 2;
+        memset(pHostPtr, 1, testImageDimensions * testImageDimensions * elementSize * 4);
+        imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
+        imageDesc.image_height = 1;
+        imageDesc.image_row_pitch = elementSize * imageDesc.image_width + 1;
+        auto image = clUniquePtr(createImageWithFlags(flags));
+        auto allocation = image->getGraphicsAllocation(pDevice->getRootDeviceIndex());
 
-    char *memory = reinterpret_cast<char *>(allocation->getUnderlyingBuffer());
-    auto memorySize = allocation->getUnderlyingBufferSize() / 2;
-    for (size_t i = 0; i < image->getHostPtrSlicePitch(); ++i) {
-        if (i < imageDesc.image_width * elementSize) {
-            EXPECT_EQ(1, memory[i]);
-        } else {
-            EXPECT_EQ(0, memory[i]);
+        char *memory = reinterpret_cast<char *>(allocation->getUnderlyingBuffer());
+        auto memorySize = allocation->getUnderlyingBufferSize() / 2;
+        for (size_t i = 0; i < image->getHostPtrSlicePitch(); ++i) {
+            if (i < imageDesc.image_width * elementSize) {
+                EXPECT_EQ(1, memory[i]);
+            } else {
+                EXPECT_EQ(0, memory[i]);
+            }
         }
-    }
-    for (size_t i = 0; i < memorySize; ++i) {
-        EXPECT_EQ(0, memory[memorySize + i]);
-    }
+        for (size_t i = 0; i < memorySize; ++i) {
+            EXPECT_EQ(0, memory[memorySize + i]);
+        }
 
-    mockMemoryManager->redundancyRatio = 1;
+        mockMemoryManager->redundancyRatio = 1;
+    }
 }
 
 struct ModifyableImage {
@@ -1063,29 +1064,6 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchWithExtraBytes1DArrayImageW
 
     delete imageNonZeroCopy;
 }
-
-// Parameterized test that tests image creation with all flags that should be
-// valid with a valid host ptr
-static cl_mem_flags validHostPtrFlags[] = {
-    0 | CL_MEM_USE_HOST_PTR,
-    CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-    CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
-    CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-    CL_MEM_HOST_READ_ONLY | CL_MEM_USE_HOST_PTR,
-    CL_MEM_HOST_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
-    CL_MEM_HOST_NO_ACCESS | CL_MEM_USE_HOST_PTR,
-    0 | CL_MEM_COPY_HOST_PTR,
-    CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-    CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR,
-    CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-    CL_MEM_HOST_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-    CL_MEM_HOST_WRITE_ONLY | CL_MEM_COPY_HOST_PTR,
-    CL_MEM_HOST_NO_ACCESS | CL_MEM_COPY_HOST_PTR};
-
-INSTANTIATE_TEST_SUITE_P(
-    CreateImageTest_Create,
-    CreateImageHostPtr,
-    testing::ValuesIn(validHostPtrFlags));
 
 TEST(ImageGetSurfaceFormatInfoTest, givenNullptrFormatWhenGetSurfaceFormatInfoIsCalledThenReturnsNullptr) {
     MockContext context;
@@ -1620,45 +1598,39 @@ TEST(ImageTest, givenImageArrayWhenValidateRegionAndOriginIsCalledThenAdditional
     EXPECT_EQ(CL_SUCCESS, Image::validateRegionAndOrigin(origin, region, desc));
 }
 
-typedef ::testing::TestWithParam<uint32_t> MipLevelCoordinateTest;
-
-TEST_P(MipLevelCoordinateTest, givenMipmappedImageWhenValidateRegionAndOriginIsCalledThenAdditionalOriginCoordinateIsAnalyzed) {
-    size_t origin[4]{};
-    size_t region[3]{1, 1, 1};
-    cl_image_desc desc = {};
-    desc.image_type = GetParam();
-    desc.num_mip_levels = 2;
-    desc.image_width = 1;
-    desc.image_height = 1;
-    desc.image_depth = 1;
-    desc.image_array_size = 1;
-    origin[getMipLevelOriginIdx(desc.image_type)] = 1;
-    EXPECT_EQ(CL_SUCCESS, Image::validateRegionAndOrigin(origin, region, desc));
-    origin[getMipLevelOriginIdx(desc.image_type)] = 2;
-    EXPECT_EQ(CL_INVALID_MIP_LEVEL, Image::validateRegionAndOrigin(origin, region, desc));
+TEST(MipLevelCoordinateTest, givenMipmappedImageWhenValidateRegionAndOriginIsCalledThenAdditionalOriginCoordinateIsAnalyzed) {
+    const cl_mem_object_type imageTypes[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D,
+                                             CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
+    for (auto imageType : imageTypes) {
+        size_t origin[4]{};
+        size_t region[3]{1, 1, 1};
+        cl_image_desc desc = {};
+        desc.image_type = imageType;
+        desc.num_mip_levels = 2;
+        desc.image_width = 1;
+        desc.image_height = 1;
+        desc.image_depth = 1;
+        desc.image_array_size = 1;
+        origin[getMipLevelOriginIdx(desc.image_type)] = 1;
+        EXPECT_EQ(CL_SUCCESS, Image::validateRegionAndOrigin(origin, region, desc));
+        origin[getMipLevelOriginIdx(desc.image_type)] = 2;
+        EXPECT_EQ(CL_INVALID_MIP_LEVEL, Image::validateRegionAndOrigin(origin, region, desc));
+    }
 }
 
-INSTANTIATE_TEST_SUITE_P(MipLevelCoordinate,
-                         MipLevelCoordinateTest,
-                         ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D,
-                                           CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
-
-typedef ::testing::TestWithParam<std::pair<uint32_t, bool>> HasSlicesTest;
-
-TEST_P(HasSlicesTest, givenMemObjectTypeWhenHasSlicesIsCalledThenReturnsTrueIfTypeDefinesObjectWithSlicePitch) {
-    auto pair = GetParam();
-    EXPECT_EQ(pair.second, Image::hasSlices(pair.first));
+TEST(HasSlicesTest, givenMemObjectTypeWhenHasSlicesIsCalledThenReturnsTrueIfTypeDefinesObjectWithSlicePitch) {
+    const std::pair<uint32_t, bool> cases[] = {
+        {CL_MEM_OBJECT_IMAGE1D, false},
+        {CL_MEM_OBJECT_IMAGE1D_ARRAY, true},
+        {CL_MEM_OBJECT_IMAGE2D, false},
+        {CL_MEM_OBJECT_IMAGE2D_ARRAY, true},
+        {CL_MEM_OBJECT_IMAGE3D, true},
+        {CL_MEM_OBJECT_BUFFER, false},
+        {CL_MEM_OBJECT_PIPE, false}};
+    for (auto &pair : cases) {
+        EXPECT_EQ(pair.second, Image::hasSlices(pair.first));
+    }
 }
-
-INSTANTIATE_TEST_SUITE_P(HasSlices,
-                         HasSlicesTest,
-                         ::testing::Values(std::make_pair(CL_MEM_OBJECT_IMAGE1D, false),
-                                           std::make_pair(CL_MEM_OBJECT_IMAGE1D_ARRAY, true),
-                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D, false),
-                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D_ARRAY, true),
-                                           std::make_pair(CL_MEM_OBJECT_IMAGE3D, true),
-                                           std::make_pair(CL_MEM_OBJECT_BUFFER, false),
-                                           std::make_pair(CL_MEM_OBJECT_PIPE, false)));
 
 typedef ::testing::Test ImageTransformTest;
 
