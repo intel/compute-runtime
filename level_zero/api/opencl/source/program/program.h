@@ -11,6 +11,7 @@
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/core/source/module/module_imp.h"
 
+#include <map>
 #include <span>
 #include <vector>
 
@@ -67,15 +68,15 @@ class Program : public BaseObject<_cl_program> {
                         size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet);
 
     cl_int createFromBinary(cl_device_id device, size_t length, const unsigned char *binary);
-    cl_int buildFromSource(cl_device_id device, const char *options);
-    cl_int compileFromSourceWithHeaders(cl_device_id device, const char *options, cl_uint numInputHeaders,
+    cl_int buildFromSource(const char *options);
+    cl_int compileFromSourceWithHeaders(const char *options, cl_uint numInputHeaders,
                                         const cl_program *inputHeaders, const char **headerIncludeNames);
-    cl_int buildFromIL(cl_device_id device, const char *options);
+    cl_int buildFromIL(const char *options);
     cl_int setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
     void setProgramBinaryType(cl_program_binary_type programBinaryType) { this->programBinaryType = programBinaryType; }
     void setBuildStatus(cl_build_status buildStatus) { this->buildStatus = buildStatus; }
-    void setBuildLogHandle(ze_module_build_log_handle_t buildLogHandle) { this->buildLogHandle = buildLogHandle; }
-    void setModuleHandle(ze_module_handle_t moduleHandle) { this->moduleHandle = moduleHandle; }
+    void setBuildLogHandle(uint32_t rootDeviceIndex, ze_module_build_log_handle_t buildLogHandle) { this->buildLogHandles[rootDeviceIndex] = buildLogHandle; }
+    void setModuleHandle(uint32_t rootDeviceIndex, ze_module_handle_t moduleHandle) { this->moduleHandles[rootDeviceIndex] = moduleHandle; }
 
     CreatedFrom getCreatedFrom() const;
     Context *getContext();
@@ -84,19 +85,24 @@ class Program : public BaseObject<_cl_program> {
     size_t getIrBinarySize() const;
     bool getIsSpirv() const;
     ze_module_handle_t getModuleHandle() const;
+    ze_module_handle_t getModuleHandle(uint32_t rootDeviceIndex) const;
+    const std::map<uint32_t, ze_module_handle_t> &getModuleHandles() const { return this->moduleHandles; }
     std::vector<const char *> getUserKernelNames() const;
-    L0::ModuleImp *getL0Object() const { return static_cast<L0::ModuleImp *>(L0::Module::fromHandle(this->moduleHandle)); }
+    L0::ModuleImp *getL0Object() const { return static_cast<L0::ModuleImp *>(L0::Module::fromHandle(this->getModuleHandle())); }
+    L0::ModuleImp *getL0Object(uint32_t rootDeviceIndex) const { return static_cast<L0::ModuleImp *>(L0::Module::fromHandle(this->getModuleHandle(rootDeviceIndex))); }
     static bool isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
     void invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
 
   protected:
+    cl_int buildModulesForContextDevices(ze_module_desc_t &moduleDescription);
+
     specConstValuesMap specConstantsValues;
     std::mutex specializationConstantsMutex;
     std::string source{};
     std::string options{};
     Context *context = nullptr;
-    ze_module_handle_t moduleHandle = nullptr;
-    ze_module_build_log_handle_t buildLogHandle = nullptr;
+    std::map<uint32_t, ze_module_handle_t> moduleHandles{};
+    std::map<uint32_t, ze_module_build_log_handle_t> buildLogHandles{};
     std::unique_ptr<char[]> irBinary;
     size_t irBinarySize = 0U;
     cl_program_binary_type programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;

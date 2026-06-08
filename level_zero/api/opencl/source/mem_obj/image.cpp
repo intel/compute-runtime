@@ -11,6 +11,7 @@
 
 #include "level_zero/api/opencl/source/helpers/get_info_status_mapper.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
+#include <level_zero/ze_api.h>
 
 #include "CL/cl_gl.h"
 
@@ -20,6 +21,9 @@ namespace LEO {
 Image::~Image() {
     if (!externalHandle && this->imageHandle) {
         UNRECOVERABLE_IF(zeImageDestroy(this->imageHandle) != ZE_RESULT_SUCCESS);
+    }
+    for (auto &[rootDeviceIndex, handle] : this->perDeviceImageHandles) {
+        zeImageDestroy(handle);
     }
     if (this->baseImageHandle) {
         UNRECOVERABLE_IF(zeImageDestroy(this->baseImageHandle) != ZE_RESULT_SUCCESS);
@@ -448,7 +452,34 @@ bool Image::isCompressionEnabled() {
     return false;
 }
 
-GraphicsAllocation *Image::getGraphicsAllocation(uint32_t rootDeviceIndex) { return static_cast<GraphicsAllocation *>(getL0Object()->getAllocation()); };
+GraphicsAllocation *Image::getGraphicsAllocation(uint32_t rootDeviceIndex) { return static_cast<GraphicsAllocation *>(getL0Object(rootDeviceIndex)->getAllocation()); };
+
+void Image::migrateTo(ze_command_list_handle_t cmdList, uint32_t targetRootDeviceIndex, bool outOfOrder,
+                      uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    if (this->perDeviceImageHandles.empty() || this->associatedMemObject != nullptr) {
+        return;
+    }
+    if (this->currentOwnerRootDeviceIndex == targetRootDeviceIndex) {
+        return;
+    }
+
+    auto ownerHandle = this->getL0Handle(this->currentOwnerRootDeviceIndex);
+    auto targetHandle = this->getL0Handle(targetRootDeviceIndex);
+    if (ownerHandle == targetHandle) {
+        return;
+    }
+
+    auto ret = zeCommandListAppendImageCopy(cmdList, targetHandle, ownerHandle, nullptr, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return;
+    }
+
+    if (outOfOrder) {
+        zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr);
+    }
+
+    this->currentOwnerRootDeviceIndex = targetRootDeviceIndex;
+}
 
 } // namespace LEO
 } // namespace NEO

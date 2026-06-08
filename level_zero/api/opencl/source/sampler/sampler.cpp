@@ -15,14 +15,16 @@
 namespace NEO {
 namespace LEO {
 
-Sampler::Sampler(Context *context, ze_sampler_handle_t sampler, const cl_sampler_properties *properties) : context(context), samplerHandle(sampler) {
+Sampler::Sampler(Context *context, std::map<uint32_t, ze_sampler_handle_t> samplerHandles, const cl_sampler_properties *properties) : context(context), samplerHandles(std::move(samplerHandles)) {
     context->incRefInternal();
     this->storeProperties(properties);
 }
 
 Sampler::~Sampler() {
     context->decRefInternal();
-    zeSamplerDestroy(samplerHandle);
+    for (auto &[rootDeviceIndex, samplerHandle] : this->samplerHandles) {
+        zeSamplerDestroy(samplerHandle);
+    }
 }
 
 cl_int Sampler::getInfo(cl_sampler_info paramName, size_t paramValueSize,
@@ -33,7 +35,7 @@ cl_int Sampler::getInfo(cl_sampler_info paramName, size_t paramValueSize,
     cl_context clContext = this->context;
     cl_uint refCount = 0;
 
-    auto samplerDesc = L0::Sampler::fromHandle(this->samplerHandle)->getSamplerDesc();
+    auto samplerDesc = L0::Sampler::fromHandle(this->getL0Handle())->getSamplerDesc();
 
     cl_bool normalized = samplerDesc.isNormalized;
 

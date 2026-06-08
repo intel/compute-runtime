@@ -23,6 +23,7 @@
 #include "CL/cl.h"
 
 #include <limits>
+#include <map>
 
 namespace {
 cl_int getKernelSuggestedLocalWorkSizeImpl(NEO::LEO::CommandQueue *commandQueue,
@@ -66,23 +67,28 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
         return nullptr;
     }
 
-    auto moduleHandle = pProgram->getModuleHandle();
-    if (nullptr == moduleHandle) [[unlikely]] {
+    if (pProgram->getModuleHandles().empty()) [[unlikely]] {
         err.set(CL_INVALID_PROGRAM_EXECUTABLE);
         return nullptr;
     }
 
     ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC, nullptr, 0, kernelName};
-    ze_kernel_handle_t kernelHandle{};
+    std::map<uint32_t, ze_kernel_handle_t> kernelHandles{};
 
-    auto ret = zeKernelCreate(moduleHandle, &kernelDesc, &kernelHandle);
-
-    err.set(L0ToClResultMapper(ret));
-    if (ZE_RESULT_SUCCESS != ret) [[unlikely]] {
-        return nullptr;
+    for (const auto &[rootDeviceIndex, moduleHandle] : pProgram->getModuleHandles()) {
+        ze_kernel_handle_t kernelHandle{};
+        auto ret = zeKernelCreate(moduleHandle, &kernelDesc, &kernelHandle);
+        if (ZE_RESULT_SUCCESS != ret) [[unlikely]] {
+            for (auto &[idx, handle] : kernelHandles) {
+                zeKernelDestroy(handle);
+            }
+            err.set(L0ToClResultMapper(ret));
+            return nullptr;
+        }
+        kernelHandles[rootDeviceIndex] = kernelHandle;
     }
 
-    return new NEO::LEO::Kernel(kernelHandle, pProgram);
+    return new NEO::LEO::Kernel(std::move(kernelHandles), pProgram);
 }
 
 cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
@@ -152,11 +158,11 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
         return CL_INVALID_ARG_INDEX;
     }
     pKernel->markArgAsSet(argIndex);
+    pKernel->clearImageArg(argIndex);
 
-    auto kernelHandle = pKernel->getL0Handle();
     const auto &argDescriptor = pKernel->getL0Object()->getKernelDescriptor().payloadMappings.explicitArgs[argIndex];
     if (argDescriptor.type == NEO::ArgDescriptor::argTValue) [[likely]] {
-        return L0ToClResultMapper(zeKernelSetArgumentValue(kernelHandle, argIndex, argSize, argValue));
+        return pKernel->setArgumentValue(argIndex, argSize, argValue);
     } else if (argDescriptor.type == NEO::ArgDescriptor::argTPointer) {
         auto clMem = reinterpret_cast<const cl_mem *>(argValue);
         if (clMem && *clMem) [[likely]] {
@@ -170,11 +176,9 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
             }
 
             const auto ptr = pBuffer->getUsmPtr();
-            return L0ToClResultMapper(zeKernelSetArgumentValue(kernelHandle,
-                                                               argIndex, sizeof(ptr), &ptr));
+            return pKernel->setArgumentValue(argIndex, sizeof(ptr), &ptr);
         } else {
-            return L0ToClResultMapper(zeKernelSetArgumentValue(kernelHandle,
-                                                               argIndex, argSize, nullptr));
+            return pKernel->setArgumentValue(argIndex, argSize, nullptr);
         }
     } else if (argDescriptor.type == NEO::ArgDescriptor::argTImage) {
         if (argSize != sizeof(cl_mem)) [[unlikely]] {
@@ -185,7 +189,7 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
             return CL_INVALID_MEM_OBJECT;
         }
 
-        auto pImage = NEO::LEO::castToObject<const NEO::LEO::Image>(*reinterpret_cast<const cl_mem *>(argValue));
+        auto pImage = NEO::LEO::castToObject<NEO::LEO::Image>(*reinterpret_cast<const cl_mem *>(argValue));
         if (!pImage) {
             return CL_INVALID_MEM_OBJECT;
         }
@@ -197,9 +201,16 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
             return CL_INVALID_ARG_VALUE;
         }
 
-        const auto imageHandle = pImage->getL0Handle();
-        return L0ToClResultMapper(zeKernelSetArgumentValue(kernelHandle,
-                                                           argIndex, sizeof(imageHandle), &imageHandle));
+        cl_int result = CL_SUCCESS;
+        for (const auto &[rootDeviceIndex, kernelHandle] : pKernel->getKernelHandles()) {
+            const auto imageHandle = pImage->getL0Handle(rootDeviceIndex);
+            auto ret = L0ToClResultMapper(zeKernelSetArgumentValue(kernelHandle, argIndex, sizeof(imageHandle), &imageHandle));
+            if (ret != CL_SUCCESS) {
+                result = ret;
+            }
+        }
+        pKernel->setImageArg(argIndex, pImage);
+        return result;
     } else if (argDescriptor.type == NEO::ArgDescriptor::argTSampler) {
         if (argSize != sizeof(cl_sampler)) [[unlikely]] {
             return CL_INVALID_ARG_SIZE;
@@ -214,12 +225,17 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
             return CL_INVALID_SAMPLER;
         }
 
-        const auto samplerHandle = pSampler->getL0Handle();
-        return L0ToClResultMapper(zeKernelSetArgumentValue(kernelHandle,
-                                                           argIndex, sizeof(samplerHandle), &samplerHandle));
+        cl_int result = CL_SUCCESS;
+        for (const auto &[rootDeviceIndex, kernelHandle] : pKernel->getKernelHandles()) {
+            const auto samplerHandle = pSampler->getL0Handle(rootDeviceIndex);
+            auto ret = L0ToClResultMapper(zeKernelSetArgumentValue(kernelHandle, argIndex, sizeof(samplerHandle), &samplerHandle));
+            if (ret != CL_SUCCESS) {
+                result = ret;
+            }
+        }
+        return result;
     } else {
-        return L0ToClResultMapper(zeKernelSetArgumentValue(kernelHandle,
-                                                           argIndex, argSize, argValue));
+        return pKernel->setArgumentValue(argIndex, argSize, argValue);
     }
 }
 
@@ -235,8 +251,9 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         return CL_INVALID_ARG_INDEX;
     }
     pKernel->markArgAsSet(argIndex);
+    pKernel->clearImageArg(argIndex);
 
-    return L0ToClResultMapper(zeKernelSetArgumentValue(pKernel->getL0Handle(), argIndex, sizeof(argValue), &argValue));
+    return pKernel->setArgumentValue(argIndex, sizeof(argValue), &argValue);
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clSetKernelArgMemPointerINTEL(

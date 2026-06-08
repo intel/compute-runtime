@@ -6,12 +6,16 @@
  */
 
 #pragma once
+#include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/utilities/stackvec.h"
+
 #include "level_zero/api/opencl/source/api/cl_types.h"
 #include "level_zero/api/opencl/source/cl_device/cl_device.h"
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/api/opencl/source/sharings/sharing.h"
 #include "level_zero/core/source/context/context.h"
 
+#include <map>
 #include <memory>
 
 namespace NEO {
@@ -97,8 +101,11 @@ class Context : public BaseObject<_cl_context> {
         this->sharingFunctions[Sharing::sharingId].reset(sharing);
     }
 
-    ze_command_list_handle_t getInternalCopyCmdList() const { return this->internalCopyCmdList; };
-    ze_command_list_handle_t getInternalComputeCmdList() const { return this->internalComputeCmdList; };
+    uint32_t getDefaultRootDeviceIndex() const { return this->clDevices[0]->getRootDeviceIndex(); };
+    ze_command_list_handle_t getInternalCopyCmdList(uint32_t rootDeviceIndex) const { return this->internalCopyCmdLists.at(rootDeviceIndex); };
+    ze_command_list_handle_t getInternalCopyCmdList() const { return getInternalCopyCmdList(getDefaultRootDeviceIndex()); };
+    ze_command_list_handle_t getInternalComputeCmdList(uint32_t rootDeviceIndex) const { return this->internalComputeCmdLists.at(rootDeviceIndex); };
+    ze_command_list_handle_t getInternalComputeCmdList() const { return getInternalComputeCmdList(getDefaultRootDeviceIndex()); };
 
     [[nodiscard]] std::unique_lock<std::mutex> lockInternalCopy() { return std::unique_lock(this->internalCopyMtx); };
     [[nodiscard]] std::unique_lock<std::mutex> lockInternalCompute() { return std::unique_lock(this->internalComputeMtx); };
@@ -110,6 +117,11 @@ class Context : public BaseObject<_cl_context> {
     ClDevice *getClDevice() const { return this->clDevices[0]; };
     const std::vector<ClDevice *> &getClDevices() const { return this->clDevices; };
     ClDevice *findClDevice(ze_device_handle_t l0Device) const;
+    ClDevice *getClDeviceByRootDeviceIndex(uint32_t rootDeviceIndex) const;
+
+    const RootDeviceIndicesContainer &getRootDeviceIndices() const { return this->rootDeviceIndices; };
+    const std::map<uint32_t, DeviceBitfield> &getDeviceBitfields() const { return this->deviceBitfields; };
+    bool isSingleDeviceContext() const { return this->rootDeviceIndices.size() == 1u; };
 
     ze_context_handle_t getL0ContextHandle() const { return this->contextHandle; };
     L0::Context *getL0Object() const { return L0::Context::fromHandle(this->contextHandle); };
@@ -128,9 +140,11 @@ class Context : public BaseObject<_cl_context> {
     std::vector<cl_context_properties> contextProperties{};
 
     std::vector<ClDevice *> clDevices{};
+    RootDeviceIndicesContainer rootDeviceIndices{};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{};
     ze_context_handle_t contextHandle = nullptr;
-    ze_command_list_handle_t internalCopyCmdList = nullptr;
-    ze_command_list_handle_t internalComputeCmdList = nullptr;
+    std::map<uint32_t, ze_command_list_handle_t> internalCopyCmdLists{};
+    std::map<uint32_t, ze_command_list_handle_t> internalComputeCmdLists{};
     std::mutex internalCopyMtx;
     std::mutex internalComputeMtx;
 

@@ -15,6 +15,7 @@
 #include "level_zero/api/opencl/source/helpers/cl_to_l0_handles.h"
 #include "level_zero/api/opencl/source/helpers/get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/module/defines_ext.h"
 #include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
@@ -40,11 +41,15 @@ Program::Program(Context *context) : context(context) {
 }
 
 Program::~Program() {
-    if (this->moduleHandle) {
-        zeModuleDestroy(this->moduleHandle);
+    for (auto &[rootDeviceIndex, moduleHandle] : this->moduleHandles) {
+        if (moduleHandle) {
+            zeModuleDestroy(moduleHandle);
+        }
     }
-    if (this->buildLogHandle) {
-        zeModuleBuildLogDestroy(this->buildLogHandle);
+    for (auto &[rootDeviceIndex, buildLogHandle] : this->buildLogHandles) {
+        if (buildLogHandle) {
+            zeModuleBuildLogDestroy(buildLogHandle);
+        }
     }
 
     context->decRefInternal();
@@ -75,10 +80,16 @@ bool Program::getIsSpirv() const {
 }
 
 ze_module_handle_t Program::getModuleHandle() const {
-    return this->moduleHandle;
+    return this->moduleHandles.empty() ? nullptr : this->moduleHandles.begin()->second;
+}
+
+ze_module_handle_t Program::getModuleHandle(uint32_t rootDeviceIndex) const {
+    auto it = this->moduleHandles.find(rootDeviceIndex);
+    return it == this->moduleHandles.end() ? nullptr : it->second;
 }
 
 std::vector<const char *> Program::getUserKernelNames() const {
+    auto moduleHandle = this->getModuleHandle();
     uint32_t numKernels = 0u;
     zeModuleGetKernelNames(moduleHandle, &numKernels, nullptr);
     std::vector<const char *> kernelNames(numKernels, nullptr);
@@ -120,22 +131,48 @@ cl_int Program::createFromBinary(cl_device_id device, size_t length, const unsig
         return CL_INVALID_BINARY;
     }
 
+    const auto rootDeviceIndex = L0::Device::fromHandle(deviceHandle)->getNEODevice()->getRootDeviceIndex();
     ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC, nullptr, ZE_MODULE_FORMAT_NATIVE, length, binary, nullptr, nullptr};
-    ze_result_t ret = zeModuleCreate(this->context->getL0ContextHandle(), deviceHandle, &moduleDescription, &this->moduleHandle, &buildLogHandle);
+    ze_module_handle_t moduleHandle{};
+    ze_module_build_log_handle_t buildLogHandle{};
+    ze_result_t ret = zeModuleCreate(this->context->getL0ContextHandle(), deviceHandle, &moduleDescription, &moduleHandle, &buildLogHandle);
     if (ZE_RESULT_SUCCESS == ret) {
+        this->moduleHandles[rootDeviceIndex] = moduleHandle;
         this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
     } else {
         this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     }
+    this->buildLogHandles[rootDeviceIndex] = buildLogHandle;
     this->createdFrom = CreatedFrom::binary;
     return L0ToClResultMapper(ret);
+}
+
+cl_int Program::buildModulesForContextDevices(ze_module_desc_t &moduleDescription) {
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    for (auto clDevice : this->context->getClDevices()) {
+        const auto rootDeviceIndex = clDevice->getRootDeviceIndex();
+        if (this->moduleHandles.count(rootDeviceIndex) != 0) {
+            continue;
+        }
+        ze_module_handle_t moduleHandle{};
+        ze_module_build_log_handle_t buildLogHandle{};
+        ret = zeModuleCreate(this->context->getL0ContextHandle(), clDevice->getL0Handle(), &moduleDescription, &moduleHandle, &buildLogHandle);
+        this->buildLogHandles[rootDeviceIndex] = buildLogHandle;
+        if (ZE_RESULT_SUCCESS != ret) {
+            this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+            return L0ToClResultMapper(ret);
+        }
+        this->moduleHandles[rootDeviceIndex] = moduleHandle;
+    }
+    this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+    return CL_SUCCESS;
 }
 
 /**
  * @brief Use l0 api to compile to spirv. Resulting l0 module is expected to have irBinary.
  * This is used in linking to gen binary or llvmbc library.
  */
-cl_int Program::compileFromSourceWithHeaders(cl_device_id device, const char *options, cl_uint numInputHeaders,
+cl_int Program::compileFromSourceWithHeaders(const char *options, cl_uint numInputHeaders,
                                              const cl_program *inputHeaders, const char **headerIncludeNames) {
     L0::ze_module_program_headers_exp_desc_t headersDesc{};
     std::vector<const char *> headersSources(numInputHeaders);
@@ -160,56 +197,32 @@ cl_int Program::compileFromSourceWithHeaders(cl_device_id device, const char *op
         headersDesc.headerNames = headerIncludeNames;
     }
 
-    auto deviceHandle = NEO::LEO::ConvertTo::zeDeviceHandle(device);
-    if (!deviceHandle) {
-        return CL_INVALID_DEVICE;
-    }
     if (options) {
         this->options = options;
     }
     ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC, nullptr, ZE_MODULE_FORMAT_OCLC, this->source.length(), reinterpret_cast<const uint8_t *>(this->source.data()), options, nullptr};
     moduleDescription.pNext = &headersDesc;
 
-    ze_result_t ret = zeModuleCreate(this->context->getL0ContextHandle(), deviceHandle, &moduleDescription, &this->moduleHandle, &buildLogHandle);
-    if (ZE_RESULT_SUCCESS == ret) {
-        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
-    } else {
-        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
-    }
-    return L0ToClResultMapper(ret);
+    return buildModulesForContextDevices(moduleDescription);
 }
 
 /**
  * @brief Directly build from opencl c source to gen binary. This is used in clBuildProgram.
  * The source is not wrapped in elf but passed directly (otherwise fcl is skipped and -cmc flag not handled).
  */
-cl_int Program::buildFromSource(cl_device_id device, const char *options) {
-    auto deviceHandle = NEO::LEO::ConvertTo::zeDeviceHandle(device);
-    if (!deviceHandle) {
-        return CL_INVALID_DEVICE;
-    }
+cl_int Program::buildFromSource(const char *options) {
     if (options) {
         this->options = options;
     }
     ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC, nullptr, ZE_MODULE_FORMAT_OCLC, this->source.length(), reinterpret_cast<const uint8_t *>(this->source.data()), options, nullptr};
 
-    ze_result_t ret = zeModuleCreate(this->context->getL0ContextHandle(), deviceHandle, &moduleDescription, &this->moduleHandle, &buildLogHandle);
-    if (ZE_RESULT_SUCCESS == ret) {
-        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
-    } else {
-        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
-    }
-    return L0ToClResultMapper(ret);
+    return buildModulesForContextDevices(moduleDescription);
 }
 
 /**
  * @brief Use l0 api to link spirv to gen binary.
  */
-cl_int Program::buildFromIL(cl_device_id device, const char *options) {
-    auto deviceHandle = NEO::LEO::ConvertTo::zeDeviceHandle(device);
-    if (!deviceHandle) {
-        return CL_INVALID_DEVICE;
-    }
+cl_int Program::buildFromIL(const char *options) {
     ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC, nullptr, ZE_MODULE_FORMAT_IL_SPIRV, this->irBinarySize, reinterpret_cast<uint8_t *>(this->irBinary.get()), options, nullptr};
 
     ze_module_constants_t moduleConstants;
@@ -229,13 +242,7 @@ cl_int Program::buildFromIL(cl_device_id device, const char *options) {
         moduleConstants.pConstantValues = constantsValuesPtrs.data();
         moduleDescription.pConstants = &moduleConstants;
     }
-    ze_result_t ret = zeModuleCreate(this->context->getL0ContextHandle(), deviceHandle, &moduleDescription, &this->moduleHandle, &buildLogHandle);
-    if (ZE_RESULT_SUCCESS == ret) {
-        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
-    } else {
-        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
-    }
-    return L0ToClResultMapper(ret);
+    return buildModulesForContextDevices(moduleDescription);
 }
 
 cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue) {
@@ -262,7 +269,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
     const void *pSrc = nullptr;
     size_t srcSize = GetInfo::invalidSourceSize;
     StackVec<size_t, 1> binarySizes;
-    auto clDevicesSize = 1u;
+    auto clDevicesSize = static_cast<uint32_t>(context->getClDevices().size());
     auto requiredSize = clDevicesSize * sizeof(unsigned char *);
     size_t retSize = 0;
     cl_uint refCount = 0;
@@ -326,13 +333,15 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
             break;
         }
         auto outputBinaries = reinterpret_cast<unsigned char **>(paramValue);
+        size_t scratchSize = 0u;
         for (auto i = 0u; i < clDevicesSize; i++) {
             if (outputBinaries[i] == nullptr) {
                 continue;
             }
+            auto moduleHandle = this->getModuleHandle(context->getClDevices()[i]->getRootDeviceIndex());
             switch (this->programBinaryType) {
             case CL_PROGRAM_BINARY_TYPE_EXECUTABLE: {
-                auto zeStatus = zeModuleGetNativeBinary(this->moduleHandle, binarySizes.begin(), outputBinaries[i]);
+                auto zeStatus = zeModuleGetNativeBinary(moduleHandle, &scratchSize, outputBinaries[i]);
                 // binary size is unused but needs a valid ptr
                 if (ZE_RESULT_SUCCESS != zeStatus) {
                     return L0ToClResultMapper(zeStatus);
@@ -345,8 +354,8 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
                 if (this->irBinarySize > 0) {
                     memcpy_s(outputBinaries[i], this->irBinarySize, this->irBinary.get(), this->irBinarySize);
                 } else {
-                    auto l0Module = L0::Module::fromHandle(this->moduleHandle);
-                    l0Module->getIrBinary(binarySizes.begin(), outputBinaries[i]);
+                    auto l0Module = L0::Module::fromHandle(moduleHandle);
+                    l0Module->getIrBinary(&scratchSize, outputBinaries[i]);
                 }
                 continue;
             case CL_PROGRAM_BINARY_TYPE_NONE:
@@ -361,9 +370,10 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
     case CL_PROGRAM_BINARY_SIZES:
         binarySizes.resize(clDevicesSize, 0u);
         for (auto i = 0u; i < clDevicesSize; i++) {
+            auto moduleHandle = this->getModuleHandle(context->getClDevices()[i]->getRootDeviceIndex());
             switch (this->programBinaryType) {
             case CL_PROGRAM_BINARY_TYPE_EXECUTABLE:
-                zeModuleGetNativeBinary(this->moduleHandle, &binarySizes[i], nullptr);
+                zeModuleGetNativeBinary(moduleHandle, &binarySizes[i], nullptr);
                 continue;
             case CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT:
             case CL_PROGRAM_BINARY_TYPE_LIBRARY:
@@ -371,7 +381,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
                 if (this->irBinarySize > 0) {
                     binarySizes[i] = this->irBinarySize;
                 } else {
-                    auto l0Module = L0::Module::fromHandle(this->moduleHandle);
+                    auto l0Module = L0::Module::fromHandle(moduleHandle);
                     l0Module->getIrBinary(&binarySizes[i], nullptr);
                 }
                 continue;
@@ -390,7 +400,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         retVal = CL_INVALID_VALUE;
         break;
     case CL_PROGRAM_NUM_KERNELS:
-        if (nullptr == moduleHandle) {
+        if (nullptr == this->getModuleHandle()) {
             retVal = CL_INVALID_PROGRAM_EXECUTABLE;
         } else {
             numKernels = static_cast<uint32_t>(getUserKernelNames().size());
@@ -399,7 +409,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         }
         break;
     case CL_PROGRAM_KERNEL_NAMES:
-        if (nullptr == moduleHandle) {
+        if (nullptr == this->getModuleHandle()) {
             retVal = CL_INVALID_PROGRAM_EXECUTABLE;
         } else {
             auto userKernelNames = getUserKernelNames();
@@ -441,8 +451,14 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
     size_t retSize = 0;
     uint64_t globalVariablesSize = 0;
 
-    auto l0Module = L0::Module::fromHandle(this->moduleHandle);
-    auto l0BuildLog = L0::ModuleBuildLog::fromHandle(this->buildLogHandle);
+    auto deviceHandle = NEO::LEO::ConvertTo::zeDeviceHandle(device);
+    const auto rootDeviceIndex = deviceHandle ? L0::Device::fromHandle(deviceHandle)->getNEODevice()->getRootDeviceIndex() : this->context->getDefaultRootDeviceIndex();
+    auto l0Module = L0::Module::fromHandle(this->getModuleHandle(rootDeviceIndex));
+    ze_module_build_log_handle_t buildLogHandle = nullptr;
+    if (auto it = this->buildLogHandles.find(rootDeviceIndex); it != this->buildLogHandles.end()) {
+        buildLogHandle = it->second;
+    }
+    auto l0BuildLog = L0::ModuleBuildLog::fromHandle(buildLogHandle);
     const char *buildLog = l0BuildLog ? l0BuildLog->getBuildLog() : "";
 
     switch (paramName) {

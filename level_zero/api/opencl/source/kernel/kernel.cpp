@@ -22,18 +22,25 @@
 namespace NEO {
 namespace LEO {
 
-Kernel::Kernel(ze_kernel_handle_t kernelHandle, Program *program) : argsSet(static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle))->getPrivateState().kernelArgHandlers.size(), false), kernelHandle(kernelHandle), program(program) {
+Kernel::Kernel(std::map<uint32_t, ze_kernel_handle_t> kernelHandles, Program *program)
+    : argsSet(static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandles.begin()->second))->getPrivateState().kernelArgHandlers.size(), false),
+      kernelHandles(std::move(kernelHandles)), program(program) {
     program->incRefInternal();
 }
 
-Kernel::Kernel(Kernel *sourceKernel) : Kernel(sourceKernel->clone(), sourceKernel->program) {
-    this->argsSet = sourceKernel->argsSet;
+Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), program(sourceKernel->program) {
+    for (const auto &[rootDeviceIndex, kernelHandle] : sourceKernel->kernelHandles) {
+        this->kernelHandles[rootDeviceIndex] = static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle))->makeDependentClone().release();
+    }
     this->clonedFromKernel = sourceKernel;
     this->clonedFromKernel->incRefInternal();
+    program->incRefInternal();
 }
 
 Kernel::~Kernel() {
-    zeKernelDestroy(this->kernelHandle);
+    for (auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
+        zeKernelDestroy(kernelHandle);
+    }
     if (this->clonedFromKernel) {
         this->clonedFromKernel->decRefInternal();
     }
@@ -172,7 +179,8 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device,
     kernelProperties.pNext = &kernelMaxGroupSizeProperties;
     ze_kernel_preferred_group_size_properties_t kernelPreferredGroupSizeProperties{ZE_STRUCTURE_TYPE_KERNEL_PREFERRED_GROUP_SIZE_PROPERTIES};
     kernelMaxGroupSizeProperties.pNext = &kernelPreferredGroupSizeProperties;
-    zeKernelGetProperties(this->kernelHandle, &kernelProperties);
+    const auto rootDeviceIndex = pDevice ? pDevice->getRootDeviceIndex() : this->program->getContext()->getDefaultRootDeviceIndex();
+    zeKernelGetProperties(this->getL0Handle(rootDeviceIndex), &kernelProperties);
 
     size_t requiredWorkgroupSize[3] = {kernelProperties.requiredGroupSizeX, kernelProperties.requiredGroupSizeY, kernelProperties.requiredGroupSizeZ};
     std::array<size_t, 3> localSizeForSubGroupCount = {0u, 0u, 0u};
@@ -347,9 +355,10 @@ cl_int Kernel::getSuggestedLocalWorkSize(cl_uint workDim, const size_t *globalWo
     if (0u == workDim || workDim > 3u) {
         return CL_INVALID_WORK_DIMENSION;
     }
-    if (nullptr == this->kernelHandle) {
+    if (this->kernelHandles.empty()) {
         return CL_INVALID_KERNEL;
     }
+    auto kernelHandle = this->getL0Handle();
 
     Vec3<uint32_t> globalSize{1, 1, 1};
     for (auto dim = 0u; dim < workDim; ++dim) {
@@ -362,13 +371,13 @@ cl_int Kernel::getSuggestedLocalWorkSize(cl_uint workDim, const size_t *globalWo
 
     Vec3<uint32_t> suggestedGroupSize{1, 1, 1};
     ze_kernel_properties_t kernelProperties{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
-    auto ret = zeKernelGetProperties(this->kernelHandle, &kernelProperties);
+    auto ret = zeKernelGetProperties(kernelHandle, &kernelProperties);
     if (0u != kernelProperties.requiredGroupSizeX) {
         suggestedGroupSize.x = kernelProperties.requiredGroupSizeX;
         suggestedGroupSize.y = kernelProperties.requiredGroupSizeY;
         suggestedGroupSize.z = kernelProperties.requiredGroupSizeZ;
     } else {
-        ret = zeKernelSuggestGroupSize(this->kernelHandle,
+        ret = zeKernelSuggestGroupSize(kernelHandle,
                                        globalSize.x, globalSize.y, globalSize.z,
                                        &suggestedGroupSize.x, &suggestedGroupSize.y, &suggestedGroupSize.z);
     }
@@ -380,21 +389,41 @@ cl_int Kernel::getSuggestedLocalWorkSize(cl_uint workDim, const size_t *globalWo
     return L0ToClResultMapper(ret);
 }
 
-ze_kernel_handle_t Kernel::clone() {
-    return getL0Object()->makeDependentClone().release();
+cl_int Kernel::setArgumentValue(uint32_t argIndex, size_t argSize, const void *argValue) {
+    cl_int result = CL_SUCCESS;
+    for (const auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
+        auto ret = L0ToClResultMapper(zeKernelSetArgumentValue(kernelHandle, argIndex, argSize, argValue));
+        if (ret != CL_SUCCESS) {
+            result = ret;
+        }
+    }
+    return result;
 }
 
 cl_int Kernel::setIndirectAccess(cl_kernel_exec_info flag, cl_bool val) {
+    cl_int result = CL_SUCCESS;
     if (CL_TRUE == val) {
-        return L0ToClResultMapper(zeKernelSetIndirectAccess(this->kernelHandle, NEO::LEO::Kernel::indirectAccessFlagToL0(flag)));
+        for (const auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
+            auto ret = L0ToClResultMapper(zeKernelSetIndirectAccess(kernelHandle, NEO::LEO::Kernel::indirectAccessFlagToL0(flag)));
+            if (ret != CL_SUCCESS) {
+                result = ret;
+            }
+        }
     }
-    return CL_SUCCESS;
+    return result;
 }
 
 cl_int Kernel::setThreadArbitrationPolicy(uint32_t flag) {
     ze_scheduling_hint_exp_desc_t schedulingDesc;
     schedulingDesc.flags = NEO::LEO::Kernel::schedulingHintToL0(flag);
-    return L0ToClResultMapper(zeKernelSchedulingHintExp(this->kernelHandle, &schedulingDesc));
+    cl_int result = CL_SUCCESS;
+    for (const auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
+        auto ret = L0ToClResultMapper(zeKernelSchedulingHintExp(kernelHandle, &schedulingDesc));
+        if (ret != CL_SUCCESS) {
+            result = ret;
+        }
+    }
+    return result;
 }
 
 ze_kernel_indirect_access_flags_t Kernel::indirectAccessFlagToL0(cl_kernel_exec_info clFlag) {
@@ -434,7 +463,7 @@ cl_int Kernel::getMaxConcurrentWorkGroupCount(cl_uint workDim, const size_t *loc
     if (nullptr == localWorkSize) {
         return CL_INVALID_WORK_GROUP_SIZE;
     }
-    if (nullptr == this->kernelHandle) {
+    if (this->kernelHandles.empty()) {
         return CL_INVALID_KERNEL;
     }
     for (cl_uint i = 0; i < workDim; i++) {

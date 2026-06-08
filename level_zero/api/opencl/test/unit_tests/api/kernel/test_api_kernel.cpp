@@ -21,6 +21,7 @@
 #include "CL/cl.h"
 
 #include <limits>
+#include <map>
 
 namespace NEO {
 namespace LEO {
@@ -82,10 +83,10 @@ struct MockContextForKernelNames : public Context {
 
 struct MockProgramForKernelNames : public Program {
     MockProgramForKernelNames(MockContextForKernelNames *ctx, ze_module_handle_t moduleHandle) : Program(ctx) {
-        this->moduleHandle = moduleHandle;
+        this->setModuleHandle(0u, moduleHandle);
     }
     ~MockProgramForKernelNames() override {
-        this->moduleHandle = nullptr;
+        this->moduleHandles.clear();
     }
 };
 
@@ -114,7 +115,8 @@ struct GetKernelSuggestedLocalWorkSizeFixture : public Test<OclFixture> {
         commandQueue = std::make_unique<CommandQueue>(context.get(), device, nullptr, nullptr);
         l0Kernel = std::make_unique<MockL0KernelForSuggestedLocalWorkSize>();
         program = std::make_unique<Program>(context.get());
-        kernel = std::make_unique<Kernel>(l0Kernel->toHandle(), program.get());
+        std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernel->toHandle()}};
+        kernel = std::make_unique<Kernel>(std::move(kernelHandles), program.get());
     }
 
     void TearDown() override {

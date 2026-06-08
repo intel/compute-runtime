@@ -48,7 +48,6 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
         return nullptr;
     }
 
-    ze_sampler_handle_t samplerHandle{};
     ze_sampler_desc_t samplerDesc{ZE_STRUCTURE_TYPE_SAMPLER_DESC};
 
     L0::ze_sampler_lod_ext_desc_t lodExtDesc{};
@@ -134,12 +133,25 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
     lodExtDesc.pNext = samplerDesc.pNext;
     samplerDesc.pNext = &lodExtDesc;
 
-    err.set(L0ToClResultMapper(zeSamplerCreate(pContext->getL0ContextHandle(),
-                                               pContext->getClDevice()->getL0Handle(),
-                                               &samplerDesc,
-                                               &samplerHandle)));
+    std::map<uint32_t, ze_sampler_handle_t> samplerHandles{};
+    for (auto clDevice : pContext->getClDevices()) {
+        const auto rootDeviceIndex = clDevice->getRootDeviceIndex();
+        if (samplerHandles.count(rootDeviceIndex) != 0) {
+            continue;
+        }
+        ze_sampler_handle_t handle{};
+        auto createResult = zeSamplerCreate(pContext->getL0ContextHandle(), clDevice->getL0Handle(), &samplerDesc, &handle);
+        if (createResult != ZE_RESULT_SUCCESS) {
+            for (auto &[idx, h] : samplerHandles) {
+                zeSamplerDestroy(h);
+            }
+            err.set(L0ToClResultMapper(createResult));
+            return nullptr;
+        }
+        samplerHandles[rootDeviceIndex] = handle;
+    }
 
-    return new NEO::LEO::Sampler(pContext, samplerHandle, samplerProperties);
+    return new NEO::LEO::Sampler(pContext, std::move(samplerHandles), samplerProperties);
 }
 
 cl_int CL_API_CALL clRetainSampler(cl_sampler sampler) {

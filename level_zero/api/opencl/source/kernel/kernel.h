@@ -12,8 +12,12 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
+#include <map>
+
 namespace NEO {
 namespace LEO {
+
+class Image;
 
 template <>
 struct OpenCLObjectMapper<_cl_kernel> {
@@ -27,7 +31,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     static ze_kernel_indirect_access_flags_t indirectAccessFlagToL0(cl_kernel_exec_info clFlag);
     static ze_scheduling_hint_exp_flags_t schedulingHintToL0(uint32_t arbitrationPolicy);
 
-    Kernel(ze_kernel_handle_t kernelHandle, Program *program);
+    Kernel(std::map<uint32_t, ze_kernel_handle_t> kernelHandles, Program *program);
     Kernel(Kernel *sourceKernel);
     Kernel() = delete;
     ~Kernel() override;
@@ -59,15 +63,27 @@ class Kernel : public BaseObject<_cl_kernel> {
     cl_int setIndirectAccess(cl_kernel_exec_info flag, cl_bool val);
     cl_int setThreadArbitrationPolicy(uint32_t flag);
 
-    ze_kernel_handle_t getL0Handle() { return this->kernelHandle; };
-    L0::KernelImp *getL0Object() const { return static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(this->kernelHandle)); };
+    cl_int setArgumentValue(uint32_t argIndex, size_t argSize, const void *argValue);
+
+    void setImageArg(uint32_t argIndex, Image *image) { this->imageArgs[argIndex] = image; }
+    void clearImageArg(uint32_t argIndex) { this->imageArgs.erase(argIndex); }
+    const std::map<uint32_t, Image *> &getImageArgs() const { return this->imageArgs; }
+
+    ze_kernel_handle_t getL0Handle() const { return this->kernelHandles.begin()->second; };
+    ze_kernel_handle_t getL0Handle(uint32_t rootDeviceIndex) const {
+        auto it = this->kernelHandles.find(rootDeviceIndex);
+        return it == this->kernelHandles.end() ? this->kernelHandles.begin()->second : it->second;
+    };
+    L0::KernelImp *getL0Object() const { return static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(this->getL0Handle())); };
+    L0::KernelImp *getL0Object(uint32_t rootDeviceIndex) const { return static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(this->getL0Handle(rootDeviceIndex))); };
+    const std::map<uint32_t, ze_kernel_handle_t> &getKernelHandles() const { return this->kernelHandles; };
 
   protected:
-    ze_kernel_handle_t clone();
     Kernel *clonedFromKernel = nullptr;
 
     std::vector<bool> argsSet{};
-    ze_kernel_handle_t kernelHandle = nullptr;
+    std::map<uint32_t, ze_kernel_handle_t> kernelHandles{};
+    std::map<uint32_t, Image *> imageArgs{};
     Program *program = nullptr;
 };
 

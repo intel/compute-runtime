@@ -11,6 +11,8 @@
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/core/source/sampler/sampler.h"
 
+#include <map>
+
 namespace NEO {
 namespace LEO {
 
@@ -23,7 +25,7 @@ class Sampler : public BaseObject<_cl_sampler> {
   public:
     static const cl_ulong objectMagic = 0x4684913AC213EF00LL;
 
-    Sampler(Context *context, ze_sampler_handle_t sampler, const cl_sampler_properties *properties);
+    Sampler(Context *context, std::map<uint32_t, ze_sampler_handle_t> samplerHandles, const cl_sampler_properties *properties);
     Sampler() = delete;
     ~Sampler() override;
 
@@ -32,8 +34,12 @@ class Sampler : public BaseObject<_cl_sampler> {
 
     void resetProperties();
 
-    ze_sampler_handle_t getL0Handle() const { return this->samplerHandle; };
-    L0::Sampler *getL0Object() const { return L0::Sampler::fromHandle(this->samplerHandle); };
+    ze_sampler_handle_t getL0Handle() const { return this->samplerHandles.begin()->second; };
+    ze_sampler_handle_t getL0Handle(uint32_t rootDeviceIndex) const {
+        auto it = this->samplerHandles.find(rootDeviceIndex);
+        return it == this->samplerHandles.end() ? this->samplerHandles.begin()->second : it->second;
+    };
+    L0::Sampler *getL0Object() const { return L0::Sampler::fromHandle(this->getL0Handle()); };
 
   protected:
     void storeProperties(const cl_sampler_properties *properties);
@@ -41,7 +47,7 @@ class Sampler : public BaseObject<_cl_sampler> {
     std::vector<cl_sampler_properties> samplerProperties{};
     Context *context = nullptr;
 
-    ze_sampler_handle_t samplerHandle = nullptr;
+    std::map<uint32_t, ze_sampler_handle_t> samplerHandles{};
 };
 
 } // namespace LEO

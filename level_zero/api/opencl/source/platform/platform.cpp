@@ -26,7 +26,19 @@ Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformI
     const auto &deviceHandles = L0::DriverHandle::fromHandle(driverHandle)->devicesToExpose;
     clDevices.reserve(deviceHandles.size());
     for (const auto &deviceHandle : deviceHandles) {
-        clDevices.emplace_back(new ClDevice(this, deviceHandle, false));
+        const bool isSubdevice = L0::Device::fromHandle(deviceHandle)->getNEODevice()->isSubDevice();
+        clDevices.emplace_back(new ClDevice(this, deviceHandle, isSubdevice));
+        this->rootDeviceIndices.pushUnique(clDevices.back()->getRootDeviceIndex());
+    }
+
+    for (const auto &rootDeviceIndex : this->rootDeviceIndices) {
+        DeviceBitfield deviceBitfield{};
+        for (const auto &clDevice : this->clDevices) {
+            if (clDevice->getRootDeviceIndex() == rootDeviceIndex) {
+                deviceBitfield |= clDevice->getDevice().getDeviceBitfield();
+            }
+        }
+        this->deviceBitfields.emplace(rootDeviceIndex, deviceBitfield);
     }
 
     this->platformInfo->extensions = this->clDevices[0]->getDeviceInfo().deviceExtensions;

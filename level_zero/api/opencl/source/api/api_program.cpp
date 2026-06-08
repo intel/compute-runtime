@@ -69,12 +69,20 @@ cl_program CL_API_CALL clCreateProgramWithBinary(cl_context context,
 
     auto pProgram = new NEO::LEO::Program(pContext);
     if (CL_SUCCESS == status) {
-        status = pProgram->createFromBinary(deviceList[0], lengths[0], binaries[0]);
-    }
-    ErrorCodeHelper(errcodeRet, status);
-    if (binaryStatus) {
+        for (cl_uint i = 0; i < numDevices; ++i) {
+            auto deviceStatus = pProgram->createFromBinary(deviceList[i], lengths[i], binaries[i]);
+            if (binaryStatus) {
+                binaryStatus[i] = deviceStatus;
+            }
+            if (CL_SUCCESS != deviceStatus) {
+                status = deviceStatus;
+                break;
+            }
+        }
+    } else if (binaryStatus) {
         binaryStatus[0] = status;
     }
+    ErrorCodeHelper(errcodeRet, status);
     return pProgram;
 }
 
@@ -157,13 +165,12 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
         return CL_SUCCESS;
     }
 
-    auto device = pProgram->getContext()->getClDevice();
     cl_int retVal = CL_INVALID_OPERATION;
     pProgram->setBuildStatus(CL_BUILD_ERROR);
     if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::source) {
-        retVal = pProgram->buildFromSource(device, options);
+        retVal = pProgram->buildFromSource(options);
     } else if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::il) {
-        retVal = pProgram->buildFromIL(device, options);
+        retVal = pProgram->buildFromIL(options);
     }
     if (retVal != CL_SUCCESS) [[unlikely]] {
         pProgram->invokeCallback(funcNotify, userData);
@@ -197,13 +204,12 @@ cl_int CL_API_CALL clCompileProgram(cl_program program,
         return CL_SUCCESS;
     }
 
-    auto device = pProgram->getContext()->getClDevice();
     cl_int retVal = CL_INVALID_OPERATION;
     pProgram->setBuildStatus(CL_BUILD_ERROR);
     if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::source) {
-        retVal = pProgram->compileFromSourceWithHeaders(device, options, numInputHeaders, inputHeaders, headerIncludeNames);
+        retVal = pProgram->compileFromSourceWithHeaders(options, numInputHeaders, inputHeaders, headerIncludeNames);
     } else if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::il) {
-        retVal = pProgram->buildFromIL(device, options);
+        retVal = pProgram->buildFromIL(options);
     }
     if (CL_SUCCESS == retVal) {
         pProgram->setProgramBinaryType(CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT);
@@ -320,20 +326,26 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
         moduleProgDesc.pNext = &llvmBcDesc;
     }
 
-    ze_module_handle_t moduleHandle = {};
-    ze_module_build_log_handle_t buildLog;
     auto l0Context = pContext->getL0ContextHandle();
-    auto l0Device = pContext->getClDevice()->getL0Handle();
-    auto ret = zeModuleCreate(l0Context, l0Device, &moduleDesc, &moduleHandle, &buildLog);
-
-    errcodeHelper.set(L0ToClResultMapper(ret));
-    if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
-        retProgram->setBuildLogHandle(buildLog);
-        retProgram->invokeCallback(funcNotify, userData);
-        return retProgram.release();
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    for (auto clDevice : pContext->getClDevices()) {
+        const auto rootDeviceIndex = clDevice->getRootDeviceIndex();
+        if (retProgram->getModuleHandle(rootDeviceIndex) != nullptr) {
+            continue;
+        }
+        ze_module_handle_t moduleHandle = {};
+        ze_module_build_log_handle_t buildLog{};
+        ret = zeModuleCreate(l0Context, clDevice->getL0Handle(), &moduleDesc, &moduleHandle, &buildLog);
+        retProgram->setBuildLogHandle(rootDeviceIndex, buildLog);
+        if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
+            errcodeHelper.set(L0ToClResultMapper(ret));
+            retProgram->invokeCallback(funcNotify, userData);
+            return retProgram.release();
+        }
+        retProgram->setModuleHandle(rootDeviceIndex, moduleHandle);
     }
 
-    retProgram->setModuleHandle(moduleHandle);
+    errcodeHelper.set(L0ToClResultMapper(ret));
     const bool requestedLibrary = options && NEO::CompilerOptions::contains(options, "-create-library");
     retProgram->setProgramBinaryType(requestedLibrary ? CL_PROGRAM_BINARY_TYPE_LIBRARY : CL_PROGRAM_BINARY_TYPE_EXECUTABLE);
     retProgram->setBuildStatus(CL_BUILD_SUCCESS);

@@ -168,7 +168,9 @@ cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
         return retVal;
     }
 
-    return L0ToClResultMapper(zeModuleGetGlobalPointer(pProgram->getModuleHandle(), globalVariableName, globalVariableSizeRet, globalVariablePointerRet));
+    auto pDevice = NEO::LEO::castToObject<NEO::LEO::ClDevice>(device);
+    auto moduleHandle = pDevice ? pProgram->getModuleHandle(pDevice->getRootDeviceIndex()) : pProgram->getModuleHandle();
+    return L0ToClResultMapper(zeModuleGetGlobalPointer(moduleHandle, globalVariableName, globalVariableSizeRet, globalVariablePointerRet));
 }
 
 cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
@@ -181,7 +183,9 @@ cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
         return retVal;
     }
 
-    return L0ToClResultMapper(zeModuleGetFunctionPointer(pProgram->getModuleHandle(), functionName, reinterpret_cast<void **>(functionPointerRet)));
+    auto pDevice = NEO::LEO::castToObject<NEO::LEO::ClDevice>(device);
+    auto moduleHandle = pDevice ? pProgram->getModuleHandle(pDevice->getRootDeviceIndex()) : pProgram->getModuleHandle();
+    return L0ToClResultMapper(zeModuleGetFunctionPointer(moduleHandle, functionName, reinterpret_cast<void **>(functionPointerRet)));
 }
 
 CL_API_ENTRY cl_int CL_API_CALL

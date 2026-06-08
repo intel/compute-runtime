@@ -415,9 +415,10 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
     auto mipDesc = createZeImageRegionWithMipLevel(pImage, origin, region);
 
     auto lock = pCommandQueue->takeOwnership();
+    pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     ze_result_t ret = zeCommandListAppendImageCopyToMemoryExt(pCommandQueue->getL0Handle(),
                                                               ptr,
-                                                              pImage->getL0Handle(),
+                                                              pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
                                                               &mipDesc,
                                                               static_cast<uint32_t>(rowPitch),
                                                               static_cast<uint32_t>(slicePitch),
@@ -459,8 +460,9 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
     auto mipDesc = createZeImageRegionWithMipLevel(pImage, origin, region);
 
     auto lock = pCommandQueue->takeOwnership();
+    pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     ze_result_t ret = zeCommandListAppendImageCopyFromMemoryExt(pCommandQueue->getL0Handle(),
-                                                                pImage->getL0Handle(),
+                                                                pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
                                                                 ptr,
                                                                 &mipDesc,
                                                                 static_cast<uint32_t>(inputRowPitch),
@@ -491,7 +493,7 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
         return retVal;
     }
 
-    auto l0ImageImp = pImage->getL0Object();
+    auto l0ImageImp = pImage->getL0Object(pCommandQueue->getDevice()->getRootDeviceIndex());
     auto imgInfo = l0ImageImp->getImageInfo();
 
     int32_t convertedFillColor[4] = {0};
@@ -530,7 +532,7 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
     auto lock = l0Device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     auto *builtinKernel = l0Device->getBuiltinFunctionsLib()->getImageFunction(L0::ImageBuiltIn::fillImage3d, builtInMode);
 
-    builtinKernel->setArgRedescribedImage(0u, pImage->getL0Handle(), false, 0u);
+    builtinKernel->setArgRedescribedImage(0u, pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()), false, 0u);
     builtinKernel->setArgumentValue(1u, sizeof(packedFillColor), packedFillColor);
 
     auto fillRegion = createZeImageRegionWithMipLevel(pImage, origin, region);
@@ -550,6 +552,7 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
     ze_group_count_t groupCount{dispatchX, dispatchY, dispatchZ};
 
     auto queueLock = pCommandQueue->takeOwnership();
+    pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     ze_result_t ret = zeCommandListAppendLaunchKernel(pCommandQueue->getL0Handle(),
                                                       builtinKernel->toHandle(),
                                                       &groupCount,
@@ -581,10 +584,13 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
     auto srcMipDesc = createZeImageRegionWithMipLevel(pSrcImage, srcOrigin, region);
     auto dstMipDesc = createZeImageRegionWithMipLevel(pDstImage, dstOrigin, region);
 
+    const auto copyImageRootDeviceIndex = pCommandQueue->getDevice()->getRootDeviceIndex();
     auto lock = pCommandQueue->takeOwnership();
+    pSrcImage->migrateTo(pCommandQueue->getL0Handle(), copyImageRootDeviceIndex, pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
+    pDstImage->migrateTo(pCommandQueue->getL0Handle(), copyImageRootDeviceIndex, pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     ze_result_t ret = zeCommandListAppendImageCopyRegion(pCommandQueue->getL0Handle(),
-                                                         pDstImage->getL0Handle(),
-                                                         pSrcImage->getL0Handle(),
+                                                         pDstImage->getL0Handle(copyImageRootDeviceIndex),
+                                                         pSrcImage->getL0Handle(copyImageRootDeviceIndex),
                                                          &dstMipDesc,
                                                          &srcMipDesc,
                                                          hSignalEvent,
@@ -614,9 +620,10 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
     auto mipDesc = createZeImageRegionWithMipLevel(pSrcImage, srcOrigin, region);
 
     auto lock = pCommandQueue->takeOwnership();
+    pSrcImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     ze_result_t ret = zeCommandListAppendImageCopyToMemory(pCommandQueue->getL0Handle(),
                                                            ptrOffset(pDstBuffer->getUsmPtr(), dstOffset),
-                                                           pSrcImage->getL0Handle(),
+                                                           pSrcImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
                                                            &mipDesc,
                                                            hSignalEvent,
                                                            waitEvents.size(),
@@ -646,8 +653,9 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
     auto mipDesc = createZeImageRegionWithMipLevel(pDstImage, dstOrigin, region);
 
     auto lock = pCommandQueue->takeOwnership();
+    pDstImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     ze_result_t ret = zeCommandListAppendImageCopyFromMemory(pCommandQueue->getL0Handle(),
-                                                             pDstImage->getL0Handle(),
+                                                             pDstImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
                                                              ptrOffset(pSrcBuffer->getUsmPtr(), srcOffset),
                                                              &mipDesc,
                                                              hSignalEvent,
@@ -795,9 +803,10 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
 
         {
             auto lock = pCommandQueue->takeOwnership();
+            pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
             errcodeHelper.set(L0ToClResultMapper(zeCommandListAppendImageCopyToMemoryExt(pCommandQueue->getL0Handle(),
                                                                                          ptrOffset(pImage->getCpuPtr(), offset),
-                                                                                         pImage->getL0Handle(),
+                                                                                         pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
                                                                                          &mipDesc,
                                                                                          mapRowPitch,
                                                                                          mapSlicePitch,
@@ -963,7 +972,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return retVal;
     }
 
-    auto kernelHandle = pKernel->getL0Handle();
+    auto kernelHandle = pKernel->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex());
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
     if (!pKernel->areAllArgsSet()) [[unlikely]] {
@@ -1034,7 +1043,14 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         }
     }
 
-    return L0ToClResultMapper(zeCommandListAppendLaunchKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data()));
+    const auto queueRootDeviceIndex = pCommandQueue->getDevice()->getRootDeviceIndex();
+    const bool outOfOrder = pCommandQueue->isOutOfOrder();
+    for (const auto &[argIndex, pImage] : pKernel->getImageArgs()) {
+        pImage->migrateTo(cmdlistHandle, queueRootDeviceIndex, outOfOrder, static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
+    }
+
+    ret = zeCommandListAppendLaunchKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data());
+    return L0ToClResultMapper(ret);
 }
 
 cl_int CL_API_CALL clEnqueueWaitForEvents(cl_command_queue commandQueue,
@@ -1492,7 +1508,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
         return retVal;
     }
 
-    auto kernelHandle = pKernel->getL0Handle();
+    auto kernelHandle = pKernel->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex());
 
     if (!pKernel->areAllArgsSet()) [[unlikely]] {
         return CL_INVALID_KERNEL_ARGS;
@@ -1543,7 +1559,14 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
         return L0ToClResultMapper(ret);
     }
 
-    return L0ToClResultMapper(zeCommandListAppendLaunchCooperativeKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data()));
+    const auto queueRootDeviceIndex = pCommandQueue->getDevice()->getRootDeviceIndex();
+    const bool outOfOrder = pCommandQueue->isOutOfOrder();
+    for (const auto &[argIndex, pImage] : pKernel->getImageArgs()) {
+        pImage->migrateTo(cmdlistHandle, queueRootDeviceIndex, outOfOrder, static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
+    }
+
+    ret = zeCommandListAppendLaunchCooperativeKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data());
+    return L0ToClResultMapper(ret);
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueAcquireExternalMemObjectsKHR(

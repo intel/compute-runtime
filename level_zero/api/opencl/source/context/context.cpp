@@ -31,6 +31,17 @@ Context::Context(const cl_context_properties *properties, ze_context_handle_t co
     this->clDevices.reserve(numDevices);
     for (uint32_t i = 0; i < numDevices; ++i) {
         this->clDevices.push_back(NEO::LEO::castToObject<ClDevice>(devices[i]));
+        this->rootDeviceIndices.pushUnique(this->clDevices.back()->getRootDeviceIndex());
+    }
+
+    for (const auto &rootDeviceIndex : this->rootDeviceIndices) {
+        DeviceBitfield deviceBitfield{};
+        for (const auto clDevice : this->clDevices) {
+            if (clDevice->getRootDeviceIndex() == rootDeviceIndex) {
+                deviceBitfield |= clDevice->getDevice().getDeviceBitfield();
+            }
+        }
+        this->deviceBitfields.emplace(rootDeviceIndex, deviceBitfield);
     }
 
     this->storeProperties(properties);
@@ -44,11 +55,11 @@ Context::Context(const cl_context_properties *properties, ze_context_handle_t co
 }
 
 Context::~Context() {
-    if (this->internalComputeCmdList) {
-        zeCommandListDestroy(this->internalComputeCmdList);
+    for (auto &[rootDeviceIndex, cmdList] : this->internalComputeCmdLists) {
+        zeCommandListDestroy(cmdList);
     }
-    if (this->internalCopyCmdList) {
-        zeCommandListDestroy(this->internalCopyCmdList);
+    for (auto &[rootDeviceIndex, cmdList] : this->internalCopyCmdLists) {
+        zeCommandListDestroy(cmdList);
     }
 
     this->regularEventsManager.reset();
@@ -72,14 +83,23 @@ cl_int Context::initialize() {
                                            ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
                                            ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
 
-    this->internalCopyCmdList = L0::CommandList::createImmediate(clDevices[0]->getHardwareInfo().platform.eProductFamily, clDevices[0]->getL0Object(), &cmdListDesc, true, NEO::EngineGroupType::copy, resultValue);
-    if (resultValue != ZE_RESULT_SUCCESS) {
-        return L0ToClResultMapper(resultValue);
-    }
+    for (const auto clDevice : this->clDevices) {
+        const auto rootDeviceIndex = clDevice->getRootDeviceIndex();
+        if (this->internalCopyCmdLists.count(rootDeviceIndex) != 0) {
+            continue;
+        }
 
-    this->internalComputeCmdList = L0::CommandList::createImmediate(clDevices[0]->getHardwareInfo().platform.eProductFamily, clDevices[0]->getL0Object(), &cmdListDesc, true, NEO::EngineGroupType::compute, resultValue);
-    if (resultValue != ZE_RESULT_SUCCESS) {
-        return L0ToClResultMapper(resultValue);
+        auto internalCopyCmdList = L0::CommandList::createImmediate(clDevice->getHardwareInfo().platform.eProductFamily, clDevice->getL0Object(), &cmdListDesc, true, NEO::EngineGroupType::copy, resultValue);
+        if (resultValue != ZE_RESULT_SUCCESS) {
+            return L0ToClResultMapper(resultValue);
+        }
+        this->internalCopyCmdLists.emplace(rootDeviceIndex, internalCopyCmdList);
+
+        auto internalComputeCmdList = L0::CommandList::createImmediate(clDevice->getHardwareInfo().platform.eProductFamily, clDevice->getL0Object(), &cmdListDesc, true, NEO::EngineGroupType::compute, resultValue);
+        if (resultValue != ZE_RESULT_SUCCESS) {
+            return L0ToClResultMapper(resultValue);
+        }
+        this->internalComputeCmdLists.emplace(rootDeviceIndex, internalComputeCmdList);
     }
 
     sharingFunctions.resize(SharingType::MAX_SHARING_VALUE);
@@ -279,6 +299,15 @@ cl_int Context::getMemAllocInfo(const void *ptr,
 ClDevice *Context::findClDevice(ze_device_handle_t l0Device) const {
     for (auto device : this->clDevices) {
         if (l0Device == device->getL0Handle()) {
+            return device;
+        }
+    }
+    return nullptr;
+}
+
+ClDevice *Context::getClDeviceByRootDeviceIndex(uint32_t rootDeviceIndex) const {
+    for (auto device : this->clDevices) {
+        if (rootDeviceIndex == device->getRootDeviceIndex()) {
             return device;
         }
     }

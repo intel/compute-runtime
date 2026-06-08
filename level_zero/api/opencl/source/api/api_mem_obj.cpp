@@ -97,8 +97,14 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
             ret = zeMemAllocHost(NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0ContextHandle(), &hostAllocDesc, size, 0, &ptr);
             cpuPtr = ptr;
         } else {
+            auto pCtx = NEO::LEO::castToObject<NEO::LEO::Context>(context);
             ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, compressionHints.flags ? &compressionHints : nullptr, 0, 0};
-            ret = zeMemAllocDevice(NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0ContextHandle(), &deviceAllocDesc, size, 0, NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0Object()->getDevices().begin()->second, &ptr);
+            if (pCtx->isSingleDeviceContext()) {
+                ret = zeMemAllocDevice(pCtx->getL0ContextHandle(), &deviceAllocDesc, size, 0, pCtx->getL0Object()->getDevices().begin()->second, &ptr);
+            } else {
+                ze_host_mem_alloc_desc_t sharedHostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, 0};
+                ret = zeMemAllocShared(pCtx->getL0ContextHandle(), &deviceAllocDesc, &sharedHostDesc, size, 0, nullptr, &ptr);
+            }
         }
     }
 
@@ -199,6 +205,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     }
 
     ze_image_handle_t imageHandle{};
+    std::map<uint32_t, ze_image_handle_t> extraImageHandles{};
     ze_result_t ret = ZE_RESULT_SUCCESS;
     ze_image_desc_t l0imageDesc{ZE_STRUCTURE_TYPE_IMAGE_DESC};
     cl_image_format resolvedFormat{};
@@ -258,6 +265,21 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                             &l0imageDesc,
                             &imageHandle);
 
+        auto pCtx = NEO::LEO::castToObject<NEO::LEO::Context>(context);
+        if (ret == ZE_RESULT_SUCCESS && !pCtx->isSingleDeviceContext()) {
+            const auto primaryRootDeviceIndex = pCtx->getL0Object()->getDevices().begin()->first;
+            for (auto clDevice : pCtx->getClDevices()) {
+                const auto extraRootDeviceIndex = clDevice->getRootDeviceIndex();
+                if (extraRootDeviceIndex == primaryRootDeviceIndex || extraImageHandles.count(extraRootDeviceIndex) != 0) {
+                    continue;
+                }
+                ze_image_handle_t extraImageHandle{};
+                if (zeImageCreate(pCtx->getL0ContextHandle(), clDevice->getL0Handle(), &l0imageDesc, &extraImageHandle) == ZE_RESULT_SUCCESS) {
+                    extraImageHandles[extraRootDeviceIndex] = extraImageHandle;
+                }
+            }
+        }
+
         resolvedFormat = *imageFormat;
     }
 
@@ -289,6 +311,10 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
 
     cl_mem associatedMemObject = inputMemObjFound ? nullptr : imageDesc->mem_object;
     auto image = new NEO::LEO::Image(NEO::LEO::castToObject<NEO::LEO::Context>(context), memoryProperties, flags, imageHandle, cpuPtr, nullptr, inputMemObjFound, resolvedFormat, associatedMemObject);
+    image->setOwnerRootDeviceIndex(NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0Object()->getDevices().begin()->first);
+    for (auto &[extraRootDeviceIndex, extraImageHandle] : extraImageHandles) {
+        image->addPerDeviceHandle(extraRootDeviceIndex, extraImageHandle);
+    }
     image->storeProperties(properties);
     image->setHostPtrRowPitch(imageDesc->image_row_pitch);
     image->setHostPtrSlicePitch(imageDesc->image_slice_pitch);

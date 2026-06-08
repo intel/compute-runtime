@@ -30,7 +30,7 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
         return nullptr;
     }
 
-    return clSharedMemAllocINTEL(context, pContext->getClDevice(), nullptr, size, alignment, nullptr);
+    return clSharedMemAllocINTEL(context, nullptr, nullptr, size, alignment, nullptr);
 }
 
 void CL_API_CALL clSVMFree(cl_context context,
