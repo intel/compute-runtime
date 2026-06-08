@@ -2104,9 +2104,12 @@ TEST_F(EventSynchronizeTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchr
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
-TEST_F(EventSynchronizeTest, GivenNotReadyEventWhenHostSynchronizeIsCalledThenTPauseisCalled) {
+TEST_F(EventSynchronizeTest, GivenShortTimeoutAndNotReadyEventWhenHostSynchronizeIsCalledThenTPauseIsNotCalled) {
+    int64_t eventHostSyncThreshold = WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds;
     VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
-    VariableBackup<int64_t> backupWaitpkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds, -1);
+    VariableBackup<int64_t> backupWaitpkgThresholdForEventHostSync(
+        &WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds,
+        eventHostSyncThreshold);
 
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->isGpuHangDetectedReturnValue = false;
@@ -2117,7 +2120,31 @@ TEST_F(EventSynchronizeTest, GivenNotReadyEventWhenHostSynchronizeIsCalledThenTP
     constexpr uint64_t timeoutNanoseconds = 1;
     EXPECT_EQ(CpuIntrinsicsTests::tpauseCounter, 0u);
     auto result = event->hostSynchronize(timeoutNanoseconds);
-    EXPECT_NE(CpuIntrinsicsTests::tpauseCounter, 0u);
+    EXPECT_EQ(CpuIntrinsicsTests::tpauseCounter, 0u);
+    CpuIntrinsicsTests::tpauseCounter = 0;
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
+TEST_F(EventSynchronizeTest, GivenUllsLightThresholdAndShortTimeoutWhenHostSynchronizeIsCalledThenTPauseIsNotCalled) {
+    int64_t ullsLightThreshold = WaitUtils::defaultWaitPkgThresholdForUllsLightInMicroSeconds;
+    int64_t eventHostSyncThreshold = WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds;
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    VariableBackup<int64_t> backupWaitpkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds, ullsLightThreshold);
+    VariableBackup<int64_t> backupWaitpkgThresholdForEventHostSync(
+        &WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds,
+        eventHostSyncThreshold);
+
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = false;
+
+    event->csrs[0] = csr.get();
+    event->gpuHangCheckPeriod = 0ms;
+
+    constexpr uint64_t timeoutNanoseconds = 1;
+    EXPECT_EQ(CpuIntrinsicsTests::tpauseCounter, 0u);
+    auto result = event->hostSynchronize(timeoutNanoseconds);
+    EXPECT_EQ(CpuIntrinsicsTests::tpauseCounter, 0u);
     CpuIntrinsicsTests::tpauseCounter = 0;
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
@@ -2125,7 +2152,7 @@ TEST_F(EventSynchronizeTest, GivenNotReadyEventWhenHostSynchronizeIsCalledThenTP
 
 HWTEST_F(EventSynchronizeTest, GivenNotReadyEventAndInfiniteTimeoutWhenHostSynchronizeIsCalledThenTPauseIsCalled) {
     VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
-    VariableBackup<int64_t> backupWaitpkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds, 0);
+    VariableBackup<int64_t> backupWaitpkgThresholdForEventHostSync(&WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds, 0);
     VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
     VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
@@ -2161,7 +2188,7 @@ HWTEST_F(EventSynchronizeTest, GivenNotReadyEventAndInfiniteTimeoutWhenHostSynch
 
 HWTEST_F(EventSynchronizeTest, GivenNotReadyEventAndInfiniteTimeoutWhenHostSynchronizeIsCalledThenTPauseUsesEventHostSyncCounterValue) {
     VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
-    VariableBackup<int64_t> backupWaitpkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds, 0);
+    VariableBackup<int64_t> backupWaitpkgThresholdForEventHostSync(&WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds, 0);
     uint64_t ullsLightCounterValue = WaitUtils::defaultCounterValueForUllsLight;
     VariableBackup<uint64_t> backupWaitpkgCounterValue(&WaitUtils::waitpkgCounterValue, ullsLightCounterValue);
     VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);

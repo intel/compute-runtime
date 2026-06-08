@@ -20,6 +20,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     VariableBackup<uint64_t> backupWaitpkgCounterValue(&WaitUtils::waitpkgCounterValue);
     VariableBackup<uint64_t> backupCounterValueForEventHostSync(&WaitUtils::counterValueForEventHostSync);
     VariableBackup<int64_t> backupWaitPkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds);
+    VariableBackup<int64_t> backupWaitPkgThresholdForEventHostSync(&WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
     VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
     VariableBackup<void (*)(int *, int)> backupCpuidFunc(&CpuInfo::cpuidFunc, mockCpuidEnableAll);
 
@@ -37,6 +38,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     EXPECT_EQ(WaitUtils::waitpkgCounterValue, WaitUtils::defaultCounterValueForUllsLight);
     EXPECT_EQ(WaitUtils::counterValueForEventHostSync, WaitUtils::defaultCounterValueForEventHostSync);
     EXPECT_EQ(WaitUtils::waitPkgThresholdInMicroSeconds, WaitUtils::defaultWaitPkgThresholdForUllsLightInMicroSeconds);
+    EXPECT_EQ(WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds, WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenWaitpkgParamsSetByDebugVariablesAndDirectSubmissionLightWhenInitThenUseTpauseWaitpkg) {
@@ -48,6 +50,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenWaitpkgParamsSetBy
     VariableBackup<uint64_t> backupWaitpkgCounterValue(&WaitUtils::waitpkgCounterValue);
     VariableBackup<uint64_t> backupCounterValueForEventHostSync(&WaitUtils::counterValueForEventHostSync);
     VariableBackup<int64_t> backupWaitPkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds);
+    VariableBackup<int64_t> backupWaitPkgThresholdForEventHostSync(&WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
     VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
     VariableBackup<void (*)(int *, int)> backupCpuidFunc(&CpuInfo::cpuidFunc, mockCpuidEnableAll);
 
@@ -65,4 +68,5 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenWaitpkgParamsSetBy
     EXPECT_EQ(WaitUtils::waitpkgCounterValue, 1000u);
     EXPECT_EQ(WaitUtils::counterValueForEventHostSync, 1000u);
     EXPECT_EQ(WaitUtils::waitPkgThresholdInMicroSeconds, 35);
+    EXPECT_EQ(WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds, 35);
 }

@@ -18,6 +18,7 @@ namespace WaitUtils {
 WaitpkgUse waitpkgUse = WaitpkgUse::uninitialized;
 
 int64_t waitPkgThresholdInMicroSeconds = defaultWaitPkgThresholdInMicroSeconds;
+int64_t waitPkgThresholdForEventHostSyncInMicroSeconds = defaultWaitPkgThresholdForEventHostSyncInMicroSeconds;
 uint64_t waitpkgCounterValue = defaultCounterValue;
 uint64_t counterValueForEventHostSync = defaultCounterValueForEventHostSync;
 uint32_t waitpkgControlValue = defaultControlValue;
@@ -72,6 +73,7 @@ void overrideWaitpkgParams() {
 
     if (debugManager.flags.WaitpkgThreshold.get() != -1) {
         waitPkgThresholdInMicroSeconds = debugManager.flags.WaitpkgThreshold.get();
+        waitPkgThresholdForEventHostSyncInMicroSeconds = debugManager.flags.WaitpkgThreshold.get();
     }
 }
 

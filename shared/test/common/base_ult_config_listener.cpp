@@ -33,7 +33,9 @@ void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
     lastTest = std::string(testInfo.test_suite_name()) + "." + testInfo.name();
     WaitUtils::waitpkgUse = WaitUtils::WaitpkgUse::uninitialized;
     WaitUtils::waitPkgThresholdInMicroSeconds = WaitUtils::defaultWaitPkgThresholdInMicroSeconds;
+    WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds = WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds;
     WaitUtils::waitpkgCounterValue = WaitUtils::defaultCounterValue;
+    WaitUtils::counterValueForEventHostSync = WaitUtils::defaultCounterValueForEventHostSync;
     WaitUtils::waitpkgControlValue = WaitUtils::defaultControlValue;
     WaitUtils::waitCount = WaitUtils::defaultWaitCount;
 
