@@ -97,6 +97,13 @@ struct StructuresLookupTable {
         bool hasUnifiedMcsSurface;
     } glTextureExt;
 
+    struct ImageTilingOverride {
+        bool present;
+        bool linearStorage;
+        NEO::ImageTilingMode forceTiling;
+        uint64_t rowPitch;
+    } imageTilingOverride;
+
     bool isDepthStencilFormat;
     ze_depth_stencil_format_t depthStencilFormat;
 
@@ -246,6 +253,12 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             const ze_depth_stencil_format_ext_desc_t *dsDesc = reinterpret_cast<const ze_depth_stencil_format_ext_desc_t *>(extendedDesc);
             lookupTable.isDepthStencilFormat = true;
             lookupTable.depthStencilFormat = dsDesc->format;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_IMAGE_TILING_EXT_DESC) {
+            const ze_image_tiling_ext_desc_t *tilingDesc = reinterpret_cast<const ze_image_tiling_ext_desc_t *>(extendedDesc);
+            lookupTable.imageTilingOverride.present = true;
+            lookupTable.imageTilingOverride.linearStorage = tilingDesc->linearStorage;
+            lookupTable.imageTilingOverride.forceTiling = tilingDesc->forceTiling;
+            lookupTable.imageTilingOverride.rowPitch = tilingDesc->rowPitch;
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }

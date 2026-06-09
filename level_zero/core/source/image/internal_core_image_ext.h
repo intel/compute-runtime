@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_type.h"
 
 #include <level_zero/ze_api.h>
@@ -78,6 +79,21 @@ struct ze_depth_stencil_format_ext_desc_t {
     ze_structure_type_t stype = ZE_STRUCTURE_TYPE_DEPTH_STENCIL_FORMAT_EXT_DESC;
     const void *pNext = nullptr;
     ze_depth_stencil_format_t format = ZE_DEPTH_STENCIL_FORMAT_D24_UNORM_S8_UINT;
+};
+
+constexpr ze_structure_type_t ZE_STRUCTURE_TYPE_IMAGE_TILING_EXT_DESC = static_cast<ze_structure_type_t>(0x00050006);
+
+// Communicates the tiling/layout of an externally imported image (e.g. a dma-buf
+// shared from another driver) so the implementation can build a matching GMM.
+// Required on Linux: a dma-buf's layout is described by a DRM format modifier that
+// cannot be queried back from the kernel on the Xe KMD, so the importer must supply
+// it explicitly. Only consulted on the shared-handle (FD) image-create path.
+struct ze_image_tiling_ext_desc_t {
+    ze_structure_type_t stype = ZE_STRUCTURE_TYPE_IMAGE_TILING_EXT_DESC;
+    const void *pNext = nullptr;
+    bool linearStorage = false;                                        // image memory is linear (e.g. DRM_FORMAT_MOD_LINEAR)
+    NEO::ImageTilingMode forceTiling = NEO::ImageTilingMode::notTiled; // explicit tiling, used when linearStorage is false
+    uint64_t rowPitch = 0;                                             // row pitch in bytes as reported by the exporter (0 = derive from GMM)
 };
 
 // NOLINTEND(readability-identifier-naming)

@@ -321,5 +321,76 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithNoMsaaWhenCreatin
     imageHW.reset(nullptr);
 }
 
+HWTEST_F(ImageCreateGlTextureExtTest, givenDmaBufFdAndImageTilingExtDescWithForcedTilingWhenCreatingImageThenForceTilingAndRowPitchAreApplied) {
+    ze_external_memory_import_fd_t importFd = {};
+    importFd.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+    importFd.fd = 1;
+    importFd.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+    ze_image_tiling_ext_desc_t tilingDesc = {};
+    tilingDesc.linearStorage = false;
+    tilingDesc.forceTiling = NEO::ImageTilingMode::tiled4;
+    tilingDesc.rowPitch = 256u;
+    importFd.pNext = &tilingDesc;
+
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.depth = 1;
+    desc.pNext = &importFd;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_FALSE(imageHW->imgInfo.linearStorage);
+    EXPECT_EQ(NEO::ImageTilingMode::tiled4, imageHW->imgInfo.forceTiling);
+    EXPECT_EQ(256u, imageHW->imgInfo.imgDesc.imageRowPitch);
+
+    imageHW.reset(nullptr);
+}
+
+HWTEST_F(ImageCreateGlTextureExtTest, givenDmaBufFdAndImageTilingExtDescWithLinearStorageWhenCreatingImageThenLinearStorageAndRowPitchAreApplied) {
+    ze_external_memory_import_fd_t importFd = {};
+    importFd.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+    importFd.fd = 1;
+    importFd.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+    ze_image_tiling_ext_desc_t tilingDesc = {};
+    tilingDesc.linearStorage = true;
+    tilingDesc.rowPitch = 64u;
+    importFd.pNext = &tilingDesc;
+
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.depth = 1;
+    desc.pNext = &importFd;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->imgInfo.linearStorage);
+    EXPECT_EQ(64u, imageHW->imgInfo.imgDesc.imageRowPitch);
+
+    imageHW.reset(nullptr);
+}
+
+HWTEST_F(ImageCreateGlTextureExtTest, givenDmaBufFdWithoutImageTilingExtDescWhenCreatingImageThenRowPitchIsDerivedFromGmm) {
+    ze_external_memory_import_fd_t importFd = {};
+    importFd.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+    importFd.fd = 1;
+    importFd.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.depth = 1;
+    desc.pNext = &importFd;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_NE(256u, imageHW->imgInfo.imgDesc.imageRowPitch);
+
+    imageHW.reset(nullptr);
+}
+
 } // namespace ult
 } // namespace L0

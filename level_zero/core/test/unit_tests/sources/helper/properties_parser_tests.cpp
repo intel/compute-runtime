@@ -319,5 +319,66 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithUnsupportedOptionsWhenPr
 
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION);
 }
+
+TEST(L0StructuresLookupTableTests, givenImageTilingExtDescWithForcedTilingWhenPrepareLookupTableThenTilingOverrideFieldsAreSet) {
+    ze_image_desc_t imageDesc = {};
+    imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    imageDesc.width = 16;
+    imageDesc.height = 16;
+
+    ze_external_memory_import_fd_t fdStructure = {};
+    fdStructure.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+    fdStructure.fd = 7;
+    fdStructure.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+    ze_image_tiling_ext_desc_t tilingDesc = {};
+    tilingDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_TILING_EXT_DESC;
+    tilingDesc.linearStorage = false;
+    tilingDesc.forceTiling = NEO::ImageTilingMode::tiled4;
+    tilingDesc.rowPitch = 512u;
+
+    imageDesc.pNext = &fdStructure;
+    fdStructure.pNext = &tilingDesc;
+
+    StructuresLookupTable l0LookupTable = {};
+    auto result = prepareL0StructuresLookupTable(l0LookupTable, &imageDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(l0LookupTable.imageTilingOverride.present);
+    EXPECT_FALSE(l0LookupTable.imageTilingOverride.linearStorage);
+    EXPECT_EQ(NEO::ImageTilingMode::tiled4, l0LookupTable.imageTilingOverride.forceTiling);
+    EXPECT_EQ(512u, l0LookupTable.imageTilingOverride.rowPitch);
+}
+
+TEST(L0StructuresLookupTableTests, givenImageTilingExtDescWithLinearStorageWhenPrepareLookupTableThenTilingOverrideFieldsAreSet) {
+    ze_image_desc_t imageDesc = {};
+    imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    ze_image_tiling_ext_desc_t tilingDesc = {};
+    tilingDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_TILING_EXT_DESC;
+    tilingDesc.linearStorage = true;
+    tilingDesc.rowPitch = 64u;
+
+    imageDesc.pNext = &tilingDesc;
+
+    StructuresLookupTable l0LookupTable = {};
+    auto result = prepareL0StructuresLookupTable(l0LookupTable, &imageDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(l0LookupTable.imageTilingOverride.present);
+    EXPECT_TRUE(l0LookupTable.imageTilingOverride.linearStorage);
+    EXPECT_EQ(64u, l0LookupTable.imageTilingOverride.rowPitch);
+}
+
+TEST(L0StructuresLookupTableTests, givenNoImageTilingExtDescWhenPrepareLookupTableThenTilingOverrideNotPresent) {
+    ze_image_desc_t imageDesc = {};
+    imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    StructuresLookupTable l0LookupTable = {};
+    auto result = prepareL0StructuresLookupTable(l0LookupTable, &imageDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(l0LookupTable.imageTilingOverride.present);
+}
 } // namespace ult
 } // namespace L0

@@ -134,6 +134,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
             if (lookupTable.sharedHandleType.isOpaqueFDHandle || lookupTable.sharedHandleType.isDMABUFHandle) {
+                if (lookupTable.imageTilingOverride.present) {
+                    imgInfo.linearStorage = lookupTable.imageTilingOverride.linearStorage;
+                    if (!lookupTable.imageTilingOverride.linearStorage) {
+                        imgInfo.forceTiling = lookupTable.imageTilingOverride.forceTiling;
+                    }
+                }
                 NEO::MemoryManager::OsHandleData osHandleData{static_cast<NEO::osHandle>(lookupTable.sharedHandleType.fd)};
                 NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::sharedImage, device->getNEODevice()->getDeviceBitfield());
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
@@ -264,6 +270,11 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     } else if (this->customSlicePitch > 0) {
         imgInfo.slicePitch = this->customSlicePitch;
         imgInfo.imgDesc.imageSlicePitch = this->customSlicePitch;
+    }
+
+    if (lookupTable.imageTilingOverride.present && lookupTable.imageTilingOverride.rowPitch > 0) {
+        imgInfo.rowPitch = lookupTable.imageTilingOverride.rowPitch;
+        imgInfo.imgDesc.imageRowPitch = lookupTable.imageTilingOverride.rowPitch;
     }
 
     imgInfo.print();
