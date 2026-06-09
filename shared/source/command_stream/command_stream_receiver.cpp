@@ -10,6 +10,7 @@
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/aub_subcapture_status.h"
+#include "shared/source/command_stream/front_end_controller.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
@@ -457,11 +458,16 @@ bool CommandStreamReceiver::initializeResources(bool allocateInterrupt, const Pr
             if (!osContext->ensureContextInitialized(allocateInterrupt)) {
                 return false;
             }
-            this->resourcesInitialized = true;
+
             if (preemptionMode == NEO::PreemptionMode::MidThread &&
                 !this->getPreemptionAllocation()) {
                 this->createPreemptionAllocation();
             }
+            if (getProductHelper().isFrontEndControllerEnabled() && device->getFrontEndController() && !allocateFrontEndAllocation(device->getFrontEndController()->getFrontEndAllocationSize())) {
+                return false;
+            }
+            this->resourcesInitialized = true;
+
             initializeEngine();
         }
     }

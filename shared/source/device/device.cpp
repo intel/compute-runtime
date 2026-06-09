@@ -167,7 +167,12 @@ bool Device::createSubDevices() {
 bool Device::createDeviceImpl() {
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(getHardwareInfo());
 
+    auto &productHelper = getProductHelper();
+    if (productHelper.isFrontEndControllerEnabled()) {
+        createFrontEndController();
+    }
     if (!isSubDevice()) {
+
         // init sub devices first
         if (!createSubDevices()) {
             return false;
@@ -346,11 +351,6 @@ bool Device::initDeviceFully() {
     uuid.isValid = false;
     initUsmReuseLimits();
 
-    auto &productHelper = getProductHelper();
-    if (productHelper.isFrontEndControllerEnabled()) {
-        createFrontEndController();
-    }
-
     if (getRootDeviceEnvironment().osInterface == nullptr) {
         return true;
     }
@@ -358,7 +358,7 @@ bool Device::initDeviceFully() {
 
     if (debugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
         if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
-
+            auto &productHelper = getProductHelper();
             auto deviceIndex = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
             uuid.isValid = productHelper.getUuid(getRootDeviceEnvironment().osInterface->getDriverModel(), getRootDevice()->getNumSubDevices(), deviceIndex, uuid.id);
         }
@@ -605,10 +605,6 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     }
 
     if (!commandStreamReceiver->createGlobalFenceAllocation()) {
-        return false;
-    }
-
-    if (getProductHelper().isFrontEndControllerEnabled() && getFrontEndController() && !commandStreamReceiver->allocateFrontEndAllocation(getFrontEndController()->getFrontEndAllocationSize())) {
         return false;
     }
 
