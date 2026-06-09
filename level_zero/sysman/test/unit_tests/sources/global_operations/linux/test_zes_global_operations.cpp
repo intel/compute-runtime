@@ -1769,6 +1769,180 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenInvalidPciBusInfoWhenRetrievingUu
     debugManager.flags.EnableChipsetUniqueUUID.set(prevFlag);
 }
 
+class SysmanGlobalOperationsSerialNumberFixture : public SysmanDeviceFixture {
+  protected:
+    std::unique_ptr<MockGlobalOpsFwInterface> pFwInterface;
+    L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
+    L0::Sysman::OsGlobalOperations *pOsGlobalOperationsPrev = nullptr;
+    L0::Sysman::GlobalOperationsImp *pGlobalOperationsImp;
+
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+
+        pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
+        pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
+
+        pFwInterface = std::make_unique<MockGlobalOpsFwInterface>();
+        pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
+        pLinuxSysmanImp->pFwUtilInterface = pFwInterface.get();
+
+        pGlobalOperationsImp = static_cast<L0::Sysman::GlobalOperationsImp *>(pSysmanDeviceImp->pGlobalOperations);
+        pOsGlobalOperationsPrev = pGlobalOperationsImp->pOsGlobalOperations;
+        pGlobalOperationsImp->pOsGlobalOperations = nullptr;
+        pGlobalOperationsImp->pOsGlobalOperations = L0::Sysman::OsGlobalOperations::create(pLinuxSysmanImp);
+    }
+
+    void TearDown() override {
+        pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
+        if (pGlobalOperationsImp->pOsGlobalOperations != nullptr) {
+            delete pGlobalOperationsImp->pOsGlobalOperations;
+        }
+        pGlobalOperationsImp->pOsGlobalOperations = pOsGlobalOperationsPrev;
+        SysmanDeviceFixture::TearDown();
+    }
+};
+
+TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenValidFirmwareInterfaceWhenRetrievingSerialNumberThenValidSerialNumberIsReturned) {
+    const std::string expectedSerialNumber = "VPBG2604WC331K9P";
+
+    // Set up mock serial number data
+    pFwInterface->mockSerialNumberLen = static_cast<uint16_t>(expectedSerialNumber.length());
+    for (size_t i = 0; i < expectedSerialNumber.length(); i++) {
+        pFwInterface->mockSerialNumberData[i] = static_cast<uint8_t>(expectedSerialNumber[i]);
+    }
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
+    properties.pNext = &oemSerialNumber;
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+}
+
+TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenNullFirmwareInterfaceWhenRetrievingSerialNumberThenUnknownIsReturned) {
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
+    properties.pNext = &oemSerialNumber;
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(oemSerialNumber.oemSerialNumber));
+}
+
+TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenFirmwareErrorWhenRetrievingSerialNumberThenUnknownIsReturned) {
+    pFwInterface->mockSerialNumberError = ZE_RESULT_ERROR_UNINITIALIZED;
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
+    properties.pNext = &oemSerialNumber;
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(oemSerialNumber.oemSerialNumber));
+}
+
+TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithNonPrintableCharactersWhenRetrievingSerialNumberThenOnlyPrintablePartIsReturned) {
+    const std::string expectedSerialNumber = "VPBG2604";
+    const std::string fullData = expectedSerialNumber + std::string(1, '\x00') + "ExtraData";
+
+    // Set up mock serial number data with non-printable character
+    pFwInterface->mockSerialNumberLen = static_cast<uint16_t>(fullData.length());
+    for (size_t i = 0; i < fullData.length(); i++) {
+        pFwInterface->mockSerialNumberData[i] = static_cast<uint8_t>(fullData[i]);
+    }
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
+    properties.pNext = &oemSerialNumber;
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+}
+
+TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberExceedingBufferSizeWhenRetrievingSerialNumberThenTruncatedSerialNumberIsReturned) {
+    // Create a serial number longer than IGSC_MAX_OEM_SN_LENGTH (firmware buffer limit is 512, which is less than API buffer of 1024)
+    std::string longSerialNumber;
+    for (size_t i = 0; i < IGSC_MAX_OEM_SN_LENGTH + 10; i++) {
+        longSerialNumber += 'A';
+    }
+
+    // Set up mock serial number data - firmware reports more data than it can actually hold
+    pFwInterface->mockSerialNumberLen = static_cast<uint16_t>(longSerialNumber.length());
+    // But only IGSC_MAX_OEM_SN_LENGTH bytes can be stored in the firmware buffer
+    for (size_t i = 0; i < IGSC_MAX_OEM_SN_LENGTH; i++) {
+        pFwInterface->mockSerialNumberData[i] = static_cast<uint8_t>(longSerialNumber[i]);
+    }
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
+    properties.pNext = &oemSerialNumber;
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    // Should be limited to IGSC_MAX_OEM_SN_LENGTH (512) since that's the firmware buffer size
+    EXPECT_EQ(strlen(oemSerialNumber.oemSerialNumber), static_cast<size_t>(IGSC_MAX_OEM_SN_LENGTH));
+    EXPECT_EQ('\0', oemSerialNumber.oemSerialNumber[IGSC_MAX_OEM_SN_LENGTH]);
+}
+
+TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenEmptySerialNumberWhenRetrievingSerialNumberThenEmptyStringIsReturned) {
+    pFwInterface->mockSerialNumberLen = 0;
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
+    properties.pNext = &oemSerialNumber;
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ('\0', oemSerialNumber.oemSerialNumber[0]);
+}
+
+TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithMultipleFieldsWhenRetrievingSerialNumberThenOnlyFirstFieldIsReturned) {
+    // Simulate OEM serial number format with multiple fields separated by non-printable chars
+    const std::string expectedSerialNumber = "VPBG2604WC331K9PHRN76814-400";
+    std::string fullData = expectedSerialNumber;
+    fullData += '\x01';          // Non-printable separator
+    fullData += "U5R7G92200450"; // Second field
+    fullData += '\x02';          // Another separator
+    fullData += "20260130";      // Third field
+
+    // Set up mock serial number data
+    pFwInterface->mockSerialNumberLen = static_cast<uint16_t>(fullData.length());
+    for (size_t i = 0; i < fullData.length(); i++) {
+        pFwInterface->mockSerialNumberData[i] = static_cast<uint8_t>(fullData[i]);
+    }
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
+    properties.pNext = &oemSerialNumber;
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+}
+
+TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithControlCharactersWhenRetrievingSerialNumberThenStopsAtFirstControlChar) {
+    const std::string expectedSerialNumber = "TEST123";
+    std::string fullData = expectedSerialNumber + "\x0A" + "MoreData";
+
+    // Set up mock serial number data with control character
+    pFwInterface->mockSerialNumberLen = static_cast<uint16_t>(fullData.length());
+    for (size_t i = 0; i < fullData.length(); i++) {
+        pFwInterface->mockSerialNumberData[i] = static_cast<uint8_t>(fullData[i]);
+    }
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
+    properties.pNext = &oemSerialNumber;
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

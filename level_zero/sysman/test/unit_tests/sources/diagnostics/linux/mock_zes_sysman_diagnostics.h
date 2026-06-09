@@ -69,6 +69,7 @@ struct MockDiagnosticsFwInterface : public L0::Sysman::FirmwareUtil {
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
     ADDMETHOD_NOBASE_VOIDRETURN(fwGetMemoryHealthIndicator, (zes_mem_health_t * health));
     ADDMETHOD_NOBASE_VOIDRETURN(getLateBindingSupportedFwTypes, (std::vector<std::string> & fwTypes));
+    ADDMETHOD_NOBASE(fwGetSerialNumber, ze_result_t, ZE_RESULT_SUCCESS, (std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> & serialNumber, uint16_t &serialNumberLen));
 };
 struct MockGlobalOperationsEngineHandleContext : public L0::Sysman::EngineHandleContext {
     MockGlobalOperationsEngineHandleContext(L0::Sysman::OsSysman *pOsSysman) : EngineHandleContext(pOsSysman) {}

@@ -11,9 +11,11 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_igsc_wrapper.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <algorithm>
+#include <cctype>
 #include <iomanip>
 
 namespace L0 {
@@ -121,6 +123,32 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
         } else if (pNext->stype == ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES) {
             auto driverNameProperties = reinterpret_cast<zes_intel_driver_name_exp_properties_t *>(pNext);
             pOsGlobalOperations->getDriverName(driverNameProperties->driverName);
+        } else if (pNext->stype == ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES) {
+            auto oemSerialNumberProperties = reinterpret_cast<zes_intel_oem_serial_number_exp_properties_t *>(pNext);
+            memset(oemSerialNumberProperties->oemSerialNumber, 0, ZES_INTEL_OEM_SERIAL_NUMBER_SIZE);
+            oemSerialNumberProperties->length = 0;
+
+            std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> oemSerialNumber = {};
+            uint16_t serialNumberLen = 0;
+
+            if (pOsGlobalOperations->getOemSerialNumber(oemSerialNumber, serialNumberLen)) {
+                // Limit to the minimum of firmware buffer size, firmware reported length, and API buffer size
+                size_t maxLen = std::min({static_cast<size_t>(IGSC_MAX_OEM_SN_LENGTH),
+                                          static_cast<size_t>(serialNumberLen),
+                                          static_cast<size_t>(ZES_INTEL_OEM_SERIAL_NUMBER_SIZE - 1)});
+                size_t actualLen = 0;
+                for (size_t i = 0; i < maxLen; i++) {
+                    if (oemSerialNumber[i] == 0 || !isprint(oemSerialNumber[i])) {
+                        break;
+                    }
+                    oemSerialNumberProperties->oemSerialNumber[actualLen++] = static_cast<char>(oemSerialNumber[i]);
+                }
+                oemSerialNumberProperties->oemSerialNumber[actualLen] = '\0';
+                oemSerialNumberProperties->length = static_cast<uint16_t>(actualLen);
+            } else {
+                memcpy_s(oemSerialNumberProperties->oemSerialNumber, ZES_INTEL_OEM_SERIAL_NUMBER_SIZE, unknown.data(), unknown.length() + 1);
+                oemSerialNumberProperties->length = static_cast<uint16_t>(unknown.length());
+            }
         } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_PROPERTIES_EXP) {
             auto memPageOfflineProperties = reinterpret_cast<zes_intel_mem_page_offline_properties_exp_t *>(pNext);
             ze_result_t result = pOsGlobalOperations->getMaxMemoryOfflinePages(&memPageOfflineProperties->maxOfflinePages);

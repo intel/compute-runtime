@@ -691,6 +691,19 @@ struct MockGlobalOpsFwInterface : public L0::Sysman::FirmwareUtil {
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
     ADDMETHOD_NOBASE_VOIDRETURN(fwGetMemoryHealthIndicator, (zes_mem_health_t * health));
     ADDMETHOD_NOBASE_VOIDRETURN(getLateBindingSupportedFwTypes, (std::vector<std::string> & fwTypes));
+
+    ze_result_t mockSerialNumberError = ZE_RESULT_SUCCESS;
+    std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> mockSerialNumberData = {};
+    uint16_t mockSerialNumberLen = 0;
+
+    ze_result_t fwGetSerialNumber(std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> &serialNumber, uint16_t &serialNumberLen) override {
+        if (mockSerialNumberError != ZE_RESULT_SUCCESS) {
+            return mockSerialNumberError;
+        }
+        serialNumber = mockSerialNumberData;
+        serialNumberLen = mockSerialNumberLen;
+        return ZE_RESULT_SUCCESS;
+    }
 };
 
 struct MockGlobalOpsLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {

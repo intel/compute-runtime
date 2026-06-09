@@ -23,32 +23,37 @@ extern "C" {
 #define OUT
 #endif /* OUT */
 
-#if defined(_WIN32) || defined(_WIN64)
-#ifndef IGSC_DLL
-#define IGSC_EXPORT
-#else /* IGSC_DLL */
-#ifdef IGSC_DLL_EXPORTS
-#define IGSC_EXPORT __declspec(dllexport)
+#if defined (_WIN32) || defined (_WIN64)
+  #ifndef IGSC_DLL
+    #define IGSC_EXPORT
+  #else /* IGSC_DLL */
+    #ifdef IGSC_DLL_EXPORTS
+      #define IGSC_EXPORT __declspec(dllexport)
+    #else
+      #define IGSC_EXPORT __declspec(dllimport)
+    #endif
+  #endif /* IGSC_DLL */
 #else
-#define IGSC_EXPORT __declspec(dllimport)
-#endif
-#endif /* IGSC_DLL */
-#else
-#ifndef IGSC_DLL
-#define IGSC_EXPORT
-#else /* IGSC_DLL */
-#ifdef IGSC_DLL_EXPORTS
-#define IGSC_EXPORT __attribute__((__visibility__("default")))
-#else
-#define IGSC_EXPORT
-#endif
-#endif /* IGSC_DLL */
+  #ifndef IGSC_DLL
+    #define IGSC_EXPORT
+  #else /* IGSC_DLL */
+    #ifdef IGSC_DLL_EXPORTS
+      #define IGSC_EXPORT __attribute__((__visibility__("default")))
+    #else
+      #define IGSC_EXPORT
+    #endif
+  #endif /* IGSC_DLL */
 #endif
 /** @endcond */
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
+
+#define IGSC_LIBRARY_VERSION_MAJOR (1)
+#define IGSC_LIBRARY_VERSION_MINOR (3)
+#define IGSC_LIBRARY_VERSION_PATCH (0)
+#define IGSC_LIBRARY_VERSION_BUILD (0)
 
 #ifndef BIT
 #define BIT(x) (1U << (x))
@@ -81,7 +86,7 @@ enum igsc_log_level_type {
     IGSC_LOG_LEVEL_ERROR = 0, /**< Errors only */
     IGSC_LOG_LEVEL_DEBUG = 1, /**< Debug messages and errors */
     IGSC_LOG_LEVEL_TRACE = 2, /**< Trace, debug messages and errors */
-    IGSC_LOG_LEVEL_MAX = 3,   /**< Upper boundary */
+    IGSC_LOG_LEVEL_MAX   = 3, /**< Upper boundary */
 };
 
 /**
@@ -118,27 +123,27 @@ enum igsc_image_type {
  * Structure to store fw version data
  */
 struct igsc_fw_version {
-    char project[4]; /**< Project code name */
-    uint16_t hotfix; /**< FW Hotfix Number */
-    uint16_t build;  /**< FW Build Number */
+    char       project[4]; /**< Project code name */
+    uint16_t   hotfix;     /**< FW Hotfix Number */
+    uint16_t   build;      /**< FW Build Number */
 };
 
 /**
  * Structure to store ifr binary version data
  */
 struct igsc_ifr_bin_version {
-    uint16_t major;  /**< IFR Binary Major Number */
-    uint16_t minor;  /**< IFR Binary Minor Number */
-    uint16_t hotfix; /**< IFR Binary Hotfix Number */
-    uint16_t build;  /**< IFR Binary Build Number */
+    uint16_t   major;      /**< IFR Binary Major Number */
+    uint16_t   minor;      /**< IFR Binary Minor Number */
+    uint16_t   hotfix;     /**< IFR Binary Hotfix Number */
+    uint16_t   build;      /**< IFR Binary Build Number */
 };
 
 /**
  * Structure to store psc version data
  */
 struct igsc_psc_version {
-    uint32_t date;        /**< PSC date */
-    uint32_t cfg_version; /**< PSC configuration version */
+    uint32_t   date;        /**< PSC date */
+    uint32_t   cfg_version; /**< PSC configuration version */
 };
 
 #define IGSC_MAX_OEM_VERSION_LENGTH 256
@@ -147,8 +152,18 @@ struct igsc_psc_version {
  * Structure to store oem version data
  */
 struct igsc_oem_version {
-    uint16_t length;                              /**< actual OEM version length */
-    uint8_t version[IGSC_MAX_OEM_VERSION_LENGTH]; /**< buffer to store oem version */
+    uint16_t length; /**< actual OEM version length */
+    uint8_t  version[IGSC_MAX_OEM_VERSION_LENGTH];  /**< buffer to store oem version */
+};
+
+#define IGSC_MAX_OEM_SN_LENGTH 512
+
+/**
+ * Structure to store oem serial number
+ */
+struct igsc_oem_serial_number {
+    uint16_t length; /**< actual OEM serial number length */
+    uint8_t  sn[IGSC_MAX_OEM_SN_LENGTH];  /**< buffer to store the oem serial number */
 };
 
 /**
@@ -181,7 +196,7 @@ enum igsc_fwdata_version_compare_result {
  */
 struct igsc_fwdata_version {
     uint32_t oem_manuf_data_version; /**< GSC in-field data firmware OEM manufacturing data version */
-    uint16_t major_version;          /**< GSC in-field data firmware major version */
+    uint16_t major_version;           /**< GSC in-field data firmware major version */
     uint16_t major_vcn;              /**< GSC in-field data firmware major VCN */
 };
 
@@ -195,14 +210,14 @@ struct igsc_fwdata_version {
  * for GSC in-field data firmware update image (version 2)
  */
 struct igsc_fwdata_version2 {
-    uint32_t format_version;              /**< GSC in-field data firmware version format */
-    uint32_t oem_manuf_data_version;      /**< GSC in-field data firmware OEM manufacturing data version */
+    uint32_t format_version;         /**< GSC in-field data firmware version format */
+    uint32_t oem_manuf_data_version; /**< GSC in-field data firmware OEM manufacturing data version */
     uint32_t oem_manuf_data_version_fitb; /**< GSC in-field data firmware OEM manufacturing data version from FITB */
-    uint16_t major_version;               /**< GSC in-field data firmware major version */
-    uint16_t major_vcn;                   /**< GSC in-field data firmware major VCN */
-    uint32_t flags;                       /**< GSC in-field data firmware flags */
-    uint32_t data_arb_svn;                /**< GSC in-field data firmware SVN */
-    uint32_t data_arb_svn_fitb;           /**< GSC in-field data firmware SVN from FITB */
+    uint16_t major_version;          /**< GSC in-field data firmware major version */
+    uint16_t major_vcn;              /**< GSC in-field data firmware major VCN */
+    uint32_t flags;                  /**< GSC in-field data firmware flags */
+    uint32_t data_arb_svn;           /**< GSC in-field data firmware SVN */
+    uint32_t data_arb_svn_fitb;      /**< GSC in-field data firmware SVN from FITB */
 };
 
 /**
@@ -220,9 +235,9 @@ struct igsc_oprom_version {
  * OPROM partition type
  */
 enum igsc_oprom_type {
-    IGSC_OPROM_NONE = 0,    /**< OPROM INVALID PARTITION */
-    IGSC_OPROM_DATA = 0x01, /**< OPROM data (VBT) */
-    IGSC_OPROM_CODE = 0x02, /**< OPROM code (VBIOS and GOP) */
+    IGSC_OPROM_NONE = 0,     /**< OPROM INVALID PARTITION */
+    IGSC_OPROM_DATA = 0x01,  /**< OPROM data (VBT) */
+    IGSC_OPROM_CODE = 0x02,  /**< OPROM code (VBIOS and GOP) */
 };
 
 /**
@@ -230,8 +245,8 @@ enum igsc_oprom_type {
  * as defined by PCI.
  */
 struct igsc_oprom_device_info {
-    uint16_t subsys_vendor_id; /**< subsystem vendor id */
-    uint16_t subsys_device_id; /**< subsystem device id */
+  uint16_t subsys_vendor_id; /**< subsystem vendor id */
+  uint16_t subsys_device_id; /**< subsystem device id */
 };
 
 /**
@@ -239,10 +254,10 @@ struct igsc_oprom_device_info {
  * the GSC in-field data firmware update image as defined by PCI.
  */
 struct igsc_oprom_device_info_4ids {
-    uint16_t vendor_id;        /**< vendor id */
-    uint16_t device_id;        /**< device id */
-    uint16_t subsys_vendor_id; /**< subsystem vendor id */
-    uint16_t subsys_device_id; /**< subsystem device id */
+  uint16_t vendor_id;        /**< vendor id */
+  uint16_t device_id;        /**< device id */
+  uint16_t subsys_vendor_id; /**< subsystem vendor id */
+  uint16_t subsys_device_id; /**< subsystem device id */
 };
 
 /**
@@ -250,10 +265,10 @@ struct igsc_oprom_device_info_4ids {
  * the GSC in-field data firmware update image as defined by PCI.
  */
 struct igsc_fwdata_device_info {
-    uint16_t vendor_id;        /**< vendor id */
-    uint16_t device_id;        /**< device id */
-    uint16_t subsys_vendor_id; /**< subsystem vendor id */
-    uint16_t subsys_device_id; /**< subsystem device id */
+  uint16_t vendor_id; /**< vendor id */
+  uint16_t device_id; /**< device id */
+  uint16_t subsys_vendor_id; /**< subsystem vendor id */
+  uint16_t subsys_device_id; /**< subsystem device id */
 };
 
 /**
@@ -267,6 +282,7 @@ struct igsc_oprom_image;
  * opaque struct for fw data image handle
  */
 struct igsc_fwdata_image;
+
 
 /**
  * opaque structure representing device lookup context
@@ -282,17 +298,17 @@ struct igsc_device_iterator;
  * Structure to store GSC device info
  */
 struct igsc_device_info {
-    char name[IGSC_INFO_NAME_SIZE]; /**<  the device node path */
+    char name[IGSC_INFO_NAME_SIZE];  /**<  the device node path */
 
-    uint16_t domain; /**< pci domain for GFX device */
-    uint8_t bus;     /**< pci bus number for GFX device */
-    uint8_t dev;     /**< device number on pci bus */
-    uint8_t func;    /**< device function number */
+    uint16_t domain;                 /**< pci domain for GFX device */
+    uint8_t  bus;                    /**< pci bus number for GFX device */
+    uint8_t  dev;                    /**< device number on pci bus */
+    uint8_t  func;                   /**< device function number */
 
-    uint16_t device_id;        /**< gfx device id */
-    uint16_t vendor_id;        /**< gfx device vendor id */
-    uint16_t subsys_device_id; /**< gfx device subsystem device id */
-    uint16_t subsys_vendor_id; /**< gfx device subsystem vendor id */
+    uint16_t device_id;              /**< gfx device id */
+    uint16_t vendor_id;              /**< gfx device vendor id */
+    uint16_t subsys_device_id;       /**< gfx device subsystem device id */
+    uint16_t subsys_vendor_id;       /**< gfx device subsystem vendor id */
 };
 
 /**
@@ -301,21 +317,21 @@ struct igsc_device_info {
  * @addtogroup IGSC_ERRORS
  * @{
  */
-#define IGSC_ERROR_BASE 0x0000U                             /**< Error Base */
-#define IGSC_SUCCESS (IGSC_ERROR_BASE + 0)                  /**< Success */
-#define IGSC_ERROR_INTERNAL (IGSC_ERROR_BASE + 1)           /**< Internal Error */
-#define IGSC_ERROR_NOMEM (IGSC_ERROR_BASE + 2)              /**< Memory Allocation Failed */
+#define IGSC_ERROR_BASE              0x0000U                /**< Error Base */
+#define IGSC_SUCCESS                 (IGSC_ERROR_BASE + 0)  /**< Success */
+#define IGSC_ERROR_INTERNAL          (IGSC_ERROR_BASE + 1)  /**< Internal Error */
+#define IGSC_ERROR_NOMEM             (IGSC_ERROR_BASE + 2)  /**< Memory Allocation Failed */
 #define IGSC_ERROR_INVALID_PARAMETER (IGSC_ERROR_BASE + 3)  /**< Invalid parameter was provided */
-#define IGSC_ERROR_DEVICE_NOT_FOUND (IGSC_ERROR_BASE + 4)   /**< Requested device was not found */
-#define IGSC_ERROR_BAD_IMAGE (IGSC_ERROR_BASE + 5)          /**< Provided image has wrong format */
-#define IGSC_ERROR_PROTOCOL (IGSC_ERROR_BASE + 6)           /**< Error in the update protocol */
-#define IGSC_ERROR_BUFFER_TOO_SMALL (IGSC_ERROR_BASE + 7)   /**< Provided buffer is too small */
-#define IGSC_ERROR_INVALID_STATE (IGSC_ERROR_BASE + 8)      /**< Invalid library internal state */
-#define IGSC_ERROR_NOT_SUPPORTED (IGSC_ERROR_BASE + 9)      /**< Unsupported request */
-#define IGSC_ERROR_INCOMPATIBLE (IGSC_ERROR_BASE + 10)      /**< Incompatible request */
-#define IGSC_ERROR_TIMEOUT (IGSC_ERROR_BASE + 11)           /**< The operation has timed out */
+#define IGSC_ERROR_DEVICE_NOT_FOUND  (IGSC_ERROR_BASE + 4)  /**< Requested device was not found */
+#define IGSC_ERROR_BAD_IMAGE         (IGSC_ERROR_BASE + 5)  /**< Provided image has wrong format */
+#define IGSC_ERROR_PROTOCOL          (IGSC_ERROR_BASE + 6)  /**< Error in the update protocol */
+#define IGSC_ERROR_BUFFER_TOO_SMALL  (IGSC_ERROR_BASE + 7)  /**< Provided buffer is too small */
+#define IGSC_ERROR_INVALID_STATE     (IGSC_ERROR_BASE + 8)  /**< Invalid library internal state */
+#define IGSC_ERROR_NOT_SUPPORTED     (IGSC_ERROR_BASE + 9)  /**< Unsupported request */
+#define IGSC_ERROR_INCOMPATIBLE      (IGSC_ERROR_BASE + 10) /**< Incompatible request */
+#define IGSC_ERROR_TIMEOUT           (IGSC_ERROR_BASE + 11) /**< The operation has timed out */
 #define IGSC_ERROR_PERMISSION_DENIED (IGSC_ERROR_BASE + 12) /**< The process doesn't have access rights */
-#define IGSC_ERROR_BUSY (IGSC_ERROR_BASE + 13)              /**< Device is currently busy, try again later */
+#define IGSC_ERROR_BUSY              (IGSC_ERROR_BASE + 13) /**< Device is currently busy, try again later */
 /**
  * @}
  */
@@ -349,7 +365,7 @@ struct igsc_subsystem_ids {
  * @def IGSC_MAX_IMAGE_SIZE
  * @brief Maximum firmware image size
  */
-#define IGSC_MAX_IMAGE_SIZE (8 * 1024 * 1024) /* 8M */
+#define IGSC_MAX_IMAGE_SIZE (8*1024*1024) /* 8M */
 
 struct igsc_lib_ctx;
 
@@ -401,14 +417,14 @@ int igsc_read_fw_status_reg(IN struct igsc_device_handle *handle,
                             IN uint32_t fwsts_index,
                             OUT uint32_t *fwsts_value);
 
-/**
- *  @brief Callback function template for printing igsc log messages.
- *
- *  @param log_level log level of the error message.
- *  @param fmt log message format
- *  @param ... variadic parameters
- */
-typedef void (*igsc_log_func_t)(enum igsc_log_level_type log_level, const char *fmt, ...);
+ /**
+  *  @brief Callback function template for printing igsc log messages.
+  *
+  *  @param log_level log level of the error message.
+  *  @param fmt log message format
+  *  @param ... variadic parameters
+  */
+typedef void (*igsc_log_func_t)(enum igsc_log_level_type log_level, const char* fmt, ...);
 
 /**
  *  @brief Sets log callback function.
@@ -476,8 +492,9 @@ int igsc_device_init_by_device_info(IN OUT struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_get_device_info(IN struct igsc_device_handle *handle,
+int igsc_device_get_device_info(IN  struct igsc_device_handle *handle,
                                 OUT struct igsc_device_info *dev_info);
+
 
 /**
  *  @brief Update device information from the firmware
@@ -492,7 +509,7 @@ int igsc_device_get_device_info(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_update_device_info(IN struct igsc_device_handle *handle,
+int igsc_device_update_device_info(IN  struct igsc_device_handle *handle,
                                    OUT struct igsc_device_info *dev_info);
 
 /**
@@ -514,7 +531,7 @@ int igsc_device_close(IN OUT struct igsc_device_handle *handle);
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_fw_version(IN struct igsc_device_handle *handle,
+int igsc_device_fw_version(IN  struct igsc_device_handle *handle,
                            OUT struct igsc_fw_version *version);
 
 /**
@@ -528,8 +545,8 @@ int igsc_device_fw_version(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_image_fw_version(IN const uint8_t *buffer,
-                          IN uint32_t buffer_len,
+int igsc_image_fw_version(IN  const uint8_t *buffer,
+                          IN  uint32_t buffer_len,
                           OUT struct igsc_fw_version *version);
 
 /**
@@ -542,7 +559,7 @@ int igsc_image_fw_version(IN const uint8_t *buffer,
  *  @return IGSC_ERROR_NOT_SUPPORTED if feature is not supported
  */
 IGSC_EXPORT
-int igsc_device_hw_config(IN struct igsc_device_handle *handle,
+int igsc_device_hw_config(IN  struct igsc_device_handle *handle,
                           OUT struct igsc_hw_config *hw_config);
 
 /**
@@ -555,7 +572,7 @@ int igsc_device_hw_config(IN struct igsc_device_handle *handle,
  *  @return IGSC_ERROR_NOT_SUPPORTED if feature is not supported
  */
 IGSC_EXPORT
-int igsc_device_subsystem_ids(IN struct igsc_device_handle *handle,
+int igsc_device_subsystem_ids(IN struct  igsc_device_handle *handle,
                               OUT struct igsc_subsystem_ids *ssids);
 
 /**
@@ -569,8 +586,8 @@ int igsc_device_subsystem_ids(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_image_hw_config(IN const uint8_t *buffer,
-                         IN uint32_t buffer_len,
+int igsc_image_hw_config(IN  const uint8_t *buffer,
+                         IN  uint32_t buffer_len,
                          OUT struct igsc_hw_config *hw_config);
 
 /**
@@ -620,16 +637,16 @@ typedef void (*igsc_progress_func_t)(uint32_t sent, uint32_t total, void *ctx);
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT int
-igsc_device_fw_update(IN struct igsc_device_handle *handle,
-                      IN const uint8_t *buffer,
-                      IN const uint32_t buffer_len,
-                      IN igsc_progress_func_t progress_f,
-                      IN void *ctx);
+igsc_device_fw_update(IN  struct igsc_device_handle *handle,
+                      IN  const uint8_t *buffer,
+                      IN  const uint32_t buffer_len,
+                      IN  igsc_progress_func_t progress_f,
+                      IN  void *ctx);
 
 /* flags with which the update should be performed */
 struct igsc_fw_update_flags {
-    uint32_t force_update : 1;
-    uint32_t reserved : 31;
+    uint32_t  force_update     : 1;
+    uint32_t  reserved         : 31;
 };
 
 /**
@@ -646,12 +663,12 @@ struct igsc_fw_update_flags {
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT int
-igsc_device_fw_update_ex(IN struct igsc_device_handle *handle,
-                         IN const uint8_t *buffer,
-                         IN const uint32_t buffer_len,
-                         IN igsc_progress_func_t progress_f,
-                         IN void *ctx,
-                         IN struct igsc_fw_update_flags flags);
+igsc_device_fw_update_ex(IN  struct igsc_device_handle *handle,
+                         IN  const uint8_t *buffer,
+                         IN  const uint32_t buffer_len,
+                         IN  igsc_progress_func_t progress_f,
+                         IN  void *ctx,
+                         IN  struct igsc_fw_update_flags flags);
 
 /**
  *  @brief Perform Intel Accelerator Fabric Platform Specific
@@ -689,11 +706,11 @@ igsc_iaf_psc_update(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT int
-igsc_device_fwdata_update(IN struct igsc_device_handle *handle,
-                          IN const uint8_t *buffer,
-                          IN const uint32_t buffer_len,
-                          IN igsc_progress_func_t progress_f,
-                          IN void *ctx);
+igsc_device_fwdata_update(IN  struct igsc_device_handle *handle,
+                          IN  const uint8_t *buffer,
+                          IN  const uint32_t buffer_len,
+                          IN  igsc_progress_func_t progress_f,
+                          IN  void *ctx);
 
 /**
  *  @brief Perform the GSC firmware in-field data update from the provided firmware update image.
@@ -707,10 +724,10 @@ igsc_device_fwdata_update(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT int
-igsc_device_fwdata_image_update(IN struct igsc_device_handle *handle,
-                                IN struct igsc_fwdata_image *img,
-                                IN igsc_progress_func_t progress_f,
-                                IN void *ctx);
+igsc_device_fwdata_image_update(IN  struct igsc_device_handle *handle,
+                                IN  struct igsc_fwdata_image *img,
+                                IN  igsc_progress_func_t progress_f,
+                                IN  void *ctx);
 
 /**
  *  @brief initializes firmware data image handle from the supplied firmware data update image.
@@ -735,7 +752,7 @@ int igsc_image_fwdata_init(IN OUT struct igsc_fwdata_image **img,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_fwdata_version(IN struct igsc_device_handle *handle,
+int igsc_device_fwdata_version(IN  struct igsc_device_handle *handle,
                                OUT struct igsc_fwdata_version *version);
 
 /**
@@ -748,8 +765,8 @@ int igsc_device_fwdata_version(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_fwdata_version2(IN struct igsc_device_handle *handle,
-                                OUT struct igsc_fwdata_version2 *version);
+int igsc_device_fwdata_version2(IN  struct igsc_device_handle* handle,
+    OUT struct igsc_fwdata_version2* version);
 
 /**
  *  @brief Retrieves the GSC in-field data Firmware version from the supplied GSC in-field data Firmware update image.
@@ -773,8 +790,8 @@ int igsc_image_fwdata_version(IN struct igsc_fwdata_image *img,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_image_fwdata_version2(IN struct igsc_fwdata_image *img,
-                               OUT struct igsc_fwdata_version2 *version);
+int igsc_image_fwdata_version2(IN struct igsc_fwdata_image* img,
+    OUT struct igsc_fwdata_version2* version);
 
 /**
  *  @brief Compares input GSC in-field data firmware update version to the flash one
@@ -810,8 +827,8 @@ uint8_t igsc_fwdata_version_compare(IN struct igsc_fwdata_version *image_ver,
  *  * IGSC_FWDATA_VERSION_REJECT_ARB_SVN                if update image SVN version is smaller than the one on the device
  */
 IGSC_EXPORT
-uint8_t igsc_fwdata_version_compare2(IN struct igsc_fwdata_version2 *image_ver,
-                                     IN struct igsc_fwdata_version2 *device_ver);
+uint8_t igsc_fwdata_version_compare2(IN struct igsc_fwdata_version2* image_ver,
+                                     IN struct igsc_fwdata_version2* device_ver);
 
 /**
  *  @brief Retrieves a count of of different devices supported
@@ -933,11 +950,11 @@ int igsc_device_oprom_version(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_oprom_update(IN struct igsc_device_handle *handle,
-                             IN uint32_t oprom_type,
-                             IN struct igsc_oprom_image *img,
-                             IN igsc_progress_func_t progress_f,
-                             IN void *ctx);
+int igsc_device_oprom_update(IN  struct igsc_device_handle *handle,
+                             IN  uint32_t oprom_type,
+                             IN  struct igsc_oprom_image *img,
+                             IN  igsc_progress_func_t progress_f,
+                             IN  void *ctx);
 /**
  * @addtogroup oprom
  * @{
@@ -982,7 +999,7 @@ int igsc_image_oprom_version(IN struct igsc_oprom_image *img,
  */
 IGSC_EXPORT
 int igsc_image_oprom_type(IN struct igsc_oprom_image *img,
-                          IN uint32_t *oprom_type);
+                          IN  uint32_t *oprom_type);
 
 /**
  *  @brief Retrieves a count of of different devices supported
@@ -1252,7 +1269,7 @@ enum igsc_ifr_tiles {
  * ifr supported test masks
  */
 enum igsc_supported_ifr_tests {
-    IGSC_IFR_SUPPORTED_TEST_SCAN = 0x00000001,
+    IGSC_IFR_SUPPORTED_TEST_SCAN  = 0x00000001,
     IGSC_IFR_SUPPORTED_TEST_ARRAY = 0x00000002,
 };
 
@@ -1261,7 +1278,7 @@ enum igsc_supported_ifr_tests {
  */
 enum igsc_ifr_repairs {
     IGSC_IFR_REPAIR_DSS_EN = 0x00000001,
-    IGSC_IFR_REPAIR_ARRAY = 0x00000002,
+    IGSC_IFR_REPAIR_ARRAY  = 0x00000002,
 };
 
 /**
@@ -1271,12 +1288,12 @@ enum igsc_ifr_repairs {
  * @{
  */
 enum ifr_test_run_status {
-    IFR_TEST_STATUS_SUCCESS = 0,          /**< Test passed successfully */
-    IFR_TEST_STATUS_PASSED_WITH_REPAIR,   /**< Test passed, recoverable error found and repaired. No subslice swap needed */
-    IFR_TEST_STATUS_PASSED_WITH_RECOVERY, /**< Test passed, recoverable error found and repaired. Subslice swap needed. */
-    IFR_TEST_STATUS_SUBSLICE_FAILURE,     /**< Test completed, unrecoverable error found (Subslice failure and no spare Subslice available). */
-    IFR_TEST_STATUS_NON_SUBSLICE_FAILURE, /**< Test completed, unrecoverable error found (non-Subslice failure). */
-    IFR_TEST_STATUS_ERROR,                /**< Test error */
+    IFR_TEST_STATUS_SUCCESS = 0,           /**< Test passed successfully */
+    IFR_TEST_STATUS_PASSED_WITH_REPAIR,    /**< Test passed, recoverable error found and repaired. No subslice swap needed */
+    IFR_TEST_STATUS_PASSED_WITH_RECOVERY,  /**< Test passed, recoverable error found and repaired. Subslice swap needed. */
+    IFR_TEST_STATUS_SUBSLICE_FAILURE,      /**< Test completed, unrecoverable error found (Subslice failure and no spare Subslice available). */
+    IFR_TEST_STATUS_NON_SUBSLICE_FAILURE,  /**< Test completed, unrecoverable error found (non-Subslice failure). */
+    IFR_TEST_STATUS_ERROR,                 /**< Test error */
 };
 
 /**
@@ -1291,11 +1308,11 @@ enum ifr_test_run_status {
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_ifr_get_status(IN struct igsc_device_handle *handle,
-                        OUT uint8_t *result,
-                        OUT uint32_t *supported_tests,
-                        OUT uint32_t *ifr_applied,
-                        OUT uint8_t *tiles_num);
+int igsc_ifr_get_status(IN  struct igsc_device_handle *handle,
+                        OUT uint8_t   *result,
+                        OUT uint32_t  *supported_tests,
+                        OUT uint32_t  *ifr_applied,
+                        OUT uint8_t   *tiles_num);
 
 /**
  *  @brief Runs IFR test on GSC IFR device.
@@ -1311,10 +1328,10 @@ int igsc_ifr_get_status(IN struct igsc_device_handle *handle,
  */
 IGSC_EXPORT
 int igsc_ifr_run_test(IN struct igsc_device_handle *handle,
-                      IN uint8_t test_type,
-                      IN uint8_t tiles,
-                      OUT uint8_t *result,
-                      OUT uint8_t *run_status,
+                      IN uint8_t   test_type,
+                      IN uint8_t   tiles,
+                      OUT uint8_t  *result,
+                      OUT uint8_t  *run_status,
                       OUT uint32_t *error_code);
 /**
  * @}
@@ -1351,7 +1368,7 @@ struct igsc_gfsp_mem_err {
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_gfsp_count_tiles(IN struct igsc_device_handle *handle,
+int igsc_gfsp_count_tiles(IN  struct igsc_device_handle *handle,
                           OUT uint32_t *max_num_of_tiles);
 
 /**
@@ -1380,9 +1397,9 @@ enum igsc_ifr_pending_reset {
  */
 enum igsc_ifr_array_scan_test_status_mask {
     IGSC_ARRAY_SCAN_STATUS_TEST_EXECUTION_MASK = BIT(0), /**< 0 - Test executed, 1 - Test not executed */
-    IGSC_ARRAY_SCAN_STATUS_TEST_RESULT_MASK = BIT(1),    /**< 0 - Test finished successfully, 1 - Error occurred during test execution */
+    IGSC_ARRAY_SCAN_STATUS_TEST_RESULT_MASK =    BIT(1), /**< 0 - Test finished successfully, 1 - Error occurred during test execution */
     IGSC_ARRAY_SCAN_STATUS_FOUND_HW_ERROR_MASK = BIT(2), /**< 0 - HW error not found, 1 - HW error found*/
-    IGSC_ARRAY_SCAN_STATUS_HW_REPAIR_MASK = BIT(3),      /**< 0 - HW error will be fully repaired or no HW error found, 1 - HW error will not be fully repaired */
+    IGSC_ARRAY_SCAN_STATUS_HW_REPAIR_MASK =      BIT(3), /**< 0 - HW error will be fully repaired or no HW error found, 1 - HW error will not be fully repaired */
 };
 
 enum igsc_ifr_array_scan_extended_status {
@@ -1440,8 +1457,8 @@ int igsc_ifr_run_mem_ppr_test(IN struct igsc_device_handle *handle,
  * IFR supported tests masks
  */
 enum igsc_ifr_supported_tests_masks {
-    IGSC_IFR_SUPPORTED_TESTS_ARRAY_AND_SCAN = BIT(0), /**< 1 - Array and Scan test */
-    IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR = BIT(1),     /**< 2 - Memory PPR */
+   IGSC_IFR_SUPPORTED_TESTS_ARRAY_AND_SCAN = BIT(0), /**< 1 - Array and Scan test */
+   IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR =     BIT(1), /**< 2 - Memory PPR */
 };
 
 /**
@@ -1457,22 +1474,22 @@ enum igsc_ifr_hw_capabilities_masks {
  * IFR previous errors masks
  */
 enum igsc_ifr_previous_errors_masks {
-    IGSC_IFR_PREV_ERROR_DSS_ERR_ARR_STS_PKT = BIT(0),          /**< DSS Engine error in an array test status packet */
-    IGSC_IFR_PREV_ERROR_NON_DSS_ERR_ARR_STS_PKT = BIT(1),      /**< Non DSS Engine error in an array test status packet */
-    IGSC_IFR_PREV_ERROR_DSS_REPAIRABLE_PKT = BIT(2),           /**< DSS Repairable repair packet in an array test */
-    IGSC_IFR_PREV_ERROR_DSS_UNREPAIRABLE_PKT = BIT(3),         /**< DSS Unrepairable repair packet in an array test */
-    IGSC_IFR_PREV_ERROR_NON_DSS_REPAIRABLE_PKT = BIT(4),       /**< Non DSS Repairable repair packet in an array test */
-    IGSC_IFR_PREV_ERROR_NON_DSS_UNREPAIRABLE_PKT = BIT(5),     /**< Non DSS Unrepairable repair packet in an array test */
-    IGSC_IFR_PREV_ERROR_DSS_ERR_SCAN_STS_PKT = BIT(6),         /**< DSS failure in a scan test packet */
-    IGSC_IFR_PREV_ERROR_NON_DSS_ERR_SCAN_STS_PKT = BIT(7),     /**< Non DSS failure in a scan test packet */
-    IGSC_IFR_PREV_ERROR_NOT_ENOUGH_SPARE_DSS = BIT(8),         /**< Not enough spare DSS available */
-    IGSC_IFR_PREV_ERROR_MIS_DSS_STS_PKT_ON_ARR = BIT(9),       /**< Missing DSS status packet on array test */
-    IGSC_IFR_PREV_ERROR_MIS_NON_DSS_STS_PKT_ON_ARR = BIT(10),  /**< Missing non DSS status packet on array test */
-    IGSC_IFR_PREV_ERROR_MIS_DSS_STS_PKT_ON_SCAN = BIT(11),     /**< Missing DSS status packet on scan test */
+    IGSC_IFR_PREV_ERROR_DSS_ERR_ARR_STS_PKT =         BIT(0), /**< DSS Engine error in an array test status packet */
+    IGSC_IFR_PREV_ERROR_NON_DSS_ERR_ARR_STS_PKT =     BIT(1), /**< Non DSS Engine error in an array test status packet */
+    IGSC_IFR_PREV_ERROR_DSS_REPAIRABLE_PKT =          BIT(2), /**< DSS Repairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_DSS_UNREPAIRABLE_PKT =        BIT(3), /**< DSS Unrepairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_NON_DSS_REPAIRABLE_PKT =      BIT(4), /**< Non DSS Repairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_NON_DSS_UNREPAIRABLE_PKT =    BIT(5), /**< Non DSS Unrepairable repair packet in an array test */
+    IGSC_IFR_PREV_ERROR_DSS_ERR_SCAN_STS_PKT =        BIT(6), /**< DSS failure in a scan test packet */
+    IGSC_IFR_PREV_ERROR_NON_DSS_ERR_SCAN_STS_PKT =    BIT(7), /**< Non DSS failure in a scan test packet */
+    IGSC_IFR_PREV_ERROR_NOT_ENOUGH_SPARE_DSS =        BIT(8), /**< Not enough spare DSS available */
+    IGSC_IFR_PREV_ERROR_MIS_DSS_STS_PKT_ON_ARR =      BIT(9), /**< Missing DSS status packet on array test */
+    IGSC_IFR_PREV_ERROR_MIS_NON_DSS_STS_PKT_ON_ARR =  BIT(10), /**< Missing non DSS status packet on array test */
+    IGSC_IFR_PREV_ERROR_MIS_DSS_STS_PKT_ON_SCAN =     BIT(11), /**< Missing DSS status packet on scan test */
     IGSC_IFR_PREV_ERROR_MIS_NON_DSS_STS_PKT_ON_SCAN = BIT(12), /**< Missing non DSS status packet on scan test */
-    IGSC_IFR_PREV_ERROR_DSS_ENG_DONE_CLR_IN_ARR = BIT(13),     /**< DSS Engine Done clear bit in array test status packet */
+    IGSC_IFR_PREV_ERROR_DSS_ENG_DONE_CLR_IN_ARR =     BIT(13), /**< DSS Engine Done clear bit in array test status packet */
     IGSC_IFR_PREV_ERROR_NON_DSS_ENG_DONE_CLR_IN_ARR = BIT(14), /**< Non DSS Engine Done clear bit in array test status packet */
-    IGSC_IFR_PREV_ERROR_UNEXPECTED = BIT(31),                  /**< Unexpected test failure */
+    IGSC_IFR_PREV_ERROR_UNEXPECTED =                  BIT(31), /**< Unexpected test failure */
 };
 
 /**
@@ -1480,8 +1497,8 @@ enum igsc_ifr_previous_errors_masks {
  */
 enum igsc_ifr_repairs_mask {
     IGSC_IFR_REPAIRS_MASK_DSS_EN_REPAIR = BIT(0), /**< DSS enable repair applied */
-    IGSC_IFR_REPAIRS_MASK_ARRAY_REPAIR = BIT(1),  /**< Array repair applied */
-    IGSC_IFR_REPAIRS_MASK_FAILURE = BIT(2),       /**< Repair failure occurred */
+    IGSC_IFR_REPAIRS_MASK_ARRAY_REPAIR =  BIT(1), /**< Array repair applied */
+    IGSC_IFR_REPAIRS_MASK_FAILURE =       BIT(2), /**< Repair failure occurred */
 };
 
 /**
@@ -1502,7 +1519,7 @@ enum igsc_ifr_repairs_mask {
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_ifr_get_status_ext(IN struct igsc_device_handle *handle,
+int igsc_ifr_get_status_ext(IN  struct igsc_device_handle *handle,
                             OUT uint32_t *supported_tests,
                             OUT uint32_t *hw_capabilities,
                             OUT uint32_t *ifr_applied,
@@ -1518,7 +1535,7 @@ int igsc_ifr_get_status_ext(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_ifr_count_tiles(IN struct igsc_device_handle *handle,
+int igsc_ifr_count_tiles(IN  struct igsc_device_handle *handle,
                          OUT uint16_t *supported_tiles);
 
 /**
@@ -1533,7 +1550,7 @@ int igsc_ifr_count_tiles(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_ifr_get_tile_repair_info(IN struct igsc_device_handle *handle,
+int igsc_ifr_get_tile_repair_info(IN  struct igsc_device_handle *handle,
                                   IN uint16_t tile_idx,
                                   OUT uint16_t *used_array_repair_entries,
                                   OUT uint16_t *available_array_repair_entries,
@@ -1549,8 +1566,8 @@ int igsc_ifr_get_tile_repair_info(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_ecc_config_set(IN struct igsc_device_handle *handle,
-                        IN uint8_t req_ecc_state,
+int igsc_ecc_config_set(IN  struct igsc_device_handle *handle,
+                        IN  uint8_t req_ecc_state,
                         OUT uint8_t *cur_ecc_state,
                         OUT uint8_t *pen_ecc_state);
 
@@ -1564,7 +1581,7 @@ int igsc_ecc_config_set(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_ecc_config_get(IN struct igsc_device_handle *handle,
+int igsc_ecc_config_get(IN  struct igsc_device_handle *handle,
                         OUT uint8_t *cur_ecc_state,
                         OUT uint8_t *pen_ecc_state);
 
@@ -1577,8 +1594,20 @@ int igsc_ecc_config_get(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_oem_version(IN struct igsc_device_handle *handle,
+int igsc_device_oem_version(IN  struct igsc_device_handle *handle,
                             OUT struct igsc_oem_version *version);
+
+/**
+ *  @brief Retrieves the OEM serial number from the device.
+ *
+ *  @param handle A handle to the device.
+ *  @param sn The memory to store obtained OEM serial number.
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_oem_serial_number(IN  struct igsc_device_handle *handle,
+                                  OUT struct igsc_oem_serial_number *sn);
 
 /**
  *  @brief Retrieves the IFR Binary Version from the device.
@@ -1589,7 +1618,7 @@ int igsc_device_oem_version(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_ifr_bin_version(IN struct igsc_device_handle *handle,
+int igsc_device_ifr_bin_version(IN  struct igsc_device_handle *handle,
                                 OUT struct igsc_ifr_bin_version *version);
 
 /**
@@ -1601,14 +1630,14 @@ int igsc_device_ifr_bin_version(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_psc_version(IN struct igsc_device_handle *handle,
+int igsc_device_psc_version(IN  struct igsc_device_handle *handle,
                             OUT struct igsc_psc_version *version);
 
 enum igsc_gfsp_health_indicators {
     IGSC_HEALTH_INDICATOR_HEALTHY = 0,
     IGSC_HEALTH_INDICATOR_DEGRADED = 1,
     IGSC_HEALTH_INDICATOR_CRITICAL = 2,
-    IGSC_HEALTH_INDICATOR_REPLACE = 3
+    IGSC_HEALTH_INDICATOR_REPLACE  = 3
 };
 
 /**
@@ -1618,7 +1647,7 @@ enum igsc_gfsp_health_indicators {
  *  @param health_indicator contains pointer to @enum igsc_gfsp_health_indicators
  *
  *  @return IGSC_SUCCESS if successful, otherwise error code.
- */
+*/
 IGSC_EXPORT
 int igsc_gfsp_get_health_indicator(IN struct igsc_device_handle *handle,
                                    OUT uint8_t *health_indicator);
@@ -1635,11 +1664,11 @@ int igsc_gfsp_get_health_indicator(IN struct igsc_device_handle *handle,
  *  @param actual_out_buffer_size pointer to the actual data size returned in the output buffer
  *
  *  @return IGSC_SUCCESS if successful, otherwise error code.
- */
+*/
 IGSC_EXPORT
 int igsc_gfsp_heci_cmd(struct igsc_device_handle *handle, uint32_t gfsp_cmd,
-                       uint8_t *in_buffer, size_t in_buffer_size,
-                       uint8_t *out_buffer, size_t out_buffer_size,
+                       uint8_t* in_buffer, size_t in_buffer_size,
+                       uint8_t* out_buffer, size_t out_buffer_size,
                        size_t *actual_out_buffer_size);
 
 /**
@@ -1654,22 +1683,47 @@ enum csc_late_binding_flags {
  */
 enum csc_late_binding_type {
     CSC_LATE_BINDING_TYPE_INVALID = 0,
-    CSC_LATE_BINDING_TYPE_FAN_TABLE,
-    CSC_LATE_BINDING_TYPE_VR_CONFIG
+    CSC_LATE_BINDING_TYPE_FAN_TABLE = 1,
+    CSC_LATE_BINDING_TYPE_VR_CONFIG = 2,
+    CSC_LATE_BINDING_TYPE_OCODE = 3,
+    CSC_LATE_BINDING_TYPE_DGDIAG = 4,
 };
 
 /**
  * Late Binding payload status
  */
 enum csc_late_binding_status {
-    CSC_LATE_BINDING_STATUS_SUCCESS = 0,
-    CSC_LATE_BINDING_STATUS_4ID_MISMATCH = 1,
-    CSC_LATE_BINDING_STATUS_ARB_FAILURE = 2,
-    CSC_LATE_BINDING_STATUS_GENERAL_ERROR = 3,
-    CSC_LATE_BINDING_STATUS_INVALID_PARAMS = 4,
+    CSC_LATE_BINDING_STATUS_SUCCESS           = 0,
+    CSC_LATE_BINDING_STATUS_4ID_MISMATCH      = 1,
+    CSC_LATE_BINDING_STATUS_ARB_FAILURE       = 2,
+    CSC_LATE_BINDING_STATUS_GENERAL_ERROR     = 3,
+    CSC_LATE_BINDING_STATUS_INVALID_PARAMS    = 4,
     CSC_LATE_BINDING_STATUS_INVALID_SIGNATURE = 5,
-    CSC_LATE_BINDING_STATUS_INVALID_PAYLOAD = 6,
-    CSC_LATE_BINDING_STATUS_TIMEOUT = 7,
+    CSC_LATE_BINDING_STATUS_INVALID_PAYLOAD   = 6,
+    CSC_LATE_BINDING_STATUS_TIMEOUT           = 7,
+    CSC_LATE_BINDING_STATUS_BUFFER_TOO_SMALL                      = 8,
+    CSC_LATE_BINDING_STATUS_INTERNAL_ERROR                        = 9,
+    CSC_LATE_BINDING_STATUS_INVALID_FPT_TABLE                     = 10,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_VERIFICATION_ERROR     = 11,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_INVALID_CPD            = 12,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_FW_VERSION_MISMATCH    = 13,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_INVALID_MANIFEST       = 14,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_INVALID_HASH           = 15,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_BINDING_TYPE_MISMATCH  = 16,
+    CSC_LATE_BINDING_STATUS_SIGNED_PAYLOAD_HANDLE_SVN_FAILED      = 17,
+    CSC_LATE_BINDING_STATUS_DESTINATION_MBOX_FAILURE              = 18,
+    CSC_LATE_BINDING_STATUS_MISSING_LOADING_PATCH                 = 19,
+    CSC_LATE_BINDING_STATUS_INVALID_COMMAND                       = 20,
+    CSC_LATE_BINDING_STATUS_INVALID_HECI_HEADER                   = 21,
+    CSC_LATE_BINDING_STATUS_IP_ERROR_START                        = 0x80000000,
+};
+
+/**
+ * Late Binding SVN source
+ */
+enum csc_late_binding_svn_source {
+    CSC_LATE_BINDING_SVN_SOURCE_SPI = 0,
+    CSC_LATE_BINDING_SVN_SOURCE_KEY_MANIFEST = 1,
 };
 
 /**
@@ -1686,10 +1740,48 @@ enum csc_late_binding_status {
  */
 IGSC_EXPORT
 int igsc_device_update_late_binding_config(IN struct igsc_device_handle *handle,
-                                           IN uint32_t type,  /* enum csc_late_binding_type */
+                                           IN uint32_t type, /* enum csc_late_binding_type */
                                            IN uint32_t flags, /* enum csc_late_binding_flags */
                                            IN uint8_t *payload, IN size_t payload_size,
                                            OUT uint32_t *status); /* enum csc_late_binding_status */
+
+/**
+ *  @brief Sends Late Binding HECI command to version 2 firmware
+ *
+ *  @param handle       A handle to the device.
+ *  @param type         Late Binding payload type @enum csc_late_binding_type
+ *  @param flags        Late Binding flags to be sent to the firmware enum csc_late_binding_flags
+ *  @param payload      Late Binding data to be sent to the firmware
+ *  @param payload_size Size of the payload data
+ *  @param status       Late Binding payload status @enum csc_late_binding_status
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_update_late_binding_config2(IN struct igsc_device_handle* handle,
+    IN uint32_t type, /* enum csc_late_binding_type */
+    IN uint32_t flags, /* enum csc_late_binding_flags */
+    IN uint8_t* payload, IN size_t payload_size,
+    OUT uint32_t* status); /* enum csc_late_binding_status */
+
+/**
+ *  @brief Retrieve information about specific Late Binding type
+ *
+ *  @param handle       A handle to the device.
+ *  @param type         Late Binding payload type @enum csc_late_binding_type
+ *  @param svn_source   Source of the ARB SVN for the specific type
+ *  @param min_svn      The minimum ARB SVN of the specific type
+ *  @param status       Late Binding payload status @enum csc_late_binding_status
+ *
+ *  @return IGSC_SUCCESS if successful, otherwise error code.
+ */
+IGSC_EXPORT
+int igsc_device_get_late_binding_info(IN struct  igsc_device_handle* handle,
+    IN uint32_t type, /* enum csc_late_binding_type */
+    OUT uint32_t* svn_source,
+    OUT uint32_t* min_svn,
+    OUT uint32_t* status); /* enum csc_late_binding_status */
+
 /**
  *  @brief Sends ARB SVN Commit HECI command
  *
@@ -1699,7 +1791,7 @@ int igsc_device_update_late_binding_config(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_device_commit_arb_svn(IN struct igsc_device_handle *handle, uint8_t *fw_error);
+int igsc_device_commit_arb_svn(IN struct  igsc_device_handle *handle, uint8_t *fw_error);
 
 /**
  *  @brief Retrieves Minimal allowed ARB SVN
@@ -1744,16 +1836,16 @@ struct igsc_device_mbist_ppr_status {
  * PPR status structure
  */
 struct igsc_ppr_status {
-    uint8_t boot_time_memory_correction_pending; /**< 0 - No pending boot time memory correction, */
-                                                 /**< 1 - Pending boot time memory correction     */
-    uint8_t ppr_mode;                            /**< 0 – PPR enabled, 1 – PPR disabled, 2 – PPR test mode, */
-                                                 /**< 3 – PPR auto run on next boot */
-    uint8_t test_run_status;                     /**< test status @see enum igsc_ppr_test_status_mask */
-    uint8_t reserved;
-    uint32_t ras_ppr_applied;                                      /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
-    uint32_t mbist_completed;                                      /**< 0 - Not Applied, Any set bit represents mbist completed */
-    uint32_t num_devices;                                          /**< real number of devices in the array (on Xe_HP SDV, PVC <= 8) */
-    struct igsc_device_mbist_ppr_status device_mbist_ppr_status[]; /**< Array of PPR statuses per device */
+    uint8_t  boot_time_memory_correction_pending; /**< 0 - No pending boot time memory correction, */
+                                                  /**< 1 - Pending boot time memory correction     */
+    uint8_t  ppr_mode;                            /**< 0 – PPR enabled, 1 – PPR disabled, 2 – PPR test mode, */
+                                                  /**< 3 – PPR auto run on next boot */
+    uint8_t  test_run_status;                     /**< test status @see enum igsc_ppr_test_status_mask */
+    uint8_t  reserved;
+    uint32_t ras_ppr_applied;                     /**< 0 - ppr not applied, 1 - ppr applied, 2 - ppr exhausted */
+    uint32_t mbist_completed;                     /**< 0 - Not Applied, Any set bit represents mbist completed */
+    uint32_t num_devices;                         /**< real number of devices in the array (on Xe_HP SDV, PVC <= 8) */
+    struct   igsc_device_mbist_ppr_status device_mbist_ppr_status[]; /**< Array of PPR statuses per device */
 };
 
 /**
@@ -1778,12 +1870,25 @@ int igsc_memory_ppr_devices(IN struct igsc_device_handle *handle,
  *  @return IGSC_SUCCESS if successful, otherwise error code.
  */
 IGSC_EXPORT
-int igsc_memory_ppr_status(IN struct igsc_device_handle *handle,
+int igsc_memory_ppr_status(IN struct  igsc_device_handle *handle,
                            OUT struct igsc_ppr_status *ppr_status);
 
 /**
  * @}
  */
+
+/**
+ *  @brief Return the library version
+ *
+ *  @param major pointer to fill for major version part
+ *  @param minor pointer to fill for minor version part
+ *  @param patch pointer to fill for patch version part
+ *  @param build pointer to fill for build version part
+ */
+IGSC_EXPORT
+void igsc_library_version(uint32_t *major, uint32_t *minor,
+                          uint32_t *patch, uint32_t *build);
+
 #ifdef __cplusplus
 }
 #endif

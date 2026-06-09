@@ -1865,12 +1865,15 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Global Operations tests ---- " << std::endl;
     zes_device_properties_t properties = {};
+    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
     zes_intel_driver_name_exp_properties_t drvName = {ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES};
-    properties.pNext = &drvName;
+    oemSerialNumber.pNext = &drvName;
+    properties.pNext = &oemSerialNumber;
     VALIDATECALL(zesDeviceGetProperties(device, &properties));
     if (verbose) {
         std::cout << "properties.numSubdevices = " << properties.numSubdevices << std::endl;
         std::cout << "properties.serialNumber = " << properties.serialNumber << std::endl;
+        std::cout << "oemSerialNumber.oemSerialNumber = " << oemSerialNumber.oemSerialNumber << std::endl;
         std::cout << "properties.boardNumber = " << properties.boardNumber << std::endl;
         std::cout << "properties.brandName = " << properties.brandName << std::endl;
         std::cout << "properties.modelName = " << properties.modelName << std::endl;

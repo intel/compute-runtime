@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,6 +84,20 @@ static inline int mockGetHealthIndicator(struct igsc_device_handle *handle, uint
 
 static inline int mockGetHealthIndicatorFailure(struct igsc_device_handle *handle, uint8_t *healthIndicator) {
     return -1;
+}
+
+static int mockIgscDeviceGetOemSerialNumber(struct igsc_device_handle *handle,
+                                            struct igsc_oem_serial_number *oemSerialNumber) {
+    const char *mockSerialNumber = "VPBG2604WC331K9PHRN76814-400";
+    size_t len = strlen(mockSerialNumber);
+    oemSerialNumber->length = static_cast<uint16_t>(len);
+    memcpy(oemSerialNumber->sn, mockSerialNumber, len);
+    return IGSC_SUCCESS;
+}
+
+static int mockIgscDeviceGetOemSerialNumberFailure(struct igsc_device_handle *handle,
+                                                   struct igsc_oem_serial_number *oemSerialNumber) {
+    return IGSC_ERROR_DEVICE_NOT_FOUND;
 }
 
 static int mockGetEccAvailable(struct igsc_device_handle *handle, uint32_t gfspCmd, uint8_t *inBuffer, size_t inBufferSize, uint8_t *outBuffer, size_t outBufferSize, size_t *actualOutBufferSize) {
@@ -1114,6 +1128,58 @@ TEST(FwFlashLateBindingTest, GivenFirmwareUtilImpAndLateBindingIsSupportedWhenCa
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
     delete pFwUtilImp;
+}
+
+class FwGetSerialNumberTestFixture : public ::testing::Test {
+  protected:
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = nullptr;
+    MockFwUtilOsLibrary *osLibHandle = nullptr;
+
+    void SetUp() override {
+        pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+        osLibHandle = new MockFwUtilOsLibrary();
+        osLibHandle->funcMap["igsc_device_oem_serial_number"] = reinterpret_cast<void *>(&mockIgscDeviceGetOemSerialNumber);
+        pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    }
+
+    void TearDown() override {
+        delete pFwUtilImp->libraryHandle;
+        pFwUtilImp->libraryHandle = nullptr;
+        delete pFwUtilImp;
+    }
+};
+
+TEST_F(FwGetSerialNumberTestFixture, GivenFirmwareUtilInstanceWhenFwGetSerialNumberIsCalledAndIgscCallSucceedsThenSerialNumberIsRetrieved) {
+    std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> serialNumber = {};
+    uint16_t serialNumberLen = 0;
+
+    auto result = pFwUtilImp->fwGetSerialNumber(serialNumber, serialNumberLen);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_GT(serialNumberLen, 0);
+
+    std::string expectedSerialNumber = "VPBG2604WC331K9PHRN76814-400";
+    std::string actualSerialNumber(reinterpret_cast<char *>(serialNumber.data()), serialNumberLen);
+    EXPECT_EQ(expectedSerialNumber, actualSerialNumber);
+}
+
+TEST_F(FwGetSerialNumberTestFixture, GivenFirmwareUtilInstanceWhenFwGetSerialNumberIsCalledAndIgscCallFailsThenCallReturnsError) {
+    osLibHandle->funcMap["igsc_device_oem_serial_number"] = reinterpret_cast<void *>(&mockIgscDeviceGetOemSerialNumberFailure);
+
+    std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> serialNumber = {};
+    uint16_t serialNumberLen = 0;
+
+    auto result = pFwUtilImp->fwGetSerialNumber(serialNumber, serialNumberLen);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
+}
+
+TEST_F(FwGetSerialNumberTestFixture, GivenFirmwareUtilInstanceWhenFwGetSerialNumberIsCalledAndFunctionNotAvailableThenCallReturnsUnsupported) {
+    osLibHandle->funcMap.erase("igsc_device_oem_serial_number");
+
+    std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> serialNumber = {};
+    uint16_t serialNumberLen = 0;
+
+    auto result = pFwUtilImp->fwGetSerialNumber(serialNumber, serialNumberLen);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 } // namespace ult

@@ -77,6 +77,21 @@ bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_P
     return false;
 }
 
+bool LinuxGlobalOperationsImp::getOemSerialNumber(std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> &serialNumber, uint16_t &serialNumberLen) {
+    auto pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
+    if (pFwInterface == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get firmware interface\n", __FUNCTION__);
+        return false;
+    }
+
+    ze_result_t result = pFwInterface->fwGetSerialNumber(serialNumber, serialNumberLen);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read serial number from firmware\n", __FUNCTION__);
+        return false;
+    }
+    return true;
+}
+
 bool LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
     uint64_t offset = 0;
     std::string telemDir = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,10 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "level_zero/sysman/source/shared/firmware_util/sysman_igsc_wrapper.h"
 #include <level_zero/zes_api.h>
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -73,6 +75,7 @@ class FirmwareUtil {
     virtual void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) = 0;
     virtual void fwGetMemoryHealthIndicator(zes_mem_health_t *health) = 0;
     virtual void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) = 0;
+    virtual ze_result_t fwGetSerialNumber(std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> &serialNumber, uint16_t &serialNumberLen) = 0;
     virtual ~FirmwareUtil() = default;
 };
 } // namespace Sysman

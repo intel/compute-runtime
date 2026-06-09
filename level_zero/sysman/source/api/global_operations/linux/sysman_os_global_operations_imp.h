@@ -39,6 +39,7 @@ struct MemPageInfo {
 class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNonMovableClass {
   public:
     bool getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
+    bool getOemSerialNumber(std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> &serialNumber, uint16_t &serialNumberLen) override;
     bool getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) override;
     void getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;

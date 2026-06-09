@@ -95,6 +95,7 @@ struct MockEccFwInterface : public L0::Sysman::FirmwareUtil {
     ADDMETHOD_NOBASE_VOIDRETURN(getLateBindingSupportedFwTypes, (std::vector<std::string> & fwTypes));
     ADDMETHOD_NOBASE(fwSetGfspConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t gfspHeciCmdCode, std::vector<uint8_t> inBuf, std::vector<uint8_t> &outBuf));
     ADDMETHOD_NOBASE(fwGetGfspConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t gfspHeciCmdCode, std::vector<uint8_t> &outBuf));
+    ADDMETHOD_NOBASE(fwGetSerialNumber, ze_result_t, ZE_RESULT_SUCCESS, (std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> & serialNumber, uint16_t &serialNumberLen));
 
     MockEccFwInterface() = default;
     ~MockEccFwInterface() override = default;

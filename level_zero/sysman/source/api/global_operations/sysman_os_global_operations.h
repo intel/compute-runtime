@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/sysman/source/device/os_sysman.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_igsc_wrapper.h"
 #include <level_zero/zes_api.h>
 #include <level_zero/zes_intel_gpu_sysman.h>
 
@@ -25,6 +26,7 @@ namespace Sysman {
 class OsGlobalOperations {
   public:
     virtual bool getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) = 0;
+    virtual bool getOemSerialNumber(std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> &serialNumber, uint16_t &serialNumberLen) = 0;
     virtual bool getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) = 0;

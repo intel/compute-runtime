@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,10 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util_imp.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_igsc_wrapper.h"
 
 #include <algorithm>
+#include <array>
 
 static std::vector<std::string> deviceSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC", "GFX_DATA"};
 static constexpr uint8_t eccStateNone = 0xFF;
@@ -25,6 +27,7 @@ const std::string fwGfspGetHealthIndicator = "igsc_gfsp_get_health_indicator";
 const std::string fwGfspCountTiles = "igsc_gfsp_count_tiles";
 const std::string fwDeviceIfrRunMemPPRTest = "igsc_ifr_run_mem_ppr_test";
 const std::string fwGfspHeciCmd = "igsc_gfsp_heci_cmd";
+const std::string fwDeviceOemSerialNumber = "igsc_device_oem_serial_number";
 
 pIgscIfrGetStatusExt deviceIfrGetStatusExt;
 pIgscIafPscUpdate iafPscUpdate;
@@ -33,6 +36,7 @@ pIgscGfspCountTiles gfspCountTiles;
 pIgscGfspGetHealthIndicator gfspGetHealthIndicator;
 pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
 pIgscGfspHeciCmd gfspHeciCmd;
+pIgscDeviceOemSerialNumber deviceGetOemSerialNumber;
 
 ze_result_t FirmwareUtilImp::fwIfrApplied(bool &ifrStatus) {
     uint32_t supportedTests = 0; // Bitmap holding the tests supported on the platform
@@ -412,6 +416,30 @@ ze_result_t FirmwareUtilImp::getFwVersion(std::string fwType, std::string &firmw
         return fwDataGetVersion(firmwareVersion);
     }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t FirmwareUtilImp::fwGetSerialNumber(std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> &serialNumber, uint16_t &serialNumberLen) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
+
+    deviceGetOemSerialNumber = reinterpret_cast<pIgscDeviceOemSerialNumber>(libraryHandle->getProcAddress(fwDeviceOemSerialNumber));
+    if (deviceGetOemSerialNumber == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc_device_oem_serial_number function not available\n", __FUNCTION__);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    igsc_oem_serial_number oemSerialNumber = {};
+    int ret = deviceGetOemSerialNumber(&fwDeviceHandle, &oemSerialNumber);
+    if (ret != IGSC_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): Failed to get OEM serial number from igsc (error:0x%x)\n", __FUNCTION__, ret);
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    serialNumberLen = oemSerialNumber.length;
+    std::copy(oemSerialNumber.sn, oemSerialNumber.sn + oemSerialNumber.length, serialNumber.begin());
+
+    return ZE_RESULT_SUCCESS;
 }
 
 bool FirmwareUtilImp::loadEntryPointsExt() {

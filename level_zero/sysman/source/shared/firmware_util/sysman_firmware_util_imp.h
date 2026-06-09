@@ -100,6 +100,9 @@ typedef int (*pIgscGfspHeciCmd)(struct igsc_device_handle *handle,
                                 size_t outBufferSize,
                                 size_t *actualOutBufferSize);
 
+typedef int (*pIgscDeviceOemSerialNumber)(struct igsc_device_handle *handle,
+                                          struct igsc_oem_serial_number *sn);
+
 extern const std::string fwDeviceFwVersion;
 extern const std::string fwDeviceFwDataVersion;
 extern const std::string fwDeviceOpromVersion;
@@ -127,6 +130,7 @@ extern pIgscGfspMemoryErrors gfspMemoryErrors;
 extern pIgscGfspCountTiles gfspCountTiles;
 extern pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
 extern pIgscGfspHeciCmd gfspHeciCmd;
+extern pIgscDeviceOemSerialNumber deviceGetOemSerialNumber;
 
 extern void firmwareFlashProgressFunc(uint32_t done, uint32_t total, void *ctx);
 
@@ -156,6 +160,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableAndNonMovableClass 
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
     void fwGetMemoryHealthIndicator(zes_mem_health_t *health) override;
     void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) override;
+    ze_result_t fwGetSerialNumber(std::array<uint8_t, IGSC_MAX_OEM_SN_LENGTH> &serialNumber, uint16_t &serialNumberLen) override;
 
     static int fwUtilLoadFlags;
     static std::vector<std::string> fwUtilLibraryNames;

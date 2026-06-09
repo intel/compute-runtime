@@ -141,6 +141,39 @@ typedef struct _zes_intel_driver_name_exp_properties_t {
 } zes_intel_driver_name_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTY_NAME
+/// @brief OEM serial number property extension name
+#define ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTY_NAME "ZES_intel_experimental_oem_serial_number_property"
+#endif // ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTY_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_OEM_SERIAL_NUMBER_SIZE
+/// @brief Maximum OEM serial number string size
+#define ZES_INTEL_OEM_SERIAL_NUMBER_SIZE 1024
+#endif // ZES_INTEL_OEM_SERIAL_NUMBER_SIZE
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query OEM serial number extension Version(s)
+typedef enum _zes_intel_oem_serial_number_exp_properties_version_t {
+    ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                      ///< version 1.0
+    ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES_VERSION_CURRENT = ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES_VERSION_1_0, ///< latest known version
+    ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_oem_serial_number_exp_properties_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query OEM serial number.
+/// This structure can be passed in the 'pNext' of zes_device_properties_t
+typedef struct _zes_intel_oem_serial_number_exp_properties_t {
+    zes_structure_type_ext_t stype;                         ///< [in] type of this structure
+    void *pNext;                                            ///< [in][optional] must be null or a pointer to an extension-specific
+                                                            ///< structure (i.e. contains stype and pNext).
+    uint16_t length;                                        ///< [out] actual OEM serial number length (not including null terminator)
+    char oemSerialNumber[ZES_INTEL_OEM_SERIAL_NUMBER_SIZE]; ///< [out] OEM serial number (NULL terminated string value). Will be
+                                                            ///< set to the string "unknown" if this cannot be determined for the
+                                                            ///< device.
+} zes_intel_oem_serial_number_exp_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_FREQ_THROTTLE_REASON_EXP_NAME
 /// @brief Frequency throttle reason extension name
 #define ZES_INTEL_FREQ_THROTTLE_REASON_EXP_NAME "ZES_intel_experimental_frequency_throttle_reason"
