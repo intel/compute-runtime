@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
 #include "gtest/gtest.h"
@@ -27,7 +29,8 @@ TEST_F(ReleaseHelperMtlUTests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_FALSE(releaseHelper->isAdjustWalkOrderAvailable());
         EXPECT_FALSE(releaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_FALSE(releaseHelper->isDotProductAccumulateSystolicSupported());
-        EXPECT_EQ(revision == 0, releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired());
+        EXPECT_EQ(revision == 0, releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired());
+        EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
         EXPECT_EQ(revision == 0, releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
         EXPECT_FALSE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());

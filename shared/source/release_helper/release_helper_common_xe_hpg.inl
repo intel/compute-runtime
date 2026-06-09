@@ -49,4 +49,15 @@ template <>
 bool ReleaseHelperHw<release>::isPostImageWriteFlushRequired() const {
     return true;
 }
+
+template <>
+bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const {
+    return true;
+}
+
+template <>
+bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    return hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1 && !isRcs;
+}
+
 } // namespace NEO

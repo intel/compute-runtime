@@ -12,7 +12,6 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 
@@ -116,12 +115,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(Lin
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
     auto &hwInfo = peekHwInfo();
-    auto &productHelper = getProductHelper();
     auto *releaseHelper = getReleaseHelper();
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
     args.dcFlushEnable = this->dcFlushSupport;
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs(), releaseHelper);
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired && debuggingEnabled) {

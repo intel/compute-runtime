@@ -155,16 +155,6 @@ PVCTEST_F(PvcProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSuppor
     EXPECT_TRUE(fePropertiesSupport.disableOverdispatch);
 }
 
-PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenTrueIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    auto isRcs = false;
-
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
-
-    EXPECT_FALSE(isBasicWARequired);
-    EXPECT_FALSE(isExtendedWARequired);
-}
-
 PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isDirectSubmissionSupported());
 }
@@ -187,19 +177,6 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsSkippingStatefulInformati
 
     kernelDescriptor.kernelMetadata.isGeneratedByIgc = false;
     EXPECT_TRUE(productHelper->isSkippingStatefulInformationRequired(kernelDescriptor));
-}
-
-PVCTEST_F(PvcProductHelper, givenProductHelperAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandDisabledWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
-
-    auto hwInfo = *defaultHwInfo;
-    auto isRcs = false;
-
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
-
-    EXPECT_FALSE(isExtendedWARequired);
-    EXPECT_FALSE(isBasicWARequired);
 }
 
 PVCTEST_F(PvcProductHelper, givenDeviceIdThenProperMaxThreadsForWorkgroupIsReturned) {

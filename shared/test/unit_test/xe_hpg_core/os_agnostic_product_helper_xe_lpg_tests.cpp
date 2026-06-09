@@ -258,22 +258,6 @@ HWTEST2_F(XeLpgProductHelperTests, givenCompressionFtrEnabledWhenAskingForPageTa
     EXPECT_TRUE(productHelper->isPageTableManagerSupported(hwInfo));
 }
 
-HWTEST2_F(XeLpgProductHelperTests, givenHwIpVersionWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenAllowBasedOnReleaseHelper, IsXeLpg) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    auto isRcs = false;
-
-    AOT::PRODUCT_CONFIG ipReleases[] = {AOT::MTL_U_A0, AOT::MTL_U_B0, AOT::MTL_H_A0, AOT::MTL_H_B0, AOT::ARL_H_A0, AOT::ARL_H_B0};
-    for (auto &ipRelease : ipReleases) {
-        hwInfo.ipVersion.value = ipRelease;
-        auto releaseHelper = ReleaseHelper::create(ipRelease);
-
-        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper.get());
-
-        EXPECT_FALSE(isExtendedWARequired);
-        EXPECT_EQ(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(), isBasicWARequired);
-    }
-}
-
 HWTEST2_F(XeLpgProductHelperTests, whenCheckFp64SupportThenReturnTrue, IsXeLpg) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64);
 }

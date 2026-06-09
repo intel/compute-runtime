@@ -22,6 +22,7 @@
 namespace NEO {
 
 class ReleaseHelper;
+struct HardwareInfo;
 enum class ReleaseType;
 
 inline constexpr uint32_t maxArchitecture = 64;
@@ -39,7 +40,9 @@ class ReleaseHelper {
     virtual bool isAdjustWalkOrderAvailable() const = 0;
     virtual bool isMatrixMultiplyAccumulateSupported() const = 0;
     virtual bool isDotProductAccumulateSystolicSupported() const = 0;
-    virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const = 0;
+    std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const;
+    virtual bool isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const = 0;
+    virtual bool isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const = 0;
     virtual bool isPipeControlPriorToPipelineSelectWaRequired() const = 0;
     virtual bool isProgramAllStateComputeCommandFieldsWARequired() const = 0;
     virtual bool isSplitMatrixMultiplyAccumulateSupported() const = 0;
@@ -94,7 +97,8 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isAdjustWalkOrderAvailable() const override;
     bool isMatrixMultiplyAccumulateSupported() const override;
     bool isDotProductAccumulateSystolicSupported() const override;
-    bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const override;
+    bool isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const override;
+    bool isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const override;
     bool isPipeControlPriorToPipelineSelectWaRequired() const override;
     bool isProgramAllStateComputeCommandFieldsWARequired() const override;
     bool isSplitMatrixMultiplyAccumulateSupported() const override;

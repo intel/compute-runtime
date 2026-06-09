@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 #include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -27,9 +28,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &productHelper = this->device->getProductHelper();
     auto *releaseHelper = device->getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs(), releaseHelper);
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -115,10 +115,9 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenComputeModeCmdSizeWhenL
 
     auto expSize = sizeof(STATE_COMPUTE_MODE);
     auto &rootDeviceEnvironment = csr->peekRootDeviceEnvironment();
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, getCsrHw<FamilyType>()->isRcs(), releaseHelper);
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, getCsrHw<FamilyType>()->isRcs());
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {
@@ -149,10 +148,9 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenCoherencyWithSharedHand
 
     auto expSize = sizeof(STATE_COMPUTE_MODE) + (sizeof(PIPE_CONTROL));
     auto &rootDeviceEnvironment = csr->peekRootDeviceEnvironment();
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, getCsrHw<FamilyType>()->isRcs(), releaseHelper);
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, getCsrHw<FamilyType>()->isRcs());
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {
@@ -181,10 +179,9 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenCoherencyWithoutSharedH
 
     auto expSize = sizeof(STATE_COMPUTE_MODE);
     auto &rootDeviceEnvironment = csr->peekRootDeviceEnvironment();
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, getCsrHw<FamilyType>()->isRcs(), releaseHelper);
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, getCsrHw<FamilyType>()->isRcs());
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {

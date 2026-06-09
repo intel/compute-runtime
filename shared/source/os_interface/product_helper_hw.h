@@ -55,7 +55,6 @@ class ProductHelperHw : public ProductHelper {
     bool isDirectSubmissionSupported() const override;
     bool isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const override;
     bool restartDirectSubmissionForHostptrFree() const override;
-    std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const override;
     bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
     void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const override;
     uint32_t canShareMemoryWithoutNTHandle() const override;

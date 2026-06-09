@@ -890,10 +890,9 @@ template <typename Family>
 inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
                                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs) {
 
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     if (isExtendedWARequired) {
         args.textureCacheInvalidationEnable = true;

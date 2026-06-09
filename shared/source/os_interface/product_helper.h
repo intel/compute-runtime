@@ -120,7 +120,6 @@ class ProductHelper {
     virtual bool isDirectSubmissionSupported() const = 0;
     virtual bool isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const = 0;
     virtual bool restartDirectSubmissionForHostptrFree() const = 0;
-    virtual std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const = 0;
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const = 0;
     virtual uint32_t canShareMemoryWithoutNTHandle() const = 0;

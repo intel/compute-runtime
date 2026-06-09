@@ -18,7 +18,7 @@ namespace NEO {
 constexpr auto release = ReleaseType::release1271;
 
 template <>
-bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsWARequired() const {
+bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired() const {
     return hardwareIpVersion.value == AOT::MTL_H_A0;
 }
 

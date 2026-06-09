@@ -5,7 +5,10 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
 #include "gtest/gtest.h"
@@ -26,7 +29,8 @@ TEST_F(ReleaseHelperDg2G11Tests, whenGettingCapabilitiesThenCorrectPropertiesAre
         EXPECT_FALSE(releaseHelper->isAdjustWalkOrderAvailable());
         EXPECT_TRUE(releaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(releaseHelper->isDotProductAccumulateSystolicSupported());
-        EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired());
+        EXPECT_TRUE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired());
+        EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
         EXPECT_TRUE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
         EXPECT_TRUE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
@@ -134,4 +138,32 @@ TEST_F(ReleaseHelperDg2G11Tests, whenIsSingleDispatchRequiredForMultiCCSCalledTh
 
 TEST_F(ReleaseHelperDg2G11Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
     whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
+}
+
+TEST_F(ReleaseHelperDg2G11Tests, whenNumberOfCCSEnabledLargerThanOneAndIsRcsFalseThenPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredCalledThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+    releaseHelper = ReleaseHelper::create(ipVersion);
+    EXPECT_TRUE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, false));
+}
+
+TEST_F(ReleaseHelperDg2G11Tests, whenNumberOfCCSEnabledLargerThanOneAndIsRcsTrueThenPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredCalledThenFalseReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+    releaseHelper = ReleaseHelper::create(ipVersion);
+    EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, true));
+}
+
+TEST_F(ReleaseHelperDg2G11Tests, whenNumberOfCCSEnabledEqualToOneAndIsRcsFalseThenPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredCalledThenFalseReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    releaseHelper = ReleaseHelper::create(ipVersion);
+    EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, false));
+}
+
+TEST_F(ReleaseHelperDg2G11Tests, whenNumberOfCCSEnabledEqualToOneAndIsRcsTrueThenPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredCalledThenFalseReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    releaseHelper = ReleaseHelper::create(ipVersion);
+    EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, true));
 }

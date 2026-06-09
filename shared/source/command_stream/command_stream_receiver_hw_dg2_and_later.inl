@@ -12,7 +12,6 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 
@@ -23,8 +22,7 @@ template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
     size_t size = sizeof(_3DSTATE_BTD);
     auto *releaseHelper = getReleaseHelper();
-    auto &productHelper = getProductHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs(), releaseHelper);
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isBasicWARequired;
 
     if (isExtendedWARequired) {
@@ -37,9 +35,8 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const Ha
 template <>
 void CommandStreamReceiverHw<Family>::dispatchRayTracingStateCommand(LinearStream &cmdStream, Device &device) {
     auto &hwInfo = peekHwInfo();
-    auto &productHelper = getProductHelper();
     auto *releaseHelper = getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs(), releaseHelper);
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isBasicWARequired;
 
     if (isExtendedWARequired) {

@@ -15,11 +15,6 @@ const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsWARequired() const {
-    return false;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isResolvingSubDeviceIDNeeded() const {
     return true;
 }

@@ -7,6 +7,8 @@
 
 #include "shared/source/release_helper/release_helper.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 namespace NEO {
 
 std::unique_ptr<ReleaseHelper> ReleaseHelper::create(HardwareIpVersion hardwareIpVersion) {
@@ -18,6 +20,15 @@ std::unique_ptr<ReleaseHelper> ReleaseHelper::create(HardwareIpVersion hardwareI
     }
     auto createFunction = releaseHelperFactory[architecture][release];
     return createFunction(hardwareIpVersion);
+}
+
+std::pair<bool, bool> ReleaseHelper::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    auto isExtendedWARequired = isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, isRcs);
+    if (debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
+        isExtendedWARequired = debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
+    }
+    return {isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired(),
+            isExtendedWARequired};
 }
 
 } // namespace NEO
