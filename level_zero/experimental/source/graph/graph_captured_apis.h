@@ -132,6 +132,9 @@ struct ExternalCbEventInfo {
     NEO::InOrderExecEventHelper inOrderExecEventHelper;
 };
 
+using PatchPreambleHostData = std::pair<uint64_t, uint64_t *>;
+using PatchPreambleHostDataContainer = std::unordered_map<L0::CommandList *, PatchPreambleHostData>;
+
 struct ExternalCbEventInfoContainer {
     void addCbEventInfo(L0::Event *event, L0::CommandList *executorCommandList) {
         auto it = std::find_if(storage.begin(),
@@ -154,9 +157,21 @@ struct ExternalCbEventInfoContainer {
     const std::vector<ExternalCbEventInfo> &getCbEventInfos() const {
         return storage;
     }
+    const PatchPreambleHostDataContainer &getExecutorInfos() const {
+        return executorStorage;
+    }
+
+    void finalizeExecutorContainer();
+    void updateExecutorContainer(L0::CommandList *currentRoot);
+    PatchPreambleHostData getPreambleHostData(L0::CommandList *executor) {
+        auto it = executorStorage.find(executor);
+        UNRECOVERABLE_IF(it == executorStorage.end());
+        return it->second;
+    }
 
   protected:
     std::vector<ExternalCbEventInfo> storage;
+    PatchPreambleHostDataContainer executorStorage;
 };
 
 struct CbExternalEventInstantiateContext {

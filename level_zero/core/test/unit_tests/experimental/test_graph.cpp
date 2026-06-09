@@ -1937,10 +1937,12 @@ TEST_F(GraphTestInstantiationTest, WhenForkJoinCbExternalEventsAreUsedThenParent
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
+    auto whiteBoxCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(commandList.get())->cmdQImmediate);
 
     std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     subCommandList->setOrdinal(0);
     auto subCommandListHandle = subCommandList->toHandle();
+    auto whiteBoxSubCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(subCommandList.get())->cmdQImmediate);
 
     zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
@@ -1966,11 +1968,14 @@ TEST_F(GraphTestInstantiationTest, WhenForkJoinCbExternalEventsAreUsedThenParent
 
     ExecutableGraph execGraph;
     execGraph.instantiateFrom(*srcGraph.get());
+    auto execGraphHandle = execGraph.toHandle();
+
+    auto cbEventContainer = execGraph.getExternalCbEventInfoContainer().get();
 
     bool forkEventFound = false;
     bool joinEventFound = false;
 
-    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbEventInfos();
+    auto &externalCbEventContainer = cbEventContainer->getCbEventInfos();
     for (const auto &entry : externalCbEventContainer) {
         if (entry.event == forkEvent) {
             EXPECT_EQ(nullptr, entry.executorCommandList);
@@ -1984,6 +1989,35 @@ TEST_F(GraphTestInstantiationTest, WhenForkJoinCbExternalEventsAreUsedThenParent
 
     EXPECT_TRUE(forkEventFound);
     EXPECT_TRUE(joinEventFound);
+
+    auto &execContainer = cbEventContainer->getExecutorInfos();
+    EXPECT_EQ(2u, execContainer.size());
+
+    bool virtualRootFound = false;
+    bool physicalChildFound = false;
+    for (const auto &entry : execContainer) {
+        if (entry.first == nullptr) {
+            virtualRootFound = true;
+        } else {
+            EXPECT_EQ(subCommandList.get(), entry.first);
+            physicalChildFound = true;
+        }
+        EXPECT_EQ(0u, entry.second.first);
+        EXPECT_EQ(nullptr, entry.second.second);
+    }
+
+    EXPECT_TRUE(virtualRootFound);
+    EXPECT_TRUE(physicalChildFound);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExp(commandListHandle, execGraphHandle, nullptr, nullptr, 0, nullptr));
+
+    auto rootHostPatchPreamblePair = cbEventContainer->getPreambleHostData(nullptr);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, rootHostPatchPreamblePair.first);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostAddress, rootHostPatchPreamblePair.second);
+
+    auto childHostPatchPreamblePair = cbEventContainer->getPreambleHostData(subCommandList.get());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, childHostPatchPreamblePair.first);
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, childHostPatchPreamblePair.second);
 
     srcGraph.reset();
     forkEvent->destroy();

@@ -400,6 +400,24 @@ void ExternalCbEventInfoContainer::attachExternalCbEventsToExecutableGraph() {
         info.event->updateInOrdeState(info.inOrderExecEventHelper);
     }
 }
+void ExternalCbEventInfoContainer::finalizeExecutorContainer() {
+    for (auto &info : storage) {
+        executorStorage[info.executorCommandList] = {0, nullptr};
+    }
+}
+
+void ExternalCbEventInfoContainer::updateExecutorContainer(L0::CommandList *currentRoot) {
+    uint64_t *hostAddress = nullptr;
+    uint64_t counter = 0;
+    for (auto &elem : executorStorage) {
+        if (elem.first == nullptr) {
+            currentRoot->getPatchPreambleHostCounter(counter, hostAddress);
+        } else {
+            elem.first->getPatchPreambleHostCounter(counter, hostAddress);
+        }
+        elem.second = {counter, hostAddress};
+    }
+}
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopy>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const {
     auto eventParams = getEffectiveEventParams<CaptureApi::zeCommandListAppendMemoryCopy>(apiArgs, indirectArgs, externalStorage, enforcedEvents);
@@ -1184,6 +1202,9 @@ ze_result_t ExecutableGraph::instantiateFrom(Graph &rootSrc, const GraphInstatia
     builder.finalize(settings);
     this->trailingEventsPool = builder.releaseTrailingEventsPool();
     this->trailingEvents = builder.releaseTrailingEvents();
+    if (this->getExternalCbEventInfoContainer()->externalCbEventsPresent()) {
+        this->getExternalCbEventInfoContainer()->finalizeExecutorContainer();
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1247,6 +1268,7 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
         UNRECOVERABLE_IF(this->orderedCommands->empty());
 
         if (this->externalCbEventStorage->externalCbEventsPresent()) {
+            this->externalCbEventStorage->updateExecutorContainer(executionTarget);
             this->externalCbEventStorage->attachExternalCbEventsToExecutableGraph();
         }
 
