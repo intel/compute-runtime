@@ -19,6 +19,7 @@ set(LEO_HELPERS_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/gl_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/image_enqueue_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/l0_to_cl_return_types_mapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/properties_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/surface_formats.cpp

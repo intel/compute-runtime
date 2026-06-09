@@ -292,8 +292,15 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
         {
             auto lock = pContext->lockInternalCopy();
+            uint32_t regionHeight = std::max(l0imageDesc.height, 1u);
+            uint32_t regionDepth = std::max(l0imageDesc.depth, 1u);
+            if (l0imageDesc.type == ZE_IMAGE_TYPE_1DARRAY) {
+                regionHeight = std::max(l0imageDesc.arraylevels, 1u);
+            } else if (l0imageDesc.type == ZE_IMAGE_TYPE_2DARRAY) {
+                regionDepth = std::max(l0imageDesc.arraylevels, 1u);
+            }
             ze_image_region_t region{0u, 0u, 0u, static_cast<uint32_t>(l0imageDesc.width),
-                                     std::max(l0imageDesc.height, 1u), std::max(l0imageDesc.depth, 1u)};
+                                     regionHeight, regionDepth};
             ret = zeCommandListAppendImageCopyFromMemoryExt(NEO::LEO::castToObject<NEO::LEO::Context>(context)->getInternalCopyCmdList(),
                                                             imageHandle,
                                                             hostPtr,

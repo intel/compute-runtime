@@ -18,6 +18,7 @@
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/api/opencl/source/helpers/cl_validators.h"
 #include "level_zero/api/opencl/source/helpers/convert_color.h"
+#include "level_zero/api/opencl/source/helpers/image_enqueue_helpers.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/kernel/kernel.h"
 #include "level_zero/api/opencl/source/mem_obj/buffer.h"
@@ -420,7 +421,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
                                                               ptr,
                                                               pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
                                                               &mipDesc,
-                                                              static_cast<uint32_t>(rowPitch),
+                                                              getL0ImageRowPitch(pImage->getClObjectType(), rowPitch, slicePitch),
                                                               static_cast<uint32_t>(slicePitch),
                                                               hSignalEvent,
                                                               waitEvents.size(),
@@ -465,7 +466,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
                                                                 pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
                                                                 ptr,
                                                                 &mipDesc,
-                                                                static_cast<uint32_t>(inputRowPitch),
+                                                                getL0ImageRowPitch(pImage->getClObjectType(), inputRowPitch, inputSlicePitch),
                                                                 static_cast<uint32_t>(inputSlicePitch),
                                                                 hSignalEvent,
                                                                 waitEvents.size(),
@@ -808,7 +809,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
                                                                                          ptrOffset(pImage->getCpuPtr(), offset),
                                                                                          pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
                                                                                          &mipDesc,
-                                                                                         mapRowPitch,
+                                                                                         getL0ImageRowPitch(pImage->getClObjectType(), mapRowPitch, mapSlicePitch),
                                                                                          mapSlicePitch,
                                                                                          hSignalEvent,
                                                                                          waitEvents.size(),
