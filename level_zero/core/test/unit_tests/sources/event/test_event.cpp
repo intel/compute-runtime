@@ -6246,5 +6246,28 @@ TEST_F(CounterBasedEventTests, givenEventCreatedWithCounterBasedEventPoolAndCall
     EXPECT_EQ(counterBasedEventPoolFlag, counterBasedEventFlags);
 }
 
+TEST_F(EventTests, givenImplicitlyCounterBasedEventWhenResetCalledThenCounterBasedModeIsDisabled) {
+    event->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+
+    EXPECT_TRUE(event->isCounterBased());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->reset());
+
+    EXPECT_FALSE(event->isCounterBased());
+}
+
+TEST_F(EventTests, givenImplicitlyCounterBasedEventWhenResetCalledThenCounterBasedFlagsAreCleared) {
+    event->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+
+    ze_event_counter_based_flags_t flags{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->getCounterBasedFlags(&flags));
+    EXPECT_EQ(ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE, flags);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->reset());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->getCounterBasedFlags(&flags));
+    EXPECT_EQ(0u, flags);
+}
+
 } // namespace ult
 } // namespace L0

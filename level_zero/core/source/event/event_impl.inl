@@ -976,6 +976,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
     this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();
     this->resetAdditionalTimestampNode(nullptr, 0, true);
+    this->disableImplicitCounterBasedMode();
     return ZE_RESULT_SUCCESS;
 }
 
