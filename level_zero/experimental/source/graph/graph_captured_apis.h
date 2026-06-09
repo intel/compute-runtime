@@ -165,8 +165,7 @@ struct ExternalCbEventInfoContainer {
     void updateExecutorContainer(L0::CommandList *currentRoot);
     PatchPreambleHostData getPreambleHostData(L0::CommandList *executor) {
         auto it = executorStorage.find(executor);
-        UNRECOVERABLE_IF(it == executorStorage.end());
-        return it->second;
+        return it == executorStorage.end() ? PatchPreambleHostData{0, nullptr} : it->second;
     }
 
   protected:

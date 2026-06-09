@@ -1361,6 +1361,10 @@ ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, Gr
     }
 
     CommandListExecutionInternalOptions internalOptions = {};
+    if (this->externalCbEventStorage->externalCbEventsPresent()) {
+        auto preambleCounter = this->externalCbEventStorage->getPreambleHostData(this->executionTarget);
+        internalOptions.patchPreambleRequiredCounter = preambleCounter.first;
+    }
 
     auto segmentIt = this->myOrderedSegments.find(segmentStart);
     if (segmentIt == this->myOrderedSegments.end()) {

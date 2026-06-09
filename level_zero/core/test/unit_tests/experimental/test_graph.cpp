@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/experimental/test_graph.h"
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/internal/l0_cmdlist.h"
@@ -2014,9 +2015,88 @@ TEST_F(GraphTestInstantiationTest, WhenForkJoinCbExternalEventsAreUsedThenParent
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, childHostPatchPreamblePair.first);
     EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, childHostPatchPreamblePair.second);
 
+    auto nullPatchPreamblePair = cbEventContainer->getPreambleHostData(reinterpret_cast<L0::CommandList *>(0x123));
+    EXPECT_EQ(0u, nullPatchPreamblePair.first);
+    EXPECT_EQ(nullptr, nullPatchPreamblePair.second);
+
     srcGraph.reset();
     forkEvent->destroy();
     joinEvent->destroy();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            GivenGraphUsesExternalCbEventsWhenExecutingGraphThenPatchPreambleDispatchesCounterPostSync) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+    auto whiteBoxCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(commandList.get())->cmdQImmediate);
+
+    zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+
+    ze_event_handle_t eventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    auto event = L0::Event::fromHandle(eventHandle);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandle, 0U, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*srcGraph.get());
+    auto execGraphHandle = execGraph.toHandle();
+
+    auto cmdBufferCpuBase = commandList->getCmdContainer().getCommandStream()->getCpuBase();
+
+    auto sizeBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExp(commandListHandle, execGraphHandle, nullptr, nullptr, 0, nullptr));
+    auto sizeAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+
+    auto cbEventContainer = execGraph.getExternalCbEventInfoContainer().get();
+    auto rootHostPatchPreamblePair = cbEventContainer->getPreambleHostData(nullptr);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, rootHostPatchPreamblePair.first);
+
+    auto counter = whiteBoxCmdQueue->patchPreambleCounter.counter;
+    auto deviceAddress = whiteBoxCmdQueue->patchPreambleCounter.deviceAddress;
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdBufferCpuBase, sizeBefore),
+        sizeAfter - sizeBefore));
+
+    bool foundPostSyncWithCounter = false;
+
+    auto pipeControlCmds = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pipeControlCmds.size());
+    for (auto &pipeControlCmd : pipeControlCmds) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlCmd);
+        auto actualAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA &&
+            deviceAddress == actualAddress &&
+            pipeControl->getImmediateData() == counter) {
+            foundPostSyncWithCounter = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(foundPostSyncWithCounter);
+
+    srcGraph.reset();
+    event->destroy();
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
