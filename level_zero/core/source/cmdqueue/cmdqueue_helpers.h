@@ -19,12 +19,14 @@
 #include <level_zero/ze_api.h>
 
 #include <cstdint>
+#include <mutex>
 #include <optional>
 #include <utility>
 
 namespace NEO {
 class CommandStreamReceiver;
 class GraphicsAllocation;
+class TagNodeBase;
 } // namespace NEO
 
 namespace L0 {
@@ -96,6 +98,21 @@ struct CommandListRequiredStateChange {
     CommandListDirtyFlags flags{};
     NEO::PreemptionMode newPreemptionMode = NEO::PreemptionMode::Initial;
     uint32_t cmdListIndex = 0;
+};
+
+struct CommandQueuePatchPreambleCounter {
+    uint64_t counter = 0;
+    NEO::TagNodeBase *hostCounterNode = nullptr;
+    uint64_t *hostAddress = nullptr;
+    uint64_t deviceAddress = 0;
+    NEO::GraphicsAllocation *allocation = nullptr;
+    std::mutex mutex;
+
+    CommandQueuePatchPreambleCounter() = default;
+
+    ~CommandQueuePatchPreambleCounter();
+    void getPatchPreambleHostCounter(Device *device, uint64_t &outCounterValue, uint64_t *&outHostAddress);
+    void getPatchPreambleDeviceData(NEO::GraphicsAllocation *&outAllocation, uint64_t &outDeviceAddress);
 };
 
 static constexpr uint32_t defaultCommandListStateChangeListSize = 10;

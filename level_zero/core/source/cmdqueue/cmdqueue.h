@@ -151,6 +151,10 @@ struct CommandQueue : _ze_command_queue_handle_t {
     }
     void makeResidentForResidencyContainer(const NEO::ResidencyContainer &residencyContainer);
 
+    void getPatchPreambleHostCounter(uint64_t &outCounterValue, uint64_t *&outHostAddress) {
+        patchPreambleCounter.getPatchPreambleHostCounter(this->device, outCounterValue, outHostAddress);
+    }
+
   protected:
     bool frontEndTrackingEnabled() const;
 
@@ -163,6 +167,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
 
     CommandListStateChangeList stateChanges;
     CommandBufferManager buffers;
+    CommandQueuePatchPreambleCounter patchPreambleCounter;
     NEO::LinearStream commandStream{};
     NEO::LinearStream firstCmdListStream{};
     NEO::HeapContainer heapContainer;

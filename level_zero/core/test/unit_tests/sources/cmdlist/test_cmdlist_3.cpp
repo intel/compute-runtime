@@ -646,6 +646,42 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenMemoryCopyRegionWith
     }
 }
 
+TEST_F(CommandListCreateTests, givenImmediateCommandListWhenGettingPatchPreambleDataThenCorrectValuesAreProvided) {
+    const ze_command_queue_desc_t desc = {};
+
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
+                                                                              device,
+                                                                              &desc,
+                                                                              false,
+                                                                              NEO::EngineGroupType::compute,
+                                                                              ret));
+    ASSERT_NE(nullptr, commandList);
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+    auto whiteBoxCmdQueue = static_cast<CommandQueue *>(whiteBoxCmdList->cmdQImmediate);
+
+    uint64_t *hostAddress = nullptr;
+    uint64_t counter = 0;
+
+    whiteBoxCmdList->getPatchPreambleHostCounter(counter, hostAddress);
+    EXPECT_EQ(1u, counter);
+    EXPECT_NE(nullptr, hostAddress);
+
+    uint64_t deviceAddress = 0;
+    NEO::GraphicsAllocation *allocation = nullptr;
+
+    whiteBoxCmdQueue->patchPreambleCounter.getPatchPreambleDeviceData(allocation, deviceAddress);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_NE(0u, deviceAddress);
+
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.allocation, allocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceAddress, deviceAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostAddress, hostAddress);
+
+    whiteBoxCmdList->getPatchPreambleHostCounter(counter, hostAddress);
+    EXPECT_EQ(2u, counter);
+}
+
 HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;

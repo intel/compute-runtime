@@ -836,4 +836,8 @@ void CommandList::destroyRecordedBcsSplitResources() {
     resetBcsSplitEvents(true);
 }
 
+void CommandList::getPatchPreambleHostCounter(uint64_t &outCounterValue, uint64_t *&outHostAddress) {
+    cmdQImmediate->getPatchPreambleHostCounter(outCounterValue, outHostAddress);
+}
+
 } // namespace L0
