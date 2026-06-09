@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/deferrable_allocation_deletion.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
+#include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -44,6 +45,7 @@ struct DeferrableAllocationDeletionMtTest : ::testing::Test {
         asyncDeleter->addClient();
     }
     void TearDown() override {
+        MemoryManagement::pendingDetachedThreadCleanup = true;
         asyncDeleter->allowExit = true;
         asyncDeleter->removeClient();
         executionEnvironment->decRefInternal();
