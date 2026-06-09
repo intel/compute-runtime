@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ HWTEST2_F(ClGfxCoreHelperTestXeHpAndLater, WhenGettingSupportedDeviceFeatureCapa
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     auto releaseHelper = pDevice->getReleaseHelper();
 
-    if (releaseHelper && !releaseHelper->isMatrixMultiplyAccumulateSupported()) {
+    if (!releaseHelper->isMatrixMultiplyAccumulateSupported()) {
         cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
         EXPECT_EQ(expectedCapabilities, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(getRootDeviceEnvironment()));
     } else {

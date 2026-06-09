@@ -1312,7 +1312,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
         }
     }
     auto releaseHelper = pDevice->getReleaseHelper();
-    if (releaseHelper && releaseHelper->isDummyBlitWaRequired()) {
+    if (releaseHelper->isDummyBlitWaRequired()) {
         UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
     }
     auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));

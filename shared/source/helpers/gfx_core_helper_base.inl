@@ -378,7 +378,7 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffe
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
 
         MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, NEO::FenceType::release, rootDeviceEnvironment);
-    } else if (releaseHelper && postSyncMode == PostSyncMode::timestamp && releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp()) {
+    } else if (postSyncMode == PostSyncMode::timestamp && releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp()) {
         PipeControlArgs additionalArgs = {};
         additionalArgs.csStallOnly = true;
 
@@ -431,7 +431,7 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(const RootD
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         size = getSizeForSingleBarrier() +
                getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
-    } else if (releaseHelper && postSyncMode == PostSyncMode::timestamp && releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp()) {
+    } else if (postSyncMode == PostSyncMode::timestamp && releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp()) {
         size = getSizeForStallingBarrier();
     }
     return size;

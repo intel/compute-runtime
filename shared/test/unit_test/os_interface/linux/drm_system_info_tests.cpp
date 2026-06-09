@@ -123,9 +123,6 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
 
     auto *releaseHelper = drm.getRootDeviceEnvironment().getReleaseHelper();
 
-    if (releaseHelper == nullptr) {
-        GTEST_SKIP();
-    }
     class ReleaseHelperExpose : public ReleaseHelper {
       public:
         using ReleaseHelper::hardwareIpVersion;

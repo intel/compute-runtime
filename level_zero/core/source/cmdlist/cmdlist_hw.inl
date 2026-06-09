@@ -319,8 +319,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->systemMemoryFenceInPostSyncRequired = productHelper.isGlobalFenceInPostSyncRequired(hwInfo);
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo, this->l3FlushAfterPostSyncEnabled);
     this->useAdditionalBlitProperties = productHelper.useAdditionalBlitProperties();
-    this->isPostImageWriteFlushRequired = releaseHelper ? releaseHelper->isPostImageWriteFlushRequired() : false;
-    this->isPreImageReadFlushRequired = releaseHelper ? releaseHelper->isPreImageReadFlushRequired() : false;
+    this->isPostImageWriteFlushRequired = releaseHelper->isPostImageWriteFlushRequired();
+    this->isPreImageReadFlushRequired = releaseHelper->isPreImageReadFlushRequired();
     this->shouldRegisterEnqueuedWalkerWithProfiling = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
     this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->dcFlushSupport);
     this->statelessBuiltinsEnabled = compilerProductHelper.isForceToStatelessRequired();

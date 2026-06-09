@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ class RayTracingHelper : public NonCopyableAndNonMovableClass {
     static uint32_t getNumRtStacksPerDss(const Device &device) {
         auto releaseHelper = device.getReleaseHelper();
 
-        if (releaseHelper == nullptr || releaseHelper->isNumRtStacksPerDssFixedValue()) {
+        if (releaseHelper->isNumRtStacksPerDssFixedValue()) {
             return fixedSizeOfRtStacksPerDss;
         }
 

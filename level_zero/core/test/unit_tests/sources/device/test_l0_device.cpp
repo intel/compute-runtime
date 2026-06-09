@@ -1266,7 +1266,7 @@ HWTEST_F(DeviceTest, whenPassingRaytracingExpStructToGetPropertiesThenProperties
     unsigned int expectedMaxBVHLevels = 0;
     auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper->isRayTracingSupported()) {
         expectedMaxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
     }
 
@@ -1293,7 +1293,7 @@ HWTEST_F(DeviceTest, givenSetMaxBVHLevelsWhenPassingRaytracingExpStructToGetProp
     EXPECT_NE(ZE_DEVICE_RAYTRACING_EXT_FLAG_FORCE_UINT32, rayTracingProperties.flags);
 
     auto releaseHelper = this->neoDevice->getReleaseHelper();
-    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper->isRayTracingSupported()) {
         EXPECT_EQ(7u, rayTracingProperties.maxBVHLevels);
     } else {
         EXPECT_EQ(0u, rayTracingProperties.maxBVHLevels);
@@ -5576,7 +5576,7 @@ HWTEST_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesThenCor
 
     auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper->isRayTracingSupported()) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5601,7 +5601,7 @@ HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesThe
 
     auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper->isRayTracingSupported()) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5609,7 +5609,7 @@ HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesThe
 HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned) {
     auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (!releaseHelper || !releaseHelper->isRayTracingSupported()) {
+    if (!releaseHelper->isRayTracingSupported()) {
         GTEST_SKIP();
     }
     MockOsLibrary::libraryLoaded = false;
@@ -5635,7 +5635,7 @@ HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThenC
 HWTEST_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned) {
     auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (!releaseHelper || !releaseHelper->isRayTracingSupported()) {
+    if (!releaseHelper->isRayTracingSupported()) {
         GTEST_SKIP();
     }
     MockOsLibrary::libraryLoaded = false;
@@ -5679,7 +5679,7 @@ HWTEST_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesExtThen
 
     auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper->isRayTracingSupported()) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5704,7 +5704,7 @@ HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesExt
 
     auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper->isRayTracingSupported()) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5712,7 +5712,7 @@ HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesExt
 HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASPropertiesExtThenCorrectPropertiesIsReturned) {
     auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (!releaseHelper || !releaseHelper->isRayTracingSupported()) {
+    if (!releaseHelper->isRayTracingSupported()) {
         GTEST_SKIP();
     }
     MockOsLibrary::libraryLoaded = false;
@@ -5738,7 +5738,7 @@ HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASPropertiesExtThe
 HWTEST_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesExtThenCorrectPropertiesIsReturned) {
     auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (!releaseHelper || !releaseHelper->isRayTracingSupported()) {
+    if (!releaseHelper->isRayTracingSupported()) {
         GTEST_SKIP();
     }
     MockOsLibrary::libraryLoaded = false;

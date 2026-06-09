@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,15 +56,6 @@ GEN12LPTEST_F(ImageClearColorFixture, givenImageForGen12LpWhenClearColorParamete
     EXPECT_EQ(true, surfaceState.getClearValueAddressEnable());
     EXPECT_NE(0u, surfaceState.getClearColorAddress());
     EXPECT_NE(0u, surfaceState.getClearColorAddressHigh());
-}
-
-GEN12LPTEST_F(ImageClearColorFixture, givenSurfaceStateForGen12LpAndNullptrAsReleaseHelperWhenAuxParamsForMCSCCSAreSetThenCorrectAuxParamsInSurfaceStateIsSet) {
-    this->setUpImpl<FamilyType>();
-    auto surfaceState = this->getSurfaceState<FamilyType>();
-
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, nullptr);
-
-    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
 }
 
 GEN12LPTEST_F(ImageClearColorFixture, givenSurfaceStateForGen12LpAndAuxSurfaceModeOverrideRequiredIsFalseWhenAuxParamsForMCSCCSAreSetThenCorrectAuxParamsInSurfaceStateIsSet) {

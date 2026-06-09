@@ -89,9 +89,6 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
     ASSERT_TRUE(success);
     auto *releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
 
-    if (releaseHelper == nullptr) {
-        GTEST_SKIP();
-    }
     class ReleaseHelperExpose : public ReleaseHelper {
       public:
         using ReleaseHelper::hardwareIpVersion;
@@ -145,12 +142,7 @@ TEST_F(DeviceFactoryTests, givenDisabledRcsWhenPrepareDeviceEnvironmentsCalledTh
     ASSERT_TRUE(success);
 
     auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
-
-    if (releaseHelper == nullptr) {
-        EXPECT_TRUE(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrRcsNode);
-    } else {
-        EXPECT_NE(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrRcsNode, releaseHelper->isRcsExposureDisabled());
-    }
+    EXPECT_NE(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrRcsNode, releaseHelper->isRcsExposureDisabled());
 }
 
 TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesSucceedsForAtLeastOneDeviceThenSuccessIsReturned) {
