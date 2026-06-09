@@ -72,6 +72,7 @@ class Program : public BaseObject<_cl_program> {
     cl_int compileFromSourceWithHeaders(const char *options, cl_uint numInputHeaders,
                                         const cl_program *inputHeaders, const char **headerIncludeNames);
     cl_int buildFromIL(const char *options);
+    cl_int captureIrForLibraryOutput();
     cl_int setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
     void setProgramBinaryType(cl_program_binary_type programBinaryType) { this->programBinaryType = programBinaryType; }
     void setBuildStatus(cl_build_status buildStatus) { this->buildStatus = buildStatus; }
@@ -95,6 +96,8 @@ class Program : public BaseObject<_cl_program> {
 
   protected:
     cl_int buildModulesForContextDevices(ze_module_desc_t &moduleDescription);
+    cl_int populateIrBinaryFromModule(bool isSpirv);
+    void resetModules();
 
     specConstValuesMap specConstantsValues;
     std::mutex specializationConstantsMutex;

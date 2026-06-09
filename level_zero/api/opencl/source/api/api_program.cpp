@@ -209,10 +209,10 @@ cl_int CL_API_CALL clCompileProgram(cl_program program,
     if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::source) {
         retVal = pProgram->compileFromSourceWithHeaders(options, numInputHeaders, inputHeaders, headerIncludeNames);
     } else if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::il) {
-        retVal = pProgram->buildFromIL(options);
+        // An IL program is already a compiled object - no-op, keep the binary type set at creation.
+        retVal = CL_SUCCESS;
     }
     if (CL_SUCCESS == retVal) {
-        pProgram->setProgramBinaryType(CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT);
         pProgram->setBuildStatus(CL_BUILD_SUCCESS);
     }
     pProgram->invokeCallback(funcNotify, userData);
@@ -250,8 +250,9 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
         return retProgram.release();
     }
 
-    // Extracting IR binaries from Program
-    std::vector<ze_module_handle_t> modules;
+    // Every linkable program (created from IL, source-compiled, or a previously linked library)
+    // exposes its IR uniformly through getIrBinary(); programs without IR (executables / native
+    // binaries) are not linkable.
     std::vector<const uint8_t *> spirvBinaries;
     std::vector<size_t> spirvBinariesSizes;
     std::vector<const uint8_t *> llvmbcBinaries;
@@ -263,47 +264,19 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
             retProgram->invokeCallback(funcNotify, userData);
             return retProgram.release();
         }
-        if (inProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::il) {
-            if (inProgram->getIsSpirv()) {
-                spirvBinaries.push_back(reinterpret_cast<const uint8_t *>(inProgram->getIrBinary()));
-                spirvBinariesSizes.push_back(inProgram->getIrBinarySize());
-            } else {
-                llvmbcBinaries.push_back(reinterpret_cast<const uint8_t *>(inProgram->getIrBinary()));
-                llvmbcBinariesSizes.push_back(inProgram->getIrBinarySize());
-            }
-            continue;
-        }
-        if (nullptr == inProgram->getModuleHandle()) [[unlikely]] {
+        auto irBinary = reinterpret_cast<const uint8_t *>(inProgram->getIrBinary());
+        auto irBinarySize = inProgram->getIrBinarySize();
+        if (nullptr == irBinary || 0u == irBinarySize) [[unlikely]] {
             errcodeHelper.set(CL_INVALID_OPERATION);
             retProgram->invokeCallback(funcNotify, userData);
             return retProgram.release();
         }
-        modules.push_back(inProgram->getModuleHandle());
-    }
-
-    // Extracting IR binaries from L0 module (if did not get from Program directly)
-    for (auto moduleHandle : modules) {
-        auto l0Module = L0::Module::fromHandle(moduleHandle);
-        if (!l0Module->isModulesPackage()) [[likely]] {
-            auto moduleImp = static_cast<L0::ModuleImp *>(l0Module);
-            auto binarySize = moduleImp->getTranslationUnit()->irBinarySize;
-            auto binaryPtr = reinterpret_cast<uint8_t *>(moduleImp->getTranslationUnit()->irBinary.get());
-            if (0u == binarySize || nullptr == binaryPtr) [[unlikely]] {
-                errcodeHelper.set(CL_INVALID_OPERATION);
-                retProgram->invokeCallback(funcNotify, userData);
-                return retProgram.release();
-            }
-            if (moduleImp->isLlvmBc()) {
-                llvmbcBinariesSizes.push_back(binarySize);
-                llvmbcBinaries.push_back(binaryPtr);
-            } else {
-                spirvBinariesSizes.push_back(binarySize);
-                spirvBinaries.push_back(binaryPtr);
-            }
+        if (inProgram->getIsSpirv()) {
+            spirvBinaries.push_back(irBinary);
+            spirvBinariesSizes.push_back(irBinarySize);
         } else {
-            errcodeHelper.set(CL_INVALID_OPERATION);
-            retProgram->invokeCallback(funcNotify, userData);
-            return retProgram.release();
+            llvmbcBinaries.push_back(irBinary);
+            llvmbcBinariesSizes.push_back(irBinarySize);
         }
     }
 
@@ -345,9 +318,22 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
         retProgram->setModuleHandle(rootDeviceIndex, moduleHandle);
     }
 
-    errcodeHelper.set(L0ToClResultMapper(ret));
-    const bool requestedLibrary = options && NEO::CompilerOptions::contains(options, "-create-library");
-    retProgram->setProgramBinaryType(requestedLibrary ? CL_PROGRAM_BINARY_TYPE_LIBRARY : CL_PROGRAM_BINARY_TYPE_EXECUTABLE);
+    const bool requestedLibrary = options && NEO::CompilerOptions::contains(options, NEO::CompilerOptions::createLibrary);
+    if (requestedLibrary) {
+        // A library output (LLVM BC) can itself be a link input later; copy its IR into the
+        // Program so it is read uniformly via getIrBinary(), like every other linkable program.
+        const cl_int captureResult = retProgram->captureIrForLibraryOutput();
+        if (CL_SUCCESS != captureResult) [[unlikely]] {
+            errcodeHelper.set(captureResult);
+            retProgram->invokeCallback(funcNotify, userData);
+            return retProgram.release();
+        }
+        retProgram->setProgramBinaryType(CL_PROGRAM_BINARY_TYPE_LIBRARY);
+    } else {
+        retProgram->setProgramBinaryType(CL_PROGRAM_BINARY_TYPE_EXECUTABLE);
+    }
+    // Reached only on success: the per-device build loop and captureIrForLibraryOutput each
+    // early-return on failure, so errcodeHelper is still its CL_SUCCESS default here.
     retProgram->setBuildStatus(CL_BUILD_SUCCESS);
     retProgram->invokeCallback(funcNotify, userData);
     return retProgram.release();

@@ -7,6 +7,7 @@
 
 #include "level_zero/api/opencl/source/program/program.h"
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
@@ -22,6 +23,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
 #include <string_view>
 
 namespace NEO {
@@ -41,6 +43,11 @@ Program::Program(Context *context) : context(context) {
 }
 
 Program::~Program() {
+    this->resetModules();
+    context->decRefInternal();
+}
+
+void Program::resetModules() {
     for (auto &[rootDeviceIndex, moduleHandle] : this->moduleHandles) {
         if (moduleHandle) {
             zeModuleDestroy(moduleHandle);
@@ -51,8 +58,8 @@ Program::~Program() {
             zeModuleBuildLogDestroy(buildLogHandle);
         }
     }
-
-    context->decRefInternal();
+    this->moduleHandles.clear();
+    this->buildLogHandles.clear();
 }
 
 Program::CreatedFrom Program::getCreatedFrom() const {
@@ -110,6 +117,33 @@ void Program::invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, v
     }
 }
 
+/**
+ * @brief Copy the IR (SPIR-V or LLVM BC) out of the underlying L0 module into the Program.
+ * Keeps the Program self-contained so the link path never reaches into L0::ModuleImp internals.
+ */
+cl_int Program::populateIrBinaryFromModule(bool isSpirv) {
+    auto l0Module = L0::Module::fromHandle(this->getModuleHandle());
+    if (nullptr == l0Module) {
+        return CL_INVALID_OPERATION;
+    }
+    size_t irSize = 0u;
+    if (ZE_RESULT_SUCCESS != l0Module->getIrBinary(&irSize, nullptr) || 0u == irSize) {
+        return CL_INVALID_OPERATION;
+    }
+    this->irBinary = std::make_unique<char[]>(irSize);
+    if (ZE_RESULT_SUCCESS != l0Module->getIrBinary(&irSize, reinterpret_cast<uint8_t *>(this->irBinary.get()))) {
+        this->irBinary.reset();
+        return CL_INVALID_OPERATION;
+    }
+    this->irBinarySize = irSize;
+    this->isSpirv = isSpirv;
+    return CL_SUCCESS;
+}
+
+cl_int Program::captureIrForLibraryOutput() {
+    return populateIrBinaryFromModule(false);
+}
+
 cl_int Program::createFromBinary(cl_device_id device, size_t length, const unsigned char *binary) {
     auto deviceHandle = NEO::LEO::ConvertTo::zeDeviceHandle(device);
     if (!deviceHandle) {
@@ -148,12 +182,10 @@ cl_int Program::createFromBinary(cl_device_id device, size_t length, const unsig
 }
 
 cl_int Program::buildModulesForContextDevices(ze_module_desc_t &moduleDescription) {
+    this->resetModules();
     ze_result_t ret = ZE_RESULT_SUCCESS;
     for (auto clDevice : this->context->getClDevices()) {
         const auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-        if (this->moduleHandles.count(rootDeviceIndex) != 0) {
-            continue;
-        }
         ze_module_handle_t moduleHandle{};
         ze_module_build_log_handle_t buildLogHandle{};
         ret = zeModuleCreate(this->context->getL0ContextHandle(), clDevice->getL0Handle(), &moduleDescription, &moduleHandle, &buildLogHandle);
@@ -169,8 +201,7 @@ cl_int Program::buildModulesForContextDevices(ze_module_desc_t &moduleDescriptio
 }
 
 /**
- * @brief Use l0 api to compile to spirv. Resulting l0 module is expected to have irBinary.
- * This is used in linking to gen binary or llvmbc library.
+ * @brief Use l0 api to compile to IR. Set binary type. Store IR in Program.
  */
 cl_int Program::compileFromSourceWithHeaders(const char *options, cl_uint numInputHeaders,
                                              const cl_program *inputHeaders, const char **headerIncludeNames) {
@@ -201,9 +232,25 @@ cl_int Program::compileFromSourceWithHeaders(const char *options, cl_uint numInp
         this->options = options;
     }
     ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC, nullptr, ZE_MODULE_FORMAT_OCLC, this->source.length(), reinterpret_cast<const uint8_t *>(this->source.data()), options, nullptr};
+    // pNext is set to the headers descriptor unconditionally (even with zero headers): its presence
+    // is what selects L0 compile-mode (source -> IR) over build-mode (source -> gen binary).
     moduleDescription.pNext = &headersDesc;
 
-    return buildModulesForContextDevices(moduleDescription);
+    cl_int ret = buildModulesForContextDevices(moduleDescription);
+    if (CL_SUCCESS != ret) {
+        return ret;
+    }
+    const bool isSpirv = !NEO::CompilerOptions::contains(this->options, NEO::CompilerOptions::createLibrary);
+    // IR is copied out, but the L0 module(s) are kept in moduleHandles (released on the next
+    // rebuild via resetModules, or at ~Program). Set the binary type only after IR capture
+    // succeeds so a failed capture leaves the program in a consistent NONE state.
+    ret = populateIrBinaryFromModule(isSpirv);
+    if (CL_SUCCESS != ret) {
+        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+        return ret;
+    }
+    this->programBinaryType = isSpirv ? CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT : CL_PROGRAM_BINARY_TYPE_LIBRARY;
+    return CL_SUCCESS;
 }
 
 /**
@@ -481,6 +528,9 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
         break;
     case CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE: {
         if (CL_BUILD_SUCCESS != buildStatus) {
+            return CL_INVALID_PROGRAM;
+        }
+        if (nullptr == l0Module) {
             return CL_INVALID_PROGRAM;
         }
         if (!l0Module->isModulesPackage()) {
