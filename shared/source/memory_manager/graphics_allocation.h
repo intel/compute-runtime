@@ -430,6 +430,23 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         return allocationType == AllocationType::preemption;
     }
 
+    static bool isSuitableForDownload(AllocationType allocationType) {
+        switch (allocationType) {
+        case AllocationType::commandBuffer:
+        case AllocationType::fillPattern:
+        case AllocationType::globalSurface:
+        case AllocationType::internalHeap:
+        case AllocationType::instructionHeap:
+        case AllocationType::kernelIsa:
+        case AllocationType::kernelIsaInternal:
+        case AllocationType::linearStream:
+        case AllocationType::ringBuffer:
+            return false;
+        default:
+            return true;
+        }
+    }
+
     static uint32_t getNumHandlesForKmdSharedAllocation(uint32_t numBanks);
 
     void *getReservedAddressPtr() const {

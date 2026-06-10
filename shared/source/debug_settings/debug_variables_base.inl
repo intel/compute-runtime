@@ -42,6 +42,7 @@ DECLARE_DEBUG_VARIABLE(bool, GenerateAubFilePerProcessId, true, "Generate aub fi
 DECLARE_DEBUG_VARIABLE(bool, SetBufferHostMemoryAlwaysAubWritable, false, "Make buffer host memory allocation always uploaded to AUB/TBX")
 DECLARE_DEBUG_VARIABLE(bool, CopyLockedMemoryBeforeWrite, false, "Copy memory before writing to aub")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableTbxPageFaultManager, -1, "Enable/Disable TbxPageFaultManager, overrides SetBufferHostMemoryAlwaysAubWritable to false if enabled: default 1, 0 - disable, 1 - enable")
+DECLARE_DEBUG_VARIABLE(bool, TbxDownloadAllAllocations, false, "Download all allocation types in TBX mode; by default GPU read-only allocations (commandBuffer, linearStream, fillPattern, kernelIsa, etc.) are skipped")
 
 /*DEBUG FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableSWTags, false, "Enable software tagging in batch buffer")

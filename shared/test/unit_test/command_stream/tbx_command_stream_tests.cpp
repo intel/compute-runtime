@@ -1758,6 +1758,75 @@ HWTEST_F(TbxCommandStreamTests, givenPooledAllocationWhenWritePooledMemoryCalled
     EXPECT_EQ(2u, tbxCsr.writeMemoryChunkCallCount);
 }
 
+HWTEST_F(TbxCommandStreamTests, givenAllocationNotSuitableForDownloadWhenDownloadAllocationCalledThenSkipDownload) {
+    MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
+
+    uint32_t downloadImplCallCount = 0u;
+    tbxCsr.downloadAllocationImpl = [&downloadImplCallCount](GraphicsAllocation &, uint64_t, size_t) {
+        downloadImplCallCount++;
+    };
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+
+    for (auto i = 0u; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocType = static_cast<AllocationType>(i);
+        if (GraphicsAllocation::isSuitableForDownload(allocType)) {
+            continue;
+        }
+        allocation.allocationType = allocType;
+        downloadImplCallCount = 0u;
+        tbxCsr.downloadAllocation(allocation);
+        EXPECT_EQ(0u, downloadImplCallCount) << "Expected skip for type " << static_cast<uint32_t>(allocType);
+    }
+}
+
+HWTEST_F(TbxCommandStreamTests, givenAllocationNotSuitableForDownloadAndTbxDownloadAllAllocationsWhenDownloadAllocationCalledThenDoDownload) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.TbxDownloadAllAllocations.set(true);
+
+    MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
+
+    uint32_t downloadImplCallCount = 0u;
+    tbxCsr.downloadAllocationImpl = [&downloadImplCallCount](GraphicsAllocation &, uint64_t, size_t) {
+        downloadImplCallCount++;
+    };
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+
+    for (auto i = 0u; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocType = static_cast<AllocationType>(i);
+        if (GraphicsAllocation::isSuitableForDownload(allocType)) {
+            continue;
+        }
+        allocation.allocationType = allocType;
+        downloadImplCallCount = 0u;
+        tbxCsr.downloadAllocation(allocation);
+        EXPECT_EQ(1u, downloadImplCallCount) << "Expected download for type " << static_cast<uint32_t>(allocType);
+    }
+}
+
+HWTEST_F(TbxCommandStreamTests, givenAllocationSuitableForDownloadWhenDownloadAllocationCalledThenDoDownload) {
+    MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
+
+    uint32_t downloadImplCallCount = 0u;
+    tbxCsr.downloadAllocationImpl = [&downloadImplCallCount](GraphicsAllocation &, uint64_t, size_t) {
+        downloadImplCallCount++;
+    };
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+
+    for (auto i = 0u; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocType = static_cast<AllocationType>(i);
+        if (!GraphicsAllocation::isSuitableForDownload(allocType)) {
+            continue;
+        }
+        allocation.allocationType = allocType;
+        downloadImplCallCount = 0u;
+        tbxCsr.downloadAllocation(allocation);
+        EXPECT_EQ(1u, downloadImplCallCount) << "Expected download for type " << static_cast<uint32_t>(allocType);
+    }
+}
+
 HWTEST_F(TbxCommandStreamTests, givenInitFullPageTablesWhenWritePooledMemoryCalledThenFullAndChunkWritesArePerformed) {
     MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
 
