@@ -23,6 +23,10 @@ std::unique_ptr<ReleaseHelper> ReleaseHelper::create(HardwareIpVersion hardwareI
     return createFunction(hardwareIpVersion);
 }
 
+void ReleaseHelper::getKernelCapabilitiesExtra(uint32_t &extraCaps) const {
+    extraCaps |= this->getAdditionalExtraCaps();
+}
+
 bool ReleaseHelper::isAvailableSemaphore64(const HardwareInfo &hwInfo) const {
     if (debugManager.flags.Enable64BitSemaphore.get() != -1) {
         return debugManager.flags.Enable64BitSemaphore.get() == 1;
@@ -40,8 +44,7 @@ std::pair<bool, bool> ReleaseHelper::isPipeControlPriorToNonPipelinedStateComman
     if (debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
         isExtendedWARequired = debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
     }
-    return {isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired(),
-            isExtendedWARequired};
+    return {isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired(), isExtendedWARequired};
 }
 
 } // namespace NEO

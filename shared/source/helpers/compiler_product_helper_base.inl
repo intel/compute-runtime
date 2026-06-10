@@ -236,13 +236,6 @@ void CompilerProductHelperHw<gfxProduct>::getKernelFp64AtomicCapabilities(uint32
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void CompilerProductHelperHw<gfxProduct>::getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const {
-    if (releaseHelper) {
-        extraCaps |= releaseHelper->getAdditionalExtraCaps();
-    }
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const {
     if (releaseHelper) {
         return releaseHelper->isBindlessAddressingDisabled();

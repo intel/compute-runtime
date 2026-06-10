@@ -410,21 +410,3 @@ HWTEST_F(CompilerProductHelperFixture, GivenRequestForKernelFp64CapabilitiesThen
     EXPECT_TRUE(isValueSet(fp64Caps, FpAtomicExtFlags::minMaxAtomicCaps));
     EXPECT_TRUE(isValueSet(fp64Caps, FpAtomicExtFlags::loadStoreAtomicCaps));
 }
-
-HWTEST_F(CompilerProductHelperFixture, GivenRequestForExtraKernelCapabilitiesThenReturnCapabilitiesFromReleaseHelperOrNoneIfReleaseHelperIsNotPresent) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto *releaseHelper = getReleaseHelper();
-
-    uint32_t extraCaps = 0u;
-    compilerProductHelper.getKernelCapabilitiesExtra(releaseHelper, extraCaps);
-    if (releaseHelper) {
-        uint32_t extraCapsFromRH = releaseHelper->getAdditionalExtraCaps();
-        if (0u != extraCapsFromRH) {
-            EXPECT_TRUE(isValueSet(extraCaps, extraCapsFromRH));
-        } else {
-            EXPECT_EQ(0u, extraCaps);
-        }
-    } else {
-        EXPECT_EQ(0u, extraCaps);
-    }
-}
