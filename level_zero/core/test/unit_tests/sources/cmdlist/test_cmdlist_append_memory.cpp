@@ -23,6 +23,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -1228,7 +1229,8 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenAppendMemAdviseWithRegularAndHeapLessC
     {
         cmdList.appendMemAdvise(device->toHandle(), deviceBuffer, allocSize, ZE_MEMORY_ADVICE_CLEAR_SYSTEM_MEMORY_PREFERRED_LOCATION);
         cmdList.close();
-        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
         EXPECT_EQ(1u, cmdList.executeMemAdviseCallCount);
         EXPECT_EQ(1u, cmdList.getMemAdviseOperations().size());
     }
@@ -1238,7 +1240,8 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenAppendMemAdviseWithRegularAndHeapLessC
         cmdList.reset();
         cmdList.appendMemAdvise(device->toHandle(), deviceBuffer, allocSize, ZE_MEMORY_ADVICE_CLEAR_SYSTEM_MEMORY_PREFERRED_LOCATION);
         cmdList.close();
-        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
         EXPECT_EQ(2u, cmdList.executeMemAdviseCallCount);
         EXPECT_EQ(1u, cmdList.getMemAdviseOperations().size());
     }
@@ -1324,7 +1327,8 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
         offset = cmdStream->getUsed();
         cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, copyParams);
         cmdList.close();
-        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
 
         EXPECT_TRUE(verify(false));
     }
@@ -1335,7 +1339,8 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
         offset = cmdStream->getUsed();
         cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, regularEvent->toHandle(), 0, nullptr, copyParams);
         cmdList.close();
-        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
 
         EXPECT_TRUE(verify(true));
     }
@@ -1346,7 +1351,8 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
         offset = cmdStream->getUsed();
         cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, nullptr, 0, nullptr, copyParams);
         cmdList.close();
-        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
 
         EXPECT_TRUE(verify(true));
     }
@@ -1362,7 +1368,8 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
         EXPECT_FALSE(cmdList.taskCountUpdateFenceRequired);
 
         cmdList.close();
-        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
 
         EXPECT_TRUE(verify(false));
     }

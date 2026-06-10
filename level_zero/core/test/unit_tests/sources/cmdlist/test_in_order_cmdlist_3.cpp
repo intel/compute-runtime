@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/internal/l0_event.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/driver_experimental/zex_api.h"
@@ -1161,7 +1162,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     void *queueCpuBase = mockCmdQHw->commandStream.getCpuBase();
     auto usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
     auto commandListHandle = regularCmdList->toHandle();
-    auto returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = mockCmdQHw->commandStream.getUsed();
 
@@ -1190,7 +1192,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
     commandListHandle = regularCmdList->toHandle();
-    returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     usedSpaceAfter = mockCmdQHw->commandStream.getUsed();
 

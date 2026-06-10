@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -69,7 +70,8 @@ HWTEST_F(DeviceMtTest, givenMultiThreadsExecutingCmdListAndSynchronizingDeviceWh
         ze_command_list_handle_t cmdList = commandList->toHandle();
 
         for (auto i = 0; i < iterationCount; i++) {
-            commandQueue->executeCommandLists(1, &cmdList, nullptr, false, nullptr, nullptr);
+            CommandListExecutionInternalOptions internalOptions = {};
+            commandQueue->executeCommandLists(1, &cmdList, nullptr, internalOptions);
             device->synchronize();
         }
     };

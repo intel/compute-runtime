@@ -14,6 +14,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -39,7 +40,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeWhenExec
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle()};
     CommandList::fromHandle(commandLists[0])->close();
-    mockCmdQ->executeCommandLists(1, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    mockCmdQ->executeCommandLists(1, commandLists, nullptr, internalOptions);
     EXPECT_EQ(mockCmdQ->synchronizedCalled, 1u);
     CommandList::fromHandle(commandLists[0])->destroy();
     mockCmdQ->destroy();
@@ -57,7 +60,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeAndDevic
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle()};
     CommandList::fromHandle(commandLists[0])->close();
-    const auto result = mockCmdQ->executeCommandLists(1, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    const auto result = mockCmdQ->executeCommandLists(1, commandLists, nullptr, internalOptions);
     EXPECT_EQ(mockCmdQ->synchronizedCalled, 1u);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 
@@ -74,7 +79,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenAsynchronousModeWhenExe
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle()};
     CommandList::fromHandle(commandLists[0])->close();
-    mockCmdQ->executeCommandLists(1, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    mockCmdQ->executeCommandLists(1, commandLists, nullptr, internalOptions);
     EXPECT_EQ(mockCmdQ->synchronizedCalled, 0u);
     CommandList::fromHandle(commandLists[0])->destroy();
     mockCmdQ->destroy();
@@ -103,7 +110,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeCo
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     CommandList::fromHandle(commandLists[0])->close();
     CommandList::fromHandle(commandLists[1])->close();
-    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, internalOptions);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -155,7 +164,8 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
 
     CommandList::fromHandle(commandList)->close();
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
-    returnValue = commandQueue->executeCommandLists(1, &commandList, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandQueue->executeCommandLists(1, &commandList, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -180,7 +190,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
     ASSERT_NE(nullptr, commandQueue2);
 
     usedSpaceBefore = commandQueue2->commandStream.getUsed();
-    returnValue = commandQueue2->executeCommandLists(1, &commandList, nullptr, false, nullptr, nullptr);
+    returnValue = commandQueue2->executeCommandLists(1, &commandList, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     usedSpaceAfter = commandQueue2->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -216,7 +226,8 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
 
     CommandList::fromHandle(commandList)->close();
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
-    returnValue = commandQueue->executeCommandLists(1, &commandList, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandQueue->executeCommandLists(1, &commandList, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -247,7 +258,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
     ASSERT_NE(nullptr, commandQueue2);
 
     usedSpaceBefore = commandQueue2->commandStream.getUsed();
-    returnValue = commandQueue2->executeCommandLists(1, &commandList, nullptr, false, nullptr, nullptr);
+    returnValue = commandQueue2->executeCommandLists(1, &commandList, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     usedSpaceAfter = commandQueue2->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -390,8 +401,8 @@ struct PauseOnGpuFixture : public Test<ModuleFixture> {
 
         result = commandList->close();
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-        result = commandQueue->executeCommandLists(1u, &commandListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        result = commandQueue->executeCommandLists(1u, &commandListHandle, nullptr, internalOptions);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     }
 
@@ -432,8 +443,8 @@ struct PauseOnGpuTests : public PauseOnGpuFixture {
 
         result = commandList->close();
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-        result = commandQueue->executeCommandLists(1u, &commandListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        result = commandQueue->executeCommandLists(1u, &commandListHandle, nullptr, internalOptions);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     }
 };
@@ -779,7 +790,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenDirtyFlagForContextInBi
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     CommandList::fromHandle(commandLists[0])->close();
     CommandList::fromHandle(commandLists[1])->close();
-    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, internalOptions);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -826,7 +839,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenRegisterInstructionCach
         CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle()};
     uint32_t numCommandLists = 1;
     CommandList::fromHandle(commandLists[0])->close();
-    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, internalOptions);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -893,7 +908,9 @@ HWTEST_F(CommandQueueExecuteCommandListsMultiDeviceTest, GivenDirtyFlagForContex
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     CommandList::fromHandle(commandLists[0])->close();
     CommandList::fromHandle(commandLists[1])->close();
-    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, internalOptions);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -937,8 +954,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenRegularCommandListNotCl
     EXPECT_FALSE(commandList->isClosed());
 
     auto commandListHandle = commandList->toHandle();
-
-    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
 
     commandList->close();
@@ -988,7 +1006,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     uint64_t queueGpuBase = commandQueue->commandStream.getGpuBase();
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
-    returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1032,7 +1052,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     EXPECT_EQ(expectedReturnAddress, chainBackBbStartCmd->getBatchBufferStartAddress());
 
     usedSpaceBefore = commandQueue->commandStream.getUsed();
-    returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr, nullptr);
+    returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1114,7 +1134,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
     void *queueCpuBase = commandQueue->commandStream.getCpuBase();
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
-    returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1186,7 +1208,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenTwoCmd
     uint64_t queueGpuBase = commandQueue->commandStream.getGpuBase();
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
-    returnValue = commandQueue->executeCommandLists(2, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    returnValue = commandQueue->executeCommandLists(2, commandLists, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1269,7 +1293,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenTwoCmd
     }
 
     usedSpaceBefore = commandQueue->commandStream.getUsed();
-    returnValue = commandQueue->executeCommandLists(2, commandLists, nullptr, true, nullptr, nullptr);
+    returnValue = commandQueue->executeCommandLists(2, commandLists, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1473,7 +1497,8 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
 
     auto usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
-    returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = mockCmdQHw->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1586,7 +1611,8 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
 
     auto usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
-    returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = mockCmdQHw->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1695,7 +1721,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
 
     commandQueue->setPatchingPreamble(true);
     commandQueue->saveWaitForPreamble = true;
-    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     uint64_t expectedGpuAddress = commandQueue->getCsr()->getTagAllocation()->getGpuAddress();
@@ -1731,7 +1758,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     immediateCmdList->setPatchingPreamble(true);
     immediateQueue->saveWaitForPreamble = true;
 
-    returnValue = immediateCmdList->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = immediateCmdList->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     uint64_t expectedGpuAddress = immediateQueue->getCsr()->getTagAllocation()->getGpuAddress();
@@ -1777,7 +1805,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     commandQueue->saveWaitForPreamble = true;
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
-    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1791,7 +1820,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(0u, semWaitCmds.size());
 
     usedSpaceBefore = commandQueue->commandStream.getUsed();
-    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1812,7 +1841,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     ultCsr->storeMakeResidentAllocations = true;
 
     usedSpaceBefore = commandQueue->commandStream.getUsed();
-    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);

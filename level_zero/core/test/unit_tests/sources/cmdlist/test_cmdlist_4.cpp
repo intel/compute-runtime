@@ -20,6 +20,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -1268,7 +1269,8 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingRegu
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
     ultCsr->recordFlushedBatchBuffer = true;
 
-    returnValue = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
@@ -1340,12 +1342,13 @@ HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularThen
     ultCsr.recursiveLockCounter = 0;
 
     // first append can carry preamble
-    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr, internalOptions);
 
     EXPECT_EQ(1u, ultCsr.recursiveLockCounter);
 
     // regular append can dispatch bb_start to secondary regular or primary directly regular
-    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr, internalOptions);
 
     EXPECT_EQ(2u, ultCsr.recursiveLockCounter);
 
@@ -1367,7 +1370,8 @@ HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularCmdL
     auto cmdListHandle = commandList->toHandle();
 
     auto usedBefore = immediateQueue->commandStream.getUsed();
-    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr, internalOptions);
     auto usedAfter = immediateQueue->commandStream.getUsed();
 
     EXPECT_EQ(usedBefore, usedAfter);
@@ -1391,7 +1395,8 @@ HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWithPrimaryBatchBufferWh
     auto dispatchRegularBufferLinearStream = &cmdQImmediate->firstCmdListStream;
 
     // first append can carry preamble
-    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr, internalOptions);
 
     ultCsr.recordFlushedBatchBuffer = true;
 
@@ -1399,7 +1404,7 @@ HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWithPrimaryBatchBufferWh
     auto immediateCmdBufferOffset = immediateCmdBufferStream->getUsed();
 
     // no preamble - regular cmdlist buffer will be first and immediate cmd buffer will be epilogue
-    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr, internalOptions);
 
     if (L0GfxCoreHelper::useImmediateComputeFlushTask(device->getNEODevice()->getRootDeviceEnvironment())) {
         EXPECT_EQ(NEO::AppendOperations::cmdList, ultCsr.recordedImmediateDispatchFlags.dispatchOperation);
@@ -1447,7 +1452,8 @@ HWTEST_F(ImmediateCommandListTest, givenCopyEngineImmediateCmdListWithPrimaryBat
     auto dispatchRegularBufferLinearStream = &cmdQImmediate->firstCmdListStream;
 
     // first append can carry preamble
-    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr, internalOptions);
 
     ultCsr->recordFlushedBatchBuffer = true;
 
@@ -1455,7 +1461,7 @@ HWTEST_F(ImmediateCommandListTest, givenCopyEngineImmediateCmdListWithPrimaryBat
     auto immediateCmdBufferOffset = immediateCmdBufferStream->getUsed();
 
     // no preamble - regular cmdlist buffer will be first and immediate cmd buffer will be epilogue
-    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr, internalOptions);
 
     EXPECT_EQ(NEO::AppendOperations::cmdList, ultCsr->recordedBcsDispatchFlags.dispatchOperation);
     EXPECT_EQ(dispatchRegularBufferLinearStream, ultCsr->lastFlushedBcsCommandStream);
@@ -1505,14 +1511,15 @@ HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWithPrimaryBatchBufferWh
     cmdQImmediate->dispatchCmdListBatchBufferAsPrimary = true;
 
     // first append can carry preamble
-    returnValue = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto immediateCmdBufferStream = commandListImmediate->getCmdContainer().getCommandStream();
     auto offsetBefore = immediateCmdBufferStream->getUsed();
 
     // no preamble but wait event as first, then bb_start jumping to regular cmdlist
-    returnValue = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 1, &eventHandle);
+    returnValue = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 1, &eventHandle, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto offsetAfter = immediateCmdBufferStream->getUsed();
@@ -1574,7 +1581,8 @@ HWTEST_F(ImmediateCommandListTest,
 
     auto commandListHandle = commandList->toHandle();
     EXPECT_EQ(0u, kernel->printPrintfOutputCalledTimes);
-    returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = commandListImmediate->hostSynchronize(std::numeric_limits<uint64_t>::max());
@@ -1609,7 +1617,8 @@ HWTEST_F(ImmediateCommandListTest,
 
     auto commandListHandle = commandList->toHandle();
     auto eventHandle = event->toHandle();
-    returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, eventHandle, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, eventHandle, 0, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_TRUE(ultCsr.isMadeResident(eventAllocation));
@@ -1637,7 +1646,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto commandListHandle = commandList->toHandle();
     commandListImmediate->setPatchingPreamble(true);
     auto usedSpaceBefore = cmdStream->getUsed();
-    returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = cmdStream->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);

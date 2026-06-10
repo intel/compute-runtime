@@ -13,6 +13,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -72,8 +73,8 @@ HWTEST2_F(CommandQueueLinuxTests, givenExecBufferErrorOnXeHpcWhenExecutingComman
     commandList->close();
 
     ze_command_list_handle_t cmdListHandles[1] = {commandList->toHandle()};
-
-    returnValue = commandQueue->executeCommandLists(1, cmdListHandles, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandQueue->executeCommandLists(1, cmdListHandles, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, returnValue);
     commandQueue->destroy();
     neoDevice->getMemoryManager()->freeGraphicsMemory(kernel.immutableData.isaGraphicsAllocation.release());

@@ -2492,7 +2492,8 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToComman
     struct MockGraphCommandListCapturingExecuteParams : MockGraphCmdListWithContext {
         using MockGraphCmdListWithContext::MockGraphCmdListWithContext;
         ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
-                                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+                                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                       CommandListExecutionInternalOptions &internalOptions) override {
             capturedParamsVec.push_back({numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents});
             return ZE_RESULT_SUCCESS;
         }

@@ -58,6 +58,7 @@ struct Device;
 struct EventPool;
 struct Event;
 struct Kernel;
+struct CommandListExecutionInternalOptions;
 struct CommandQueue;
 struct CmdListKernelLaunchParams;
 struct CmdListMemoryCopyParams;
@@ -252,7 +253,8 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
     virtual ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
-                                           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
+                                           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                           CommandListExecutionInternalOptions &internalOptions) = 0;
 
     virtual ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction,
                                            void *pUserData,

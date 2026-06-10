@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
@@ -1154,7 +1155,8 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
     size_t usedBefore = cmdQueueStream.getUsed();
 
     auto cmdListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     size_t usedAfter = cmdQueueStream.getUsed();
@@ -1405,7 +1407,8 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
     size_t usedBefore = cmdQueueStream.getUsed();
 
     auto cmdListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     size_t usedAfter = cmdQueueStream.getUsed();
@@ -1644,7 +1647,8 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     auto cmdListHandle = commandList->toHandle();
 
     usedBefore = cmdQueueStream.getUsed();
-    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     usedAfter = cmdQueueStream.getUsed();
 
@@ -1825,7 +1829,8 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     auto cmdListHandle = commandList->toHandle();
 
     usedBefore = cmdQueueStream.getUsed();
-    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     usedAfter = cmdQueueStream.getUsed();
 

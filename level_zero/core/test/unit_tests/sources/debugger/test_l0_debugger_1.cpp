@@ -21,6 +21,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -121,8 +122,9 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandL
         auto commandList = CommandList::fromHandle(commandLists[i]);
         commandList->close();
     }
-
-    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
@@ -203,8 +205,9 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenTwoComma
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     auto commandList = CommandList::fromHandle(commandLists[0]);
     commandList->close();
-
-    returnValue = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    returnValue = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
@@ -216,8 +219,7 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenTwoComma
 
     auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(1u, stateSipCmds.size());
-
-    returnValue = commandQueue2->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr, nullptr);
+    returnValue = commandQueue2->executeCommandLists(numCommandLists, commandLists, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter2 = commandQueue2->commandStream.getUsed();
 
@@ -460,8 +462,9 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForRegularCo
     result = commandList->appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 4096u, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     commandList->close();
-
-    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     commandQueue->synchronize(0);
@@ -770,7 +773,9 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenExecutingCmd
     commandList->close();
 
     memoryOperationsHandler->captureGfxAllocationsForMakeResident = true;
-    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto allocIter = std::find(memoryOperationsHandler->gfxAllocationsForMakeResident.begin(),
@@ -836,8 +841,8 @@ HWTEST2_F(L0DebuggerGlobalStatelessTest,
     returnValue = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     commandList->close();
-
-    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(statelessSurfaceHeap->getCpuBase());
@@ -860,7 +865,7 @@ HWTEST2_F(L0DebuggerGlobalStatelessTest,
 
     memset(debugSurfaceState, 0, sizeof(RENDER_SURFACE_STATE));
 
-    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     char zeroBuffer[sizeof(RENDER_SURFACE_STATE)];

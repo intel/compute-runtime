@@ -14,6 +14,7 @@
 
 #include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -68,7 +69,8 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGlobalWorkSizeIsPr
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(cmdListHandle, kernel, &dispatchTraits, nullptr, 0, nullptr));
     commandList->close();
 
-    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
     EXPECT_TRUE(csr->expectMemory(outBuffer, expectedGlobalWorkSize, size, aub_stream::CompareOperationValues::CompareEqual));
@@ -113,7 +115,8 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGroupCountIsProper
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(cmdListHandle, kernel, &dispatchTraits, nullptr, 0, nullptr));
     commandList->close();
 
-    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
     EXPECT_TRUE(csr->expectMemory(outBuffer, groupCount, size, aub_stream::CompareOperationValues::CompareEqual));
@@ -173,7 +176,8 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCoun
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchMultipleKernelsIndirect(cmdListHandle, 2, kernels, kernelCount, dispatchTraits, nullptr, 0, nullptr));
     commandList->close();
 
-    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
     EXPECT_TRUE(csr->expectMemory(outBuffer, groupCount, size, aub_stream::CompareOperationValues::CompareEqual));
@@ -246,7 +250,8 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyP
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(cmdListHandle, kernel, &dispatchTraits, nullptr, 0, nullptr));
         commandList->close();
 
-        pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
         pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
         EXPECT_TRUE(csr->expectMemory(outBuffer, &expectedWorkDim, size, aub_stream::CompareOperationValues::CompareEqual));

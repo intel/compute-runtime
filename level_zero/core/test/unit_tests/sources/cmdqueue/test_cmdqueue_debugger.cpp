@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -76,7 +77,9 @@ SBA_HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSb
         ze_command_list_handle_t commandListHandle = commandList->toHandle();
         const uint32_t numCommandLists = 1u;
 
-        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, true, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        internalOptions.performMigration = true;
+        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, internalOptions);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
         auto usedSpaceAfter = cmdStream.getUsed();
@@ -211,8 +214,9 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTime
 
         ze_command_list_handle_t commandListHandle = commandList->toHandle();
         const uint32_t numCommandLists = 1u;
-
-        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, true, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        internalOptions.performMigration = true;
+        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, internalOptions);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
         auto usedSpaceAfter = cmdStream.getUsed();
@@ -231,7 +235,7 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTime
             EXPECT_EQ(cmdList.end(), itCsrCommand);
         }
 
-        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, true, nullptr, nullptr);
+        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, internalOptions);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
         GenCmdList cmdList2;

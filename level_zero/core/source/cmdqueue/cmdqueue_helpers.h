@@ -109,6 +109,8 @@ struct CommandQueuePatchPreambleCounter {
     std::mutex mutex;
 
     CommandQueuePatchPreambleCounter() = default;
+    CommandQueuePatchPreambleCounter(const CommandQueuePatchPreambleCounter &) = delete;
+    CommandQueuePatchPreambleCounter &operator=(const CommandQueuePatchPreambleCounter &) = delete;
 
     ~CommandQueuePatchPreambleCounter();
     void getPatchPreambleHostCounter(Device *device, uint64_t &outCounterValue, uint64_t *&outHostAddress);

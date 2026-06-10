@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/os_context.h"
 
 #include "level_zero/api/internal/l0_event.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -190,11 +191,12 @@ uint64_t BcsSplit::getAggregatedEventIncrementValForSplit(const Event *signalEve
 }
 
 void BcsSplit::dispatchRecordedCmdLists(const std::vector<CommandList *> &recordedSubCmdLists) {
+    CommandListExecutionInternalOptions internalOptions = {};
     for (auto i = 0u; i < recordedSubCmdLists.size(); i++) {
         auto splitImmCmdList = this->cmdLists[i];
         auto recordedCmdListHandle = recordedSubCmdLists[i]->toHandle();
 
-        splitImmCmdList->appendCommandLists(1, &recordedCmdListHandle, nullptr, 0, nullptr);
+        splitImmCmdList->appendCommandLists(1, &recordedCmdListHandle, nullptr, 0, nullptr, internalOptions);
     }
 }
 

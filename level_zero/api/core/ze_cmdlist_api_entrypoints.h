@@ -9,6 +9,7 @@
 
 #include "level_zero/api/core/ze_mutable_cmdlist_api_entrypoints.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include <level_zero/ze_api.h>
@@ -146,7 +147,8 @@ ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsExp(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandListImmediate)->appendCommandLists(numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents);
+    CommandListExecutionInternalOptions internalOptions = {};
+    return L0::CommandList::fromHandle(hCommandListImmediate)->appendCommandLists(numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents, internalOptions);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendSignalExternalSemaphoreExt(

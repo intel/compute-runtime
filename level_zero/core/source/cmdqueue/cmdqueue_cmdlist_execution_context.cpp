@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 
@@ -28,9 +29,9 @@ CommandListExecutionContext::CommandListExecutionContext(
     Device *device,
     NEO::ScratchSpaceController *scratchSpaceController,
     NEO::GraphicsAllocation *globalStatelessAllocation,
+    CommandListExecutionInternalOptions &internalOptions,
     bool debugEnabled,
     bool programActivePartitionConfig,
-    bool performMigration,
     bool sipSent) : scratchSpaceController(scratchSpaceController),
                     globalStatelessAllocation(globalStatelessAllocation),
                     preemptionMode{contextPreemptionMode},
@@ -38,11 +39,15 @@ CommandListExecutionContext::CommandListExecutionContext(
                     isPreemptionModeInitial{contextPreemptionMode == NEO::PreemptionMode::Initial},
                     isDebugEnabled{debugEnabled},
                     isProgramActivePartitionConfigRequired{programActivePartitionConfig},
-                    isMigrationRequested{performMigration} {
+                    isMigrationRequested{internalOptions.performMigration} {
 
     constexpr size_t residencyContainerSpaceForPreemption = 2;
     constexpr size_t residencyContainerSpaceForTagWrite = 1;
     constexpr size_t residencyContainerSpaceForBtdAllocation = 1;
+
+    this->patchPreambleRequiredCounter = internalOptions.patchPreambleRequiredCounter;
+    this->outerLockForIndirect = internalOptions.outerLockForIndirect;
+    this->parentImmediateCommandlistLinearStream = internalOptions.parentImmediateCommandlistLinearStream;
 
     this->firstCommandList = CommandList::fromHandle(commandListHandles[0]);
     this->lastCommandList = CommandList::fromHandle(commandListHandles[numCommandLists - 1]);

@@ -11,6 +11,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_cmdlist_execution_context.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_cmdlist_execution_context.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_cmdlist_execution_internal_options.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_helpers.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_helpers.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_hw.h

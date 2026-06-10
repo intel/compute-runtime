@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
@@ -761,7 +762,8 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
         auto cmdListHandle = commandList->toHandle();
 
         auto usedSpaceBefore = commandQueue->commandStream.getUsed();
-        returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         auto usedSpaceAfter = commandQueue->commandStream.getUsed();
         ASSERT_GT(usedSpaceAfter, usedSpaceBefore);

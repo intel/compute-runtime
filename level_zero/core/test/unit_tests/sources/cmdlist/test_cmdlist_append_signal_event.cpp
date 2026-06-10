@@ -14,6 +14,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
@@ -189,7 +190,8 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListAndAppendingRegular
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
     auto usedSpaceBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
-    result = immCommandList->appendCommandLists(1u, &commandListHandle, hSignalEventHandle, 1u, &hWaitEventHandle);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = immCommandList->appendCommandLists(1u, &commandListHandle, hSignalEventHandle, 1u, &hWaitEventHandle, internalOptions);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -247,7 +249,8 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithComputeQueueAnd
     auto commandListHandle = commandListRegular->toHandle();
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    result = commandList0->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = commandList0->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(heaplessPrologProgrammed ? 2u : 1u, commandStreamReceiver.makeSurfacePackNonResidentCalled);
 }
@@ -286,7 +289,8 @@ HWTEST2_F(CommandListAppendSignalEvent, givenCopyOnlyImmediateCmdListAndAppendin
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
     auto usedSpaceBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
-    result = immCommandList->appendCommandLists(1u, &commandListHandle, hSignalEventHandle, 1u, &hWaitEventHandle);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = immCommandList->appendCommandLists(1u, &commandListHandle, hSignalEventHandle, 1u, &hWaitEventHandle, internalOptions);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -335,7 +339,8 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQueueAndApp
     auto commandListHandle = commandListRegular->toHandle();
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    result = commandList0->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = commandList0->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(heaplessPrologProgrammed ? 2u : 1u, commandStreamReceiver.makeSurfacePackNonResidentCalled);
 }
@@ -368,7 +373,8 @@ HWTEST_F(CommandListAppendSignalEvent, givenOutOfOrderImmediateCmdListWhenAppend
     auto commandListHandle = commandListRegular->toHandle();
 
     ze_event_handle_t eventHandle = event->toHandle();
-    result = immCommandList->appendCommandLists(1u, &commandListHandle, eventHandle, 0u, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = immCommandList->appendCommandLists(1u, &commandListHandle, eventHandle, 0u, nullptr, internalOptions);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
@@ -410,7 +416,8 @@ HWTEST_F(CommandListAppendSignalEvent, givenInOrderImmediateCmdListWhenAppending
 
     size_t usedBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
     ze_event_handle_t eventHandle = event->toHandle();
-    result = immCommandList->appendCommandLists(1u, &commandListHandle, eventHandle, 0u, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = immCommandList->appendCommandLists(1u, &commandListHandle, eventHandle, 0u, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = immCommandList->getCmdContainer().getCommandStream()->getUsed();
 
@@ -433,7 +440,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenInOrderImmediateCmdListWhenAppending
 
     // next append should have implicit sync command
     usedBefore = usedAfter;
-    result = immCommandList->appendCommandLists(1u, &commandListHandle, eventHandle, 0u, nullptr);
+    result = immCommandList->appendCommandLists(1u, &commandListHandle, eventHandle, 0u, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     usedAfter = immCommandList->getCmdContainer().getCommandStream()->getUsed();
 

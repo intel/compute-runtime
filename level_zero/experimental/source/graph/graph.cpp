@@ -12,6 +12,7 @@
 
 #include "level_zero/api/internal/l0_cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
@@ -1359,13 +1360,15 @@ ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, Gr
         executionTarget = this->executionTarget;
     }
 
+    CommandListExecutionInternalOptions internalOptions = {};
+
     auto segmentIt = this->myOrderedSegments.find(segmentStart);
     if (segmentIt == this->myOrderedSegments.end()) {
         return ZE_RESULT_SUCCESS; // part of preceeding segment
     }
     ze_command_list_handle_t hCmdList = segmentIt->second;
     executionTarget->setPatchingPreamble(this->usePatchingPreamble);
-    auto res = executionTarget->appendCommandLists(1, &hCmdList, hSignalEvent, numWaitEvents, phWaitEvents);
+    auto res = executionTarget->appendCommandLists(1, &hCmdList, hSignalEvent, numWaitEvents, phWaitEvents, internalOptions);
     executionTarget->setPatchingPreamble(false);
     return res;
 }

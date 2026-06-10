@@ -12,6 +12,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
@@ -723,7 +724,8 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     auto queueStreamCpuBaseAddress = queueStream->getCpuBase();
 
     auto sizeBefore = queueStream->getUsed();
-    auto result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto sizeAfter = queueStream->getUsed();
 
@@ -788,7 +790,8 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     auto queueStream = &commandQueue->commandStream;
 
     auto sizeBefore = queueStream->getUsed();
-    auto result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto sizeAfter = queueStream->getUsed();
 

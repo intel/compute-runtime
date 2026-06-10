@@ -20,6 +20,7 @@
 #include "shared/test/common/test_macros/test_base.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -93,21 +94,22 @@ XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithIndirectAccessA
     auto cmdListHandle = commandList->toHandle();
     commandList->close();
 
+    CommandListExecutionInternalOptions internalOptions = {};
     auto ctx = CommandListExecutionContext{&cmdListHandle,
                                            1,
                                            csr->getPreemptionMode(),
                                            device,
                                            csr->getScratchSpaceController(),
                                            csr->getGlobalStatelessHeapAllocation(),
+                                           internalOptions,
                                            false,
                                            csr->isProgramActivePartitionConfigRequired(),
-                                           false,
                                            false};
 
     ctx.hasIndirectAccess = true;
     ctx.isDispatchTaskCountPostSyncRequired = false;
     ctx.pipelineCmdsDispatch = false;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr));
     EXPECT_EQ(commandQueue->handleIndirectAllocationResidencyCalledTimes, 1u);
     commandQueue->destroy();
 }
@@ -124,21 +126,22 @@ XE3P_CORETEST_F(CommandQueueIndirectAllocationsXe3p, givenCtxWithNoIndirectAcces
     commandList->close();
     auto cmdListHandle = commandList.get()->toHandle();
 
+    CommandListExecutionInternalOptions internalOptions = {};
     auto ctx = CommandListExecutionContext{&cmdListHandle,
                                            1,
                                            csr->getPreemptionMode(),
                                            device,
                                            csr->getScratchSpaceController(),
                                            csr->getGlobalStatelessHeapAllocation(),
+                                           internalOptions,
                                            false,
                                            csr->isProgramActivePartitionConfigRequired(),
-                                           false,
                                            false};
 
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
     ctx.pipelineCmdsDispatch = false;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr));
     commandQueue->destroy();
 }
 
@@ -158,15 +161,16 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenInstructionCacheWhenExecut
     commandList->close();
     auto cmdListHandle = commandList.get()->toHandle();
 
+    CommandListExecutionInternalOptions internalOptions = {};
     auto ctx = CommandListExecutionContext{&cmdListHandle,
                                            1,
                                            csr->getPreemptionMode(),
                                            device,
                                            csr->getScratchSpaceController(),
                                            csr->getGlobalStatelessHeapAllocation(),
+                                           internalOptions,
                                            false,
                                            csr->isProgramActivePartitionConfigRequired(),
-                                           false,
                                            false};
 
     ctx.hasIndirectAccess = false;
@@ -174,7 +178,7 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenInstructionCacheWhenExecut
     ctx.pipelineCmdsDispatch = false;
     csr->registerInstructionCacheFlush();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr));
 
     GenCmdList cmdList;
     FamilyType::Parse::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
@@ -218,22 +222,23 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheWhenExecuteComma
     commandList->close();
     auto cmdListHandle = commandList.get()->toHandle();
 
+    CommandListExecutionInternalOptions internalOptions = {};
     auto ctx = CommandListExecutionContext{&cmdListHandle,
                                            1,
                                            csr->getPreemptionMode(),
                                            device,
                                            csr->getScratchSpaceController(),
                                            csr->getGlobalStatelessHeapAllocation(),
+                                           internalOptions,
                                            false,
                                            csr->isProgramActivePartitionConfigRequired(),
-                                           false,
                                            false};
 
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
     ctx.pipelineCmdsDispatch = false;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr));
 
     GenCmdList cmdList;
     FamilyType::Parse::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
@@ -278,22 +283,23 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenBindlessHelperAndStateNotD
     commandList->close();
     auto cmdListHandle = commandList.get()->toHandle();
 
+    CommandListExecutionInternalOptions internalOptions = {};
     auto ctx = CommandListExecutionContext{&cmdListHandle,
                                            1,
                                            csr->getPreemptionMode(),
                                            device,
                                            csr->getScratchSpaceController(),
                                            csr->getGlobalStatelessHeapAllocation(),
+                                           internalOptions,
                                            false,
                                            csr->isProgramActivePartitionConfigRequired(),
-                                           false,
                                            false};
 
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
     ctx.pipelineCmdsDispatch = false;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr));
 
     GenCmdList cmdList;
     FamilyType::Parse::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
@@ -357,8 +363,8 @@ XE3P_CORETEST_F(CommandQueueHeaplessXe3p, givenSecondaryContextQueueWhenExecutin
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandList->close();
     auto cmdListHandle = commandList.get()->toHandle();
-
-    commandQueue2->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandQueue2->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
 
     HardwareParse hwParserCsr;
     hwParserCsr.parseCommands<FamilyType>(commandQueue2->commandStream);
@@ -412,7 +418,8 @@ XE3P_CORETEST_F(CommandQueueWithAssertXe3p, givenCmdListWithAssertAndStateHeaple
     commandList->close();
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_TRUE(commandQueue->cmdListWithAssertExecuted);
@@ -438,22 +445,23 @@ XE3P_CORETEST_F(CommandQueueWithXe3p, givenHeaplessAndNonDefaultCsrWhenExecuting
     commandList->close();
     auto cmdListHandle = commandList.get()->toHandle();
 
+    CommandListExecutionInternalOptions internalOptions = {};
     auto ctx = CommandListExecutionContext{&cmdListHandle,
                                            1,
                                            csr->getPreemptionMode(),
                                            device,
                                            csr->getScratchSpaceController(),
                                            csr->getGlobalStatelessHeapAllocation(),
+                                           internalOptions,
                                            false,
                                            csr->isProgramActivePartitionConfigRequired(),
-                                           false,
                                            false};
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
     ctx.pipelineCmdsDispatch = false;
     EXPECT_FALSE(reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->heaplessPrologProgrammed);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr));
 
     if (!device->getHwInfo().capabilityTable.isIntegratedDevice) {
         GenCmdList cmdList, cmdList2;
@@ -462,7 +470,7 @@ XE3P_CORETEST_F(CommandQueueWithXe3p, givenHeaplessAndNonDefaultCsrWhenExecuting
         EXPECT_EQ(1u, memFence.size());
         EXPECT_TRUE(reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->heaplessPrologProgrammed);
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr));
 
         FamilyType::Parse::parseCommandBuffer(cmdList2, csr->getCS().getCpuBase(), csr->getCS().getUsed());
         memFence = findAll<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(cmdList2.begin(), cmdList2.end());
@@ -673,7 +681,8 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenImmediateCmdListAndAppendi
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
     auto usedSpaceBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
-    result = immCommandList->appendCommandLists(1u, &commandListHandle, hSignalEventHandle, 1u, &hWaitEventHandle);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = immCommandList->appendCommandLists(1u, &commandListHandle, hSignalEventHandle, 1u, &hWaitEventHandle, internalOptions);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -729,7 +738,8 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenImmediateCmdListAndAppendi
     auto commandListHandle = commandListRegular->toHandle();
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    result = commandList0->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = commandList0->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(2u, commandStreamReceiver.makeSurfacePackNonResidentCalled);
 }

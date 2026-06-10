@@ -30,9 +30,8 @@ struct CommandQueueHw : public CommandQueue {
     ze_result_t createFence(const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) override;
     ze_result_t executeCommandLists(uint32_t numCommandLists,
                                     ze_command_list_handle_t *phCommandLists,
-                                    ze_fence_handle_t hFence, bool performMigration,
-                                    NEO::LinearStream *parentImmediateCommandlistLinearStream,
-                                    std::unique_lock<std::mutex> *outerLockForIndirect) override;
+                                    ze_fence_handle_t hFence,
+                                    CommandListExecutionInternalOptions &internalOptions) override;
 
     void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed, NEO::StreamProperties *streamProperties);
     size_t estimateStateBaseAddressCmdSize();
@@ -67,19 +66,16 @@ struct CommandQueueHw : public CommandQueue {
     MOCKABLE_VIRTUAL ze_result_t executeCommandListsRegularHeapless(CommandListExecutionContext &ctx,
                                                                     uint32_t numCommandLists,
                                                                     ze_command_list_handle_t *commandListHandles,
-                                                                    ze_fence_handle_t hFence,
-                                                                    NEO::LinearStream *parentImmediateCommandlistLinearStream);
+                                                                    ze_fence_handle_t hFence);
 
     MOCKABLE_VIRTUAL ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
                                                             uint32_t numCommandLists,
                                                             ze_command_list_handle_t *commandListHandles,
-                                                            ze_fence_handle_t hFence,
-                                                            NEO::LinearStream *parentImmediateCommandlistLinearStream);
+                                                            ze_fence_handle_t hFence);
     inline ze_result_t executeCommandListsCopyOnly(CommandListExecutionContext &ctx,
                                                    uint32_t numCommandLists,
                                                    ze_command_list_handle_t *phCommandLists,
-                                                   ze_fence_handle_t hFence,
-                                                   NEO::LinearStream *parentImmediateCommandlistLinearStream);
+                                                   ze_fence_handle_t hFence);
     inline size_t computeDebuggerCmdsSize(const CommandListExecutionContext &ctx);
     inline size_t computePreemptionSizeForCommandList(CommandListExecutionContext &ctx,
                                                       CommandList *commandList,
@@ -87,8 +83,7 @@ struct CommandQueueHw : public CommandQueue {
     inline ze_result_t setupCmdListsAndContextParams(CommandListExecutionContext &ctx,
                                                      ze_command_list_handle_t *phCommandLists,
                                                      uint32_t numCommandLists,
-                                                     ze_fence_handle_t hFence,
-                                                     NEO::LinearStream *parentImmediateCommandlistLinearStream);
+                                                     ze_fence_handle_t hFence);
     MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, CommandListExecutionContext &ctx) const;
     inline size_t estimateLinearStreamSizeTotal(CommandListExecutionContext &ctx,
                                                 ze_command_list_handle_t *commandListHandles,
@@ -117,7 +112,7 @@ struct CommandQueueHw : public CommandQueue {
     inline size_t estimateCommandListResidencySize(CommandList *commandList);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
     inline void handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx);
-    MOCKABLE_VIRTUAL ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize, CommandListExecutionContext &ctx);
+    MOCKABLE_VIRTUAL ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize, CommandListExecutionContext &ctx, NEO::LinearStream *&streamForDispatch);
     inline void getGlobalFenceAndMakeItResident();
     inline void getWorkPartitionAndMakeItResident();
     inline void getGlobalStatelessHeapAndMakeItResident(CommandListExecutionContext &ctx);
@@ -225,7 +220,7 @@ struct CommandQueueHw : public CommandQueue {
     inline void updateDebugSurfaceState(CommandListExecutionContext &ctx);
     inline void patchCommands(CommandList &commandList, CommandListExecutionContext &ctx);
     void prepareInOrderCommandList(CommandList *commandList, CommandListExecutionContext &ctx);
-
+    inline void handleIndirectMigration(CommandListExecutionContext &ctx, std::unique_lock<std::mutex> &lockForIndirect);
     struct CommandsToPatchVisitor {
         CommandQueueHw &queue;
         uint32_t &hostFunctionsCounter;

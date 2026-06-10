@@ -11,6 +11,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
@@ -39,8 +40,8 @@ TEST_F(AUBHelloWorldL0, whenAppendMemoryCopyIsCalledThenMemoryIsProperlyCopied) 
     commandList->appendMemoryCopy(dstMemory, srcMemory, size, nullptr, 0, nullptr, copyParams);
     commandList->close();
     auto pHCmdList = std::make_unique<ze_command_list_handle_t>(commandList->toHandle());
-
-    pCmdq->executeCommandLists(1, pHCmdList.get(), nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    pCmdq->executeCommandLists(1, pHCmdList.get(), nullptr, internalOptions);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
     EXPECT_TRUE(csr->expectMemory(dstMemory, srcMemory, size, aub_stream::CompareOperationValues::CompareEqual));
@@ -362,7 +363,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // execute command list
     auto cmdListHandle = commandList->toHandle();
-    returnValue = pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     returnValue = pCmdq->synchronize(std::numeric_limits<uint64_t>::max());
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

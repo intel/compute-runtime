@@ -31,6 +31,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
@@ -1849,7 +1850,8 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::allocateOrReuseKernelPrivate
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
-                                                                              ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+                                                                              ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                                              CommandListExecutionInternalOptions &internalOptions) {
 
     constexpr bool copyOffloadOperation = false;
     constexpr bool relaxedOrderingDispatch = false;
@@ -1904,11 +1906,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
             this->cmdQImmediate->triggerBbStartJump();
         }
     }
+    internalOptions.performMigration = true;
+    internalOptions.parentImmediateCommandlistLinearStream = this->commandContainer.getCommandStream();
+    internalOptions.outerLockForIndirect = &mainLockForIndirect;
+
     ret = this->cmdQImmediate->executeCommandLists(numCommandLists, phCommandLists,
                                                    nullptr,
-                                                   true,
-                                                   this->commandContainer.getCommandStream(),
-                                                   &mainLockForIndirect);
+                                                   internalOptions);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }

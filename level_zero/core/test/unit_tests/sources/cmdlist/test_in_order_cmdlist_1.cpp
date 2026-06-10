@@ -29,6 +29,7 @@
 
 #include "level_zero/api/internal/l0_event.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
@@ -636,7 +637,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInterruptableEventsWhenEx
 
     EXPECT_NE(firstQueue->getCsr(), secondQueue->getCsr());
 
-    firstQueue->executeCommandLists(1, &cmdlistHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    firstQueue->executeCommandLists(1, &cmdlistHandle, nullptr, internalOptions);
     EXPECT_EQ(1u, events[0]->csrs.size());
     EXPECT_EQ(firstQueue->getCsr(), events[0]->csrs[0]);
     EXPECT_EQ(1u, events[1]->csrs.size());
@@ -644,7 +646,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInterruptableEventsWhenEx
     EXPECT_EQ(1u, events[2]->csrs.size());
     EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, events[2]->csrs[0]);
 
-    secondQueue->executeCommandLists(1, &cmdlistHandle, nullptr, false, nullptr, nullptr);
+    secondQueue->executeCommandLists(1, &cmdlistHandle, nullptr, internalOptions);
     EXPECT_EQ(1u, events[0]->csrs.size());
     EXPECT_EQ(secondQueue->getCsr(), events[0]->csrs[0]);
     EXPECT_EQ(1u, events[1]->csrs.size());
@@ -3645,19 +3647,20 @@ HWTEST_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFrom
 
     // 1 Execute call
     offset = cmdStream->getUsed();
-    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, internalOptions);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
     verifySemaphore(expectedCounterValue);
 
     // 2 Execute calls
     offset = cmdStream->getUsed();
-    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, nullptr);
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, internalOptions);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
     verifySemaphore(expectedCounterValue);
 
     // 3 Execute calls
     offset = cmdStream->getUsed();
-    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, nullptr);
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, internalOptions);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
     verifySemaphore(expectedCounterValue);
 }
@@ -6184,8 +6187,9 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAnd
     mockCmdQHw->initialize(false, false, false);
 
     auto cmdListHandle = cmdList->toHandle();
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetDeviceAddress(eventHandle, &counterValue, &address));
     EXPECT_EQ(cmdList->isWalkerPostSyncSkipEnabled ? 1u : 2u, counterValue);

@@ -24,6 +24,7 @@
 #include "shared/test/common/mocks/mock_sync_buffer_handler.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -748,7 +749,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSync
     void *queueCpuBase = commandQueue->commandStream.getCpuBase();
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
     auto commandListHandle = commandList->toHandle();
-    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 

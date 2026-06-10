@@ -37,6 +37,7 @@ using ResidencyContainer = std::vector<GraphicsAllocation *>;
 struct UnifiedMemoryControls;
 
 namespace L0 {
+struct CommandListExecutionInternalOptions;
 struct Kernel;
 
 struct CommandQueue : _ze_command_queue_handle_t {
@@ -63,9 +64,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
     virtual ze_result_t destroy();
     virtual ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
-                                            ze_fence_handle_t hFence, bool performMigration,
-                                            NEO::LinearStream *parentImmediateCommandlistLinearStream,
-                                            std::unique_lock<std::mutex> *outerLockForIndirect) = 0;
+                                            ze_fence_handle_t hFence,
+                                            CommandListExecutionInternalOptions &internalOptions) = 0;
     virtual ze_result_t synchronize(uint64_t timeout);
     ze_result_t getOrdinal(uint32_t *pOrdinal);
     ze_result_t getIndex(uint32_t *pIndex);

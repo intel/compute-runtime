@@ -23,6 +23,7 @@
 
 #include "level_zero/api/internal/l0_context.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image.h"
@@ -902,7 +903,9 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                      returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
-    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 1u);
@@ -953,7 +956,9 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests, whenExecutingKernelWithIndi
     commandList->close();
 
     auto commandListHandle = commandList->toHandle();
-    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = true;
+    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomainCalled, 1u);
 
@@ -1002,8 +1007,8 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                      returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
-
-    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 0u);
@@ -1114,7 +1119,8 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     commandListRegular->close();
 
     auto cmdListHandle = commandListRegular->toHandle();
-    result = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 1u);

@@ -5173,7 +5173,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendCopyOperationFence(Event *signa
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
-                                                                     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+                                                                     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                                     CommandListExecutionInternalOptions &internalOptions) {
 
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }

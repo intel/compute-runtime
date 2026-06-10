@@ -29,6 +29,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/command_to_patch.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel.h"
@@ -400,7 +401,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToCommandLi
 
     auto commandListHandle = commandList->toHandle();
     EXPECT_EQ(0u, kernel->printPrintfOutputCalledTimes);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr));
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->synchronize(std::numeric_limits<uint64_t>::max()));
     EXPECT_EQ(1u, kernel->printPrintfOutputCalledTimes);
     EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->destroy());
@@ -462,7 +464,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToC
 
     auto commandListHandle = commandList->toHandle();
     EXPECT_EQ(0u, kernel->printPrintfOutputCalledTimes);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr));
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->synchronize(std::numeric_limits<uint64_t>::max()));
     *reinterpret_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_SIGNALED;
     EXPECT_EQ(1u, kernel->printPrintfOutputCalledTimes);
@@ -529,7 +532,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToC
 
     auto commandListHandle = commandList->toHandle();
     EXPECT_EQ(0u, kernel->printPrintfOutputCalledTimes);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr));
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
     *reinterpret_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_SIGNALED;
     EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(std::numeric_limits<uint64_t>::max()));
     EXPECT_EQ(1u, kernel->printPrintfOutputCalledTimes);
@@ -1841,7 +1845,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenPatchPreambleActiveWhenExecutingCo
 
         void *queueCpuBase = commandQueue->commandStream.getCpuBase();
         auto usedSpaceBefore = commandQueue->commandStream.getUsed();
-        returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+        CommandListExecutionInternalOptions internalOptions = {};
+        returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
         auto usedSpaceAfter = commandQueue->commandStream.getUsed();
         auto scratchAddress = static_cast<uint32_t>(commandQueue->getCsr()->getScratchSpaceController()->getScratchPatchAddress());

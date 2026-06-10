@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 
@@ -34,8 +35,8 @@ HWTEST2_F(CommandQueueCommandsXe2HpgCore, givenCommandQueueWhenExecutingCommandL
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
-
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
 
     auto globalFence = csr->getGlobalFenceAllocation();
 
@@ -65,10 +66,10 @@ HWTEST2_F(CommandQueueCommandsXe2HpgCore, givenCommandQueueWhenExecutingCommandL
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
-
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     auto usedSpaceAfter1stExecute = commandQueue->commandStream.getUsed();
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     auto usedSpaceOn2ndExecute = commandQueue->commandStream.getUsed() - usedSpaceAfter1stExecute;
 
     GenCmdList cmdList;

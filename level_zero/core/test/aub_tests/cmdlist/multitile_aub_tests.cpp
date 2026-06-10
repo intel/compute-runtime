@@ -11,6 +11,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -102,7 +103,8 @@ HWTEST_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecu
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(cmdListHandle, kernel.get(), &groupCount, nullptr, 0, nullptr));
     commandList->close();
 
-    cmdQ->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    cmdQ->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
     cmdQ->synchronize(std::numeric_limits<uint32_t>::max());
 
     auto csr = getSimulatedCsr<FamilyType>(0, 0);

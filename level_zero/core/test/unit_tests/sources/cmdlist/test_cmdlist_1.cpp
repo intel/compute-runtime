@@ -26,6 +26,7 @@
 #include "level_zero/api/internal/l0_cmdlist.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -2723,7 +2724,8 @@ TEST_F(CommandListCreateTests, whenCreatingImmediateCommandListAndAppendCommandL
     std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
-    auto result = commandList->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto result = commandList->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr, internalOptions);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
@@ -2733,7 +2735,8 @@ TEST_F(CommandListCreateTests, givenCreatingRegularCommandlistAndppendCommandLis
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_FALSE(commandList->isImmediateType());
-    auto result = commandList->appendCommandLists(0u, nullptr, nullptr, 0u, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto result = commandList->appendCommandLists(0u, nullptr, nullptr, 0u, nullptr, internalOptions);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
     commandList->setPatchingPreamble(true);
 }

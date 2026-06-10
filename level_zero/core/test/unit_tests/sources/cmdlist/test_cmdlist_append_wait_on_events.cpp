@@ -17,6 +17,7 @@
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
@@ -217,13 +218,14 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListAndAppendingRegular
     auto commandListHandle = commandListRegular->toHandle();
 
     // 1st append can carry preamble
-    auto result = immCommandList->appendCommandLists(1u, &commandListHandle, nullptr, 1u, &hEventHandle);
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto result = immCommandList->appendCommandLists(1u, &commandListHandle, nullptr, 1u, &hEventHandle, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // 2nd append should carry only wait events and bb_start to regular command list
     auto usedSpaceBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
 
-    result = immCommandList->appendCommandLists(1u, &commandListHandle, nullptr, 1u, &hEventHandle);
+    result = immCommandList->appendCommandLists(1u, &commandListHandle, nullptr, 1u, &hEventHandle, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = immCommandList->getCmdContainer().getCommandStream()->getUsed();
@@ -306,9 +308,7 @@ class MockCommandQueueExecute : public Mock<CommandQueue> {
         uint32_t numCommandLists,
         ze_command_list_handle_t *phCommandLists,
         ze_fence_handle_t hFence,
-        bool performMigration,
-        NEO::LinearStream *parentImmediateCommandlistLinearStream,
-        std::unique_lock<std::mutex> *outerLockForIndirect) override {
+        CommandListExecutionInternalOptions &internalOptions) override {
         if (forceQueueExecuteError) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
@@ -336,7 +336,8 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     cmdList->cmdQImmediate = &queue;
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    auto result = cmdList->appendCommandLists(0u, nullptr, nullptr, 1u, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto result = cmdList->appendCommandLists(0u, nullptr, nullptr, 1u, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     EXPECT_EQ(queue.executeCalledCount, 0u);
 
@@ -356,7 +357,8 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     cmdList->cmdQImmediate = &queue;
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    auto result = cmdList->appendCommandLists(0u, nullptr, nullptr, 1u, &hEventHandle);
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto result = cmdList->appendCommandLists(0u, nullptr, nullptr, 1u, &hEventHandle, internalOptions);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
     EXPECT_EQ(queue.executeCalledCount, 0u);
 
@@ -392,7 +394,8 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
-    result = cmdList->appendCommandLists(1, &commandListHandle, hSignalEventHandle, 1u, &hEventHandle);
+    CommandListExecutionInternalOptions internalOptions = {};
+    result = cmdList->appendCommandLists(1, &commandListHandle, hSignalEventHandle, 1u, &hEventHandle, internalOptions);
     EXPECT_EQ(queue.executeCalledCount, 1u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -414,7 +417,8 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListAndAppendingRegular
 
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
     ze_event_handle_t hEventHandle = event->toHandle();
-    auto result = cmdList.appendCommandLists(0u, nullptr, nullptr, 1u, &hEventHandle);
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto result = cmdList.appendCommandLists(0u, nullptr, nullptr, 1u, &hEventHandle, internalOptions);
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 

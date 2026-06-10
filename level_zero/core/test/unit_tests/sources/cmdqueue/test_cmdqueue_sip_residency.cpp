@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -79,8 +80,8 @@ HWTEST_F(CommandQueueSipResidencyTest, givenNeitherPreemptionNorDebuggerActiveWh
     neoDevice->setPreemptionMode(NEO::PreemptionMode::ThreadGroup);
 
     EXPECT_EQ(nullptr, commandQueue->cachedSipAllocation);
-
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
 
     EXPECT_EQ(nullptr, commandQueue->cachedSipAllocation);
 }
@@ -93,8 +94,8 @@ HWTEST_F(CommandQueueSipResidencyTest, givenMidThreadPreemptionActiveWhenExecuti
     }
 
     EXPECT_EQ(nullptr, commandQueue->cachedSipAllocation);
-
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
 
     EXPECT_NE(nullptr, commandQueue->cachedSipAllocation);
 }
@@ -105,8 +106,8 @@ HWTEST_F(CommandQueueSipResidencyTest, givenCachedSipAllocationWhenExecutingComm
     if (!csr->getPreemptionAllocation()) {
         csr->createPreemptionAllocation();
     }
-
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
     ASSERT_NE(nullptr, commandQueue->cachedSipAllocation);
     auto *cachedAfterFirstExecute = commandQueue->cachedSipAllocation;
 
@@ -115,15 +116,15 @@ HWTEST_F(CommandQueueSipResidencyTest, givenCachedSipAllocationWhenExecutingComm
     CommandList::fromHandle(commandListHandle)->reset();
     CommandList::fromHandle(commandListHandle)->close();
 
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
 
     EXPECT_EQ(cachedAfterFirstExecute, commandQueue->cachedSipAllocation);
 }
 
 HWTEST_F(CommandQueueSipResidencyDebuggerTest, givenNEODebuggerActiveWhenExecutingCommandListThenSipAllocationIsCached) {
     EXPECT_EQ(nullptr, commandQueue->cachedSipAllocation);
-
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
 
     EXPECT_NE(nullptr, commandQueue->cachedSipAllocation);
 }

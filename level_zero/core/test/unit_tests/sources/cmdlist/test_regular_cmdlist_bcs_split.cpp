@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
@@ -219,8 +220,8 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWhenExecuteCommandList
     for (auto i = 0u; i < cmdList->subCmdListsForRecordedBcsSplit.size(); i++) {
         EXPECT_EQ(0u, static_cast<WhiteBox<CommandList> *>(bcsSplit->cmdLists[i])->cmdQImmediate->getTaskCount());
     }
-
-    mockCmdQ->executeCommandLists(1, &handle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    mockCmdQ->executeCommandLists(1, &handle, nullptr, internalOptions);
 
     for (auto i = 0u; i < cmdList->subCmdListsForRecordedBcsSplit.size(); i++) {
         EXPECT_NE(0u, static_cast<WhiteBox<CommandList> *>(bcsSplit->cmdLists[i])->cmdQImmediate->getTaskCount());
@@ -279,8 +280,8 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWhenExecuteCalledThenM
     for (auto i = 0u; i < cmdList->subCmdListsForRecordedBcsSplit.size(); i++) {
         EXPECT_EQ(0u, static_cast<WhiteBox<CommandList> *>(bcsSplit->cmdLists[i])->cmdQImmediate->getTaskCount());
     }
-
-    mockCmdQ->executeCommandLists(1, &handle, nullptr, false, nullptr, nullptr);
+    CommandListExecutionInternalOptions internalOptions = {};
+    mockCmdQ->executeCommandLists(1, &handle, nullptr, internalOptions);
 
     EXPECT_GT(mockCmdQ->makeResidentAndMigrateCallCount, 0u);
 

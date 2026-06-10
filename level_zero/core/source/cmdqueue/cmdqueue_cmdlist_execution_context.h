@@ -19,11 +19,13 @@
 
 namespace NEO {
 class GraphicsAllocation;
+class LinearStream;
 class ScratchSpaceController;
 } // namespace NEO
 
 namespace L0 {
 struct CommandList;
+struct CommandListExecutionInternalOptions;
 struct Device;
 
 struct CommandListExecutionContext {
@@ -36,9 +38,9 @@ struct CommandListExecutionContext {
                                 Device *device,
                                 NEO::ScratchSpaceController *scratchSpaceController,
                                 NEO::GraphicsAllocation *globalStatelessAllocation,
+                                CommandListExecutionInternalOptions &internalOptions,
                                 bool debugEnabled,
                                 bool programActivePartitionConfig,
-                                bool performMigration,
                                 bool sipSent);
 
     NEO::StreamProperties cmdListBeginState{};
@@ -46,6 +48,7 @@ struct CommandListExecutionContext {
     uint64_t childGpuAddressPositionBeforeDynamicPreamble = 0;
     uint64_t currentGpuAddressForChainedBbStart = 0;
     uint64_t basePatchPreambleGpuAddress = 0;
+    uint64_t patchPreambleRequiredCounter = 0;
 
     size_t spaceForResidency = 10;
     size_t bufferSpaceForPatchPreamble = 0;
@@ -54,6 +57,8 @@ struct CommandListExecutionContext {
     CommandList *lastCommandList = nullptr;
     void *currentPatchForChainedBbStart = nullptr;
     void *currentPatchPreambleBuffer = nullptr;
+    NEO::LinearStream *parentImmediateCommandlistLinearStream = nullptr;
+
     uintptr_t basePatchPreambleAddress = 0;
     NEO::ScratchSpaceController *scratchSpaceController = nullptr;
     NEO::GraphicsAllocation *globalStatelessAllocation = nullptr;
