@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2018-2025 Intel Corporation
+Copyright (C) 2018-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -132,6 +132,7 @@ for more details.
 
 ## See also
 
+* [Architecture Overview](https://github.com/intel/compute-runtime/blob/master/ARCHITECTURE.md)
 * [Contribution guidelines](https://github.com/intel/compute-runtime/blob/master/CONTRIBUTING.md)
 * [Programmers Guide](https://github.com/intel/compute-runtime/blob/master/programmers-guide/PROGRAMMERS_GUIDE.md)
 * [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/ISSUE_SUBMISSION_GUIDE.md)

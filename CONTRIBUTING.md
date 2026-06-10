@@ -23,6 +23,15 @@ Make sure you adhere to our
 this will be verified by clang-format and clang-tidy
 (tool configuration is already included in NEO repository).
 For every file you modify, make sure the copyright header year range is up to date.
+When your change introduces, removes, or reshapes a fundamental concept (for example a
+new subsystem or core object, a hardware- or OS-abstraction mechanism, or a change to
+the object/ownership model or the command submission / memory management flow), update
+the relevant documentation in the same patch: the top-level architecture overview
+([ARCHITECTURE.md](https://github.com/intel/compute-runtime/blob/master/ARCHITECTURE.md))
+for cross-cutting concepts, and the
+[programmers guide](https://github.com/intel/compute-runtime/blob/master/programmers-guide/PROGRAMMERS_GUIDE.md)
+for feature-specific design details. Keep documentation generic and free of
+internal-only or non-public information.
 
 ### 2. Certificate of origin
 

@@ -90,3 +90,19 @@ The NEO code uses the UNRECOVERABLE macro to abort execution in the following ca
 * Execution entered an unexpected path that is not supported 
 
 The abort mechanism guarantees that the error is caught as early as possible, which makes debug and fixing easier. 
+
+# Documentation
+
+* Keep documentation in sync with the code; when a change introduces, removes, or
+reshapes a fundamental concept, update the documentation in the same change.
+* A change is considered fundamental when it affects how the driver is structured or
+how its pieces interact, for example: a new subsystem or core object, a new
+hardware- or OS-abstraction mechanism, a change to the object/ownership model, the
+command submission or memory management flow, or a new cross-cutting feature.
+* Capture cross-cutting concepts in the top-level architecture overview
+(`ARCHITECTURE.md`); document feature-specific design and optimization details under
+`programmers-guide/`.
+* When you change behavior that an existing document describes, update that document
+so it keeps matching the code; do not leave stale documentation behind.
+* Keep documentation generic and free of internal-only or non-public information,
+since documentation may be published; describe concepts rather than restating code.
