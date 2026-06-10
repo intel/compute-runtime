@@ -1087,19 +1087,28 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenContextGroupIdleD
     csr2->latestFlushedTaskCount = 1;
     csr2->taskCount = 1;
 
-    std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
-    std::unique_lock<std::recursive_mutex> lock2(csr2->getMutex());
-
     // When group idle detection is disabled, only the queried CSR's state matters
-    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock1));  // csr1 is not busy
-    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr2.get(), lock2)); // csr2 is busy
+    {
+        std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+        EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock1)); // csr1 is not busy
+    }
+    {
+        std::unique_lock<std::recursive_mutex> lock2(csr2->getMutex());
+        EXPECT_FALSE(controller->isDirectSubmissionIdle(csr2.get(), lock2)); // csr2 is busy
+    }
 
     // Now make csr1 busy and csr2 idle, and check again
     csr1->setBusy(true);
     csr2->setBusy(false);
 
-    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1)); // csr1 is busy
-    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr2.get(), lock2));  // csr2 is not busy
+    {
+        std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+        EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1)); // csr1 is busy
+    }
+    {
+        std::unique_lock<std::recursive_mutex> lock2(csr2->getMutex());
+        EXPECT_TRUE(controller->isDirectSubmissionIdle(csr2.get(), lock2)); // csr2 is not busy
+    }
 }
 
 class DirectSubmissionContextGroupCompositeKeyTests : public ::testing::Test {
@@ -1155,18 +1164,20 @@ TEST_F(DirectSubmissionContextGroupCompositeKeyTests, givenCsrsWithSameContextGr
     controller->notifyNewSubmission(csr0.get());
     controller->notifyNewSubmission(csr1.get());
 
-    // Only csr0 should be in its group, and only csr1 in its own group
-    std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
-    std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
-
     // Make csr1 busy, csr0 idle
     csr0->setBusy(false);
     csr1->setBusy(true);
 
     // csr0's group should be idle (csr1's busy state should not affect it)
-    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
+    {
+        std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
+        EXPECT_TRUE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
+    }
     // csr1's group should not be idle (csr1 is busy)
-    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+    {
+        std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+        EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+    }
 }
 
 TEST_F(DirectSubmissionContextGroupCompositeKeyTests, givenCsrsWithSameContextGroupIdAndRootDeviceIndexWhenCheckingDirectSubmissionIdleThenCsrsAreGrouped) {
@@ -1182,18 +1193,27 @@ TEST_F(DirectSubmissionContextGroupCompositeKeyTests, givenCsrsWithSameContextGr
     controller->notifyNewSubmission(csr0.get());
     controller->notifyNewSubmission(csr1.get());
 
-    std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
-    std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
-
     // Both not busy: group is idle
     csr0->setBusy(false);
     csr1->setBusy(false);
-    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
-    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+    {
+        std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
+        EXPECT_TRUE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
+    }
+    {
+        std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+        EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+    }
 
     // One busy: group is not idle
     csr1->setBusy(true);
-    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
-    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+    {
+        std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
+        EXPECT_FALSE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
+    }
+    {
+        std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+        EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+    }
 }
 } // namespace NEO
