@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
@@ -40,6 +41,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     : ringBuffers(RingBufferUse::initialRingBufferCount), csr(inputParams.csr), osContext(inputParams.osContext), rootDeviceIndex(inputParams.rootDeviceIndex), rootDeviceEnvironment(inputParams.rootDeviceEnvironment) {
     memoryManager = inputParams.memoryManager;
     globalFenceAllocation = inputParams.globalFenceAllocation;
+    completionFenceAllocation = inputParams.completionFenceAllocation;
     hwInfo = inputParams.rootDeviceEnvironment.getHardwareInfo();
     memoryOperationHandler = inputParams.rootDeviceEnvironment.memoryOperationsInterface.get();
 
@@ -128,10 +130,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     if (this->workPartitionAllocation != nullptr) {
         allocations.push_back(workPartitionAllocation);
     }
-
-    if (completionFenceAllocation != nullptr) {
-        allocations.push_back(completionFenceAllocation);
-    }
+    UNRECOVERABLE_IF(completionFenceAllocation == nullptr);
+    allocations.push_back(completionFenceAllocation);
 
     if (this->relaxedOrderingEnabled) {
         const AllocationProperties allocationProperties(rootDeviceIndex,
@@ -195,11 +195,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::makeResourcesResident(DirectSubm
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources() {
-    if (this->semaphorePtr != nullptr) {
-        this->tagAddress = reinterpret_cast<volatile TagAddressType *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + offsetof(RingSemaphoreData, tagAllocation));
-    } else {
-        this->tagAddress = nullptr;
-    }
+    auto ringTagPtr = reinterpret_cast<uint8_t *>(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::ringBufferCompletionOffset;
+    auto bytesToClear = std::max<size_t>(sizeof(TagAddressType), this->immWritePostSyncOffset * this->activeTiles);
+    memset(ringTagPtr, 0, bytesToClear);
+    this->tagAddress = reinterpret_cast<volatile TagAddressType *>(ringTagPtr);
     return true;
 }
 

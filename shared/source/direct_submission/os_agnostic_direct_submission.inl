@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/os_agnostic_direct_submission.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -20,12 +21,8 @@ template <typename GfxFamily, typename Dispatcher>
 OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::OsAgnosticDirectSubmission(const DirectSubmissionInputParams &inputParams)
     : DirectSubmissionHw<GfxFamily, Dispatcher>(inputParams) {
 
-    this->completionFenceAllocation = inputParams.completionFenceAllocation;
-
-    if (this->completionFenceAllocation) {
-        if (this->miMemFenceRequired) {
-            this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
-        }
+    if (this->miMemFenceRequired) {
+        this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
     }
 }
 
@@ -49,9 +46,8 @@ void OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
-
     DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources();
-    this->currentTagData.tagAddress = this->semaphoreGpuVa + offsetof(RingSemaphoreData, tagAllocation);
+    this->currentTagData.tagAddress = this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::ringBufferCompletionOffset;
     this->currentTagData.tagValue = 0u;
     return true;
 }

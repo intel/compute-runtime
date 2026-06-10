@@ -49,7 +49,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     MOCKABLE_VIRTUAL void wait(TaskCountType taskCountToWait);
 
-    TagData currentTagData{};
+    TaskCountType currentTagValue{};
     TaskCountType completionFenceValue{};
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
 

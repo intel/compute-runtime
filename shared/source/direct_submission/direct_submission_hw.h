@@ -24,15 +24,13 @@ struct RootDeviceEnvironment;
 struct RingSemaphoreData {
     uint32_t queueWorkCount;
     uint8_t reservedCacheline0[60];
-    uint32_t tagAllocation;
-    uint8_t reservedCacheline1[60];
-    uint8_t reservedCacheline2[64];
+    uint8_t reservedCacheline1[64];
     uint64_t miFlushSpace;
-    uint8_t reservedCacheline3[56];
+    uint8_t reservedCacheline2[56];
     uint32_t pagingFenceCounter;
-    uint8_t reservedCacheline4[60];
+    uint8_t reservedCacheline3[60];
 };
-static_assert((64u * 5) == sizeof(RingSemaphoreData), "Invalid size for RingSemaphoreData");
+static_assert((64u * 4) == sizeof(RingSemaphoreData), "Invalid size for RingSemaphoreData");
 #pragma pack()
 
 using DirectSubmissionAllocations = StackVec<GraphicsAllocation *, 8>;

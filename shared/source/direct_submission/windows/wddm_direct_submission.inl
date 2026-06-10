@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/windows/wddm_direct_submission.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -36,7 +37,6 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(const DirectSu
                                 debugManager.flags.DirectSubmissionBufferPlacement.get(),
                                 debugManager.flags.DirectSubmissionSemaphorePlacement.get());
 
-    this->completionFenceAllocation = inputParams.completionFenceAllocation;
     UNRECOVERABLE_IF(!this->completionFenceAllocation);
     if (this->miMemFenceRequired) {
         this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
@@ -89,7 +89,7 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
     bool ret = wddm->getWddmInterface()->createFenceForDirectSubmission(ringFence, *this->osContextWin);
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS resource allocation finished with: %d\n", ret);
 
-    this->ringBufferEndCompletionTagData.tagAddress = this->semaphoreGpuVa + offsetof(RingSemaphoreData, tagAllocation);
+    this->ringBufferEndCompletionTagData.tagAddress = this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::ringBufferCompletionOffset;
     this->ringBufferEndCompletionTagData.tagValue = 0u;
 
     DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources();

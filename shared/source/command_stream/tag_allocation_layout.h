@@ -13,9 +13,10 @@ namespace NEO {
 namespace TagAllocationLayout {
 
 inline constexpr uint64_t debugPauseStateAddressOffset = MemoryConstants::kiloByte;
-inline constexpr uint64_t ucTagAddressOffset = MemoryConstants::kiloByte + MemoryConstants::cacheLineSize;
+inline constexpr uint64_t ucTagAddressOffset = MemoryConstants::kiloByte + MemoryConstants::cacheLineSize256B;
 inline constexpr uint64_t completionFenceOffset = 2 * MemoryConstants::kiloByte;
 inline constexpr uint64_t barrierCountOffset = 3 * MemoryConstants::kiloByte;
+inline constexpr uint64_t ringBufferCompletionOffset = 3 * MemoryConstants::kiloByte + MemoryConstants::cacheLineSize256B;
 
 } // namespace TagAllocationLayout
 } // namespace NEO

@@ -34,6 +34,7 @@ inline constexpr uint64_t teraByte = 1024 * gigaByte;
 inline constexpr uint64_t fullStatefulRegion = 4 * gigaByte;
 inline constexpr size_t minBufferAlignment = 4;
 inline constexpr size_t cacheLineSize = 64;
+inline constexpr size_t cacheLineSize256B = 256;
 inline constexpr size_t pageSize = 4 * kiloByte;
 inline constexpr size_t pageSize64k = 64 * kiloByte;
 inline constexpr size_t pageSize2M = 2 * megaByte;

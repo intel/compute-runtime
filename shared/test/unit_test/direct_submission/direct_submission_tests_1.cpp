@@ -218,33 +218,6 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenMakingResourcesResidentT
     pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.release();
 }
 
-HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithoutCompletionFenceAllocationWhenAllocatingResourcesThenMakeResidentIsCalledForRingAndSemaphoreBuffers) {
-    auto mockMemoryOperations = std::make_unique<MockMemoryOperations>();
-    mockMemoryOperations->captureGfxAllocationsForMakeResident = true;
-    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(mockMemoryOperations.get());
-
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-
-    directSubmission.callBaseResident = true;
-    bool ret = directSubmission.initialize(true);
-    EXPECT_TRUE(ret);
-    EXPECT_EQ(nullptr, directSubmission.completionFenceAllocation);
-
-    size_t expectedAllocationsCnt = 3;
-    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
-        expectedAllocationsCnt += 2;
-    }
-
-    EXPECT_EQ(1, mockMemoryOperations->makeResidentCalledCount);
-    ASSERT_EQ(expectedAllocationsCnt, mockMemoryOperations->gfxAllocationsForMakeResident.size());
-    EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
-    EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[1]);
-    EXPECT_EQ(directSubmission.semaphores, mockMemoryOperations->gfxAllocationsForMakeResident[2]);
-
-    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.release();
-}
-
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithCompletionFenceAllocationWhenAllocatingResourcesThenMakeResidentIsCalledForRingAndSemaphoreBuffersAndCompletionFenceAllocation) {
     auto mockMemoryOperations = std::make_unique<MockMemoryOperations>();
     mockMemoryOperations->captureGfxAllocationsForMakeResident = true;

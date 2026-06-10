@@ -78,7 +78,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::completionFenceAllocation;
     using BaseClass::completionFenceValue;
     using BaseClass::currentRingBuffer;
-    using BaseClass::currentTagData;
+    using BaseClass::currentTagValue;
     using BaseClass::dispatchMonitorFenceRequired;
     using BaseClass::dispatchSwitchRingBufferSection;
     using BaseClass::DrmDirectSubmission;
@@ -179,8 +179,8 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
 
     TagData tagData = {1ull, 1ull};
     drmDirectSubmission.getTagAddressValue(tagData);
-    EXPECT_EQ(drmDirectSubmission.currentTagData.tagAddress, tagData.tagAddress);
-    EXPECT_EQ(drmDirectSubmission.currentTagData.tagValue + 1, tagData.tagValue);
+    EXPECT_EQ(drmDirectSubmission.completionFenceAllocation->getGpuAddress() + TagAllocationLayout::ringBufferCompletionOffset, tagData.tagAddress);
+    EXPECT_EQ(drmDirectSubmission.currentTagValue + 1, tagData.tagValue);
 
     *drmDirectSubmission.tagAddress = 1u;
 }
@@ -368,7 +368,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierDisabledWhenCreateDirectSubmiss
     SysCalls::munmap(ptr, MemoryConstants::pageSize);
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenCreateDrmDirectSubmissionThenCompletionFenceAllocationIsNotSet) {
+HWTEST_F(DrmDirectSubmissionTest, givenNoDrmCompletionFenceSupportWhenCreateDrmDirectSubmissionThenCompletionFenceAllocationIsStillSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDrmCompletionFence.set(0);
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
@@ -377,11 +377,11 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenCreateDrmDire
     ASSERT_FALSE(drm->completionFenceSupport());
     {
         MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
-        EXPECT_EQ(directSubmission.miMemFenceRequired, directSubmission.completionFenceAllocation != nullptr);
+        EXPECT_NE(nullptr, directSubmission.completionFenceAllocation);
     }
     {
         MockDrmDirectSubmission<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
-        EXPECT_EQ(directSubmission.miMemFenceRequired, directSubmission.completionFenceAllocation != nullptr);
+        EXPECT_NE(nullptr, directSubmission.completionFenceAllocation);
     }
 }
 
@@ -522,7 +522,6 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenSubmittingThe
     debugManager.flags.EnableDrmCompletionFence.set(0);
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    drmDirectSubmission.completionFenceAllocation = nullptr;
     EXPECT_TRUE(drmDirectSubmission.allocateResources());
     auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
@@ -549,7 +548,6 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportAndExecFailureWhe
     debugManager.flags.EnableDrmCompletionFence.set(0);
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    drmDirectSubmission.completionFenceAllocation = nullptr;
     EXPECT_TRUE(drmDirectSubmission.allocateResources());
     auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
@@ -752,7 +750,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenDispatchSwitchRin
     EXPECT_NE(pipeControl, nullptr);
     EXPECT_EQ(directSubmission.getSizeSwitchRingBufferSection(), Dispatcher::getSizeStartCommandBuffer() + Dispatcher::getSizeMonitorFence(device->getRootDeviceEnvironment()));
 
-    directSubmission.currentTagData.tagValue--;
+    directSubmission.currentTagValue--;
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenUpdateTagValueThenTagIsNotUpdated) {
@@ -764,14 +762,14 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenUpdateTagValueThe
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    auto currentTag = directSubmission.currentTagData.tagValue;
+    auto currentTag = directSubmission.currentTagValue;
     directSubmission.updateTagValue(directSubmission.dispatchMonitorFenceRequired(false));
 
-    auto updatedTag = directSubmission.currentTagData.tagValue;
+    auto updatedTag = directSubmission.currentTagValue;
 
     EXPECT_EQ(currentTag, updatedTag);
 
-    directSubmission.currentTagData.tagValue--;
+    directSubmission.currentTagValue--;
 }
 
 HWTEST_F(DrmDirectSubmissionTest, whenCheckForDirectSubmissionSupportThenProperValueIsReturned) {
@@ -1144,7 +1142,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionStartedWhenHandleSwitc
     auto prevRingBufferIndex = 0u;
     auto newCompletionFenceValue = 10u;
     drmDirectSubmission.ringStart = true;
-    drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
+    drmDirectSubmission.currentTagValue = newCompletionFenceValue;
     drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
     drmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue + 1);
@@ -1156,7 +1154,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionNotStartedWhenHandleSw
     auto prevRingBufferIndex = 0u;
     auto newCompletionFenceValue = 10u;
     drmDirectSubmission.ringStart = false;
-    drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
+    drmDirectSubmission.currentTagValue = newCompletionFenceValue;
     drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
     drmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue);
@@ -1171,7 +1169,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTa
 
     drmDirectSubmission.ringStart = false;
 
-    drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
+    drmDirectSubmission.currentTagValue = newCompletionFenceValue;
     drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
     drmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, prevCompletionFenceVal);
@@ -1186,7 +1184,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTa
 
     drmDirectSubmission.ringStart = true;
 
-    drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
+    drmDirectSubmission.currentTagValue = newCompletionFenceValue;
     drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
     drmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue + 1);
@@ -1201,7 +1199,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTa
     auto newCompletionFenceValue = 10u;
 
     drmDirectSubmission.ringStart = true;
-    drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
+    drmDirectSubmission.currentTagValue = newCompletionFenceValue;
     drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
     drmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue + 1);

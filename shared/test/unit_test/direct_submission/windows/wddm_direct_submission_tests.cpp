@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/submissions_aggregator.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -253,9 +254,9 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenRingBuffe
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
     wddmDirectSubmission.allocateResources();
-    EXPECT_EQ(wddmDirectSubmission.ringBufferEndCompletionTagData.tagAddress, wddmDirectSubmission.semaphoreGpuVa + offsetof(RingSemaphoreData, tagAllocation));
+    EXPECT_EQ(wddmDirectSubmission.ringBufferEndCompletionTagData.tagAddress, wddmDirectSubmission.completionFenceAllocation->getGpuAddress() + TagAllocationLayout::ringBufferCompletionOffset);
     EXPECT_EQ(wddmDirectSubmission.ringBufferEndCompletionTagData.tagValue, 0u);
-    auto expectedTagAddress = reinterpret_cast<volatile TagAddressType *>(reinterpret_cast<uint8_t *>(wddmDirectSubmission.semaphorePtr) + offsetof(RingSemaphoreData, tagAllocation));
+    auto expectedTagAddress = reinterpret_cast<volatile TagAddressType *>(reinterpret_cast<uint8_t *>(wddmDirectSubmission.completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::ringBufferCompletionOffset);
     EXPECT_EQ(wddmDirectSubmission.tagAddress, expectedTagAddress);
 }
 

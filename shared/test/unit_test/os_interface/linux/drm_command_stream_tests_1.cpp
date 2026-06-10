@@ -1025,12 +1025,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
 
 template <typename GfxFamily>
 struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
-    using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::currentTagData;
+    using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::currentTagValue;
 };
 
 template <typename GfxFamily>
 struct MockDrmBlitterDirectSubmission : public DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>> {
-    using DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>::currentTagData;
+    using DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>::currentTagValue;
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenFlushThenFlushStampIsNotUpdated) {
@@ -1051,7 +1051,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
 
     auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get();
     ASSERT_NE(nullptr, directSubmission);
-    static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagData.tagValue = 0u;
+    static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagValue = 0u;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionLightWhenFlushThenFlushStampIsUpdated) {
@@ -1070,7 +1070,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
 
     auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get();
     ASSERT_NE(nullptr, directSubmission);
-    static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagData.tagValue = 0u;
+    static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagValue = 0u;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenFlushThenCommandBufferAllocationIsNotAddedToHandlerResidencySet) {
@@ -1090,7 +1090,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
 
     auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get();
     ASSERT_NE(nullptr, directSubmission);
-    static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagData.tagValue = 0u;
+    static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagValue = 0u;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenEnabledDirectSubmissionOnBlitterWhenFlushThenFlushStampIsNotUpdated) {
@@ -1109,7 +1109,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenEnabledDire
 
     auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->blitterDirectSubmission.get();
     ASSERT_NE(nullptr, directSubmission);
-    static_cast<MockDrmBlitterDirectSubmission<FamilyType> *>(directSubmission)->currentTagData.tagValue = 0u;
+    static_cast<MockDrmBlitterDirectSubmission<FamilyType> *>(directSubmission)->currentTagValue = 0u;
 
     EXPECT_EQ(nullptr, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get());
 }

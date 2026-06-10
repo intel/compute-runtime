@@ -670,7 +670,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
 
-    size_t expectedAllocationsCount = 4;
+    size_t expectedAllocationsCount = 5;
 
     if (directSubmission.isRelaxedOrderingEnabled()) {
         expectedAllocationsCount += 2;

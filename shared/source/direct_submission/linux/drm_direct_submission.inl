@@ -75,19 +75,16 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
     }
 
     if (this->miMemFenceRequired || drm.completionFenceSupport()) {
-        this->completionFenceAllocation = inputParams.completionFenceAllocation;
-        if (this->completionFenceAllocation) {
-            this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
-            if (drm.completionFenceSupport()) {
-                this->completionFenceSupported = true;
-            }
+        this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
+        if (drm.completionFenceSupport()) {
+            this->completionFenceSupported = true;
+        }
 
-            if (debugManager.flags.PrintCompletionFenceUsage.get()) {
-                std::cout << "Completion fence for DirectSubmission:"
-                          << " GPU address: " << std::hex << (this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::completionFenceOffset)
-                          << ", CPU address: " << (castToUint64(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::completionFenceOffset)
-                          << std::dec << std::endl;
-            }
+        if (debugManager.flags.PrintCompletionFenceUsage.get()) {
+            std::cout << "Completion fence for DirectSubmission:"
+                      << " GPU address: " << std::hex << (this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::completionFenceOffset)
+                      << ", CPU address: " << (castToUint64(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::completionFenceOffset)
+                      << std::dec << std::endl;
         }
     }
     this->notifyKmdDuringMonitorFence = true;
@@ -122,15 +119,14 @@ TaskCountType *DrmDirectSubmission<GfxFamily, Dispatcher>::getCompletionValuePoi
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
     if (this->tagAddress) {
-        this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
+        this->wait(static_cast<uint32_t>(this->currentTagValue));
     }
 }
 
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
     DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources();
-    this->currentTagData.tagAddress = this->semaphoreGpuVa + offsetof(RingSemaphoreData, tagAllocation);
-    this->currentTagData.tagValue = 0u;
+    this->currentTagValue = 0u;
     return true;
 }
 
@@ -237,7 +233,7 @@ inline void DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidencyContainer
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
-    this->currentTagData.tagValue++;
+    this->currentTagValue++;
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -255,7 +251,7 @@ size_t DrmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSection
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
     if (this->ringStart) {
-        this->currentTagData.tagValue++;
+        this->currentTagValue++;
     }
 
     bool updateCompletionFences = true;
@@ -264,23 +260,23 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(Residen
     }
 
     if (updateCompletionFences) {
-        this->ringBuffers[this->previousRingBuffer].completionFence = this->currentTagData.tagValue;
+        this->ringBuffers[this->previousRingBuffer].completionFence = this->currentTagValue;
     }
 }
 
 template <typename GfxFamily, typename Dispatcher>
 uint64_t DrmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool requireMonitorFence) {
     if (requireMonitorFence) {
-        this->currentTagData.tagValue++;
-        this->ringBuffers[this->currentRingBuffer].completionFence = this->currentTagData.tagValue;
+        this->currentTagValue++;
+        this->ringBuffers[this->currentRingBuffer].completionFence = this->currentTagValue;
     }
     return boHandleForExec;
 }
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tagData) {
-    tagData.tagAddress = this->currentTagData.tagAddress;
-    tagData.tagValue = this->currentTagData.tagValue + 1;
+    tagData.tagAddress = this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::ringBufferCompletionOffset;
+    tagData.tagValue = this->currentTagValue + 1;
 }
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValueForRingSwitch(TagData &tagData) {
