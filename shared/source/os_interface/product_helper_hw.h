@@ -219,7 +219,6 @@ class ProductHelperHw : public ProductHelper {
     bool isScratchSpaceBasePointerInGrf() const override;
     bool scanFullTopologyBitmap() const override;
     bool isMemSetExtendedPayloadSupported() const override;
-    bool isAvailableSemaphore64(const ReleaseHelper *releaseHelper, const HardwareInfo &hwInfo) const override;
     std::optional<uint8_t> getBcsCompressionFormat() const override;
     bool isProgramAdditionalEngineMMIORequired(const HardwareInfo &hwInfo) const override;
     bool isFrontEndControllerEnabled() const override;

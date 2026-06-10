@@ -1369,24 +1369,3 @@ HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenRetur
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsMemSetExtendedPayloadSupportedThenFalseReturned, IsAtMostXe3pCore) {
     EXPECT_FALSE(productHelper->isMemSetExtendedPayloadSupported());
 }
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsAvailableSemaphore64CalledThenCorrectValueIsReturned) {
-    pInHwInfo.featureTable.flags.ftrHwSemaphore64 = true;
-    EXPECT_EQ(releaseHelper->isAvailableSemaphore64(), productHelper->isAvailableSemaphore64(releaseHelper, pInHwInfo));
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperAndNoFtrHwSemaphore64WhenIsAvailableSemaphore64CalledThenCorrectValueIsReturned) {
-    pInHwInfo.featureTable.flags.ftrHwSemaphore64 = false;
-    EXPECT_EQ(false, productHelper->isAvailableSemaphore64(releaseHelper, pInHwInfo));
-}
-
-HWTEST_F(ProductHelperTest, givenEnable64BitSemaphoreFlagAndFtrHwSemaphore64SetWhenIsAvailableSemaphore64CalledThenCorrectValueIsReturned) {
-    DebugManagerStateRestore restore;
-    pInHwInfo.featureTable.flags.ftrHwSemaphore64 = true;
-
-    debugManager.flags.Enable64BitSemaphore.set(0);
-    EXPECT_FALSE(productHelper->isAvailableSemaphore64(releaseHelper, pInHwInfo));
-
-    debugManager.flags.Enable64BitSemaphore.set(1);
-    EXPECT_TRUE(productHelper->isAvailableSemaphore64(releaseHelper, pInHwInfo));
-}

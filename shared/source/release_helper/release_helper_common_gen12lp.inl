@@ -19,7 +19,7 @@ bool ReleaseHelperHw<release>::isResolvingSubDeviceIDNeeded() const {
     return true;
 }
 template <>
-bool ReleaseHelperHw<release>::isAvailableSemaphore64() const {
+bool ReleaseHelperHw<release>::isAvailableSemaphore64Base() const {
     return false;
 }
 

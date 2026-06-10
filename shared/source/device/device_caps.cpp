@@ -168,7 +168,7 @@ void Device::initializeCaps() {
         deviceInfo.maxParameterSize = maxParameterSizeFromIgc;
     }
 
-    deviceInfo.semaphore64bCmdSupport = productHelper.isAvailableSemaphore64(releaseHelper, hwInfo);
+    deviceInfo.semaphore64bCmdSupport = releaseHelper->isAvailableSemaphore64(hwInfo);
 }
 
 } // namespace NEO

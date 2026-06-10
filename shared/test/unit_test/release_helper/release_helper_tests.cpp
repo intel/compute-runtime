@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -15,9 +16,57 @@
 
 using namespace NEO;
 
+using ReleaseHelperSemaphore64Tests = ::testing::Test;
+
+TEST(ReleaseHelperSemaphore64Tests, givenFtrHwSemaphore64SetWhenIsAvailableSemaphore64CalledThenValueFromReleaseSpecificImplementationIsReturned) {
+    MockReleaseHelper releaseHelper;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrHwSemaphore64 = true;
+
+    releaseHelper.isAvailableSemaphore64BaseResult = true;
+    EXPECT_TRUE(releaseHelper.isAvailableSemaphore64(hwInfo));
+
+    releaseHelper.isAvailableSemaphore64BaseResult = false;
+    EXPECT_FALSE(releaseHelper.isAvailableSemaphore64(hwInfo));
+}
+
+TEST(ReleaseHelperSemaphore64Tests, givenNoFtrHwSemaphore64WhenIsAvailableSemaphore64CalledThenFalseReturned) {
+    MockReleaseHelper releaseHelper;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrHwSemaphore64 = false;
+    releaseHelper.isAvailableSemaphore64BaseResult = true;
+
+    EXPECT_FALSE(releaseHelper.isAvailableSemaphore64(hwInfo));
+}
+
+TEST(ReleaseHelperSemaphore64Tests, givenEnable64BitSemaphoreFlagSetWhenIsAvailableSemaphore64CalledThenFlagValueOverridesEverythingElse) {
+    DebugManagerStateRestore restore;
+    MockReleaseHelper releaseHelper;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrHwSemaphore64 = true;
+    releaseHelper.isAvailableSemaphore64BaseResult = true;
+
+    debugManager.flags.Enable64BitSemaphore.set(0);
+    EXPECT_FALSE(releaseHelper.isAvailableSemaphore64(hwInfo));
+
+    debugManager.flags.Enable64BitSemaphore.set(1);
+    EXPECT_TRUE(releaseHelper.isAvailableSemaphore64(hwInfo));
+}
+
+TEST(ReleaseHelperSemaphore64Tests, givenEnable64BitSemaphoreFlagSetWhenIsAvailableSemaphore64CalledThenFtrFlagAndReleaseSpecificValueAreIgnored) {
+    DebugManagerStateRestore restore;
+    MockReleaseHelper releaseHelper;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrHwSemaphore64 = false;
+    releaseHelper.isAvailableSemaphore64BaseResult = false;
+
+    debugManager.flags.Enable64BitSemaphore.set(1);
+    EXPECT_TRUE(releaseHelper.isAvailableSemaphore64(hwInfo));
+}
+
 using ReleaseHelperPipeControlTests = ::testing::Test;
 
-TEST_F(ReleaseHelperPipeControlTests, givenOnlyBaseWaRequiredWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenOnlyBasicIsRequired) {
+TEST(ReleaseHelperPipeControlTests, givenOnlyBaseWaRequiredWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenOnlyBasicIsRequired) {
     MockReleaseHelper releaseHelper{};
     releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequiredResult = true;
     releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredResult = false;
@@ -25,7 +74,7 @@ TEST_F(ReleaseHelperPipeControlTests, givenOnlyBaseWaRequiredWhenIsPipeControlPr
     EXPECT_EQ((std::pair<bool, bool>{true, false}), releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, false));
 }
 
-TEST_F(ReleaseHelperPipeControlTests, givenOnlyExtendedWaRequiredWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenOnlyExtendedIsRequired) {
+TEST(ReleaseHelperPipeControlTests, givenOnlyExtendedWaRequiredWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenOnlyExtendedIsRequired) {
     MockReleaseHelper releaseHelper{};
     releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequiredResult = false;
     releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredResult = true;
@@ -33,7 +82,7 @@ TEST_F(ReleaseHelperPipeControlTests, givenOnlyExtendedWaRequiredWhenIsPipeContr
     EXPECT_EQ((std::pair<bool, bool>{false, true}), releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, false));
 }
 
-TEST_F(ReleaseHelperPipeControlTests, givenDebugFlagSetTo1WhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenExtendedIsForcedToTrue) {
+TEST(ReleaseHelperPipeControlTests, givenDebugFlagSetTo1WhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenExtendedIsForcedToTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
 
@@ -44,7 +93,7 @@ TEST_F(ReleaseHelperPipeControlTests, givenDebugFlagSetTo1WhenIsPipeControlPrior
     EXPECT_EQ((std::pair<bool, bool>{false, true}), releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, false));
 }
 
-TEST_F(ReleaseHelperPipeControlTests, givenDebugFlagSetTo0WhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenExtendedIsForcedToFalse) {
+TEST(ReleaseHelperPipeControlTests, givenDebugFlagSetTo0WhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredThenExtendedIsForcedToFalse) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
 

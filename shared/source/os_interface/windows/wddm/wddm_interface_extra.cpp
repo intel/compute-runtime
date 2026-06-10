@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
+#include "shared/source/release_helper/release_helper.h"
 
 using namespace NEO;
 
@@ -20,7 +20,6 @@ bool WddmInterface32::createSyncObject(MonitoredFence &monitorFence) {
 bool WddmInterface32::createNativeFence(MonitoredFence &monitorFence, bool useForWalkerInterrupt) {
     UNRECOVERABLE_IF(wddm.getGdi()->createNativeFence == nullptr);
     auto &rootDeviceEnvironment = wddm.getRootDeviceEnvironment();
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_CREATENATIVEFENCE createNativeFenceObject = {0};
     createNativeFenceObject.hDevice = wddm.getDeviceHandle();
@@ -29,7 +28,7 @@ bool WddmInterface32::createNativeFence(MonitoredFence &monitorFence, bool useFo
     auto privateData = reinterpret_cast<CREATENATIVEFENCE_PVTDATA *>(&createNativeFenceObject.PrivateDriverData);
     privateData->UseForWalkerInterrupt = useForWalkerInterrupt;
     privateData->UseHw64bToken = debugManager.flags.WddmUseHw64bToken.get() &&
-                                 productHelper.isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper(), *rootDeviceEnvironment.getHardwareInfo());
+                                 rootDeviceEnvironment.getReleaseHelper()->isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
 
     status = wddm.getGdi()->createNativeFence(&createNativeFenceObject);
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);

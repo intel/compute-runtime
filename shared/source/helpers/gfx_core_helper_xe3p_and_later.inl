@@ -282,7 +282,7 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(MI_MEM_FENCE));
     } else if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::semaphore) {
         const auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-        bool useSemaphore64bCmd = productHelper.isAvailableSemaphore64(releaseHelper, *rootDeviceEnvironment.getHardwareInfo());
+        bool useSemaphore64bCmd = releaseHelper->isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
         EncodeSemaphore<Family>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandsBuffer),
                                                         gpuAddress,
                                                         EncodeSemaphore<Family>::invalidHardwareTag,

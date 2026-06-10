@@ -218,7 +218,7 @@ bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired(bool isImm
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isAvailableSemaphore64() const {
+bool ReleaseHelperHw<releaseType>::isAvailableSemaphore64Base() const {
     return false;
 }
 

@@ -15,6 +15,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -175,7 +176,7 @@ template <typename GfxFamily>
 size_t ImplicitScalingDispatch<GfxFamily>::getBarrierSize(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                           bool apiSelfCleanup,
                                                           bool usePostSync) {
-    bool semaphore64bCmdSupported = rootDeviceEnvironment.getProductHelper().isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper(), *rootDeviceEnvironment.getHardwareInfo());
+    bool semaphore64bCmdSupported = rootDeviceEnvironment.getReleaseHelper()->isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
     WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, usePostSync, semaphore64bCmdSupported);
 
     return static_cast<size_t>(WalkerPartition::estimateBarrierSpaceRequiredInCommandBuffer<GfxFamily>(args, rootDeviceEnvironment));
@@ -223,7 +224,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(void *&commandB
                                                                  bool useSecondaryBatchBuffer) {
     uint32_t totalProgrammedSize = 0u;
 
-    bool semaphore64bCmdSupported = rootDeviceEnvironment.getProductHelper().isAvailableSemaphore64(rootDeviceEnvironment.getReleaseHelper(), *rootDeviceEnvironment.getHardwareInfo());
+    bool semaphore64bCmdSupported = rootDeviceEnvironment.getReleaseHelper()->isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
     WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, postSyncGpuAddress > 0, semaphore64bCmdSupported);
     args.tileCount = static_cast<uint32_t>(devices.count());
     args.secondaryBatchBuffer = useSecondaryBatchBuffer;
