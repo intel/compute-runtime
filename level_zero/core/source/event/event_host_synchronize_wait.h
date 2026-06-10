@@ -19,6 +19,17 @@
 
 namespace L0::EventHostSynchronize {
 
+inline bool isNativeWddm(const NEO::CommandStreamReceiver &csr) {
+    auto osInterface = csr.getOSInterface();
+    auto driverModel = osInterface ? osInterface->getDriverModel() : nullptr;
+    if (!driverModel || driverModel->getDriverModelType() != NEO::DriverModelType::wddm) {
+        return false;
+    }
+
+    auto rootDeviceEnvironment = csr.peekExecutionEnvironment().rootDeviceEnvironments[csr.getRootDeviceIndex()].get();
+    return !rootDeviceEnvironment->isWddmOnLinux();
+}
+
 struct WaitAction {
     int64_t sleepUs = 0;
 };
@@ -80,7 +91,7 @@ class WaitController {
 
     bool isEnabled() const {
         const auto strategy = NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get();
-        if ((strategy == 0) || !isNativeWddm()) {
+        if ((strategy == 0) || !isNativeWddm(csr)) {
             return false;
         }
 
@@ -89,17 +100,6 @@ class WaitController {
         }
 
         return (strategy == 2) && !csr.getAcLineConnected(true);
-    }
-
-    bool isNativeWddm() const {
-        auto osInterface = csr.getOSInterface();
-        auto driverModel = osInterface ? osInterface->getDriverModel() : nullptr;
-        if (!driverModel || driverModel->getDriverModelType() != NEO::DriverModelType::wddm) {
-            return false;
-        }
-
-        auto rootDeviceEnvironment = csr.peekExecutionEnvironment().rootDeviceEnvironments[csr.getRootDeviceIndex()].get();
-        return !rootDeviceEnvironment->isWddmOnLinux();
     }
 
     static int64_t getScheduledSleepUs(int64_t elapsedUs) {

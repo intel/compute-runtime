@@ -2249,6 +2249,7 @@ TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhen
     EXPECT_EQ(750, NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.get());
     EXPECT_EQ(50, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
     EXPECT_EQ(20000, NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.get());
+    EXPECT_EQ(4000, NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get());
 }
 
 HWTEST_F(EventSynchronizeTest, GivenWaitControllerWhenStrategiesAndInputsAreChangedThenExpectedWaitActionsAreReturned) {
@@ -4470,6 +4471,29 @@ struct CacheFlushTrackingCsr : public UltCommandStreamReceiver<GfxFamily> {
     }
 };
 
+template <typename GfxFamily>
+struct KmdWaitTrackingCsr : public CacheFlushTrackingCsr<GfxFamily> {
+    using BaseClass = CacheFlushTrackingCsr<GfxFamily>;
+
+    KmdWaitTrackingCsr(NEO::ExecutionEnvironment &executionEnvironment,
+                       uint32_t rootDeviceIndex,
+                       const NEO::DeviceBitfield deviceBitfield)
+        : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+
+    NEO::WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, NEO::QueueThrottle throttle) override {
+        this->waitForTaskCountWithKmdNotifyInputParams.push_back({taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle});
+        if (onKmdWait) {
+            onKmdWait();
+        }
+        if (this->waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
+            return *this->waitForTaskCountWithKmdNotifyFallbackReturnValue;
+        }
+        return NEO::WaitStatus::ready;
+    }
+
+    std::function<void()> onKmdWait;
+};
+
 HWTEST_F(EventContextGroupTests, givenPendingSelectedSecondaryCsrTaskWhenHostSynchronizeRequiresCacheFlushThenFlushAndWaitAreCalledOnSelectedCsrOnly) {
     if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
         GTEST_SKIP();
@@ -4518,6 +4542,170 @@ HWTEST_F(EventContextGroupTests, givenPendingSelectedSecondaryCsrTaskWhenHostSyn
     EXPECT_TRUE(secondaryCsrPtr->flushTagUpdateCalled);
     EXPECT_TRUE(secondaryCsrPtr->waitForTaskCountCalled);
     EXPECT_EQ(1u, secondaryCsrPtr->peekLatestFlushedTaskCount());
+}
+
+HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndInfiniteTimeoutWhenHostSynchronizeRequiresCacheFlushThenKmdWaitUsesSelectedCsrAndEventIsQueriedAgain) {
+    if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
+        GTEST_SKIP();
+    }
+
+    if (!event->isDcFlushAllowed) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+
+    auto defaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_NE(nullptr, defaultCsr);
+
+    defaultCsr->taskCount = 0;
+    defaultCsr->latestFlushedTaskCount = 0;
+    defaultCsr->flushTagUpdateCalled = false;
+    defaultCsr->waitForTaskCountCalled = false;
+    defaultCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+    defaultCsr->waitForTaskCountWithKmdNotifyInputParams.clear();
+
+    auto secondaryCsr = std::make_unique<KmdWaitTrackingCsr<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
+
+    OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
+    secondaryCsr->setupContext(osContext);
+    secondaryCsr->initializeResources(false, device->getDevicePreemptionMode());
+    secondaryCsr->setPrimaryCsr(defaultCsr);
+
+    secondaryCsr->taskCount = 1;
+    secondaryCsr->latestFlushedTaskCount = 0;
+    secondaryCsr->flushTagUpdateCalled = false;
+    secondaryCsr->waitForTaskCountCalled = false;
+    secondaryCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+    secondaryCsr->waitForTaskCountWithKmdNotifyFallbackReturnValue = NEO::WaitStatus::ready;
+    secondaryCsr->flushStamp->setStamp(0);
+
+    auto secondaryCsrPtr = secondaryCsr.get();
+
+    event->setCsrForCacheFlush(secondaryCsrPtr);
+    event->setDualCopyOffload(true);
+    auto eventAddress = static_cast<uint32_t *>(event->getHostAddress());
+    *eventAddress = Event::STATE_INITIAL;
+    uint32_t kmdWaitCallbacks = 0;
+    secondaryCsr->onKmdWait = [&]() {
+        kmdWaitCallbacks++;
+        *eventAddress = Event::STATE_SIGNALED;
+    };
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, kmdWaitCallbacks);
+
+    EXPECT_FALSE(defaultCsr->flushTagUpdateCalled);
+    EXPECT_FALSE(defaultCsr->waitForTaskCountCalled);
+    EXPECT_TRUE(defaultCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
+
+    EXPECT_TRUE(secondaryCsrPtr->flushTagUpdateCalled);
+    EXPECT_FALSE(secondaryCsrPtr->waitForTaskCountCalled);
+    ASSERT_EQ(1u, secondaryCsrPtr->waitForTaskCountWithKmdNotifyInputParams.size());
+    EXPECT_EQ(1u, secondaryCsrPtr->waitForTaskCountWithKmdNotifyInputParams[0].taskCountToWait);
+    EXPECT_EQ(1u, secondaryCsrPtr->waitForTaskCountWithKmdNotifyInputParams[0].flushStampToWait);
+    EXPECT_FALSE(secondaryCsrPtr->waitForTaskCountWithKmdNotifyInputParams[0].useQuickKmdSleep);
+    EXPECT_EQ(NEO::QueueThrottle::LOW, secondaryCsrPtr->waitForTaskCountWithKmdNotifyInputParams[0].throttle);
+}
+
+HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndFiniteTimeoutWhenHostSynchronizeRequiresCacheFlushThenKmdWaitIsNotUsed) {
+    if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
+        GTEST_SKIP();
+    }
+
+    if (!event->isDcFlushAllowed) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+
+    auto secondaryCsr = std::make_unique<KmdWaitTrackingCsr<FamilyType>>(*neoDevice->getExecutionEnvironment(), 0, 1);
+
+    OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
+    secondaryCsr->setupContext(osContext);
+    secondaryCsr->initializeResources(false, device->getDevicePreemptionMode());
+    secondaryCsr->taskCount = 1;
+    secondaryCsr->latestFlushedTaskCount = 0;
+    secondaryCsr->flushTagUpdateCalled = false;
+    secondaryCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+
+    auto secondaryCsrPtr = secondaryCsr.get();
+
+    event->setCsrForCacheFlush(secondaryCsrPtr);
+    event->setDualCopyOffload(true);
+    *static_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_INITIAL;
+
+    auto result = event->hostSynchronize(1);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+    EXPECT_FALSE(secondaryCsrPtr->flushTagUpdateCalled);
+    EXPECT_TRUE(secondaryCsrPtr->waitForTaskCountWithKmdNotifyInputParams.empty());
+}
+
+HWTEST_F(EventContextGroupTests, givenKmdWaitStrategyAndCounterBasedEventWithoutCacheFlushWhenHostSynchronizeThenKmdWaitIsNotUsed) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.AllowDcFlush.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+
+    event.reset();
+    ze_result_t createResult = ZE_RESULT_SUCCESS;
+    event = std::unique_ptr<EventImp<uint32_t>>(static_cast<EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device, createResult)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, createResult);
+    ASSERT_NE(nullptr, event);
+    ASSERT_FALSE(event->isDcFlushAllowed);
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    ASSERT_TRUE(event->isCounterBased());
+
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_NE(nullptr, csr);
+    csr->taskCount = 1;
+    csr->latestFlushedTaskCount = 0;
+    csr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+    csr->waitForTaskCountWithKmdNotifyInputParams.clear();
+
+    uint64_t counterStorage = Event::STATE_INITIAL;
+    NEO::MockGraphicsAllocation counterAllocation(&counterStorage, sizeof(counterStorage));
+    counterAllocation.updateTaskCount(1u, csr->getOsContext().getContextId());
+    event->getInOrderExecEventHelper().assignData(1u, 0u, 1u, 1u, &counterAllocation, &counterAllocation, counterAllocation.getGpuAddress(), counterAllocation.getGpuAddress(), &counterStorage, 0u, 0u, false, false);
+
+    auto counterAddress = static_cast<uint64_t *>(event->getInOrderExecEventHelper().getBaseHostCpuAddress());
+    *counterAddress = Event::STATE_INITIAL;
+
+    uint32_t pauseCounter = 0;
+    VariableBackup<std::function<void()>> setupPauseAddressBackup(&CpuIntrinsicsTests::setupPauseAddress);
+    CpuIntrinsicsTests::setupPauseAddress = [&]() {
+        if (++pauseCounter == 2) {
+            *counterAddress = event->getInOrderExecBaseSignalValue();
+        }
+    };
+
+    auto result = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(csr->waitForTaskCountWithKmdNotifyInputParams.empty());
 }
 
 HWTEST_F(EventContextGroupTests, givenNoPendingTaskOnSelectedSecondaryCsrWhenHostSynchronizeRequiresCacheFlushThenFlushAndWaitAreNotCalled) {

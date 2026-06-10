@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/timestamp_packet.h"
 
@@ -69,6 +70,10 @@ struct EventImp : public Event {
     bool tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation);
     void tbxDownload(NEO::Device &device, bool &downloadedAllocation, bool &downloadedInOrdedAllocation);
     TaskCountType getTaskCount(const NEO::CommandStreamReceiver &csr) const;
+    NEO::WaitStatus tryKmdWaitForHostSynchronize(NEO::CommandStreamReceiver &csrForCacheFlush,
+                                                 bool cacheFlushRequiredForHostSync,
+                                                 TaskCountType &taskCountToWaitForCacheFlush,
+                                                 bool &taskCountWaitedForCacheFlush);
 
     ze_result_t calculateProfilingData();
     ze_result_t queryStatusEventPackets(int64_t timeSinceWait);

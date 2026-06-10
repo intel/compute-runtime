@@ -8,6 +8,7 @@
 #include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/basic_math.h"
@@ -370,6 +371,50 @@ TaskCountType EventImp<TagSizeT>::getTaskCount(const NEO::CommandStreamReceiver 
     }
 
     return taskCount;
+}
+
+template <typename TagSizeT>
+NEO::WaitStatus EventImp<TagSizeT>::tryKmdWaitForHostSynchronize(NEO::CommandStreamReceiver &csrForCacheFlush,
+                                                                 bool cacheFlushRequiredForHostSync,
+                                                                 TaskCountType &taskCountToWaitForCacheFlush,
+                                                                 bool &taskCountWaitedForCacheFlush) {
+    auto isUsableTaskCount = [](TaskCountType taskCount) {
+        return taskCount && (taskCount != NEO::GraphicsAllocation::objectNotUsed);
+    };
+
+    NEO::CommandStreamReceiver *csrForTaskCountWait = nullptr;
+    TaskCountType taskCountToWait = 0;
+    bool cacheFlushTaskCount = false;
+
+    if (cacheFlushRequiredForHostSync) {
+        if (!isUsableTaskCount(taskCountToWaitForCacheFlush)) {
+            taskCountToWaitForCacheFlush = csrForCacheFlush.flushTagUpdateIfRequired();
+        }
+        if (isUsableTaskCount(taskCountToWaitForCacheFlush)) {
+            csrForTaskCountWait = &csrForCacheFlush;
+            taskCountToWait = taskCountToWaitForCacheFlush;
+            cacheFlushTaskCount = true;
+        }
+    }
+
+    if ((csrForTaskCountWait == nullptr) || !isUsableTaskCount(taskCountToWait)) {
+        return NEO::WaitStatus::notReady;
+    }
+
+    auto flushStampToWait = csrForTaskCountWait->obtainCurrentFlushStamp();
+    if (flushStampToWait == 0) {
+        flushStampToWait = taskCountToWait;
+    }
+
+    const auto waitStatus = csrForTaskCountWait->waitForTaskCountWithKmdNotifyFallback(taskCountToWait,
+                                                                                       flushStampToWait,
+                                                                                       false,
+                                                                                       NEO::QueueThrottle::LOW);
+    if ((waitStatus == NEO::WaitStatus::ready) && cacheFlushTaskCount) {
+        taskCountWaitedForCacheFlush = true;
+        taskCountToWaitForCacheFlush = 0;
+    }
+    return waitStatus;
 }
 
 template <typename TagSizeT>
@@ -774,13 +819,27 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     }
     auto neoDevice = this->device->getNEODevice();
     auto csrForCacheFlush = neoDevice->getDefaultEngine().commandStreamReceiver;
-    auto cacheFlushRequiredForHostSync = this->isCacheFlushRequiredForHostSync();
-    TaskCountType taskCountToWaitForL3Flush = 0;
+    auto *selectedCsrForCacheFlush = this->getCsrForCacheFlush();
+    if (selectedCsrForCacheFlush != nullptr) {
+        csrForCacheFlush = selectedCsrForCacheFlush;
+    }
+    const bool cacheFlushRequiredForHostSync = this->isCacheFlushRequiredForHostSync();
+    const bool secondaryContextsSupported = this->device->getGfxCoreHelper().areSecondaryContextsSupported();
+    const bool waitForTaskCountUsingKmd = (NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get() == 3) &&
+                                          cacheFlushRequiredForHostSync &&
+                                          (timeout == std::numeric_limits<uint64_t>::max()) &&
+                                          EventHostSynchronize::isNativeWddm(*csrForCacheFlush) &&
+                                          neoDevice->getHardwareInfo().capabilityTable.isIntegratedDevice;
+    const auto kmdWaitInitialPollUs = std::max<int64_t>(NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get(), 0);
+    TaskCountType taskCountToWaitForCacheFlush = 0;
+    bool taskCountWaitedForCacheFlush = false;
 
-    if (cacheFlushRequiredForHostSync) {
-        if (!this->device->getGfxCoreHelper().areSecondaryContextsSupported()) {
-            taskCountToWaitForL3Flush = csrForCacheFlush->flushTagUpdateIfRequired();
-        }
+    auto isUsableTaskCount = [](TaskCountType taskCount) {
+        return taskCount && (taskCount != NEO::GraphicsAllocation::objectNotUsed);
+    };
+
+    if (cacheFlushRequiredForHostSync && !secondaryContextsSupported) {
+        taskCountToWaitForCacheFlush = csrForCacheFlush->flushTagUpdateIfRequired();
     }
 
     waitStartTime = std::chrono::high_resolution_clock::now();
@@ -790,14 +849,18 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     EventHostSynchronize::WaitController waitController(*csrs[0]);
 
     auto *assertHndlr = neoDevice->getRootDeviceEnvironment().assertHandler.get();
+
     do {
         if (this->heapfullCbEventWithProfiling) {
-            synchronizeTimestampCompletionWithTimeout();
+            assignKernelEventCompletionData(getHostAddress());
+            calculateProfilingData();
             if (this->isTimestampPopulated()) {
                 inOrderExecHelper.setLastWaitedCounterValue(getInOrderExecBaseSignalValue(), this->getInOrderAllocationOffset());
                 handleSuccessfulHostSynchronization();
                 ret = ZE_RESULT_SUCCESS;
                 this->heapfullCbEventWithProfiling = false;
+            } else {
+                ret = ZE_RESULT_NOT_READY;
             }
         } else {
             if (fenceWait) {
@@ -807,13 +870,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             }
         }
         if (ret == ZE_RESULT_SUCCESS) {
-            if (cacheFlushRequiredForHostSync) {
-                if (device->getGfxCoreHelper().areSecondaryContextsSupported()) {
-                    auto *selectedCsrForCacheFlush = this->getCsrForCacheFlush();
-                    if (selectedCsrForCacheFlush != nullptr) {
-                        csrForCacheFlush = selectedCsrForCacheFlush;
-                    }
-                    taskCountToWaitForL3Flush = csrForCacheFlush->flushTagUpdateIfRequired();
+            if (cacheFlushRequiredForHostSync && !taskCountWaitedForCacheFlush) {
+                if (secondaryContextsSupported || !isUsableTaskCount(taskCountToWaitForCacheFlush)) {
+                    taskCountToWaitForCacheFlush = csrForCacheFlush->flushTagUpdateIfRequired();
                 }
             }
             if (this->getKernelWithPrintfDeviceMutex() != nullptr) {
@@ -833,8 +892,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                     return ZE_RESULT_ERROR_DEVICE_LOST;
                 }
             }
-            if (taskCountToWaitForL3Flush) {
-                csrForCacheFlush->waitForTaskCount(taskCountToWaitForL3Flush);
+            if (isUsableTaskCount(taskCountToWaitForCacheFlush)) {
+                csrForCacheFlush->waitForTaskCount(taskCountToWaitForCacheFlush);
             }
             return ret;
         }
@@ -853,6 +912,22 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                     assertHndlr->printAssertAndAbort();
                 }
                 return ZE_RESULT_ERROR_DEVICE_LOST;
+            }
+        }
+
+        if (waitForTaskCountUsingKmd && (elapsedTimeSinceWaitStartUs >= kmdWaitInitialPollUs)) {
+            const auto waitStatus = tryKmdWaitForHostSynchronize(*csrForCacheFlush,
+                                                                 cacheFlushRequiredForHostSync,
+                                                                 taskCountToWaitForCacheFlush,
+                                                                 taskCountWaitedForCacheFlush);
+            if (waitStatus == NEO::WaitStatus::gpuHang) {
+                if (assertHndlr) {
+                    assertHndlr->printAssertAndAbort();
+                }
+                return ZE_RESULT_ERROR_DEVICE_LOST;
+            }
+            if (waitStatus == NEO::WaitStatus::ready) {
+                continue;
             }
         }
 
