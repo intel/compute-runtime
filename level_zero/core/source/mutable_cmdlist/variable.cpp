@@ -884,7 +884,7 @@ void Variable::processVariableDispatchForSlm() {
 
 uint32_t Variable::getAlignedSlmSize(uint32_t slmSize) {
     auto &neoDevice = *cmdList->getBase()->getDevice()->getNEODevice();
-    return neoDevice.getGfxCoreHelper().alignSlmSize(slmSize, neoDevice.getRootDeviceEnvironment().getReleaseHelper());
+    return neoDevice.getGfxCoreHelper().alignSlmSizePerThreadGroup(slmSize, neoDevice.getRootDeviceEnvironment().getReleaseHelper());
 }
 
 void Variable::addCommitVariableToBaseCmdList() {

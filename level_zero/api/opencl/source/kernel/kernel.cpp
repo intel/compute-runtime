@@ -477,8 +477,8 @@ cl_int Kernel::getMaxConcurrentWorkGroupCount(cl_uint workDim, const size_t *loc
     auto &helper = neoDevice.getGfxCoreHelper();
     auto &descriptor = l0Kernel->getImmutableData()->getDescriptor();
 
-    auto usedSlmSize = helper.alignSlmSize(l0Kernel->getPrivateState().slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize,
-                                           neoDevice.getRootDeviceEnvironment().getReleaseHelper());
+    auto usedSlmSize = helper.alignSlmSizePerThreadGroup(l0Kernel->getPrivateState().slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize,
+                                                         neoDevice.getRootDeviceEnvironment().getReleaseHelper());
 
     bool platformImplicitScaling = helper.platformSupportsImplicitScaling(neoDevice.getRootDeviceEnvironment());
     bool isImplicitScalingEnabled = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice.getDeviceBitfield(), platformImplicitScaling);

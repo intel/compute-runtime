@@ -635,8 +635,8 @@ uint32_t KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineG
     auto &helper = neoDevice.getGfxCoreHelper();
     auto &descriptor = getImmutableData()->getDescriptor();
 
-    auto usedSlmSize = helper.alignSlmSize(privateState.slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize,
-                                           neoDevice.getRootDeviceEnvironment().getReleaseHelper());
+    auto usedSlmSize = helper.alignSlmSizePerThreadGroup(privateState.slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize,
+                                                         neoDevice.getRootDeviceEnvironment().getReleaseHelper());
     const uint32_t workDim = 3;
     const size_t localWorkSize[] = {this->privateState.groupSize[0], this->privateState.groupSize[1], this->privateState.groupSize[2]};
 

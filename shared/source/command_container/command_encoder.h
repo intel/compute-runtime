@@ -231,11 +231,11 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     static void encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 
     template <typename InterfaceDescriptorType>
-    static void setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
-                                      const uint32_t threadsPerThreadGroup, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy);
+    static void encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
+                                         const uint32_t threadsPerThreadGroup, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy);
 
     template <typename InterfaceDescriptorType>
-    static void setupProgrammableSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled);
+    static void encodeSlmSizePerThreadGroup(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled);
 
     static uint32_t getThreadCountPerSubslice(const HardwareInfo &hwInfo);
     static uint32_t alignPreferredSlmSize(uint32_t slmSize);
@@ -306,7 +306,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     template <typename WalkerType>
     static void forceComputeWalkerPostSyncFlushWithWrite(WalkerType &walkerCmd);
 
-    static uint32_t alignSlmSize(uint32_t slmSize, ReleaseHelper *releaseHelper);
+    static uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize, ReleaseHelper *releaseHelper);
     static uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper);
 
     static bool singleTileExecImplicitScalingRequired(bool cooperativeKernel);

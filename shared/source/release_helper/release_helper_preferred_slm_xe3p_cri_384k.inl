@@ -113,7 +113,7 @@ uint32_t ReleaseHelperHw<release>::computeSlmValues(uint32_t slmSize) const {
 }
 
 template <>
-uint32_t ReleaseHelperHw<release>::alignSlmSize(uint32_t slmSize) const {
+uint32_t ReleaseHelperHw<release>::alignSlmSizePerThreadGroup(uint32_t slmSize) const {
     static constexpr uint32_t largeSizes[] = {
         24u * MemoryConstants::kiloByte,
         32u * MemoryConstants::kiloByte,

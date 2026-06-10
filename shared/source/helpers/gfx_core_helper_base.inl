@@ -462,8 +462,8 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize, ReleaseHelper *releaseHelper) const {
-    return EncodeDispatchKernel<GfxFamily>::alignSlmSize(slmSize, releaseHelper);
+uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSizePerThreadGroup(uint32_t slmSize, ReleaseHelper *releaseHelper) const {
+    return EncodeDispatchKernel<GfxFamily>::alignSlmSizePerThreadGroup(slmSize, releaseHelper);
 }
 
 template <typename GfxFamily>

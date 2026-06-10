@@ -94,7 +94,7 @@ class GfxCoreHelper {
     virtual uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
     virtual uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual uint32_t alignSlmSize(uint32_t slmSize, ReleaseHelper *releaseHelper) const = 0;
+    virtual uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize, ReleaseHelper *releaseHelper) const = 0;
 
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
     virtual uint32_t getMinimalSIMDSize() const = 0;
@@ -338,7 +338,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
-    uint32_t alignSlmSize(uint32_t slmSize, ReleaseHelper *releaseHelper) const override;
+    uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize, ReleaseHelper *releaseHelper) const override;
 
     static AuxTranslationMode getAuxTranslationMode(const HardwareInfo &hwInfo);
 

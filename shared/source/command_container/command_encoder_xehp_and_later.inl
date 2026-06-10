@@ -122,7 +122,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, args.defaultPipelinedThreadArbitrationPolicy);
 
-    EncodeDispatchKernel<Family>::setupProgrammableSlmSize(&idd, rootDeviceEnvironment, args.dispatchInterface->getSlmTotalSizePerThreadGroup(), heaplessModeEnabled);
+    EncodeDispatchKernel<Family>::encodeSlmSizePerThreadGroup(&idd, rootDeviceEnvironment, args.dispatchInterface->getSlmTotalSizePerThreadGroup(), heaplessModeEnabled);
 
     auto bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
     bool sshProgrammingRequired = true;
@@ -435,9 +435,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                  walkerCmd.getThreadGroupIdZDimension(),
                  idd.getThreadGroupDispatchSize());
 
-    EncodeDispatchKernel<Family>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup,
-                                                        args.dispatchInterface->getSlmTotalSizePerThreadGroup(),
-                                                        args.dispatchInterface->getSlmPolicy());
+    EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup,
+                                                           args.dispatchInterface->getSlmTotalSizePerThreadGroup(),
+                                                           args.dispatchInterface->getSlmPolicy());
 
     auto kernelExecutionType = args.isCooperative ? KernelExecutionType::concurrent : KernelExecutionType::defaultType;
 
@@ -972,7 +972,7 @@ void EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(Walk
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
+uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
     static constexpr uint32_t alignedSlmSizes[] = {
         0u,
         1u * MemoryConstants::kiloByte,
@@ -1043,7 +1043,7 @@ uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwIn
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setupProgrammableSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled) {
+void EncodeDispatchKernel<Family>::encodeSlmSizePerThreadGroup(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
 
@@ -1051,12 +1051,12 @@ void EncodeDispatchKernel<Family>::setupProgrammableSlmSize(InterfaceDescriptorT
     auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, availableSlmSizePerSubslice);
     slmTotalSizePerThreadGroup = std::min(slmTotalSizePerThreadGroup, static_cast<uint32_t>(maxProgrammableSlmSizeKb * MemoryConstants::kiloByte));
 
-    auto programmableIDSLMSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, slmTotalSizePerThreadGroup, releaseHelper);
+    auto programmableSlmSizePerThreadGroup = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, slmTotalSizePerThreadGroup, releaseHelper);
 
     if (debugManager.flags.OverrideSlmAllocationSize.get() != -1) {
-        programmableIDSLMSize = static_cast<uint32_t>(debugManager.flags.OverrideSlmAllocationSize.get());
+        programmableSlmSizePerThreadGroup = static_cast<uint32_t>(debugManager.flags.OverrideSlmAllocationSize.get());
     }
-    pInterfaceDescriptor->setSharedLocalMemorySize(programmableIDSLMSize);
+    pInterfaceDescriptor->setSharedLocalMemorySize(programmableSlmSizePerThreadGroup);
 }
 
 template <typename Family>

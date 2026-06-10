@@ -70,7 +70,7 @@ class ReleaseHelper {
     virtual bool getFtrXe2Compression() const = 0;
     virtual bool programmAdditionalStallPriorToBarrierWithTimestamp() const = 0;
     virtual uint32_t computeSlmValues(uint32_t slmSize) const = 0;
-    virtual uint32_t alignSlmSize(uint32_t slmSize) const = 0;
+    virtual uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize) const = 0;
     virtual bool isBlitImageAllowedForDepthFormat() const = 0;
     virtual bool isPostImageWriteFlushRequired() const = 0;
     virtual bool isPreImageReadFlushRequired() const = 0;
@@ -127,7 +127,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool getFtrXe2Compression() const override;
     bool programmAdditionalStallPriorToBarrierWithTimestamp() const override;
     uint32_t computeSlmValues(uint32_t slmSize) const override;
-    uint32_t alignSlmSize(uint32_t slmSize) const override;
+    uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize) const override;
     bool isBlitImageAllowedForDepthFormat() const override;
     bool isPostImageWriteFlushRequired() const override;
     bool isPreImageReadFlushRequired() const override;

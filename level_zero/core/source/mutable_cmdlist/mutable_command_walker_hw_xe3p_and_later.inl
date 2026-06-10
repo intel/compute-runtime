@@ -302,11 +302,11 @@ void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &
     }
 
     if (args.isSlmKernel && (args.updateGroupSize || args.updateSlm)) {
-        NEO::EncodeDispatchKernel<GfxFamily>::setupPreferredSlmSize(&idd,
-                                                                    device.getRootDeviceEnvironment(),
-                                                                    args.threadsPerThreadGroup,
-                                                                    args.slmTotalSizePerThreadGroup,
-                                                                    static_cast<NEO::SlmPolicy>(args.slmPolicy));
+        NEO::EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&idd,
+                                                                       device.getRootDeviceEnvironment(),
+                                                                       args.threadsPerThreadGroup,
+                                                                       args.slmTotalSizePerThreadGroup,
+                                                                       static_cast<NEO::SlmPolicy>(args.slmPolicy));
     }
 
     if (args.updateGroupCount || args.updateGroupSize) {

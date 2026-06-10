@@ -42,7 +42,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getFtrXe2Compression, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDirectSubmissionLightSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(computeSlmValues, uint32_t, {}, (uint32_t slmSize));
-    ADDMETHOD_CONST_NOBASE(alignSlmSize, uint32_t, {}, (uint32_t slmSize));
+    ADDMETHOD_CONST_NOBASE(alignSlmSizePerThreadGroup, uint32_t, {}, (uint32_t slmSize));
     ADDMETHOD_CONST_NOBASE(programmAdditionalStallPriorToBarrierWithTimestamp, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isPostImageWriteFlushRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isPreImageReadFlushRequired, bool, false, ());

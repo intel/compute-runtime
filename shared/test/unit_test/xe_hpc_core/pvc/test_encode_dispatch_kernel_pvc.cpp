@@ -33,7 +33,7 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenZeroSlmSizeWhenSetAdditionalInfoIsCal
     uint32_t slmTotalSizePerThreadGroup = 0;
 
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-    EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsCount, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
+    EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsCount, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
     EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB, idd.getPreferredSlmAllocationSize());
 }
 

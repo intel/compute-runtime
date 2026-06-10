@@ -103,7 +103,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                        kernelDescriptor,
                                                        hwInfo);
 
-    EncodeDispatchKernel<Family>::setupProgrammableSlmSize(&idd, args.device->getRootDeviceEnvironment(), args.dispatchInterface->getSlmTotalSizePerThreadGroup(), false);
+    EncodeDispatchKernel<Family>::encodeSlmSizePerThreadGroup(&idd, args.device->getRootDeviceEnvironment(), args.dispatchInterface->getSlmTotalSizePerThreadGroup(), false);
 
     uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
     uint32_t bindingTablePointer = 0u;
@@ -443,11 +443,11 @@ inline void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerT
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {}
+void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {}
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setupProgrammableSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled) {
+void EncodeDispatchKernel<Family>::encodeSlmSizePerThreadGroup(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
     uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment);
@@ -646,7 +646,7 @@ void EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(Walk
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
+uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
     if (slmSize == 0u) {
         return 0u;
     }

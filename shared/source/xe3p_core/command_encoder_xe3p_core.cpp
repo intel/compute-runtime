@@ -131,9 +131,9 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 }
 
 template <>
-uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
+uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
     DEBUG_BREAK_IF(!releaseHelper);
-    return releaseHelper->alignSlmSize(slmSize);
+    return releaseHelper->alignSlmSizePerThreadGroup(slmSize);
 }
 
 template <>

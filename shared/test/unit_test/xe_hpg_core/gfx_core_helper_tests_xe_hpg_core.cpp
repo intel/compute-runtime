@@ -115,24 +115,24 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocati
     }
 }
 
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSizePerThreadGroupIsCalledThenCorrectValueIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    EXPECT_EQ(0u, gfxCoreHelper.alignSlmSize(0, nullptr));
-    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1, nullptr));
-    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1024, nullptr));
-    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(1025, nullptr));
-    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(2048, nullptr));
-    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(2049, nullptr));
-    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(4096, nullptr));
-    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(4097, nullptr));
-    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(8192, nullptr));
-    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(8193, nullptr));
-    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(16384, nullptr));
-    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(16385, nullptr));
-    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(32768, nullptr));
-    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(32769, nullptr));
-    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536, nullptr));
+    EXPECT_EQ(0u, gfxCoreHelper.alignSlmSizePerThreadGroup(0, nullptr));
+    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSizePerThreadGroup(1, nullptr));
+    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSizePerThreadGroup(1024, nullptr));
+    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSizePerThreadGroup(1025, nullptr));
+    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSizePerThreadGroup(2048, nullptr));
+    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSizePerThreadGroup(2049, nullptr));
+    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSizePerThreadGroup(4096, nullptr));
+    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSizePerThreadGroup(4097, nullptr));
+    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSizePerThreadGroup(8192, nullptr));
+    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSizePerThreadGroup(8193, nullptr));
+    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSizePerThreadGroup(16384, nullptr));
+    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSizePerThreadGroup(16385, nullptr));
+    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSizePerThreadGroup(32768, nullptr));
+    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSizePerThreadGroup(32769, nullptr));
+    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSizePerThreadGroup(65536, nullptr));
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenXeHpgCoreWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnTrue) {

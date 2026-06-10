@@ -162,8 +162,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     EncodeDispatchKernel<GfxFamily>::setGrfInfo(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                                 sizeCrossThreadData, sizePerThreadData, device.getRootDeviceEnvironment());
 
-    EncodeDispatchKernel<GfxFamily>::setupPreferredSlmSize(&interfaceDescriptor, device.getRootDeviceEnvironment(),
-                                                           threadsPerThreadGroup, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
+    EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&interfaceDescriptor, device.getRootDeviceEnvironment(),
+                                                              threadsPerThreadGroup, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
 
     if constexpr (heaplessModeEnabled == false) {
         interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
@@ -179,7 +179,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     const auto &hardwareInfo = device.getHardwareInfo();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
 
-    EncodeDispatchKernel<GfxFamily>::setupProgrammableSlmSize(&interfaceDescriptor, device.getRootDeviceEnvironment(), slmTotalSizePerThreadGroup, heaplessModeEnabled);
+    EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerThreadGroup(&interfaceDescriptor, device.getRootDeviceEnvironment(), slmTotalSizePerThreadGroup, heaplessModeEnabled);
 
     EncodeDispatchKernel<GfxFamily>::programBarrierEnable(interfaceDescriptor,
                                                           kernelDescriptor,
