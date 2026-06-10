@@ -1567,10 +1567,11 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
     }
     auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();
     for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
-        std::unique_lock<CommandStreamReceiver::MutexType> lock;
         if (engine.osContext->isDirectSubmissionLightActive()) {
-            lock = engine.commandStreamReceiver->obtainUniqueOwnership();
-            engine.commandStreamReceiver->stopDirectSubmission(true, false);
+            {
+                auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                engine.commandStreamReceiver->stopDirectSubmission(true, false);
+            }
             handleFenceCompletion(gfxAllocation);
         }
 
