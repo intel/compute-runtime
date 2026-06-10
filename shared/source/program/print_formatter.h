@@ -48,6 +48,9 @@ class PrintFormatter {
     void setInitialOffset(uint32_t offset) {
         initialOffset = offset;
     }
+    void setStartParsingOffset(uint32_t offset) {
+        startParsingOffset = offset;
+    }
     constexpr static size_t maxSinglePrintStringLength = 16 * MemoryConstants::kiloByte;
 
   protected:
@@ -127,7 +130,8 @@ class PrintFormatter {
 
     bool using32BitPointers = false;
 
-    uint32_t currentOffset = 0; // current position in currently parsed buffer
-    uint32_t initialOffset = 0; // initial offset - reserved memory for header in buffer
+    uint32_t currentOffset = 0;      // current position in currently parsed buffer
+    uint32_t initialOffset = 0;      // initial offset - reserved memory for header in buffer
+    uint32_t startParsingOffset = 0; // skip entries already emitted by a previous drain of this buffer
 };
 }; // namespace NEO

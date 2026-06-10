@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,11 +26,14 @@ struct KernelImmutableData;
 struct PrintfHandler : NEO::NonCopyableAndNonMovableClass {
     static NEO::GraphicsAllocation *createPrintfBuffer(Device *device);
     static void printOutput(const KernelImmutableData *kernelData,
-                            NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter);
+                            NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter,
+                            uint32_t &alreadyPrintedSize);
     static size_t getPrintBufferSize();
 
   protected:
     PrintfHandler() = delete;
+
+    static void rewindPrintfBuffer(NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter);
 
     constexpr static size_t printfBufferSize = 4 * MemoryConstants::megaByte;
     constexpr static uint32_t printfSurfaceInitialDataSize = sizeof(uint32_t);

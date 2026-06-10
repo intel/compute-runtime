@@ -30,6 +30,10 @@ void PrintFormatter::printKernelOutput(const std::function<void(char *)> &print)
     read(&printfOutputBufferSizeRead);
     printfOutputBufferSize = std::min(printfOutputBufferSizeRead, printfOutputBufferSize);
 
+    if (startParsingOffset > currentOffset) {
+        currentOffset = startParsingOffset;
+    }
+
     while (currentOffset + sizeof(char *) <= printfOutputBufferSize) {
         char *formatString = nullptr;
         read(&formatString);

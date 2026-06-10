@@ -36,7 +36,8 @@ NEO::GraphicsAllocation *PrintfHandler::createPrintfBuffer(Device *device) {
 }
 
 void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
-                                NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter) {
+                                NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter,
+                                uint32_t &alreadyPrintedSize) {
     bool using32BitGpuPointers = kernelData->getDescriptor().kernelAttributes.gpuPointerSize == 4u;
 
     auto printfOutputBuffer = static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer());
@@ -72,14 +73,56 @@ void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
         }
     }
 
+    uint32_t bytesWritten = *reinterpret_cast<const uint32_t *>(printfOutputBuffer); // NOLINT(clang-analyzer-core.uninitialized.Assign)
+    bytesWritten = std::min(bytesWritten, printfOutputSize);
+    if (bytesWritten <= alreadyPrintedSize) {
+        return;
+    }
+
     NEO::PrintFormatter printfFormatter{
         printfOutputBuffer,
         printfOutputSize,
         using32BitGpuPointers};
+    printfFormatter.setStartParsingOffset(alreadyPrintedSize);
     printfFormatter.printKernelOutput();
 
-    *reinterpret_cast<uint32_t *>(printfBuffer->getUnderlyingBuffer()) =
-        PrintfHandler::printfSurfaceInitialDataSize;
+    alreadyPrintedSize = bytesWritten;
+
+    // Rewind only when full: the GPU has stopped writing, so this cannot race a live launch.
+    const uint32_t minEntrySize = using32BitGpuPointers ? sizeof(uint32_t) : sizeof(uint64_t);
+    if (bytesWritten + minEntrySize > printfOutputSize) {
+        rewindPrintfBuffer(printfBuffer, device, useInternalBlitter);
+        alreadyPrintedSize = 0;
+    }
+}
+
+void PrintfHandler::rewindPrintfBuffer(NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter) {
+    uint32_t initialValue = PrintfHandler::printfSurfaceInitialDataSize;
+
+    if (useInternalBlitter) {
+        auto selectedDevice = device->getNEODevice()->getNearestGenericSubDevice(0);
+        auto &selectorCopyEngine = selectedDevice->getSelectorCopyEngine();
+        auto deviceBitfield = selectedDevice->getDeviceBitfield();
+        auto bcsEngineType = NEO::EngineHelpers::getBcsEngineType(selectedDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, true);
+        auto bcsEngine = selectedDevice->tryGetEngine(bcsEngineType, NEO::EngineUsage::internal);
+
+        if (bcsEngine) {
+            NEO::BlitPropertiesContainer blitPropertiesContainer;
+            blitPropertiesContainer.push_back(
+                NEO::BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
+                                                                     *bcsEngine->commandStreamReceiver, printfBuffer, nullptr,
+                                                                     &initialValue,
+                                                                     printfBuffer->getGpuAddress(),
+                                                                     0, 0, 0, Vec3<size_t>(sizeof(initialValue), 0, 0), 0, 0, 0, 0));
+
+            auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, *selectedDevice);
+            if (newTaskCount != NEO::CompletionStamp::gpuHang) {
+                return;
+            }
+        }
+    }
+
+    *reinterpret_cast<uint32_t *>(printfBuffer->getUnderlyingBuffer()) = initialValue;
 }
 
 size_t PrintfHandler::getPrintBufferSize() {

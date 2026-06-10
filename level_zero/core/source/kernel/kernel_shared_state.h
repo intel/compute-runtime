@@ -45,6 +45,11 @@ struct KernelSharedState {
 
     bool heaplessEnabled = false;
     bool implicitScalingEnabled = false;
+
+    // High-water mark of how many bytes of the shared printf buffer have already been printed.
+    // Only the region beyond it is emitted on a drain, so repeated drains (two channels, or
+    // re-launches sharing the buffer) print each launch's output once. Reset when the buffer is rewound.
+    uint32_t printfOutputAlreadyPrintedSize = 0;
 };
 
 } // namespace L0

@@ -3928,6 +3928,29 @@ TEST_F(KernelPrintHandlerTest, whenPrintPrintfOutputIsCalledThenPrintfBufferIsUs
     EXPECT_EQ(buffer, MyPrintfHandler::getPrintfSurfaceInitialDataSize());
 }
 
+TEST_F(KernelPrintHandlerTest, givenPrintfBufferDrainedRepeatedlyWithoutNewOutputThenHighWaterMarkAdvancesOnlyOnce) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
+    kernel->setModule(module.get());
+    kernel->initialize(&desc);
+
+    ASSERT_NE(nullptr, kernel->sharedState->printfBuffer);
+    const uint32_t initialSize = MyPrintfHandler::getPrintfSurfaceInitialDataSize();
+
+    // Nothing has been drained yet.
+    EXPECT_EQ(0u, kernel->getPrintfOutputAlreadyPrintedSize());
+
+    // First drain advances the high-water mark to the buffer's current write offset.
+    kernel->printPrintfOutput(false);
+    EXPECT_EQ(initialSize, kernel->getPrintfOutputAlreadyPrintedSize());
+
+    // A second drain of the same launch (e.g. the other channel) finds no new bytes => no-op.
+    kernel->printPrintfOutput(false);
+    EXPECT_EQ(initialSize, kernel->getPrintfOutputAlreadyPrintedSize());
+}
+
 using PrintfKernelOwnershipTest = Test<ModuleFixture>;
 
 TEST_F(PrintfKernelOwnershipTest, givenKernelWithPrintfThenModuleStoresItCorrectly) {
@@ -4062,7 +4085,8 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
 
         StreamCapture capture;
         capture.captureStdout();
-        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true);
+        uint32_t alreadyPrintedSize = 0;
+        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true, alreadyPrintedSize);
         std::string output = capture.getCapturedStdout();
 
         auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::internal);
@@ -4127,7 +4151,8 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
         StreamCapture capture;
         capture.captureStdout();
         capture.captureStderr();
-        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true);
+        uint32_t alreadyPrintedSize = 0;
+        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true, alreadyPrintedSize);
         std::string output = capture.getCapturedStdout();
         std::string error = capture.getCapturedStderr();
 
@@ -4138,6 +4163,157 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
         EXPECT_STREQ(expectedString, output.c_str());
         EXPECT_STREQ("Failed to copy printf buffer.\n", error.c_str());
     }
+}
+
+HWTEST_F(PrintfHandlerTests, givenPrintfBufferDrainedFromTwoChannelsThenOutputIsPrintedOnce) {
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0));
+    device->incRefInternal();
+    MockDeviceImp mockDevice(device.get());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->heapInfo.kernelHeapSize = 1;
+    char kernelHeap[1];
+    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+    auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+    kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
+    auto &kernelDescriptor = kernelInfo->kernelDescriptor;
+    kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
+    kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
+
+    const char *expectedString = "printed_once";
+    constexpr size_t size = 128;
+    uint32_t bufferArray[size] = {};
+    void *buffer = reinterpret_cast<void *>(bufferArray);
+    NEO::MockGraphicsAllocation mockAllocation(buffer, 0x2000, size);
+    auto printfAllocation = reinterpret_cast<uint8_t *>(buffer);
+    uint32_t dataSize = sizeof(uint32_t) + sizeof(char *);
+    *reinterpret_cast<uint32_t *>(printfAllocation) = dataSize;
+    memcpy(printfAllocation + sizeof(uint32_t), &expectedString, sizeof(char *));
+
+    // Use the direct (non-blitter) read path for a deterministic buffer in the ULT.
+    uint32_t alreadyPrintedSize = 0;
+
+    StreamCapture firstCapture;
+    firstCapture.captureStdout();
+    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    std::string firstOutput = firstCapture.getCapturedStdout();
+    EXPECT_STREQ(expectedString, firstOutput.c_str());
+    EXPECT_EQ(dataSize, alreadyPrintedSize);
+
+    // Second channel draining the same launch (no new bytes written) must print nothing.
+    StreamCapture secondCapture;
+    secondCapture.captureStdout();
+    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    std::string secondOutput = secondCapture.getCapturedStdout();
+    EXPECT_EQ(0u, secondOutput.size());
+    EXPECT_EQ(dataSize, alreadyPrintedSize);
+}
+
+HWTEST_F(PrintfHandlerTests, givenPrintfBufferGrowingAcrossLaunchesThenEachLaunchOutputIsPrintedOnce) {
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0));
+    device->incRefInternal();
+    MockDeviceImp mockDevice(device.get());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->heapInfo.kernelHeapSize = 1;
+    char kernelHeap[1];
+    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+    auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+    kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
+    auto &kernelDescriptor = kernelInfo->kernelDescriptor;
+    kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
+    kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
+
+    const char *firstString = "launch_one";
+    const char *secondString = "launch_two";
+    constexpr size_t size = 128;
+    uint32_t bufferArray[size] = {};
+    void *buffer = reinterpret_cast<void *>(bufferArray);
+    NEO::MockGraphicsAllocation mockAllocation(buffer, 0x2000, size);
+    auto printfAllocation = reinterpret_cast<uint8_t *>(buffer);
+
+    // First launch wrote one entry; the buffer header tracks total bytes written.
+    uint32_t sizeAfterFirst = sizeof(uint32_t) + sizeof(char *);
+    *reinterpret_cast<uint32_t *>(printfAllocation) = sizeAfterFirst;
+    memcpy(printfAllocation + sizeof(uint32_t), &firstString, sizeof(char *));
+
+    uint32_t alreadyPrintedSize = 0;
+    StreamCapture firstCapture;
+    firstCapture.captureStdout();
+    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    EXPECT_STREQ(firstString, firstCapture.getCapturedStdout().c_str());
+    EXPECT_EQ(sizeAfterFirst, alreadyPrintedSize);
+
+    // A second launch of the same kernel appended another entry to the shared, never-reset buffer.
+    uint32_t sizeAfterSecond = sizeAfterFirst + sizeof(char *);
+    *reinterpret_cast<uint32_t *>(printfAllocation) = sizeAfterSecond;
+    memcpy(printfAllocation + sizeAfterFirst, &secondString, sizeof(char *));
+
+    StreamCapture secondCapture;
+    secondCapture.captureStdout();
+    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    std::string secondOutput = secondCapture.getCapturedStdout();
+    EXPECT_STREQ(secondString, secondOutput.c_str()); // only the new entry, launch_one is not re-printed
+    EXPECT_EQ(sizeAfterSecond, alreadyPrintedSize);
+}
+
+HWTEST_F(PrintfHandlerTests, givenFullPrintfBufferWhenDrainedThenBufferIsRewoundAndReusedByNextLaunch) {
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0));
+    device->incRefInternal();
+    MockDeviceImp mockDevice(device.get());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->heapInfo.kernelHeapSize = 1;
+    char kernelHeap[1];
+    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+    auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+    kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
+    auto &kernelDescriptor = kernelInfo->kernelDescriptor;
+    kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
+    kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
+
+    const char *lastString = "at_capacity";
+    const char *afterReclaimString = "after_reclaim";
+    constexpr size_t size = 128; // allocation size in bytes == printfOutputSize
+    uint32_t bufferArray[size] = {};
+    void *buffer = reinterpret_cast<void *>(bufferArray);
+    NEO::MockGraphicsAllocation mockAllocation(buffer, 0x2000, size);
+    auto printfAllocation = reinterpret_cast<uint8_t *>(buffer);
+
+    const uint32_t initialSize = sizeof(uint32_t);
+
+    // The buffer is full: its write offset reached capacity and a final entry sits in the last slot.
+    uint32_t lastEntryOffset = static_cast<uint32_t>(size - sizeof(char *));
+    *reinterpret_cast<uint32_t *>(printfAllocation) = static_cast<uint32_t>(size);
+    memcpy(printfAllocation + lastEntryOffset, &lastString, sizeof(char *));
+
+    uint32_t alreadyPrintedSize = lastEntryOffset; // everything before the last entry already printed
+
+    StreamCapture capture;
+    capture.captureStdout();
+    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    EXPECT_STREQ(lastString, capture.getCapturedStdout().c_str());
+
+    // Full buffer was rewound: write offset reset to the start and the mark cleared.
+    EXPECT_EQ(initialSize, *reinterpret_cast<uint32_t *>(printfAllocation));
+    EXPECT_EQ(0u, alreadyPrintedSize);
+
+    // A subsequent launch reuses the buffer from the beginning and its output is printed.
+    uint32_t reusedSize = sizeof(uint32_t) + sizeof(char *);
+    *reinterpret_cast<uint32_t *>(printfAllocation) = reusedSize;
+    memcpy(printfAllocation + sizeof(uint32_t), &afterReclaimString, sizeof(char *));
+
+    StreamCapture reuseCapture;
+    reuseCapture.captureStdout();
+    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    EXPECT_STREQ(afterReclaimString, reuseCapture.getCapturedStdout().c_str());
+    EXPECT_EQ(reusedSize, alreadyPrintedSize);
 }
 
 using KernelImplicitArgTests = Test<ModuleImmutableDataFixture>;

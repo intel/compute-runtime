@@ -124,6 +124,7 @@ struct KernelImp : Kernel {
         return this->sharedState->printfBuffer;
     }
     void printPrintfOutput(bool hangDetected) override;
+    uint32_t getPrintfOutputAlreadyPrintedSize() const { return this->sharedState->printfOutputAlreadyPrintedSize; }
 
     bool usesSyncBuffer() override;
     void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;

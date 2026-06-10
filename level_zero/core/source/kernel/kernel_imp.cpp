@@ -351,7 +351,8 @@ KernelSharedState::~KernelSharedState() {
     const auto *kernelImmData = this->kernelImmData;
     if (this->printfBuffer != nullptr) {
         // not allowed to call virtual function on destructor, so calling printOutput directly
-        PrintfHandler::printOutput(kernelImmData, this->printfBuffer, this->module->getDevice(), false);
+        PrintfHandler::printOutput(kernelImmData, this->printfBuffer, this->module->getDevice(), false,
+                                   this->printfOutputAlreadyPrintedSize);
         this->module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->printfBuffer);
     }
 
@@ -1433,7 +1434,8 @@ void KernelImp::createPrintfBuffer() {
 }
 
 void KernelImp::printPrintfOutput(bool hangDetected) {
-    PrintfHandler::printOutput(getImmutableData(), this->sharedState->printfBuffer, module->getDevice(), hangDetected);
+    PrintfHandler::printOutput(getImmutableData(), this->sharedState->printfBuffer, module->getDevice(), hangDetected,
+                               this->sharedState->printfOutputAlreadyPrintedSize);
 }
 
 bool KernelImp::usesSyncBuffer() {
