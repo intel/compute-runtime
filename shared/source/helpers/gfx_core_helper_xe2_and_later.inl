@@ -54,6 +54,7 @@ const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstanc
 
     engines.push_back({defaultEngine, EngineUsage::lowPriority});
     engines.push_back({defaultEngine, EngineUsage::internal});
+    engines.push_back({defaultEngine, EngineUsage::powerHint});
 
     if (hwInfo.capabilityTable.blitterOperationsSupported) {
 
@@ -71,6 +72,13 @@ const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstanc
                     engines.push_back({engineType, EngineUsage::internal});
                 }
             }
+        }
+
+        const auto &productHelper = rootDeviceEnvironment.getProductHelper();
+        auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
+        auto defaultCopyBcsIndex = NEO::EngineHelpers::getBcsIndex(defaultCopyEngine);
+        if (defaultCopyBcsIndex < hwInfo.featureTable.ftrBcsInfo.size() && hwInfo.featureTable.ftrBcsInfo.test(defaultCopyBcsIndex)) {
+            engines.push_back({defaultCopyEngine, EngineUsage::powerHint});
         }
     }
 

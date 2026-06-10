@@ -256,16 +256,6 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
         return nullptr;
     }
 
-    auto &osContext = csr->getOsContext();
-    auto driverHandle = device->getDriverHandle();
-    if (driverHandle->powerHint && driverHandle->powerHint != osContext.getUmdPowerHintValue()) {
-        csr->unregisterDirectSubmissionFromController();
-        auto lock = csr->obtainUniqueOwnership();
-        csr->resetDirectSubmission();
-        osContext.setUmdPowerHintValue(driverHandle->powerHint);
-        osContext.reInitializeContext();
-    }
-
     csr->initializeResourcesAndDirectSubmission(device->getDevicePreemptionMode());
     if (commandQueue->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
         csr->createGlobalStatelessHeap();

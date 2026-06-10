@@ -111,7 +111,7 @@ bool BcsSplit::setupQueues() {
             splitDesc.ordinal = static_cast<uint32_t>(std::distance(regularEngines.cbegin(), ordinalIt));
         }
 
-        auto cmdList = CommandList::createImmediate(productFamily, &device, &splitDesc, true, engineGroupType, csr, result);
+        auto cmdList = CommandList::createImmediate(productFamily, &device, &splitDesc, true, engineGroupType, csr, result, 0u);
         UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
 
         cmdList->forceDisableInOrderWaits();

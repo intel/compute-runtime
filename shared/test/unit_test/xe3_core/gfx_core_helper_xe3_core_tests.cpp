@@ -94,7 +94,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenXe3CoreWhenAskedForMinimialSimdTh
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEnginesAndTwoRegularCopyEngines) {
-    const size_t numEngines = 18;
+    const size_t numEngines = 20;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -123,6 +123,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenGetGpgpuEnginesThenReturnTwoCccsEn
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
@@ -134,6 +135,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenGetGpgpuEnginesThenReturnTwoCccsEn
         {aub_stream::ENGINE_BCS6, false, true},
         {aub_stream::ENGINE_BCS7, false, true},
         {aub_stream::ENGINE_BCS8, false, true},
+        {aub_stream::ENGINE_BCS, false, true},
     }};
 
     for (size_t i = 0; i < numEngines; i++) {
@@ -144,7 +146,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenGetGpgpuEnginesThenReturnTwoCccsEn
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenCccsAsDefaultEngineWhenGetEnginesCalledThenChangeDefaultEngine) {
-    const size_t numEngines = 18;
+    const size_t numEngines = 20;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -173,6 +175,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenCccsAsDefaultEngineWhenGetEngines
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCCS, false, false},
+        {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
@@ -184,6 +187,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenCccsAsDefaultEngineWhenGetEngines
         {aub_stream::ENGINE_BCS6, false, true},
         {aub_stream::ENGINE_BCS7, false, true},
         {aub_stream::ENGINE_BCS8, false, true},
+        {aub_stream::ENGINE_BCS, false, true},
     }};
 
     for (size_t i = 0; i < numEngines; i++) {
@@ -194,7 +198,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenCccsAsDefaultEngineWhenGetEngines
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenOneCcsEnabledWhenGetEnginesCalledThenCreateOnlyOneCcs) {
-    const size_t numEngines = 15;
+    const size_t numEngines = 17;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -221,6 +225,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenOneCcsEnabledWhenGetEnginesCalled
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
@@ -232,6 +237,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenOneCcsEnabledWhenGetEnginesCalled
         {aub_stream::ENGINE_BCS6, false, true},
         {aub_stream::ENGINE_BCS7, false, true},
         {aub_stream::ENGINE_BCS8, false, true},
+        {aub_stream::ENGINE_BCS, false, true},
     }};
 
     for (size_t i = 0; i < numEngines; i++) {
@@ -242,7 +248,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenOneCcsEnabledWhenGetEnginesCalled
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenFtrRcsDisabledWhenGettingGpgpuEnginesThenCCCSIsNotAdded) {
-    const size_t numEngines = 14;
+    const size_t numEngines = 16;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -268,6 +274,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenFtrRcsDisabledWhenGettingGpgpuEng
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
@@ -279,6 +286,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenFtrRcsDisabledWhenGettingGpgpuEng
         {aub_stream::ENGINE_BCS6, false, true},
         {aub_stream::ENGINE_BCS7, false, true},
         {aub_stream::ENGINE_BCS8, false, true},
+        {aub_stream::ENGINE_BCS, false, true},
     }};
 
     for (size_t i = 0; i < numEngines; i++) {
@@ -291,7 +299,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenFtrRcsDisabledWhenGettingGpgpuEng
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenNodeOrdinalSetoToCCCSWhenGettingGpgpuEnginesThenCCCSIsAdded) {
     DebugManagerStateRestore restorer;
     debugManager.flags.NodeOrdinal.set(aub_stream::ENGINE_CCCS);
-    const size_t numEngines = 15;
+    const size_t numEngines = 17;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -318,6 +326,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenNodeOrdinalSetoToCCCSWhenGettingG
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCCS, false, false},
+        {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
@@ -329,6 +338,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenNodeOrdinalSetoToCCCSWhenGettingG
         {aub_stream::ENGINE_BCS6, false, true},
         {aub_stream::ENGINE_BCS7, false, true},
         {aub_stream::ENGINE_BCS8, false, true},
+        {aub_stream::ENGINE_BCS, false, true},
     }};
 
     for (size_t i = 0; i < numEngines; i++) {
@@ -339,7 +349,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenNodeOrdinalSetoToCCCSWhenGettingG
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenNotAllCopyEnginesWhenSettingEngineTableThenDontAddUnsuportted) {
-    const size_t numEngines = 10;
+    const size_t numEngines = 11;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -369,6 +379,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenNotAllCopyEnginesWhenSettingEngin
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_BCS1, false, true},
         {aub_stream::ENGINE_BCS3, false, true}, // regular
         {aub_stream::ENGINE_BCS3, false, true}, // internal
@@ -385,7 +396,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenNotAllCopyEnginesWhenSettingEngin
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenOneBcsEnabledWhenGetEnginesCalledThenCreateOnlyOneBcs) {
-    const size_t numEngines = 9;
+    const size_t numEngines = 11;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -414,6 +425,8 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenOneBcsEnabledWhenGetEnginesCalled
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
     }};
@@ -426,7 +439,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenOneBcsEnabledWhenGetEnginesCalled
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenBcsDisabledWhenGetEnginesCalledThenDontCreateAnyBcs) {
-    const size_t numEngines = 7;
+    const size_t numEngines = 8;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -454,6 +467,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenBcsDisabledWhenGetEnginesCalledTh
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
     }};
 
     for (size_t i = 0; i < numEngines; i++) {
@@ -472,13 +486,14 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenCcsDisabledAndNumberOfCcsEnabledW
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    EXPECT_EQ(3u, device->allEngines.size());
+    EXPECT_EQ(4u, device->allEngines.size());
     auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-    EXPECT_EQ(3u, engines.size());
+    EXPECT_EQ(4u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[0].first);
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[1].first);
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[3].first);
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenCcsDisabledWhenGetGpgpuEnginesThenReturnCccsEngines) {
@@ -490,13 +505,14 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenCcsDisabledWhenGetGpgpuEnginesThe
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    EXPECT_EQ(3u, device->allEngines.size());
+    EXPECT_EQ(4u, device->allEngines.size());
     auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-    EXPECT_EQ(3u, engines.size());
+    EXPECT_EQ(4u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[0].first);
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[1].first);
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[3].first);
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenNonBcsEngineIsVerifiedThenReturnFalse) {

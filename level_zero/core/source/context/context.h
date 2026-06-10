@@ -390,6 +390,11 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     DriverHandle *driverHandle = nullptr;
     uint32_t numDevices = 0;
     ContextExt *contextExt = nullptr;
+    uint8_t powerHint = 0;
+
+  public:
+    void setPowerHint(uint8_t value) { powerHint = value; }
+    uint8_t getPowerHint() const { return powerHint; }
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Context>);

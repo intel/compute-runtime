@@ -151,6 +151,21 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenQueueFlagWhenCreatingCmdL
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenForceInOrderDebugFlagWhenCreatingCmdListThenEnableInOrder) {
+    NEO::debugManager.flags.ForceInOrderImmediateCmdListExecution.set(1);
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+
+    ze_command_list_handle_t cmdList;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
+
+    EXPECT_TRUE(static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(cmdList)->isInOrderExecutionEnabled());
+    auto flags = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(cmdList)->getCmdListFlags();
+    EXPECT_EQ(static_cast<ze_command_list_flags_t>(ZE_COMMAND_LIST_FLAG_IN_ORDER), flags);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
+}
+
 HWTEST_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListThenReturnError) {
     debugManager.flags.ForceInOrderEvents.set(1);
 

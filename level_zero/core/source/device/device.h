@@ -89,10 +89,20 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
                                                    ze_command_list_handle_t *commandList);
     MOCKABLE_VIRTUAL ze_result_t createInternalCommandList(const ze_command_list_desc_t *desc,
                                                            ze_command_list_handle_t *commandList);
+    ze_result_t createCommandListImmediate(const ze_command_queue_desc_t *desc,
+                                           ze_command_list_handle_t *commandList) {
+        return createCommandListImmediate(desc, commandList, 0u);
+    }
     MOCKABLE_VIRTUAL ze_result_t createCommandListImmediate(const ze_command_queue_desc_t *desc,
-                                                            ze_command_list_handle_t *commandList);
+                                                            ze_command_list_handle_t *commandList,
+                                                            uint8_t powerHint);
+    ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
+                                   ze_command_queue_handle_t *commandQueue) {
+        return createCommandQueue(desc, commandQueue, 0u);
+    }
     MOCKABLE_VIRTUAL ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
-                                                    ze_command_queue_handle_t *commandQueue);
+                                                    ze_command_queue_handle_t *commandQueue,
+                                                    uint8_t powerHint);
     MOCKABLE_VIRTUAL ze_result_t createInternalCommandQueue(const ze_command_queue_desc_t *desc,
                                                             ze_command_queue_handle_t *commandQueue);
     MOCKABLE_VIRTUAL ze_result_t createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage);
@@ -178,9 +188,13 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed);
     MOCKABLE_VIRTUAL void setSysmanHandle(SysmanDevice *pSysmanDevice);
     MOCKABLE_VIRTUAL SysmanDevice *getSysmanHandle();
-    MOCKABLE_VIRTUAL ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt);
+    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt) {
+        return getCsrForOrdinalAndIndex(csr, ordinal, index, priority, priorityLevel, allocateInterrupt, 0u);
+    }
+    MOCKABLE_VIRTUAL ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt, uint8_t powerHint);
     MOCKABLE_VIRTUAL ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr, bool copyOnly);
     ze_result_t getCsrForHighPriority(NEO::CommandStreamReceiver **csr, bool copyOnly);
+    ze_result_t getCsrForPowerHint(NEO::CommandStreamReceiver **csr, bool copyOnly);
     bool isSuitableForLowPriority(ze_command_queue_priority_t priority, bool copyOnly);
     MOCKABLE_VIRTUAL NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::AllocationType type);
     MOCKABLE_VIRTUAL void storeReusableAllocation(NEO::GraphicsAllocation &alloc);

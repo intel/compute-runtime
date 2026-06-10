@@ -111,16 +111,22 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
 
     engines.push_back({defaultEngine, EngineUsage::lowPriority});
     engines.push_back({defaultEngine, EngineUsage::internal});
+    engines.push_back({defaultEngine, EngineUsage::powerHint});
 
     bool lowPriorityBcsCreated = false;
     bool regularPriorityCreated = false;
+    bool powerHintBcsCreated = false;
 
-    const auto pushDefaultCopyEngineInstances = [&engines, &lowPriorityBcsCreated](aub_stream::EngineType defaultCopyEngineType, bool addLowPriorityEngine) {
+    const auto pushDefaultCopyEngineInstances = [&engines, &lowPriorityBcsCreated, &powerHintBcsCreated](aub_stream::EngineType defaultCopyEngineType, bool addLowPriorityEngine) {
         engines.push_back({defaultCopyEngineType, EngineUsage::regular});  // Main copy engine
         engines.push_back({defaultCopyEngineType, EngineUsage::internal}); // Internal usage
         if (addLowPriorityEngine && !lowPriorityBcsCreated) {
             engines.push_back({defaultCopyEngineType, EngineUsage::lowPriority});
             lowPriorityBcsCreated = true;
+        }
+        if (!powerHintBcsCreated) {
+            engines.push_back({defaultCopyEngineType, EngineUsage::powerHint});
+            powerHintBcsCreated = true;
         }
     };
 

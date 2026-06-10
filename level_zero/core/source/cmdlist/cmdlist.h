@@ -268,12 +268,26 @@ struct CommandList : _ze_command_list_handle_t {
     static CommandList *createImmediate(uint32_t productFamily, Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType,
-                                        ze_result_t &resultValue);
+                                        ze_result_t &resultValue) {
+        return createImmediate(productFamily, device, desc, internalUsage, engineGroupType, resultValue, 0u);
+    }
+    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+                                        const ze_command_queue_desc_t *desc,
+                                        bool internalUsage, NEO::EngineGroupType engineGroupType,
+                                        ze_result_t &resultValue,
+                                        uint8_t powerHint);
 
     static CommandList *createImmediate(uint32_t productFamily, Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
-                                        ze_result_t &resultValue);
+                                        ze_result_t &resultValue) {
+        return createImmediate(productFamily, device, desc, internalUsage, engineGroupType, csr, resultValue, 0u);
+    }
+    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+                                        const ze_command_queue_desc_t *desc,
+                                        bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
+                                        ze_result_t &resultValue,
+                                        uint8_t powerHint);
 
     static CommandList *fromHandle(ze_command_list_handle_t handle) {
         return static_cast<CommandList *>(handle);
@@ -716,6 +730,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     CommandListType cmdListType = CommandListType::typeRegular;
     CopyOffloadMode copyOffloadMode = CopyOffloadModes::disabled;
+    uint8_t powerHint = 0u;
     BcsSplitParams::BcsSplitMode bcsSplitMode = BcsSplitParams::BcsSplitMode::disabled;
     NEO::SynchronizedDispatchMode synchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
     uint32_t partitionCount = 1;

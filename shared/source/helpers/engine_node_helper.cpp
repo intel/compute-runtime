@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,8 @@ std::string engineUsageToString(EngineUsage usage) {
         return "Internal";
     case EngineUsage::cooperative:
         return "Cooperative";
+    case EngineUsage::powerHint:
+        return "PowerHint";
     default:
         return "Unknown";
     }
