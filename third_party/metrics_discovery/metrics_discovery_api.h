@@ -37,7 +37,7 @@ SPDX-License-Identifier: MIT
 //////////////////////////////////////////////////////////////////////////////////
 // API build number:
 //////////////////////////////////////////////////////////////////////////////////
-#define MD_API_BUILD_NUMBER_CURRENT 186
+#define MD_API_BUILD_NUMBER_CURRENT 187
 
 namespace MetricsDiscovery
 {
@@ -71,7 +71,8 @@ namespace MetricsDiscovery
         MD_API_MINOR_NUMBER_12      = 12, // Add support for Information Set in concurrent group
         MD_API_MINOR_NUMBER_13      = 13, // Extend API to support flexible metric sets
         MD_API_MINOR_NUMBER_14      = 14, // Offline calculation support
-        MD_API_MINOR_NUMBER_CURRENT = MD_API_MINOR_NUMBER_14,
+        MD_API_MINOR_NUMBER_15      = 15, // Change IO Stream state
+        MD_API_MINOR_NUMBER_CURRENT = MD_API_MINOR_NUMBER_15,
         MD_API_MINOR_NUMBER_CEIL    = 0xFFFFFFFF
     } MD_API_MINOR_VERSION;
 
@@ -109,6 +110,7 @@ namespace MetricsDiscovery
     class IAdapterGroup_1_11;
     class IAdapterGroup_1_13;
     class IAdapterGroup_1_14;
+    class IAdapterGroup_1_15;
 
     //////////////////////////////////////////////////////////////////////////////////
     // Abstract interface for the GPU adapter object.
@@ -119,6 +121,7 @@ namespace MetricsDiscovery
     class IAdapter_1_10;
     class IAdapter_1_11;
     class IAdapter_1_13;
+    class IAdapter_1_15;
 
     //////////////////////////////////////////////////////////////////////////////////
     // Abstract interface for the GPU metrics root object.
@@ -130,6 +133,7 @@ namespace MetricsDiscovery
     class IMetricsDevice_1_10;
     class IMetricsDevice_1_11;
     class IMetricsDevice_1_13;
+    class IMetricsDevice_1_15;
 
     //////////////////////////////////////////////////////////////////////////////////
     // Abstract interface for Metrics Device overrides.
@@ -146,6 +150,7 @@ namespace MetricsDiscovery
     class IConcurrentGroup_1_5;
     class IConcurrentGroup_1_11;
     class IConcurrentGroup_1_13;
+    class IConcurrentGroup_1_15;
 
     //////////////////////////////////////////////////////////////////////////////////
     // Abstract interface for the metric sets mapping to different HW configuration
@@ -904,6 +909,15 @@ namespace MetricsDiscovery
     } TQueryModeMask;
 
     //////////////////////////////////////////////////////////////////////////////////
+    // IO Stream states:
+    //////////////////////////////////////////////////////////////////////////////////
+    typedef enum EIoStreamState
+    {
+        IO_STREAM_STATE_DISABLED = 0,
+        IO_STREAM_STATE_ENABLED,
+    } TIoStreamState;
+
+    //////////////////////////////////////////////////////////////////////////////////
     // Read params:
     //////////////////////////////////////////////////////////////////////////////////
     typedef struct SReadParams_1_0
@@ -1496,6 +1510,31 @@ namespace MetricsDiscovery
     ///////////////////////////////////////////////////////////////////////////////
     //
     // Class:
+    //   IConcurrentGroup_1_15
+    //
+    // Description:
+    //   Updated 1.13 version to use with 1.15 interface version.
+    //
+    // Updates:
+    // - OpenIoStream:                  Update to 1.15 interface
+    //
+    // New:
+    // - ChangeIoStreamState:           To change IO stream state
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IConcurrentGroup_1_15 : public IConcurrentGroup_1_13
+    {
+    public:
+        // Updates.
+        using IConcurrentGroup_1_13::OpenIoStream; // To avoid hiding by 1.15 interface function
+
+        virtual TCompletionCode OpenIoStream( IMetricSet_1_13* metricSet, uint32_t processId, uint32_t* nsTimerPeriod, uint32_t* oaBufferSize, TIoStreamState state );
+        virtual TCompletionCode ChangeIoStreamState( TIoStreamState state, uint32_t* nsTimerPeriod );
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
     //   IOverride_1_2
     //
     // Description:
@@ -1660,6 +1699,24 @@ namespace MetricsDiscovery
     {
     public:
         virtual IConcurrentGroup_1_13* GetConcurrentGroup( uint32_t index );
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
+    //   IMetricsDevice_1_15
+    //
+    // Description:
+    //   Updated 1.13 version to use with 1.15 interface version.
+    //
+    // Updates:
+    // - GetConcurrentGroup:            Update to 1.15 interface
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IMetricsDevice_1_15 : public IMetricsDevice_1_13
+    {
+    public:
+        virtual IConcurrentGroup_1_15* GetConcurrentGroup( uint32_t index );
     };
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -1842,6 +1899,36 @@ namespace MetricsDiscovery
     ///////////////////////////////////////////////////////////////////////////////
     //
     // Class:
+    //   IAdapter_1_15
+    //
+    // Description:
+    //   Abstract interface for GPU adapter.
+    //
+    // Updates:
+    // - OpenMetricsDevice:             Update to 1.15 interface
+    // - OpenMetricsDeviceFromFile:     Update to 1.15 interface
+    // - OpenMetricsSubDevice:          Update to 1.15 interface
+    // - OpenMetricsSubDeviceFromFile:  Update to 1.15 interface
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IAdapter_1_15 : public IAdapter_1_13
+    {
+    public:
+        // Updates.
+        using IAdapter_1_13::OpenMetricsDevice;            // To avoid hiding by 1.15 interface function
+        using IAdapter_1_13::OpenMetricsDeviceFromFile;    // To avoid hiding by 1.15 interface function
+        using IAdapter_1_13::OpenMetricsSubDevice;         // To avoid hiding by 1.15 interface function
+        using IAdapter_1_13::OpenMetricsSubDeviceFromFile; // To avoid hiding by 1.15 interface function
+
+        virtual TCompletionCode OpenMetricsDevice( IMetricsDevice_1_15** metricsDevice );
+        virtual TCompletionCode OpenMetricsDeviceFromFile( const char* fileName, void* openParams, IMetricsDevice_1_15** metricsDevice );
+        virtual TCompletionCode OpenMetricsSubDevice( const uint32_t subDeviceIndex, IMetricsDevice_1_15** metricsDevice );
+        virtual TCompletionCode OpenMetricsSubDeviceFromFile( const uint32_t subDeviceIndex, const char* fileName, void* openParams, IMetricsDevice_1_15** metricsDevice );
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
     //   IAdapterGroup_1_6
     //
     // Description:
@@ -1974,19 +2061,49 @@ namespace MetricsDiscovery
         virtual TCompletionCode SaveMetricsDeviceToBuffer( IMetricsDevice_1_13* metricsDevice, IMetricSet_1_13** metricSets, uint32_t metricSetCount, uint8_t* buffer, uint32_t* bufferSize, const uint32_t minMajorApiVersion, const uint32_t minMinorApiVersion );
     };
 
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
+    //   IAdapterGroup_1_15
+    //
+    // Description:
+    //   Abstract interface for the GPU adapters root object.
+    //
+    // Updates:
+    // - GetAdapter:                         Update to 1.15 interface
+    // - OpenOfflineMetricsDeviceFromBuffer: Update to 1.15 interface
+    // - CloseOfflineMetricsDevice:          Update to 1.15 interface
+    // - SaveMetricsDeviceToBuffer:          Update to 1.15 interface
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IAdapterGroup_1_15 : public IAdapterGroup_1_14
+    {
+    public:
+        // Updates.
+        using IAdapterGroup_1_14::OpenOfflineMetricsDeviceFromBuffer; // To avoid hiding by 1.15 interface function
+        using IAdapterGroup_1_14::CloseOfflineMetricsDevice;          // To avoid hiding by 1.15 interface function
+        using IAdapterGroup_1_14::SaveMetricsDeviceToBuffer;          // To avoid hiding by 1.15 interface function
+
+        virtual IAdapter_1_15* GetAdapter( uint32_t index );
+
+        virtual TCompletionCode OpenOfflineMetricsDeviceFromBuffer( uint8_t* buffer, uint32_t bufferSize, IMetricsDevice_1_15** metricsDevice );
+        virtual TCompletionCode CloseOfflineMetricsDevice( IMetricsDevice_1_15* metricsDevice );
+        virtual TCompletionCode SaveMetricsDeviceToBuffer( IMetricsDevice_1_15* metricsDevice, IMetricSet_1_13** metricSets, uint32_t metricSetCount, uint8_t* buffer, uint32_t* bufferSize, const uint32_t minMajorApiVersion, const uint32_t minMinorApiVersion );
+    };
+
     //////////////////////////////////////////////////////////////////////////////////
     // Latest interfaces and typedef structs versions:
     //////////////////////////////////////////////////////////////////////////////////
-    using IAdapterGroupLatest                    = IAdapterGroup_1_14;
-    using IAdapterLatest                         = IAdapter_1_13;
-    using IConcurrentGroupLatest                 = IConcurrentGroup_1_13;
+    using IAdapterGroupLatest                    = IAdapterGroup_1_15;
+    using IAdapterLatest                         = IAdapter_1_15;
+    using IConcurrentGroupLatest                 = IConcurrentGroup_1_15;
     using IEquationLatest                        = IEquation_1_0;
     using IInformationLatest                     = IInformation_1_0;
     using IMetricEnumeratorLatest                = IMetricEnumerator_1_13;
     using IMetricLatest                          = IMetric_1_13;
     using IMetricPrototypeLatest                 = IMetricPrototype_1_13;
     using IMetricSetLatest                       = IMetricSet_1_13;
-    using IMetricsDeviceLatest                   = IMetricsDevice_1_13;
+    using IMetricsDeviceLatest                   = IMetricsDevice_1_15;
     using IOverrideLatest                        = IOverride_1_2;
     using TAdapterGroupParamsLatest              = TAdapterGroupParams_1_6;
     using TAdapterIdLatest                       = TAdapterId_1_6;
