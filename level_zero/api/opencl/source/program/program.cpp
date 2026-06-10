@@ -292,6 +292,80 @@ cl_int Program::buildFromIL(const char *options) {
     return buildModulesForContextDevices(moduleDescription);
 }
 
+/**
+ * @brief Use l0 api to link the input programs' IR (SPIR-V and/or LLVM BC) into this program.
+ * Produces a gen binary, or an LLVM BC library when -create_library is requested (its IR is
+ * captured so the library can itself be a link input later). Used in clLinkProgram.
+ */
+cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_program *inputPrograms) {
+    if (options) {
+        this->options = options;
+    }
+
+    // Every linkable program (created from IL, source-compiled, or a previously linked library)
+    // exposes its IR uniformly through getIrBinary(); programs without IR (executables / native
+    // binaries) are not linkable.
+    std::vector<const uint8_t *> spirvBinaries;
+    std::vector<size_t> spirvBinariesSizes;
+    std::vector<const uint8_t *> llvmbcBinaries;
+    std::vector<size_t> llvmbcBinariesSizes;
+    for (uint32_t i = 0; i < numInputPrograms; ++i) {
+        auto inProgram = NEO::LEO::castToObject<NEO::LEO::Program>(inputPrograms[i]);
+        if (nullptr == inProgram) {
+            return CL_INVALID_PROGRAM;
+        }
+        auto irBinary = reinterpret_cast<const uint8_t *>(inProgram->getIrBinary());
+        auto irBinarySize = inProgram->getIrBinarySize();
+        if (nullptr == irBinary || 0u == irBinarySize) [[unlikely]] {
+            return CL_INVALID_OPERATION;
+        }
+        if (inProgram->getIsSpirv()) {
+            spirvBinaries.push_back(irBinary);
+            spirvBinariesSizes.push_back(irBinarySize);
+        } else {
+            llvmbcBinaries.push_back(irBinary);
+            llvmbcBinariesSizes.push_back(irBinarySize);
+        }
+    }
+
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pBuildFlags = options;
+    ze_module_program_exp_desc_t moduleProgDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
+    moduleProgDesc.inputSizes = spirvBinariesSizes.data();
+    moduleProgDesc.pInputModules = spirvBinaries.data();
+    moduleProgDesc.count = static_cast<uint32_t>(spirvBinaries.size());
+    moduleDesc.pNext = &moduleProgDesc;
+    L0::ze_module_program_llvmbc_exp_desc_t llvmBcDesc;
+    if (!llvmbcBinaries.empty()) {
+        llvmBcDesc.inputSizes = llvmbcBinariesSizes.data();
+        llvmBcDesc.pInputModules = llvmbcBinaries.data();
+        llvmBcDesc.count = static_cast<uint32_t>(llvmbcBinaries.size());
+        moduleProgDesc.pNext = &llvmBcDesc;
+    }
+
+    // buildModulesForContextDevices runs the per-device zeModuleCreate loop, captures build logs,
+    // and on success sets the binary type to EXECUTABLE (overridden below for a library output).
+    cl_int ret = buildModulesForContextDevices(moduleDesc);
+    if (CL_SUCCESS != ret) {
+        return ret;
+    }
+
+    if (options && NEO::CompilerOptions::contains(options, NEO::CompilerOptions::createLibrary)) {
+        // A library output (LLVM BC) can itself be a link input later; copy its IR into the
+        // Program so it is read uniformly via getIrBinary(), like every other linkable program.
+        ret = captureIrForLibraryOutput();
+        if (CL_SUCCESS != ret) [[unlikely]] {
+            this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+            return ret;
+        }
+        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+    } else {
+        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+    }
+    return CL_SUCCESS;
+}
+
 cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue) {
     if (CreatedFrom::il != this->createdFrom) {
         return CL_INVALID_PROGRAM;

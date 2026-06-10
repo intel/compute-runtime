@@ -72,6 +72,7 @@ class Program : public BaseObject<_cl_program> {
     cl_int compileFromSourceWithHeaders(const char *options, cl_uint numInputHeaders,
                                         const cl_program *inputHeaders, const char **headerIncludeNames);
     cl_int buildFromIL(const char *options);
+    cl_int link(const char *options, cl_uint numInputPrograms, const cl_program *inputPrograms);
     cl_int captureIrForLibraryOutput();
     cl_int setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
     void setProgramBinaryType(cl_program_binary_type programBinaryType) { this->programBinaryType = programBinaryType; }
