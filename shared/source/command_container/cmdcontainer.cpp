@@ -726,6 +726,7 @@ void CommandContainer::extractCommonThreadData() {
     if (this->isIOHCacheEnabled && !this->threadDataTracker->isEmpty()) {
         auto [hash, threadData] = this->threadDataTracker->getCommonThreadData();
         this->threadDataMap->insert(hash, threadData);
+        this->makeThreadDataMapResident();
     }
 }
 

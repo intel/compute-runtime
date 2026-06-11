@@ -2543,10 +2543,18 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenThreadDataRegisteredAndExtr
     auto hash = ThreadDataHash::computeThreadDataHash({ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
 
     cmdContainer->registerThreadData(hash, {combined, sizeof(combined)});
+
+    auto residencyBefore = cmdContainer->getResidencyContainer().size();
     cmdContainer->extractCommonThreadData();
 
     auto result = cmdContainer->getCachedIohOffset(hash, {ctd, sizeof(ctd)}, {ptd, sizeof(ptd)});
     EXPECT_TRUE(result.has_value());
+
+    auto storageAlloc = cmdContainer->getThreadDataMapStorage()->getGraphicsAllocation();
+    ASSERT_NE(nullptr, storageAlloc);
+    auto &residency = cmdContainer->getResidencyContainer();
+    EXPECT_GT(residency.size(), residencyBefore);
+    EXPECT_NE(std::find(residency.begin(), residency.end(), storageAlloc), residency.end());
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -2600,6 +2608,7 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResident
     auto expectedAlloc = cmdContainer->getThreadDataMapStorage()->getGraphicsAllocation();
     ASSERT_NE(nullptr, expectedAlloc);
 
+    cmdContainer->clearResidencyContainer();
     auto residencyBefore = cmdContainer->getResidencyContainer().size();
     cmdContainer->makeThreadDataMapResident();
     auto &residency = cmdContainer->getResidencyContainer();
