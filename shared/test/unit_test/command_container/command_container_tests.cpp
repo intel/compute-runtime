@@ -2561,6 +2561,29 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenThreadDataRegisteredAndExtr
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
+TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenSurfaceStateHeapExhaustedThenCommonThreadDataNotExtracted) {
+    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
+    cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    const uint8_t data[] = {1, 2, 3, 4};
+    auto hash = ThreadDataHash::computeThreadDataHash({data, sizeof(data)}, {});
+    cmdContainer->registerThreadData(hash, {data, sizeof(data)});
+
+    auto ssh = cmdContainer->getIndirectHeap(HeapType::surfaceState);
+    ASSERT_NE(nullptr, ssh);
+    auto sshAllocBefore = ssh->getGraphicsAllocation();
+    ssh->getSpace(ssh->getMaxAvailableSpace());
+    cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, 1024, 1024);
+
+    EXPECT_NE(sshAllocBefore, cmdContainer->getIndirectHeap(HeapType::surfaceState)->getGraphicsAllocation());
+    EXPECT_FALSE(cmdContainer->getCachedIohOffset(hash, {data, sizeof(data)}, {}).has_value());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
 TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenTwoDifferentThreadDataShareSameHashThenGetCachedIohOffsetReturnsCorrectOffset) {
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
     cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);

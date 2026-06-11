@@ -318,6 +318,9 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSize(HeapType heapType, size_
             }
             newSize = alignUp(newSize, MemoryConstants::pageSize);
             auto oldAlloc = getIndirectHeapAllocation(heapType);
+            if (heapType == HeapType::indirectObject) {
+                extractCommonThreadData();
+            }
             this->createAndAssignNewHeap(heapType, newSize);
             if (heapType == HeapType::surfaceState) {
                 indirectHeap->getSpace(reservedSshSize);
@@ -662,8 +665,6 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
             this->immediateReusableAllocationList->pushTailOne(*allocation);
         }
     } else {
-        extractCommonThreadData();
-
         const auto parent = allocation->getParentAllocation();
         const bool isPoolView = allocation->isView() && parent &&
                                 (this->device->getLinearStreamPoolAllocator().isPoolBuffer(parent) ||
