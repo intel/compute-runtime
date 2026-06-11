@@ -494,7 +494,7 @@ uint32_t CommandListCoreFamily<gfxCoreFamily>::getIohSizeForPrefetch(const Kerne
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-std::pair<NEO::GraphicsAllocation *, size_t> CommandListCoreFamily<gfxCoreFamily>::getIohAllocationAndOffsetForPrefetch(const Kernel &kernel, CmdListKernelLaunchParams &launchParams, bool isThreadDataMapAllowed) {
+std::pair<NEO::GraphicsAllocation *, size_t> CommandListCoreFamily<gfxCoreFamily>::getIohAllocationAndOffsetForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace, bool isThreadDataMapAllowed) {
     if (isThreadDataMapAllowed) {
         uint32_t inlineDataProgrammingOffset = 0u;
         if (NEO::EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelDescriptor())) {
@@ -503,13 +503,13 @@ std::pair<NEO::GraphicsAllocation *, size_t> CommandListCoreFamily<gfxCoreFamily
         }
         const std::span<const uint8_t> crossThreadSpan(kernel.getCrossThreadData() + inlineDataProgrammingOffset, kernel.getCrossThreadDataSize() - inlineDataProgrammingOffset);
         const std::span<const uint8_t> perThreadSpan(kernel.getPerThreadData(), kernel.getPerThreadDataSizeForWholeThreadGroup());
-        launchParams.cachedIohOffset = commandContainer.getCachedIohOffset(crossThreadSpan, perThreadSpan);
-        if (launchParams.cachedIohOffset) {
+        auto cachedIohOffset = commandContainer.getCachedIohOffset(crossThreadSpan, perThreadSpan);
+        if (cachedIohOffset) {
             auto cacheStorage = commandContainer.getThreadDataMapStorage();
-            return {cacheStorage->getGraphicsAllocation(), static_cast<size_t>(*launchParams.cachedIohOffset - cacheStorage->getHeapGpuStartOffset())};
+            return {cacheStorage->getGraphicsAllocation(), static_cast<size_t>(*cachedIohOffset - cacheStorage->getHeapGpuStartOffset())};
         }
     }
-    auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(kernel, launchParams.reserveExtraPayloadSpace), GfxFamily::indirectDataAlignment);
+    auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(kernel, reserveExtraSpace), GfxFamily::indirectDataAlignment);
     return {ioh->getGraphicsAllocation(), ioh->getUsed()};
 }
 
@@ -534,7 +534,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         if (isThreadDataMapAllowed) {
             this->patchKernelProperties(launchParams, *kernel, threadGroupDimensions);
         }
-        auto [iohAllocation, iohOffset] = getIohAllocationAndOffsetForPrefetch(*kernel, launchParams, isThreadDataMapAllowed);
+        auto [iohAllocation, iohOffset] = getIohAllocationAndOffsetForPrefetch(*kernel, launchParams.reserveExtraPayloadSpace, isThreadDataMapAllowed);
         auto estimateSizeForPrefetch = ensureCmdBufferSpaceForPrefetch();
         prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, iohAllocation, iohOffset, launchParams.outListCommands, getPrefetchCmdId(), estimateSizeForPrefetch);
     }

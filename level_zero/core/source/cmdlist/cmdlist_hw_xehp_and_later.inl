@@ -368,7 +368,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .isTimestampEvent = isTimestampEvent,
             .isUsingSystemAllocation = isKernelUsingSystemAllocation,
         },
-        .cachedIohOffset = launchParams.cachedIohOffset,
         .preemptionMode = kernelPreemptionMode,
         .requiredPartitionDim = launchParams.requiredPartitionDim,
         .requiredDispatchWalkOrder = launchParams.requiredDispatchWalkOrder,

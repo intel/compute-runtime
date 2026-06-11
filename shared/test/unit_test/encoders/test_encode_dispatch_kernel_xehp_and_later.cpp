@@ -1918,13 +1918,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, IOHCacheCommandEncodeStatesTest, givenIOHCacheEnabl
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*iohCmdContainer.get(), dispatchArgs);
     EXPECT_EQ(1u, iohCmdContainer->getHeapWithRequiredSizeAndAlignmentCalled);
     EXPECT_EQ(iohUsedAfterFirstDispatch, ioh->getUsed());
-
-    // Third dispatch with prefetch result preset in args: encode must skip its own cache lookup and
-    // reuse the supplied offset directly.
-    dispatchArgs.cachedIohOffset = 0xdeadbeefull;
-    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*iohCmdContainer.get(), dispatchArgs);
-    EXPECT_EQ(1u, iohCmdContainer->getHeapWithRequiredSizeAndAlignmentCalled);
-    EXPECT_EQ(iohUsedAfterFirstDispatch, ioh->getUsed());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, IOHCacheCommandEncodeStatesTest, givenIOHCacheEnabledAndZeroSizeThreadDataWhenDispatchKernelThenThreadDataMapIsNotAccessed) {
