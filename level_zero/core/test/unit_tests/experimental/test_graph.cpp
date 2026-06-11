@@ -7,9 +7,6 @@
 
 #include "level_zero/core/test/unit_tests/experimental/test_graph.h"
 
-#include "shared/source/command_container/cmdcontainer.h"
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/linear_stream.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -19,13 +16,10 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_graph.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
-#include "level_zero/driver_experimental/zex_api.h"
 #include "level_zero/ze_api.h"
 
-#include <tuple>
 #include <unordered_set>
 
 using namespace NEO;
@@ -60,6 +54,7 @@ using GraphTestCaptureRestrictions = Test<GraphFixture>;
 using GraphTestDebugApis = Test<GraphFixture>;
 using GraphInstantiationValidation = Test<GraphFixture>;
 using GraphTestApiCaptureBeginEnd = Test<GraphFixture>;
+using GraphTestApiPauseResume = Test<GraphFixture>;
 
 struct LaunchKernelWithArgumentsVisitorCapture {
     ze_command_list_handle_t hCommandList = nullptr;
@@ -3386,5 +3381,129 @@ TEST(CaptureTestMclIdMapping, GivenBothMutableVariantsWithFollowingCommandsWhenM
     EXPECT_EQ(4U, graph.recordedApiCommands.size());
 }
 
+TEST_F(GraphTestApiPauseResume, GivenNullGraphWhenCallingGraphPauseResumeThenErrorIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeGraphPauseCaptureExt(nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeGraphResumeCaptureExt(nullptr));
+}
+
+TEST_F(GraphTestApiPauseResume, GivenCapturePausedAndResumedWhenAppendingCommandsThenOnlyCommandsOutsidePauseAreCaptured) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_graph_handle_t hGraph{};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphCreateExp(context->toHandle(), &hGraph, nullptr));
+    ASSERT_NE(nullptr, hGraph);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, hGraph, nullptr));
+
+    auto *graph = L0::Graph::fromHandle(hGraph);
+    ASSERT_NE(nullptr, graph);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0U, nullptr));
+    ASSERT_EQ(1u, graph->getCapturedCommands().size());
+    EXPECT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(graph->getCapturedCommands()[0].index()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphPauseCaptureExt(hGraph));
+
+    // paused capture, command list should not have graph associated
+    ze_graph_handle_t queriedGraph{};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeCommandListGetGraphExp(immCmdListHandle, &queriedGraph));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0U, nullptr));
+    // state of the graph should be unchanged
+    EXPECT_EQ(1u, graph->getCapturedCommands().size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphResumeCaptureExt(hGraph));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListGetGraphExp(immCmdListHandle, &queriedGraph));
+    EXPECT_EQ(hGraph, queriedGraph);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0U, nullptr));
+    ASSERT_EQ(2u, graph->getCapturedCommands().size());
+    EXPECT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(graph->getCapturedCommands()[1].index()));
+
+    ze_graph_handle_t hEndedGraph{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &hEndedGraph, nullptr));
+    EXPECT_EQ(hGraph, hEndedGraph);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphDestroyExp(hGraph));
+}
+
+TEST_F(GraphTestApiPauseResume, GivenGraphNotCapturingWhenCallingGraphPauseResumeThenErrorIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true};
+    auto hGraph = graph.toHandle();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphPauseCaptureExt(hGraph));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphResumeCaptureExt(hGraph));
+}
+
+TEST_F(GraphTestApiPauseResume, GivenActiveCaptureWhenPausingAndResumingThenCommandListCaptureTargetIsDetachedAndRestored) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockCommandList cmdList;
+    TestableGraphForPrimaryCommandListQuery graph{&ctx, true};
+    auto hGraph = graph.toHandle();
+
+    graph.setCaptureSource(&cmdList);
+    cmdList.setGraphCaptureTarget(&graph);
+
+    EXPECT_EQ(&graph, cmdList.getGraphCaptureTarget());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphPauseCaptureExt(hGraph));
+    EXPECT_EQ(nullptr, cmdList.getGraphCaptureTarget());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphPauseCaptureExt(hGraph));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphResumeCaptureExt(hGraph));
+    EXPECT_EQ(&graph, cmdList.getGraphCaptureTarget());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphResumeCaptureExt(hGraph));
+}
+
+TEST_F(GraphTestApiPauseResume, GivenRootGraphWithSubgraphWhenPausingRootThenAllCapturesArePaused) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockCommandList rootCmdlist;
+    rootCmdlist.device = this->device;
+    MockCommandList childCmdlist;
+    childCmdlist.device = this->device;
+
+    Graph rootGraph{&ctx, true};
+    rootGraph.startCapturingFrom(rootCmdlist, false);
+
+    Mock<Event> forkEvent;
+    rootGraph.capture<CaptureApi::zeCommandListAppendBarrier>(rootCmdlist.toHandle(), forkEvent.toHandle(), 0U, nullptr);
+    rootGraph.registerSignallingEventFromPreviousCommand(forkEvent);
+
+    Graph *subGraph = nullptr;
+    rootGraph.forkTo(childCmdlist, subGraph, forkEvent);
+    ASSERT_NE(nullptr, subGraph);
+
+    Mock<Event> subGraphSignalEvent;
+    subGraph->capture<CaptureApi::zeCommandListAppendBarrier>(childCmdlist.toHandle(), subGraphSignalEvent.toHandle(), 0U, nullptr);
+    subGraph->registerSignallingEventFromPreviousCommand(subGraphSignalEvent);
+
+    EXPECT_EQ(&rootGraph, rootCmdlist.getGraphCaptureTarget());
+    EXPECT_EQ(subGraph, childCmdlist.getGraphCaptureTarget());
+    EXPECT_EQ(&rootCmdlist, forkEvent.getRecordedSignalFrom());
+    EXPECT_EQ(&childCmdlist, subGraphSignalEvent.getRecordedSignalFrom());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphPauseCaptureExt(rootGraph.toHandle()));
+    EXPECT_EQ(nullptr, rootCmdlist.getGraphCaptureTarget());
+    EXPECT_EQ(nullptr, childCmdlist.getGraphCaptureTarget());
+    EXPECT_EQ(nullptr, forkEvent.getRecordedSignalFrom());
+    EXPECT_EQ(nullptr, subGraphSignalEvent.getRecordedSignalFrom());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphResumeCaptureExt(rootGraph.toHandle()));
+    EXPECT_EQ(&rootGraph, rootCmdlist.getGraphCaptureTarget());
+    EXPECT_EQ(subGraph, childCmdlist.getGraphCaptureTarget());
+    EXPECT_EQ(&rootCmdlist, forkEvent.getRecordedSignalFrom());
+    EXPECT_EQ(&childCmdlist, subGraphSignalEvent.getRecordedSignalFrom());
+
+    rootCmdlist.setGraphCaptureTarget(nullptr);
+    childCmdlist.setGraphCaptureTarget(nullptr);
+}
 } // namespace ult
 } // namespace L0

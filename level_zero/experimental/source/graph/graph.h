@@ -263,6 +263,10 @@ struct Graph : _ze_graph_handle_t {
         return resolvedJoins;
     }
 
+    const std::unordered_map<L0::Event *, CapturedCommandId> &getRecordedSignals() const {
+        return recordedSignals;
+    }
+
     const std::unordered_map<L0::CommandList *, ForkInfo> &getUnjoinedForks() const {
         return unjoinedForks;
     }
@@ -319,6 +323,9 @@ struct Graph : _ze_graph_handle_t {
     bool hasUnjoinedForks() const {
         return false == unjoinedForks.empty();
     }
+
+    ze_result_t pauseCapturing();
+    ze_result_t resumeCapturing();
 
     void tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinEvent);
     void forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent);
@@ -382,6 +389,8 @@ struct Graph : _ze_graph_handle_t {
     }
 
   protected:
+    void setCaptureTargetRecursively(bool attach);
+    void setRecordedSignalsRecursively(bool attach);
     void unregisterSignallingEvents();
 
     RecordedApiCommands recordedApiCommands;

@@ -254,6 +254,35 @@ void RecordedApiCommands::updateKernel(MclCommandId commandId, ze_kernel_handle_
     }
 }
 
+void Graph::setCaptureTargetRecursively(bool attach) {
+    if (this->captureSrc != nullptr) {
+        if (attach) {
+            if (this->captureSrc->getGraphCaptureTarget() == nullptr) {
+                this->captureSrc->setGraphCaptureTarget(this);
+            }
+        } else {
+            if (this->captureSrc->getGraphCaptureTarget() == this) {
+                this->captureSrc->releaseGraphCaptureTarget();
+            }
+        }
+    }
+
+    for (auto &subGraph : this->subGraphs) {
+        subGraph->setCaptureTargetRecursively(attach);
+    }
+}
+
+void Graph::setRecordedSignalsRecursively(bool attach) {
+    auto *recordedSignalFrom = attach ? this->captureSrc : nullptr;
+    for (const auto &recordedSignal : this->recordedSignals) {
+        recordedSignal.first->setRecordedSignalFrom(recordedSignalFrom);
+    }
+
+    for (auto &subGraph : this->subGraphs) {
+        subGraph->setRecordedSignalsRecursively(attach);
+    }
+}
+
 Graph::~Graph() {
     this->unregisterSignallingEvents();
     for (auto *sg : subGraphs) {
@@ -316,6 +345,35 @@ void Graph::stopCapturing() {
     for (auto &subGraph : subGraphs) {
         subGraph->stopCapturing();
     }
+}
+
+ze_result_t Graph::pauseCapturing() {
+    if (nullptr == this->captureSrc) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (this->captureSrc->getGraphCaptureTarget() != this) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    this->setCaptureTargetRecursively(false);
+    this->setRecordedSignalsRecursively(false);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t Graph::resumeCapturing() {
+    if (nullptr == this->captureSrc) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (this->captureSrc->getGraphCaptureTarget() != nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    this->setCaptureTargetRecursively(true);
+    this->setRecordedSignalsRecursively(true);
+    return ZE_RESULT_SUCCESS;
 }
 
 void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinEvent) {

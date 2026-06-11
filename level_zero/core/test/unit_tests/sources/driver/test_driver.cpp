@@ -1482,6 +1482,8 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnGraphSetDestructionCallbackExp = decltype(&zeGraphSetDestructionCallbackExp);
     using pfnExecutableGraphGetSourceGraphExt = decltype(&zeExecutableGraphGetSourceGraphExt);
     using pfnGraphGetPrimaryCommandListExt = decltype(&zeGraphGetPrimaryCommandListExt);
+    using pfnGraphPauseCaptureExt = decltype(&zeGraphPauseCaptureExt);
+    using pfnGraphResumeCaptureExt = decltype(&zeGraphResumeCaptureExt);
 
     // memory function types
     using pfnMemGetIpcHandles = decltype(&zexMemGetIpcHandles);
@@ -1607,6 +1609,8 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     pfnGraphSetDestructionCallbackExp expectedGraphSetDestructionCallbackExp = L0::zeGraphSetDestructionCallbackExp;
     pfnExecutableGraphGetSourceGraphExt expectedExecutableGraphGetSourceGraphExt = L0::zeExecutableGraphGetSourceGraphExt;
     pfnGraphGetPrimaryCommandListExt expectedGraphGetPrimaryCommandListExt = L0::zeGraphGetPrimaryCommandListExt;
+    pfnGraphPauseCaptureExt expectedGraphPauseCaptureExt = L0::zeGraphPauseCaptureExt;
+    pfnGraphResumeCaptureExt expectedGraphResumeCaptureExt = L0::zeGraphResumeCaptureExt;
 
     // command queue function addresses
     pfnCommandQueueGetOrdinal expectedCommandQueueGetOrdinal = L0::zeCommandQueueGetOrdinal;
@@ -1809,6 +1813,12 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphGetPrimaryCommandListExt", &funPtr));
     EXPECT_EQ(expectedGraphGetPrimaryCommandListExt, reinterpret_cast<pfnGraphGetPrimaryCommandListExt>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphPauseCaptureExt", &funPtr));
+    EXPECT_EQ(expectedGraphPauseCaptureExt, reinterpret_cast<pfnGraphPauseCaptureExt>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphResumeCaptureExt", &funPtr));
+    EXPECT_EQ(expectedGraphResumeCaptureExt, reinterpret_cast<pfnGraphResumeCaptureExt>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexMemGetIpcHandles", &funPtr));
     EXPECT_EQ(expectedMemGetIpcHandles, reinterpret_cast<pfnMemGetIpcHandles>(funPtr));

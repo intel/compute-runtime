@@ -310,4 +310,22 @@ ze_result_t ZE_APICALL zeGraphGetPrimaryCommandListExt(ze_graph_handle_t hGraph,
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t ZE_APICALL zeGraphPauseCaptureExt(ze_graph_handle_t hGraph) {
+    auto graph = L0::Graph::fromHandle(hGraph);
+    if (nullptr == graph) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    return graph->pauseCapturing();
+}
+
+ze_result_t ZE_APICALL zeGraphResumeCaptureExt(ze_graph_handle_t hGraph) {
+    auto graph = L0::Graph::fromHandle(hGraph);
+    if (nullptr == graph) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    return graph->resumeCapturing();
+}
+
 } // namespace L0

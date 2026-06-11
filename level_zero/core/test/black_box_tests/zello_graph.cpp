@@ -9,7 +9,6 @@
 #include "zello_compile.h"
 
 #include <algorithm>
-#include <array>
 #include <cstring>
 #include <iostream>
 #include <map>
@@ -22,12 +21,15 @@ using zeCommandListEndGraphCaptureExpFP = ze_result_t(ZE_APICALL *)(ze_command_l
 using zeCommandListInstantiateGraphExpFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph, ze_executable_graph_handle_t *phGraph, void *pNext);
 using zeCommandListAppendGraphExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, ze_executable_graph_handle_t hGraph, void *pNext,
                                                                 ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+using zeCommandListGetGraphExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph);
 using zeGraphDestroyExpFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
 using zeExecutableGraphDestroyExpFP = ze_result_t(ZE_APICALL *)(ze_executable_graph_handle_t hGraph);
 
 using zeCommandListIsGraphCaptureEnabledExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList);
 using zeGraphIsEmptyExpFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
 using zeGraphDumpContentsExpFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph, const char *filePath, void *pNext);
+using zeGraphPauseCaptureExtFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
+using zeGraphResumeCaptureExtFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t hGraph);
 
 using TestKernelsContainer = std::map<std::string, ze_kernel_handle_t>;
 
@@ -38,15 +40,18 @@ struct GraphApi {
     zeCommandListEndGraphCaptureExpFP commandListEndGraphCapture = nullptr;
     zeCommandListInstantiateGraphExpFP commandListInstantiateGraph = nullptr;
     zeCommandListAppendGraphExpFP commandListAppendGraph = nullptr;
+    zeCommandListGetGraphExpFP commandListGetGraph = nullptr;
     zeGraphDestroyExpFP graphDestroy = nullptr;
     zeExecutableGraphDestroyExpFP executableGraphDestroy = nullptr;
 
     zeCommandListIsGraphCaptureEnabledExpFP commandListIsGraphCaptureEnabled = nullptr;
     zeGraphIsEmptyExpFP graphIsEmpty = nullptr;
     zeGraphDumpContentsExpFP graphDumpContents = nullptr;
+    zeGraphPauseCaptureExtFP graphPauseCapture = nullptr;
+    zeGraphResumeCaptureExtFP graphResumeCapture = nullptr;
 
     bool valid() const {
-        return graphCreate && commandListBeginGraphCapture && commandListBeginCaptureIntoGraph && commandListEndGraphCapture && commandListInstantiateGraph && commandListAppendGraph && graphDestroy && executableGraphDestroy && commandListIsGraphCaptureEnabled && graphIsEmpty && graphDumpContents;
+        return graphCreate && commandListBeginGraphCapture && commandListBeginCaptureIntoGraph && commandListEndGraphCapture && commandListInstantiateGraph && commandListAppendGraph && commandListGetGraph && graphDestroy && executableGraphDestroy && commandListIsGraphCaptureEnabled && graphIsEmpty && graphDumpContents && graphPauseCapture && graphResumeCapture;
     }
     bool loaded = false;
 };
@@ -87,12 +92,15 @@ GraphApi &loadGraphApi(ze_driver_handle_t driver) {
     zeDriverGetExtensionFunctionAddress(driver, "zeCommandListEndGraphCaptureExp", reinterpret_cast<void **>(&testGraphFunctions.commandListEndGraphCapture));
     zeDriverGetExtensionFunctionAddress(driver, "zeCommandListInstantiateGraphExp", reinterpret_cast<void **>(&testGraphFunctions.commandListInstantiateGraph));
     zeDriverGetExtensionFunctionAddress(driver, "zeCommandListAppendGraphExp", reinterpret_cast<void **>(&testGraphFunctions.commandListAppendGraph));
+    zeDriverGetExtensionFunctionAddress(driver, "zeCommandListGetGraphExp", reinterpret_cast<void **>(&testGraphFunctions.commandListGetGraph));
     zeDriverGetExtensionFunctionAddress(driver, "zeGraphDestroyExp", reinterpret_cast<void **>(&testGraphFunctions.graphDestroy));
     zeDriverGetExtensionFunctionAddress(driver, "zeExecutableGraphDestroyExp", reinterpret_cast<void **>(&testGraphFunctions.executableGraphDestroy));
 
     zeDriverGetExtensionFunctionAddress(driver, "zeCommandListIsGraphCaptureEnabledExp", reinterpret_cast<void **>(&testGraphFunctions.commandListIsGraphCaptureEnabled));
     zeDriverGetExtensionFunctionAddress(driver, "zeGraphIsEmptyExp", reinterpret_cast<void **>(&testGraphFunctions.graphIsEmpty));
     zeDriverGetExtensionFunctionAddress(driver, "zeGraphDumpContentsExp", reinterpret_cast<void **>(&testGraphFunctions.graphDumpContents));
+    zeDriverGetExtensionFunctionAddress(driver, "zeGraphPauseCaptureExt", reinterpret_cast<void **>(&testGraphFunctions.graphPauseCapture));
+    zeDriverGetExtensionFunctionAddress(driver, "zeGraphResumeCaptureExt", reinterpret_cast<void **>(&testGraphFunctions.graphResumeCapture));
 
     testGraphFunctions.loaded = true;
     return testGraphFunctions;
@@ -1662,6 +1670,91 @@ bool testCopyEngineSimpleGraph(GraphApi &graphApi,
     return validRet;
 }
 
+// Scenario:
+// 1) Start graph capture and copy patternA to device buffer
+// 2) Pause capture, copy patternB to the same device buffer and validate
+// 3) Resume capture, copy from device buffer to host and validate patternA is copied (patternB copy should not be captured)
+bool testPauseResumeCapture(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
+    bool validRet = true;
+
+    constexpr size_t allocSize = 4096;
+    constexpr uint8_t patternA = 0xAA;
+    constexpr uint8_t patternB = 0xBB;
+
+    void *srcBufferA = nullptr;
+    void *srcBufferB = nullptr;
+    void *zeBuffer = nullptr;
+    void *dstBuffer = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &srcBufferA));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &srcBufferB));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &dstBuffer));
+
+    ze_device_mem_alloc_desc_t deviceDesc = {.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
+
+    memset(srcBufferA, patternA, allocSize);
+    memset(srcBufferB, patternB, allocSize);
+    memset(dstBuffer, 0x00, allocSize);
+
+    ze_command_list_handle_t cmdList{};
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
+
+    SUCCESS_OR_TERMINATE(graphApi.commandListBeginGraphCapture(cmdList, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, srcBufferA, allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+
+    ze_graph_handle_t virtualGraph{};
+    SUCCESS_OR_TERMINATE(graphApi.commandListGetGraph(cmdList, &virtualGraph));
+    SUCCESS_OR_TERMINATE(graphApi.graphPauseCapture(virtualGraph));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, srcBufferB, allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, zeBuffer, allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+
+    if (aubMode == false) {
+        const bool pausePhaseValid = LevelZeroBlackBoxTests::validateToValue(patternB, static_cast<uint8_t *>(dstBuffer), allocSize);
+        validRet &= pausePhaseValid;
+        if (!pausePhaseValid) {
+            std::cerr << "Pause/resume capture test failed: dstBuffer should contain patternB (0xBB) during the pause phase\n";
+        }
+    }
+
+    SUCCESS_OR_TERMINATE(graphApi.graphResumeCapture(virtualGraph));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, zeBuffer, allocSize, nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, &virtualGraph, nullptr));
+
+    ze_executable_graph_handle_t physicalGraph{};
+    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+
+    if (aubMode == false) {
+        const bool replayPhaseValid = LevelZeroBlackBoxTests::validateToValue(patternA, static_cast<uint8_t *>(dstBuffer), allocSize);
+        validRet &= replayPhaseValid;
+        if (!replayPhaseValid) {
+            std::cerr << "Pause/resume capture test failed: dstBuffer should contain patternA (0xAA) "
+                         "but pause-phase patternB (0xBB) write was incorrectly captured\n";
+        }
+    }
+
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBufferA));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBufferB));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
+    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    return validRet;
+}
+
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestStandardMemoryCopy = 0u;
     constexpr uint32_t bitNumberTestStandardMemoryCopyMultigraph = 1u;
@@ -1676,6 +1769,7 @@ int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestWrappedMultipleEngines = 10u;
     constexpr uint32_t bitNumberTestCopyEngineSimpleGraph = 11u;
     constexpr uint32_t bitNumberTestVisitGraph = 12u;
+    constexpr uint32_t bitNumberTestPauseResume = 13u;
 
     constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max();
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
@@ -1932,6 +2026,14 @@ int main(int argc, char *argv[]) {
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }
+    }
+
+    if (testMask.test(bitNumberTestPauseResume)) {
+        currentTest = "Pause Resume Graph Capture";
+        std::cout << "Starting test: " << currentTest << std::endl;
+        casePass = testPauseResumeCapture(graphApi, context, device0, aubMode, graphDumpSettings);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
     }
 
     for (auto kernel : kernelsMap) {
