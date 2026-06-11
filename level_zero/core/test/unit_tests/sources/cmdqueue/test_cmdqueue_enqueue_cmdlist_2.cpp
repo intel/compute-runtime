@@ -1100,6 +1100,85 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingleCmdListExecutedWithRequiredCounterThenPatchPreambleHasPostSyncWithCounter) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                                                 device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
+    commandList->close();
+
+    commandQueue->setPatchingPreamble(true);
+
+    uint64_t counterDeviceAddress = 0;
+    uint64_t *hostAddress = nullptr;
+    uint64_t counter = 0;
+    NEO::GraphicsAllocation *counterAllocation = nullptr;
+    commandQueue->getPatchPreambleHostCounter(counter, hostAddress);
+    commandQueue->patchPreambleCounter.getPatchPreambleDeviceData(counterAllocation, counterDeviceAddress);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->storeMakeResidentAllocations = true;
+
+    void *queueCpuBase = commandQueue->commandStream.getCpuBase();
+
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.patchPreambleRequiredCounter = counter;
+    returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    EXPECT_TRUE(ultCsr->isMadeResident(counterAllocation));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(queueCpuBase, usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    bool foundPostSyncWithCounter = false;
+
+    auto pipeControlCmds = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pipeControlCmds.size());
+    for (auto &pipeControlCmd : pipeControlCmds) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlCmd);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            auto actualAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
+            if (counterDeviceAddress == actualAddress &&
+                pipeControl->getImmediateData() == counter) {
+                foundPostSyncWithCounter = true;
+                break;
+            }
+        }
+    }
+
+    EXPECT_TRUE(foundPostSyncWithCounter);
+
+    commandList->destroy();
+    commandQueue->destroy();
+}
+
 HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngineWhenSingleCmdListExecutedThenPatchPreambleContainsMiFlushCommand) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -1156,6 +1235,83 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
 
     auto startingBbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStarts[0]);
     EXPECT_EQ(startGpuAddress, startingBbStart->getBatchBufferStartAddress());
+
+    commandList->destroy();
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngineWhenSingleCmdListExecutedWithRequiredCounterThenPatchPreambleHasPostSyncWithCounter) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                                                 device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 true,
+                                                                                 false,
+                                                                                 false,
+                                                                                 returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
+    commandList->close();
+
+    commandQueue->setPatchingPreamble(true);
+
+    uint64_t counterDeviceAddress = 0;
+    uint64_t *hostAddress = nullptr;
+    uint64_t counter = 0;
+    NEO::GraphicsAllocation *counterAllocation = nullptr;
+    commandQueue->getPatchPreambleHostCounter(counter, hostAddress);
+    commandQueue->patchPreambleCounter.getPatchPreambleDeviceData(counterAllocation, counterDeviceAddress);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->storeMakeResidentAllocations = true;
+
+    void *queueCpuBase = commandQueue->commandStream.getCpuBase();
+
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.patchPreambleRequiredCounter = counter;
+    returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    EXPECT_TRUE(ultCsr->isMadeResident(counterAllocation));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(queueCpuBase, usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    bool foundPostSyncWithCounter = false;
+
+    auto miFlushCmds = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, miFlushCmds.size());
+
+    for (auto &miFlushCmd : miFlushCmds) {
+        auto miFlush = reinterpret_cast<MI_FLUSH_DW *>(*miFlushCmd);
+        if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD &&
+            miFlush->getDestinationAddress() == counterDeviceAddress &&
+            miFlush->getImmediateData() == counter) {
+            foundPostSyncWithCounter = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(foundPostSyncWithCounter);
 
     commandList->destroy();
     commandQueue->destroy();

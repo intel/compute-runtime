@@ -65,6 +65,9 @@ CommandListExecutionContext::CommandListExecutionContext(
     if (device->getNEODevice()->getRTMemoryBackedBuffer()) {
         this->spaceForResidency += residencyContainerSpaceForBtdAllocation;
     }
+    if (this->patchPreambleRequiredCounter > 0) {
+        this->spaceForResidency += 1;
+    }
 
     if (this->isMigrationRequested && device->getDriverHandle()->getMemoryManager()->getPageFaultManager() == nullptr) {
         this->isMigrationRequested = false;

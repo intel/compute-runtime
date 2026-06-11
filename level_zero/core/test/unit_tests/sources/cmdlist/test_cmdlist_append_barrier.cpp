@@ -767,6 +767,67 @@ HWTEST2_F(MultiTilePatchPreambleTest,
 }
 
 HWTEST2_F(MultiTilePatchPreambleTest,
+          givenMultiTileQueueWithPatchPreambleWhenAppendingCommandListWithCounterRequiredThenExpectMultiTileBarrierWithPostSync, IsAtLeastXeCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    uint64_t counterDeviceAddress = 0;
+    uint64_t *hostAddress = nullptr;
+    uint64_t counter = 0;
+    NEO::GraphicsAllocation *counterAllocation = nullptr;
+
+    commandQueue->getPatchPreambleHostCounter(counter, hostAddress);
+    commandQueue->patchPreambleCounter.getPatchPreambleDeviceData(counterAllocation, counterDeviceAddress);
+
+    commandQueue->setPatchingPreamble(true);
+    commandList->close();
+    auto cmdListHandle = commandList->toHandle();
+
+    auto queueStream = &commandQueue->commandStream;
+    auto queueStreamGpuBaseAddress = queueStream->getGpuBase();
+    auto queueStreamCpuBaseAddress = queueStream->getCpuBase();
+
+    auto sizeBefore = queueStream->getUsed();
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.patchPreambleRequiredCounter = counter;
+    auto result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto sizeAfter = queueStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(queueStream->getCpuBase(), sizeBefore),
+        (sizeAfter - sizeBefore)));
+
+    auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBbStart);
+
+    // size of x-tile atomic counters is 2 * sizeof(uint32_t) and they are programmed right after BB_START
+    constexpr size_t xTileJumpOffset = 2 * sizeof(uint32_t);
+
+    // first BB_START is to jump over the x-tile atomic counters
+    auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*itorBbStart);
+    size_t bbStartOffset = reinterpret_cast<uintptr_t>(cmdBbStart) - reinterpret_cast<uintptr_t>(queueStreamCpuBaseAddress);
+    // right after BB_START command
+    uint64_t expectedAtomicCounterAddress = queueStreamGpuBaseAddress + bbStartOffset + sizeof(MI_BATCH_BUFFER_START);
+    uint64_t expectedBbStartAddress = expectedAtomicCounterAddress + xTileJumpOffset;
+
+    EXPECT_EQ(expectedBbStartAddress, cmdBbStart->getBatchBufferStartAddress());
+
+    // verify x-tile sync: PIPE_CONTROL, MI_ATOMIC, MI_SEMAPHORE_WAIT
+    auto itorPipeControl = find<PIPE_CONTROL *>(cmdList.begin(), itorBbStart);
+    ASSERT_NE(itorBbStart, itorPipeControl);
+
+    auto cmdPipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeControl);
+    EXPECT_EQ(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, cmdPipeControl->getPostSyncOperation());
+    EXPECT_EQ(counter, cmdPipeControl->getImmediateData());
+    EXPECT_EQ(counterDeviceAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmdPipeControl));
+    EXPECT_TRUE(cmdPipeControl->getWorkloadPartitionIdOffsetEnable());
+}
+
+HWTEST2_F(MultiTilePatchPreambleTest,
           givenMultiTileQueueWithPatchPreambleWhenAppendingCommandListRequiresWaitThenExpectSemaphoreWaitingForAllTiles,
           IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
