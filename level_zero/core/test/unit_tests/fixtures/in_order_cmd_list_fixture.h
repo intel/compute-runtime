@@ -54,12 +54,12 @@ struct InOrderFixtureMockEvent : public EventImp<uint32_t> {
 
     void makeCounterBasedInitiallyDisabled(MultiGraphicsAllocation &poolAllocation) {
         resetInOrderTimestampNode(nullptr, 0);
-        this->eventPoolAllocation = &poolAllocation;
-        this->hostAddressFromPool = ptrOffset(eventPoolAllocation->getGraphicsAllocation(0)->getUnderlyingBuffer(), eventPoolOffset);
-        reset();
         counterBasedMode = CounterBasedMode::initiallyDisabled;
         resetCompletionStatus();
         counterBasedFlags = 0;
+        this->eventPoolAllocation = &poolAllocation;
+        this->hostAddressFromPool = ptrOffset(eventPoolAllocation->getGraphicsAllocation(0)->getUnderlyingBuffer(), eventPoolOffset);
+        reset();
     }
 
     void makeCounterBasedImplicitlyDisabled(MultiGraphicsAllocation &poolAllocation) {
