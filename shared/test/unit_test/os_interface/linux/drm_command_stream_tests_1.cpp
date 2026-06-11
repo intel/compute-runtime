@@ -587,7 +587,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     elementInVector = std::find(recordedCmdBuffer->surfaces.begin(), recordedCmdBuffer->surfaces.end(), allocations->getGraphicsAllocation(0u));
     EXPECT_NE(elementInVector, recordedCmdBuffer->surfaces.end());
 
-    if (testedCsr->getHeaplessModeEnabled()) {
+    if (testedCsr->getHeaplessModeEnabled() && !testedCsr->isPerQueuePrologueEnabled()) {
         EXPECT_EQ(cs.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
     } else {
         EXPECT_EQ(testedCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
@@ -663,7 +663,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
 
     uint32_t expectedBatchStartOffset = 0u;
     if (csr->getHeaplessModeEnabled()) {
-        expectedBatchStartOffset = 0u; // No additional commands in heapless mode
+        if (testedCsr->isPerQueuePrologueEnabled()) {
+            expectedBatchStartOffset = 65540u; // Offset when per-queue state programming is enabled
+        } else {
+            expectedBatchStartOffset = 0u; // No additional commands in heapless mode without per-queue state programming
+        }
     } else {
         expectedBatchStartOffset = 4u; // Default offset for non-heapless mode
     }
