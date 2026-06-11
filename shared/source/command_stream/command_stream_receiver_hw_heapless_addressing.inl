@@ -462,6 +462,11 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
     }
 
     heaplessPrologProgrammed = true;
+
+    if (status == SubmissionStatus::success) {
+        this->osContext->onFirstSubmission();
+    }
+
     return status;
 }
 

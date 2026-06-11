@@ -204,6 +204,7 @@ class IoctlHelper {
 
     virtual bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const;
     virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) = 0;
+    virtual void onFirstSubmission(OsContextLinux &osContext) {}
 
     virtual void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) = 0;
     virtual void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) = 0;

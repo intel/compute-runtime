@@ -133,6 +133,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     void adjustSettings(const ProductHelper &productHelper);
     virtual bool isDirectSubmissionLightActive() const { return false; }
     virtual bool isPriorityChangeSupported() const { return false; }
+    virtual void onFirstSubmission() {}
 
   protected:
     virtual bool initializeContext() { return true; }

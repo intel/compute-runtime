@@ -52,6 +52,7 @@ class OsContextLinux : public OsContext {
     bool isPriorityChangeSupported() const override {
         return true;
     }
+    void onFirstSubmission() override;
 
   protected:
     bool initializeContext() override;

@@ -92,6 +92,10 @@ bool OsContextLinux::initializeContext() {
     return true;
 }
 
+void OsContextLinux::onFirstSubmission() {
+    drm.getIoctlHelper()->onFirstSubmission(*this);
+}
+
 void OsContextLinux::isOpenVinoLoaded() {
     std::call_once(this->ovLoadedFlag, [this]() {
         this->ovLoaded = NEO::Linux::isLibraryLoaded("libopenvino_intel_gpu_plugin.so");
