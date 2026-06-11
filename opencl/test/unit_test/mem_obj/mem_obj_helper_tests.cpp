@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,7 +167,7 @@ TEST(MemObjHelper, givenContextWithMultipleRootDevicesWhenIsSuitableForCompressi
     MockDefaultContext context;
 
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.pRootDevice0->getDevice());
-    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
 }
 
 TEST(MemObjHelper, givenCompressionEnabledButNotPreferredWhenCompressionHintIsPassedThenCompressionIsUsed) {
@@ -177,15 +177,15 @@ TEST(MemObjHelper, givenCompressionEnabledButNotPreferredWhenCompressionHintIsPa
     MemoryProperties memoryProperties =
         ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false));
+    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false, false));
     flags = CL_MEM_COMPRESSED_HINT_INTEL;
     flagsIntel = 0;
     memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false));
+    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false, false));
     flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
     flags = 0;
     memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false));
+    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false, false));
 }
 
 TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenCompressionHintIsPassedThenCompressionIsUsed) {
@@ -195,15 +195,15 @@ TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenCompressionHintIsPasse
     MemoryProperties memoryProperties =
         ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
     flags = CL_MEM_COMPRESSED_HINT_INTEL;
     flagsIntel = 0;
     memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
     flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
     flags = 0;
     memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
 }
 
 TEST(MemObjHelper, givenCompressionWhenCL_MEM_COMPRESSEDIsNotSetThenFalseReturned) {
@@ -212,7 +212,7 @@ TEST(MemObjHelper, givenCompressionWhenCL_MEM_COMPRESSEDIsNotSetThenFalseReturne
     MockContext context;
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
-    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false));
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false, false));
 }
 
 TEST(MemObjHelper, givenCompressionWhenCL_MEM_COMPRESSEDThenTrueIsReturned) {
@@ -221,7 +221,7 @@ TEST(MemObjHelper, givenCompressionWhenCL_MEM_COMPRESSEDThenTrueIsReturned) {
     MockContext context;
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
 }
 
 TEST(MemObjHelperMultiTile, givenValidExtraPropertiesWhenValidatingExtraPropertiesThenTrueIsReturned) {
@@ -363,9 +363,9 @@ TEST(MemObjHelper, givenMultipleSubDevicesWhenDefaultContextIsUsedThenResourcesA
     MockContext context(platform()->getClDevice(0));
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_ONLY, 0u, 0, &context.getDevice(0)->getDevice());
 
-    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
     memoryProperties.flags.hostNoAccess = true;
-    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
 }
 
 TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextRequiresResolveThenResourceNotSuitableForCompression) {
@@ -375,7 +375,7 @@ TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextRequiresResolve
     context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
     context.resolvesRequiredInKernels = true;
 
-    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
 }
 
 TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextNotRequiresResolveThenResourceSuitableForCompression) {
@@ -385,7 +385,7 @@ TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextNotRequiresReso
     context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
     context.resolvesRequiredInKernels = false;
 
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
 }
 
 TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextNotRequiresResolveAndForceHintDisableCompressionThenResourceNotSuitableForCompression) {
@@ -398,7 +398,7 @@ TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextNotRequiresReso
     context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
     context.resolvesRequiredInKernels = false;
 
-    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
 }
 
 TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextRequiresResolveAndForceHintEnableCompressionThenResourceSuitableForCompression) {
@@ -411,5 +411,33 @@ TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextRequiresResolve
     context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
     context.resolvesRequiredInKernels = true;
 
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
+    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
+}
+
+TEST(MemObjHelper, givenImageAllocationWhenContextRequiresResolveThenResourceSuitableForCompression) {
+    MemoryProperties memoryProperties{};
+    MockContext context;
+
+    context.resolvesRequiredInKernels = true;
+
+    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, true));
+}
+
+TEST(MemObjHelper, givenBufferAllocationWhenContextRequiresResolveThenResourceNotSuitableForCompression) {
+    MemoryProperties memoryProperties{};
+    MockContext context;
+
+    context.resolvesRequiredInKernels = true;
+
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false));
+}
+
+TEST(MemObjHelper, givenImageAllocationWithUncompressedHintWhenContextRequiresResolveThenResourceNotSuitableForCompression) {
+    MemoryProperties memoryProperties{};
+    MockContext context;
+
+    context.resolvesRequiredInKernels = true;
+    memoryProperties.flags.uncompressedHint = true;
+
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, true));
 }

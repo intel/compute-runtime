@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,7 +103,7 @@ SVMAllocsManager::SvmAllocationProperties MemObjHelper::getSvmAllocationProperti
     return svmProperties;
 }
 
-bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const MemoryProperties &properties, Context &context, bool preferCompression) {
+bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const MemoryProperties &properties, Context &context, bool preferCompression, bool isImageAllocation) {
     if (!compressionSupported) {
         return false;
     }
@@ -127,7 +127,7 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
         if (disableCompression != -1) {
             return !!disableCompression;
         } else {
-            if (context.getResolvesRequiredInKernels()) {
+            if (!isImageAllocation && context.getResolvesRequiredInKernels()) {
                 return false;
             }
         }

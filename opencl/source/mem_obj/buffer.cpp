@@ -386,7 +386,7 @@ Buffer *Buffer::create(Context *context,
         bool compressionSupported = GfxCoreHelper::compressedBuffersSupported(*hwInfo) && !defaultProductHelper.isCompressionForbidden(*hwInfo);
 
         bool compressionEnabled = MemObjHelper::isSuitableForCompression(compressionSupported, memoryProperties, *context,
-                                                                         gfxCoreHelper.isBufferSizeSuitableForCompression(size));
+                                                                         gfxCoreHelper.isBufferSizeSuitableForCompression(size), false);
 
         allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled,
                                                                                           memoryManager->isLocalMemorySupported(rootDeviceIndex));

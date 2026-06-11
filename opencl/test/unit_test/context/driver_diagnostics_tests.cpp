@@ -666,7 +666,7 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
         isCompressed = MemObjHelper::isSuitableForCompression(
                            GfxCoreHelper::compressedBuffersSupported(hwInfo),
                            memoryProperties, *context,
-                           gfxCoreHelper.isBufferSizeSuitableForCompression(size)) &&
+                           gfxCoreHelper.isBufferSizeSuitableForCompression(size), false) &&
                        !is32bit &&
                        (!memoryProperties.flags.useHostPtr || context->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex())) &&
                        !memoryProperties.flags.forceHostMemory;

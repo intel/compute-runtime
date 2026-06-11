@@ -212,7 +212,7 @@ Image *Image::create(Context *context,
     bool compressionSupported = !imgInfo.linearStorage && !defaultProductHelper.isCompressionForbidden(*hwInfo);
 
     bool preferCompression = MemObjHelper::isSuitableForCompression(compressionSupported, memoryProperties,
-                                                                    *context, true);
+                                                                    *context, true, true);
     preferCompression &= clGfxCoreHelper.allowImageCompression(surfaceFormat->oclImageFormat);
     preferCompression &= !clGfxCoreHelper.isFormatRedescribable(surfaceFormat->oclImageFormat);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ class MemObjHelper {
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags);
     static SVMAllocsManager::SvmAllocationProperties getSvmAllocationProperties(cl_mem_flags flags);
     static bool isSuitableForCompression(bool compressionSupported, const MemoryProperties &properties, Context &context,
-                                         bool preferCompression);
+                                         bool preferCompression, bool isImageAllocation);
 
   protected:
     static bool validateExtraMemoryProperties(const MemoryProperties &memoryProperties, cl_mem_flags flags,

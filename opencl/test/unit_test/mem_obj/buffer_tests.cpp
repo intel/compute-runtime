@@ -441,7 +441,7 @@ TEST(Buffer, givenCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferC
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
-    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false);
     EXPECT_TRUE(compressionEnabled);
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
@@ -454,7 +454,7 @@ TEST(Buffer, givenCompressedBuffersDisabledLocalMemoryEnabledWhenAllocationTypeI
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
-    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true, false);
     EXPECT_FALSE(compressionEnabled);
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true);
@@ -468,7 +468,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledWhenAllocationTypeIsQuerie
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
-    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true, false);
     EXPECT_FALSE(compressionEnabled);
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
@@ -482,7 +482,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledWhenAllocationTypeIsQueried
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
-    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true, false);
     EXPECT_FALSE(compressionEnabled);
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true);
@@ -496,7 +496,7 @@ TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferTypeIsRet
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
-    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true, false);
     EXPECT_FALSE(compressionEnabled);
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
@@ -510,7 +510,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledAndCompressedBuffersEnable
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
-    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false);
     EXPECT_TRUE(compressionEnabled);
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
@@ -524,7 +524,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledAndCompressedBuffersEnabled
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
-    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false);
     EXPECT_TRUE(compressionEnabled);
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true);
@@ -538,7 +538,7 @@ TEST(Buffer, givenUseHostPointerFlagAndForceSharedPhysicalStorageWhenLocalMemory
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
-    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false);
     EXPECT_TRUE(compressionEnabled);
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true);
@@ -552,7 +552,7 @@ TEST(Buffer, givenAllocHostPtrFlagAndCompressedBuffersEnabledWhenAllocationTypeI
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
-    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true, false);
     EXPECT_TRUE(compressionEnabled);
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
@@ -565,7 +565,7 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndCompressedBuffersDisabledWhenAlloca
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
 
-    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true, false);
     EXPECT_FALSE(compressionEnabled);
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
