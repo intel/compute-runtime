@@ -411,6 +411,47 @@ TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsRe
 }
 
 using ContextPowerSavingHintTest = Test<DeviceFixture>;
+TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithPowerHintDescThenPowerHintSetInDriverHandle) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
+    ze_context_power_saving_hint_exp_desc_t powerHintContext = {};
+    powerHintContext.stype = ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC;
+    powerHintContext.hint = 1;
+    ctxtDesc.pNext = &powerHintContext;
+    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(powerHintContext.hint, driverHandle->powerHint);
+    L0::Context *context = L0::Context::fromHandle(hContext);
+    context->destroy();
+}
+
+TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithPowerHintMinimumThenPowerHintSetInDriverHandle) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
+    ze_context_power_saving_hint_exp_desc_t powerHintContext = {};
+    powerHintContext.stype = ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC;
+    powerHintContext.hint = ZE_POWER_SAVING_HINT_TYPE_MIN;
+    ctxtDesc.pNext = &powerHintContext;
+    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(powerHintContext.hint, driverHandle->powerHint);
+    L0::Context *context = L0::Context::fromHandle(hContext);
+    context->destroy();
+}
+
+TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithPowerHintMaximumThenPowerHintSetInDriverHandle) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
+    ze_context_power_saving_hint_exp_desc_t powerHintContext = {};
+    powerHintContext.stype = ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC;
+    powerHintContext.hint = ZE_POWER_SAVING_HINT_TYPE_MAX;
+    ctxtDesc.pNext = &powerHintContext;
+    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(powerHintContext.hint, driverHandle->powerHint);
+    L0::Context *context = L0::Context::fromHandle(hContext);
+    context->destroy();
+}
 
 TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithPowerHintGreaterThanMaxHintThenErrorIsReturned) {
     ze_context_handle_t hContext;
@@ -423,90 +464,22 @@ TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithPowerHintGreaterT
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, res);
 }
 
+TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithoutPowerHintDescThenPowerHintIsNotSetInDriverHandle) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_scheduling_hint_exp_desc_t invalidExpContext = {};
+    invalidExpContext.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC;
+    ctxtDesc.pNext = &invalidExpContext;
+    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0, driverHandle->powerHint);
+    L0::Context *context = L0::Context::fromHandle(hContext);
+    context->destroy();
+}
+
 TEST_F(ContextPowerSavingHintTest, givenOsContextPowerHintMaxAndZePowerSavingHintTypeMaxThenTheyAreEqualAndBothAre100) {
     EXPECT_EQ(NEO::OsContext::getUmdPowerHintMax(), ZE_POWER_SAVING_HINT_TYPE_MAX);
     EXPECT_EQ(NEO::OsContext::getUmdPowerHintMax(), 100u);
-}
-
-TEST_F(ContextPowerSavingHintTest, givenContextWithoutPowerHintExpDescWhenAccessorCalledThenZeroIsReturned) {
-    ze_context_handle_t hContext;
-    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
-    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    L0::Context *context = L0::Context::fromHandle(hContext);
-    EXPECT_EQ(0u, context->getPowerHint());
-    context->destroy();
-}
-
-TEST_F(ContextPowerSavingHintTest, givenContextCreatedWithMaxPowerHintWhenAccessorCalledThenMaxValueIsReturned) {
-    ze_context_handle_t hContext;
-    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
-    ze_context_power_saving_hint_exp_desc_t powerHintContext = {};
-    powerHintContext.stype = ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC;
-    powerHintContext.hint = ZE_POWER_SAVING_HINT_TYPE_MAX;
-    ctxtDesc.pNext = &powerHintContext;
-    ze_result_t res = driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    L0::Context *context = L0::Context::fromHandle(hContext);
-    EXPECT_EQ(NEO::OsContext::getUmdPowerHintMax(), context->getPowerHint());
-    context->destroy();
-}
-
-TEST_F(ContextPowerSavingHintTest, givenTwoContextsWhenOneHasMaxPowerHintThenOtherIsUnaffected) {
-    ze_context_handle_t hContextWithHint;
-    ze_context_desc_t ctxtDescWithHint = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
-    ze_context_power_saving_hint_exp_desc_t powerHintContext = {};
-    powerHintContext.stype = ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC;
-    powerHintContext.hint = ZE_POWER_SAVING_HINT_TYPE_MAX;
-    ctxtDescWithHint.pNext = &powerHintContext;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&ctxtDescWithHint, 0u, nullptr, &hContextWithHint));
-
-    ze_context_handle_t hContextWithoutHint;
-    ze_context_desc_t ctxtDescPlain = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&ctxtDescPlain, 0u, nullptr, &hContextWithoutHint));
-
-    EXPECT_EQ(NEO::OsContext::getUmdPowerHintMax(), L0::Context::fromHandle(hContextWithHint)->getPowerHint());
-    EXPECT_EQ(0u, L0::Context::fromHandle(hContextWithoutHint)->getPowerHint());
-
-    L0::Context::fromHandle(hContextWithHint)->destroy();
-    L0::Context::fromHandle(hContextWithoutHint)->destroy();
-}
-
-TEST_F(ContextPowerSavingHintTest, givenContextWhenSetPowerHintCalledThenGetPowerHintReturnsSameValue) {
-    ze_context_handle_t hContext;
-    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext));
-    L0::Context *context = L0::Context::fromHandle(hContext);
-    context->setPowerHint(NEO::OsContext::getUmdPowerHintMax());
-    EXPECT_EQ(NEO::OsContext::getUmdPowerHintMax(), context->getPowerHint());
-    context->setPowerHint(42u);
-    EXPECT_EQ(42u, context->getPowerHint());
-    context->destroy();
-}
-
-TEST_F(ContextPowerSavingHintTest, givenContextWithMaxPowerHintWhenCreatingImmediateCmdListWithCopyOffloadThenOffloadDisabledWhenNoPowerHintBcs) {
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
-    ze_context_power_saving_hint_exp_desc_t powerHintDesc = {};
-    powerHintDesc.stype = ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC;
-    powerHintDesc.hint = ZE_POWER_SAVING_HINT_TYPE_MAX;
-    ctxtDesc.pNext = &powerHintDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext));
-    L0::Context *context = L0::Context::fromHandle(hContext);
-    EXPECT_EQ(NEO::OsContext::getUmdPowerHintMax(), context->getPowerHint());
-
-    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    queueDesc.ordinal = 0;
-    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    ze_command_list_handle_t hCmdList = nullptr;
-    auto res = context->createCommandListImmediate(device->toHandle(), &queueDesc, &hCmdList);
-    if (res == ZE_RESULT_SUCCESS && hCmdList) {
-        L0::CommandList::fromHandle(hCmdList)->destroy();
-    }
-    context->destroy();
 }
 
 using ContextTest = Test<DeviceFixture>;

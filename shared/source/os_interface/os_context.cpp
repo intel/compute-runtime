@@ -23,11 +23,7 @@ OsContext::OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineD
       numSupportedDevices(static_cast<uint32_t>(engineDescriptor.deviceBitfield.count())),
       engineType(engineDescriptor.engineTypeUsage.first),
       engineUsage(engineDescriptor.engineTypeUsage.second),
-      rootDevice(engineDescriptor.isRootDevice) {
-    if (engineUsage == EngineUsage::powerHint) {
-        powerHintValue = powerHintMax;
-    }
-}
+      rootDevice(engineDescriptor.isRootDevice) {}
 
 void OsContext::adjustSettings(const ProductHelper &productHelper) {
     initializeInternalEngineImmediately = productHelper.initializeInternalEngineImmediately();

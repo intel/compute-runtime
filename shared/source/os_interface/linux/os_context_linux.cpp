@@ -44,7 +44,7 @@ bool OsContextLinux::initializeContext(bool allocateInterrupt) {
     auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(*hwInfo);
 
-    if (engineType == defaultEngineType && !isLowPriority() && !isInternalEngine() && !isPowerHint()) {
+    if (engineType == defaultEngineType && !isLowPriority() && !isInternalEngine()) {
         this->setDefaultContext(true);
     }
 

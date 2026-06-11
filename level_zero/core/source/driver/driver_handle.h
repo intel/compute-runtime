@@ -225,6 +225,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     bool enableIpcHandleSharing = true;
     std::once_flag hostUsmPoolOnceFlag;
     std::once_flag deviceUsmPoolOnceFlag;
+    uint8_t powerHint = 0;
 
     // Error messages per thread, variable initialized / destroyed per thread,
     // not based on the lifetime of the object of a class.

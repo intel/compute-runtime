@@ -74,8 +74,8 @@ using GfxCoreHelperTestsXe3pCoreWithEnginesCheck = GfxCoreHelperTestWithEnginesC
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEnginesAndTwoRegularCopyEngines) {
     DebugManagerStateRestore restore;
 
-    const size_t numEnginesWithCccs = 20;
-    const size_t numEnginesWithoutCccs = 19;
+    const size_t numEnginesWithCccs = 18;
+    const size_t numEnginesWithoutCccs = 17;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -114,8 +114,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenGetGpgpuEnginesThenReturnTwoCccs
                 {aub_stream::ENGINE_CCS3, true, false},
                 {aub_stream::ENGINE_CCS, true, false},
                 {aub_stream::ENGINE_CCS, true, false},
-                {aub_stream::ENGINE_CCS, true, false},
-                {aub_stream::ENGINE_BCS, false, true},
                 {aub_stream::ENGINE_BCS, false, true},
                 {aub_stream::ENGINE_BCS, false, true},
                 {aub_stream::ENGINE_BCS1, false, true},
@@ -143,8 +141,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenGetGpgpuEnginesThenReturnTwoCccs
                 {aub_stream::ENGINE_CCCS, false, false},
                 {debugFlag ? aub_stream::ENGINE_CCCS : aub_stream::ENGINE_CCS, debugFlag ? false : true, false},
                 {debugFlag ? aub_stream::ENGINE_CCCS : aub_stream::ENGINE_CCS, debugFlag ? false : true, false},
-                {debugFlag ? aub_stream::ENGINE_CCCS : aub_stream::ENGINE_CCS, debugFlag ? false : true, false},
-                {aub_stream::ENGINE_BCS, false, true},
                 {aub_stream::ENGINE_BCS, false, true},
                 {aub_stream::ENGINE_BCS, false, true},
                 {aub_stream::ENGINE_BCS1, false, true},
@@ -182,7 +178,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWh
     bool isBCS0Enabled = (aub_stream::ENGINE_BCS == productHelper.getDefaultCopyEngine());
     bool isBCSLowPriorityEnabled = gfxCoreHelper.areSecondaryContextsSupported();
 
-    size_t numEngines = isBCS0Enabled ? 17 : 16;
+    size_t numEngines = isBCS0Enabled ? 15 : 14;
     if (isBCSLowPriorityEnabled) {
         numEngines++;
     }
@@ -202,7 +198,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWh
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::internal));
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::lowPriority));
-    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::powerHint));
 
     if (renderCommandStreamerEnabled) {
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
@@ -224,7 +219,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWh
         EXPECT_EQ(1u, getEngineCount(productHelper.getDefaultCopyEngine(), EngineUsage::lowPriority));
     }
 
-    EXPECT_EQ(1u, getEngineCount(productHelper.getDefaultCopyEngine(), EngineUsage::powerHint));
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS3, EngineUsage::internal));
     EXPECT_TRUE(allEnginesChecked());
 }
@@ -248,7 +242,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenNotAllCopyEngin
     bool isBCS0Enabled = (aub_stream::ENGINE_BCS == productHelper.getDefaultCopyEngine());
     bool isBCSLowPriorityEnabled = gfxCoreHelper.areSecondaryContextsSupported();
 
-    size_t numEngines = isBCS0Enabled ? 11 : 13;
+    size_t numEngines = isBCS0Enabled ? 10 : 11;
     if (isBCSLowPriorityEnabled) {
         numEngines++;
     }
@@ -269,14 +263,12 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenNotAllCopyEngin
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::internal));
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::lowPriority));
-    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::powerHint));
     if (renderCommandStreamerEnabled) {
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
     }
 
     if (!isBCS0Enabled) {
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS1, EngineUsage::internal));
-        EXPECT_EQ(1u, getEngineCount(productHelper.getDefaultCopyEngine(), EngineUsage::powerHint));
     }
     if (isBCSLowPriorityEnabled) {
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS1, EngineUsage::lowPriority));
@@ -337,48 +329,8 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenGroupContextWhe
     EXPECT_EQ(1u, bcsLpContextsCount);
 }
 
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenDefaultCopyEngineEnabledWhenGetEnginesCalledThenPowerHintBcsEngineIsIncluded) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto &productHelper = device->getProductHelper();
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-
-    for (const auto &engine : engines) {
-        countEngine(engine.first, engine.second);
-    }
-
-    EXPECT_EQ(1u, getEngineCount(productHelper.getDefaultCopyEngine(), EngineUsage::powerHint));
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenDefaultCopyEngineDisabledWhenGetEnginesCalledThenPowerHintBcsEngineIsNotIncluded) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = 0;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto &productHelper = device->getProductHelper();
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-
-    for (const auto &engine : engines) {
-        countEngine(engine.first, engine.second);
-    }
-
-    EXPECT_EQ(0u, getEngineCount(productHelper.getDefaultCopyEngine(), EngineUsage::powerHint));
-}
-
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenOneBcsEnabledWhenGetEnginesCalledThenCreateOnlyOneBcs) {
-    const size_t numEngines = 9;
+    const size_t numEngines = 8;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -406,7 +358,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenOneBcsEnabledWhenGetEnginesCall
         {aub_stream::ENGINE_CCS3, true, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
     }};
@@ -419,7 +370,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenOneBcsEnabledWhenGetEnginesCall
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenBcsDisabledWhenGetEnginesCalledThenDontCreateAnyBcs) {
-    const size_t numEngines = 7;
+    const size_t numEngines = 6;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -446,7 +397,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenBcsDisabledWhenGetEnginesCalled
         {aub_stream::ENGINE_CCS3, true, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_CCS, true, false},
     }};
 
     for (size_t i = 0; i < numEngines; i++) {
@@ -465,9 +415,9 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenCcsDisabledAndNumberOfCcsEnable
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    EXPECT_EQ(7u, device->allEngines.size());
+    EXPECT_EQ(6u, device->allEngines.size());
     auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-    EXPECT_EQ(7u, engines.size());
+    EXPECT_EQ(6u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
     EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[1].first);
@@ -475,7 +425,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenCcsDisabledAndNumberOfCcsEnable
     EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[3].first);
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[4].first);
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[5].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[6].first);
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenCcsDisabledWhenGetGpgpuEnginesThenReturnCccsEngines) {
@@ -487,17 +436,16 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenCcsDisabledWhenGetGpgpuEnginesT
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    EXPECT_EQ(3u, device->allEngines.size());
+    EXPECT_EQ(2u, device->allEngines.size());
     auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-    EXPECT_EQ(3u, engines.size());
+    EXPECT_EQ(2u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[0].first);
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[1].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[2].first);
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugFlagDisablingContextGroupWhenQueryingEnginesThenLowPriorityAndInternalEngineIsReturned) {
-    constexpr size_t numEngines = 11;
+    constexpr size_t numEngines = 9;
 
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(0);
@@ -528,11 +476,9 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugFlagDisablingContextGroupW
                                                                               {aub_stream::ENGINE_CCS1, true, false, false, false},
                                                                               {aub_stream::ENGINE_CCS, false, true, false, false},
                                                                               {aub_stream::ENGINE_CCS, false, false, true, false},
-                                                                              {aub_stream::ENGINE_CCS, false, false, false, false},
 
                                                                               {aub_stream::ENGINE_BCS, true, false, false, false},
                                                                               {aub_stream::ENGINE_BCS, false, false, true, false},
-                                                                              {aub_stream::ENGINE_BCS, false, false, false, false},
                                                                               {aub_stream::ENGINE_BCS1, true, false, false, false},
                                                                               {aub_stream::ENGINE_BCS2, true, false, false, false},
                                                                               {aub_stream::ENGINE_BCS2, false, false, true, false}}};
@@ -548,7 +494,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugFlagDisablingContextGroupW
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingEnginesThenLowPriorityHighPriorityAndInternalEngineIsReturned) {
-    constexpr size_t numEngines = 11;
+    constexpr size_t numEngines = 9;
 
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(4);
@@ -579,12 +525,10 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingEngines
         {aub_stream::ENGINE_CCS, true, false, false, false},
         {aub_stream::ENGINE_CCS, false, true, false, false},
         {aub_stream::ENGINE_CCS, false, false, true, false},
-        {aub_stream::ENGINE_CCS, false, false, false, false},
 
         {aub_stream::ENGINE_BCS, true, false, false, false},
         {aub_stream::ENGINE_BCS, false, false, true, false},
         {aub_stream::ENGINE_BCS, false, true, false, false},
-        {aub_stream::ENGINE_BCS, false, false, false, false},
         {aub_stream::ENGINE_BCS1, true, false, false, false},
         {aub_stream::ENGINE_BCS1, false, false, true, false},
         {aub_stream::ENGINE_BCS2, false, false, false, true},

@@ -208,8 +208,7 @@ ze_result_t Device::createInternalCommandList(const ze_command_list_desc_t *desc
 }
 
 ze_result_t Device::createCommandListImmediate(const ze_command_queue_desc_t *desc,
-                                               ze_command_list_handle_t *phCommandList,
-                                               uint8_t powerHint) {
+                                               ze_command_list_handle_t *phCommandList) {
 
     ze_command_queue_desc_t commandQueueDesc = *desc;
 
@@ -223,7 +222,7 @@ ze_result_t Device::createCommandListImmediate(const ze_command_queue_desc_t *de
 
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *phCommandList = CommandList::createImmediate(productFamily, this, &commandQueueDesc, false, engineGroupType, returnValue, powerHint);
+    *phCommandList = CommandList::createImmediate(productFamily, this, &commandQueueDesc, false, engineGroupType, returnValue);
     if (returnValue == ZE_RESULT_SUCCESS) {
         CommandList::fromHandle(*phCommandList)->setOrdinal(commandQueueDesc.ordinal);
     }
@@ -261,8 +260,7 @@ void Device::adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index) {
 }
 
 ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
-                                       ze_command_queue_handle_t *commandQueue,
-                                       uint8_t powerHint) {
+                                       ze_command_queue_handle_t *commandQueue) {
     auto &platform = neoDevice->getHardwareInfo().platform;
 
     NEO::CommandStreamReceiver *csr = nullptr;
@@ -282,7 +280,7 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, queueProperties.priorityLevel, queueProperties.interruptHint, powerHint);
+    auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, queueProperties.priorityLevel, queueProperties.interruptHint);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -1132,7 +1130,7 @@ ze_result_t Device::getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, 
         queueDescriptor.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
         queueDescriptor.ordinal = 0;
         queueDescriptor.index = 0;
-        this->createCommandListImmediate(&queueDescriptor, &this->globalTimestampCommandList, 0u);
+        this->createCommandListImmediate(&queueDescriptor, &this->globalTimestampCommandList);
 
         RootDeviceIndicesContainer rootDeviceIndices;
         rootDeviceIndices.pushUnique(this->getNEODevice()->getRootDeviceIndex());
@@ -1588,7 +1586,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
 
         device->pageFaultCommandList =
             CommandList::createImmediate(
-                device->neoDevice->getHardwareInfo().platform.eProductFamily, pageFaultDevice, &cmdQueueDesc, true, NEO::EngineGroupType::copy, resultValue, 0u);
+                device->neoDevice->getHardwareInfo().platform.eProductFamily, pageFaultDevice, &cmdQueueDesc, true, NEO::EngineGroupType::copy, resultValue);
     }
 
     if (osInterface) {
@@ -1849,7 +1847,7 @@ bool Device::isQueueGroupOrdinalValid(uint32_t ordinal) {
     return true;
 }
 
-ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt, uint8_t powerHint) {
+ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt) {
     auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
     uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
 
@@ -1915,13 +1913,6 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
 
     auto selectedDevice = this;
     if (ordinal < numEngineGroups) {
-
-        if (powerHint == NEO::OsContext::getUmdPowerHintMax()) {
-            auto result = getCsrForPowerHint(csr, copyOnly);
-            if (result == ZE_RESULT_SUCCESS) {
-                return result;
-            }
-        }
 
         if (contextPriority == NEO::EngineUsage::lowPriority) {
             auto result = getCsrForLowPriority(csr, copyOnly);
@@ -1993,17 +1984,6 @@ ze_result_t Device::getCsrForLowPriority(NEO::CommandStreamReceiver **csr, bool 
     }
 
     // if the code falls through, we have no low priority context created by neoDevice.
-    return ZE_RESULT_ERROR_UNKNOWN;
-}
-ze_result_t Device::getCsrForPowerHint(NEO::CommandStreamReceiver **csr, bool copyOnly) {
-    for (auto &it : getActiveDevice()->getAllEngines()) {
-        bool engineTypeMatch = NEO::EngineHelpers::isBcs(it.osContext->getEngineType()) == copyOnly;
-        if (it.osContext->isPowerHint() && engineTypeMatch) {
-            *csr = it.commandStreamReceiver;
-            return ZE_RESULT_SUCCESS;
-        }
-    }
-
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 ze_result_t Device::getCsrForHighPriority(NEO::CommandStreamReceiver **csr, bool copyOnly) {

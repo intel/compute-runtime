@@ -559,33 +559,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenLowPriorityQueueWhenCopyEngineDoesNotSup
     zeCommandListDestroy(cmdListHandle);
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenMaxPowerHintWhenCreatingDualStreamCopyOffloadCmdListThenCopyQueueHasPowerHintOrOffloadIsDisabled, IsAtLeastXeCore) {
-    auto defaultCopyOffloadMode = device->getL0GfxCoreHelper().getDefaultCopyOffloadMode(device->getProductHelper().useAdditionalBlitProperties());
-    if (defaultCopyOffloadMode != CopyOffloadModes::dualStream) {
-        GTEST_SKIP();
-    }
-
-    NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
-    context->setPowerHint(NEO::OsContext::getUmdPowerHintMax());
-
-    ze_command_list_handle_t cmdListHandle;
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
-    auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-
-    if (cmdList->cmdQImmediateCopyOffload != nullptr) {
-        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
-        EXPECT_TRUE(copyQueue->getCsr()->getOsContext().isPowerHint());
-    } else {
-        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-    }
-
-    zeCommandListDestroy(cmdListHandle);
-}
-
 HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeCore) {
     NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(-1);
 

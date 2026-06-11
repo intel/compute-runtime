@@ -483,16 +483,14 @@ ze_result_t CommandList::isMutableExp(ze_bool_t *pIsMutable) {
 CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device,
                                           const ze_command_queue_desc_t *desc,
                                           bool internalUsage, NEO::EngineGroupType engineGroupType,
-                                          ze_result_t &returnValue,
-                                          uint8_t powerHint) {
-    return createImmediate(productFamily, device, desc, internalUsage, engineGroupType, nullptr, returnValue, powerHint);
+                                          ze_result_t &returnValue) {
+    return createImmediate(productFamily, device, desc, internalUsage, engineGroupType, nullptr, returnValue);
 }
 
 CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device,
                                           const ze_command_queue_desc_t *desc,
                                           bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
-                                          ze_result_t &returnValue,
-                                          uint8_t powerHint) {
+                                          ze_result_t &returnValue) {
 
     ze_command_queue_desc_t cmdQdesc = *desc;
 
@@ -533,7 +531,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 return commandList;
             }
 
-            returnValue = device->getCsrForOrdinalAndIndex(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, queueProperties.priorityLevel, queueProperties.interruptHint, powerHint);
+            returnValue = device->getCsrForOrdinalAndIndex(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, queueProperties.priorityLevel, queueProperties.interruptHint);
             if (returnValue != ZE_RESULT_SUCCESS) {
                 return commandList;
             }
@@ -590,7 +588,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
     commandList->isTbxMode = csr->isTbxMode();
     commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
-    commandList->powerHint = powerHint;
 
     commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper);
     commandList->isSmallBarConfigPresent = NEO::isSmallBarConfigPresent(device->getOsInterface());
@@ -644,15 +641,10 @@ void CommandList::enableCopyOperationOffload() {
     NEO::CommandStreamReceiver *copyCsr = nullptr;
     uint32_t ordinal = device->getCopyEngineOrdinal();
 
-    device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, immediateQueuePriority, std::nullopt, false, this->powerHint);
+    device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, immediateQueuePriority, std::nullopt, false);
     UNRECOVERABLE_IF(!copyCsr);
 
     if (immediateQueuePriority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !copyCsr->getOsContext().isLowPriority()) {
-        this->copyOffloadMode = CopyOffloadModes::disabled;
-        return;
-    }
-
-    if (this->powerHint == NEO::OsContext::getUmdPowerHintMax() && !copyCsr->getOsContext().isPowerHint()) {
         this->copyOffloadMode = CopyOffloadModes::disabled;
         return;
     }

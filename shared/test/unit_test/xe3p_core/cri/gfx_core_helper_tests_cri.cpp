@@ -75,7 +75,7 @@ CRITEST_F(GfxCoreHelperTestsCri, WhenAskingForDcFlushThenReturnFalse) {
 }
 
 CRITEST_F(GfxCoreHelperTestsCri, givenDebugFlagDisablingContextGroupWhenQueryingEnginesThenLowPriorityAndInternalEngineIsReturned) {
-    constexpr size_t numEngines = 10;
+    constexpr size_t numEngines = 8;
 
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(0);
@@ -106,10 +106,8 @@ CRITEST_F(GfxCoreHelperTestsCri, givenDebugFlagDisablingContextGroupWhenQuerying
         {aub_stream::ENGINE_CCS1, true, false, false},
         {aub_stream::ENGINE_CCS, false, true, false},
         {aub_stream::ENGINE_CCS, false, false, true},
-        {aub_stream::ENGINE_CCS, false, false, false},
         {aub_stream::ENGINE_BCS1, true, false, false},
         {aub_stream::ENGINE_BCS1, false, false, true},
-        {aub_stream::ENGINE_BCS1, false, false, false},
         {aub_stream::ENGINE_BCS2, true, false, false},
         {aub_stream::ENGINE_BCS2, false, false, true},
     }};
@@ -124,7 +122,7 @@ CRITEST_F(GfxCoreHelperTestsCri, givenDebugFlagDisablingContextGroupWhenQuerying
 }
 
 CRITEST_F(GfxCoreHelperTestsCri, givenContextGroupWhenQueryingEnginesThenLowPriorityHighPriorityAndInternalEngineIsReturned) {
-    constexpr size_t numEngines = 9;
+    constexpr size_t numEngines = 7;
 
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(4);
@@ -155,11 +153,9 @@ CRITEST_F(GfxCoreHelperTestsCri, givenContextGroupWhenQueryingEnginesThenLowPrio
         {aub_stream::ENGINE_CCS, true, false, false, false},
         {aub_stream::ENGINE_CCS, false, true, false, false},
         {aub_stream::ENGINE_CCS, false, false, true, false},
-        {aub_stream::ENGINE_CCS, false, false, false, false},
         {aub_stream::ENGINE_BCS1, true, false, false, false},
         {aub_stream::ENGINE_BCS1, false, false, true, false},
         {aub_stream::ENGINE_BCS1, false, true, false, false},
-        {aub_stream::ENGINE_BCS1, false, false, false, false},
         {aub_stream::ENGINE_BCS2, false, false, false, true},
     }};
 
@@ -224,8 +220,8 @@ struct GfxCoreHelperTestsCriWithEnginesCheck : public GfxCoreHelperTestWithEngin
 CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEngines) {
     DebugManagerStateRestore restore;
 
-    const size_t numEnginesWithCccs = 20;
-    const size_t numEnginesWithoutCccs = 19;
+    const size_t numEnginesWithCccs = 18;
+    const size_t numEnginesWithoutCccs = 17;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -267,7 +263,6 @@ CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTw
         }
         EXPECT_EQ(1u, getEngineCount(debugFlag ? aub_stream::ENGINE_CCCS : aub_stream::ENGINE_CCS, EngineUsage::internal));
         EXPECT_EQ(1u, getEngineCount(debugFlag ? aub_stream::ENGINE_CCCS : aub_stream::ENGINE_CCS, EngineUsage::lowPriority));
-        EXPECT_EQ(1u, getEngineCount(debugFlag ? aub_stream::ENGINE_CCCS : aub_stream::ENGINE_CCS, EngineUsage::powerHint));
 
         for (uint32_t idx = 1u; idx < hwInfo.featureTable.ftrBcsInfo.size(); idx++) {
             if (idx == 8 && gfxCoreHelper.areSecondaryContextsSupported()) {
@@ -280,7 +275,6 @@ CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTw
         if (gfxCoreHelper.areSecondaryContextsSupported()) {
             EXPECT_EQ(1u, getEngineCount(device->getProductHelper().getDefaultCopyEngine(), EngineUsage::lowPriority));
         }
-        EXPECT_EQ(1u, getEngineCount(device->getProductHelper().getDefaultCopyEngine(), EngineUsage::powerHint));
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS3, EngineUsage::internal));
         EXPECT_TRUE(allEnginesChecked());
 

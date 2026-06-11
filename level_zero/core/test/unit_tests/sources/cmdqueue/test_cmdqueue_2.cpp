@@ -540,6 +540,52 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
 
 using CommandQueuePowerHintTest = Test<DeviceFixture>;
 
+HWTEST_F(CommandQueuePowerHintTest, givenDriverHandleWithPowerHintAndOsContextPowerHintUnsetThenSuccessIsReturned) {
+    auto csr = std::unique_ptr<TestCmdQueueCsr<FamilyType>>(new TestCmdQueueCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                            device->getNEODevice()->getDeviceBitfield()));
+    csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
+    DriverHandle *driverHandle = device->getDriverHandle();
+    driverHandle->powerHint = 1;
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr.get(),
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, commandQueue);
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueuePowerHintTest, givenDriverHandleWithPowerHintAndOsContextPowerHintAlreadySetThenSuccessIsReturned) {
+    auto csr = std::unique_ptr<TestCmdQueueCsr<FamilyType>>(new TestCmdQueueCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                            device->getNEODevice()->getDeviceBitfield()));
+    csr->setupContext(*device->getNEODevice()->getDefaultEngine().osContext);
+    DriverHandle *driverHandle = device->getDriverHandle();
+    driverHandle->powerHint = 1;
+    auto &osContext = csr->getOsContext();
+    osContext.setUmdPowerHintValue(1);
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr.get(),
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, commandQueue);
+    commandQueue->destroy();
+}
+
 struct MemoryManagerCommandQueueCreateNegativeTest : public NEO::MockMemoryManager {
     MemoryManagerCommandQueueCreateNegativeTest(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
     NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const NEO::AllocationProperties &properties) override {

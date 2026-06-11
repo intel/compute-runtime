@@ -1457,7 +1457,7 @@ ze_result_t Context::createSampler(ze_device_handle_t hDevice,
 ze_result_t Context::createCommandQueue(ze_device_handle_t hDevice,
                                         const ze_command_queue_desc_t *desc,
                                         ze_command_queue_handle_t *commandQueue) {
-    return L0::Device::fromHandle(hDevice)->createCommandQueue(desc, commandQueue, this->getPowerHint());
+    return L0::Device::fromHandle(hDevice)->createCommandQueue(desc, commandQueue);
 }
 
 ze_result_t Context::createCommandList(ze_device_handle_t hDevice,
@@ -1473,7 +1473,7 @@ ze_result_t Context::createCommandList(ze_device_handle_t hDevice,
 ze_result_t Context::createCommandListImmediate(ze_device_handle_t hDevice,
                                                 const ze_command_queue_desc_t *desc,
                                                 ze_command_list_handle_t *commandList) {
-    auto ret = L0::Device::fromHandle(hDevice)->createCommandListImmediate(desc, commandList, this->getPowerHint());
+    auto ret = L0::Device::fromHandle(hDevice)->createCommandListImmediate(desc, commandList);
     if (*commandList) {
         L0::CommandList::fromHandle(*commandList)->setCmdListContext(this->toHandle());
     }
