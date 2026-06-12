@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
         strExtendedFileName << "_PID_" << SysCalls::getProcessId();
     }
     auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-    const auto deviceConfig = AubHelper::getDeviceConfigString(releaseHelper.get(), subDevicesCount, gtSystemInfo.SliceCount, subSlicesPerSlice, gtSystemInfo.MaxEuPerSubSlice);
+    const auto deviceConfig = releaseHelper->getDeviceConfigString(subDevicesCount, gtSystemInfo.SliceCount, subSlicesPerSlice, gtSystemInfo.MaxEuPerSubSlice);
     strfilename << deviceConfig << "_" << rootDeviceIndex << "_" << strExtendedFileName.str() << ".aub";
 
     // clean-up any fileName issues because of the file system incompatibilities

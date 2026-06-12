@@ -51,13 +51,6 @@ bool AubHelper::isOneTimeAubWritableAllocationType(const AllocationType &type) {
     }
 }
 
-uint64_t AubHelper::getTotalMemBankSize(const ReleaseHelper *releaseHelper) {
-    if (releaseHelper) {
-        return releaseHelper->getTotalMemBankSize();
-    }
-    return 32ull * MemoryConstants::gigaByte;
-}
-
 uint64_t AubHelper::getPTEntryBits(uint64_t pdEntryBits) {
     pdEntryBits &= ~makeBitMask<PageTableEntry::localMemoryBit>();
     return pdEntryBits;
@@ -67,22 +60,7 @@ uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const
     if (debugManager.flags.HBMSizePerTileInGigabytes.get() > 0) {
         return debugManager.flags.HBMSizePerTileInGigabytes.get() * MemoryConstants::gigaByte;
     }
-    return getTotalMemBankSize(releaseHelper) / GfxCoreHelper::getSubDevicesCount(pHwInfo);
-}
-
-const std::string AubHelper::getDeviceConfigString(const ReleaseHelper *releaseHelper, uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) {
-    if (releaseHelper) {
-        return releaseHelper->getDeviceConfigString(tileCount, sliceCount, subSliceCount, euPerSubSliceCount);
-    }
-    char configString[16] = {0};
-    if (tileCount > 1) {
-        auto err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%utx%ux%ux%u", tileCount, sliceCount, subSliceCount, euPerSubSliceCount);
-        UNRECOVERABLE_IF(err < 0);
-    } else {
-        auto err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%ux%ux%u", sliceCount, subSliceCount, euPerSubSliceCount);
-        UNRECOVERABLE_IF(err < 0);
-    }
-    return configString;
+    return releaseHelper->getTotalMemBankSize() / GfxCoreHelper::getSubDevicesCount(pHwInfo);
 }
 
 } // namespace NEO
