@@ -269,7 +269,6 @@ class DirectSubmissionHw {
     bool relaxedOrderingEnabled = false;
     bool relaxedOrderingInitialized = false;
     bool relaxedOrderingSchedulerRequired = false;
-    bool notifyKmdDuringMonitorFence = false;
     bool isSwitchOnUnsuccessful = false;
     bool useSemaphore64bCmd = false;
 };

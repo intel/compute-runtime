@@ -56,7 +56,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::lastSubmittedThrottle;
     using BaseClass::maxRingBufferCount;
     using BaseClass::miMemFenceRequired;
-    using BaseClass::notifyKmdDuringMonitorFence;
     using BaseClass::osContext;
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;

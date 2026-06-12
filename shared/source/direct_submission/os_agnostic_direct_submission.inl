@@ -112,7 +112,7 @@ template <typename GfxFamily, typename Dispatcher>
 void OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSection() {
     TagData currentTagData = {};
     getTagAddressValue(currentTagData);
-    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
+    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, false);
 }
 
 template <typename GfxFamily, typename Dispatcher>

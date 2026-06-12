@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,8 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingMonitorFenceCmdThenDis
     for (auto &cmd : commandsList) {
         MI_FLUSH_DW *miFlush = static_cast<MI_FLUSH_DW *>(cmd);
         if (miFlush->getDestinationAddress() == expectedGpuAddress &&
-            miFlush->getImmediateData() == expectedValue) {
+            miFlush->getImmediateData() == expectedValue &&
+            miFlush->getNotifyEnable() == false) {
             foundPostSync = true;
         }
     }

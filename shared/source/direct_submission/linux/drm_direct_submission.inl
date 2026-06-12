@@ -87,7 +87,6 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
                       << std::dec << std::endl;
         }
     }
-    this->notifyKmdDuringMonitorFence = true;
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -240,7 +239,7 @@ template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSection() {
     TagData currentTagData = {};
     getTagAddressValue(currentTagData);
-    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
+    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, false);
 }
 
 template <typename GfxFamily, typename Dispatcher>

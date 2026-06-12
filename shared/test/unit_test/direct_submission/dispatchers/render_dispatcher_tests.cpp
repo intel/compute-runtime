@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,8 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPip
             foundMonitorFence =
                 (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) &&
                 (NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl) == gpuVa) &&
-                (pipeControl->getImmediateData() == value);
+                (pipeControl->getImmediateData() == value) &&
+                (pipeControl->getNotifyEnable() == false);
             if (foundMonitorFence) {
                 break;
             }
