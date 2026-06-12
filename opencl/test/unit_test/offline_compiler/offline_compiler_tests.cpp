@@ -4287,25 +4287,6 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingDisabledWhenA
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(false);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isBindlessAddressingDisabledResult = true;
-
-    auto internalOptions = mockOfflineCompiler->internalOptions;
-    mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
-
-    EXPECT_EQ(std::string::npos, internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
-
-    mockOfflineCompiler->compilerProductHelper.swap(backup);
-}
-
-TEST_F(OfflineCompilerBindlessOptionsTests, givenNullReleaseHelperWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotAddedToInternalOptions) {
-    mockOfflineCompiler->releaseHelper.reset();
-
-    ASSERT_EQ(nullptr, mockOfflineCompiler->releaseHelper);
-
-    std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(false);
-    mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isBindlessAddressingDisabledResult = true;
-
     auto internalOptions = mockOfflineCompiler->internalOptions;
     mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
 
@@ -4321,7 +4302,6 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindful
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isBindlessAddressingDisabledResult = true;
     static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
 
     std::string &internalOptions = mockOfflineCompiler->internalOptions;
@@ -4343,7 +4323,6 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndDefault
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isBindlessAddressingDisabledResult = true;
     static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
 
     std::string &internalOptions = mockOfflineCompiler->internalOptions;
@@ -4361,7 +4340,6 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindles
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isBindlessAddressingDisabledResult = true;
     static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
 
     std::string &internalOptions = mockOfflineCompiler->internalOptions;

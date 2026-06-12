@@ -236,14 +236,6 @@ void CompilerProductHelperHw<gfxProduct>::getKernelFp64AtomicCapabilities(uint32
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->isBindlessAddressingDisabled();
-    }
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isForceBindlessRequired(const HardwareInfo &hwInfo) const {
     return this->isHeaplessModeEnabled(hwInfo);
 }

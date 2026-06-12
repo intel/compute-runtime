@@ -79,7 +79,6 @@ class CompilerProductHelper {
     virtual void getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const = 0;
     virtual void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const = 0;
     virtual void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const = 0;
-    virtual bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isForceBindlessRequired(const HardwareInfo &hwInfo) const = 0;
     virtual BuiltIn::AddressingMode getDefaultBuiltInAddressingMode(bool bindlessImages) const = 0;
     virtual const char *getCustomIgcLibraryName() const = 0;
@@ -127,7 +126,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     void getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const override;
     void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const override;
     void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const override;
-    bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const override;
     bool isForceBindlessRequired(const HardwareInfo &hwInfo) const override;
     BuiltIn::AddressingMode getDefaultBuiltInAddressingMode(bool bindlessImages) const override;
     const char *getCustomIgcLibraryName() const override;

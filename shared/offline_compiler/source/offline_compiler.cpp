@@ -1510,7 +1510,7 @@ int OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     if (compilerProductHelper->isForceEmuInt32DivRemSPRequired()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
-    if ((!compilerProductHelper->isBindlessAddressingDisabled(releaseHelper.get()) && addressingMode != "bindful") ||
+    if ((!releaseHelper->isBindlessAddressingDisabled() && addressingMode != "bindful") ||
         addressingMode == "bindless" ||
         compilerProductHelper->isForceBindlessRequired(hwInfo)) {
         if (internalOptions.find("-cl-intel-use-bindless") == std::string::npos) {
