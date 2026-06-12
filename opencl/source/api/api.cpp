@@ -4017,6 +4017,9 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
     }
 
     auto ptr = neoContext->getSVMAllocsManager()->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    if (!ptr) {
+        err.set(CL_OUT_OF_HOST_MEMORY);
+    }
     TRACING_EXIT(ClHostMemAllocINTEL, &ptr);
     return ptr;
 }
@@ -4082,6 +4085,9 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     }
 
     auto ptr = neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    if (!ptr) {
+        err.set(CL_OUT_OF_RESOURCES);
+    }
     TRACING_EXIT(ClDeviceMemAllocINTEL, &ptr);
     return ptr;
 }

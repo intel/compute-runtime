@@ -208,6 +208,37 @@ TEST_F(ClUnifiedSharedMemoryTests, givenSharedMemAllocCallWhenAllocatingGraphics
     std::swap(memoryManager, executionEnvironment->memoryManager);
 }
 
+TEST_F(ClUnifiedSharedMemoryTests, givenHostMemAllocCallWhenAllocatingGraphicsMemoryFailsThenOutOfHostMemoryErrorIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto executionEnvironment = deviceFactory.rootDevices[0]->getExecutionEnvironment();
+    std::unique_ptr<MemoryManager> memoryManager = std::make_unique<FailMemoryManager>(0, *executionEnvironment);
+    std::swap(memoryManager, executionEnvironment->memoryManager);
+    MockContext context(deviceFactory.rootDevices[0]);
+
+    cl_int retVal = CL_INVALID_CONTEXT;
+
+    auto allocation = clHostMemAllocINTEL(&context, nullptr, PoolInfo::getHostMaxPoolableSize() + 1, 0, &retVal);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    EXPECT_EQ(nullptr, allocation);
+    std::swap(memoryManager, executionEnvironment->memoryManager);
+}
+
+TEST_F(ClUnifiedSharedMemoryTests, givenDeviceMemAllocCallWhenAllocatingGraphicsMemoryFailsThenOutOfResourcesErrorIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto executionEnvironment = deviceFactory.rootDevices[0]->getExecutionEnvironment();
+    std::unique_ptr<MemoryManager> memoryManager = std::make_unique<FailMemoryManager>(0, *executionEnvironment);
+    std::swap(memoryManager, executionEnvironment->memoryManager);
+    MockContext context(deviceFactory.rootDevices[0]);
+
+    cl_int retVal = CL_INVALID_CONTEXT;
+
+    const size_t nonPoolableSize = PoolInfo::getMaxPoolableSize(context.getDevice(0u)->getDevice().getGfxCoreHelper()) + 1;
+    auto allocation = clDeviceMemAllocINTEL(&context, context.getDevice(0u), nullptr, nonPoolableSize, 0, &retVal);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+    EXPECT_EQ(nullptr, allocation);
+    std::swap(memoryManager, executionEnvironment->memoryManager);
+}
+
 TEST_F(ClUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongContextThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto ptr = clSharedMemAllocINTEL(0, 0, nullptr, 0, 0, &retVal);
