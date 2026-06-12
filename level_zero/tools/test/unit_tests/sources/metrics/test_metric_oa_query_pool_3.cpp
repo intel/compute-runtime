@@ -26,7 +26,7 @@ TEST_F(MetricQueryPoolTest, givenMetricQueryIsActiveWhenMetricQueryPoolDestroyIs
     zet_device_handle_t metricDevice = device->toHandle();
 
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricSource);
+    Mock<OaMetricGroupImp> metricGroup(metricSource);
 
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;

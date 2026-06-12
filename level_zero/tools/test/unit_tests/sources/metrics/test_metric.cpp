@@ -766,6 +766,39 @@ TEST_F(MetricScopesMultiDeviceFixture, WhenSubDeviceQueriesComputeScopeIdFromRoo
     EXPECT_EQ(scopeId, subdeviceIndex);
 }
 
+HWTEST_F(MetricScopesMultiDeviceFixture, GivenPlatformSupportsAggregationOrNotComputeScopeToSubDeviceIsDifferent) {
+
+    MockL0GfxCoreHelperSupportMetricsAggregation<FamilyType> mockL0GfxCoreHelperSupportsAggregation;
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelperSupportsAggregation));
+    rootDevice->getNEODevice()->getRootDeviceEnvironmentRef().apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+
+    EXPECT_EQ(mockRootMetricSource->getSubDeviceIdForComputeScopeId(*mockRootDeviceContext, 0), 0U);
+    // The only case when the subdevice ID is one less than the compute scope ID is when:
+    // - the root device is queried
+    // - the root device supports metrics aggregation (so compute scope 0 is for aggregated metrics) and
+    // - the scope in not aggregated (aggregated scope ID = 0)
+    EXPECT_EQ(mockRootMetricSource->getSubDeviceIdForComputeScopeId(*mockRootDeviceContext, 1), 0U);
+
+    EXPECT_EQ(mockRootMetricSource->getSubDeviceIdForComputeScopeId(*mockSubDeviceContext, 0), 0U);
+    EXPECT_EQ(mockRootMetricSource->getSubDeviceIdForComputeScopeId(*mockSubDeviceContext, 1), 1U);
+
+    rootDevice->getNEODevice()->getRootDeviceEnvironmentRef().apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+    l0GfxCoreHelperBackup.release();
+
+    MockL0GfxCoreHelperNOTSupportMetricsAggregation<FamilyType> mockL0GfxCoreHelperNotSupportsAggregation;
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup2(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelperNotSupportsAggregation));
+    rootDevice->getNEODevice()->getRootDeviceEnvironmentRef().apiGfxCoreHelper.swap(l0GfxCoreHelperBackup2);
+
+    EXPECT_EQ(mockRootMetricSource->getSubDeviceIdForComputeScopeId(*mockRootDeviceContext, 0), 0U);
+    EXPECT_EQ(mockRootMetricSource->getSubDeviceIdForComputeScopeId(*mockRootDeviceContext, 1), 1U);
+
+    EXPECT_EQ(mockRootMetricSource->getSubDeviceIdForComputeScopeId(*mockSubDeviceContext, 0), 0U);
+    EXPECT_EQ(mockRootMetricSource->getSubDeviceIdForComputeScopeId(*mockSubDeviceContext, 1), 1U);
+
+    rootDevice->getNEODevice()->getRootDeviceEnvironmentRef().apiGfxCoreHelper.swap(l0GfxCoreHelperBackup2);
+    l0GfxCoreHelperBackup2.release();
+}
+
 using MetricGroupTest = Test<DeviceFixture>;
 
 TEST_F(MetricGroupTest, GivenNoMetricSourceIsAvailableThenNoMetricGroupsAreReturnedAndErrorIsReturned) {

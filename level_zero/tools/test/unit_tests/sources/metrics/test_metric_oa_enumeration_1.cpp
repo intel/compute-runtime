@@ -3747,54 +3747,9 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenAppendMarkerIsCalledThenRet
     EXPECT_EQ(zetCommandListAppendMarkerExp(commandList->toHandle(), metricGroupHandle, 0), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIsCalled) {
+TEST_F(MetricEnumerationTest, givenOAMetricSourceThenOASourceCalcOperationIsUnsupported) {
 
-    // Metrics Discovery device.
-    metricsDeviceParams.ConcurrentGroupsCount = 1;
-
-    // Metrics Discovery concurrent group.
-    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
-    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
-    metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.MetricSetsCount = 1;
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
-
-    // Metrics Discovery:: metric set.
-    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
-    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
-    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
-
-    openMetricsAdapter();
-
-    setupDefaultMocksForMetricDevice(metricsDevice);
-
-    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
-
-    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
-    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
-
-    metricsSet.GetParamsResult = &metricsSetParams;
-
-    // Metric group handle.
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t metricGroupHandle = {};
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
+    auto oaMetricSource = OaMetricSourceImp::create(device->getMetricDeviceContext());
 
     zet_intel_metric_scope_properties_exp_t scopeProperties{};
     scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
@@ -3806,23 +3761,32 @@ TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIs
     // metric groups from different source
     zet_intel_metric_calculation_exp_desc_t calculationDesc{
         ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,            // pNext
-        1,                  // metricGroupCount
-        &metricGroupHandle, // phMetricGroups
-        0,                  // metricCount
-        nullptr,            // phMetrics
-        0,                  // timeWindowsCount
-        nullptr,            // pCalculationTimeWindows
-        1000,               // timeAggregationWindow
-        1,                  // metricScopesCount
-        &hMockScope,        // phMetricScopes
+        nullptr,     // pNext
+        0,           // metricGroupCount
+        nullptr,     // phMetricGroups
+        0,           // metricCount
+        nullptr,     // phMetrics
+        0,           // timeWindowsCount
+        nullptr,     // pCalculationTimeWindows
+        1000,        // timeAggregationWindow
+        1,           // metricScopesCount
+        &hMockScope, // phMetricScopes
     };
 
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, oaMetricSource->calcOperationCreate(device->getMetricDeviceContext(),
+                                                                                       &calculationDesc,
+                                                                                       &hCalculationOperation));
+}
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                                               device->toHandle(), &calculationDesc,
-                                                                                               &hCalculationOperation));
+TEST_F(MetricEnumerationTest, givenOAMetricGroupCanSetAndRetrieveTheMDAPIMetricSet) {
+    zet_metric_group_properties_t groupProperties = {};
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
+    Mock<MetricsDiscovery::IConcurrentGroup_1_13> concurrentGroup;
+    MockMetricSource mockSource{};
+
+    OaMetricGroupImp oaMetricGroup(groupProperties, metricsSet, concurrentGroup, mockSource, false);
+    EXPECT_EQ(oaMetricGroup.getReferenceMetricSet(), &metricsSet);
 }
 
 } // namespace ult

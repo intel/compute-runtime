@@ -307,8 +307,8 @@ zetIntelMetricCalculateValuesExp(
                                                                                ///< reports will be calculated. If count is greater than the number of reports
                                                                                ///< available in the raw data buffer, then the driver shall update the value with
                                                                                ///< the actual number of metric reports calculated.
-    zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of calculated
-                                                                               ///< metrics results.
+    zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][optional][range(0, *pTotalMetricReportCount x reportSize)] buffer of calculated
+                                                                               ///< metrics results. Report size is retrieved by the number of metrics returned by zetIntelMetricCalculationOperationGetReportFormatExp()
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Decoded metric entry

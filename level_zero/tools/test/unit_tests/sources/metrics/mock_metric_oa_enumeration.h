@@ -334,7 +334,7 @@ struct Mock<MetricEnumeration> : public MetricEnumeration {
 };
 
 template <>
-struct Mock<MetricGroup> : public OaMetricGroupImp {
+struct Mock<OaMetricGroupImp> : public OaMetricGroupImp {
     ~Mock() override = default;
     Mock(MetricSource &metricSource) : OaMetricGroupImp(metricSource) {}
 

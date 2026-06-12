@@ -444,7 +444,6 @@ void OaMetricGroupImp::getL0MetricPropertiesFromMdapiInformation(zet_metric_prop
 }
 
 ze_result_t OaMetricGroupImp::createMetrics(MetricsDiscovery::IMetricSet_1_5 &metricSet,
-                                            std::vector<Metric *> &metrics,
                                             OaMetricGroupImp *metricGroup) {
     MetricsDiscovery::TMetricSetParams_1_4 *pMetricSetParams = metricSet.GetParams();
     DEBUG_BREAK_IF(pMetricSetParams == nullptr);
@@ -1229,7 +1228,7 @@ OaMetricGroupImp::OaMetricGroupImp(const zet_metric_group_properties_t &sourcePr
     isPredefined = predefined;
 
     if (isPredefined) {
-        createMetrics(metricSet, metrics, this);
+        createMetrics(metricSet, this);
     }
 }
 

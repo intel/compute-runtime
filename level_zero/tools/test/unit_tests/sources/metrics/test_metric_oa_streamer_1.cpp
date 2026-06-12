@@ -35,7 +35,7 @@ TEST_F(MetricStreamerTest, givenInvalidMetricGroupTypeWhenZetMetricStreamerOpenI
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -107,7 +107,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     streamerDesc.samplingPeriod = 1000;
 
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -197,7 +197,7 @@ TEST_F(MetricStreamerTest, givenRawReportSizeAsZeroWhenZetMetricStreamerOpenIsCa
     streamerDesc.samplingPeriod = 1000;
 
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -287,7 +287,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsAndMetricGroupsIsNotActivatedWhenZ
     streamerDesc.samplingPeriod = 1000;
 
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -347,7 +347,7 @@ TEST_F(MetricStreamerTest, givenInValidOaInformationSymbolNameWhenZetMetricGroup
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -405,7 +405,7 @@ TEST_F(MetricStreamerTest, givenInValidInformationElementCountWhenZetMetricGroup
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -464,7 +464,7 @@ TEST_F(MetricStreamerTest, givenInValidInformationElementTypeWhenZetMetricGroupG
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -535,7 +535,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -635,7 +635,7 @@ TEST_F(MetricStreamerTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateExtI
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
@@ -690,7 +690,7 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetMetricStreamerReadDataIsC
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -785,7 +785,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -891,7 +891,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -996,7 +996,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -1096,7 +1096,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1191,7 +1191,7 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetCommandListAppendMetricSt
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -1291,7 +1291,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -1408,7 +1408,7 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
 
     // One api: metric group handle.
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -1511,7 +1511,7 @@ TEST_F(MetricStreamerTest, WhenStreamerOpenIsCalledWithNotificationEventThenNoti
     zet_metric_streamer_handle_t streamerHandle = {};
 
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1604,7 +1604,7 @@ TEST_F(MetricStreamerTest, WhenStreamerOpenIsCalledWithoutNotificationEventThenM
     zet_metric_streamer_handle_t streamerHandle = {};
 
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;

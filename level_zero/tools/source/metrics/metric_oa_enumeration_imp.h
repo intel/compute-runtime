@@ -231,6 +231,7 @@ struct OaMetricGroupImp : public MetricGroupImp {
                                           const uint8_t *pRawData, uint32_t *pSetCount,
                                           uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
                                           zet_typed_value_t *pMetricValues);
+    MetricsDiscovery::IMetricSet_1_5 *getReferenceMetricSet() const { return pReferenceMetricSet; }
 
   protected:
     void copyProperties(const zet_metric_group_properties_t &source,
@@ -246,7 +247,6 @@ struct OaMetricGroupImp : public MetricGroupImp {
                                           zet_typed_value_t *pCalculatedData);
     ze_result_t getExportDataHeapSize(size_t &exportDataHeapSize);
     ze_result_t createMetrics(MetricsDiscovery::IMetricSet_1_5 &metricSet,
-                              std::vector<Metric *> &metrics,
                               OaMetricGroupImp *metricGroup);
 
     void getL0MetricPropertiesFromMdapiMetric(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IMetric_1_0 *mdapiMetric);
@@ -284,10 +284,6 @@ struct OaMetricImp : public MetricImp {
     template <typename MdapiEntryType>
     static Metric *create(MetricSource &metricSource, MdapiEntryType *mdapiEntry, zet_metric_properties_t &properties, bool isPredefined);
 
-    OaMetricGroupImp *getMetricGroup() const {
-        return metricGroup;
-    }
-
     MetricsDiscovery::IMetric_1_0 *getMdapiMetric() const {
         return mdapiMetric;
     }
@@ -298,6 +294,10 @@ struct OaMetricImp : public MetricImp {
 
     void setMetricGroup(OaMetricGroupImp *group) {
         metricGroup = group;
+    }
+
+    OaMetricGroupImp *getMetricGroup() const {
+        return metricGroup;
     }
 
   protected:

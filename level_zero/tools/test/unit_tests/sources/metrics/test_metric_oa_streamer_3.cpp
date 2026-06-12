@@ -40,7 +40,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetComma
     streamerDesc.samplingPeriod = 1000;
 
     auto &metricOaSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 
@@ -135,7 +135,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricGroupCalcu
     streamerDesc.samplingPeriod = 1000;
 
     auto &metricOaSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -246,7 +246,7 @@ TEST_F(MetricStreamerMultiDeviceTest, WhenStreamerOpenIsCalledWithoutNotificatio
     streamerDesc.pNext = &hwBufferSizeDesc;
 
     auto &metricOaSource = (static_cast<Device *>(devices[0]))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -329,7 +329,7 @@ TEST_F(MetricStreamerTest, givenRawReportSizeIsNotAlignedToOaBufferSizeWhenZetMe
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     metricsDeviceParams.ConcurrentGroupsCount = 1;
 
@@ -402,7 +402,7 @@ TEST_F(MetricStreamerTest, givenValidArgumenteWhenZetMetricStreamerOpenIsCalledT
     streamerDesc.notifyEveryNReports = 32768;
     streamerDesc.samplingPeriod = 1000;
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    Mock<MetricGroup> metricGroup(metricOaSource);
+    Mock<OaMetricGroupImp> metricGroup(metricOaSource);
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     metricsDeviceParams.ConcurrentGroupsCount = 1;
 

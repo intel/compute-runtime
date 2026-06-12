@@ -74,6 +74,15 @@ uint32_t MetricSource::getRootDevMetricComputeScopeIdForSubDevice(MetricDeviceCo
     return scopeId;
 }
 
+uint32_t MetricSource::getSubDeviceIdForComputeScopeId(MetricDeviceContext &metricDeviceContext, uint32_t scopeId) {
+    uint32_t subDeviceId = scopeId;
+    auto &l0GfxCoreHelper = metricDeviceContext.getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    if ((scopeId > 0) && (metricDeviceContext.isMultiDeviceCapable()) && l0GfxCoreHelper.supportMetricsAggregation()) {
+        subDeviceId--;
+    }
+    return subDeviceId;
+}
+
 ze_result_t MetricSource::validateMetricsAgainstScopesAndGetExcludedMetrics(const std::vector<MetricImp *> &metrics,
                                                                             uint32_t scopeCount,
                                                                             zet_intel_metric_scope_exp_handle_t *phMetricScopes,
