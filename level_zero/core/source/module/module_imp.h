@@ -176,6 +176,7 @@ struct ModuleImp : public Module {
     uint32_t getMaxGroupSize(const NEO::KernelDescriptor &kernelDescriptor) const override;
 
     void createBuildOptions(const char *pBuildFlags, std::string &buildOptions, std::string &internalBuildOptions);
+    bool usesMsaaImage() const;
     bool verifyBuildOptions(std::string buildOptions) const;
     bool moveOptLevelOption(std::string &dstOptionsSet, std::string &srcOptionSet);
     bool moveProfileFlagsOption(std::string &dstOptionsSet, std::string &srcOptionSet);
@@ -262,6 +263,7 @@ struct ModuleImp : public Module {
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
     bool isZebinBinary = false;
+    bool forceBindfulForMsaaImages = false;
     bool isFunctionSymbolExportEnabled = false;
     bool isGlobalSymbolExportEnabled = false;
     bool precompiled = false;

@@ -26,6 +26,24 @@ bool KernelDescriptor::isBindlessAddressingKernel(const KernelDescriptor &desc) 
     return bindlessBuffers || bindlessImages;
 }
 
+bool KernelDescriptor::hasMsaaImageArg(const KernelDescriptor &desc) {
+    for (const auto &arg : desc.payloadMappings.explicitArgs) {
+        if (arg.type != ArgDescriptor::ArgType::argTImage) {
+            continue;
+        }
+        switch (arg.as<ArgDescImage>().imageType) {
+        case NEOImageType::imageType2DMSAA:
+        case NEOImageType::imageType2DMSAADepth:
+        case NEOImageType::imageType2DArrayMSAA:
+        case NEOImageType::imageType2DArrayMSAADepth:
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
 void KernelDescriptor::initBindlessOffsetToSurfaceState() {
     std::call_once(initBindlessArgsMapOnce, [this]() {
         uint32_t index = 0;

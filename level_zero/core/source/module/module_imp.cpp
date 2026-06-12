@@ -711,9 +711,30 @@ void ModuleImp::generateDefaultExtendedArgsMetadata() {
     this->metadataGeneration->callGenerateDefaultExtendedArgsMetadataOnce(this->translationUnit->programInfo.kernelInfos);
 }
 
+bool ModuleImp::usesMsaaImage() const {
+    for (const auto &kernelInfo : this->translationUnit->programInfo.kernelInfos) {
+        if (NEO::KernelDescriptor::hasMsaaImageArg(kernelInfo->kernelDescriptor)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
     bool linkageSuccessful = true;
     ze_result_t result = this->initializeTranslationUnit(desc, neoDevice);
+
+    // Multisample image reads compile to ld_mcs/ld2dms, which the compiler's bindless codegen emits without a
+    // surface-state reference (no ExBSO, no binding table). Recompile any module that uses a multisample image
+    // with bindful addressing (handled correctly by the hardware). The translation unit is recreated so the
+    // discarded bindless build's decoded program info is not accumulated.
+    if (result == ZE_RESULT_SUCCESS && !this->forceBindfulForMsaaImages && !this->precompiled &&
+        NEO::ApiSpecificConfig::getBindlessMode(*neoDevice) && this->usesMsaaImage()) {
+        this->forceBindfulForMsaaImages = true;
+        this->translationUnit = std::make_unique<ModuleTranslationUnit>(this->device);
+        result = this->initializeTranslationUnit(desc, neoDevice);
+    }
+
     this->updateBuildLog(neoDevice);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -1159,7 +1180,7 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
             NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::optDisableSendWarWa);
         }
     }
-    if (NEO::ApiSpecificConfig::getBindlessMode(*device->getNEODevice())) {
+    if (NEO::ApiSpecificConfig::getBindlessMode(*device->getNEODevice()) && !this->forceBindfulForMsaaImages) {
         NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::bindlessMode.str());
     }
 }

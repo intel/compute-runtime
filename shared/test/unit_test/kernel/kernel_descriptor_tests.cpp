@@ -140,6 +140,36 @@ TEST(KernelDescriptor, GivenBufferOrImageBindlessAddressingWhenIsBindlessAddress
     EXPECT_TRUE(NEO::KernelDescriptor::isBindlessAddressingKernel(desc));
 }
 
+TEST(KernelDescriptor, GivenImageArgsWhenHasMsaaImageArgCalledThenTrueOnlyForMultisampleImages) {
+    NEO::KernelDescriptor desc;
+    EXPECT_FALSE(NEO::KernelDescriptor::hasMsaaImageArg(desc));
+
+    desc.payloadMappings.explicitArgs.push_back(NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer));
+    EXPECT_FALSE(NEO::KernelDescriptor::hasMsaaImageArg(desc));
+
+    auto image2d = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    image2d.as<NEO::ArgDescImage>().imageType = NEO::NEOImageType::imageType2D;
+    desc.payloadMappings.explicitArgs.push_back(image2d);
+    EXPECT_FALSE(NEO::KernelDescriptor::hasMsaaImageArg(desc));
+
+    auto imageMsaa = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    imageMsaa.as<NEO::ArgDescImage>().imageType = NEO::NEOImageType::imageType2DMSAA;
+    desc.payloadMappings.explicitArgs.push_back(imageMsaa);
+    EXPECT_TRUE(NEO::KernelDescriptor::hasMsaaImageArg(desc));
+}
+
+TEST(KernelDescriptor, GivenEachMultisampleImageTypeWhenHasMsaaImageArgCalledThenTrueIsReturned) {
+    const NEO::NEOImageType msaaTypes[] = {NEO::NEOImageType::imageType2DMSAA, NEO::NEOImageType::imageType2DMSAADepth,
+                                           NEO::NEOImageType::imageType2DArrayMSAA, NEO::NEOImageType::imageType2DArrayMSAADepth};
+    for (auto imageType : msaaTypes) {
+        NEO::KernelDescriptor desc;
+        auto image = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+        image.as<NEO::ArgDescImage>().imageType = imageType;
+        desc.payloadMappings.explicitArgs.push_back(image);
+        EXPECT_TRUE(NEO::KernelDescriptor::hasMsaaImageArg(desc)) << "imageType=" << static_cast<int>(imageType);
+    }
+}
+
 TEST(KernelDescriptor, GivenDescriptorWithBindlessArgsWhenInitBindlessOffsetsToSurfaceStateCalledThenMapIsInitializedOnceAndReturnsCorrectSurfaceIndices) {
     NEO::KernelDescriptor desc;
 

@@ -4833,6 +4833,77 @@ TEST_F(ModuleTest, givenInternalOptionsWhenBindlessDisabledThenBindlesOptionsNot
     EXPECT_EQ(device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo), NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessMode));
 }
 
+TEST_F(ModuleTest, givenForceBindfulForMsaaImagesWhenCreateBuildOptionsThenBindlessOptionIsNotAdded) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseBindlessMode.set(1);
+
+    struct MsaaModule : public L0::ModuleImp {
+        MsaaModule(L0::Device *device) : L0::ModuleImp(device, nullptr, ModuleType::user) {}
+        void setForceBindfulForMsaaImages(bool value) { this->forceBindfulForMsaaImages = value; }
+    };
+    MsaaModule module{device};
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+    module.createBuildOptions("", buildOptions, internalBuildOptions);
+    EXPECT_TRUE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessMode));
+
+    module.setForceBindfulForMsaaImages(true);
+    std::string buildOptionsBindful;
+    std::string internalBuildOptionsBindful;
+    module.createBuildOptions("", buildOptionsBindful, internalBuildOptionsBindful);
+    EXPECT_FALSE(NEO::CompilerOptions::contains(internalBuildOptionsBindful, NEO::CompilerOptions::bindlessMode));
+}
+
+TEST_F(ModuleTest, givenProgramInfoWithMultisampleImageArgWhenUsesMsaaImageThenTrueIsReturned) {
+    MockModule module{device, nullptr, ModuleType::user};
+    EXPECT_FALSE(module.usesMsaaImage());
+
+    auto nonMsaaKernelInfo = std::make_unique<NEO::KernelInfo>();
+    auto image = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    image.as<NEO::ArgDescImage>().imageType = NEO::NEOImageType::imageType2D;
+    nonMsaaKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(image);
+    module.translationUnit->programInfo.kernelInfos.push_back(std::move(nonMsaaKernelInfo.release()));
+    EXPECT_FALSE(module.usesMsaaImage());
+
+    auto msaaKernelInfo = std::make_unique<NEO::KernelInfo>();
+    auto msaaImage = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    msaaImage.as<NEO::ArgDescImage>().imageType = NEO::NEOImageType::imageType2DArrayMSAA;
+    msaaKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(msaaImage);
+    module.translationUnit->programInfo.kernelInfos.push_back(std::move(msaaKernelInfo.release()));
+    EXPECT_TRUE(module.usesMsaaImage());
+}
+
+TEST_F(ModuleTest, givenBindlessModeAndMultisampleImageWhenInitializeThenTranslationUnitIsRebuiltBindful) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseBindlessMode.set(1);
+
+    struct RecompileModule : public L0::ModuleImp {
+        RecompileModule(L0::Device *device) : L0::ModuleImp(device, nullptr, ModuleType::user) {}
+        ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice) override {
+            forceBindfulPerCall.push_back(this->forceBindfulForMsaaImages);
+            auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+            auto image = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+            image.as<NEO::ArgDescImage>().imageType = NEO::NEOImageType::imageType2DMSAA;
+            kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(image);
+            this->translationUnit->programInfo.kernelInfos.clear();
+            this->translationUnit->programInfo.kernelInfos.push_back(std::move(kernelInfo.release()));
+            // Fail the bindful rebuild so initialize returns before the (unmocked) post-build steps.
+            return forceBindfulPerCall.size() == 1u ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+        }
+        std::vector<bool> forceBindfulPerCall;
+    };
+
+    RecompileModule module{device};
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    module.initialize(&moduleDesc, device->getNEODevice());
+
+    ASSERT_EQ(2u, module.forceBindfulPerCall.size());
+    EXPECT_FALSE(module.forceBindfulPerCall[0]);
+    EXPECT_TRUE(module.forceBindfulPerCall[1]);
+}
+
 TEST_F(ModuleTest, givenSrcOptLevelInSrcNamesWhenMovingBuildOptionsThenOptionIsRemovedFromSrcNamesAndTranslatedOptionsStoredInDstNames) {
     auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
     ASSERT_NE(nullptr, module);

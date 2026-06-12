@@ -34,6 +34,7 @@ void freeKernelDescriptorExt(KernelDescriptorExt *);
 
 struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
     static bool isBindlessAddressingKernel(const KernelDescriptor &desc);
+    static bool hasMsaaImageArg(const KernelDescriptor &desc);
 
     enum AddressingMode : uint8_t {
         AddrNone,
