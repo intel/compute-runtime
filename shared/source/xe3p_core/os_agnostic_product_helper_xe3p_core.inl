@@ -132,13 +132,4 @@ bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
     return false;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
-    bool tlbFlushRequired = false;
-    if (debugManager.flags.ForceTlbFlush.get() != -1) {
-        tlbFlushRequired = !!debugManager.flags.ForceTlbFlush.get();
-    }
-    return tlbFlushRequired;
-}
-
 } // namespace NEO

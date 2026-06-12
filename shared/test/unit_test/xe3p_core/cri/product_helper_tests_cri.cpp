@@ -219,13 +219,3 @@ CRITEST_F(CriProductHelper, givenAtLeastXe3pCoreWhenGetL1CachePolicyThenReturnWB
     EXPECT_EQ(productHelper->getL1CachePolicy(false), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB);
     EXPECT_EQ(productHelper->getL1CachePolicy(true), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
 }
-
-CRITEST_F(CriProductHelper, whenCheckIsTlbFlushRequiredThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
-}
-
-CRITEST_F(CriProductHelper, whenForceTlbFlushSetAndCheckIsTlbFlushRequiredThenReturnTrue) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ForceTlbFlush.set(1);
-    EXPECT_TRUE(productHelper->isTlbFlushRequired());
-}
