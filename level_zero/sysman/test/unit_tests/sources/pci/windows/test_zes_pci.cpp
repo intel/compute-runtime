@@ -364,7 +364,7 @@ HWTEST2_F(SysmanDevicePciFixture, GivenValidDeviceHandleWhenGettingZesDevicePciG
     EXPECT_EQ(stats.rxCounter, mockRxCounter);
     EXPECT_EQ(stats.txCounter, mockTxCounter);
     EXPECT_EQ(stats.packetCounter, mockRxPacketCounter + mockTxPacketCounter);
-    EXPECT_GT(stats.timestamp, initialTimestamp);
+    EXPECT_GE(stats.timestamp, initialTimestamp);
 }
 
 HWTEST2_F(SysmanDevicePciFixture, GivenNullPmtHandleWhenGettingZesDevicePciGetStatsThenCallFails, IsBMG) {

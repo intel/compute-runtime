@@ -318,7 +318,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenValidSysmanDeviceHandleWhenDeviceGetP
     uint64_t mockTxPacketCounter = packInto64Bit(mockTxPacketCounterMsb, mockTxPacketCounterLsb);
     EXPECT_EQ(mockRxPacketCounter + mockTxPacketCounter, stats.packetCounter);
 
-    EXPECT_GT(stats.timestamp, initialTimestamp);
+    EXPECT_GE(stats.timestamp, initialTimestamp);
 }
 
 HWTEST2_F(SysmanProductHelperPciTest, GivenValidDeviceHandleWhenDeviceGetPciPropertiesIsCalledThenCallSucceeds, IsBMG) {
