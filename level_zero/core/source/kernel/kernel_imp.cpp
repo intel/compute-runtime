@@ -1413,7 +1413,7 @@ std::unique_ptr<KernelImp> KernelImp::makeDependentClone() {
     DEBUG_BREAK_IF(clone->ownedSharedState);
 
     clone->module = this->module;
-    clone->sharedState = this->ownedSharedState.get();
+    clone->sharedState = this->sharedState;
     clone->privateState = this->privateState;
     return std::unique_ptr<KernelImp>{clone};
 }

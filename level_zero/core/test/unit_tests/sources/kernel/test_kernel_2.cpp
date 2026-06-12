@@ -271,6 +271,24 @@ TEST_F(KernelImpTest, GivenKernelPrivateStateWhenKernelImpClonedThenSharedStateI
     EXPECT_EQ(kernel2->sharedState->implicitScalingEnabled, kernel1.sharedState->implicitScalingEnabled);
 }
 
+TEST_F(KernelImpTest, GivenKernelSharedStateOverriddenWhenKernelImpClonedThenCloneUsesCurrentSharedStatePointer) {
+    Mock<Module> module(device, nullptr);
+    WhiteBox<KernelImp> kernel;
+    kernel.module = &module;
+
+    KernelSharedState externalSharedState(&module);
+    kernel.sharedState = &externalSharedState;
+
+    auto clonedKernel = kernel.makeDependentClone();
+    auto cloned = static_cast<WhiteBox<KernelImp> *>(clonedKernel.get());
+
+    EXPECT_NE(nullptr, kernel.ownedSharedState.get());
+    EXPECT_NE(kernel.sharedState, kernel.ownedSharedState.get());
+    EXPECT_EQ(nullptr, cloned->ownedSharedState.get());
+    EXPECT_EQ(kernel.sharedState, cloned->sharedState);
+    EXPECT_EQ(&externalSharedState, cloned->sharedState);
+}
+
 TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAndGroupCount) {
     WhiteBox<::L0::KernelImmutableData> kernelInfo = {};
     NEO::KernelDescriptor descriptor;
