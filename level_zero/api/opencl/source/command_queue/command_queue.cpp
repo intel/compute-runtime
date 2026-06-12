@@ -240,6 +240,7 @@ cl_int CommandQueue::enqueueAcquireSharedObjects(cl_uint numObjects,
 
     auto sharingUserData = new CommandQueue::SharingUserData{this, numObjects, memObjects};
 
+    auto lock = this->takeOwnership();
     return L0ToClResultMapper(L0::zeCommandListAppendHostFunction(this->cmdListHandle,
                                                                   reinterpret_cast<ze_host_function_callback_t>(CommandQueue::acquireHelper),
                                                                   sharingUserData,
@@ -264,6 +265,7 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects,
 
     auto sharingUserData = new CommandQueue::SharingUserData{this, numObjects, memObjects};
 
+    auto lock = this->takeOwnership();
     return L0ToClResultMapper(L0::zeCommandListAppendHostFunction(this->cmdListHandle,
                                                                   reinterpret_cast<ze_host_function_callback_t>(CommandQueue::releaseHelper),
                                                                   sharingUserData,
