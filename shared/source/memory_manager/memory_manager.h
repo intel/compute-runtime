@@ -424,7 +424,7 @@ class MemoryManager {
     void removeCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, uint32_t rootDeviceIndex);
 
     void storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t osContextId, TaskCountType taskCount);
-    void cleanTemporaryAllocations(CommandStreamReceiver &csr, TaskCountType waitTaskCount, bool cleanHostPtrAssigned);
+    void cleanTemporaryAllocations(const CommandStreamReceiver &csr, TaskCountType waitTaskCount);
     std::unique_ptr<GraphicsAllocation> obtainTemporaryAllocationWithPtr(CommandStreamReceiver *csr, size_t requiredSize, const void *requiredPtr, AllocationType allocationType);
     std::unique_ptr<GraphicsAllocation> obtainTemporaryAllocationWithPtr(CommandStreamReceiver *csr, size_t requiredSize, const void *requiredPtr, AllocationType allocationType, bool *nonUsmHostPtrPartialOverlapFound);
     AllocationsList &getTemporaryAllocationsList() const { return *temporaryAllocations; }

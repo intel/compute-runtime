@@ -1508,10 +1508,11 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThe
     EXPECT_FALSE(heapHelper->storageForReuse->getAllocationsForReuse().peekIsEmpty());
     EXPECT_NE(heapHelper->storageForReuse->getAllocationsForReuse().peekHead()->getResidencyTaskCount(csr->getOsContext().getContextId()), GraphicsAllocation::objectNotResident);
     EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize);
-    auto storedHeapAllocations = heapHelper->storageForReuse->getAllocationsForReuse().peekAllocations();
+    auto *heapNode = heapHelper->storageForReuse->getAllocationsForReuse().peekHead();
     const auto &csrResidency = csr->getResidencyAllocations();
-    for (auto *heapNode : storedHeapAllocations) {
+    while (heapNode) {
         EXPECT_NE(std::find(csrResidency.begin(), csrResidency.end(), heapNode), csrResidency.end());
+        heapNode = heapNode->next;
     }
 
     cmdContainer.reset();
@@ -1622,7 +1623,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     EXPECT_TRUE(reusableHeapsList.peekIsEmpty());
     cmdContainer->fillReusableAllocationLists();
     EXPECT_FALSE(reusableHeapsList.peekIsEmpty());
-    EXPECT_EQ(reusableHeapsList.peekAllocations().size(), 1u);
+    EXPECT_EQ(reusableHeapsList.peekHead()->countThisAndAllConnected(), 1u);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1654,7 +1655,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     cmdContainer->fillReusableAllocationLists();
     EXPECT_FALSE(reusableHeapsList.peekIsEmpty());
     auto expectedHeapCount = hardwareInfo.capabilityTable.supportsImages ? 2u : 1u;
-    EXPECT_EQ(reusableHeapsList.peekAllocations().size(), expectedHeapCount);
+    EXPECT_EQ(reusableHeapsList.peekHead()->countThisAndAllConnected(), expectedHeapCount);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1728,7 +1729,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
 
     EXPECT_EQ(cmdContainer->immediateReusableAllocationList, nullptr);
     cmdContainer->fillReusableAllocationLists();
-    EXPECT_EQ(cmdContainer->immediateReusableAllocationList->peekAllocations().size(), 10u);
+    EXPECT_EQ(cmdContainer->immediateReusableAllocationList->peekHead()->countThisAndAllConnected(), 10u);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);

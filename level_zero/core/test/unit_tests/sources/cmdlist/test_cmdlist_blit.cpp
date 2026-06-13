@@ -1214,7 +1214,14 @@ HWTEST2_F(AggregatedBcsSplitTests, givenUserPtrWhenAppendCalledThenCreateOnlyOne
     auto &tempAllocList = device->getNEODevice()->getMemoryManager()->getTemporaryAllocationsList();
 
     auto countElements = [&tempAllocList]() {
-        return static_cast<uint32_t>(tempAllocList.peekAllocations().size());
+        auto current = tempAllocList.peekHead();
+        uint32_t count = 0;
+        while (current) {
+            count++;
+            current = current->next;
+        }
+
+        return count;
     };
 
     EXPECT_EQ(0u, countElements());
