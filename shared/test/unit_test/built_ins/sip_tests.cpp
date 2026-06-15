@@ -19,6 +19,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -574,6 +575,37 @@ TEST(DebugSip, givenDebuggingActiveWhenSipTypeIsQueriedThenDbgCsrSipTypeIsReturn
 
     auto sipType = SipKernel::getSipKernelType(*mockDevice);
     EXPECT_LE(SipKernelType::dbgCsr, sipType);
+}
+
+TEST(Sip, givenCompilerInterfaceWhenGettingCsrSipKernelThenAllocationContainsCompilerProvidedBinary) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto mockCompilerInterface = new MockCompilerInterface();
+    mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->compilerInterface.reset(mockCompilerInterface);
+    auto builtins = new BuiltIns;
+    MockRootDeviceEnvironment::resetBuiltins(mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), builtins);
+    mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
+    mockCompilerInterface->sipStateAreaHeaderOverride = MockSipData::createStateSaveAreaHeader(4);
+
+    const SipKernel &sipKernel = builtins->getSipKernel(SipKernelType::csr, *mockDevice);
+
+    auto expectedMem = mockCompilerInterface->sipKernelBinaryOverride.data();
+    EXPECT_EQ(0, memcmp(expectedMem, sipKernel.getSipAllocation()->getUnderlyingBuffer(), mockCompilerInterface->sipKernelBinaryOverride.size()));
+    EXPECT_EQ(SipKernelType::csr, mockCompilerInterface->requestedSipKernel);
+
+    mockCompilerInterface->releaseDummyGenBinary();
+}
+
+TEST(Sip, givenEmptyStateSaveAreaHeaderWhenGettingCsrSipKernelThenAborts) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto mockCompilerInterface = new MockCompilerInterface();
+    mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->compilerInterface.reset(mockCompilerInterface);
+    auto builtins = new BuiltIns;
+    MockRootDeviceEnvironment::resetBuiltins(mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), builtins);
+    mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
+
+    EXPECT_THROW(builtins->getSipKernel(SipKernelType::csr, *mockDevice), std::runtime_error);
+
+    mockCompilerInterface->releaseDummyGenBinary();
 }
 
 TEST(DebugSip, givenBuiltInsWhenDbgCsrSipIsRequestedThenCorrectSipKernelIsReturned) {

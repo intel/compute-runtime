@@ -73,7 +73,9 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         }
 
         if (type == SipKernelType::csr) {
-            rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = sipBuiltIn.first->getStateSaveAreaSize(&device);
+            auto preemptionSurfaceSize = sipBuiltIn.first->getStateSaveAreaSize(&device);
+            rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = preemptionSurfaceSize;
+            UNRECOVERABLE_IF(preemptionSurfaceSize == 0);
         }
     };
     std::call_once(sipBuiltIn.second, initializer);

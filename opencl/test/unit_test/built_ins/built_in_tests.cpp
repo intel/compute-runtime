@@ -1828,22 +1828,6 @@ TEST_F(BuiltInTests, GivenInvalidBuiltinWhenCreatingProgramFromCodeThenNullPoint
     EXPECT_EQ(nullptr, program.get());
 }
 
-TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquiredThroughCompilerInterface) {
-    auto mockCompilerInterface = new MockCompilerInterface();
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
-    auto builtins = new BuiltIns;
-    MockRootDeviceEnvironment::resetBuiltins(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get(), builtins);
-    mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
-
-    const SipKernel &sipKernel = builtins->getSipKernel(SipKernelType::csr, *pDevice);
-
-    auto expectedMem = mockCompilerInterface->sipKernelBinaryOverride.data();
-    EXPECT_EQ(0, memcmp(expectedMem, sipKernel.getSipAllocation()->getUnderlyingBuffer(), mockCompilerInterface->sipKernelBinaryOverride.size()));
-    EXPECT_EQ(SipKernelType::csr, mockCompilerInterface->requestedSipKernel);
-
-    mockCompilerInterface->releaseDummyGenBinary();
-}
-
 TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationForKernel) {
     const SipKernel &sipKern = pDevice->getBuiltIns()->getSipKernel(SipKernelType::csr, pContext->getDevice(0)->getDevice());
     auto sipAllocation = sipKern.getSipAllocation();

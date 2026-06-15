@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,6 +154,9 @@ class MockCompilerInterface : public CompilerInterface {
                                             std::vector<char> &stateAreaHeader) override {
         if (this->sipKernelBinaryOverride.size() > 0) {
             retBinary = this->sipKernelBinaryOverride;
+            if (this->sipStateAreaHeaderOverride.size() > 0) {
+                stateAreaHeader = this->sipStateAreaHeaderOverride;
+            }
             this->requestedSipKernel = type;
             return TranslationErrorCode::success;
         } else {
@@ -194,6 +197,7 @@ class MockCompilerInterface : public CompilerInterface {
     std::vector<TranslationOpT> requestedTranslationCtxs;
 
     std::vector<char> sipKernelBinaryOverride;
+    std::vector<char> sipStateAreaHeaderOverride;
     SipKernelType requestedSipKernel = SipKernelType::count;
 
     NEO::IgcOclDeviceCtxTag *peekIgcDeviceCtx(Device *device) { return igcDeviceContexts[device].get(); }

@@ -1202,6 +1202,7 @@ bool CommandStreamReceiver::createPreemptionAllocation() {
     if (debugManager.flags.OverrideCsrAllocationSize.get() > 0) {
         preemptionSurfaceSize = debugManager.flags.OverrideCsrAllocationSize.get();
     }
+    UNRECOVERABLE_IF(preemptionSurfaceSize == 0);
     AllocationProperties properties{rootDeviceIndex, true, preemptionSurfaceSize, AllocationType::preemption, isMultiOsContextCapable(), false, deviceBitfield};
     properties.flags.uncacheable = hwInfo->workaroundTable.flags.waCSRUncachable;
     properties.alignment = gfxCoreHelper.getPreemptionAllocationAlignment();
