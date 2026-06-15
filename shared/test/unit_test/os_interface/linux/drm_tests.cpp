@@ -2831,6 +2831,61 @@ TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeSharedSystemAllocEnableIsFal
     EXPECT_EQ(0lu, sharedSystemRange);
 }
 
+namespace {
+std::string mockDrmCpuFlags;
+// CpuInfo is a singleton, so patch it in place to emulate a 5-level paging capable CPU
+class DrmCpuInfoOverride {
+  public:
+    class MockCpuInfo : public CpuInfo {
+      public:
+        using CpuInfo::cpuFlags;
+        using CpuInfo::featuresDetected;
+        using CpuInfo::virtualAddressSize;
+    } *mockCpuInfo = reinterpret_cast<MockCpuInfo *>(const_cast<CpuInfo *>(&CpuInfo::getInstance()));
+
+    DrmCpuInfoOverride(uint32_t newCpuVirtualAddressSize, const char *newCpuFlags) {
+        // mark features as detected so getVirtualAddressSize() does not re-run detect() and overwrite the override
+        mockCpuInfo->featuresDetected = true;
+        mockCpuInfo->virtualAddressSize = newCpuVirtualAddressSize;
+        // clear any cached flags so isCpuFlagPresent() consults the mocked getCpuFlagsFunc
+        mockCpuInfo->cpuFlags.clear();
+        mockDrmCpuFlags = newCpuFlags;
+    }
+
+    VariableBackup<decltype(MockCpuInfo::getCpuFlagsFunc)> funcBackup{&MockCpuInfo::getCpuFlagsFunc, [](std::string &flags) { flags = mockDrmCpuFlags; }};
+    VariableBackup<decltype(MockCpuInfo::featuresDetected)> featuresDetectedBackup{&mockCpuInfo->featuresDetected};
+    VariableBackup<decltype(MockCpuInfo::virtualAddressSize)> virtualAddressSizeBackup{&mockCpuInfo->virtualAddressSize};
+    VariableBackup<decltype(MockCpuInfo::cpuFlags)> cpuFlagsBackup{&mockCpuInfo->cpuFlags};
+    VariableBackup<decltype(mockDrmCpuFlags)> mockFlagsBackup{&mockDrmCpuFlags};
+};
+} // namespace
+
+TEST(DrmTest, GivenFiveLevelPagingWhenCpuAddressRangeExceedsGpuAddressRangeThenSharedSystemUsmIsDisabledAndHintMentionsNo5lvl) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.PrintDebugMessages.set(1);
+    DrmCpuInfoOverride cpuInfoOverride{57u, "la57"};
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    drm.setSharedSystemAllocEnable(true);
+    uint64_t caps = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = caps;
+
+    StreamCapture capture;
+    capture.captureStderr();
+    drm.adjustSharedSystemMemCapabilities();
+    std::string output = capture.getCapturedStderr();
+
+    EXPECT_FALSE(drm.isSharedSystemAllocEnabled());
+    EXPECT_EQ(0lu, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities);
+    EXPECT_FALSE(drm.hasPageFaultSupport());
+    EXPECT_EQ(0lu, drm.getSharedSystemAllocAddressRange());
+    EXPECT_NE(std::string::npos, output.find("5-level paging"));
+    EXPECT_NE(std::string::npos, output.find("no5lvl"));
+}
+
 using DrmHwTest = ::testing::Test;
 HWTEST_F(DrmHwTest, GivenDrmWhenSetupHardwareInfoCalledThenGfxCoreHelperIsInitializedFromProductHelper) {
     DebugManagerStateRestore restore;

@@ -23,3 +23,4 @@ For a top-level overview of how the project is structured and how its components
 ### [Module Symbols and Linking in Level Zero](MODULE_SYMBOL_SUPPORT.md)
 ### [L0 Sysman](SYSMAN.md)
 ### [System Memory Allocations in Level Zero](SYSTEM_MEMORY_ALLOCATIONS.md)
+### [Shared System USM](SHARED_SYSTEM_USM.md)

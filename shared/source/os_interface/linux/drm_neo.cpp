@@ -2078,12 +2078,17 @@ void Drm::adjustSharedSystemMemCapabilities() {
     if (requestSharedSystemUsm) {
         uint64_t gpuAddressLength = (this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.gpuAddressSpace + 1);
         uint64_t cpuAddressLength = (0x1ull << (NEO::CpuInfo::getInstance().getVirtualAddressSize()));
-        if ((cpuAddressLength > (maxNBitValue(48) + 1)) && !(CpuInfo::getInstance().isCpuFlagPresent("la57"))) {
+        const bool la57Present = CpuInfo::getInstance().isCpuFlagPresent("la57");
+        if ((cpuAddressLength > (maxNBitValue(48) + 1)) && !la57Present) {
             cpuAddressLength = (maxNBitValue(48) + 1);
         }
         if (gpuAddressLength < cpuAddressLength) {
             requestSharedSystemUsm = false;
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Shared System USM NOT allowed: CPU address range > GPU address range\n");
+            if (la57Present) {
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Shared System USM NOT allowed: CPU address range > GPU address range due to 5-level paging (la57). Add 'no5lvl' to the kernel command line to fall back to 4-level paging and enable Shared System USM.\n");
+            } else {
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Shared System USM NOT allowed: CPU address range > GPU address range\n");
+            }
         } else {
             this->setSharedSystemAllocAddressRange(cpuAddressLength);
             this->setPageFaultSupported(true);
