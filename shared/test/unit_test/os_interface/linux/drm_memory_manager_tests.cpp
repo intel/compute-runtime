@@ -10602,8 +10602,7 @@ TEST(DrmMemoryManagerReservedHandleDataTest, givenValidReservedHandleDataAndSucc
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenValidMemoryInfoWhenGetCurrentUsedLocalMemorySizeThenReturnsCorrectUsedMemory) {
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
-    auto mockIoctlHelper = new MockIoctlHelper(drm);
-    drm.ioctlHelper.reset(mockIoctlHelper);
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
 
     uint32_t deviceBitfield = 1;
 
@@ -10614,9 +10613,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenValidMemoryInfoWhenGetCurrentUsedL
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMultipleTilesWhenQueryingSpecificTileThenReturnsCorrectUsage) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
-    auto mockIoctlHelper = new MockIoctlHelper(drm);
-    drm.ioctlHelper.reset(mockIoctlHelper);
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
 
     uint32_t regionOneBitfield = (1 << 0);
     uint64_t regionOneUsed = memoryManager->getCurrentUsedLocalMemorySize(mockRootDeviceIndex, regionOneBitfield);
@@ -10625,6 +10626,57 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMultipleTilesWhenQueryingSpecificT
     uint32_t regionFourBitfield = (1 << 1);
     uint64_t regionFourUsed = memoryManager->getCurrentUsedLocalMemorySize(mockRootDeviceIndex, regionFourBitfield);
     EXPECT_EQ(probedSizeRegionFour - unallocatedSizeRegionFour, regionFourUsed);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMultiTileRootDeviceBitfieldWhenGetCurrentUsedLocalMemorySizeThenReturnsSumOfAllTiles) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    uint32_t bothTilesBitfield = 0b11;
+    uint64_t totalUsed = memoryManager->getCurrentUsedLocalMemorySize(mockRootDeviceIndex, bothTilesBitfield);
+
+    uint64_t expectedUsed = (probedSizeRegionOne - unallocatedSizeRegionOne) +
+                            (probedSizeRegionFour - unallocatedSizeRegionFour);
+    EXPECT_EQ(expectedUsed, totalUsed);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUnifiedLocalMemoryRegionWhenGetCurrentUsedLocalMemorySizeThenSharedRegionIsCountedOnce) {
+    class UnifiedRegionIoctlHelper : public MockIoctlHelper {
+      public:
+        using MockIoctlHelper::MockIoctlHelper;
+
+        std::unique_ptr<MemoryInfo> createMemoryInfo() override {
+            std::vector<MemoryRegion> regionInfo = {
+                {
+                    .region = {static_cast<uint16_t>(getDrmParamValue(DrmParam::memoryClassSystem)), 0},
+                    .probedSize = probedSizeRegionZero,
+                    .unallocatedSize = unallocatedSizeRegionZero,
+                },
+                {
+                    .region = {static_cast<uint16_t>(getDrmParamValue(DrmParam::memoryClassDevice)), 0},
+                    .probedSize = probedSizeRegionOne,
+                    .unallocatedSize = unallocatedSizeRegionOne,
+                },
+            };
+
+            return std::make_unique<MemoryInfo>(regionInfo, drm);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper = std::make_unique<UnifiedRegionIoctlHelper>(drm);
+
+    uint32_t bothTilesBitfield = 0b11;
+    uint64_t totalUsed = memoryManager->getCurrentUsedLocalMemorySize(mockRootDeviceIndex, bothTilesBitfield);
+
+    uint64_t expectedUsed = probedSizeRegionOne - unallocatedSizeRegionOne;
+    EXPECT_EQ(expectedUsed, totalUsed);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenNullMemoryInfoWhenGetCurrentUsedLocalMemorySizeThenReturnsZero) {
@@ -10639,8 +10691,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenNullMemoryInfoWhenGetCurrentUsedLo
     };
 
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
-    auto mockIoctlHelper = new NullMemoryInfoIoctlHelper(drm);
-    drm.ioctlHelper.reset(mockIoctlHelper);
+    drm.ioctlHelper = std::make_unique<NullMemoryInfoIoctlHelper>(drm);
 
     uint32_t deviceBitfield = 1;
     uint64_t usedMemory = memoryManager->getCurrentUsedLocalMemorySize(mockRootDeviceIndex, deviceBitfield);

@@ -1670,10 +1670,30 @@ uint64_t DrmMemoryManager::getCurrentUsedLocalMemorySize(uint32_t rootDeviceInde
         return 0;
     }
 
-    // Get memory region for the specified deviceBitfield
-    const auto &region = memoryInfo->getMemoryRegion(deviceBitfield);
+    const auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    uint32_t subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
+    constexpr uint32_t maxTiles = DeviceBitfield{}.size();
+    subDevicesCount = std::min(subDevicesCount, maxTiles);
 
-    uint64_t usedMemory = region.probedSize - region.unallocatedSize;
+    uint64_t usedMemory = 0;
+    uint32_t visitedRegionsMask = 0;
+    const auto &localRegions = memoryInfo->getLocalMemoryRegions();
+    for (uint32_t i = 0; i < subDevicesCount; i++) {
+        const auto memoryBank = (1u << i);
+
+        if (deviceBitfield & memoryBank) {
+            auto regionIndex = memoryInfo->getLocalMemoryRegionIndex(memoryBank);
+            if (regionIndex >= localRegions.size()) {
+                regionIndex = static_cast<uint32_t>(localRegions.size() - 1);
+            }
+            const auto regionBit = (1u << regionIndex);
+            if (visitedRegionsMask & regionBit) {
+                continue;
+            }
+            visitedRegionsMask |= regionBit;
+            usedMemory += localRegions[regionIndex].probedSize - localRegions[regionIndex].unallocatedSize;
+        }
+    }
 
     return usedMemory;
 }
