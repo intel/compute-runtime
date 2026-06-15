@@ -139,6 +139,7 @@ class DirectSubmissionHw {
     virtual void getTagAddressValueForRingSwitch(TagData &tagData) = 0;
     virtual void unblockGpu();
     bool submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size, bool needWait, const ResidencyContainer *allocationsForResidency);
+    bool isAubWritingDirectSubmission() const;
     bool copyCommandBufferIntoRing(BatchBuffer &batchBuffer);
 
     void dispatchSemaphoreSection(uint32_t value);

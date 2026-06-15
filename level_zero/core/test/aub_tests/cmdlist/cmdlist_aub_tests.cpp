@@ -10,6 +10,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/internal/l0_event.h"
@@ -566,6 +567,79 @@ HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEve
     driverHandle->svmAllocsManager->freeSVMAlloc(dstBuffer1);
     driverHandle->svmAllocsManager->freeSVMAlloc(dstBuffer2);
     context->freeMem(eventStorage);
+}
+
+struct AubDirectSubmissionImmCmdListFixture : AUBFixtureL0 {
+    DebugManagerStateRestore dbgRestore;
+
+    void setUp() {
+        debugManager.flags.EnableDirectSubmission.set(1);
+        debugManager.flags.EnableDirectSubmissionInSimulationMode.set(1);
+        AUBFixtureL0::setUp();
+
+        ze_result_t returnValue;
+        ze_command_queue_desc_t queueDesc = {};
+        commandList.reset(ult::CommandList::whiteboxCast(
+            CommandList::createImmediate(neoDevice->getHardwareInfo().platform.eProductFamily,
+                                         device, &queueDesc, false,
+                                         NEO::EngineGroupType::compute, returnValue)));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        ASSERT_NE(nullptr, commandList.get());
+        csr = commandList->getCsr(true);
+    }
+};
+
+using AubDirectSubmissionImmCmdListTests = Test<AubDirectSubmissionImmCmdListFixture>;
+
+HWTEST2_F(AubDirectSubmissionImmCmdListTests,
+          givenImmediateCmdListWithDirectSubmissionWhenTwoKernelsAppendedThenBothExecute,
+          IsAtLeastXeHpcCore) {
+    constexpr uint32_t numBytes = 64u;
+
+    NEO::UnifiedMemoryProperties usmProps(InternalMemoryType::hostUnifiedMemory, 1,
+                                          context->rootDeviceIndices, context->deviceBitfields);
+    auto *src1 = static_cast<char *>(driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(numBytes, usmProps));
+    auto *dst1 = static_cast<char *>(driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(numBytes, usmProps));
+    auto *src2 = static_cast<char *>(driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(numBytes, usmProps));
+    auto *dst2 = static_cast<char *>(driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(numBytes, usmProps));
+
+    for (uint32_t i = 0u; i < numBytes; i++) {
+        src1[i] = static_cast<char>(i + 1u);
+        src2[i] = static_cast<char>(~i);
+    }
+    memset(dst1, 0, numBytes);
+    memset(dst2, 0, numBytes);
+
+    ze_module_handle_t module = createModuleFromFile("test_kernel", context, device, "");
+    ASSERT_NE(nullptr, module);
+
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = "memcpy_bytes";
+    ze_kernel_handle_t kernel;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(module, &kernelDesc, &kernel));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernel, numBytes, 1u, 1u));
+
+    ze_group_count_t groupCount = {1u, 1u, 1u};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &dst1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 1, sizeof(void *), &src1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandList->toHandle(), kernel, &groupCount, nullptr, 0u, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &dst2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 1, sizeof(void *), &src2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandList->toHandle(), kernel, &groupCount, nullptr, 0u, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListHostSynchronize(commandList->toHandle(), std::numeric_limits<uint64_t>::max()));
+
+    expectMemory<FamilyType>(dst1, src1, numBytes);
+    expectMemory<FamilyType>(dst2, src2, numBytes);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(module));
+    driverHandle->svmAllocsManager->freeSVMAlloc(src1);
+    driverHandle->svmAllocsManager->freeSVMAlloc(dst1);
+    driverHandle->svmAllocsManager->freeSVMAlloc(src2);
+    driverHandle->svmAllocsManager->freeSVMAlloc(dst2);
 }
 
 } // namespace ult

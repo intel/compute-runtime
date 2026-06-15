@@ -213,7 +213,10 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
 
     PRINT_STRING(debugManager.flags.DirectSubmissionPrintSemaphoreUsage.get() == 1, stdout, "DirectSubmission semaphore %" PRIx64 " unlocked with value: %u\n", semaphoreGpuVa, currentQueueWorkCount);
 
-    semaphoreData->queueWorkCount = currentQueueWorkCount;
+    // In AUB mode the ring section ends with BB_END; there is no spinning GPU to unblock,
+    // so write currentQueueWorkCount+1 to pre-satisfy the MI_SEMAPHORE_WAIT that was
+    // written into the ring section with that threshold.
+    semaphoreData->queueWorkCount = this->isAubWritingDirectSubmission() ? currentQueueWorkCount + 1 : currentQueueWorkCount;
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -485,13 +488,19 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
     }
 
     dispatchSemaphoreSection(currentQueueWorkCount + 1);
+    if (this->isAubWritingDirectSubmission()) {
+        // In AUB mode the semaphore will be pre-satisfied via unblockGpu() before the
+        // ring is submitted. Terminate the ring section with BB_END to stop executing here
+        // instead of spinning on the next (not-yet-written) section.
+        Dispatcher::dispatchStopCommandBuffer(this->ringCommandStream);
+    }
     return currentPosition;
 }
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::copyCommandBufferIntoRing(BatchBuffer &batchBuffer) {
     /* Command buffer can't be copied into ring if implicit scaling or metrics are enabled,
-       because those features uses GPU VAs of command buffer which would be invalid after copy. */
+       because those features uses GPU VAs of command buffer which would be invalid after copy.*/
 
     auto ret = !batchBuffer.disableFlatRingBuffer &&
                this->osContext.getNumSupportedDevices() == 1u &&
@@ -591,6 +600,12 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         }
     }
 
+    // In AUB mode: semaphore section is written but the ring-switch section is not;
+    // add one BB_END for the section terminator and skip cycleSize/endSize.
+    if (this->isAubWritingDirectSubmission()) {
+        requiredMinimalSize = alignUp(dispatchSize + Dispatcher::getSizeStopCommandBuffer(), MemoryConstants::cacheLineSize);
+    }
+
     auto needStart = !this->ringStart;
 
     this->switchRingBuffersNeeded(requiredMinimalSize, batchBuffer.allocationsForResidency);
@@ -627,6 +642,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size, bool needWait, const ResidencyContainer *allocationsForResidency) {
+    if (this->isAubWritingDirectSubmission()) {
+        size = alignUp(static_cast<size_t>(this->ringCommandStream.getCurrentGpuAddressPosition() - gpuAddress), MemoryConstants::cacheLineSize);
+    }
     if (needStart) {
         this->ringStart = this->submit(gpuAddress, size, allocationsForResidency);
         if (auto controller = rootDeviceEnvironment.executionEnvironment.directSubmissionController.get()) {
@@ -637,13 +655,24 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::submitCommandBufferToGpu(bool ne
         if (needWait) {
             handleResidency(nullptr);
         }
-        if (!this->csr.isHardwareMode()) {
+        if (!this->csr.isHardwareMode() && !this->isAubWritingDirectSubmission()) {
             handleResidency(allocationsForResidency);
         }
 
         this->unblockGpu();
+
+        if (this->isAubWritingDirectSubmission()) {
+            this->submit(gpuAddress, size, allocationsForResidency);
+        }
         return true;
     }
+}
+
+template <typename GfxFamily, typename Dispatcher>
+bool DirectSubmissionHw<GfxFamily, Dispatcher>::isAubWritingDirectSubmission() const {
+    const auto type = this->csr.getType();
+    return type == CommandStreamReceiverType::aub ||
+           type == CommandStreamReceiverType::nullAub;
 }
 
 template <typename GfxFamily, typename Dispatcher>

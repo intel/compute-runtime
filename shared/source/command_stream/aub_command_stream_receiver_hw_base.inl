@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -221,6 +221,28 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
 
     if (!this->standalone || debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
         allocationsForResidency.pop_back();
+    }
+
+    if (this->directSubmission.get() || this->blitterDirectSubmission.get()) {
+        // Drive the AUB through the direct submission ring (same as TBX), so the produced AUB
+        // reflects the ring buffer with every appended command buffer. Residency (incl. data
+        // buffers) was already uploaded above; the direct submission uploads the ring and records
+        // each (including appended) ring section into the AUB stream.
+        batchBuffer.allocationsForResidency = &allocationsForResidency;
+        bool ret = this->directSubmission.get()
+                       ? this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get())
+                       : this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+        if (!ret) {
+            return SubmissionStatus::failed;
+        }
+        if (this->standalone) {
+            volatile TagAddressType *pollAddress = this->tagAddress;
+            for (uint32_t i = 0; i < this->activePartitions; i++) {
+                *pollAddress = this->peekLatestSentTaskCount();
+                pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
+            }
+        }
+        return SubmissionStatus::success;
     }
 
     submitBatchBufferAub(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));

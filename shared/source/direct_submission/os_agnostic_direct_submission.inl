@@ -62,7 +62,7 @@ bool OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddre
         auto batchBuffer = ptrOffset(this->ringCommandStream.getGraphicsAllocation()->getUnderlyingBuffer(), static_cast<size_t>(offset));
         auto memoryBank = csrSimulatedHw->getMemoryBank(this->ringCommandStream.getGraphicsAllocation());
 
-        csrSimulatedHw->submit(*this->ringCommandStream.getGraphicsAllocation(), gpuAddress, batchBuffer, size, memoryBank, MemoryConstants::pageSize64k, false, allocationsForResidency);
+        csrSimulatedHw->submit(*this->ringCommandStream.getGraphicsAllocation(), gpuAddress, batchBuffer, size, memoryBank, MemoryConstants::pageSize64k, this->isAubWritingDirectSubmission(), allocationsForResidency);
     }
     return true;
 }

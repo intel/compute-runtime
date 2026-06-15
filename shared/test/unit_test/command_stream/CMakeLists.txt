@@ -10,6 +10,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_1_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_2_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_3_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_with_direct_submission_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_file_stream_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_tests.cpp
