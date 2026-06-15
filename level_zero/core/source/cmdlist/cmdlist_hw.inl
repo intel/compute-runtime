@@ -3564,7 +3564,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
 
         if (event->isCounterBased()) {
-            event->refreshImported2WayIpcCbData();
+            if (event->getInOrderExecEventHelper().is2WayIpcSharingEnabled()) {
+                event->refreshImported2WayIpcCbData();
+            }
             if (!event->getInOrderExecEventHelper().isDataAssigned()) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
             }

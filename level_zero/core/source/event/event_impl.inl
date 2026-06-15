@@ -561,7 +561,9 @@ void EventImp<TagSizeT>::tbxDownload(NEO::Device &device, bool &downloadedAlloca
 
 template <typename TagSizeT>
 bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
-    refreshImported2WayIpcCbData();
+    if (inOrderExecHelper.is2WayIpcSharingEnabled()) {
+        refreshImported2WayIpcCbData();
+    }
 
     if (metricNotification != nullptr && eventPoolAllocation) {
         hostEventSetValue(metricNotification->getNotificationState());

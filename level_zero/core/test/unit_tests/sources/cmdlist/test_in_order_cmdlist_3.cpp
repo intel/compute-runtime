@@ -896,6 +896,35 @@ HWTEST_F(InOrderIpcTests, givenNon2WayIpcEventWhenCheckingRefreshNeededThenRetur
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
+HWTEST_F(InOrderIpcTests, givenNon2WayIpcEventWhenQueryingStatusAndWaitingThenNoImportIsTriggeredOnHotPath) {
+    auto mockMemoryManager = static_cast<NEO::MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto waitCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    auto &helper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
+    EXPECT_FALSE(helper.twoWayIpcSharing);
+    EXPECT_TRUE(helper.isDataAssigned());
+
+    auto importCallsBefore = mockMemoryManager->capturedIsHostIpcAllocation.size();
+
+    events[0]->queryStatus(0);
+    EXPECT_FALSE(helper.is2WayIpcImportRefreshNeeded());
+
+    auto eventHandle = events[0]->toHandle();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, waitCmdList->appendWaitOnEvents(1, &eventHandle, nullptr, false, true, true, false, false, false));
+    EXPECT_FALSE(helper.is2WayIpcImportRefreshNeeded());
+
+    EXPECT_EQ(importCallsBefore, mockMemoryManager->capturedIsHostIpcAllocation.size());
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(waitCmdList.get());
+}
+
 HWTEST_F(InOrderIpcTests, givenExporterWhenGettingIpcHandleThenExporterDoesNotRefreshItself) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
