@@ -8,11 +8,13 @@
 
 #
 # Build the Intel compute-runtime Level Zero driver and its required
-# dependencies (GmmLib, IGC) for a given release tag.
+# dependencies (GmmLib, IGC, level-zero headers) for a given release tag.
 #
 # The script checks whether system-installed GmmLib and IGC versions are
 # compatible with the requested release. If they are too old or missing,
 # it installs the correct versions to a local prefix (no sudo required).
+# The level-zero headers are always cloned at the exact revision pinned in
+# the manifest because the system-installed headers may be too old.
 #
 # Note: this script is Ubuntu-specific.
 #
@@ -31,9 +33,28 @@
 set -euo pipefail
 
 # Parse arguments: the release tag is required, the install prefix is optional.
+# PREFIX is the directory where GmmLib and IGC are installed (no sudo needed).
+# It is used as CMAKE_PREFIX_PATH and PKG_CONFIG_PATH during the build, and
+# must be readable at driver load time (LD_LIBRARY_PATH=${PREFIX}/lib).
+# Defaults to $HOME/local if not specified.
 TAG="${1:?Usage: $0 <tag> [install_prefix]}"
 PREFIX="${2:-$HOME/local}"
 REPO_URL="https://github.com/intel/compute-runtime"
+
+# Validate the tag format: must be four dot-separated integers (e.g. 26.18.38308.1).
+if ! echo "${TAG}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo "ERROR: '${TAG}' is not a valid compute-runtime tag." >&2
+    echo "       Expected format: YY.WW.BUILD.PATCH (e.g. 26.18.38308.1)" >&2
+    echo "       See: ${REPO_URL}/releases" >&2
+    exit 1
+fi
+
+# Verify the tag actually exists on the remote before doing any work.
+if ! git ls-remote --tags "${REPO_URL}.git" "refs/tags/${TAG}" 2>/dev/null | grep -q .; then
+    echo "ERROR: tag '${TAG}' not found in ${REPO_URL}" >&2
+    echo "       See: ${REPO_URL}/releases" >&2
+    exit 1
+fi
 # All intermediate build artifacts go into a temporary directory that is
 # printed at the end so the user can clean it up manually if desired.
 WORKDIR="$(mktemp -d)"
@@ -57,7 +78,7 @@ trap cleanup EXIT
 # --------------------------------------------------------------------------
 # Shallow clone (--depth 1) is sufficient since we only need the source at
 # this exact tag, not the full git history.
-echo "=== [1/5] Cloning compute-runtime at tag ${TAG} ==="
+echo "=== [1/6] Cloning compute-runtime at tag ${TAG} ==="
 SRCDIR="${WORKDIR}/compute-runtime"
 git clone --depth 1 -b "${TAG}" "${REPO_URL}.git" "${SRCDIR}"
 
@@ -68,9 +89,10 @@ git clone --depth 1 -b "${TAG}" "${REPO_URL}.git" "${SRCDIR}"
 # manifests/manifest.yml. We extract:
 #   - GmmLib "revision": a git tag like "intel-gmmlib-22.9.0"
 #   - IGC "branch": a release branch like "releases/2.30.x"
+#   - level_zero "revision": a git tag like "v1.28.2"
 # We try python3+PyYAML first (reliable), falling back to sed if unavailable.
 echo ""
-echo "=== [2/5] Reading dependency versions from manifest ==="
+echo "=== [2/6] Reading dependency versions from manifest ==="
 MANIFEST="${SRCDIR}/manifests/manifest.yml"
 
 if [ ! -f "${MANIFEST}" ]; then
@@ -87,7 +109,7 @@ print(m['components']['gmmlib']['revision'])
 " 2>/dev/null || sed -n '/^  gmmlib:/,/^  [a-z]/{/revision:/s/.*revision: *//p}' "${MANIFEST}")
 
 # Extract IGC branch (e.g. "releases/2.30.x") -- used to find the matching
-# prebuilt release on GitHub (see Step 4).
+# prebuilt release on GitHub (see Step 5).
 IGC_BRANCH=$(python3 -c "
 import yaml, sys
 with open('${MANIFEST}') as f:
@@ -95,8 +117,17 @@ with open('${MANIFEST}') as f:
 print(m['components']['igc']['branch'])
 " 2>/dev/null || sed -n '/^  igc:/,/^  [a-z]/{/branch:/s/.*branch: *//p}' "${MANIFEST}")
 
-echo "  GmmLib revision: ${GMMLIB_REV}"
-echo "  IGC branch:      ${IGC_BRANCH}"
+# Extract level_zero revision (e.g. "v1.28.2") -- the exact tag to clone.
+LEVEL_ZERO_REV=$(python3 -c "
+import yaml, sys
+with open('${MANIFEST}') as f:
+    m = yaml.safe_load(f)
+print(m['components']['level_zero']['revision'])
+" 2>/dev/null || sed -n '/^  level_zero:/,/^  [a-z]/{/revision:/s/.*revision: *//p}' "${MANIFEST}")
+
+echo "  GmmLib revision:    ${GMMLIB_REV}"
+echo "  IGC branch:         ${IGC_BRANCH}"
+echo "  level_zero revision: ${LEVEL_ZERO_REV}"
 
 # Check if system-installed versions are already compatible.
 # GmmLib: compare the installed pkg-config version against the manifest tag.
@@ -127,7 +158,21 @@ if echo "${SYSTEM_IGC_VER}" | grep -q "^${EXPECTED_IGC_MINOR}\."; then
 fi
 
 # --------------------------------------------------------------------------
-# Step 3: Build and install GmmLib
+# Step 3: Clone level-zero headers
+# --------------------------------------------------------------------------
+# The compute-runtime CMakeLists.txt looks for level-zero headers in a
+# directory named "level_zero" that is a sibling of the compute-runtime
+# source tree (i.e. ${WORKDIR}/level_zero). We always clone the exact
+# revision pinned in the manifest because the system-installed headers
+# may be too old and lack recently-added headers (e.g. zer_ddi.h).
+echo ""
+echo "=== [3/6] Cloning level-zero headers (${LEVEL_ZERO_REV}) ==="
+git clone --depth 1 -b "${LEVEL_ZERO_REV}" \
+    https://github.com/oneapi-src/level-zero.git "${WORKDIR}/level_zero"
+echo "  level-zero headers cloned to ${WORKDIR}/level_zero"
+
+# --------------------------------------------------------------------------
+# Step 4: Build and install GmmLib
 # --------------------------------------------------------------------------
 # GmmLib (Graphics Memory Management Library) provides the igfxfmid.h header
 # that defines GPU family enums (GFXCORE_FAMILY, PRODUCT_FAMILY) required by
@@ -135,7 +180,7 @@ fi
 # prebuilt packages on GitHub, and install it into the local prefix.
 echo ""
 if [ "${NEED_LOCAL_GMMLIB}" = true ]; then
-echo "=== [3/5] Building GmmLib (${GMMLIB_REV}) ==="
+echo "=== [4/6] Building GmmLib (${GMMLIB_REV}) ==="
 cd "${WORKDIR}"
 git clone --depth 1 -b "${GMMLIB_REV}" https://github.com/intel/gmmlib.git
 cd gmmlib
@@ -145,11 +190,11 @@ make -j"${NPROC}"
 make install
 echo "  GmmLib installed to ${PREFIX}"
 else
-echo "=== [3/5] Skipping GmmLib (system version is compatible) ==="
+echo "=== [4/6] Skipping GmmLib (system version is compatible) ==="
 fi
 
 # --------------------------------------------------------------------------
-# Step 4: Download and install IGC prebuilt packages
+# Step 5: Download and install IGC prebuilt packages
 # --------------------------------------------------------------------------
 # IGC (Intel Graphics Compiler) is complex to build from source (requires
 # LLVM 16, SPIRV-LLVM-Translator, opencl-clang, etc.), so we use prebuilt
@@ -169,7 +214,7 @@ fi
 # into the local prefix.
 echo ""
 if [ "${NEED_LOCAL_IGC}" = true ]; then
-echo "=== [4/5] Installing IGC from prebuilt packages ==="
+echo "=== [5/6] Installing IGC from prebuilt packages ==="
 
 # Convert branch name to version prefix for matching against release tags.
 # e.g. "releases/2.30.x" -> "2.30" -> match tags starting with "v2.30."
@@ -253,12 +298,12 @@ fi
 
 echo "  IGC ${IGC_TAG} installed to ${PREFIX}"
 else
-echo "=== [4/5] Skipping IGC (system version ${SYSTEM_IGC_VER} is compatible) ==="
+echo "=== [5/6] Skipping IGC (system version ${SYSTEM_IGC_VER} is compatible) ==="
 IGC_TAG="system-${SYSTEM_IGC_VER}"
 fi
 
 # --------------------------------------------------------------------------
-# Step 5: Build compute-runtime
+# Step 6: Build compute-runtime
 # --------------------------------------------------------------------------
 # Configure and build the driver with cmake. Key options:
 #   -DNEO_SKIP_UNIT_TESTS=1  : skip building test binaries (much faster)
@@ -269,19 +314,28 @@ fi
 #       one. Replacing the system IGC would require sudo. To enable built-in
 #       kernel compilation, set LD_LIBRARY_PATH to include ${PREFIX}/lib.
 #
+# The level-zero clone from Step 3 is at ${WORKDIR}/level_zero, a sibling of
+# ${SRCDIR}. cmake detects it via ${NEO_SOURCE_DIR}/../level_zero and copies
+# headers into include/level_zero/. We ALSO add it to CMAKE_PREFIX_PATH so
+# cmake's find_path finds our headers before the (potentially older) system
+# headers in /usr/include - cmake searches CMAKE_PREFIX_PATH before system
+# paths, whereas the PATHS option in FindLevelZero.cmake is searched last.
+#
 # PKG_CONFIG_PATH is set so that cmake's pkg-config lookups find our local
 # igc-opencl.pc and igdgmm.pc before any system-installed versions.
 # If local deps were installed, we also set CMAKE_PREFIX_PATH and disable
 # built-in kernel compilation (COMPILE_BUILT_INS=OFF).
 echo ""
-echo "=== [5/5] Building compute-runtime ==="
+echo "=== [6/6] Building compute-runtime ==="
 cd "${SRCDIR}"
 mkdir -p build && cd build
 
 CMAKE_EXTRA_ARGS=""
 if [ "${NEED_LOCAL_GMMLIB}" = true ] || [ "${NEED_LOCAL_IGC}" = true ]; then
     export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-    CMAKE_EXTRA_ARGS="-DCMAKE_PREFIX_PATH=${PREFIX} -DCOMPILE_BUILT_INS=OFF"
+    CMAKE_EXTRA_ARGS="-DCMAKE_PREFIX_PATH=${WORKDIR}/level_zero;${PREFIX} -DGMM_DIR=${PREFIX} -DCOMPILE_BUILT_INS=OFF"
+else
+    CMAKE_EXTRA_ARGS="-DCMAKE_PREFIX_PATH=${WORKDIR}/level_zero"
 fi
 
 cmake \
@@ -305,9 +359,10 @@ echo "=========================================="
 echo "  Build complete!"
 echo "=========================================="
 echo ""
-echo "  Tag:     ${TAG}"
-echo "  GmmLib:  ${GMMLIB_REV}"
-echo "  IGC:     ${IGC_TAG}"
+echo "  Tag:        ${TAG}"
+echo "  GmmLib:     ${GMMLIB_REV}"
+echo "  IGC:        ${IGC_TAG}"
+echo "  level-zero: ${LEVEL_ZERO_REV}"
 echo ""
 echo "  Built artifacts:"
 BINDIR="${SRCDIR}/build/bin"
