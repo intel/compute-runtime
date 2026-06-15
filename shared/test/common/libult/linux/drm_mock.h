@@ -85,6 +85,14 @@ class DrmMock : public Drm {
 
     int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
 
+    std::string getSysFsPciPath() override {
+        if (!mockSysFsPciPath.empty()) {
+            return mockSysFsPciPath;
+        }
+        return Drm::getSysFsPciPath();
+    }
+    std::string mockSysFsPciPath{};
+
     void setFileDescriptor(int fd) {
         hwDeviceId = std::make_unique<HwDeviceIdDrm>(fd, "");
     }

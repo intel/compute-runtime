@@ -22,6 +22,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win_tests.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/query_peer_access_win_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader_tests.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_win.cpp

@@ -85,7 +85,7 @@ void Driver::initialize(ze_result_t *result) {
                 neoDeviceToExpose.push_back(Device::fromHandle(deviceToExpose)->getNEODevice());
             }
 
-            NEO::Device::initializePeerAccessForDevices(Device::queryPeerAccess, Device::freeMemoryAllocation, neoDeviceToExpose);
+            NEO::Device::initializePeerAccessForDevices(neoDeviceToExpose);
             driverHandle->initUsmPooling();
         }
     }

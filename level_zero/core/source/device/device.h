@@ -227,9 +227,6 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     uint32_t getCopyEngineOrdinal() const;
     std::optional<uint32_t> tryGetCopyEngineOrdinal() const;
 
-    static bool queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle);
-    static void freeMemoryAllocation(NEO::Device &device, void *memoryAllocation);
-
     void releaseResources();
 
     MOCKABLE_VIRTUAL Module *getRequiredLibModule(const std::string &libName, ModuleBuildLog *moduleBuildLog);

@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 
+#include <functional>
 #include <optional>
 
 namespace NEO {
@@ -27,6 +28,15 @@ class UltCommandStreamReceiver;
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
                                                   uint32_t rootDeviceIndex,
                                                   const DeviceBitfield deviceBitfield);
+
+using MockQueryPeerAccessFunc = std::function<bool(Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle)>;
+
+inline bool invokeMockQueryPeerAccess(Device &device, const MockQueryPeerAccessFunc &queryPeerAccessFunc, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) {
+    if (queryPeerAccessFunc) {
+        return queryPeerAccessFunc(device, peerDevice, probeAllocPtr, handle);
+    }
+    return device.Device::queryPeerAccess(peerDevice, probeAllocPtr, handle);
+}
 
 struct MockSubDevice : public SubDevice {
     using Device::allEngines;
@@ -49,6 +59,11 @@ struct MockSubDevice : public SubDevice {
         pollForCompletionCalled = true;
         Device::pollForCompletion();
     }
+
+    bool queryPeerAccess(Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) override {
+        return invokeMockQueryPeerAccess(*this, queryPeerAccessFunc, peerDevice, probeAllocPtr, handle);
+    }
+    MockQueryPeerAccessFunc queryPeerAccessFunc;
 };
 
 class MockDevice : public RootDevice {
@@ -182,6 +197,10 @@ class MockDevice : public RootDevice {
         Device::pollForCompletion();
     }
 
+    bool queryPeerAccess(Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) override {
+        return invokeMockQueryPeerAccess(*this, queryPeerAccessFunc, peerDevice, probeAllocPtr, handle);
+    }
+
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const override {
         if (callBaseGetGlobalMemorySize) {
             return Device::getGlobalMemorySize(deviceBitfield);
@@ -212,6 +231,7 @@ class MockDevice : public RootDevice {
     bool callBaseGetGlobalMemorySize = true;
     bool disableSecondaryEngines = false;
     std::optional<NEO::SipExternalLib *> mockSipLib;
+    MockQueryPeerAccessFunc queryPeerAccessFunc;
 };
 
 template <>

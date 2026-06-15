@@ -17,11 +17,3 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/device.h
                ${CMAKE_CURRENT_SOURCE_DIR}/device_imp_${DRIVER_MODEL}/device_imp_${DRIVER_MODEL}.cpp
 )
-
-if(UNIX)
-  target_sources(${L0_STATIC_LIB_NAME}
-                 PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/device_imp_drm/device_imp_peer.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/device_imp_drm/device_imp_peer.h
-  )
-endif()

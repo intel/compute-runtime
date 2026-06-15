@@ -3084,11 +3084,11 @@ TEST(DeviceCanAccessPeerTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
     UltDeviceFactory deviceFactory{2, 0};
     auto rootDevice0 = deviceFactory.rootDevices[0];
 
-    auto queryPeerAccess = [](Device &peerDevice, Device &device, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+    rootDevice0->queryPeerAccessFunc = [](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
         return false;
     };
 
-    bool canAccess = rootDevice0->canAccessPeer(queryPeerAccess, nullptr, rootDevice0);
+    bool canAccess = rootDevice0->canAccessPeer(rootDevice0);
     EXPECT_TRUE(canAccess);
 }
 
@@ -3099,25 +3099,25 @@ TEST(DeviceCanAccessPeerTest, givenTwoRootDevicesThenCanAccessPeerReturnsValueBa
     auto rootDevice0 = deviceFactory.rootDevices[0];
     auto rootDevice1 = deviceFactory.rootDevices[1];
 
+    uint32_t queryCalled = 0;
+    rootDevice0->queryPeerAccessFunc = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
+        queryCalled++;
+        return false;
+    };
+
     {
-        uint32_t flagValue = 1;
-        auto queryPeerAccess = [&flagValue](Device &peerDevice, Device &device, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
-            return !!flagValue;
-        };
-        debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(flagValue);
-        bool canAccess = rootDevice0->canAccessPeer(queryPeerAccess, nullptr, rootDevice1);
+        debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(1);
+        bool canAccess = rootDevice0->canAccessPeer(rootDevice1);
         EXPECT_TRUE(canAccess);
     }
 
     {
-        uint32_t flagValue = 0;
-        auto queryPeerAccess = [&flagValue](Device &peerDevice, Device &device, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
-            return !!flagValue;
-        };
-        debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(flagValue);
-        bool canAccess = rootDevice0->canAccessPeer(queryPeerAccess, nullptr, rootDevice1);
+        debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(0);
+        bool canAccess = rootDevice0->canAccessPeer(rootDevice1);
         EXPECT_FALSE(canAccess);
     }
+
+    EXPECT_EQ(0u, queryCalled);
 }
 
 TEST(DeviceCanAccessPeerTest, givenCanAccessPeerCalledTwiceThenCanAccessPeerCachesResultAndReturnsSameValueEachTime) {
@@ -3127,16 +3127,16 @@ TEST(DeviceCanAccessPeerTest, givenCanAccessPeerCalledTwiceThenCanAccessPeerCach
 
     uint32_t queryCalled = 0;
 
-    auto queryPeerAccess = [&queryCalled](Device &peerDevice, Device &device, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+    rootDevice0->queryPeerAccessFunc = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
         queryCalled++;
         return true;
     };
 
-    bool canAccess = rootDevice0->canAccessPeer(queryPeerAccess, nullptr, rootDevice1);
+    bool canAccess = rootDevice0->canAccessPeer(rootDevice1);
     EXPECT_EQ(1u, queryCalled);
     EXPECT_TRUE(canAccess);
 
-    canAccess = rootDevice0->canAccessPeer(queryPeerAccess, nullptr, rootDevice1);
+    canAccess = rootDevice0->canAccessPeer(rootDevice1);
     EXPECT_EQ(1u, queryCalled);
     EXPECT_TRUE(canAccess);
 }
@@ -3148,12 +3148,15 @@ TEST(DeviceCanAccessPeerTest, givenTwoSubDevicesFromTheSameRootDeviceThenCanAcce
     auto subDevice0 = rootDevice->getSubDevices()[0];
     auto subDevice1 = rootDevice->getSubDevices()[1];
 
-    auto queryPeerAccess = [](Device &peerDevice, Device &device, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+    uint32_t queryCalled = 0;
+    static_cast<MockSubDevice *>(deviceFactory.subDevices[0])->queryPeerAccessFunc = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
+        queryCalled++;
         return false;
     };
 
-    bool canAccess = subDevice0->canAccessPeer(queryPeerAccess, nullptr, subDevice1);
+    bool canAccess = subDevice0->canAccessPeer(subDevice1);
     EXPECT_TRUE(canAccess);
+    EXPECT_EQ(0u, queryCalled);
 }
 
 TEST(DeviceCanAccessPeerTest, givenMemoryAllocationWhenCanAccessPeerThenFreeAllocation) {
@@ -3161,23 +3164,22 @@ TEST(DeviceCanAccessPeerTest, givenMemoryAllocationWhenCanAccessPeerThenFreeAllo
     auto rootDevice0 = deviceFactory.rootDevices[0];
     auto rootDevice1 = deviceFactory.rootDevices[1];
 
-    uint32_t queryCalled = 0;
-    uint32_t freeMemoryCalled = 0;
+    auto memoryManager = static_cast<MockMemoryManager *>(rootDevice0->getMemoryManager());
 
-    auto queryPeerAccess = [&queryCalled](Device &peerDevice, Device &device, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+    uint32_t queryCalled = 0;
+
+    rootDevice0->queryPeerAccessFunc = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
         queryCalled++;
 
-        *memoryAllocation = reinterpret_cast<void *>(0xABCD);
+        AllocationProperties properties{device.getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, device.getDeviceBitfield()};
+        *probeAllocPtr = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
         return true;
     };
 
-    auto freeMemory = [&freeMemoryCalled](Device &device, void *memoryAllocation) -> void {
-        freeMemoryCalled++;
-    };
-
-    rootDevice0->canAccessPeer(queryPeerAccess, freeMemory, rootDevice1);
+    const uint32_t freeCalledBefore = memoryManager->freeGraphicsMemoryCalled.load();
+    rootDevice0->canAccessPeer(rootDevice1);
     EXPECT_EQ(1u, queryCalled);
-    EXPECT_EQ(1u, freeMemoryCalled);
+    EXPECT_EQ(freeCalledBefore + 1u, memoryManager->freeGraphicsMemoryCalled.load());
 }
 
 TEST(DevicePeerAccessInitializationTest, givenDeviceListWhenInitializePeerAccessThenQueryOnlyRelevantPeers) {
@@ -3197,12 +3199,15 @@ TEST(DevicePeerAccessInitializationTest, givenDeviceListWhenInitializePeerAccess
     rootDevices[2]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper2);
 
     uint32_t queryCalled = 0;
-    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
         queryCalled++;
         return true;
     };
+    for (auto &device : deviceFactory.rootDevices) {
+        device->queryPeerAccessFunc = queryPeerAccess;
+    }
 
-    MockDevice::initializePeerAccessForDevices(queryPeerAccess, nullptr, rootDevices);
+    MockDevice::initializePeerAccessForDevices(rootDevices);
 
     // Check device[0] with none
     // Check device[1] with device[0] and device[2] - 2 calls
@@ -3224,12 +3229,15 @@ TEST(DevicePeerAccessInitializationTest, givenSubDevicesWhenInitializePeerAccess
     subDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
 
     uint32_t queryCalled = 0;
-    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
         queryCalled++;
         return true;
     };
+    for (auto &subDevice : deviceFactory.subDevices) {
+        static_cast<MockSubDevice *>(subDevice)->queryPeerAccessFunc = queryPeerAccess;
+    }
 
-    MockDevice::initializePeerAccessForDevices(queryPeerAccess, nullptr, subDevices);
+    MockDevice::initializePeerAccessForDevices(subDevices);
 
     EXPECT_EQ(0u, queryCalled);
 }
@@ -3249,12 +3257,15 @@ TEST(DevicePeerAccessInitializationTest, givenDevicesWithPeerAccessCachedWhenIni
     rootDevices[0]->updatePeerAccessCache(rootDevices[1], true);
 
     uint32_t queryCalled = 0;
-    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
         queryCalled++;
         return false;
     };
+    for (auto &device : deviceFactory.rootDevices) {
+        device->queryPeerAccessFunc = queryPeerAccess;
+    }
 
-    MockDevice::initializePeerAccessForDevices(queryPeerAccess, nullptr, rootDevices);
+    MockDevice::initializePeerAccessForDevices(rootDevices);
 
     EXPECT_EQ(0u, queryCalled);
 }
@@ -3274,12 +3285,15 @@ TEST(DevicePeerAccessInitializationTest, givenDevicesWhenInitializePeerAccessFor
         rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
 
         uint32_t queryCalled = 0;
-        auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+        auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
             queryCalled++;
             return true;
         };
+        for (auto &device : deviceFactory.rootDevices) {
+            device->queryPeerAccessFunc = queryPeerAccess;
+        }
 
-        MockDevice::initializePeerAccessForDevices(queryPeerAccess, nullptr, rootDevices);
+        MockDevice::initializePeerAccessForDevices(rootDevices);
 
         EXPECT_EQ(1u, queryCalled);
         ASSERT_TRUE(rootDevices[0]->hasAnyPeerAccess().has_value());
@@ -3302,12 +3316,15 @@ TEST(DevicePeerAccessInitializationTest, givenDevicesWhenInitializePeerAccessFor
         rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
 
         uint32_t queryCalled = 0;
-        auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+        auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
             queryCalled++;
             return false;
         };
+        for (auto &device : deviceFactory.rootDevices) {
+            device->queryPeerAccessFunc = queryPeerAccess;
+        }
 
-        MockDevice::initializePeerAccessForDevices(queryPeerAccess, nullptr, rootDevices);
+        MockDevice::initializePeerAccessForDevices(rootDevices);
 
         EXPECT_EQ(1u, queryCalled);
         ASSERT_TRUE(rootDevices[0]->hasAnyPeerAccess().has_value());
@@ -3330,12 +3347,15 @@ TEST(DevicePeerAccessInitializationTest, givenDevicesThatDontRequirePeerAccessQu
     rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
 
     uint32_t queryCalled = 0;
-    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
         queryCalled++;
         return true;
     };
+    for (auto &device : deviceFactory.rootDevices) {
+        device->queryPeerAccessFunc = queryPeerAccess;
+    }
 
-    MockDevice::initializePeerAccessForDevices(queryPeerAccess, nullptr, rootDevices);
+    MockDevice::initializePeerAccessForDevices(rootDevices);
 
     EXPECT_EQ(0u, queryCalled);
 
@@ -3363,25 +3383,29 @@ TEST(DevicePeerAccessInitializationTest, givenMemoryAllocationWhenInitializePeer
     releaseHelper3->shouldQueryPeerAccessResult = true;
     rootDevices[3]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper3);
 
-    uint32_t queryCalled = 0;
-    uint32_t freeMemoryCalled = 0;
+    auto memoryManager = static_cast<MockMemoryManager *>(rootDevices[0]->getMemoryManager());
 
-    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, void **memoryAllocation, uint64_t *memoryHandle) -> bool {
+    uint32_t queryCalled = 0;
+
+    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) -> bool {
         queryCalled++;
 
-        *memoryAllocation = reinterpret_cast<void *>(0xABCD);
+        if (*probeAllocPtr == nullptr) {
+            AllocationProperties properties{device.getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, device.getDeviceBitfield()};
+            *probeAllocPtr = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        }
         return true;
     };
+    for (auto &device : deviceFactory.rootDevices) {
+        device->queryPeerAccessFunc = queryPeerAccess;
+    }
 
-    auto freeMemory = [&freeMemoryCalled](Device &device, void *memoryAllocation) -> void {
-        freeMemoryCalled++;
-    };
+    const uint32_t freeCalledBefore = memoryManager->freeGraphicsMemoryCalled.load();
+    MockDevice::initializePeerAccessForDevices(rootDevices);
 
-    MockDevice::initializePeerAccessForDevices(queryPeerAccess, freeMemory, rootDevices);
-
-    // Each unique device pair is queried once (6 pairs for 4 devices), and memory is freed for each query
+    // Each unique device pair is queried once (6 pairs for 4 devices), and the probe allocation is freed once per probing device
     EXPECT_EQ(6u, queryCalled);
-    EXPECT_EQ(3u, freeMemoryCalled);
+    EXPECT_EQ(freeCalledBefore + 3u, memoryManager->freeGraphicsMemoryCalled.load());
 }
 
 HWTEST2_F(DeviceTests, givenSkipHpBcsInitializationWhenDeviceCreatedThenHpCopyEngineIsNotCreated, IsAtLeastXe3pCore) {

@@ -9,6 +9,7 @@ set(NEO_CORE_GLOBAL_FACTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/create_os_time_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/discover_devices_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/init_os_interface_${DRIVER_MODEL}.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/query_peer_access_${DRIVER_MODEL}.cpp
 )
 
 set(NEO_CORE_OS_INTERFACE
@@ -50,6 +51,7 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_from_xe_hpc_to_xe3.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe_hpc_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/query_peer_access.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_common.h
 )
 

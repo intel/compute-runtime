@@ -21,12 +21,10 @@ struct Device : public ::L0::Device {
     using Base::createRequiredLibModule;
     using Base::debugSession;
     using Base::deviceInOrderCounterAllocator;
-    using Base::freeMemoryAllocation;
     using Base::getRequiredLibDirPath;
     using Base::hostInOrderCounterAllocator;
     using Base::implicitScalingCapable;
     using Base::inOrderTimestampAllocator;
-    using Base::queryPeerAccess;
     using Base::requiredLibsOptionalSearchPaths;
     using Base::requiredLibsRegistry;
     using Base::resourcesReleased;
@@ -134,13 +132,11 @@ struct MockDeviceImp : public L0::Device {
     using BaseClass::debugSession;
     using BaseClass::deviceInOrderCounterAllocator;
     using BaseClass::fabricEdgeModelSupportsBandwidthAndLatency;
-    using BaseClass::freeMemoryAllocation;
     using BaseClass::getNEODevice;
     using BaseClass::hostInOrderCounterAllocator;
     using BaseClass::implicitScalingCapable;
     using BaseClass::inOrderTimestampAllocator;
     using BaseClass::neoDevice;
-    using BaseClass::queryPeerAccess;
     using BaseClass::subDeviceCopyEngineGroups;
     using BaseClass::syncDispatchTokenAllocation;
 

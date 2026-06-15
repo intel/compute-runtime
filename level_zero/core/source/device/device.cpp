@@ -109,15 +109,9 @@ ze_result_t Device::getStatus() {
 }
 
 ze_result_t Device::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
-    *value = neoDevice->canAccessPeer(queryPeerAccess, freeMemoryAllocation, fromHandle(hPeerDevice)->getNEODevice());
+    *value = neoDevice->canAccessPeer(fromHandle(hPeerDevice)->getNEODevice());
 
     return ZE_RESULT_SUCCESS;
-}
-
-void Device::freeMemoryAllocation(NEO::Device &device, void *ptr) {
-    auto deviceImp = device.getSpecializedDevice<Device>();
-    auto context = Context::fromHandle(deviceImp->getDriverHandle()->getDefaultContext());
-    context->freeMem(ptr);
 }
 
 ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,

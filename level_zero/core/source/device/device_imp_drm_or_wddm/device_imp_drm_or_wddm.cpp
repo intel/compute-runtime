@@ -14,7 +14,6 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp_drm/device_imp_peer.h"
 
 namespace L0 {
 
@@ -66,16 +65,6 @@ ze_result_t Device::getExternalMemoryProperties(ze_device_external_memory_proper
         }
     }
     return ZE_RESULT_SUCCESS;
-}
-
-bool Device::queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle) {
-    if (device.getRootDeviceEnvironment().osInterface) {
-        NEO::DriverModelType driverType = device.getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
-        if (driverType == NEO::DriverModelType::drm) {
-            return queryPeerAccessDrm(device, peerDevice, handlePtr, handle);
-        }
-    }
-    return false;
 }
 
 } // namespace L0

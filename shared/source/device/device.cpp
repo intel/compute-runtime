@@ -33,6 +33,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/performance_counters.h"
+#include "shared/source/os_interface/query_peer_access.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
@@ -1462,7 +1463,21 @@ std::vector<DeviceVector> Device::groupDevices(DeviceVector devices) {
     return outDevices;
 }
 
-bool Device::canAccessPeer(QueryPeerAccessFunc queryPeerAccess, FreeMemoryFunc freeMemory, Device *peerDevice) {
+namespace {
+void releasePeerAccessProbeAllocation(Device &device, GraphicsAllocation *probeAllocation, uint64_t &handle) {
+    auto memoryManager = device.getMemoryManager();
+    if (handle != std::numeric_limits<uint64_t>::max()) {
+        memoryManager->closeInternalHandle(handle, 0u, probeAllocation);
+    }
+    memoryManager->freeGraphicsMemory(probeAllocation);
+}
+} // namespace
+
+bool Device::queryPeerAccess(Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) {
+    return NEO::queryPeerAccess(*this, peerDevice, probeAllocPtr, handle);
+}
+
+bool Device::canAccessPeer(Device *peerDevice) {
     if (NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get() != -1) {
         return !!NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get();
     }
@@ -1475,21 +1490,21 @@ bool Device::canAccessPeer(QueryPeerAccessFunc queryPeerAccess, FreeMemoryFunc f
     }
 
     auto handle = std::numeric_limits<uint64_t>::max();
-    void *handlePtr = nullptr;
+    GraphicsAllocation *probeAllocation = nullptr;
 
     auto lock = executionEnvironment->obtainPeerAccessQueryLock();
     if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) == this->crossAccessEnabledDevices.end()) {
-        bool canAccess = queryPeerAccess(*this, *peerDevice, &handlePtr, &handle);
+        bool canAccess = this->queryPeerAccess(*peerDevice, &probeAllocation, &handle);
         this->updatePeerAccessCache(peerDevice, canAccess);
     }
 
-    if (handlePtr) {
-        freeMemory(*this, handlePtr);
+    if (probeAllocation) {
+        releasePeerAccessProbeAllocation(*this, probeAllocation, handle);
     }
     return this->crossAccessEnabledDevices[peerRootDeviceIndex];
 }
 
-void Device::initializePeerAccessForDevices(QueryPeerAccessFunc queryPeerAccess, FreeMemoryFunc freeMemory, const std::vector<NEO::Device *> &devices) {
+void Device::initializePeerAccessForDevices(const std::vector<NEO::Device *> &devices) {
     for (auto &device : devices) {
         auto releaseHelper = device->getReleaseHelper();
         if (!releaseHelper->shouldQueryPeerAccess()) {
@@ -1499,7 +1514,7 @@ void Device::initializePeerAccessForDevices(QueryPeerAccessFunc queryPeerAccess,
         device->hasPeerAccess = false;
         const auto deviceRootIndex = device->getRootDeviceIndex();
 
-        void *handlePtr = nullptr;
+        GraphicsAllocation *probeAllocation = nullptr;
         uint64_t handle = std::numeric_limits<uint64_t>::max();
 
         for (auto &peerDevice : devices) {
@@ -1511,7 +1526,7 @@ void Device::initializePeerAccessForDevices(QueryPeerAccessFunc queryPeerAccess,
             bool canAccess = false;
             if (device->crossAccessEnabledDevices.find(peerRootIndex) == device->crossAccessEnabledDevices.end()) {
                 auto lock = device->getExecutionEnvironment()->obtainPeerAccessQueryLock();
-                canAccess = queryPeerAccess(*device, *peerDevice, &handlePtr, &handle);
+                canAccess = device->queryPeerAccess(*peerDevice, &probeAllocation, &handle);
                 device->updatePeerAccessCache(peerDevice, canAccess);
             } else {
                 canAccess = device->crossAccessEnabledDevices[peerRootIndex];
@@ -1522,10 +1537,8 @@ void Device::initializePeerAccessForDevices(QueryPeerAccessFunc queryPeerAccess,
             }
         }
 
-        if (handlePtr) {
-            freeMemory(*device, handlePtr);
-            handlePtr = nullptr;
-            handle = std::numeric_limits<uint64_t>::max();
+        if (probeAllocation) {
+            releasePeerAccessProbeAllocation(*device, probeAllocation, handle);
         }
     }
 }

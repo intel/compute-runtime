@@ -6119,19 +6119,6 @@ TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceRecordReplayGraphWhenRet
     EXPECT_EQ(deviceRecordReplayGraphCapability, recordReplayGraphProperties.graphFlags);
 }
 
-using MultipleDeviceQueryPeerAccessTests = Test<MultiDeviceFixture>;
-
-TEST_F(MultipleDeviceQueryPeerAccessTests, givenDeviceQueryPeerAccessAndNoOsInterfaceThenReturnsFalse) {
-    L0::Device *device0 = driverHandle->devices[0];
-    L0::Device *device1 = driverHandle->devices[1];
-
-    void *handlePtr = nullptr;
-    uint64_t handle = std::numeric_limits<uint64_t>::max();
-
-    bool canAccess = MockDevice::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), &handlePtr, &handle);
-    EXPECT_FALSE(canAccess);
-}
-
 using MultipleDeviceMemAdviseTests = Test<MultiDeviceFixture>;
 
 TEST_F(MultipleDeviceMemAdviseTests, givenTargetDeviceNotSupportSharedSystemUsmThenExecuteMemAdviseReturnsError) {

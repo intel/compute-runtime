@@ -42,8 +42,4 @@ ze_result_t Device::getExternalMemoryProperties(ze_device_external_memory_proper
     return ZE_RESULT_SUCCESS;
 }
 
-bool Device::queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle) {
-    return false;
-}
-
 } // namespace L0
