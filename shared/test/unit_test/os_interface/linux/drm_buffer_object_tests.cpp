@@ -20,6 +20,7 @@
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -58,7 +59,7 @@ TEST_F(DrmBufferObjectTest, GivenDetectedGpuHangDuringEvictUnusedAllocationsWhen
     EXPECT_EQ(BufferObject::gpuHangDetected, result);
 }
 
-TEST_F(DrmBufferObjectTest, GivenDirectSubmissionLightWhenExecFailsThenDoNotRetryAtBoExecLevelAndReturnError) {
+HWTEST2_F(DrmBufferObjectTest, GivenDirectSubmissionLightWhenExecFailsThenDoNotRetryAtBoExecLevelAndReturnError, IsXeLpg) {
     osContext->setDirectSubmissionActive();
 
     mock->ioctlExpected.total = 1;
@@ -141,7 +142,7 @@ TEST_F(DrmBufferObjectTest, whenExecFailsThenPinFails) {
     EXPECT_EQ(EINVAL, ret);
 }
 
-TEST_F(DrmBufferObjectTest, givenDirectSubmissionLightWhenValidateHostptrThenStopDirectSubmission) {
+HWTEST2_F(DrmBufferObjectTest, givenDirectSubmissionLightWhenValidateHostptrThenStopDirectSubmission, IsXeLpg) {
     mock->ioctlExpected.total = -1;
     executionEnvironment.initializeMemoryManager();
     MockCommandStreamReceiver csr(executionEnvironment, 0, 0b1);

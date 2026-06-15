@@ -1151,7 +1151,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhe
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDirectSubmissionLightWhenWaitForFlushStampThenStopDirectSubmission) {
+HWTEST2_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDirectSubmissionLightWhenWaitForFlushStampThenStopDirectSubmission, IsXeLpg) {
     EXPECT_FALSE(static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->stopDirectSubmissionCalled);
 
     csr->getOsContext().setDirectSubmissionActive();

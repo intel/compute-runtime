@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLightWhenInitThenUseTpauseWaitpkg) {
+HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenDirectSubmissionLightWhenInitThenUseTpauseWaitpkg, IsXeLpg) {
     VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse);
     VariableBackup<uint64_t> backupWaitpkgCounterValue(&WaitUtils::waitpkgCounterValue);
     VariableBackup<uint64_t> backupCounterValueForEventHostSync(&WaitUtils::counterValueForEventHostSync);
@@ -41,7 +41,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     EXPECT_EQ(WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds, WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenWaitpkgParamsSetByDebugVariablesAndDirectSubmissionLightWhenInitThenUseTpauseWaitpkg) {
+HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenWaitpkgParamsSetByDebugVariablesAndDirectSubmissionLightWhenInitThenUseTpauseWaitpkg, IsXeLpg) {
     DebugManagerStateRestore restorer;
     debugManager.flags.WaitpkgThreshold.set(35);
     debugManager.flags.WaitpkgCounterValue.set(1000);

@@ -94,7 +94,7 @@ HWTEST_F(DeviceCommandStreamLeaksTest, givenDisabledGemCloseWorkerWhenCsrIsCreat
     delete osContext;
 }
 
-HWTEST_F(DeviceCommandStreamLeaksTest, givenDirectSubmissionLightWhenCsrIsCreatedThenGemCloseWorkerInactiveModeIsSelected) {
+HWTEST2_F(DeviceCommandStreamLeaksTest, givenDirectSubmissionLightWhenCsrIsCreatedThenGemCloseWorkerInactiveModeIsSelected, IsXeLpg) {
     executionEnvironment->memoryManager = DrmMemoryManager::create(*executionEnvironment);
     std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
     auto osContext = OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), 0, 0,

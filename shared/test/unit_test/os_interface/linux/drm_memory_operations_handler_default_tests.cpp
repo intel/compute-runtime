@@ -279,7 +279,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerW
     EXPECT_EQ(ret, MemoryOperationsStatus::outOfMemory);
 }
 
-HWTEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenDirectSubmissionLightWhenFreeGraphicsMemoryThenStopDirectSubmission) {
+HWTEST2_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenDirectSubmissionLightWhenFreeGraphicsMemoryThenStopDirectSubmission, IsXeLpg) {
     drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = true;
     drmMemoryOperationsHandler->evictWithinOsContextCallBase = true;
     auto allocation = pMemManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize});

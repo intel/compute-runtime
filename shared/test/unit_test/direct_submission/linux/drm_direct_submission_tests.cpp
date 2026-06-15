@@ -185,7 +185,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
     *drmDirectSubmission.tagAddress = 1u;
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenUllsLightWhenSwitchRingBufferNeedsToAllocateNewRingBufferThenAddToResidencyVectorAndRingStop) {
+HWTEST2_F(DrmDirectSubmissionTest, givenUllsLightWhenSwitchRingBufferNeedsToAllocateNewRingBufferThenAddToResidencyVectorAndRingStop, IsXeLpg) {
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     drmDirectSubmission.osContext.setDirectSubmissionActive();
     auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
@@ -806,7 +806,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenDi
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenRegisterResourcesThenRestart) {
+HWTEST2_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenRegisterResourcesThenRestart, IsXeLpg) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
@@ -853,7 +853,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenRegisterResource
     executionEnvironment.memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenExecTimeoutReachedThenRestart) {
+HWTEST2_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenExecTimeoutReachedThenRestart, IsXeLpg) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
@@ -905,7 +905,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenExecTimeoutReach
     executionEnvironment.memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenNoRegisteredResourcesThenNoRestart) {
+HWTEST2_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenNoRegisteredResourcesThenNoRestart, IsXeLpg) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);

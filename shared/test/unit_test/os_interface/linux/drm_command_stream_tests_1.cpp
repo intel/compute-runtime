@@ -950,7 +950,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenBlitterDire
     EXPECT_NE(NEO::SubmissionStatus::success, res);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLightWhenNewResourcesAddedThenAddToResidencyContainer) {
+HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenDirectSubmissionLightWhenNewResourcesAddedThenAddToResidencyContainer, IsXeLpg) {
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->stopDirectSubmission(false, false);
     testedCsr->completionFenceValuePointer = nullptr;
@@ -980,7 +980,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(oldMemoryOperationsInterface);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLightWhenDispatchFailsThenEvictUnusedAndRetry) {
+HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenDirectSubmissionLightWhenDispatchFailsThenEvictUnusedAndRetry, IsXeLpg) {
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->stopDirectSubmission(false, false);
     testedCsr->completionFenceValuePointer = nullptr;
@@ -1013,7 +1013,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(oldMemoryOperationsInterface);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLightWhenMakeResidentThenDoNotAddToCsrResidencyContainer) {
+HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenDirectSubmissionLightWhenMakeResidentThenDoNotAddToCsrResidencyContainer, IsXeLpg) {
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->stopDirectSubmission(false, false);
     testedCsr->directSubmission.reset();
@@ -1058,7 +1058,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
     static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagValue = 0u;
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionLightWhenFlushThenFlushStampIsUpdated) {
+HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenEnabledDirectSubmissionLightWhenFlushThenFlushStampIsUpdated, IsXeLpg) {
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);

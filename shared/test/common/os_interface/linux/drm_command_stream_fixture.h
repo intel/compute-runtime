@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -262,11 +263,36 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
     void setUpT() {
         debugManager.flags.EnableDirectSubmission.set(1u);
         debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+        debugManager.flags.UseVmBind.set(1);
         DrmCommandStreamEnhancedTest::setUpT<GfxFamily>();
         auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
         auto engineType = device->getDefaultEngine().osContext->getEngineType();
         hwInfo->capabilityTable.directSubmissionEngines.data[engineType].engineSupported = true;
         device->finalizeRayTracing();
+        csr->initDirectSubmission();
+    }
+
+    template <typename GfxFamily>
+    void tearDownT() {
+        csr->stopDirectSubmission(false, false);
+        this->dbgState.reset();
+        DrmCommandStreamEnhancedTest::tearDownT<GfxFamily>();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+struct DrmCommandStreamUllsLightTest : public DrmCommandStreamEnhancedTest {
+    template <typename GfxFamily>
+    void setUpT() {
+        debugManager.flags.EnableDirectSubmission.set(1u);
+        debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+        DrmCommandStreamEnhancedTest::setUpT<GfxFamily>();
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface =
+            std::make_unique<DrmMemoryOperationsHandlerDefault>(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], rootDeviceIndex);
+        auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+        auto engineType = device->getDefaultEngine().osContext->getEngineType();
+        hwInfo->capabilityTable.directSubmissionEngines.data[engineType].engineSupported = true;
         csr->initDirectSubmission();
     }
 

@@ -1491,7 +1491,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingSharedHandleT
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUllsLightWhenCreateGraphicsAllocationFromSharedHandleThenAddToResidencyContainer) {
+HWTEST2_TEMPLATED_F(DrmMemoryManagerTest, givenUllsLightWhenCreateGraphicsAllocationFromSharedHandleThenAddToResidencyContainer, IsXeLpg) {
     mock->ioctlExpected.total = -1;
     this->dontTestIoctlInTearDown = true;
 
@@ -1505,8 +1505,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUllsLightWhenCreateGraphicsAllocat
     memoryManager->allRegisteredEngines[this->device->getRootDeviceIndex()] = EngineControlContainer{this->device->allEngines};
     for (auto &engine : memoryManager->getRegisteredEngines(this->device->getRootDeviceIndex())) {
         engine.osContext->incRefInternal();
-        engine.osContext->setDirectSubmissionActive();
     }
+    memoryManager->getRegisteredEngines(this->device->getRootDeviceIndex())[0].osContext->setDirectSubmissionActive();
 
     auto drmMemoryOperationsHandler = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
     EXPECT_FALSE(drmMemoryOperationsHandler->obtainAndResetNewResourcesSinceLastRingSubmit());
