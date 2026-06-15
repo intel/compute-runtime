@@ -1992,14 +1992,16 @@ TEST_F(GraphTestInstantiationTest, WhenForkJoinCbExternalEventsAreUsedThenParent
     bool virtualRootFound = false;
     bool physicalChildFound = false;
     for (const auto &entry : execContainer) {
-        if (entry.first == nullptr) {
+        if (entry.key == nullptr) {
             virtualRootFound = true;
         } else {
-            EXPECT_EQ(subCommandList.get(), entry.first);
+            EXPECT_EQ(subCommandList.get(), entry.key);
             physicalChildFound = true;
         }
-        EXPECT_EQ(0u, entry.second.first);
-        EXPECT_EQ(nullptr, entry.second.second);
+        EXPECT_EQ(0u, entry.counter());
+        EXPECT_EQ(nullptr, entry.hostAddress());
+        EXPECT_EQ(0u, entry.deviceAddress());
+        EXPECT_EQ(nullptr, entry.allocation());
     }
 
     EXPECT_TRUE(virtualRootFound);
@@ -2007,17 +2009,36 @@ TEST_F(GraphTestInstantiationTest, WhenForkJoinCbExternalEventsAreUsedThenParent
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExp(commandListHandle, execGraphHandle, nullptr, nullptr, 0, nullptr));
 
-    auto rootHostPatchPreamblePair = cbEventContainer->getPreambleHostData(nullptr);
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, rootHostPatchPreamblePair.first);
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostAddress, rootHostPatchPreamblePair.second);
+    auto &rootHostPatchPreambleData = cbEventContainer->getPreambleData(nullptr);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, rootHostPatchPreambleData.counter());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostAddress, rootHostPatchPreambleData.hostAddress());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceAddress, rootHostPatchPreambleData.deviceAddress());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.allocation, rootHostPatchPreambleData.allocation());
 
-    auto childHostPatchPreamblePair = cbEventContainer->getPreambleHostData(subCommandList.get());
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, childHostPatchPreamblePair.first);
-    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, childHostPatchPreamblePair.second);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, forkEvent->getInOrderExecEventHelper().getPatchPreambleCounter());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostAddress, forkEvent->getInOrderExecEventHelper().getPatchPreambleHostAddress());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceAddress, forkEvent->getInOrderExecEventHelper().getPatchPreambleDeviceAddress());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.allocation, forkEvent->getInOrderExecEventHelper().getPatchPreambleAllocation());
 
-    auto nullPatchPreamblePair = cbEventContainer->getPreambleHostData(reinterpret_cast<L0::CommandList *>(0x123));
-    EXPECT_EQ(0u, nullPatchPreamblePair.first);
-    EXPECT_EQ(nullptr, nullPatchPreamblePair.second);
+    auto &childHostPatchPreambleData = cbEventContainer->getPreambleData(subCommandList.get());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, childHostPatchPreambleData.counter());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, childHostPatchPreambleData.hostAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceAddress, childHostPatchPreambleData.deviceAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.allocation, childHostPatchPreambleData.allocation());
+
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, joinEvent->getInOrderExecEventHelper().getPatchPreambleCounter());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, joinEvent->getInOrderExecEventHelper().getPatchPreambleHostAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceAddress, joinEvent->getInOrderExecEventHelper().getPatchPreambleDeviceAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.allocation, joinEvent->getInOrderExecEventHelper().getPatchPreambleAllocation());
+
+    auto &nullPatchPreambleData = cbEventContainer->getPreambleData(reinterpret_cast<L0::CommandList *>(0x123));
+    EXPECT_EQ(0u, nullPatchPreambleData.counter());
+    EXPECT_EQ(nullptr, nullPatchPreambleData.hostAddress());
+    EXPECT_EQ(0u, nullPatchPreambleData.deviceAddress());
+    EXPECT_EQ(nullptr, nullPatchPreambleData.allocation());
+
+    auto nullCounter = cbEventContainer->getPreambleCounter(reinterpret_cast<L0::CommandList *>(0x123));
+    EXPECT_EQ(0u, nullCounter);
 
     srcGraph.reset();
     forkEvent->destroy();
@@ -2067,8 +2088,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto sizeAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     auto cbEventContainer = execGraph.getExternalCbEventInfoContainer().get();
-    auto rootHostPatchPreamblePair = cbEventContainer->getPreambleHostData(nullptr);
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, rootHostPatchPreamblePair.first);
+    auto &rootHostPatchPreambleData = cbEventContainer->getPreambleData(nullptr);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.counter, rootHostPatchPreambleData.counter());
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceAddress, rootHostPatchPreambleData.deviceAddress());
 
     auto counter = whiteBoxCmdQueue->patchPreambleCounter.counter;
     auto deviceAddress = whiteBoxCmdQueue->patchPreambleCounter.deviceAddress;

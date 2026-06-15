@@ -663,13 +663,17 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenGettingPatchPreamble
 
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
-
-    whiteBoxCmdList->getPatchPreambleHostCounter(counter, hostAddress);
-    EXPECT_EQ(1u, counter);
-    EXPECT_NE(nullptr, hostAddress);
-
     uint64_t deviceAddress = 0;
     NEO::GraphicsAllocation *allocation = nullptr;
+
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, deviceAddress, allocation);
+    EXPECT_EQ(1u, counter);
+    EXPECT_NE(nullptr, hostAddress);
+    EXPECT_NE(0u, deviceAddress);
+    EXPECT_NE(nullptr, allocation);
+
+    deviceAddress = 0;
+    allocation = nullptr;
 
     whiteBoxCmdQueue->patchPreambleCounter.getPatchPreambleDeviceData(allocation, deviceAddress);
     EXPECT_NE(nullptr, allocation);
@@ -679,7 +683,7 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenGettingPatchPreamble
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceAddress, deviceAddress);
     EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostAddress, hostAddress);
 
-    whiteBoxCmdList->getPatchPreambleHostCounter(counter, hostAddress);
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, deviceAddress, allocation);
     EXPECT_EQ(2u, counter);
 }
 

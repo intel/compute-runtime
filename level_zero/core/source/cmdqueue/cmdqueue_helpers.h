@@ -113,8 +113,15 @@ struct CommandQueuePatchPreambleCounter {
     CommandQueuePatchPreambleCounter &operator=(const CommandQueuePatchPreambleCounter &) = delete;
 
     ~CommandQueuePatchPreambleCounter();
-    void getPatchPreambleHostCounter(Device *device, uint64_t &outCounterValue, uint64_t *&outHostAddress);
-    void getPatchPreambleDeviceData(NEO::GraphicsAllocation *&outAllocation, uint64_t &outDeviceAddress);
+    void getPatchPreambleFullData(Device *device,
+                                  uint64_t &outCounterValue,
+                                  uint64_t *&outHostAddress,
+                                  uint64_t &outDeviceAddress,
+                                  NEO::GraphicsAllocation *&outGraphicsAllocation);
+    void getPatchPreambleDeviceData(NEO::GraphicsAllocation *&outAllocation, uint64_t &outDeviceAddress) {
+        outDeviceAddress = this->deviceAddress;
+        outAllocation = this->allocation;
+    }
 };
 
 static constexpr uint32_t defaultCommandListStateChangeListSize = 10;

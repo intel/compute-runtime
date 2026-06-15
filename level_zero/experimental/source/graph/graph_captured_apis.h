@@ -23,8 +23,13 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
+
+namespace NEO {
+class GraphicsAllocation;
+} // namespace NEO
 
 namespace L0 {
 
@@ -132,8 +137,34 @@ struct ExternalCbEventInfo {
     NEO::InOrderExecEventHelper inOrderExecEventHelper;
 };
 
-using PatchPreambleHostData = std::pair<uint64_t, uint64_t *>;
-using PatchPreambleHostDataContainer = std::unordered_map<L0::CommandList *, PatchPreambleHostData>;
+using PatchPreambleCounter = uint64_t;
+using PatchPreambleHostAddress = uint64_t *;
+using PatchPreambleDeviceAddress = uint64_t;
+using PatchPreambleGraphicsAllocation = NEO::GraphicsAllocation *;
+
+using PatchPreambleData = std::tuple<PatchPreambleCounter, PatchPreambleHostAddress, PatchPreambleDeviceAddress, PatchPreambleGraphicsAllocation>;
+struct PatchPreambleItem {
+    PatchPreambleItem(uint64_t counter, uint64_t *hostAddress, uint64_t deviceAddress, NEO::GraphicsAllocation *allocation, L0::CommandList *key)
+        : key(key),
+          data(counter, hostAddress, deviceAddress, allocation) {}
+    PatchPreambleItem() : PatchPreambleItem(0, nullptr, 0, nullptr, nullptr) {}
+
+    PatchPreambleCounter &counter() { return std::get<0>(data); }
+    PatchPreambleHostAddress &hostAddress() { return std::get<1>(data); }
+    PatchPreambleDeviceAddress &deviceAddress() { return std::get<2>(data); }
+    PatchPreambleGraphicsAllocation &allocation() { return std::get<3>(data); }
+
+    const PatchPreambleCounter &counter() const { return std::get<0>(data); }
+    const PatchPreambleHostAddress &hostAddress() const { return std::get<1>(data); }
+    const PatchPreambleDeviceAddress &deviceAddress() const { return std::get<2>(data); }
+    const PatchPreambleGraphicsAllocation &allocation() const { return std::get<3>(data); }
+
+    L0::CommandList *key = nullptr;
+
+  private:
+    PatchPreambleData data;
+};
+using PatchPreambleDataContainer = std::vector<PatchPreambleItem>;
 
 struct ExternalCbEventInfoContainer {
     void addCbEventInfo(L0::Event *event, L0::CommandList *executorCommandList) {
@@ -157,20 +188,31 @@ struct ExternalCbEventInfoContainer {
     const std::vector<ExternalCbEventInfo> &getCbEventInfos() const {
         return storage;
     }
-    const PatchPreambleHostDataContainer &getExecutorInfos() const {
+    const PatchPreambleDataContainer &getExecutorInfos() const {
         return executorStorage;
+    }
+
+    PatchPreambleDataContainer::iterator getExecutorInfo(L0::CommandList *executor) {
+        return std::find_if(executorStorage.begin(),
+                            executorStorage.end(),
+                            [executor](const PatchPreambleItem &item) { return item.key == executor; });
     }
 
     void finalizeExecutorContainer();
     void updateExecutorContainer(L0::CommandList *currentRoot);
-    PatchPreambleHostData getPreambleHostData(L0::CommandList *executor) {
-        auto it = executorStorage.find(executor);
-        return it == executorStorage.end() ? PatchPreambleHostData{0, nullptr} : it->second;
+    PatchPreambleItem &getPreambleData(L0::CommandList *executor) {
+        static PatchPreambleItem nullPatchPreambleItem;
+        auto it = getExecutorInfo(executor);
+        return it == executorStorage.end() ? nullPatchPreambleItem : *it;
+    }
+    uint64_t getPreambleCounter(L0::CommandList *executor) {
+        auto it = getExecutorInfo(executor);
+        return it == executorStorage.end() ? 0u : it->counter();
     }
 
   protected:
     std::vector<ExternalCbEventInfo> storage;
-    PatchPreambleHostDataContainer executorStorage;
+    PatchPreambleDataContainer executorStorage;
 };
 
 struct CbExternalEventInstantiateContext {

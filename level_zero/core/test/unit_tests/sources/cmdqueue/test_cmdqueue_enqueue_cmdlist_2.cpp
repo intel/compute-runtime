@@ -1133,8 +1133,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
     NEO::GraphicsAllocation *counterAllocation = nullptr;
-    commandQueue->getPatchPreambleHostCounter(counter, hostAddress);
-    commandQueue->patchPreambleCounter.getPatchPreambleDeviceData(counterAllocation, counterDeviceAddress);
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterDeviceAddress, counterAllocation);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
@@ -1272,8 +1271,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
     NEO::GraphicsAllocation *counterAllocation = nullptr;
-    commandQueue->getPatchPreambleHostCounter(counter, hostAddress);
-    commandQueue->patchPreambleCounter.getPatchPreambleDeviceData(counterAllocation, counterDeviceAddress);
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterDeviceAddress, counterAllocation);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;

@@ -836,8 +836,11 @@ void CommandList::destroyRecordedBcsSplitResources() {
     resetBcsSplitEvents(true);
 }
 
-void CommandList::getPatchPreambleHostCounter(uint64_t &outCounterValue, uint64_t *&outHostAddress) {
-    cmdQImmediate->getPatchPreambleHostCounter(outCounterValue, outHostAddress);
+void CommandList::getPatchPreambleFullData(uint64_t &outCounterValue,
+                                           uint64_t *&outHostAddress,
+                                           uint64_t &outDeviceAddress,
+                                           NEO::GraphicsAllocation *&outGraphicsAllocation) {
+    cmdQImmediate->getPatchPreambleFullData(outCounterValue, outHostAddress, outDeviceAddress, outGraphicsAllocation);
 }
 
 } // namespace L0

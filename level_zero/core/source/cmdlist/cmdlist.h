@@ -628,7 +628,10 @@ struct CommandList : _ze_command_list_handle_t {
         return flatCapture.get();
     }
 
-    void getPatchPreambleHostCounter(uint64_t &outCounterValue, uint64_t *&outHostAddress);
+    void getPatchPreambleFullData(uint64_t &outCounterValue,
+                                  uint64_t *&outHostAddress,
+                                  uint64_t &outDeviceAddress,
+                                  NEO::GraphicsAllocation *&outGraphicsAllocation);
 
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;

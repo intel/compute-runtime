@@ -151,8 +151,11 @@ struct CommandQueue : _ze_command_queue_handle_t {
     }
     void makeResidentForResidencyContainer(const NEO::ResidencyContainer &residencyContainer);
 
-    void getPatchPreambleHostCounter(uint64_t &outCounterValue, uint64_t *&outHostAddress) {
-        patchPreambleCounter.getPatchPreambleHostCounter(this->device, outCounterValue, outHostAddress);
+    void getPatchPreambleFullData(uint64_t &outCounterValue,
+                                  uint64_t *&outHostAddress,
+                                  uint64_t &outDeviceAddress,
+                                  NEO::GraphicsAllocation *&outGraphicsAllocation) {
+        patchPreambleCounter.getPatchPreambleFullData(this->device, outCounterValue, outHostAddress, outDeviceAddress, outGraphicsAllocation);
     }
 
   protected:

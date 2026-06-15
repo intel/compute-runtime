@@ -19,21 +19,24 @@ CommandQueuePatchPreambleCounter::~CommandQueuePatchPreambleCounter() {
     }
 }
 
-void CommandQueuePatchPreambleCounter::getPatchPreambleHostCounter(Device *device, uint64_t &outCounterValue, uint64_t *&outHostAddress) {
+void CommandQueuePatchPreambleCounter::getPatchPreambleFullData(Device *device,
+                                                                uint64_t &outCounterValue,
+                                                                uint64_t *&outHostAddress,
+                                                                uint64_t &outDeviceAddress,
+                                                                NEO::GraphicsAllocation *&outGraphicsAllocation) {
     std::lock_guard<std::mutex> lock(this->mutex);
     if (this->hostCounterNode == nullptr) {
-        this->hostCounterNode = device->getHostInOrderCounterAllocator()->getTag();
+        auto tagAllocator = device->getHostInOrderCounterAllocator();
+        this->hostCounterNode = tagAllocator->getTag();
         this->hostAddress = reinterpret_cast<uint64_t *>(this->hostCounterNode->getCpuBase());
         this->deviceAddress = this->hostCounterNode->getGpuAddress();
         this->allocation = this->hostCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
+        memset(this->hostAddress, 0x0, tagAllocator->getTagSize());
     }
     outCounterValue = ++this->counter;
     outHostAddress = this->hostAddress;
-}
-
-void CommandQueuePatchPreambleCounter::getPatchPreambleDeviceData(NEO::GraphicsAllocation *&outAllocation, uint64_t &outDeviceAddress) {
     outDeviceAddress = this->deviceAddress;
-    outAllocation = this->allocation;
+    outGraphicsAllocation = this->allocation;
 }
 
 } // namespace L0

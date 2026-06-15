@@ -777,8 +777,7 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     uint64_t counter = 0;
     NEO::GraphicsAllocation *counterAllocation = nullptr;
 
-    commandQueue->getPatchPreambleHostCounter(counter, hostAddress);
-    commandQueue->patchPreambleCounter.getPatchPreambleDeviceData(counterAllocation, counterDeviceAddress);
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterDeviceAddress, counterAllocation);
 
     commandQueue->setPatchingPreamble(true);
     commandList->close();

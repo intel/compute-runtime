@@ -271,6 +271,24 @@ class InOrderExecEventHelper : public NonCopyableClass {
     void assignData(uint64_t counterValue, uint32_t counterOffset, uint32_t devicePartitions, uint32_t hostPartitions, NEO::GraphicsAllocation *deviceCounterAllocation,
                     NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t baseHostGpuAddress, uint64_t *baseHostCpuAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
                     bool hostStorageDuplicated, bool fromExternalMemory);
+    void assignPatchPreambleData(uint64_t patchPreambleCounter, uint64_t *patchPreambleCounterCpuAddress, uint64_t patchPreambleDeviceAddress, NEO::GraphicsAllocation *patchPreambleAllocation) {
+        this->patchPreambleCounter = patchPreambleCounter;
+        this->patchPreambleCounterCpuAddress = patchPreambleCounterCpuAddress;
+        this->patchPreambleDeviceAddress = patchPreambleDeviceAddress;
+        this->patchPreambleCounterAllocation = patchPreambleAllocation;
+    }
+    uint64_t getPatchPreambleCounter() const {
+        return this->patchPreambleCounter;
+    }
+    uint64_t *getPatchPreambleHostAddress() const {
+        return this->patchPreambleCounterCpuAddress;
+    }
+    uint64_t getPatchPreambleDeviceAddress() const {
+        return this->patchPreambleDeviceAddress;
+    }
+    NEO::GraphicsAllocation *getPatchPreambleAllocation() const {
+        return this->patchPreambleCounterAllocation;
+    }
 
     const SharableEventDataHelper &getSharableEventDataHelper() const { return sharableEventDataHelper; }
 
@@ -312,16 +330,20 @@ class InOrderExecEventHelper : public NonCopyableClass {
 
     NEO::GraphicsAllocation *deviceCounterAllocation = nullptr;
     NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
+    NEO::GraphicsAllocation *patchPreambleCounterAllocation = nullptr;
 
     uint64_t *baseHostCpuAddress = nullptr;
+    uint64_t *patchPreambleCounterCpuAddress = nullptr;
     uint64_t baseHostGpuAddress = 0;
     uint64_t baseDeviceAddress = 0;
+    uint64_t patchPreambleDeviceAddress = 0;
     uint64_t incrementValue = 0;
     uint64_t aggregatedEventUsageCounter = 0;
     uint64_t imported2WayDeviceCounterHandle = 0;
     uint64_t imported2WayDeviceCacheId = 0;
     uint64_t imported2WayHostCacheId = 0;
     uint64_t communicationAllocCacheId = 0;
+    uint64_t patchPreambleCounter = 0;
     size_t imported2WayCounterOffset = 0;
     unsigned int imported2WayExportedPid = 0;
     bool twoWayIpcSharing = false;

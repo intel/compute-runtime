@@ -279,6 +279,11 @@ void InOrderExecEventHelper::assignData(uint64_t counterValue, uint32_t counterO
     this->hostCounterAllocation = hostCounterAllocation;
     this->aggregatedEventUsageCounter = aggregatedEventUsageCounter;
 
+    this->patchPreambleCounterCpuAddress = nullptr;
+    this->patchPreambleCounter = 0;
+    this->patchPreambleDeviceAddress = 0;
+    this->patchPreambleCounterAllocation = nullptr;
+
     dataAssigned = true;
 }
 

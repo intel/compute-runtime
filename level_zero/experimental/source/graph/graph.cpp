@@ -457,24 +457,37 @@ EventParams getEffectiveEventParams(const typename Closure<api>::ApiArgs &apiArg
 void ExternalCbEventInfoContainer::attachExternalCbEventsToExecutableGraph() {
     for (auto &info : storage) {
         info.event->updateInOrdeState(info.inOrderExecEventHelper);
+        auto &currentPreambleData = getPreambleData(info.executorCommandList);
+        info.event->getInOrderExecEventHelper().assignPatchPreambleData(currentPreambleData.counter(),
+                                                                        currentPreambleData.hostAddress(),
+                                                                        currentPreambleData.deviceAddress(),
+                                                                        currentPreambleData.allocation());
     }
 }
 void ExternalCbEventInfoContainer::finalizeExecutorContainer() {
     for (auto &info : storage) {
-        executorStorage[info.executorCommandList] = {0, nullptr};
+        auto it = getExecutorInfo(info.executorCommandList);
+        if (it != executorStorage.end()) {
+            *it = {0, nullptr, 0, nullptr, info.executorCommandList};
+        } else {
+            executorStorage.push_back({0, nullptr, 0, nullptr, info.executorCommandList});
+        }
     }
 }
 
 void ExternalCbEventInfoContainer::updateExecutorContainer(L0::CommandList *currentRoot) {
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
+    uint64_t deviceAddress = 0;
+    NEO::GraphicsAllocation *allocation = nullptr;
     for (auto &elem : executorStorage) {
-        if (elem.first == nullptr) {
-            currentRoot->getPatchPreambleHostCounter(counter, hostAddress);
+        L0::CommandList *currentKey = elem.key;
+        if (currentKey == nullptr) {
+            currentRoot->getPatchPreambleFullData(counter, hostAddress, deviceAddress, allocation);
         } else {
-            elem.first->getPatchPreambleHostCounter(counter, hostAddress);
+            currentKey->getPatchPreambleFullData(counter, hostAddress, deviceAddress, allocation);
         }
-        elem.second = {counter, hostAddress};
+        elem = {counter, hostAddress, deviceAddress, allocation, currentKey};
     }
 }
 
@@ -1362,8 +1375,7 @@ ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, Gr
 
     CommandListExecutionInternalOptions internalOptions = {};
     if (this->externalCbEventStorage->externalCbEventsPresent()) {
-        auto preambleCounter = this->externalCbEventStorage->getPreambleHostData(this->executionTarget);
-        internalOptions.patchPreambleRequiredCounter = preambleCounter.first;
+        internalOptions.patchPreambleRequiredCounter = this->externalCbEventStorage->getPreambleCounter(this->executionTarget);
     }
 
     auto segmentIt = this->myOrderedSegments.find(segmentStart);
