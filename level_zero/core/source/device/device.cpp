@@ -812,7 +812,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES) {
             ze_float_atomic_ext_properties_t *floatProperties =
                 reinterpret_cast<ze_float_atomic_ext_properties_t *>(extendedProperties);
-            compilerProductHelper.getKernelFp16AtomicCapabilities(releaseHelper, floatProperties->fp16Flags);
+            releaseHelper->getKernelFp16AtomicCapabilities(floatProperties->fp16Flags);
             compilerProductHelper.getKernelFp32AtomicCapabilities(floatProperties->fp32Flags);
             compilerProductHelper.getKernelFp64AtomicCapabilities(floatProperties->fp64Flags);
             static_assert(ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE == FpAtomicExtFlags::globalLoadStore, "Mismatch between internal and API - specific capabilities.");

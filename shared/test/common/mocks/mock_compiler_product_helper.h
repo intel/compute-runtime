@@ -38,7 +38,6 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     ADDMETHOD_CONST_NOBASE(getDeviceOpenCLCVersions, getDeviceOpenCLCVersionsRetType, {}, (const HardwareInfo &hwInfo, OclCVersion max));
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(adjustHwInfoForIgc, (HardwareInfo & hwInfo));
     ADDMETHOD_CONST_NOBASE(isHeaplessModeEnabled, bool, false, (const HardwareInfo &hwInfo));
-    ADDMETHOD_CONST_NOBASE_VOIDRETURN(getKernelFp16AtomicCapabilities, (const ReleaseHelper *releaseHelper, uint32_t &fp16Caps));
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(getKernelFp32AtomicCapabilities, (uint32_t &fp32Caps));
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(getKernelFp64AtomicCapabilities, (uint32_t &fp64Caps));
     ADDMETHOD_CONST_NOBASE(isForceBindlessRequired, bool, false, (const HardwareInfo &hwInfo));

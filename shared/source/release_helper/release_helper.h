@@ -61,6 +61,7 @@ class ReleaseHelper {
     virtual uint32_t getAdditionalFp16Caps() const = 0;
     virtual uint32_t getAdditionalExtraCaps() const = 0;
     void getKernelCapabilitiesExtra(uint32_t &extraCaps) const;
+    void getKernelFp16AtomicCapabilities(uint32_t &fp16Caps) const;
     virtual uint32_t getStackSizePerRay() const = 0;
     virtual void adjustRTDispatchGlobals(void *rtDispatchGlobals, uint32_t rtStacksPerDss, uint32_t maxBvhLevels) const = 0;
     virtual bool isLocalOnlyAllowed() const = 0;

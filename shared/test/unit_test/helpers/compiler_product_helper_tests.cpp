@@ -355,23 +355,6 @@ HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpen
     EXPECT_EQ(2, versions[2].minor);
 }
 
-HWTEST_F(CompilerProductHelperFixture, GivenRequestForKernelFp16CapabilitiesThenReturnMinMaxAndLoadStoreCapabilitiesWithCapsFromReleaseHelperIfPresent) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto *releaseHelper = getReleaseHelper();
-
-    uint32_t fp16Caps = 0u;
-    compilerProductHelper.getKernelFp16AtomicCapabilities(releaseHelper, fp16Caps);
-    EXPECT_TRUE(isValueSet(fp16Caps, FpAtomicExtFlags::minMaxAtomicCaps));
-    EXPECT_TRUE(isValueSet(fp16Caps, FpAtomicExtFlags::loadStoreAtomicCaps));
-
-    if (releaseHelper) {
-        uint32_t extraFp16Caps = releaseHelper->getAdditionalFp16Caps();
-        if (0u != extraFp16Caps) {
-            EXPECT_TRUE(isValueSet(fp16Caps, extraFp16Caps));
-        }
-    }
-}
-
 HWTEST_F(CompilerProductHelperFixture, GivenRequestForKernelFp32CapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 

@@ -218,14 +218,6 @@ void CompilerProductHelperHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInf
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void CompilerProductHelperHw<gfxProduct>::getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const {
-    fp16Caps = (0u | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps);
-    if (releaseHelper) {
-        fp16Caps |= releaseHelper->getAdditionalFp16Caps();
-    }
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 void CompilerProductHelperHw<gfxProduct>::getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const {
     fp32Caps = (0u | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps);
 }

@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/kernel/kernel_properties.h"
 
 namespace NEO {
 
@@ -25,6 +26,11 @@ std::unique_ptr<ReleaseHelper> ReleaseHelper::create(HardwareIpVersion hardwareI
 
 void ReleaseHelper::getKernelCapabilitiesExtra(uint32_t &extraCaps) const {
     extraCaps |= this->getAdditionalExtraCaps();
+}
+
+void ReleaseHelper::getKernelFp16AtomicCapabilities(uint32_t &fp16Caps) const {
+    fp16Caps = (0u | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps);
+    fp16Caps |= this->getAdditionalFp16Caps();
 }
 
 bool ReleaseHelper::isAvailableSemaphore64(const HardwareInfo &hwInfo) const {
