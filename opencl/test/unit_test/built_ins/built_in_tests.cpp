@@ -1828,28 +1828,6 @@ TEST_F(BuiltInTests, GivenInvalidBuiltinWhenCreatingProgramFromCodeThenNullPoint
     EXPECT_EQ(nullptr, program.get());
 }
 
-TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationForKernel) {
-    const SipKernel &sipKern = pDevice->getBuiltIns()->getSipKernel(SipKernelType::csr, pContext->getDevice(0)->getDevice());
-    auto sipAllocation = sipKern.getSipAllocation();
-    EXPECT_NE(nullptr, sipAllocation);
-}
-
-TEST_F(BuiltInTests, givenSipKernelWhenAllocationFailsThenItHasNullptrGraphicsAllocation) {
-    auto executionEnvironment = new MockExecutionEnvironment;
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto memoryManager = new MockMemoryManager(*executionEnvironment);
-    executionEnvironment->memoryManager.reset(memoryManager);
-    auto device = std::unique_ptr<RootDevice>(Device::create<RootDevice>(executionEnvironment, 0u));
-    EXPECT_NE(nullptr, device);
-
-    memoryManager->failAllocate32Bit = true;
-
-    auto builtins = std::make_unique<BuiltIns>();
-    const SipKernel &sipKern = builtins->getSipKernel(SipKernelType::csr, *device);
-    auto sipAllocation = sipKern.getSipAllocation();
-    EXPECT_EQ(nullptr, sipAllocation);
-}
-
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuiltinCodeBinary) {
     debugManager.flags.RebuildPrecompiledKernels.set(true);
     auto builtinsLib = std::unique_ptr<BuiltIn::ResourceLoader>(new BuiltIn::ResourceLoader());

@@ -608,6 +608,40 @@ TEST(Sip, givenEmptyStateSaveAreaHeaderWhenGettingCsrSipKernelThenAborts) {
     mockCompilerInterface->releaseDummyGenBinary();
 }
 
+TEST(Sip, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationForKernel) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto mockCompilerInterface = new MockCompilerInterface();
+    mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->compilerInterface.reset(mockCompilerInterface);
+    auto builtins = new BuiltIns;
+    MockRootDeviceEnvironment::resetBuiltins(mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), builtins);
+    mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
+    mockCompilerInterface->sipStateAreaHeaderOverride = MockSipData::createStateSaveAreaHeader(4);
+
+    const SipKernel &sipKernel = builtins->getSipKernel(SipKernelType::csr, *mockDevice);
+    EXPECT_NE(nullptr, sipKernel.getSipAllocation());
+}
+
+TEST(Sip, givenSipKernelWhenAllocationFailsThenItHasNullptrGraphicsAllocation) {
+    auto executionEnvironment = new MockExecutionEnvironment;
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto memoryManager = new MockMemoryManager(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto mockCompilerInterface = new MockCompilerInterface();
+    executionEnvironment->rootDeviceEnvironments[0]->compilerInterface.reset(mockCompilerInterface);
+    mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
+    mockCompilerInterface->sipStateAreaHeaderOverride = MockSipData::createStateSaveAreaHeader(4);
+    auto builtins = new BuiltIns;
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtins);
+
+    memoryManager->failAllocate32Bit = true;
+
+    const SipKernel &sipKern = builtins->getSipKernel(SipKernelType::csr, *mockDevice);
+    EXPECT_EQ(nullptr, sipKern.getSipAllocation());
+}
+
 TEST(DebugSip, givenBuiltInsWhenDbgCsrSipIsRequestedThenCorrectSipKernelIsReturned) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
