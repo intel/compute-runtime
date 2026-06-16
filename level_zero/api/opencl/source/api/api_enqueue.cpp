@@ -33,6 +33,15 @@
 
 #include <cstring>
 
+inline void applyDefaultRectPitches(const size_t *region, size_t &rowPitch, size_t &slicePitch) {
+    if (rowPitch == 0) {
+        rowPitch = region[0];
+    }
+    if (slicePitch == 0) {
+        slicePitch = region[1] * rowPitch;
+    }
+}
+
 inline uint32_t getOclMipLevel(NEO::LEO::Image *pImage, const size_t *origin) {
     if (pImage == nullptr || origin == nullptr) {
         return 0u;
@@ -177,6 +186,9 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_READ_BUFFER_RECT, pCommandQueue);
 
+    applyDefaultRectPitches(region, bufferRowPitch, bufferSlicePitch);
+    applyDefaultRectPitches(region, hostRowPitch, hostSlicePitch);
+
     ze_copy_region_t l0SrcRegion{static_cast<uint32_t>(bufferOrigin[0]), static_cast<uint32_t>(bufferOrigin[1]), static_cast<uint32_t>(bufferOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
     ze_copy_region_t l0DstRegion{static_cast<uint32_t>(hostOrigin[0]), static_cast<uint32_t>(hostOrigin[1]), static_cast<uint32_t>(hostOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
 
@@ -265,6 +277,9 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_WRITE_BUFFER_RECT, pCommandQueue);
+
+    applyDefaultRectPitches(region, bufferRowPitch, bufferSlicePitch);
+    applyDefaultRectPitches(region, hostRowPitch, hostSlicePitch);
 
     ze_copy_region_t l0DstRegion{static_cast<uint32_t>(bufferOrigin[0]), static_cast<uint32_t>(bufferOrigin[1]), static_cast<uint32_t>(bufferOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
     ze_copy_region_t l0SrcRegion{static_cast<uint32_t>(hostOrigin[0]), static_cast<uint32_t>(hostOrigin[1]), static_cast<uint32_t>(hostOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
@@ -368,6 +383,9 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COPY_BUFFER_RECT, pCommandQueue);
+
+    applyDefaultRectPitches(region, srcRowPitch, srcSlicePitch);
+    applyDefaultRectPitches(region, dstRowPitch, dstSlicePitch);
 
     ze_copy_region_t l0DstRegion{static_cast<uint32_t>(dstOrigin[0]), static_cast<uint32_t>(dstOrigin[1]), static_cast<uint32_t>(dstOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
     ze_copy_region_t l0SrcRegion{static_cast<uint32_t>(srcOrigin[0]), static_cast<uint32_t>(srcOrigin[1]), static_cast<uint32_t>(srcOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
