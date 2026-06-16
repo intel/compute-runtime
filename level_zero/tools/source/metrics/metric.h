@@ -232,6 +232,7 @@ class MetricDeviceContext {
                                                  zet_metric_group_handle_t *phMetricGroups);
     bool areMetricGroupsFromSameSource(uint32_t count, zet_metric_group_handle_t *phMetricGroups, uint32_t *sourceType);
     bool areMetricsFromSameSource(uint32_t count, zet_metric_handle_t *phMetrics, uint32_t *sourceType);
+    bool isAnyMetricGroupTimeBasedOrEventBased(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
     bool areMetricsFromSameDeviceHierarchy(uint32_t count, zet_metric_handle_t *phMetrics);
 
     std::map<uint32_t, std::unique_ptr<MetricSource>> metricSources;

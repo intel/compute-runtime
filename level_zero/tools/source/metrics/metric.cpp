@@ -663,6 +663,19 @@ bool MetricDeviceContext::areMetricsFromSameSource(uint32_t count, zet_metric_ha
     return true;
 }
 
+bool MetricDeviceContext::isAnyMetricGroupTimeBasedOrEventBased(uint32_t count, zet_metric_group_handle_t *phMetricGroups) {
+    for (uint32_t index = 0; index < count; index++) {
+        auto metricGroupImp = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(phMetricGroups[index]));
+        zet_metric_group_properties_t properties = {};
+        metricGroupImp->getProperties(&properties);
+        if (((properties.samplingType & ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED) != 0) ||
+            ((properties.samplingType & ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED) != 0)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 template <typename HandleType>
 std::vector<HandleType> removeDuplicates(HandleType *inputArray, uint32_t count) {
     std::unordered_set<HandleType> uniqueHandles(inputArray, inputArray + count);
@@ -682,8 +695,13 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     uint32_t metricGroupsSourceType = MetricSource::metricSourceTypeUndefined;
     MetricGroupImp *metricGroupImp = nullptr;
     if (metricGroups.size() > 0) {
+        if ((metricGroups.size() > 1) && (isAnyMetricGroupTimeBasedOrEventBased(static_cast<uint32_t>(metricGroups.size()), metricGroups.data()))) {
+            METRICS_LOG_ERR("%s", "Calculation operation for Time-based or event-based metric groups cannot have more than one metric group");
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
         if (!areMetricGroupsFromSameSource(static_cast<uint32_t>(metricGroups.size()), metricGroups.data(), &metricGroupsSourceType)) {
-            METRICS_LOG_ERR("%s", "Metric groups must be from the same domain");
+            METRICS_LOG_ERR("%s", "Metric groups must be from the same metric source ID");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         if (!areMetricGroupsFromSameDeviceHierarchy(pCalculationDesc->metricGroupCount, pCalculationDesc->phMetricGroups)) {
@@ -698,7 +716,7 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     MetricImp *metricImp = nullptr;
     if (metrics.size() > 0) {
         if (!areMetricsFromSameSource(static_cast<uint32_t>(metrics.size()), metrics.data(), &metricsSourceType)) {
-            METRICS_LOG_ERR("%s", "Metrics must be from the same domain");
+            METRICS_LOG_ERR("%s", "Metrics must be from the same metric source ID");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
@@ -713,7 +731,7 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
 
     if (metricGroups.size() > 0) {
         if ((metrics.size() > 0) && (metricGroupsSourceType != metricsSourceType)) {
-            METRICS_LOG_ERR("%s", "Metric groups and metrics must be from the same domain");
+            METRICS_LOG_ERR("%s", "Metric groups and metrics must be from the same metric source ID");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     } else if (metrics.size() == 0) {

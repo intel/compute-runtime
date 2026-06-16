@@ -184,8 +184,11 @@ class MockMetricGroup : public L0::MetricGroupImp {
     ~MockMetricGroup() override = default;
     MockMetricGroup(MetricSource &metricSource) : L0::MetricGroupImp(metricSource) {}
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        pProperties->samplingType = samplingType;
+        return ZE_RESULT_SUCCESS;
     }
+
+    zet_metric_group_sampling_type_flags_t samplingType = 0;
     ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }

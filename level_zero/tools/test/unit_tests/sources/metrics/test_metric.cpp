@@ -262,6 +262,76 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedHierarchiesThenErrorIsRe
                                                                                             &hCalculationOperation));
 }
 
+TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMultipleTimeOrEventBasedMetricGroupsThenErrorIsReturned) {
+
+    constexpr auto timeBased = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
+    constexpr auto eventBased = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
+    // Tracer based is neither time-based nor event-based, so isAnyMetricGroupTimeBasedOrEventBase() ignores it
+    constexpr auto otherBased = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EXP_TRACER_BASED;
+
+    struct TestCase {
+        std::vector<zet_metric_group_sampling_type_flags_t> samplingTypes;
+        ze_result_t expectedResult;
+    };
+
+    // Cover the truth table of:
+    //   (metricGroups.size() > 1) && isAnyMetricGroupTimeBasedOrEventBase(...)
+    const std::vector<TestCase> testCases = {
+        // size > 1 == false : single metric group never triggers the check, regardless of sampling type
+        {{otherBased}, ZE_RESULT_SUCCESS},
+        {{timeBased}, ZE_RESULT_SUCCESS},
+        {{eventBased}, ZE_RESULT_SUCCESS},
+
+        // size > 1 == true, isAny == false : no time/event based group -> check passes
+        {{otherBased, otherBased}, ZE_RESULT_SUCCESS},
+
+        // size > 1 == true, isAny == true : every combination of time/event based groups -> error.
+        // Covers isAny returning true from either the first (index 0) or a later group.
+        {{timeBased, timeBased}, ZE_RESULT_ERROR_INVALID_ARGUMENT},
+        {{timeBased, eventBased}, ZE_RESULT_ERROR_INVALID_ARGUMENT},
+        {{eventBased, timeBased}, ZE_RESULT_ERROR_INVALID_ARGUMENT},
+        {{eventBased, eventBased}, ZE_RESULT_ERROR_INVALID_ARGUMENT},
+        {{timeBased, otherBased}, ZE_RESULT_ERROR_INVALID_ARGUMENT},
+        {{otherBased, timeBased}, ZE_RESULT_ERROR_INVALID_ARGUMENT},
+        {{eventBased, otherBased}, ZE_RESULT_ERROR_INVALID_ARGUMENT},
+        {{otherBased, eventBased}, ZE_RESULT_ERROR_INVALID_ARGUMENT},
+    };
+
+    for (const auto &testCase : testCases) {
+        std::vector<std::unique_ptr<MockMetricGroup>> metricGroupStorage;
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        for (const auto samplingType : testCase.samplingTypes) {
+            auto metricGroup = std::make_unique<MockMetricGroup>(mockMetricSource);
+            metricGroup->samplingType = samplingType;
+            metricGroups.push_back(metricGroup->toHandle());
+            metricGroupStorage.push_back(std::move(metricGroup));
+        }
+
+        zet_intel_metric_calculation_exp_desc_t calculationDesc{
+            ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
+            nullptr,                                    // pNext
+            static_cast<uint32_t>(metricGroups.size()), // metricGroupCount
+            metricGroups.data(),                        // phMetricGroups
+            0,                                          // metricCount
+            nullptr,                                    // phMetrics
+            0,                                          // timeWindowsCount
+            nullptr,                                    // pCalculationTimeWindows
+            1000,                                       // timeAggregationWindow
+            1,                                          // metricScopesCount
+            &hMetricScope,                              // phMetricScopes
+        };
+
+        zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation = nullptr;
+        EXPECT_EQ(testCase.expectedResult, zetIntelMetricCalculationOperationCreateExp(context,
+                                                                                       device->toHandle(), &calculationDesc,
+                                                                                       &hCalculationOperation));
+        if (testCase.expectedResult == ZE_RESULT_SUCCESS) {
+            EXPECT_NE(nullptr, hCalculationOperation);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
+        }
+    }
+}
+
 TEST_F(CalcOperationFixture, WhenCreatingCalcSubDeviceOnlyAcceptsOneScope) {
 
     std::vector<zet_intel_metric_scope_exp_handle_t> mockMetricScopes{hMetricScope, hMetricScope};
