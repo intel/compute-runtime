@@ -9,7 +9,8 @@
 
 namespace L0 {
 namespace Sysman {
-std::string FirmwareUtilImp::fwUtilLibraryName = "igsc.dll";
+// Windows currently uses single DLL name, but structured as vector for consistency
+std::vector<std::string> FirmwareUtilImp::fwUtilLibraryNames = {"igsc.dll"};
 int FirmwareUtilImp::fwUtilLoadFlags{};
 } // namespace Sysman
 } // namespace L0

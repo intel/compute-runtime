@@ -12,6 +12,7 @@
 namespace L0 {
 namespace Sysman {
 int FirmwareUtilImp::fwUtilLoadFlags = RTLD_LAZY;
-std::string FirmwareUtilImp::fwUtilLibraryName = "libigsc.so.0";
+// Try newer version first, fallback to older version
+std::vector<std::string> FirmwareUtilImp::fwUtilLibraryNames = {"libigsc.so.1", "libigsc.so.0"};
 } // namespace Sysman
 } // namespace L0
