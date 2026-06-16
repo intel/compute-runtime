@@ -114,6 +114,13 @@ void SysmanKmdInterfaceXe::initSysfsNameToFileMap(SysmanProductHelper *pSysmanPr
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactor] = std::make_pair("media_freq_factor", "");
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale] = std::make_pair("media_freq_factor.scale", "");
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceSystemPowerBalance] = std::make_pair("", "sys_pwr_balance");
+    // Fan hwmon sysfs node suffixes (appended after fan/pwm channel number)
+    sysfsNameToFileMap[SysfsName::sysfsNameFanInput] = std::make_pair("", "_input");        // fan[N]_input
+    sysfsNameToFileMap[SysfsName::sysfsNameFanMax] = std::make_pair("", "_max");            // fan[N]_max
+    sysfsNameToFileMap[SysfsName::sysfsNameFanPwm] = std::make_pair("", "");                // pwm[N]
+    sysfsNameToFileMap[SysfsName::sysfsNameFanPwmEnable] = std::make_pair("", "_enable");   // pwm[N]_enable
+    sysfsNameToFileMap[SysfsName::sysfsNameFanAutoPointTemp] = std::make_pair("", "_temp"); // pwm[N]_auto_point[P]_temp
+    sysfsNameToFileMap[SysfsName::sysfsNameFanAutoPointPwm] = std::make_pair("", "_pwm");   // pwm[N]_auto_point[P]_pwm
 }
 
 void SysmanKmdInterfaceXe::initSysfsNameToNativeUnitMap(SysmanProductHelper *pSysmanProductHelper) {
@@ -537,6 +544,30 @@ ze_result_t SysmanKmdInterfaceXe::getVfLocalMemoryQuota(uint64_t &lMemQuota, con
         return result;
     }
     return ZE_RESULT_SUCCESS;
+}
+
+std::string SysmanKmdInterfaceXe::getFanInputNode(const std::string &hwmonDir, uint32_t channel) {
+    return hwmonDir + "/fan" + std::to_string(channel) + getSysfsFilePath(SysfsName::sysfsNameFanInput, 0, false);
+}
+
+std::string SysmanKmdInterfaceXe::getFanMaxNode(const std::string &hwmonDir, uint32_t channel) {
+    return hwmonDir + "/fan" + std::to_string(channel) + getSysfsFilePath(SysfsName::sysfsNameFanMax, 0, false);
+}
+
+std::string SysmanKmdInterfaceXe::getPwmNode(const std::string &hwmonDir, uint32_t channel) {
+    return hwmonDir + "/pwm" + std::to_string(channel) + getSysfsFilePath(SysfsName::sysfsNameFanPwm, 0, false);
+}
+
+std::string SysmanKmdInterfaceXe::getPwmEnableNode(const std::string &hwmonDir, uint32_t channel) {
+    return hwmonDir + "/pwm" + std::to_string(channel) + getSysfsFilePath(SysfsName::sysfsNameFanPwmEnable, 0, false);
+}
+
+std::string SysmanKmdInterfaceXe::getPwmAutoPointTempNode(const std::string &hwmonDir, uint32_t channel, uint32_t point) {
+    return hwmonDir + "/pwm" + std::to_string(channel) + "_auto_point" + std::to_string(point + 1) + getSysfsFilePath(SysfsName::sysfsNameFanAutoPointTemp, 0, false);
+}
+
+std::string SysmanKmdInterfaceXe::getPwmAutoPointPwmNode(const std::string &hwmonDir, uint32_t channel, uint32_t point) {
+    return hwmonDir + "/pwm" + std::to_string(channel) + "_auto_point" + std::to_string(point + 1) + getSysfsFilePath(SysfsName::sysfsNameFanAutoPointPwm, 0, false);
 }
 
 } // namespace Sysman

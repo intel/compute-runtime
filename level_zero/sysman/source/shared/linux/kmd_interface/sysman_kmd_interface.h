@@ -110,6 +110,12 @@ enum class SysfsName {
     sysfsNamePerformanceBaseFrequencyFactorScale,
     sysfsNamePerformanceMediaFrequencyFactorScale,
     sysfsNamePerformanceSystemPowerBalance,
+    sysfsNameFanInput,
+    sysfsNameFanMax,
+    sysfsNameFanPwm,
+    sysfsNameFanPwmEnable,
+    sysfsNameFanAutoPointTemp,
+    sysfsNameFanAutoPointPwm,
 };
 
 enum class SysfsValueUnit {
@@ -201,6 +207,12 @@ class SysmanKmdInterface {
     virtual bool isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) { return false; }
     virtual bool isDeviceInFdoMode() { return false; }
     virtual bool isDeviceInSurvivabilityMode() { return false; }
+    virtual std::string getFanInputNode(const std::string &hwmonDir, uint32_t channel) { return {}; }
+    virtual std::string getFanMaxNode(const std::string &hwmonDir, uint32_t channel) { return {}; }
+    virtual std::string getPwmNode(const std::string &hwmonDir, uint32_t channel) { return {}; }
+    virtual std::string getPwmEnableNode(const std::string &hwmonDir, uint32_t channel) { return {}; }
+    virtual std::string getPwmAutoPointTempNode(const std::string &hwmonDir, uint32_t channel, uint32_t point) { return {}; }
+    virtual std::string getPwmAutoPointPwmNode(const std::string &hwmonDir, uint32_t channel, uint32_t point) { return {}; }
     virtual ze_result_t getVfLocalMemoryQuota(uint64_t &lMemQuota, const uint32_t vfId) = 0;
 
   protected:
@@ -438,6 +450,12 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isDeviceInFdoMode() override;
     bool isDeviceInSurvivabilityMode() override;
     ze_result_t getVfLocalMemoryQuota(uint64_t &lMemQuota, const uint32_t vfId) override;
+    std::string getFanInputNode(const std::string &hwmonDir, uint32_t channel) override;
+    std::string getFanMaxNode(const std::string &hwmonDir, uint32_t channel) override;
+    std::string getPwmNode(const std::string &hwmonDir, uint32_t channel) override;
+    std::string getPwmEnableNode(const std::string &hwmonDir, uint32_t channel) override;
+    std::string getPwmAutoPointTempNode(const std::string &hwmonDir, uint32_t channel, uint32_t point) override;
+    std::string getPwmAutoPointPwmNode(const std::string &hwmonDir, uint32_t channel, uint32_t point) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

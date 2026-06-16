@@ -2024,28 +2024,86 @@ void testSysmanDiagnostics(ze_device_handle_t &device) {
     }
 }
 
+// Decode a single zes_fan_speed_mode_t enum value (used for fanConfig.mode).
 std::string getFanModes(uint32_t fanMode) {
     static const std::map<uint32_t, std::string> mgetFanMode{
-        {0, "ZES_FAN_SPEED_MODE_DEFAULT"},
-        {1, "ZES_FAN_SPEED_MODE_FIXED"},
-        {2, "ZES_FAN_SPEED_MODE_TABLE"}};
+        {ZES_FAN_SPEED_MODE_DEFAULT, "ZES_FAN_SPEED_MODE_DEFAULT"},
+        {ZES_FAN_SPEED_MODE_FIXED, "ZES_FAN_SPEED_MODE_FIXED"},
+        {ZES_FAN_SPEED_MODE_TABLE, "ZES_FAN_SPEED_MODE_TABLE"}};
     auto i = mgetFanMode.find(fanMode);
     if (i == mgetFanMode.end()) {
         return "NOT SUPPORTED FAN MODE SET";
     } else {
-        return mgetFanMode.at(fanMode);
+        return i->second;
     }
 }
 
+// Decode the supportedModes bitfield (1 << zes_fan_speed_mode_t per bit).
+std::string getSupportedFanModes(uint32_t supportedModes) {
+    static const std::pair<zes_fan_speed_mode_t, const char *> knownModes[] = {
+        {ZES_FAN_SPEED_MODE_DEFAULT, "ZES_FAN_SPEED_MODE_DEFAULT"},
+        {ZES_FAN_SPEED_MODE_FIXED, "ZES_FAN_SPEED_MODE_FIXED"},
+        {ZES_FAN_SPEED_MODE_TABLE, "ZES_FAN_SPEED_MODE_TABLE"}};
+    std::string result;
+    for (auto &[mode, name] : knownModes) {
+        if (supportedModes & (1u << static_cast<uint32_t>(mode))) {
+            if (!result.empty()) {
+                result += " | ";
+            }
+            result += name;
+        }
+    }
+    return result.empty() ? "none" : result;
+}
+
+// Decode a single zes_fan_speed_units_t enum value (used for speed fields).
 std::string getFanUnits(uint32_t fanUnit) {
     static const std::map<uint32_t, std::string> mgetFanUnit{
-        {0, "ZES_FAN_SPEED_UNITS_RPM"},
-        {1, "ZES_FAN_SPEED_UNITS_PERCENT"}};
+        {ZES_FAN_SPEED_UNITS_RPM, "ZES_FAN_SPEED_UNITS_RPM"},
+        {ZES_FAN_SPEED_UNITS_PERCENT, "ZES_FAN_SPEED_UNITS_PERCENT"}};
     auto i = mgetFanUnit.find(fanUnit);
     if (i == mgetFanUnit.end()) {
         return "NOT SUPPORTED FAN UNIT SET";
     } else {
-        return mgetFanUnit.at(fanUnit);
+        return i->second;
+    }
+}
+
+// Decode the supportedUnits bitfield (1 << zes_fan_speed_units_t per bit).
+std::string getSupportedFanUnits(uint32_t supportedUnits) {
+    static const std::pair<zes_fan_speed_units_t, const char *> knownUnits[] = {
+        {ZES_FAN_SPEED_UNITS_RPM, "ZES_FAN_SPEED_UNITS_RPM"},
+        {ZES_FAN_SPEED_UNITS_PERCENT, "ZES_FAN_SPEED_UNITS_PERCENT"}};
+    std::string result;
+    for (auto &[unit, name] : knownUnits) {
+        if (supportedUnits & (1u << static_cast<uint32_t>(unit))) {
+            if (!result.empty()) {
+                result += " | ";
+            }
+            result += name;
+        }
+    }
+    return result.empty() ? "none" : result;
+}
+
+void printFanConfig(const std::string &label, const zes_fan_config_t &cfg) {
+    std::cout << std::endl
+              << label << ":" << std::endl;
+    std::cout << "  Mode            : " << getFanModes(cfg.mode) << std::endl;
+    std::cout << "  Fixed Speed     : " << cfg.speedFixed.speed
+              << " " << getFanUnits(cfg.speedFixed.units)
+              << (cfg.speedFixed.speed == -1 ? " (not set)" : "") << std::endl;
+    if (cfg.speedTable.numPoints == -1) {
+        std::cout << "  Speed Table     : not supported" << std::endl;
+    } else if (cfg.speedTable.numPoints == 0) {
+        std::cout << "  Speed Table     : no table configured" << std::endl;
+    } else {
+        std::cout << "  Speed Table     : " << cfg.speedTable.numPoints << " point(s)" << std::endl;
+        for (int32_t i = 0; i < cfg.speedTable.numPoints; i++) {
+            std::cout << "    [" << i << "] Temp: " << cfg.speedTable.table[i].temperature
+                      << " C, Speed: " << cfg.speedTable.table[i].speed.speed
+                      << " " << getFanUnits(cfg.speedTable.table[i].speed.units) << std::endl;
+        }
     }
 }
 
@@ -2064,36 +2122,103 @@ void testSysmanFan(ze_device_handle_t &device) {
     for (auto handle : handles) {
         zes_fan_properties_t fanProperties = {};
         zes_fan_config_t fanConfig = {};
-        zes_fan_speed_units_t fanUnit = {};
-        int32_t fanSpeed;
+        zes_fan_speed_units_t fanUnit = ZES_FAN_SPEED_UNITS_RPM;
+        int32_t fanSpeed = 0;
 
+        // ---- zesFanGetProperties ----
         VALIDATECALL(zesFanGetProperties(handle, &fanProperties));
         if (verbose) {
-            std::cout << "On Subdevice = " << static_cast<uint32_t>(fanProperties.onSubdevice) << std::endl;
-            std::cout << "Subdevice Id = " << fanProperties.subdeviceId << std::endl;
-            std::cout << "Can control = " << static_cast<uint32_t>(fanProperties.canControl) << std::endl;
-            std::cout << "Supported modes = " << getFanModes(fanProperties.supportedModes) << std::endl;
-            std::cout << "Supported units = " << getFanUnits(fanProperties.supportedUnits) << std::endl;
-            std::cout << "Max RPM = " << fanProperties.maxRPM << std::endl;
-            std::cout << "MAX Points = " << fanProperties.maxPoints << std::endl;
+            std::cout << std::endl
+                      << "zesFanGetProperties:" << std::endl;
+            std::cout << "  On Subdevice    : " << (fanProperties.onSubdevice ? "true" : "false") << std::endl;
+            std::cout << "  Subdevice Id    : " << fanProperties.subdeviceId << std::endl;
+            std::cout << "  Can Control     : " << (fanProperties.canControl ? "true" : "false") << std::endl;
+            std::cout << "  Supported Modes : " << getSupportedFanModes(fanProperties.supportedModes) << std::endl;
+            std::cout << "  Supported Units : " << getSupportedFanUnits(fanProperties.supportedUnits) << std::endl;
+            std::cout << "  Max RPM         : " << fanProperties.maxRPM << std::endl;
+            std::cout << "  Max Points      : " << fanProperties.maxPoints << std::endl;
         }
 
+        // ---- zesFanGetConfig ----
         VALIDATECALL(zesFanGetConfig(handle, &fanConfig));
         if (verbose) {
-            std::cout << std::endl
-                      << " ----  Fan get config tests ---- " << std::endl;
-            std::cout << "Mode = " << getFanModes(fanConfig.mode) << std::endl;
-            std::cout << "Fan Speed = " << fanConfig.speedFixed.speed << std::endl;
-            std::cout << "Fan Speed Unit = " << getFanUnits(fanConfig.speedFixed.units) << std::endl;
+            printFanConfig("zesFanGetConfig", fanConfig);
         }
 
+        // ---- zesFanGetState ----
         VALIDATECALL(zesFanGetState(handle, fanUnit, &fanSpeed));
         if (verbose) {
             std::cout << std::endl
-                      << " ----  Fan get State tests ---- " << std::endl;
-            std::cout << "Fan Speed = " << fanSpeed << std::endl;
-            std::cout << "Fan Speed Unit = " << getFanUnits(fanUnit) << std::endl;
+                      << "zesFanGetState:" << std::endl;
+            std::cout << "  Speed           : " << fanSpeed
+                      << " " << getFanUnits(fanUnit) << std::endl;
         }
+
+        // ---- zesFanSetDefaultMode ----
+        // Restore hardware automatic fan control.
+        if (verbose) {
+            std::cout << std::endl
+                      << "zesFanSetDefaultMode:" << std::endl;
+        }
+        VALIDATECALL(zesFanSetDefaultMode(handle));
+        if (verbose) {
+            zes_fan_config_t configAfterDefault = {};
+            VALIDATECALL(zesFanGetConfig(handle, &configAfterDefault));
+            printFanConfig("zesFanGetConfig (after zesFanSetDefaultMode)", configAfterDefault);
+        }
+
+        // ---- zesFanSetFixedSpeedMode ----
+        // Fixed speed mode may not be supported on all platforms; the call is
+        // expected to return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE in that case.
+        if (verbose) {
+            std::cout << std::endl
+                      << "zesFanSetFixedSpeedMode:" << std::endl;
+        }
+        zes_fan_speed_t fixedSpeed = {};
+        fixedSpeed.speed = 50; // 50 % duty cycle
+        fixedSpeed.units = ZES_FAN_SPEED_UNITS_PERCENT;
+        ze_result_t fixedResult = zesFanSetFixedSpeedMode(handle, &fixedSpeed);
+        if (verbose) {
+            if (fixedResult == ZE_RESULT_SUCCESS) {
+                std::cout << "  Speed set       : " << fixedSpeed.speed
+                          << " " << getFanUnits(fixedSpeed.units) << std::endl;
+            } else {
+                std::cout << "  Result          : " << getErrorString(fixedResult) << std::endl;
+            }
+        }
+
+        // ---- zesFanSetSpeedTableMode ----
+        // Table entries mirror the hardware default curve observed via zesFanGetConfig,
+        // so the fan speed is not changed meaningfully during the test.
+        // Default mode is restored immediately afterwards.
+        if (verbose) {
+            std::cout << std::endl
+                      << "zesFanSetSpeedTableMode:" << std::endl;
+        }
+        zes_fan_speed_table_t speedTable = {};
+        speedTable.numPoints = 10;
+        speedTable.table[0] = {35, {10, ZES_FAN_SPEED_UNITS_PERCENT}};
+        speedTable.table[1] = {53, {12, ZES_FAN_SPEED_UNITS_PERCENT}};
+        speedTable.table[2] = {60, {18, ZES_FAN_SPEED_UNITS_PERCENT}};
+        speedTable.table[3] = {65, {23, ZES_FAN_SPEED_UNITS_PERCENT}};
+        speedTable.table[4] = {70, {30, ZES_FAN_SPEED_UNITS_PERCENT}};
+        speedTable.table[5] = {81, {52, ZES_FAN_SPEED_UNITS_PERCENT}};
+        speedTable.table[6] = {83, {61, ZES_FAN_SPEED_UNITS_PERCENT}};
+        speedTable.table[7] = {85, {72, ZES_FAN_SPEED_UNITS_PERCENT}};
+        speedTable.table[8] = {86, {83, ZES_FAN_SPEED_UNITS_PERCENT}};
+        speedTable.table[9] = {87, {94, ZES_FAN_SPEED_UNITS_PERCENT}};
+        ze_result_t tableResult = zesFanSetSpeedTableMode(handle, &speedTable);
+        if (verbose) {
+            if (tableResult == ZE_RESULT_SUCCESS) {
+                std::cout << "  Points set      : " << speedTable.numPoints << std::endl;
+                zes_fan_config_t configAfterTable = {};
+                VALIDATECALL(zesFanGetConfig(handle, &configAfterTable));
+                printFanConfig("zesFanGetConfig (after zesFanSetSpeedTableMode)", configAfterTable);
+            } else {
+                std::cout << "  Result          : " << getErrorString(tableResult) << std::endl;
+            }
+        }
+        VALIDATECALL(zesFanSetDefaultMode(handle)); // restore
     }
 }
 

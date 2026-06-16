@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -354,7 +354,7 @@ std::unique_ptr<OsFan> OsFan::create(OsSysman *pOsSysman, uint32_t fanIndex, boo
     return pWddmFanImp;
 }
 
-uint32_t OsFan::getSupportedFanCount(OsSysman *pOsSysman) {
+std::vector<uint32_t> OsFan::getSupportedFanChannels(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 
@@ -369,7 +369,7 @@ uint32_t OsFan::getSupportedFanCount(OsSysman *pOsSysman) {
     ze_result_t status = pKmdSysManager->requestSingle(request, response);
 
     if (status != ZE_RESULT_SUCCESS) {
-        return 0;
+        return {};
     }
 
     uint32_t fanCount = 0;
@@ -390,14 +390,18 @@ uint32_t OsFan::getSupportedFanCount(OsSysman *pOsSysman) {
             // Check SingleSupported capability
             bool singleSupported = (fanCaps.singleSupported != 0);
 
-            // If SingleSupported is not available, return fanCount as 1
+            // If SingleSupported is not available, expose only one fan
             if (!singleSupported) {
                 fanCount = 1;
             }
         }
     }
 
-    return fanCount;
+    std::vector<uint32_t> channels(fanCount);
+    for (uint32_t i = 0; i < fanCount; i++) {
+        channels[i] = i;
+    }
+    return channels;
 }
 
 void WddmFanImp::setFanIndexForMultipleFans(std::vector<KmdSysman::RequestProperty> &vRequests) {

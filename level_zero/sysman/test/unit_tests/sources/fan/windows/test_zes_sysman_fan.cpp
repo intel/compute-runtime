@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1117,6 +1117,15 @@ TEST_F(SysmanDeviceFanFixture, GivenTableModeResponseSizeMismatchWhenGettingFanC
         pKmdSysManager->requestMultipleCallCount = 0;
         pKmdSysManager->mockFanCurrentFanPoints = 0;
     }
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenTwoFanDomainsWhenFanContextInitCalledThenTwoHandlesCreated) {
+    init(true);
+    pKmdSysManager->mockSupportedFanCount = 2;
+    pSysmanDeviceImp->pFanHandleContext->handleList.clear();
+    pSysmanDeviceImp->pFanHandleContext->init();
+    // One handle per discovered fan domain
+    EXPECT_EQ(2u, pSysmanDeviceImp->pFanHandleContext->handleList.size());
 }
 
 } // namespace ult

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2025 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,8 @@ if(UNIX)
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_fan.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_fan_xe.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mock_fan.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_fan_xe.h
   )
 endif()

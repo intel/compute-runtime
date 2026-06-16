@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/fan/sysman_fan.h"
 
 #include "level_zero/sysman/source/api/fan/sysman_fan_imp.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 
 namespace L0 {
 namespace Sysman {
@@ -20,11 +21,11 @@ void FanHandleContext::createHandle(uint32_t fanIndex, bool multipleFansSupporte
 }
 
 void FanHandleContext::init() {
-    auto supportedFanCount = OsFan::getSupportedFanCount(pOsSysman);
-    bool multipleFansSupported = (supportedFanCount > 1);
+    auto channels = OsFan::getSupportedFanChannels(pOsSysman);
+    bool multipleFansSupported = (channels.size() > 1);
 
-    for (uint32_t fanIndex = 0; fanIndex < supportedFanCount; fanIndex++) {
-        createHandle(fanIndex, multipleFansSupported);
+    for (uint32_t channel : channels) {
+        createHandle(channel, multipleFansSupported);
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include <level_zero/zes_api.h>
 
 #include <memory>
+#include <vector>
 
 namespace L0 {
 namespace Sysman {
@@ -23,7 +24,7 @@ class OsFan {
     virtual ze_result_t setFixedSpeedMode(const zes_fan_speed_t *pSpeed) = 0;
     virtual ze_result_t setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTable) = 0;
     virtual ze_result_t getState(zes_fan_speed_units_t units, int32_t *pSpeed) = 0;
-    static uint32_t getSupportedFanCount(OsSysman *pOsSysman);
+    static std::vector<uint32_t> getSupportedFanChannels(OsSysman *pOsSysman);
     static std::unique_ptr<OsFan> create(OsSysman *pOsSysman, uint32_t fanIndex, bool multipleFansSupported);
     virtual ~OsFan() = default;
 };
