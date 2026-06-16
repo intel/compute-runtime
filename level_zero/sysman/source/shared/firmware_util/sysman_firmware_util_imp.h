@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -158,7 +158,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableAndNonMovableClass 
     void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) override;
 
     static int fwUtilLoadFlags;
-    static std::string fwUtilLibraryName;
+    static std::vector<std::string> fwUtilLibraryNames;
     bool loadEntryPoints();
     bool loadEntryPointsExt();
     void updateFirmwareFlashProgress(uint32_t percent);
