@@ -1211,7 +1211,7 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
         IndirectArgs &operator=(IndirectArgs &&) = default;
         ~IndirectArgs();
         void *pNext;
-        ClosureExternalStorage::KernelArgumentsId argumentsId;
+        ClosureExternalStorage::KernelArgumentsId argumentsId = ClosureExternalStorage::invalidKernelArgumentsId;
         std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
 
