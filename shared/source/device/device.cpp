@@ -1293,7 +1293,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
             .flags = RayTracingHelper::depthTestLessEqualFlag,
         };
 
-        releaseHelper->adjustRTDispatchGlobals(static_cast<void *>(&dispatchGlobals), rtStacksPerDss, maxBvhLevels);
+        releaseHelper->adjustRTDispatchGlobals(dispatchGlobals, rtStacksPerDss, maxBvhLevels);
 
         MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(this->getRootDeviceEnvironment(), *dispatchGlobalsArrayAllocation),
                                                          *this,
