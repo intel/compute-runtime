@@ -22,10 +22,11 @@
 namespace NEO {
 class RayTracingHelper : public NonCopyableAndNonMovableClass {
   public:
-    static constexpr uint32_t hitInfoSize = 64;
     static constexpr uint32_t bvhStackSize = 96;
-    static constexpr uint32_t memoryBackedFifoSizePerDss = 8 * MemoryConstants::kiloByte;
+    static constexpr uint32_t depthTestLessEqualFlag = 1u;
+    static constexpr uint32_t hitInfoSize = 64;
     static constexpr uint32_t maxBvhLevels = 8;
+    static constexpr uint32_t memoryBackedFifoSizePerDss = 8 * MemoryConstants::kiloByte;
 
     static constexpr uint32_t maxSizeOfRtStacksPerDss = 4096;
     static constexpr uint32_t fixedSizeOfRtStacksPerDss = 2048;

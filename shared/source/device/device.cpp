@@ -1264,18 +1264,17 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
             break;
         }
 
-        RTDispatchGlobals dispatchGlobals = {0};
-
-        dispatchGlobals.rtMemBasePtr = rtStackAllocation->getGpuAddress() + rtStackSize;
-        dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
-        auto releaseHelper = getReleaseHelper();
-        dispatchGlobals.stackSizePerRay = releaseHelper->getStackSizePerRay();
-
         auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(*this);
-        dispatchGlobals.numDSSRTStacks = rtStacksPerDss;
-        dispatchGlobals.maxBVHLevels = maxBvhLevels;
-        uint32_t *dispatchGlobalsAsArray = reinterpret_cast<uint32_t *>(&dispatchGlobals);
-        dispatchGlobalsAsArray[7] = 1;
+        auto releaseHelper = getReleaseHelper();
+
+        RTDispatchGlobals dispatchGlobals = {
+            .rtMemBasePtr = rtStackAllocation->getGpuAddress() + rtStackSize,
+            .callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr),
+            .stackSizePerRay = releaseHelper->getStackSizePerRay(),
+            .numDSSRTStacks = rtStacksPerDss,
+            .maxBVHLevels = maxBvhLevels,
+            .flags = RayTracingHelper::depthTestLessEqualFlag,
+        };
 
         releaseHelper->adjustRTDispatchGlobals(static_cast<void *>(&dispatchGlobals), rtStacksPerDss, maxBvhLevels);
 

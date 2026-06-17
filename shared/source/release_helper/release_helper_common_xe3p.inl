@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
@@ -41,7 +42,7 @@ void ReleaseHelperHw<release>::adjustRTDispatchGlobals(void *rtDispatchGlobals, 
     auto *dispatchGlobals = reinterpret_cast<RTDispatchGlobals2 *>(rtDispatchGlobals);
     dispatchGlobals->numDSSRTStacks = std::min(rtStacksPerDss, maxNumDSSRTStacks);
     dispatchGlobals->syncNumDSSRTStacks = std::min(rtStacksPerDss, maxSyncNumDSSRTStacks);
-    dispatchGlobals->flags = 1;
+    dispatchGlobals->flags = RayTracingHelper::depthTestLessEqualFlag;
 
     if (maxBvhLevels >= 8) {
         maxBvhLevels = 0;
