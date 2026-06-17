@@ -3235,6 +3235,66 @@ TEST(GraphTestZeExecutableGraphGetSourceGraphExt, GivenInvalidParametersThenRetu
     EXPECT_EQ(&graph, queryResult);
 }
 
+TEST(GraphTestZeGraphGetIdExt, GivenInvalidParametersThenReturnsInvalidArgument) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true};
+    uint64_t graphId = 0;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeGraphGetIdExt(nullptr, &graphId));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeGraphGetIdExt(graph.toHandle(), nullptr));
+}
+
+TEST(GraphTestZeGraphGetIdExt, GivenValidGraphThenReturnsNonZeroStableId) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true};
+    auto hGraph = graph.toHandle();
+
+    uint64_t firstQuery = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphGetIdExt(hGraph, &firstQuery));
+    EXPECT_NE(0u, firstQuery);
+
+    uint64_t secondQuery = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphGetIdExt(hGraph, &secondQuery));
+    EXPECT_EQ(firstQuery, secondQuery);
+}
+
+TEST(GraphTestZeGraphGetIdExt, GivenMultipleGraphsThenIdsAreUniqueAndMonotonicallyIncreasing) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph firstGraph{&ctx, true};
+    MockGraph secondGraph{&ctx, true};
+
+    uint64_t firstQuery = 0;
+    uint64_t secondQuery = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphGetIdExt(firstGraph.toHandle(), &firstQuery));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphGetIdExt(secondGraph.toHandle(), &secondQuery));
+
+    EXPECT_LT(firstQuery, secondQuery);
+}
+
+TEST(GraphTestZeGraphGetIdExt, GivenSubgraphThenReturnsRootGraphId) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph rootGraph{&ctx, true};
+    TestableGraphForCmdListQuery subgraph1{&ctx, true};
+    TestableGraphForCmdListQuery subgraph2{&ctx, true};
+    subgraph1.setParentGraph(&rootGraph);
+    subgraph2.setParentGraph(&subgraph1);
+
+    uint64_t rootId = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphGetIdExt(rootGraph.toHandle(), &rootId));
+
+    uint64_t subgraph1Id = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphGetIdExt(subgraph1.toHandle(), &subgraph1Id));
+    EXPECT_EQ(rootId, subgraph1Id);
+
+    uint64_t subgraph2Id = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphGetIdExt(subgraph2.toHandle(), &subgraph2Id));
+    EXPECT_EQ(rootId, subgraph2Id);
+}
+
 TEST(GraphTestZeGraphSetDestructionCallbackExp, GivenInvalidParametersThenReturnsAppropriateErrorCode) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;

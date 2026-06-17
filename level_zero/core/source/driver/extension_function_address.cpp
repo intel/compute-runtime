@@ -149,6 +149,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphGetPrimaryCommandListExt);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphPauseCaptureExt);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphResumeCaptureExt);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphGetIdExt);
 
     // Metrics
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceEnableMetricsExp);

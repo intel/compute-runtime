@@ -310,6 +310,20 @@ ze_result_t ZE_APICALL zeGraphGetPrimaryCommandListExt(ze_graph_handle_t hGraph,
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t ZE_APICALL zeGraphGetIdExt(ze_graph_handle_t hGraph, uint64_t *pGraphId) {
+    const auto *graph = L0::Graph::fromHandle(hGraph);
+    if (nullptr == graph) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    if (nullptr == pGraphId) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    *pGraphId = graph->getId();
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t ZE_APICALL zeGraphPauseCaptureExt(ze_graph_handle_t hGraph) {
     auto graph = L0::Graph::fromHandle(hGraph);
     if (nullptr == graph) {

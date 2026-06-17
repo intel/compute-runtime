@@ -45,6 +45,11 @@ inline bool areGraphsEnabled() {
     return processUsesGraphs.load();
 }
 
+inline std::atomic<uint64_t> graphIdCounter{1};
+inline uint64_t getNextGraphId() {
+    return graphIdCounter.fetch_add(1, std::memory_order_relaxed);
+}
+
 using ClosureVariants = std::variant<
 #define RR_CAPTURED_API(X) Closure<CaptureApi::X>,
     RR_CAPTURED_APIS()
@@ -287,6 +292,14 @@ struct Graph : _ze_graph_handle_t {
         return ctx;
     }
 
+    uint64_t getId() const {
+        const Graph *root = this;
+        while (nullptr != root->parentGraph) {
+            root = root->parentGraph;
+        }
+        return root->id;
+    }
+
     struct CaptureTargetDesc {
         ze_device_handle_t hDevice = nullptr;
         ze_command_list_desc_t desc{};
@@ -409,6 +422,8 @@ struct Graph : _ze_graph_handle_t {
     L0::CommandList *executionTarget = nullptr;
     L0::Context *ctx = nullptr;
     Graph *parentGraph = nullptr;
+
+    const uint64_t id = getNextGraphId();
 
     bool preallocated = false;
     bool wasCapturingStopped = false;

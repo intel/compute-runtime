@@ -32,5 +32,6 @@ ze_result_t ZE_APICALL zeExecutableGraphGetSourceGraphExt(ze_executable_graph_ha
 ze_result_t ZE_APICALL zeGraphGetPrimaryCommandListExt(ze_graph_handle_t hGraph, ze_command_list_handle_t *phCommandList);
 ze_result_t ZE_APICALL zeGraphPauseCaptureExt(ze_graph_handle_t hGraph);
 ze_result_t ZE_APICALL zeGraphResumeCaptureExt(ze_graph_handle_t hGraph);
+ze_result_t ZE_APICALL zeGraphGetIdExt(ze_graph_handle_t hGraph, uint64_t *pGraphId);
 
 } // namespace L0
