@@ -11,6 +11,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/user_event.h"
+#include "opencl/test/unit_test/command_queue/blit_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -73,4 +74,70 @@ HWTEST_F(EnqueueHandlerTestBasicMt, givenBlockedEnqueueHandlerWhenCommandIsBlock
     EXPECT_EQ(initialTaskCount + 1, mockInternalAllocationStorage->lastCleanAllocationsTaskCount);
 
     t0.join();
+}
+
+using BlitEnqueueMtTests = NEO::BlitEnqueueTests<1>;
+
+HWTEST_TEMPLATED_F(BlitEnqueueMtTests, givenBlockedBcsEnqueueWhenEventIsSetConcurrentlyWithNewBcsEnqueueThenNoDeadlock) {
+    auto blockedBuffer = createBuffer(1, false);
+    auto concurrentBuffer = createBuffer(1, false);
+    blockedBuffer->forceDisallowCPUCopy = true;
+    concurrentBuffer->forceDisallowCPUCopy = true;
+
+    uint32_t hostData = 0u;
+    NEO::UserEvent userEvent{};
+    cl_event waitlist = &userEvent;
+
+    commandQueue->enqueueWriteBuffer(blockedBuffer.get(), false, 0, 1, &hostData, nullptr, 1, &waitlist, nullptr);
+
+    std::atomic<int> barrier{0};
+
+    std::thread threadEnqueue([&]() {
+        barrier.fetch_add(1, std::memory_order_relaxed);
+        while (barrier.load(std::memory_order_relaxed) < 2) {
+        }
+        commandQueue->enqueueWriteBuffer(concurrentBuffer.get(), false, 0, 1, &hostData, nullptr, 0, nullptr, nullptr);
+    });
+
+    barrier.fetch_add(1, std::memory_order_relaxed);
+    while (barrier.load(std::memory_order_relaxed) < 2) {
+    }
+    userEvent.setStatus(CL_COMPLETE);
+
+    threadEnqueue.join();
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueMtTests, givenConcurrentEnqueueBlitAndEnqueueBlitSplitThenNoDeadlock) {
+    // Force the split path for transfers >= 1 KB, non-split for smaller ones,
+    // so that two concurrent writes on the same queue take different internal paths.
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.SplitBcsSize.set(1);
+    debugManager.flags.SplitBcsMask.set(3);
+
+    const size_t largeSize = MemoryConstants::kiloByte;
+    const size_t smallSize = 1u;
+
+    auto largeBuffer = createBuffer(largeSize, false);
+    auto smallBuffer = createBuffer(smallSize, false);
+    largeBuffer->forceDisallowCPUCopy = true;
+    smallBuffer->forceDisallowCPUCopy = true;
+
+    std::vector<uint8_t> hostData(largeSize, 0u);
+    std::atomic<int> barrier{0};
+
+    std::thread threadLarge([&]() {
+        barrier.fetch_add(1, std::memory_order_relaxed);
+        while (barrier.load(std::memory_order_relaxed) < 2) {
+        }
+        commandQueue->enqueueWriteBuffer(largeBuffer.get(), false, 0, largeSize, hostData.data(), nullptr, 0, nullptr, nullptr);
+    });
+
+    barrier.fetch_add(1, std::memory_order_relaxed);
+    while (barrier.load(std::memory_order_relaxed) < 2) {
+    }
+    commandQueue->enqueueWriteBuffer(smallBuffer.get(), false, 0, smallSize, hostData.data(), nullptr, 0, nullptr, nullptr);
+
+    threadLarge.join();
 }

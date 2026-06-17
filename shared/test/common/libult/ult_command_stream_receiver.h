@@ -337,10 +337,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
-        std::lock_guard<std::mutex> guard(mutex);
-        latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
-        latestWaitForCompletionWithTimeoutWaitParams = params;
-        waitForCompletionWithTimeoutTaskCountCalled++;
+        {
+            std::lock_guard<std::mutex> guard(mutex);
+            latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
+            latestWaitForCompletionWithTimeoutWaitParams = params;
+            waitForCompletionWithTimeoutTaskCountCalled++;
+        }
         if (callBaseWaitForCompletionWithTimeout) {
             return BaseClass::waitForCompletionWithTimeout(params, taskCountToWait);
         }
@@ -767,7 +769,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     std::atomic_bool downloadAllocationCalled = false;
     std::atomic_bool downloadAllocationsCalled = false;
     std::atomic_bool flushBatchedSubmissionsCalled = false;
-    bool flushTagUpdateCalled = false;
+    std::atomic_bool flushTagUpdateCalled = false;
     bool callFlushTagUpdate = true;
     bool callBaseStopDirectSubmission = true;
     bool initProgrammingFlagsCalled = false;

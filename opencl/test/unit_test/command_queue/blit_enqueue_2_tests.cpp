@@ -426,33 +426,15 @@ HWTEST_TEMPLATED_F(BlitEnqueueForceFlagsTests, givenFlagsToForceCsrLockAndNonBlo
     buffer->forceDisallowCPUCopy = true;
     mockCommandQueue->setQueueBlocked = false;
     int hostPtr = 0;
-    {
-        debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(-1);
-        debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
-        mockCsr->recursiveLockCounter = 0u;
-        mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-        EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
-    }
-    {
-        debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(-1);
-        debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
-        mockCsr->recursiveLockCounter = 0u;
-        mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-        EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
-    }
-    {
-        debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
-        debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
-        mockCsr->recursiveLockCounter = 0u;
-        mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-        EXPECT_EQ(0u, mockCsr->recursiveLockCounter);
-    }
-    {
-        debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
-        debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
-        mockCsr->recursiveLockCounter = 0u;
-        mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-        EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
+    for (auto csrLockFlagValue : {-1, 0, 1}) {
+        const auto expectedLockCount = (csrLockFlagValue != 0) ? 1u : 0u;
+        for (auto gpgpuSubmissionFlagValue : {0, 1}) {
+            debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(csrLockFlagValue);
+            debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(gpgpuSubmissionFlagValue);
+            mockCsr->recursiveLockCounter = 0u;
+            mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+            EXPECT_EQ(expectedLockCount, mockCsr->recursiveLockCounter);
+        }
     }
 }
 
@@ -471,7 +453,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueForceFlagsTests, givenFlagToForceCsrLockAndBlocked
     mockCommandQueue->setQueueBlocked = true;
     mockCommandQueue->forceGpgpuSubmissionForBcsRequired = 0;
     mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, mockCsr->recursiveLockCounter);
+    EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
 }
 HWTEST_TEMPLATED_F(BlitEnqueueForceFlagsTests, givenFlagToForceCsrLockAndBlockedQueueWhenGpgpuSubmissionForBcsRequiredAndCallEnqueueBlitThenLockAreSetCorrectly) {
     using CsrType = UltCommandStreamReceiver<FamilyType>;

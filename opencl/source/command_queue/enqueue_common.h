@@ -1308,6 +1308,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
         splitEngines = this->d2hEngines;
     }
 
+    TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
+    std::unique_lock<NEO::CommandStreamReceiver::MutexType> gpgpuLock;
+    if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 0) {
+        gpgpuLock = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    }
+
     for (uint32_t i = 0; i < bcsInfoMaskSize; i++) {
         if (splitEngines.test(i)) {
             auto engineType = EngineHelpers::mapBcsIndexToEngineType(i, true);
@@ -1320,7 +1326,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     }
 
     DEBUG_BREAK_IF(copyEngines.size() == 0);
-    TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
     if (isOOQEnabled() && (isStallingCommandsOnNextFlushRequired() || this->splitBarrierRequired)) {
         this->setStallingCommandsOnNextFlush(true);
@@ -1384,10 +1389,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     this->timestampPacketContainer->swapNodes(splitNodes);
     this->splitBarrierRequired = false;
 
-    queueOwnership.unlock();
     for (auto &lock : locks) {
         lock.unlock();
     }
+    if (gpgpuLock.owns_lock()) {
+        gpgpuLock.unlock();
+    }
+    queueOwnership.unlock();
 
     if (blocking) {
         ret = this->finish(false);
@@ -1404,11 +1412,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     }
 
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
-    auto bcsCommandStreamReceiverOwnership = bcsCsr.obtainUniqueOwnership();
     std::unique_lock<NEO::CommandStreamReceiver::MutexType> commandStreamReceiverOwnership;
-    if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 1) {
+    if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 0) {
         commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
     }
+    auto bcsCommandStreamReceiverOwnership = bcsCsr.obtainUniqueOwnership();
 
     registerBcsCsrClient(bcsCsr);
 
@@ -1491,9 +1499,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     if (gpgpuSubmission) {
         registerGpgpuCsrClient();
 
-        if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() == 1) {
-            commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
-        }
         gpgpuCommandStream = obtainCommandStream<cmdType>(csrDeps, true, blockQueue, multiDispatchInfo, eventsRequest, blockedCommandsData, nullptr, 0, false, false);
         gpgpuCommandStreamStart = gpgpuCommandStream->getUsed();
     }
@@ -1516,10 +1521,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
             return CommandQueue::getErrorCodeFromTaskCount(completionStamp.taskCount);
         }
 
-        if (gpgpuSubmission) {
-            if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() == 1) {
-                commandStreamReceiverOwnership.unlock();
-            }
+        if (commandStreamReceiverOwnership.owns_lock()) {
+            commandStreamReceiverOwnership.unlock();
         }
 
         if (pEventBuilder->getEvent()) {
@@ -1535,10 +1538,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     if (blockQueue) {
         enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, *pEventBuilder, nullptr, &bcsCsr, multiRootEventSyncStamp, &dependencyTags);
 
-        if (gpgpuSubmission) {
-            if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() == 1) {
-                commandStreamReceiverOwnership.unlock();
-            }
+        if (commandStreamReceiverOwnership.owns_lock()) {
+            commandStreamReceiverOwnership.unlock();
         }
     }
 
@@ -1553,9 +1554,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         bcsCsr.flushTagUpdate();
     }
 
-    if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 1) {
-        commandStreamReceiverOwnership.unlock();
-    }
     bcsCommandStreamReceiverOwnership.unlock();
     queueOwnership.unlock();
     if (blocking) {

@@ -296,7 +296,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     BuiltIn::OpParams kernelParams;
     size_t enqueueWriteImageCounter = 0;
     size_t enqueueReadImageCounter = 0;
-    size_t enqueueWriteBufferCounter = 0;
+    std::atomic<size_t> enqueueWriteBufferCounter = 0;
     size_t enqueueReadBufferCounter = 0;
     size_t requestedCmdStreamSize = 0;
     size_t enqueueSVMMemcpyCalledCount = 0;
@@ -318,7 +318,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool enqueueReadImageCallBase = true;
     bool enqueueWriteBufferCallBase = true;
     bool enqueueReadBufferCallBase = true;
-    bool blockingWriteBuffer = false;
+    std::atomic<bool> blockingWriteBuffer = false;
     bool blockingReadBuffer = false;
     bool storeMultiDispatchInfo = false;
     bool notifyEnqueueReadBufferCalled = false;

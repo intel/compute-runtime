@@ -109,14 +109,19 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS)
     add_custom_target(run_${product}_${revision_id}_ocl_tests DEPENDS unit_tests)
     set_target_properties(run_${product}_${revision_id}_ocl_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
 
+    set(NEO_OCL_TESTS_CMD_PREFIX)
+    if(USE_TSAN)
+      set(NEO_OCL_TESTS_CMD_PREFIX ${CMAKE_COMMAND} -E env "TSAN_OPTIONS=suppressions=${NEO_SOURCE_DIR}/opencl/test/unit_test/mt_tests/tsan_suppressions.txt")
+    endif()
+
     set(outputdir "${TargetDir}/opencl/${product}/${revision_id}")
     add_custom_command(
                        TARGET run_${product}_${revision_id}_ocl_tests
                        POST_BUILD
                        COMMAND WORKING_DIRECTORY ${TargetDir}
                        COMMAND echo Running igdrcl_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}
-                       COMMAND echo Cmd line: ${GTEST_ENV} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
-                       COMMAND ${GTEST_ENV} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
+                       COMMAND echo Cmd line: ${NEO_OCL_TESTS_CMD_PREFIX} ${GTEST_ENV} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
+                       COMMAND ${NEO_OCL_TESTS_CMD_PREFIX} ${GTEST_ENV} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
     )
 
     if(WIN32 AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND APPVERIFIER_ALLOWED)

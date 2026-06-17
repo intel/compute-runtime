@@ -26,6 +26,12 @@ race:NEO::CommandQueue::updateBcsTaskCount
 # read is benign - once set, gpgpuEngine is never reset.
 race:NEO::CommandQueue::initializeGpgpu
 race:NEO::tryAssignSecondaryEngine
+# initializeGpgpu acquires a static mutex then requestPreallocation acquires the GPGPU CSR
+# lock, creating a static-mutex->CSR ordering. Regular enqueue paths may call initializeGpgpu
+# while holding a CSR lock (from a different queue) creating the reversed edge. The actual
+# deadlock is impossible: once gpgpuEngine is set, initializeGpgpu is a no-op and neither
+# lock is acquired. The observed ordering is a one-time initialisation artifact.
+deadlock:NEO::CommandQueue::initializeGpgpu
 
 # FlushStampUpdateHelper::updateAll writes flushStamp/initialized on event objects that
 # may be shared between the BCS and GPGPU flush paths. Each caller holds its own CSR lock,

@@ -1247,6 +1247,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
                                                                           csr, buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex()), nullptr, hostPtr,
                                                                           bufferGpuVa, 0,
                                                                           0, 0, {bltSize, 1, 1}, 0, 0, 0, 0);
+    expectedResursiveLockCount++;
     if (csr.getClearColorAllocation()) {
         expectedResursiveLockCount++;
     }
