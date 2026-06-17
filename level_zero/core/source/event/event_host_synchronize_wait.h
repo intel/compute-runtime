@@ -19,6 +19,22 @@
 
 namespace L0::EventHostSynchronize {
 
+inline bool isDrm(const NEO::CommandStreamReceiver &csr) {
+    auto osInterface = csr.getOSInterface();
+    auto driverModel = osInterface ? osInterface->getDriverModel() : nullptr;
+    return driverModel && driverModel->getDriverModelType() == NEO::DriverModelType::drm;
+}
+
+inline int64_t getWaitPkgThreshold(const NEO::CommandStreamReceiver &csr) {
+    const auto debugWaitpkgThreshold = NEO::debugManager.flags.WaitpkgThreshold.get();
+    if (debugWaitpkgThreshold != -1) {
+        return debugWaitpkgThreshold;
+    }
+
+    return isDrm(csr) ? NEO::WaitUtils::defaultWaitPkgThresholdForDrmEventHostSyncInMicroSeconds
+                      : NEO::WaitUtils::defaultWaitPkgThresholdForWddmEventHostSyncInMicroSeconds;
+}
+
 inline bool isNativeWddm(const NEO::CommandStreamReceiver &csr) {
     auto osInterface = csr.getOSInterface();
     auto driverModel = osInterface ? osInterface->getDriverModel() : nullptr;

@@ -123,7 +123,7 @@ TEST_F(WaitPkgTest, givenDefaultSettingsAndWaitpkgSupportTrueWhenWaitInitialized
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::uninitialized);
     EXPECT_EQ(20, WaitUtils::waitPkgThresholdInMicroSeconds);
-    EXPECT_EQ(WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds, WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
+    EXPECT_EQ(WaitUtils::defaultWaitPkgThresholdForWddmEventHostSyncInMicroSeconds, WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
 
     EXPECT_EQ(expectedWaitpkgSupport, WaitUtils::waitpkgSupport);
 
@@ -134,7 +134,7 @@ TEST_F(WaitPkgTest, givenDefaultSettingsAndWaitpkgSupportTrueWhenWaitInitialized
     EXPECT_EQ(12000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::noUse);
-    EXPECT_EQ(WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds, WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
+    EXPECT_EQ(WaitUtils::defaultWaitPkgThresholdForWddmEventHostSyncInMicroSeconds, WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
 }
 
 TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportFalseWhenWaitInitializedThenWaitPkgNotEnabled) {

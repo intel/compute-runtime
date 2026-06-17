@@ -2105,7 +2105,7 @@ TEST_F(EventSynchronizeTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchr
 }
 
 TEST_F(EventSynchronizeTest, GivenShortTimeoutAndNotReadyEventWhenHostSynchronizeIsCalledThenTPauseIsNotCalled) {
-    int64_t eventHostSyncThreshold = WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds;
+    int64_t eventHostSyncThreshold = WaitUtils::defaultWaitPkgThresholdForWddmEventHostSyncInMicroSeconds;
     VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
     VariableBackup<int64_t> backupWaitpkgThresholdForEventHostSync(
         &WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds,
@@ -2128,7 +2128,7 @@ TEST_F(EventSynchronizeTest, GivenShortTimeoutAndNotReadyEventWhenHostSynchroniz
 
 TEST_F(EventSynchronizeTest, GivenUllsLightThresholdAndShortTimeoutWhenHostSynchronizeIsCalledThenTPauseIsNotCalled) {
     int64_t ullsLightThreshold = WaitUtils::defaultWaitPkgThresholdForUllsLightInMicroSeconds;
-    int64_t eventHostSyncThreshold = WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds;
+    int64_t eventHostSyncThreshold = WaitUtils::defaultWaitPkgThresholdForWddmEventHostSyncInMicroSeconds;
     VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
     VariableBackup<int64_t> backupWaitpkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds, ullsLightThreshold);
     VariableBackup<int64_t> backupWaitpkgThresholdForEventHostSync(
@@ -2148,6 +2148,67 @@ TEST_F(EventSynchronizeTest, GivenUllsLightThresholdAndShortTimeoutWhenHostSynch
     CpuIntrinsicsTests::tpauseCounter = 0;
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
+TEST_F(EventSynchronizeTest, GivenDrmDriverModelAndElapsedTimeAboveDrmEventHostSyncThresholdWhenQueryStatusThenTPauseIsCalled) {
+    DebugManagerStateRestore restore;
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    int64_t eventHostSyncThreshold = WaitUtils::defaultWaitPkgThresholdForWddmEventHostSyncInMicroSeconds;
+    VariableBackup<int64_t> backupWaitpkgThresholdForEventHostSync(
+        &WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds,
+        eventHostSyncThreshold);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    CpuIntrinsicsTests::tpauseCounter = 0u;
+    auto *hostAddr = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), event->getContextStartOffset()));
+    *hostAddr = Event::STATE_CLEARED;
+
+    const auto result = event->queryStatus(WaitUtils::defaultWaitPkgThresholdForDrmEventHostSyncInMicroSeconds + 1);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+    EXPECT_EQ(1u, CpuIntrinsicsTests::tpauseCounter.load());
+    CpuIntrinsicsTests::tpauseCounter = 0u;
+}
+
+TEST_F(EventSynchronizeTest, GivenWddmDriverModelAndElapsedTimeBelowEventHostSyncThresholdWhenQueryStatusThenTPauseIsNotCalled) {
+    DebugManagerStateRestore restore;
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    int64_t eventHostSyncThreshold = WaitUtils::defaultWaitPkgThresholdForWddmEventHostSyncInMicroSeconds;
+    VariableBackup<int64_t> backupWaitpkgThresholdForEventHostSync(
+        &WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds,
+        eventHostSyncThreshold);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    CpuIntrinsicsTests::tpauseCounter = 0u;
+    auto *hostAddr = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), event->getContextStartOffset()));
+    *hostAddr = Event::STATE_CLEARED;
+
+    const auto result = event->queryStatus(WaitUtils::defaultWaitPkgThresholdForDrmEventHostSyncInMicroSeconds + 1);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+    EXPECT_EQ(0u, CpuIntrinsicsTests::tpauseCounter.load());
+}
+
+TEST_F(EventSynchronizeTest, GivenDrmDriverModelAndWaitpkgThresholdOverrideWhenQueryStatusThenOverrideThresholdIsUsed) {
+    DebugManagerStateRestore restore;
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    NEO::debugManager.flags.WaitpkgThreshold.set(WaitUtils::defaultWaitPkgThresholdForWddmEventHostSyncInMicroSeconds);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    CpuIntrinsicsTests::tpauseCounter = 0u;
+    auto *hostAddr = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), event->getContextStartOffset()));
+    *hostAddr = Event::STATE_CLEARED;
+
+    const auto result = event->queryStatus(WaitUtils::defaultWaitPkgThresholdForDrmEventHostSyncInMicroSeconds + 1);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+    EXPECT_EQ(0u, CpuIntrinsicsTests::tpauseCounter.load());
 }
 
 HWTEST_F(EventSynchronizeTest, GivenNotReadyEventAndInfiniteTimeoutWhenHostSynchronizeIsCalledThenTPauseIsCalled) {

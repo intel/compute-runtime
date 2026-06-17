@@ -36,7 +36,8 @@ constexpr uint32_t defaultWaitCount = 1u;
 constexpr int64_t defaultWaitPkgThresholdForUllsLightInMicroSeconds = 1;
 constexpr uint64_t defaultCounterValueForUllsLight = 16000;
 
-constexpr int64_t defaultWaitPkgThresholdForEventHostSyncInMicroSeconds = 50;
+constexpr int64_t defaultWaitPkgThresholdForDrmEventHostSyncInMicroSeconds = 1;
+constexpr int64_t defaultWaitPkgThresholdForWddmEventHostSyncInMicroSeconds = 50;
 constexpr uint64_t defaultCounterValueForEventHostSync = 2000;
 
 extern WaitpkgUse waitpkgUse;
