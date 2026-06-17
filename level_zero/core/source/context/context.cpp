@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -1808,7 +1809,11 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if ((getPageAlignedSizeRequired(size, nullptr, nullptr) != size)) {
+    size_t pageSizeRequired = 0;
+    if (getPageAlignedSizeRequired(size, nullptr, &pageSizeRequired) != size) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+    if (!isAligned(castToUint64(ptr), pageSizeRequired)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT;
     }
 
@@ -1897,44 +1902,95 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
 }
 
 ze_result_t Context::unMapVirtualMem(const void *ptr, size_t size) {
-    ze_result_t result = ZE_RESULT_SUCCESS;
+    size_t pageSizeRequired = 0;
+    if (getPageAlignedSizeRequired(size, nullptr, &pageSizeRequired) != size) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
 
-    // Test for unsupported page size alignment: not covered in API validation layer.
-    if ((getPageAlignedSizeRequired(size, nullptr, nullptr) != size)) {
+    if (!isAligned(castToUint64(ptr), pageSizeRequired)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT;
     }
 
     auto memManager = this->driverHandle->getMemoryManager();
     auto lockVirtual = memManager->lockVirtualMemoryReservationMap();
+    NEO::SVMAllocsManager *svmAllocsManager = this->driverHandle->getSvmAllocsManager();
 
-    auto virtualMemoryReservation = findSupportedVirtualReservation(ptr, size);
-    if (virtualMemoryReservation) {
-        std::map<void *, NEO::MemoryMappedRange *>::iterator physicalMapIt;
-        physicalMapIt = virtualMemoryReservation->mappedAllocations.find(const_cast<void *>(ptr));
-        if (physicalMapIt != virtualMemoryReservation->mappedAllocations.end()) {
-            NEO::SVMAllocsManager *svmAllocsManager = this->driverHandle->getSvmAllocsManager();
-            NEO::PhysicalMemoryAllocation *physicalAllocation = &physicalMapIt->second->mappedAllocation;
-            NEO::SvmAllocationData *allocData = svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(physicalAllocation->allocation->getGpuAddress()));
+    const uint64_t rangeStart = castToUint64(ptr);
+    const uint64_t rangeEnd = rangeStart + size;
+
+    auto &reservationMap = memManager->getVirtualMemoryReservationMap();
+
+    auto getReservationBounds = [&]() {
+        auto reservationBegin = reservationMap.lower_bound(const_cast<void *>(ptr));
+
+        if (reservationBegin != reservationMap.begin()) {
+            auto prev = std::prev(reservationBegin);
+            const uint64_t prevEnd = castToUint64(prev->first) + prev->second->virtualAddressRange.size;
+            if (prevEnd > rangeStart) {
+                reservationBegin = prev;
+            }
+        }
+
+        auto reservationEnd = std::find_if_not(
+            reservationBegin,
+            reservationMap.end(),
+            [&](auto &reservation) { return castToUint64(reservation.first) < rangeEnd; });
+
+        return std::pair{reservationBegin, reservationEnd};
+    };
+
+    bool anyFailed = false;
+    auto [reservationBegin, reservationEnd] = getReservationBounds();
+
+    std::for_each(reservationBegin, reservationEnd, [&](auto &reservation) {
+        NEO::VirtualMemoryReservation *virtualMemoryReservation = reservation.second;
+        auto &mappedAllocations = virtualMemoryReservation->mappedAllocations;
+
+        auto mapBeginIt = mappedAllocations.lower_bound(reinterpret_cast<void *>(rangeStart));
+        auto mapEndIt = std::find_if_not(
+            mapBeginIt,
+            mappedAllocations.end(),
+            [&](auto &alloc) { return castToUint64(alloc.first) < rangeEnd; });
+
+        for (auto &it = mapBeginIt; it != mapEndIt;) {
+            auto &alloc = *it;
+            const uint64_t mappingVa = castToUint64(alloc.first);
+            const size_t mappingSize = alloc.second->size;
+            const uint64_t mappingEnd = mappingVa + mappingSize;
+
+            if (mappingEnd > rangeEnd) {
+                ++it;
+                continue;
+            }
+
+            NEO::PhysicalMemoryAllocation *physicalAllocation = &alloc.second->mappedAllocation;
+            NEO::SvmAllocationData *allocData = svmAllocsManager->getSVMAlloc(
+                reinterpret_cast<void *>(physicalAllocation->allocation->getGpuAddress()));
+            DEBUG_BREAK_IF(allocData == nullptr);
+
             bool retVal = false;
-
             if (physicalAllocation->allocation->getAllocationType() == NEO::AllocationType::buffer) {
                 svmAllocsManager->removeSVMAlloc(*allocData);
                 NEO::OsContext *osContext = &physicalAllocation->device->getDefaultEngine().commandStreamReceiver->getOsContext();
-                retVal = memManager->unMapPhysicalDeviceMemoryFromVirtualMemory(physicalAllocation->allocation, castToUint64(ptr), size, osContext, virtualMemoryReservation->rootDeviceIndex);
+                retVal = memManager->unMapPhysicalDeviceMemoryFromVirtualMemory(
+                    physicalAllocation->allocation, mappingVa, mappingSize, osContext, virtualMemoryReservation->rootDeviceIndex);
             } else {
-                auto gpuAllocations = allocData->gpuAllocations;
+                NEO::MultiGraphicsAllocation gpuAllocations = allocData->gpuAllocations;
                 svmAllocsManager->removeSVMAlloc(*allocData);
-                retVal = memManager->unMapPhysicalHostMemoryFromVirtualMemory(gpuAllocations, physicalAllocation->allocation, castToUint64(ptr), size);
-            }
-            if (!retVal) {
-                result = ZE_RESULT_ERROR_UNKNOWN;
+                retVal = memManager->unMapPhysicalHostMemoryFromVirtualMemory(
+                    gpuAllocations, physicalAllocation->allocation, mappingVa, mappingSize);
             }
 
-            delete physicalMapIt->second;
-            virtualMemoryReservation->mappedAllocations.erase(physicalMapIt);
+            if (!retVal) {
+                anyFailed = true;
+            }
+
+            delete alloc.second;
+            it = mappedAllocations.erase(it);
         }
-    }
-    return result;
+    });
+
+    return anyFailed ? ZE_RESULT_ERROR_UNKNOWN : ZE_RESULT_SUCCESS;
 }
 
 ze_result_t Context::setVirtualMemAccessAttribute(const void *ptr,
