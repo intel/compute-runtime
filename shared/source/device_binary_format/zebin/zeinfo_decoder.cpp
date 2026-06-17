@@ -77,6 +77,8 @@ DecodeError extractZeInfoSections(const Yaml::YamlParser &parser, ZeInfoSections
             outZeInfoSections.functions.push_back(&globalScopeNd);
         } else if (Tags::requiredLibs == key) {
             outZeInfoSections.requiredLibs.push_back(&globalScopeNd);
+        } else if (Tags::l1CachePolicy == key) {
+            outZeInfoSections.l1CachePolicy.push_back(&globalScopeNd);
         } else if (Tags::kernelMiscInfo == key) {
             // correct case but nothing to be done
         } else {
@@ -129,6 +131,7 @@ bool validateZeInfoSectionsCount(const ZeInfoSections &zeInfoSections, std::stri
     valid &= validateCountAtMost(zeInfoSections.globalHostAccessTable, 1U, outErrReason, "global host access table", context);
     valid &= validateCountAtMost(zeInfoSections.functions, 1U, outErrReason, "functions", context);
     valid &= validateCountAtMost(zeInfoSections.requiredLibs, 1U, outErrReason, "required libs", context);
+    valid &= validateCountAtMost(zeInfoSections.l1CachePolicy, 1U, outErrReason, "l1 cache policy", context);
     return valid;
 }
 
@@ -484,6 +487,11 @@ DecodeError decodeZeInfo(ProgramInfo &dst, ConstStringRef zeInfo, std::string &o
     }
 
     zeInfoDecodeError = decodeZeInfoRequiredLibs(dst, yamlParser, zeInfoSections, outErrReason, outWarning);
+    if (DecodeError::success != zeInfoDecodeError) {
+        return zeInfoDecodeError;
+    }
+
+    zeInfoDecodeError = decodeZeInfoL1CachePolicy(dst, yamlParser, zeInfoSections, outErrReason, outWarning);
     if (DecodeError::success != zeInfoDecodeError) {
         return zeInfoDecodeError;
     }
@@ -1847,6 +1855,16 @@ DecodeError decodeZeInfoRequiredLibs(ProgramInfo &dst, Yaml::YamlParser &parser,
             reqLibs.push_back(parser.readValue(reqLibNd).str());
         }
         dst.requiredLibs = std::move(reqLibs);
+    }
+    return DecodeError::success;
+}
+
+DecodeError decodeZeInfoL1CachePolicy(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning) {
+    if (zeInfoSections.l1CachePolicy.empty()) {
+        return DecodeError::success;
+    }
+    if (false == readZeInfoEnumChecked(parser, *zeInfoSections.l1CachePolicy[0], dst.l1CachePolicy, Tags::l1CachePolicy, outErrReason)) {
+        return DecodeError::invalidBinary;
     }
     return DecodeError::success;
 }

@@ -199,6 +199,18 @@ inline constexpr LookupArray<ConstStringRef, FilterMode, 2> lookup({{{nearest, F
 static_assert(lookup.size() == FilterMode::max - 1, "Every enum field must be present");
 } // namespace InlineSamplerFilterMode
 
+namespace L1CachePolicy {
+using namespace Tags::L1CachePolicy;
+using L1CachePolicy = Types::L1CachePolicy::L1CachePolicy;
+inline constexpr ConstStringRef name = "l1 cache policy";
+inline constexpr LookupArray<ConstStringRef, L1CachePolicy, 5> lookup({{{writeBypass, L1CachePolicy::L1CachePolicyWriteBypass},
+                                                                        {uncached, L1CachePolicy::L1CachePolicyUncached},
+                                                                        {writeBack, L1CachePolicy::L1CachePolicyWriteBack},
+                                                                        {writeThrough, L1CachePolicy::L1CachePolicyWriteThrough},
+                                                                        {writeStreaming, L1CachePolicy::L1CachePolicyWriteStreaming}}});
+static_assert(lookup.size() == L1CachePolicy::L1CachePolicyMax - 1, "Every enum field must be present");
+} // namespace L1CachePolicy
+
 template <typename T>
 struct EnumLooker {};
 
@@ -266,5 +278,11 @@ template <>
 struct EnumLooker<Types::Kernel::InlineSamplers::FilterMode> {
     static constexpr ConstStringRef name = InlineSamplerFilterMode::name;
     static constexpr auto members = InlineSamplerFilterMode::lookup;
+};
+
+template <>
+struct EnumLooker<Types::L1CachePolicy::L1CachePolicy> {
+    static constexpr ConstStringRef name = L1CachePolicy::name;
+    static constexpr auto members = L1CachePolicy::lookup;
 };
 } // namespace NEO::Zebin::ZeInfo::EnumLookup

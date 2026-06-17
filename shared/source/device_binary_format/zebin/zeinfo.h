@@ -25,6 +25,15 @@ inline constexpr ConstStringRef globalHostAccessTable("global_host_access_table"
 inline constexpr ConstStringRef functions("functions");
 inline constexpr ConstStringRef requiredLibs("required_libs");
 inline constexpr ConstStringRef kernelMiscInfo("kernels_misc_info");
+inline constexpr ConstStringRef l1CachePolicy("l1_cache_policy");
+
+namespace L1CachePolicy {
+inline constexpr ConstStringRef writeBypass("wbp");
+inline constexpr ConstStringRef uncached("uc");
+inline constexpr ConstStringRef writeBack("wb");
+inline constexpr ConstStringRef writeThrough("wt");
+inline constexpr ConstStringRef writeStreaming("ws");
+} // namespace L1CachePolicy
 
 namespace Kernel {
 inline constexpr ConstStringRef attributes("user_attributes");
@@ -319,6 +328,22 @@ struct Version {
     uint32_t major = 0U;
     uint32_t minor = 0U;
 };
+
+namespace L1CachePolicy {
+enum L1CachePolicy : uint8_t {
+    L1CachePolicyUnknown = 0,
+    L1CachePolicyWriteBypass = 1,
+    L1CachePolicyUncached,
+    L1CachePolicyWriteBack,
+    L1CachePolicyWriteThrough,
+    L1CachePolicyWriteStreaming,
+    L1CachePolicyMax
+};
+
+namespace Defaults {
+inline constexpr L1CachePolicy l1CachePolicy = L1CachePolicyUnknown;
+} // namespace Defaults
+} // namespace L1CachePolicy
 
 namespace Kernel {
 namespace ExecutionEnv {

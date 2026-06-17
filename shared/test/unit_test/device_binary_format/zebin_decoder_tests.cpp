@@ -4841,6 +4841,76 @@ required_libs :
     EXPECT_EQ(expectedMiscInfoPos, programInfo.kernelMiscInfoPos);
 }
 
+TEST(DecodeZebinTest, givenL1CachePolicyInZeInfoWhenDecodingZebinThenItIsDecodedToCorrespondingEnum) {
+    using L1CachePolicy = NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy;
+    const std::pair<ConstStringRef, L1CachePolicy> testCases[] = {
+        {"wbp", L1CachePolicy::L1CachePolicyWriteBypass},
+        {"uc", L1CachePolicy::L1CachePolicyUncached},
+        {"wb", L1CachePolicy::L1CachePolicyWriteBack},
+        {"wt", L1CachePolicy::L1CachePolicyWriteThrough},
+        {"ws", L1CachePolicy::L1CachePolicyWriteStreaming}};
+
+    for (const auto &[policyStr, expectedPolicy] : testCases) {
+        std::string errors, warnings;
+        auto zeInfoStr = std::string{"---\nversion : \'" + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels :
+  - name :    valid_empty_kernel
+    execution_env :
+      simd_size  : 32
+      grf_count : 128
+l1_cache_policy : )==="} +
+                         policyStr.str() + "\n";
+        ZebinTestData::ValidEmptyProgram zebin(zeInfoStr);
+
+        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+
+        NEO::ProgramInfo programInfo;
+        auto err = decodeZebin(programInfo, elf, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::success, err);
+        EXPECT_EQ(expectedPolicy, programInfo.l1CachePolicy);
+    }
+}
+
+TEST(DecodeZebinTest, givenNoL1CachePolicyInZeInfoWhenDecodingZebinThenPolicyIsUnknown) {
+    std::string errors, warnings;
+    auto zeInfoStr = std::string{"---\nversion : \'" + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels :
+  - name :    valid_empty_kernel
+    execution_env :
+      simd_size  : 32
+      grf_count : 128
+)==="};
+    ZebinTestData::ValidEmptyProgram zebin(zeInfoStr);
+
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+
+    NEO::ProgramInfo programInfo;
+    auto err = decodeZebin(programInfo, elf, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown, programInfo.l1CachePolicy);
+}
+
+TEST(DecodeZebinTest, givenInvalidL1CachePolicyInZeInfoWhenDecodingZebinThenErrorIsReturned) {
+    std::string errors, warnings;
+    auto zeInfoStr = std::string{"---\nversion : \'" + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels :
+  - name :    valid_empty_kernel
+    execution_env :
+      simd_size  : 32
+      grf_count : 128
+l1_cache_policy : invalid_policy
+)==="};
+    ZebinTestData::ValidEmptyProgram zebin(zeInfoStr);
+
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+
+    NEO::ProgramInfo programInfo;
+    auto err = decodeZebin(programInfo, elf, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
+    EXPECT_NE(std::string::npos, errors.find("Unhandled \"invalid_policy\" l1 cache policy in context of l1_cache_policy"));
+    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown, programInfo.l1CachePolicy);
+}
+
 TEST(DecodeZebinTest, givenTextSectionThenTreatItAsExternalFunctions) {
     std::string errors, warnings;
     ZebinTestData::ValidEmptyProgram zebin;

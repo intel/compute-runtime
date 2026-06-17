@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/device_binary_format/zebin/zeinfo.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
 
@@ -45,6 +46,7 @@ struct ProgramInfo : NEO::NonCopyableClass {
     std::vector<ExternalFunctionInfo> externalFunctions;
     std::vector<KernelInfo *> kernelInfos;
     std::vector<std::string> requiredLibs;
+    Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy l1CachePolicy = Zebin::ZeInfo::Types::L1CachePolicy::Defaults::l1CachePolicy;
     uint32_t grfSize = 32U;
     uint32_t minScratchSpaceSize = 0U;
     uint32_t indirectDetectionVersion = 0U;

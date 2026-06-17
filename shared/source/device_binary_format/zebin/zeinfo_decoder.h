@@ -19,7 +19,7 @@ struct KernelInfo;
 struct ProgramInfo;
 
 namespace Zebin::ZeInfo {
-inline constexpr NEO::Zebin::ZeInfo::Types::Version zeInfoDecoderVersion{1, 68};
+inline constexpr NEO::Zebin::ZeInfo::Types::Version zeInfoDecoderVersion{1, 69};
 
 using KernelExecutionEnvBaseT = Types::Kernel::ExecutionEnv::ExecutionEnvBaseT;
 
@@ -39,6 +39,7 @@ struct ZeInfoSections {
     UniqueNode globalHostAccessTable;
     UniqueNode functions;
     UniqueNode requiredLibs;
+    UniqueNode l1CachePolicy;
 };
 
 struct ZeInfoKernelSections {
@@ -140,6 +141,8 @@ void generateSSHWithBindingTable(KernelDescriptor &dst);
 void generateDSH(KernelDescriptor &dst, uint32_t samplerStateSize, uint32_t samplerBorderColorStateSize);
 
 DecodeError decodeZeInfoRequiredLibs(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning);
+
+DecodeError decodeZeInfoL1CachePolicy(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning);
 
 inline bool isAtLeastZeInfoVersion(const Types::Version &srcVersion, const Types::Version &expectedVersion) {
     return srcVersion.minor >= expectedVersion.minor;
