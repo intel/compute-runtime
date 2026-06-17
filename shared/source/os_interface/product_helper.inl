@@ -1035,6 +1035,11 @@ bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isSharedUsmAllocationReuseSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isCompressionForbiddenCommon(bool defaultValue) const {
     auto images = debugManager.flags.RenderCompressedImagesEnabled.get();
     auto buffers = debugManager.flags.RenderCompressedBuffersEnabled.get();

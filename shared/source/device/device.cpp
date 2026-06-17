@@ -249,27 +249,44 @@ bool Device::initializeCommonResources() {
 }
 
 void Device::initUsmReuseLimits() {
-    const bool usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() && this->getProductHelper().isDeviceUsmAllocationReuseSupported();
+    constexpr double defaultFractionForRecycling = 0.08;
+    constexpr double defaultFractionForLimitThreshold = 0.8;
+
     auto ailConfiguration = this->getAilConfigurationHelper();
     const bool limitDeviceMemoryForReuse = ailConfiguration && ailConfiguration->limitAmountOfDeviceMemoryForRecycling();
-    auto fractionOfTotalMemoryForRecycling = (limitDeviceMemoryForReuse || !usmDeviceAllocationsCacheEnabled) ? 0 : 0.08;
-    if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
-        fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableDeviceAllocationCache.get());
-    }
-    const auto totalDeviceMemory = this->getGlobalMemorySize(static_cast<uint32_t>(this->getDeviceBitfield().to_ulong()));
-    auto maxAllocationsSavedForReuseSize = static_cast<uint64_t>(fractionOfTotalMemoryForRecycling * totalDeviceMemory);
 
-    auto limitAllocationsReuseThreshold = static_cast<uint64_t>(0.8 * totalDeviceMemory);
-    const auto limitFlagValue = debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.get();
-    if (limitFlagValue != -1) {
-        if (limitFlagValue == 0) {
-            limitAllocationsReuseThreshold = UsmReuseInfo::notLimited;
-        } else {
-            const auto fractionOfTotalMemoryToLimitReuse = limitFlagValue / 100.0;
-            limitAllocationsReuseThreshold = static_cast<uint64_t>(fractionOfTotalMemoryToLimitReuse * totalDeviceMemory);
+    const bool deviceCacheEnabledByDefault = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() && this->getProductHelper().isDeviceUsmAllocationReuseSupported() && !limitDeviceMemoryForReuse;
+    const bool sharedCacheEnabledByDefault = this->getProductHelper().isSharedUsmAllocationReuseSupported() && !limitDeviceMemoryForReuse;
+
+    // each cache's fraction of total memory: flag value (percent, 0 disables) overrides the default; -1 keeps the default
+    auto cacheFractionFromFlag = [](int32_t flagValue, bool enabledByDefault, double defaultFraction) -> double {
+        if (flagValue == -1) {
+            return enabledByDefault ? defaultFraction : 0.0;
         }
-    }
-    this->usmReuseInfo.init(maxAllocationsSavedForReuseSize, limitAllocationsReuseThreshold);
+        return 0.01 * std::min(100, flagValue);
+    };
+
+    const double deviceCacheFraction = cacheFractionFromFlag(debugManager.flags.ExperimentalEnableDeviceAllocationCache.get(), deviceCacheEnabledByDefault, defaultFractionForRecycling);
+    const double sharedCacheFraction = cacheFractionFromFlag(debugManager.flags.ExperimentalEnableSharedAllocationCache.get(), sharedCacheEnabledByDefault, defaultFractionForRecycling);
+
+    const auto totalDeviceMemory = this->getGlobalMemorySize(static_cast<uint32_t>(this->getDeviceBitfield().to_ulong()));
+    // device and shared caches keep separate recycling budgets so one cannot starve the other
+    const auto deviceMaxAllocationsSavedForReuseSize = static_cast<uint64_t>(deviceCacheFraction * totalDeviceMemory);
+    const auto sharedMaxAllocationsSavedForReuseSize = static_cast<uint64_t>(sharedCacheFraction * totalDeviceMemory);
+
+    const auto limitAllocationsReuseThreshold = [&]() -> uint64_t {
+        const auto limitFlagValue = debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.get();
+        if (limitFlagValue == -1) {
+            return static_cast<uint64_t>(defaultFractionForLimitThreshold * totalDeviceMemory);
+        }
+        if (limitFlagValue == 0) {
+            return UsmReuseInfo::notLimited;
+        }
+        return static_cast<uint64_t>((limitFlagValue / 100.0) * totalDeviceMemory);
+    }();
+
+    this->usmReuseInfo.init(deviceMaxAllocationsSavedForReuseSize, limitAllocationsReuseThreshold);
+    this->sharedUsmReuseInfo.init(sharedMaxAllocationsSavedForReuseSize, limitAllocationsReuseThreshold);
 }
 
 bool Device::shouldLimitAllocationsReuse() const {

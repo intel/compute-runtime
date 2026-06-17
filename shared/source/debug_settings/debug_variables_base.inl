@@ -661,6 +661,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionType, -1, "Experim
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableCustomLocalMemoryAlignment, 0, "Align local memory allocations to a given value. Works only with allocations at least as big as the value.  0: no effect, 2097152: 2 megabytes, 1073741824: 1 gigabyte")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableDeviceAllocationCache, -1, "Experimentally enable device usm allocation cache. Use X% of device memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableHostAllocationCache, -1, "Experimentally enable host usm allocation cache. Use X% of shared system memory.")
+DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableSharedAllocationCache, -1, "Experimentally enable shared usm allocation cache. Use X% of device memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalUSMAllocationReuseCleaner, -1, "Enable usm allocation reuse cleaner. -1: default, 0: disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalUSMAllocationReuseLimitThreshold, -1, "Threshold of used memory to limit usm reuse. -1: default, 0: disable, >0:X% of shared/device memory")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalH2DCpuCopyThreshold, -1, "Override default threshold (in bytes) for H2D CPU copy.")

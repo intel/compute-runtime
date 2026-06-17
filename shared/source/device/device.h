@@ -285,6 +285,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     }
 
     UsmReuseInfo usmReuseInfo;
+    UsmReuseInfo sharedUsmReuseInfo;
 
     void resetUsmAllocationPool(UsmMemAllocPool *usmMemAllocPool);
     void resetUsmAllocationPoolManager(UsmMemAllocPoolsManager *usmMemAllocPoolManager);

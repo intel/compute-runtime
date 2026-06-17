@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_properties.h"
+#include "shared/source/memory_manager/unified_memory_reuse.h"
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
@@ -62,6 +63,15 @@ SVMAllocsManager::SvmAllocationCache::SvmAllocationCache() {
     this->enablePerformanceLogging = NEO::debugManager.flags.LogUsmReuse.get();
 }
 
+UsmReuseInfo &SVMAllocsManager::SvmAllocationCache::getUsmReuseInfo(SvmAllocationData &svmData) {
+    if (svmData.device) {
+        return usesSharedUsmReuseInfo ? svmData.device->sharedUsmReuseInfo : svmData.device->usmReuseInfo;
+    }
+    // A device-less allocation (e.g. shared USM allocated with a null device handle) has no per-device
+    // reuse budget, so it is accounted against the memory manager budget shared with host USM reuse.
+    return memoryManager->usmReuseInfo;
+}
+
 bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAllocationData *svmData, CompletionCheckPolicy completionPolicy) {
     if (false == sizeAllowed(size) ||
         svmData->isInternalAllocation ||
@@ -77,19 +87,13 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         return true;
     }
     bool isSuccess = true;
-    if (auto device = svmData->device) {
-        auto lock = device->usmReuseInfo.obtainAllocationsReuseLock();
-        if (size + device->usmReuseInfo.getAllocationsSavedForReuseSize() > device->usmReuseInfo.getMaxAllocationsSavedForReuseSize()) {
+    {
+        auto &usmReuseInfo = getUsmReuseInfo(*svmData);
+        auto lock = usmReuseInfo.obtainAllocationsReuseLock();
+        if (size + usmReuseInfo.getAllocationsSavedForReuseSize() > usmReuseInfo.getMaxAllocationsSavedForReuseSize()) {
             isSuccess = false;
         } else {
-            device->usmReuseInfo.recordAllocationSaveForReuse(size);
-        }
-    } else {
-        auto lock = memoryManager->usmReuseInfo.obtainAllocationsReuseLock();
-        if (size + memoryManager->usmReuseInfo.getAllocationsSavedForReuseSize() > memoryManager->usmReuseInfo.getMaxAllocationsSavedForReuseSize()) {
-            isSuccess = false;
-        } else {
-            memoryManager->usmReuseInfo.recordAllocationSaveForReuse(size);
+            usmReuseInfo.recordAllocationSaveForReuse(size);
         }
     }
     if (isSuccess) {
@@ -151,10 +155,11 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
         return nullptr;
     }
     std::lock_guard<std::mutex> lock(this->mtx);
-    for (auto allocationIter = std::lower_bound(allocations.begin(), allocations.end(), size);
+    const size_t sizeForReuse = alignUp(size, this->allocationSizeAlignment);
+    for (auto allocationIter = std::lower_bound(allocations.begin(), allocations.end(), sizeForReuse);
          allocationIter != allocations.end();
          ++allocationIter) {
-        if (false == allocUtilizationAllows(size, allocationIter->allocationSize)) {
+        if (false == allocUtilizationAllows(sizeForReuse, allocationIter->allocationSize)) {
             break;
         }
         void *allocationPtr = allocationIter->allocation;
@@ -173,12 +178,10 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
             alignmentAllows(allocationIter->allocation, unifiedMemoryProperties.alignment) &&
             hasAllRootDeviceMappings() &&
             false == isInUse(*allocationIter)) {
-            if (allocationIter->svmData->device) {
-                auto lock = allocationIter->svmData->device->usmReuseInfo.obtainAllocationsReuseLock();
-                allocationIter->svmData->device->usmReuseInfo.recordAllocationGetFromReuse(allocationIter->allocationSize);
-            } else {
-                auto lock = memoryManager->usmReuseInfo.obtainAllocationsReuseLock();
-                memoryManager->usmReuseInfo.recordAllocationGetFromReuse(allocationIter->allocationSize);
+            {
+                auto &usmReuseInfo = getUsmReuseInfo(*allocationIter->svmData);
+                auto lock = usmReuseInfo.obtainAllocationsReuseLock();
+                usmReuseInfo.recordAllocationGetFromReuse(allocationIter->allocationSize);
             }
             if (enablePerformanceLogging) {
                 logCacheOperation({.allocationSize = allocationIter->allocationSize,
@@ -214,12 +217,10 @@ void SVMAllocsManager::SvmAllocationCache::trim() {
     std::lock_guard<std::mutex> lock(this->mtx);
     for (auto &cachedAllocationInfo : this->allocations) {
         DEBUG_BREAK_IF(nullptr == cachedAllocationInfo.svmData);
-        if (cachedAllocationInfo.svmData->device) {
-            auto lock = cachedAllocationInfo.svmData->device->usmReuseInfo.obtainAllocationsReuseLock();
-            cachedAllocationInfo.svmData->device->usmReuseInfo.recordAllocationGetFromReuse(cachedAllocationInfo.allocationSize);
-        } else {
-            auto lock = memoryManager->usmReuseInfo.obtainAllocationsReuseLock();
-            memoryManager->usmReuseInfo.recordAllocationGetFromReuse(cachedAllocationInfo.allocationSize);
+        {
+            auto &usmReuseInfo = getUsmReuseInfo(*cachedAllocationInfo.svmData);
+            auto lock = usmReuseInfo.obtainAllocationsReuseLock();
+            usmReuseInfo.recordAllocationGetFromReuse(cachedAllocationInfo.allocationSize);
         }
         if (enablePerformanceLogging) {
             logCacheOperation({.allocationSize = cachedAllocationInfo.allocationSize,
@@ -250,6 +251,9 @@ void SVMAllocsManager::SvmAllocationCache::logCacheOperation(const SvmAllocation
         break;
     case InternalMemoryType::hostUnifiedMemory:
         allocationTypeString = "host";
+        break;
+    case InternalMemoryType::sharedUnifiedMemory:
+        allocationTypeString = "shared";
         break;
     default:
         allocationTypeString = "unknown";
@@ -291,12 +295,10 @@ void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resol
             continue;
         }
         DEBUG_BREAK_IF(nullptr == allocCleanCandidate.svmData);
-        if (allocCleanCandidate.svmData->device) {
-            auto lock = allocCleanCandidate.svmData->device->usmReuseInfo.obtainAllocationsReuseLock();
-            allocCleanCandidate.svmData->device->usmReuseInfo.recordAllocationGetFromReuse(allocCleanCandidate.allocationSize);
-        } else {
-            auto lock = memoryManager->usmReuseInfo.obtainAllocationsReuseLock();
-            memoryManager->usmReuseInfo.recordAllocationGetFromReuse(allocCleanCandidate.allocationSize);
+        {
+            auto &usmReuseInfo = getUsmReuseInfo(*allocCleanCandidate.svmData);
+            auto lock = usmReuseInfo.obtainAllocationsReuseLock();
+            usmReuseInfo.recordAllocationGetFromReuse(allocCleanCandidate.allocationSize);
         }
         if (enablePerformanceLogging) {
             logCacheOperation({.allocationSize = allocCleanCandidate.allocationSize,
@@ -629,12 +631,36 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
         void *unifiedMemoryPointer = nullptr;
 
         if (useKmdMigration) {
+            if (this->usmSharedAllocationsCache) {
+                if (void *allocationFromCache = this->usmSharedAllocationsCache->get(size, memoryProperties)) {
+                    return allocationFromCache;
+                }
+            }
             unifiedMemoryPointer = createUnifiedKmdMigratedAllocation(size, {}, memoryProperties);
+            if (!unifiedMemoryPointer && this->usmSharedAllocationsCache) {
+                this->trimUSMSharedAllocCache();
+                unifiedMemoryPointer = createUnifiedKmdMigratedAllocation(size, {}, memoryProperties);
+            }
             if (!unifiedMemoryPointer) {
                 return nullptr;
             }
         } else {
+            if (this->usmSharedAllocationsCache) {
+                if (void *allocationFromCache = this->usmSharedAllocationsCache->get(size, memoryProperties)) {
+                    if (auto cachedSvmData = this->getSVMAlloc(allocationFromCache); cachedSvmData && cachedSvmData->cpuAllocation) {
+                        if (auto pageFaultManager = this->memoryManager->getPageFaultManager()) {
+                            UNRECOVERABLE_IF(cmdQ == nullptr);
+                            pageFaultManager->insertAllocation(allocationFromCache, size, this, cmdQ, memoryProperties.allocationFlags);
+                        }
+                    }
+                    return allocationFromCache;
+                }
+            }
             unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(size, {}, memoryProperties);
+            if (!unifiedMemoryPointer && this->usmSharedAllocationsCache) {
+                this->trimUSMSharedAllocCache();
+                unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(size, {}, memoryProperties);
+            }
             if (!unifiedMemoryPointer) {
                 return nullptr;
             }
@@ -650,7 +676,18 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
 
         return unifiedMemoryPointer;
     }
-    return createUnifiedMemoryAllocation(size, memoryProperties);
+
+    if (this->usmSharedAllocationsCache) {
+        if (void *allocationFromCache = this->usmSharedAllocationsCache->get(size, memoryProperties)) {
+            return allocationFromCache;
+        }
+    }
+    void *unifiedMemoryPointer = createUnifiedMemoryAllocation(size, memoryProperties);
+    if (!unifiedMemoryPointer && this->usmSharedAllocationsCache) {
+        this->trimUSMSharedAllocCache();
+        unifiedMemoryPointer = createUnifiedMemoryAllocation(size, memoryProperties);
+    }
+    return unifiedMemoryPointer;
 }
 
 void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties) {
@@ -742,6 +779,16 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
                 return true;
             }
         }
+        if (InternalMemoryType::sharedUnifiedMemory == svmData->memoryType &&
+            this->usmSharedAllocationsCache) {
+            if (auto pageFaultManager = this->memoryManager->getPageFaultManager();
+                svmData->cpuAllocation && pageFaultManager) {
+                pageFaultManager->removeAllocation(ptr);
+            }
+            if (this->usmSharedAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, completionCheckPolicy)) {
+                return true;
+            }
+        }
         if (blocking) {
             this->freeSVMAllocImpl(ptr, FreePolicyType::blocking, svmData);
         } else {
@@ -770,6 +817,16 @@ bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
         if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
             this->usmHostAllocationsCache) {
             if (this->usmHostAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, completionCheckPolicy)) {
+                return true;
+            }
+        }
+        if (InternalMemoryType::sharedUnifiedMemory == svmData->memoryType &&
+            this->usmSharedAllocationsCache) {
+            if (auto pageFaultManager = this->memoryManager->getPageFaultManager();
+                svmData->cpuAllocation && pageFaultManager) {
+                pageFaultManager->removeAllocation(ptr);
+            }
+            if (this->usmSharedAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, completionCheckPolicy)) {
                 return true;
             }
         }
@@ -854,6 +911,10 @@ void SVMAllocsManager::cleanupUSMAllocCaches() {
         this->usmHostAllocationsCache->cleanup();
         this->usmHostAllocationsCache.reset(nullptr);
     }
+    if (this->usmSharedAllocationsCache) {
+        this->usmSharedAllocationsCache->cleanup();
+        this->usmSharedAllocationsCache.reset(nullptr);
+    }
 }
 
 void SVMAllocsManager::trimUSMAllocCaches() {
@@ -863,6 +924,9 @@ void SVMAllocsManager::trimUSMAllocCaches() {
     if (this->usmHostAllocationsCache) {
         this->usmHostAllocationsCache->trim();
     }
+    if (this->usmSharedAllocationsCache) {
+        this->usmSharedAllocationsCache->trim();
+    }
 }
 
 void SVMAllocsManager::trimUSMDeviceAllocCache() {
@@ -871,6 +935,10 @@ void SVMAllocsManager::trimUSMDeviceAllocCache() {
 
 void SVMAllocsManager::trimUSMHostAllocCache() {
     this->usmHostAllocationsCache->trim();
+}
+
+void SVMAllocsManager::trimUSMSharedAllocCache() {
+    this->usmSharedAllocationsCache->trim();
 }
 
 void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
@@ -1016,6 +1084,23 @@ void SVMAllocsManager::initUsmHostAllocationsCache() {
     }
 }
 
+void SVMAllocsManager::initUsmSharedAllocationsCache(Device &device) {
+    this->usmSharedAllocationsCache.reset(new SvmAllocationCache);
+    this->usmSharedAllocationsCache->allocations.reserve(128u);
+    this->usmSharedAllocationsCache->svmAllocsManager = this;
+    this->usmSharedAllocationsCache->memoryManager = memoryManager;
+    this->usmSharedAllocationsCache->usesSharedUsmReuseInfo = true;
+    const auto rootDeviceIndex = device.getRootDeviceIndex();
+    const bool roundTo2MB = memoryManager->isKmdMigrationAvailable(rootDeviceIndex) ||
+                            debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get() ||
+                            device.getProductHelper().is2MBLocalMemAlignmentEnabled();
+    this->usmSharedAllocationsCache->allocationSizeAlignment =
+        roundTo2MB ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
+    if (auto usmReuseCleaner = device.getExecutionEnvironment()->unifiedMemoryReuseCleaner.get()) {
+        usmReuseCleaner->registerSvmAllocationCache(this->usmSharedAllocationsCache.get());
+    }
+}
+
 void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
     const bool debuggerEnabled = nullptr != device.getDebugger();
     const bool isHwModeSelected = NEO::DeviceFactory::isHwModeSelected();
@@ -1046,6 +1131,20 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
         this->initUsmHostAllocationsCache();
         if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
             this->usmHostAllocationsCache->requireUpdatingAllocsForIndirectAccess = true;
+        }
+    }
+
+    bool usmSharedAllocationsCacheEnabled = device.getProductHelper().isSharedUsmAllocationReuseSupported() &&
+                                            !debuggerEnabled &&
+                                            isHwModeSelected;
+    if (debugManager.flags.ExperimentalEnableSharedAllocationCache.get() != -1) {
+        usmSharedAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableSharedAllocationCache.get();
+    }
+    if (usmSharedAllocationsCacheEnabled && device.sharedUsmReuseInfo.getMaxAllocationsSavedForReuseSize() > 0u) {
+        device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner(device.isAnyDirectSubmissionLightEnabled());
+        this->initUsmSharedAllocationsCache(device);
+        if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
+            this->usmSharedAllocationsCache->requireUpdatingAllocsForIndirectAccess = true;
         }
     }
 }

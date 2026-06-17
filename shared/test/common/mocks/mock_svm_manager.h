@@ -17,6 +17,7 @@ namespace NEO {
 struct MockSVMAllocsManager : public SVMAllocsManager {
   public:
     using SVMAllocsManager::containerLockedById;
+    using SVMAllocsManager::initUsmSharedAllocationsCache;
     using SVMAllocsManager::insertSVMAlloc;
     using SVMAllocsManager::internalAllocationsMap;
     using SVMAllocsManager::memoryManager;
@@ -27,6 +28,7 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
     using SVMAllocsManager::svmMapOperations;
     using SVMAllocsManager::usmDeviceAllocationsCache;
     using SVMAllocsManager::usmHostAllocationsCache;
+    using SVMAllocsManager::usmSharedAllocationsCache;
 
     void prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, const void *ptr, const size_t size) override {
         SVMAllocsManager::prefetchMemory(device, commandStreamReceiver, ptr, size);

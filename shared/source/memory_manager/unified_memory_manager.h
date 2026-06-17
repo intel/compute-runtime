@@ -34,6 +34,7 @@ class GraphicsAllocation;
 class MemoryManager;
 class Device;
 struct UnifiedMemoryProperties;
+struct UsmReuseInfo;
 struct VirtualMemoryReservation;
 
 struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
@@ -205,6 +206,7 @@ class SVMAllocsManager {
         SvmAllocationCache();
 
         static bool sizeAllowed(size_t size) { return size <= SvmAllocationCache::maxServicedSize; }
+        UsmReuseInfo &getUsmReuseInfo(SvmAllocationData &svmData);
         bool insert(size_t size, void *ptr, SvmAllocationData *svmData, CompletionCheckPolicy completionCheckPolicy);
         static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
         static bool alignmentAllows(void *ptr, size_t alignment);
@@ -223,6 +225,8 @@ class SVMAllocsManager {
         MemoryManager *memoryManager = nullptr;
         bool enablePerformanceLogging = false;
         bool requireUpdatingAllocsForIndirectAccess = false;
+        bool usesSharedUsmReuseInfo = false;
+        size_t allocationSizeAlignment = 1u;
         std::atomic_bool empty = true;
     };
 
@@ -273,6 +277,7 @@ class SVMAllocsManager {
     MOCKABLE_VIRTUAL void trimUSMAllocCaches();
     void trimUSMDeviceAllocCache();
     void trimUSMHostAllocCache();
+    void trimUSMSharedAllocCache();
     void insertSVMAlloc(const SvmAllocationData &svmData);
     void removeSVMAlloc(const SvmAllocationData &svmData);
     void reinsertToAllocsForIndirectAccess(SvmAllocationData &svmData);
@@ -324,6 +329,7 @@ class SVMAllocsManager {
 
     void initUsmDeviceAllocationsCache(Device &device);
     void initUsmHostAllocationsCache();
+    void initUsmSharedAllocationsCache(Device &device);
     void freeSVMData(SvmAllocationData *svmData);
     void insertSVMAlloc(void *ptr, const SvmAllocationData &allocData);
     void makeResidentForAllocationsWithId(uint32_t allocationId, CommandStreamReceiver &csr);
@@ -336,6 +342,7 @@ class SVMAllocsManager {
     std::mutex mtxForIndirectAccess;
     std::unique_ptr<SvmAllocationCache> usmDeviceAllocationsCache;
     std::unique_ptr<SvmAllocationCache> usmHostAllocationsCache;
+    std::unique_ptr<SvmAllocationCache> usmSharedAllocationsCache;
     std::multimap<uint32_t, GraphicsAllocation *> internalAllocationsMap;
 
     std::thread::id containerLockedById{};

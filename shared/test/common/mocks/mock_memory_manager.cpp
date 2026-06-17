@@ -186,6 +186,9 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryInDevicePool(const 
             if (localMemorySupported[allocation->getRootDeviceIndex()]) {
                 static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::localMemory);
             }
+            if (unifiedSharedMemoryUseGpuVaAsCpuPtr && allocationData.type == AllocationType::unifiedSharedMemory) {
+                allocation->setCpuPtrAndGpuAddress(reinterpret_cast<void *>(allocation->getGpuAddress()), allocation->getGpuAddress());
+            }
         }
         successAllocatedGraphicsMemoryIndex++;
         return allocation;

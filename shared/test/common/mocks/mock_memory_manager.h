@@ -410,6 +410,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     std::atomic<bool> allocationInDevicePoolCreated{false};
     bool failInDevicePool = false;
     bool failInDevicePoolWithError = false;
+    bool unifiedSharedMemoryUseGpuVaAsCpuPtr = false;
     bool failInAllocateWithSizeAndAlignment = false;
     bool preferCompressedFlagPassed = false;
     bool allocateForImageCalled = false;
