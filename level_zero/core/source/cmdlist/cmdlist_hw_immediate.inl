@@ -18,6 +18,7 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/cpu_copy_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/state_base_address_helper.h"
@@ -1574,7 +1575,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         signalEvent->setGpuStartTimestamp();
     }
 
-    memcpy_s(cpuMemcpyDstPtr, cpuMemCopyInfo.size, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
+    if (NEO::debugManager.flags.EnableCpuIntrinsicsMemcpy.get()) {
+        NEO::streamCopy(cpuMemcpyDstPtr, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
+    } else {
+        memcpy_s(cpuMemcpyDstPtr, cpuMemCopyInfo.size, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
+    }
 
     if (signalEvent) {
         signalEvent->setGpuEndTimestamp();

@@ -23,6 +23,7 @@ HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenDirectSubmissionLightWhe
     VariableBackup<int64_t> backupWaitPkgThresholdForEventHostSync(&WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
     VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
     VariableBackup<void (*)(int *, int)> backupCpuidFunc(&CpuInfo::cpuidFunc, mockCpuidEnableAll);
+    VariableBackup<uint64_t (*)(uint32_t)> backupXgetbvFunc(&CpuInfo::xgetbvFunc, mockXgetbvEnableAll);
 
     auto mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
     VariableBackup<MockCpuInfo> cpuInfoBackup(mockCpuInfo);
@@ -53,6 +54,7 @@ HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenWaitpkgParamsSetByDebugV
     VariableBackup<int64_t> backupWaitPkgThresholdForEventHostSync(&WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
     VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
     VariableBackup<void (*)(int *, int)> backupCpuidFunc(&CpuInfo::cpuidFunc, mockCpuidEnableAll);
+    VariableBackup<uint64_t (*)(uint32_t)> backupXgetbvFunc(&CpuInfo::xgetbvFunc, mockXgetbvEnableAll);
 
     auto mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
     VariableBackup<MockCpuInfo> cpuInfoBackup(mockCpuInfo);

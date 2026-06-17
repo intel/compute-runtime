@@ -29,3 +29,11 @@ void mockCpuidFunctionAvailableDisableAll(int *cpuInfo, int functionId);
 void mockCpuidFunctionNotAvailableDisableAll(int *cpuInfo, int functionId);
 
 void mockCpuidReport36BitVirtualAddressSize(int *cpuInfo, int functionId);
+
+void mockCpuidEnableAllExceptAvx512FoundationBit(int *cpuInfo, int functionId);
+
+void mockCpuidEnableAllExceptAvx2Bit(int *cpuInfo, int functionId);
+
+uint64_t mockXgetbvEnableAll(uint32_t index);
+
+uint64_t mockXgetbvDisableAll(uint32_t index);

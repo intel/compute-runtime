@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,4 +37,28 @@ void mockCpuidReport36BitVirtualAddressSize(int *cpuInfo, int functionId) {
     } else {
         mockCpuidEnableAll(cpuInfo, functionId);
     }
+}
+
+void mockCpuidEnableAllExceptAvx512FoundationBit(int *cpuInfo, int functionId) {
+    constexpr unsigned int extendedFeatures = 0x7;
+    mockCpuidEnableAll(cpuInfo, functionId);
+    if (static_cast<unsigned int>(functionId) == extendedFeatures) {
+        cpuInfo[1] &= ~(1 << 16);
+    }
+}
+
+void mockCpuidEnableAllExceptAvx2Bit(int *cpuInfo, int functionId) {
+    constexpr unsigned int extendedFeatures = 0x7;
+    mockCpuidEnableAll(cpuInfo, functionId);
+    if (static_cast<unsigned int>(functionId) == extendedFeatures) {
+        cpuInfo[1] &= ~(1 << 5);
+    }
+}
+
+uint64_t mockXgetbvEnableAll(uint32_t) {
+    return ~static_cast<uint64_t>(0);
+}
+
+uint64_t mockXgetbvDisableAll(uint32_t) {
+    return 0;
 }

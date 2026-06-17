@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,6 +7,7 @@
 if(${NEO_TARGET_PROCESSOR} STREQUAL "aarch64")
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+       ${CMAKE_CURRENT_SOURCE_DIR}/stream_copy.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.cpp
   )
 

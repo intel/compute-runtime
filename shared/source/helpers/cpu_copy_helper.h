@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,4 +10,5 @@
 
 namespace NEO {
 bool isSmallBarConfigPresent(const OSInterface *osIface);
+void streamCopy(void *dst, const void *src, size_t bytes) noexcept;
 } // namespace NEO

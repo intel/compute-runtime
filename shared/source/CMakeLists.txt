@@ -60,11 +60,14 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
   endif()
 
   create_project_source_tree(${LIB_NAME})
-
-  # Enable SSE4/AVX2 options for files that need them
+  # Enable SSE4/AVX2/AVX512 options for files that need them
   if(MSVC)
     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/local_id_gen_avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX2)
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/stream_copy_avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX2)
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/stream_copy_avx512.cpp PROPERTIES COMPILE_FLAGS /arch:AVX512)
   else()
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/stream_copy_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/stream_copy_avx512.cpp PROPERTIES COMPILE_FLAGS "-mavx512f -mavx2")
     if(COMPILER_SUPPORTS_AVX2)
       set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/local_id_gen_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
     endif()

@@ -23,6 +23,14 @@ void cpuidexLinuxWrapper(int *cpuInfo, int functionId, int subfunctionId) {
     __cpuid_count(functionId, subfunctionId, cpuInfo[0], cpuInfo[1], cpuInfo[2], cpuInfo[3]);
 }
 
+uint64_t xgetbvLinuxWrapper(uint32_t index) {
+    uint32_t eax, edx;
+    __asm__ __volatile__("xgetbv"
+                         : "=a"(eax), "=d"(edx)
+                         : "c"(index));
+    return (static_cast<uint64_t>(edx) << 32) | eax;
+}
+
 void getCpuFlagsLinux(std::string &cpuFlags) {
     auto fd = SysCalls::open((std::string(Os::sysFsProcPathPrefix) + "/cpuinfo").c_str(), O_RDONLY);
     if (fd < 0) {
@@ -48,6 +56,7 @@ void getCpuFlagsLinux(std::string &cpuFlags) {
 void (*CpuInfo::cpuidexFunc)(int *, int, int) = cpuidexLinuxWrapper;
 void (*CpuInfo::cpuidFunc)(int[4], int) = cpuidLinuxWrapper;
 void (*CpuInfo::getCpuFlagsFunc)(std::string &) = getCpuFlagsLinux;
+uint64_t (*CpuInfo::xgetbvFunc)(uint32_t) = xgetbvLinuxWrapper;
 
 const CpuInfo CpuInfo::instance;
 

@@ -21,6 +21,7 @@ using namespace NEO;
 
 struct WaitPkgFixture {
     using CpuIdFuncT = void (*)(int *, int);
+    using XgetbvFuncT = uint64_t (*)(uint32_t);
 
 #ifdef SUPPORTS_WAITPKG
     constexpr static bool expectedWaitpkgSupport = SUPPORTS_WAITPKG;
@@ -41,11 +42,14 @@ struct WaitPkgFixture {
         backupWaitCount = std::make_unique<VariableBackup<uint32_t>>(&WaitUtils::waitCount);
 
         savedCpuIdFunc = CpuInfo::cpuidFunc;
+        savedXgetbvFunc = CpuInfo::xgetbvFunc;
+        CpuInfo::xgetbvFunc = mockXgetbvEnableAll;
         mockCpuInfo->featuresDetected = false;
     }
 
     void tearDown() {
         CpuInfo::cpuidFunc = savedCpuIdFunc;
+        CpuInfo::xgetbvFunc = savedXgetbvFunc;
     }
 
     DebugManagerStateRestore restore;
@@ -60,6 +64,7 @@ struct WaitPkgFixture {
 
     MockCpuInfo *mockCpuInfo = nullptr;
     CpuIdFuncT savedCpuIdFunc = nullptr;
+    XgetbvFuncT savedXgetbvFunc = nullptr;
 };
 
 namespace CpuIntrinsicsTests {

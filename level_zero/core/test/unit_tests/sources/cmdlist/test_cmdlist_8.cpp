@@ -1067,6 +1067,30 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWh
     EXPECT_EQ(0, memcmp(lockedPtr, nonUsmHostPtr, 1024));
 }
 
+HWTEST_F(AppendMemoryLockedCopyTest, givenCpuIntrinsicsMemcpyEnabledWhenCopyH2DThenUseStreamCopyAndReturnSuccess) {
+    debugManager.flags.EnableCpuIntrinsicsMemcpy.set(1);
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
+
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    memset(nonUsmHostPtr, 1, 1024);
+
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    NEO::SvmAllocationData *allocData;
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, allocData);
+    auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+    auto lockedPtr = reinterpret_cast<char *>(dstAlloc->getLockedPtr());
+    EXPECT_EQ(0, memcmp(lockedPtr, nonUsmHostPtr, 1024));
+}
+
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndNonUsmHostPtrWhenCopyH2DThenSignalEvent) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
