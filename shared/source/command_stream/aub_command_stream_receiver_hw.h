@@ -60,9 +60,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void pollForCompletion(bool skipTaskCountCheck) override;
     void pollForCompletionImpl() override;
     void pollForAubCompletion() override {
-        if (!this->pollForCompletionEnabled) {
-            return;
-        }
         pollForCompletion(true);
     };
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override;
