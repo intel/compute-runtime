@@ -49,6 +49,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void cleanup();
     static bool alignmentIsAllowed(size_t alignment);
     static bool flagsAreAllowed(const UnifiedMemoryProperties &memoryProperties);
+    static bool freeIfOwned(UsmMemAllocPool *pool, const void *ptr, bool blocking);
     static double getPercentOfFreeMemoryForRecycling(InternalMemoryType memoryType);
     bool sizeIsAllowed(size_t size);
     bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties);
@@ -58,6 +59,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool freeSVMAlloc(const void *ptr, bool blocking);
     size_t getPooledAllocationSize(const void *ptr);
     void *getPooledAllocationBasePtr(const void *ptr);
+    bool isPooledAllocation(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
     uint64_t getPoolAddress() const;
     PoolInfo getPoolInfo() const;

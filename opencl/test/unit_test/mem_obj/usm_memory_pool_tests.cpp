@@ -42,6 +42,13 @@ struct UsmPoolTest : public ::testing::Test {
         mockDeviceMemPoolsFacade = static_cast<MockUsmMemAllocPoolsFacade *>(&mockContext->getDeviceMemAllocPoolsManager());
     }
 
+    void cleanupPoolsAndResetInitFlags(MockPlatform *platform) {
+        platform->getHostMemAllocPoolManager().cleanup();
+        platform->usmPoolInitialized = false;
+        mockContext->getDeviceMemAllocPoolsManager().cleanup();
+        mockContext->usmPoolInitialized = false;
+    }
+
     MockClDevice *device;
     MockUsmMemAllocPoolsFacade *mockDeviceMemPoolsFacade;
     std::unique_ptr<UltClDeviceFactoryWithPlatform> deviceFactory;
@@ -73,10 +80,7 @@ TEST_F(UsmPoolTestWithSingleDevice, givenEnabledDebugFlagsAndUsmPoolsNotSupporte
     auto platform = static_cast<MockPlatform *>(device->getPlatform());
     for (auto enablePoolManager : {false, true}) {
         debugManager.flags.EnableUsmAllocationPoolManager.set(enablePoolManager);
-        platform->getHostMemAllocPoolManager().cleanup();
-        platform->usmPoolInitialized = false;
-        mockContext->getDeviceMemAllocPoolsManager().cleanup();
-        mockContext->usmPoolInitialized = false;
+        cleanupPoolsAndResetInitFlags(platform);
 
         cl_int retVal = CL_SUCCESS;
         void *pooledDeviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, poolAllocationThreshold, 0, &retVal);
@@ -176,10 +180,7 @@ TEST_F(UsmPoolTestWithMultipleDevice, givenUsmPoolsSupportedAndMultiDeviceContex
     for (auto enablePoolManager : {false, true}) {
         DebugManagerStateRestore restorer;
         debugManager.flags.EnableUsmAllocationPoolManager.set(enablePoolManager);
-        platform->getHostMemAllocPoolManager().cleanup();
-        platform->usmPoolInitialized = false;
-        mockContext->getDeviceMemAllocPoolsManager().cleanup();
-        mockContext->usmPoolInitialized = false;
+        cleanupPoolsAndResetInitFlags(platform);
 
         mockContext->devices.push_back(deviceFactory->rootDevices[1]);
         EXPECT_FALSE(mockContext->isSingleDeviceContext());

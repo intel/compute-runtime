@@ -114,17 +114,11 @@ void ModuleTranslationUnit::freeGlobalBufferAllocation(std::unique_ptr<NEO::Shar
 
     auto gpuAddress = reinterpret_cast<void *>(globalBuffer->getGpuAddress());
 
-    if (auto usmPool = device->getNEODevice()->getUsmConstantSurfaceAllocPool();
-        usmPool && usmPool->isInPool(gpuAddress)) {
-        [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
-        DEBUG_BREAK_IF(!ret);
+    if (NEO::UsmMemAllocPool::freeIfOwned(device->getNEODevice()->getUsmConstantSurfaceAllocPool(), gpuAddress, false)) {
         return;
     }
 
-    if (auto usmPool = device->getNEODevice()->getUsmGlobalSurfaceAllocPool();
-        usmPool && usmPool->isInPool(gpuAddress)) {
-        [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
-        DEBUG_BREAK_IF(!ret);
+    if (NEO::UsmMemAllocPool::freeIfOwned(device->getNEODevice()->getUsmGlobalSurfaceAllocPool(), gpuAddress, false)) {
         return;
     }
 

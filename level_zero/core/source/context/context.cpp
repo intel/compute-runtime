@@ -578,7 +578,7 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
     uint64_t addressForIpc = reinterpret_cast<uint64_t>(ptr);
     auto *usmPool = getUsmPoolOwningPtr(ptr, allocation);
     if (usmPool) {
-        if (nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
+        if (false == usmPool->isPooledAllocation(ptr)) {
             // ptr is within usm pool address space but is not allocated
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         } else {
@@ -637,7 +637,7 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         auto *usmPool = getUsmPoolOwningPtr(ptr, allocation);
-        if (usmPool && nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
+        if (usmPool && false == usmPool->isPooledAllocation(ptr)) {
             // ptr is within usm pool address space but is not allocated
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -791,12 +791,13 @@ ze_result_t Context::getMemAddressRange(const void *ptr,
     if (allocData) {
         auto usmPool = getUsmPoolOwningPtr(ptr, allocData);
         if (usmPool) {
-            if (nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
+            auto pooledBasePtr = usmPool->getPooledAllocationBasePtr(ptr);
+            if (nullptr == pooledBasePtr) {
                 // ptr is within usm pool address space but is not allocated
                 return ZE_RESULT_ERROR_ADDRESS_NOT_FOUND;
             }
             if (pBase) {
-                *pBase = usmPool->getPooledAllocationBasePtr(ptr);
+                *pBase = pooledBasePtr;
             }
 
             if (pSize) {
@@ -965,7 +966,7 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
 
         usmPool = getUsmPoolOwningPtr(ptr, allocData);
 
-        if (usmPool && nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
+        if (usmPool && false == usmPool->isPooledAllocation(ptr)) {
             // ptr is within usm pool address space but is not allocated
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }

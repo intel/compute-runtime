@@ -134,6 +134,12 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     auto mockMemoryOperationsHandlerPeer = static_cast<MockMemoryOperations *>(mockPeerDevice.getRootDeviceEnvironment().memoryOperationsInterface.get());
     auto expectedMakeResidentCountPeer = mockMemoryOperationsHandlerPeer->makeResidentCalledCount.load();
     auto expectedEvictCountPeer = mockMemoryOperationsHandlerPeer->evictCalledCount.load();
+    auto expectResidencyCounts = [&]() {
+        EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
+        EXPECT_EQ(expectedEvictCount, mockMemoryOperationsHandler->evictCalledCount);
+        EXPECT_EQ(expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
+        EXPECT_EQ(expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
+    };
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[0], &mockPeerDevice));
     EXPECT_EQ(++expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
     EXPECT_EQ(expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
@@ -147,10 +153,7 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     // ptr in pool already resident -> skip
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[0]));
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[0], &mockPeerDevice));
-    EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
-    EXPECT_EQ(expectedEvictCount, mockMemoryOperationsHandler->evictCalledCount);
-    EXPECT_EQ(expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
-    EXPECT_EQ(expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
+    expectResidencyCounts();
     EXPECT_TRUE(firstInfo->isResident[&mockDevice]);
     EXPECT_TRUE(firstInfo->isResident[&mockPeerDevice]);
     EXPECT_FALSE(secondInfo->isResident[&mockDevice]);
@@ -161,10 +164,7 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     // second ptr in pool make resident -> skip
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[1]));
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[1], &mockPeerDevice));
-    EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
-    EXPECT_EQ(expectedEvictCount, mockMemoryOperationsHandler->evictCalledCount);
-    EXPECT_EQ(expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
-    EXPECT_EQ(expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
+    expectResidencyCounts();
     EXPECT_TRUE(firstInfo->isResident[&mockDevice]);
     EXPECT_TRUE(secondInfo->isResident[&mockDevice]);
     EXPECT_TRUE(firstInfo->isResident[&mockPeerDevice]);
@@ -175,10 +175,7 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     // first ptr evict -> skip
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::evict>(pooledPtrs[0]));
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::evict>(pooledPtrs[0], &mockPeerDevice));
-    EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
-    EXPECT_EQ(expectedEvictCount, mockMemoryOperationsHandler->evictCalledCount);
-    EXPECT_EQ(expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
-    EXPECT_EQ(expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
+    expectResidencyCounts();
     EXPECT_FALSE(firstInfo->isResident[&mockDevice]);
     EXPECT_FALSE(firstInfo->isResident[&mockPeerDevice]);
     EXPECT_TRUE(secondInfo->isResident[&mockDevice]);
@@ -193,8 +190,8 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     EXPECT_EQ(++expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
     EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
     EXPECT_FALSE(firstInfo->isResident[&mockDevice]);
-    EXPECT_FALSE(secondInfo->isResident[&mockPeerDevice]);
-    EXPECT_FALSE(firstInfo->isResident[&mockDevice]);
+    EXPECT_FALSE(firstInfo->isResident[&mockPeerDevice]);
+    EXPECT_FALSE(secondInfo->isResident[&mockDevice]);
     EXPECT_FALSE(secondInfo->isResident[&mockPeerDevice]);
     EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockDevice]);
     EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockPeerDevice]);
@@ -202,10 +199,7 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     // evict already evicted ptr -> skip
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::evict>(pooledPtrs[1]));
     EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::evict>(pooledPtrs[1], &mockPeerDevice));
-    EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
-    EXPECT_EQ(expectedEvictCount, mockMemoryOperationsHandler->evictCalledCount);
-    EXPECT_EQ(expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
-    EXPECT_EQ(expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
+    expectResidencyCounts();
     EXPECT_FALSE(firstInfo->isResident[&mockDevice]);
     EXPECT_FALSE(secondInfo->isResident[&mockDevice]);
     EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockDevice]);
@@ -288,6 +282,10 @@ class InitializedUnifiedMemoryPoolingTest : public UnifiedMemoryPoolingTest {
         UnifiedMemoryPoolingTest::tearDown();
     }
 
+    UnifiedMemoryProperties makeHostProperties() {
+        return UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    }
+
     const size_t poolSize = 2 * MemoryConstants::megaByte;
     MockUsmMemAllocPool usmMemAllocPool;
     std::unique_ptr<UltDeviceFactory> deviceFactory;
@@ -305,7 +303,7 @@ TEST_F(InitializedDeviceUnifiedMemoryPoolingTest, givenDevicePoolWhenInitialized
 
 using InitializedHostUnifiedMemoryPoolingTest = InitializedUnifiedMemoryPoolingTest<InternalMemoryType::hostUnifiedMemory, false>;
 TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenDifferentAllocationSizesWhenCallingCanBePooledThenCorrectValueIsReturned) {
-    UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    auto memoryProperties = makeHostProperties();
     EXPECT_TRUE(usmMemAllocPool.canBePooled(poolAllocationThreshold, memoryProperties));
     EXPECT_FALSE(usmMemAllocPool.canBePooled(poolAllocationThreshold + 1, memoryProperties));
 
@@ -360,7 +358,7 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenAlignmentsWhenCallingAlignm
 }
 
 TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenUsingPoolThenAllocationIsPooledUnlessPoolIsFull) {
-    UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    auto memoryProperties = makeHostProperties();
     const auto allocationSize = poolAllocationThreshold;
     const auto allocationSizeAboveThreshold = allocationSize + 1;
     EXPECT_EQ(nullptr, usmMemAllocPool.createUnifiedMemoryAllocation(allocationSizeAboveThreshold, memoryProperties));
@@ -436,7 +434,7 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenGetti
     EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(ptrInPoolButNotAllocated));
     EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(ptrInPoolButNotAllocated));
 
-    UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    auto memoryProperties = makeHostProperties();
     const auto requestedAllocSize = 1 * MemoryConstants::kiloByte;
     EXPECT_GT(poolAllocationThreshold, requestedAllocSize + usmMemAllocPool.chunkAlignment);
 
@@ -475,6 +473,36 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenGetti
     EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(pastEndPointer));
 }
 
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPointersWithDifferentOwnershipWhenCallingFreeIfOwnedAndIsPooledAllocationThenOwnershipIsRespected) {
+    auto memoryProperties = makeHostProperties();
+    const auto allocationSize = 1 * MemoryConstants::kiloByte;
+
+    auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    EXPECT_NE(nullptr, allocFromPool);
+    EXPECT_TRUE(usmMemAllocPool.isPooledAllocation(allocFromPool));
+
+    const auto ptrInPoolButNotAllocated = usmMemAllocPool.pool;
+    EXPECT_TRUE(usmMemAllocPool.isInPool(ptrInPoolButNotAllocated));
+    EXPECT_FALSE(usmMemAllocPool.isPooledAllocation(ptrInPoolButNotAllocated));
+
+    const auto ptrOutsidePool = reinterpret_cast<void *>(0x1);
+    EXPECT_FALSE(usmMemAllocPool.isInPool(ptrOutsidePool));
+
+    // null pool is never the owner
+    EXPECT_FALSE(UsmMemAllocPool::freeIfOwned(nullptr, allocFromPool, false));
+
+    // ptr outside the pool is not owned, nothing is freed
+    EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_FALSE(UsmMemAllocPool::freeIfOwned(&usmMemAllocPool, ptrOutsidePool, true));
+    EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_TRUE(usmMemAllocPool.isPooledAllocation(allocFromPool));
+
+    // owned ptr is freed, blocking path waits for engines
+    EXPECT_TRUE(UsmMemAllocPool::freeIfOwned(&usmMemAllocPool, allocFromPool, true));
+    EXPECT_EQ(1u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_FALSE(usmMemAllocPool.isPooledAllocation(allocFromPool));
+}
+
 class InitializedHostMultiDeviceUnifiedMemoryPoolingTest : public Test<SVMMemoryAllocatorFixture<true, 4u>> {
   public:
     void SetUp() override {
@@ -492,6 +520,10 @@ class InitializedHostMultiDeviceUnifiedMemoryPoolingTest : public Test<SVMMemory
         SVMMemoryAllocatorFixture::tearDown();
     }
 
+    UnifiedMemoryProperties makeHostProperties() {
+        return UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    }
+
     const size_t poolSize = 2 * MemoryConstants::megaByte;
     MockUsmMemAllocPool usmMemAllocPool;
     std::unique_ptr<UltDeviceFactory> deviceFactory;
@@ -502,7 +534,7 @@ class InitializedHostMultiDeviceUnifiedMemoryPoolingTest : public Test<SVMMemory
 TEST_F(InitializedHostMultiDeviceUnifiedMemoryPoolingTest, givenInitializedPoolWhenUsingPoolThenGraphicsAllocationsAreSetForAllRootDevices) {
     const auto devicesCount = deviceFactory->rootDevices.size();
     const auto allocationSize = 4;
-    UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    auto memoryProperties = makeHostProperties();
 
     auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
     EXPECT_NE(nullptr, allocFromPool);
@@ -516,7 +548,7 @@ TEST_F(InitializedHostMultiDeviceUnifiedMemoryPoolingTest, givenInitializedPoolW
 
 using InitializationFailedUnifiedMemoryPoolingTest = InitializedUnifiedMemoryPoolingTest<InternalMemoryType::hostUnifiedMemory, true>;
 TEST_F(InitializationFailedUnifiedMemoryPoolingTest, givenNotInitializedPoolWhenUsingPoolThenMethodsSucceed) {
-    UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    auto memoryProperties = makeHostProperties();
     const auto allocationSize = poolAllocationThreshold;
     EXPECT_EQ(nullptr, usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties));
     const auto bogusPtr = reinterpret_cast<void *>(0x1);

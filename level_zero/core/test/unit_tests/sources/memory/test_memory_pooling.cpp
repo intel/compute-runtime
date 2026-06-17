@@ -199,40 +199,25 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWi
     EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
     auto poolAllocationData = driverHandle->svmAllocsManager->getSVMAlloc(mockHostMemAllocPool->pool);
 
-    void *ptr1Byte = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = context->allocHostMem(&hostDesc, 1u, 0u, &ptr1Byte);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr1Byte);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInPool(ptr1Byte));
-    EXPECT_EQ(1u, mockHostMemAllocPool->allocations.getNumAllocs());
-    EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptr1Byte));
-    result = context->freeMem(ptr1Byte);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, mockHostMemAllocPool->allocations.getNumAllocs());
+    auto allocVerifyAndFree = [&](size_t size, bool shouldBePooled) {
+        void *ptr = nullptr;
+        auto result = context->allocHostMem(&hostDesc, size, 0u, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr);
+        EXPECT_EQ(shouldBePooled, driverHandle->usmHostMemAllocPool->isInPool(ptr));
+        EXPECT_EQ(shouldBePooled ? 1u : 0u, mockHostMemAllocPool->allocations.getNumAllocs());
+        EXPECT_EQ(shouldBePooled, poolAllocationData == driverHandle->svmAllocsManager->getSVMAlloc(ptr));
+        result = context->freeMem(ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(0u, mockHostMemAllocPool->allocations.getNumAllocs());
+    };
 
-    void *ptrThreshold = nullptr;
-    result = context->allocHostMem(&hostDesc, poolAllocationThreshold, 0u, &ptrThreshold);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptrThreshold);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInPool(ptrThreshold));
-    EXPECT_EQ(1u, mockHostMemAllocPool->allocations.getNumAllocs());
-    EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrThreshold));
-    result = context->freeMem(ptrThreshold);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, mockHostMemAllocPool->allocations.getNumAllocs());
+    allocVerifyAndFree(1u, true);
+    allocVerifyAndFree(poolAllocationThreshold, true);
+    allocVerifyAndFree(poolAllocationThreshold + 1u, false);
 
-    void *ptrOverThreshold = nullptr;
-    result = context->allocHostMem(&hostDesc, poolAllocationThreshold + 1u, 0u, &ptrOverThreshold);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptrOverThreshold);
-    EXPECT_FALSE(driverHandle->usmHostMemAllocPool->isInPool(ptrOverThreshold));
-    EXPECT_EQ(0u, mockHostMemAllocPool->allocations.getNumAllocs());
-    EXPECT_NE(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrOverThreshold));
-    result = context->freeMem(ptrOverThreshold);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, mockHostMemAllocPool->allocations.getNumAllocs());
-
+    ze_result_t result = ZE_RESULT_SUCCESS;
     void *ptrFreeMemExt = nullptr;
     result = context->allocHostMem(&hostDesc, poolAllocationThreshold, 0u, &ptrFreeMemExt);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
