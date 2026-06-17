@@ -555,6 +555,7 @@ IpSamplingMetricImp::IpSamplingMetricImp(MetricSource &metricSource, zet_metric_
 ze_result_t IpSamplingMetricImp::getProperties(zet_metric_properties_t *pProperties) {
     auto pNext = pProperties->pNext;
     *pProperties = properties;
+    pProperties->pNext = pNext;
 
     while (pNext != nullptr) {
         auto extendedProperties = reinterpret_cast<zet_base_properties_t *>(pNext);

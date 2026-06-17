@@ -1181,7 +1181,20 @@ void OaMetricGroupImp::setCachedExportDataHeapSize(size_t size) {
 }
 
 ze_result_t OaMetricImp::getProperties(zet_metric_properties_t *pProperties) {
+    auto pNext = pProperties->pNext;
     copyProperties(properties, *pProperties);
+    pProperties->pNext = pNext;
+
+    while (pNext != nullptr) {
+        auto extendedProperties = reinterpret_cast<zet_base_properties_t *>(pNext);
+        if (extendedProperties->stype == ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULABLE_PROPERTIES_EXP) {
+            auto calculableProperties = reinterpret_cast<zet_intel_metric_calculable_properties_exp_t *>(extendedProperties);
+            // All MDAPI metrics and informations are calculable.
+            calculableProperties->isCalculable = true;
+        }
+        pNext = extendedProperties->pNext;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

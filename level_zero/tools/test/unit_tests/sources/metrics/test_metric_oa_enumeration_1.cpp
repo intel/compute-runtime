@@ -3420,6 +3420,100 @@ TEST_P(MetricEnumerationTestInformationTypes, givenValidInformationTypesWhenSetA
     EXPECT_EQ(oaMetric->getMetricGroup(), static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(metricGroupHandle)));
 }
 
+TEST_P(MetricEnumerationTestInformationTypes, GivenOaMetricsThenCalculablePropertyIsAlwaysTrue) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
+
+    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
+    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
+    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
+    ioEquationElement.ImmediateUInt64 = 0;
+
+    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
+
+    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
+    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
+    oaInformation.SymbolName = "BufferOverflow";
+    oaInformation.IoReadEquation = &ioReadEquation;
+    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
+    ioMeasurement.GetParamsResult = &oaInformation;
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.InformationCount = 1;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+
+    // Metrics Discovery:: information.
+    Mock<MetricsDiscovery::IInformation_1_0> information;
+    MetricsDiscovery::TInformationParams_1_0 sourceInformationParams = {};
+    sourceInformationParams.SymbolName = "Info symbol name";
+    sourceInformationParams.LongName = "Info long name";
+    sourceInformationParams.GroupName = "Info group name";
+    sourceInformationParams.InfoUnits = "Info Units";
+    sourceInformationParams.InfoType = infoType;
+
+    // One api: metric group handle.
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetInformationResult = &information;
+
+    information.GetParamsResult = &sourceInformationParams;
+
+    // Metric group handle.
+    uint32_t metricGroupCount = 1;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // Obtain information.
+    uint32_t metricCount = 0;
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    std::vector<zet_metric_handle_t> metricHandles(metricCount);
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, metricHandles.data()), ZE_RESULT_SUCCESS);
+
+    zet_metric_properties_t metricProperties = {};
+    metricProperties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
+    metricProperties.pNext = nullptr;
+
+    zet_intel_metric_calculable_properties_exp_t calculableProperties{};
+    calculableProperties.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULABLE_PROPERTIES_EXP;
+    calculableProperties.pNext = nullptr;
+    metricProperties.pNext = &calculableProperties;
+
+    for (auto &metricHandle : metricHandles) {
+        EXPECT_EQ(zetMetricGetProperties(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);
+        EXPECT_TRUE(calculableProperties.isCalculable);
+    }
+
+    // Check that invalid structure is handled gracefully
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    metricProperties.pNext = &metricGroupProperties;
+    EXPECT_EQ(zetMetricGetProperties(metricHandles[0], &metricProperties), ZE_RESULT_SUCCESS);
+}
+
 std::vector<MetricsDiscovery::TInformationType>
 getListOfInfoTypes() {
     std::vector<MetricsDiscovery::TInformationType> infoTypes = {};
