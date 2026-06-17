@@ -63,12 +63,12 @@ struct EventImp : public Event {
     const bool isNonCoherentTimestampsModeEnabled = false;
 
   protected:
-    ze_result_t waitForUserFence(uint64_t timeout);
+    ze_result_t waitForUserFence(uint64_t timeout, int64_t timeSinceWait);
     void downloadAllTbxAllocations();
 
     bool handlePreQueryStatusOperationsAndCheckCompletion();
-    bool tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation);
-    void tbxDownload(NEO::Device &device, bool &downloadedAllocation, bool &downloadedInOrdedAllocation);
+    bool tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation, bool &downloadedPatchPreambleAllocation);
+    void tbxDownload(NEO::Device &device, bool &downloadedAllocation, bool &downloadedInOrdedAllocation, bool &downloadedPatchPreambleAllocation);
     TaskCountType getTaskCount(const NEO::CommandStreamReceiver &csr) const;
     NEO::WaitStatus tryKmdWaitForHostSynchronize(NEO::CommandStreamReceiver &csrForCacheFlush,
                                                  bool cacheFlushRequiredForHostSync,
@@ -90,6 +90,7 @@ struct EventImp : public Event {
     bool isTimestampPopulated() const { return (contextEndTS != Event::STATE_CLEARED || globalEndTS != Event::STATE_CLEARED); }
     void synchronizeTimestampCompletionWithTimeout();
     bool isCacheFlushRequiredForHostSync() const;
+    bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) override;
 };
 
 } // namespace L0

@@ -4867,6 +4867,169 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
     EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 }
 
+HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeIsCalledThenPreambleAllocationIsDonwloadedAndCounterIsSignaled) {
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_SIGNALED);
+    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
+    VariableBackup<std::function<void()>> backupControlTpause(&CpuIntrinsicsTests::controlTpause);
+
+    std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
+
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, neoDevice->getMemoryManager());
+    ze_result_t result;
+    auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+
+    ASSERT_NE(event, nullptr);
+
+    TagAddressType *eventAddress = static_cast<TagAddressType *>(event->getHostAddress());
+    *eventAddress = Event::STATE_SIGNALED;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
+    ultCsr->initializeResources(false, device->getDevicePreemptionMode());
+
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
+    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
+        downloadAllocationTrack[&gfxAllocation]++;
+    };
+
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isGpuHangDetectedReturnValue = false;
+
+    auto mockNode = tagAllocator.getTag();
+    auto syncAllocation = mockNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
+
+    uint64_t counterValue = 1;
+    uint64_t patchPreambleData = 0;
+    uint64_t *patchPreambleHostAddress = &patchPreambleData;
+    MockGraphicsAllocation preambleAllocation(patchPreambleHostAddress, reinterpret_cast<uint64_t>(patchPreambleHostAddress), sizeof(patchPreambleData));
+
+    CpuIntrinsicsTests::tpauseCounter = 0u;
+
+    CpuIntrinsicsTests::controlTpause = [patchPreambleHostAddress, counterValue]() {
+        if (CpuIntrinsicsTests::tpauseCounter > 1) {
+            *patchPreambleHostAddress = counterValue;
+        }
+    };
+
+    CpuIntrinsicsTests::pauseCounter = 0u;
+    CpuIntrinsicsTests::pauseAddress = eventAddress;
+    CpuIntrinsicsTests::setupPauseAddress = [patchPreambleHostAddress, counterValue]() {
+        if (CpuIntrinsicsTests::pauseCounter > 1) {
+            *patchPreambleHostAddress = counterValue;
+        }
+    };
+
+    auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(mockNode, nullptr, *neoDevice, 1, false);
+    *inOrderExecInfo->getBaseHostAddress() = 1;
+
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event->externalEvent = true;
+
+    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation);
+
+    constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
+    result = event->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, downloadAllocationTrack[syncAllocation]);
+    EXPECT_EQ(0u, downloadAllocationTrack[&preambleAllocation]);
+    EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
+
+    auto event2 = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+
+    event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event2->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event2->externalEvent = true;
+    event2->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation);
+
+    syncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
+    preambleAllocation.updateTaskCount(0u, ultCsr->getOsContext().getContextId());
+    ultCsr->downloadAllocationsCalledCount = 0;
+    eventAddress = static_cast<TagAddressType *>(event->getHostAddress());
+    *eventAddress = Event::STATE_SIGNALED;
+
+    result = event2->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(0u, downloadAllocationTrack[syncAllocation]);
+    EXPECT_NE(0u, downloadAllocationTrack[&preambleAllocation]);
+    EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
+}
+
+HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeUsesWaitFenceThenPreambleCounterIsSynchronized) {
+    NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.set(1);
+
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_SIGNALED);
+    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
+    VariableBackup<std::function<void()>> backupControlTpause(&CpuIntrinsicsTests::controlTpause);
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, neoDevice->getMemoryManager());
+    ze_result_t result;
+    auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+
+    TagAddressType *eventAddress = static_cast<TagAddressType *>(event->getHostAddress());
+    *eventAddress = Event::STATE_SIGNALED;
+
+    ASSERT_NE(event, nullptr);
+    EXPECT_TRUE(event->isKmdWaitModeEnabled());
+    EXPECT_TRUE(event->isInterruptModeEnabled());
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    event->csrs[0] = ultCsr;
+    ultCsr->initializeResources(false, device->getDevicePreemptionMode());
+    ultCsr->isGpuHangDetectedReturnValue = false;
+
+    ultCsr->isUserFenceWaitSupported = true;
+    ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
+    ultCsr->waitUserFenceParams.forceRetStatusValue = true;
+
+    auto mockNode = tagAllocator.getTag();
+
+    uint64_t counterValue = 1;
+    uint64_t patchPreambleData = 0;
+    uint64_t *patchPreambleHostAddress = &patchPreambleData;
+    MockGraphicsAllocation preambleAllocation(patchPreambleHostAddress, reinterpret_cast<uint64_t>(patchPreambleHostAddress), sizeof(patchPreambleData));
+
+    CpuIntrinsicsTests::tpauseCounter = 0u;
+
+    CpuIntrinsicsTests::controlTpause = [patchPreambleHostAddress, counterValue]() {
+        if (CpuIntrinsicsTests::tpauseCounter > 1) {
+            *patchPreambleHostAddress = counterValue;
+        }
+    };
+
+    CpuIntrinsicsTests::pauseCounter = 0u;
+    CpuIntrinsicsTests::pauseAddress = eventAddress;
+    CpuIntrinsicsTests::setupPauseAddress = [patchPreambleHostAddress, counterValue]() {
+        if (CpuIntrinsicsTests::pauseCounter > 1) {
+            *patchPreambleHostAddress = counterValue;
+        }
+    };
+
+    auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(mockNode, nullptr, *neoDevice, 1, false);
+    *inOrderExecInfo->getBaseHostAddress() = 1;
+
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event->externalEvent = true;
+
+    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation);
+
+    constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
+    result = event->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandleCorrectly) {
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;

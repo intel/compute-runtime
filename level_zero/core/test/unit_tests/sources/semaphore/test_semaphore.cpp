@@ -118,6 +118,9 @@ class MockEmptyEvent : public ::L0::Event {
     ze_result_t hostEventSetValue(State) override { return ZE_RESULT_SUCCESS; };
 
     void clearTimestampTagData(uint32_t, NEO::TagNodeBase *) override {};
+    bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) override {
+        return true;
+    }
 };
 
 struct MockEventPool : public ::L0::EventPool {

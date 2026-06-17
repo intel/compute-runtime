@@ -9,6 +9,7 @@
 #include "zello_compile.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <iostream>
 #include <map>
@@ -764,8 +765,6 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
                                                            false, false, cmdList);
 
-    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
-                                                           false, false, cmdList);
     void *buffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &buffer));
@@ -824,6 +823,109 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
 
     SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
     SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph2));
+    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, buffer));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(eventCb));
+    return validRet;
+}
+
+bool testExternalGraphCbEventsMultiExecution(GraphApi &graphApi,
+                                             ze_context_handle_t &context,
+                                             ze_device_handle_t &device,
+                                             TestKernelsContainer &testKernels,
+                                             uint32_t executionCount,
+                                             bool aubMode,
+                                             const GraphDumpSettings &dumpSettings) {
+    bool validRet = true;
+
+    constexpr size_t elemCount = 4096;
+    constexpr size_t allocSize = 4096 * sizeof(uint32_t);
+
+    constexpr uint32_t initialValue = 4;
+    constexpr uint32_t addValue = 5;
+
+    std::vector<uint32_t> expectedValues(executionCount);
+    uint32_t sum = initialValue;
+
+    for (uint32_t i = 0; i < executionCount; ++i) {
+        sum += addValue;
+        expectedValues[i] = sum;
+    }
+
+    ze_event_pool_handle_t eventPool = nullptr;
+    ze_event_handle_t eventCb = nullptr;
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
+    counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
+    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
+                                                     eventPool, 0u,
+                                                     true, &counterBasedDesc,
+                                                     1, &eventCb, ZE_EVENT_SCOPE_FLAG_HOST, 0u);
+
+    ze_kernel_handle_t kernelAddConstant = testKernels["add_constant"];
+
+    ze_command_list_handle_t cmdList;
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                                           false, false, cmdList);
+
+    void *buffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &buffer));
+    for (size_t i = 0; i < elemCount; i++) {
+        reinterpret_cast<uint32_t *>(buffer)[i] = initialValue;
+    }
+
+    ze_graph_handle_t virtualGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
+
+    uint32_t groupSizeX = 32;
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelAddConstant, groupSizeX, groupSizeY, groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddConstant, 0, sizeof(buffer), &buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddConstant, 1, sizeof(addValue), &addValue));
+    ze_group_count_t groupCount = {static_cast<uint32_t>(elemCount / groupSizeX), 1, 1};
+    // attach external event to append operation
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernelAddConstant, &groupCount, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendSignalEvent(cmdList, eventCb));
+
+    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, nullptr, nullptr));
+
+    // create physical graph
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+
+    std::vector<int64_t> eventSyncTimings(executionCount);
+
+    // Dispatch physicalGraph and wait on cb event
+    for (uint32_t i = 0; i < executionCount; ++i) {
+        SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+        // synchronize using event
+        auto startTime = std::chrono::high_resolution_clock::now();
+        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(eventCb, std::numeric_limits<uint64_t>::max()));
+        auto endTime = std::chrono::high_resolution_clock::now();
+        eventSyncTimings[i] = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+
+        // verify data
+        if (aubMode == false) {
+            validRet = LevelZeroBlackBoxTests::validateToValue(expectedValues[i], buffer, elemCount);
+        }
+    }
+
+    // Final sync to ensure all operations are done
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+    // Display event sync timings
+    std::cout << "Event host synchronize timings (us):" << std::endl;
+    for (uint32_t i = 0; i < executionCount; ++i) {
+        std::cout << "  Iteration " << i << ": " << eventSyncTimings[i] << " us" << std::endl;
+    }
+
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
+
+    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
     SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
@@ -1884,11 +1986,30 @@ int main(int argc, char *argv[]) {
     }
 
     if (testMask.test(bitNumberTestExternalCbEvents)) {
-        currentTest = "External Graph CB Events";
-        std::cout << "Starting test: " << currentTest << std::endl;
-        casePass = testExternalGraphCbEvents(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings);
-        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
-        boxPass &= casePass;
+        if (testSubMask.test(0)) {
+            currentTest = "External Graph CB Events";
+            std::cout << "Starting test: " << currentTest << std::endl;
+            casePass = testExternalGraphCbEvents(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings);
+            LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+            boxPass &= casePass;
+        }
+        if (testSubMask.test(1)) {
+            uint32_t executionCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-e", "--execution_count", 3u);
+            std::string testTitle = "External Graph CB Events multiple execution";
+            auto getCaseName = [&testTitle](uint32_t executionCount) -> std::string {
+                std::ostringstream caseName;
+                caseName << testTitle;
+                caseName << " count: " << executionCount;
+                return caseName.str();
+            };
+
+            currentTest = getCaseName(executionCount);
+
+            std::cout << "Starting test: " << currentTest << std::endl;
+            casePass = testExternalGraphCbEventsMultiExecution(graphApi, context, device0, kernelsMap, executionCount, aubMode, graphDumpSettings);
+            LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+            boxPass &= casePass;
+        }
     }
 
     if (testMask.test(bitNumberTestMultiLevelGraph)) {

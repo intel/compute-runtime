@@ -2045,6 +2045,102 @@ TEST_F(GraphTestInstantiationTest, WhenForkJoinCbExternalEventsAreUsedThenParent
     joinEvent->destroy();
 }
 
+TEST_F(GraphTestInstantiationTest, WhenForkAndJoinUsesSingleCbExternalEventsThenOnlySingleAndLastUsedBranchIsUsedForEvent) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    subCommandList->setOrdinal(0);
+    auto subCommandListHandle = subCommandList->toHandle();
+    auto whiteBoxSubCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(subCommandList.get())->cmdQImmediate);
+
+    zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+
+    ze_event_handle_t eventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    auto event = L0::Event::fromHandle(eventHandle);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandle, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(subCommandListHandle, eventHandle, 1U, &eventHandle)); // this is last place of signal of the event, so this branch should be used for the event
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 1U, &eventHandle));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*srcGraph.get());
+    auto execGraphHandle = execGraph.toHandle();
+
+    EXPECT_TRUE(event->isExternalEvent());
+    EXPECT_FALSE(event->isActiveExternalCbEvent());
+
+    auto cbEventContainer = execGraph.getExternalCbEventInfoContainer().get();
+
+    bool eventFound = false;
+    auto &externalCbEventContainer = cbEventContainer->getCbEventInfos();
+    for (const auto &entry : externalCbEventContainer) {
+        if (entry.event == event) {
+            EXPECT_NE(nullptr, entry.executorCommandList);
+            eventFound = true;
+        }
+    }
+    EXPECT_TRUE(eventFound);
+
+    auto &execContainer = cbEventContainer->getExecutorInfos();
+    EXPECT_EQ(1u, execContainer.size());
+
+    bool virtualRootFound = false;
+    bool physicalChildFound = false;
+    for (const auto &entry : execContainer) {
+        if (entry.key == nullptr) {
+            virtualRootFound = true;
+        } else {
+            EXPECT_EQ(subCommandList.get(), entry.key);
+            physicalChildFound = true;
+        }
+        EXPECT_EQ(0u, entry.counter());
+        EXPECT_EQ(nullptr, entry.hostAddress());
+        EXPECT_EQ(0u, entry.deviceAddress());
+        EXPECT_EQ(nullptr, entry.allocation());
+    }
+
+    EXPECT_FALSE(virtualRootFound);
+    EXPECT_TRUE(physicalChildFound);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExp(commandListHandle, execGraphHandle, nullptr, nullptr, 0, nullptr));
+
+    auto &rootHostPatchPreambleData = cbEventContainer->getPreambleData(nullptr); // there should be no data for root, as event is attached to child
+    EXPECT_EQ(0u, rootHostPatchPreambleData.counter());
+    EXPECT_EQ(nullptr, rootHostPatchPreambleData.hostAddress());
+    EXPECT_EQ(0u, rootHostPatchPreambleData.deviceAddress());
+    EXPECT_EQ(nullptr, rootHostPatchPreambleData.allocation());
+
+    auto &childHostPatchPreambleData = cbEventContainer->getPreambleData(subCommandList.get());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, childHostPatchPreambleData.counter());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, childHostPatchPreambleData.hostAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceAddress, childHostPatchPreambleData.deviceAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.allocation, childHostPatchPreambleData.allocation());
+
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, event->getInOrderExecEventHelper().getPatchPreambleCounter());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.hostAddress, event->getInOrderExecEventHelper().getPatchPreambleHostAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceAddress, event->getInOrderExecEventHelper().getPatchPreambleDeviceAddress());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.allocation, event->getInOrderExecEventHelper().getPatchPreambleAllocation());
+
+    srcGraph.reset();
+    event->destroy();
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             GraphTestInstantiationTest,
             GivenGraphUsesExternalCbEventsWhenExecutingGraphThenPatchPreambleDispatchesCounterPostSync) {

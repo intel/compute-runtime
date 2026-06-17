@@ -425,6 +425,12 @@ struct Event : _ze_event_handle_t {
     void setPerfCounterNode(NEO::TagNodeBase *node) { this->perfCounterNode = node; }
     NEO::TagNodeBase *getPerfCounterNode() const { return this->perfCounterNode; }
 
+    bool isActiveExternalCbEvent() const {
+        return externalEvent && (inOrderExecHelper.getPatchPreambleCounter() > 0);
+    }
+
+    virtual bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) = 0;
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 

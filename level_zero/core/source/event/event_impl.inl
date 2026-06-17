@@ -323,6 +323,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
     }
 
     const auto waitValue = getInOrderExecBaseSignalValue();
+    const auto partitionOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
 
     if (!inOrderExecHelper.isCounterAlreadyDone(waitValue, this->getInOrderAllocationOffset())) {
         bool signaled = true;
@@ -341,7 +342,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
                     break;
                 }
 
-                hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+                hostAddress = ptrOffset(hostAddress, partitionOffset);
             }
         }
 
@@ -514,7 +515,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
 }
 
 template <typename TagSizeT>
-bool EventImp<TagSizeT>::tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation) {
+bool EventImp<TagSizeT>::tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation, bool &downloadedPatchPreambleAllocation) {
     if (!downloadedAllocation) {
         if (auto &alloc = *this->getAllocation(this->device); alloc.isUsedByOsContext(csr.getOsContext().getContextId())) {
             csr.downloadAllocation(alloc);
@@ -531,7 +532,15 @@ bool EventImp<TagSizeT>::tbxDownload(NEO::CommandStreamReceiver &csr, bool &down
         }
     }
 
-    if (downloadedAllocation && downloadedInOrdedAllocation) {
+    if (!downloadedPatchPreambleAllocation) {
+        auto alloc = inOrderExecHelper.getPatchPreambleAllocation();
+        if (alloc && alloc->isUsedByOsContext(csr.getOsContext().getContextId())) {
+            csr.downloadAllocation(*alloc);
+            downloadedPatchPreambleAllocation = true;
+        }
+    }
+
+    if (downloadedAllocation && downloadedInOrdedAllocation && downloadedPatchPreambleAllocation) {
         return false;
     }
 
@@ -539,12 +548,12 @@ bool EventImp<TagSizeT>::tbxDownload(NEO::CommandStreamReceiver &csr, bool &down
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::tbxDownload(NEO::Device &device, bool &downloadedAllocation, bool &downloadedInOrdedAllocation) {
+void EventImp<TagSizeT>::tbxDownload(NEO::Device &device, bool &downloadedAllocation, bool &downloadedInOrdedAllocation, bool &downloadedPatchPreambleAllocation) {
     for (auto const &engine : device.getAllEngines()) {
         if (!engine.commandStreamReceiver->isInitialized()) {
             continue;
         }
-        if (!tbxDownload(*engine.commandStreamReceiver, downloadedAllocation, downloadedInOrdedAllocation)) {
+        if (!tbxDownload(*engine.commandStreamReceiver, downloadedAllocation, downloadedInOrdedAllocation, downloadedPatchPreambleAllocation)) {
             break;
         }
     }
@@ -553,7 +562,7 @@ void EventImp<TagSizeT>::tbxDownload(NEO::Device &device, bool &downloadedAlloca
         if (!csr->isInitialized()) {
             continue;
         }
-        if (!tbxDownload(*csr, downloadedAllocation, downloadedInOrdedAllocation)) {
+        if (!tbxDownload(*csr, downloadedAllocation, downloadedInOrdedAllocation, downloadedPatchPreambleAllocation)) {
             break;
         }
     }
@@ -572,14 +581,14 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
     if (this->tbxMode) {
         bool downloadedAllocation = (eventPoolAllocation == nullptr);
         bool downloadedInOrdedAllocation = (inOrderExecHelper.getDeviceCounterAllocation() == nullptr);
+        bool downloadedPatchPreambleAllocation = (inOrderExecHelper.getPatchPreambleAllocation() == nullptr);
 
         DEBUG_BREAK_IF(inOrderExecHelper.isDataAssigned() && (inOrderExecHelper.getDeviceCounterAllocation() == nullptr)); //  external allocation - not able to download
 
-        tbxDownload(*this->device->getNEODevice(), downloadedAllocation, downloadedInOrdedAllocation);
-
-        if (!downloadedAllocation || !downloadedInOrdedAllocation) {
+        tbxDownload(*this->device->getNEODevice(), downloadedAllocation, downloadedInOrdedAllocation, downloadedPatchPreambleAllocation);
+        if (!downloadedAllocation || !downloadedInOrdedAllocation || !downloadedPatchPreambleAllocation) {
             for (auto &subDevice : this->device->getNEODevice()->getRootDevice()->getSubDevices()) {
-                tbxDownload(*subDevice, downloadedAllocation, downloadedInOrdedAllocation);
+                tbxDownload(*subDevice, downloadedAllocation, downloadedInOrdedAllocation, downloadedPatchPreambleAllocation);
             }
         }
     }
@@ -595,6 +604,12 @@ template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryStatus(int64_t timeSinceWait) {
     if (handlePreQueryStatusOperationsAndCheckCompletion()) {
         return ZE_RESULT_SUCCESS;
+    }
+
+    if (isActiveExternalCbEvent()) {
+        if (!isPatchPreambleCounterCompleted(timeSinceWait)) {
+            return ZE_RESULT_NOT_READY;
+        }
     }
 
     if (isCounterBased() || this->inOrderExecHelper.isDataAssigned()) {
@@ -773,9 +788,15 @@ ze_result_t EventImp<TagSizeT>::hostSignal(bool allowCounterBased) {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
+ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout, int64_t timeSinceWait) {
     if (handlePreQueryStatusOperationsAndCheckCompletion()) {
         return ZE_RESULT_SUCCESS;
+    }
+
+    if (isActiveExternalCbEvent()) {
+        if (!isPatchPreambleCounterCompleted(timeSinceWait)) {
+            return ZE_RESULT_NOT_READY;
+        }
     }
 
     if (!inOrderExecHelper.isDataAssigned()) {
@@ -866,7 +887,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             }
         } else {
             if (fenceWait) {
-                ret = waitForUserFence(timeout);
+                ret = waitForUserFence(timeout, elapsedTimeSinceWaitStartUs);
             } else {
                 ret = queryStatus(elapsedTimeSinceWaitStartUs);
             }
@@ -1272,5 +1293,23 @@ bool EventImp<TagSizeT>::isCacheFlushRequiredForHostSync() const {
     }
 
     return !isHeaplessModeEnabled && (isCounterBased() || (inOrderExecHelper.isDataAssigned() && isNonCoherentTimestampsModeEnabled));
+}
+
+template <typename TagSizeT>
+bool EventImp<TagSizeT>::isPatchPreambleCounterCompleted(int64_t timeSinceWait) {
+    const auto counterValue = inOrderExecHelper.getPatchPreambleCounter();
+    auto hostAddress = inOrderExecHelper.getPatchPreambleHostAddress();
+    const auto hostPartitions = inOrderExecHelper.getEventData()->hostPartitions;
+    const auto partitionOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
+
+    for (uint32_t partition = 0; partition < hostPartitions; partition++) {
+        if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, counterValue, std::greater_equal<uint64_t>(), timeSinceWait,
+                                                                       NEO::WaitUtils::counterValueForEventHostSync,
+                                                                       NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds)) {
+            return false;
+        }
+        hostAddress = ptrOffset(hostAddress, partitionOffset);
+    }
+    return true;
 }
 } // namespace L0

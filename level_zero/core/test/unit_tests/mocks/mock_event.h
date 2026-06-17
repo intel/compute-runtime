@@ -26,6 +26,7 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass::Event;
     using BaseClass::eventPoolAllocation;
     using BaseClass::exportedIpcServerHandles;
+    using BaseClass::externalEvent;
     using BaseClass::globalEndTS;
     using BaseClass::globalStartTS;
     using BaseClass::gpuHangCheckPeriod;
@@ -49,6 +50,7 @@ struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass::contextEndTS;
     using BaseClass::contextStartTS;
     using BaseClass::csrs;
+    using BaseClass::externalEvent;
     using BaseClass::globalEndTS;
     using BaseClass::globalStartTS;
     using BaseClass::gpuHangCheckPeriod;
@@ -108,6 +110,7 @@ struct Mock<Event> : public Event {
     ADDMETHOD_NOBASE(hostEventSetValue, ze_result_t, ZE_RESULT_SUCCESS, (State eventState));
     ADDMETHOD_NOBASE(getPacketAddress, uint64_t, 0, (L0::Device * device));
     ADDMETHOD_NOBASE_VOIDRETURN(clearTimestampTagData, (uint32_t partitionCount, NEO::TagNodeBase *newNode));
+    ADDMETHOD_NOBASE(isPatchPreambleCounterCompleted, bool, true, (int64_t timeSinceWait));
     ADDMETHOD_CONST(getRecordedSignalFrom, L0::CommandList *, true, nullptr, (), ());
 
     // Fake an allocation for event memory
@@ -129,6 +132,7 @@ struct Mock<EventPool> : public EventPool {
 
 class MockEvent : public ::L0::Event {
   public:
+    using ::L0::Event::externalEvent;
     using ::L0::Event::gpuEndTimestamp;
     using ::L0::Event::gpuStartTimestamp;
     using ::L0::Event::isCompleted;
@@ -203,6 +207,9 @@ class MockEvent : public ::L0::Event {
     }
     ze_result_t hostEventSetValue(State eventState) override {
         return ZE_RESULT_SUCCESS;
+    }
+    bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) override {
+        return true;
     }
     ::L0::Event *toBase() { return this; }
     void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) override {}
