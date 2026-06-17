@@ -94,6 +94,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/pci_path.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pci_path.h
     ${CMAKE_CURRENT_SOURCE_DIR}/peer_access_probe.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}peer_access_probe_fabric.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/peer_access_probe.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}page_table_manager_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp

@@ -44,7 +44,7 @@ bool hasDrmDriverModel(Device &device) {
 }
 } // namespace
 
-bool queryFabricStatsDrm(Device &sourceDevice, Device &peerDevice, uint32_t &latency, uint32_t &bandwidth) {
+bool queryFabricStatsIaf(Device &sourceDevice, Device &peerDevice, uint32_t &latency, uint32_t &bandwidth) {
     if (!hasDrmDriverModel(sourceDevice) || !hasDrmDriverModel(peerDevice)) {
         return false;
     }

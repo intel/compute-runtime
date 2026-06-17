@@ -57,9 +57,13 @@ struct FabricEdgeInfo {
     FabricDuplexMode duplexMode;
 };
 
+constexpr uint32_t packPciBdf(uint32_t domain, uint32_t bus, uint32_t device, uint32_t function) {
+    return (domain << 16) | (bus << 8) | ((device & 0x1f) << 3) | (function & 0x7);
+}
+
 constexpr uint64_t bitsPerByte = 8ULL;
 
-inline uint32_t convertBandwidthToBytesPerNanosec(uint64_t bandwidth, FabricBandwidthUnit unit) {
+constexpr uint32_t convertBandwidthToBytesPerNanosec(uint64_t bandwidth, FabricBandwidthUnit unit) {
     switch (unit) {
     case FabricBandwidthUnit::bytesPerSec:
         return static_cast<uint32_t>(bandwidth / std::chrono::nanoseconds::period::den);

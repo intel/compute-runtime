@@ -401,6 +401,17 @@ TEST_F(PeerAccessProbeTest, givenPeerDeviceWithoutOsInterfaceWhenQueryingFabricS
     osInterfacePtr.reset(releasedOsInterface);
 }
 
+TEST_F(PeerAccessProbeTest, givenSourceDeviceWithNoOsInterfaceWhenQueryFabricStatsIafCalledThenReturnsFalse) {
+    auto &osInterfacePtr = executionEnvironment->rootDeviceEnvironments[device0->getRootDeviceIndex()]->osInterface;
+    auto releasedOsInterface = osInterfacePtr.release();
+
+    uint32_t latency = 0;
+    uint32_t bandwidth = 0;
+    EXPECT_FALSE(queryFabricStatsIaf(*device0, *device1, latency, bandwidth));
+
+    osInterfacePtr.reset(releasedOsInterface);
+}
+
 TEST_F(PeerAccessProbeTest, givenDrmDriverModelWhenQueryingPeerAccessThenProbeRuns) {
     GraphicsAllocation *probeAllocation = nullptr;
     uint64_t handle = std::numeric_limits<uint64_t>::max();
@@ -598,4 +609,12 @@ TEST_F(PeerAccessProbeFabricStatsTest, givenSuccessfulFabricStatsWhenQueryingPee
     EXPECT_EQ(0u, memoryManager->allocateCalls);
     EXPECT_EQ(0u, memoryManager->importCalls);
     EXPECT_EQ(nullptr, probeAllocation);
+}
+
+TEST_F(PeerAccessProbeFabricStatsTest, givenOpenFailsWhenQueryFabricStatsIafCalledThenReturnsFalse) {
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpenFail{&SysCalls::sysCallsOpen,
+                                                                  [](const char *, int) -> int { return -1; }};
+
+    uint32_t latency = 0, bandwidth = 0;
+    EXPECT_FALSE(queryFabricStatsDrm(*device0, *device0, latency, bandwidth));
 }
