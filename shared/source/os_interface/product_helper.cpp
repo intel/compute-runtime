@@ -54,9 +54,13 @@ int ProductHelper::setupProductSpecificConfig(HardwareInfo &hwInfo, const RootDe
 }
 
 void ProductHelper::applyLimitGrfSupported(SupportedNumGrfs &grfs) const {
+    DEBUG_BREAK_IF(grfs.empty());
     const auto limit = static_cast<uint32_t>(debugManager.flags.LimitNumGrfsSupported.get());
-    const auto it = std::find_if(grfs.begin(), grfs.end(), [limit](uint32_t numGrfs) { return numGrfs > limit; });
-    grfs.resize(static_cast<size_t>(it - grfs.begin()));
+    if (limit < grfs.back()) {
+        const auto it = std::find_if(grfs.begin(), grfs.end(), [limit](uint32_t numGrfs) { return numGrfs > limit; });
+        grfs.resize(static_cast<size_t>(it - grfs.begin()));
+        DEBUG_BREAK_IF(grfs.empty());
+    }
 }
 
 void ProductHelper::setupPreemptionMode(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment, bool kmdPreemptionSupport) {

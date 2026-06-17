@@ -1052,18 +1052,9 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCor
     }
 }
 
-HWTEST_F(ProductHelperTest, givenLimitNumGrfsSupportedAndReleaseHelperWhenGettingSupportedNumGrfsThenReturnLimitedValue) {
-    if (!releaseHelper) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_F(ProductHelperTest, givenLimitNumGrfsSupportedAndReleaseHelperWhenGettingSupportedNumGrfsThenReturnLimitedValue, PlatformsWithReleaseHelper) {
     DebugManagerStateRestore restorer;
 
-    {
-        debugManager.flags.LimitNumGrfsSupported.set(0u);
-        auto grfs = productHelper->getSupportedNumGrfs(releaseHelper);
-        EXPECT_TRUE(grfs.empty());
-    }
     {
         debugManager.flags.LimitNumGrfsSupported.set(128u);
         auto grfs = productHelper->getSupportedNumGrfs(releaseHelper);
@@ -1076,6 +1067,37 @@ HWTEST_F(ProductHelperTest, givenLimitNumGrfsSupportedAndReleaseHelperWhenGettin
         EXPECT_FALSE(grfs.empty());
         EXPECT_LE(*(grfs.end() - 1), 256u);
     }
+}
+
+HWTEST_F(ProductHelperTest, givenLimitNumGrfsSupportedNotExceededWhenApplyingLimitGrfSupportedThenGrfsAreNotModified) {
+    DebugManagerStateRestore restorer;
+    MockProductHelperHw<IGFX_UNKNOWN> mockProductHelper;
+    const SupportedNumGrfs initialGrfs{32u, 64u, 128u, 256u};
+
+    {
+        debugManager.flags.LimitNumGrfsSupported.set(512u);
+        auto grfs = initialGrfs;
+        mockProductHelper.applyLimitGrfSupported(grfs);
+        EXPECT_EQ(initialGrfs, grfs);
+    }
+    {
+        debugManager.flags.LimitNumGrfsSupported.set(256u);
+        auto grfs = initialGrfs;
+        mockProductHelper.applyLimitGrfSupported(grfs);
+        EXPECT_EQ(initialGrfs, grfs);
+    }
+}
+
+HWTEST_F(ProductHelperTest, givenLimitNumGrfsSupportedExceededWhenApplyingLimitGrfSupportedThenGrfsAreTruncated) {
+    DebugManagerStateRestore restorer;
+    MockProductHelperHw<IGFX_UNKNOWN> mockProductHelper;
+    const SupportedNumGrfs initialGrfs{32u, 64u, 128u, 256u};
+
+    debugManager.flags.LimitNumGrfsSupported.set(100u);
+    auto grfs = initialGrfs;
+    mockProductHelper.applyLimitGrfSupported(grfs);
+    const SupportedNumGrfs expectedGrfs{32u, 64u};
+    EXPECT_EQ(expectedGrfs, grfs);
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingDefaultCopyEngineThenEngineBCSIsReturned) {

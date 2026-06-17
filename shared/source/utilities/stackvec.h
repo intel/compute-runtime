@@ -262,6 +262,20 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
         --onStackSize;
     }
 
+    DataType &back() {
+        if (usesDynamicMem()) {
+            return dynamicMem->back();
+        }
+        return *(reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize - 1);
+    }
+
+    const DataType &back() const {
+        if (usesDynamicMem()) {
+            return dynamicMem->back();
+        }
+        return *(reinterpret_cast<const DataType *>(onStackMemRawBytes) + onStackSize - 1);
+    }
+
     DataType &operator[](std::size_t idx) {
         if (usesDynamicMem()) {
             return (*dynamicMem)[idx];

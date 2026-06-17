@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1365,6 +1365,62 @@ TEST(StackVecPopBack, GivenNonEmptyStackVecThenRemoveSingleElementFromTheEnd) {
     EXPECT_EQ(3U, *v.rbegin());
     v.pop_back();
     EXPECT_EQ(0U, v.size());
+}
+
+TEST(StackVecBack, GivenStackStorageWhenGettingBackThenLastElementIsReturned) {
+    using Type = uint32_t;
+    StackVec<Type, 5> v;
+    v.push_back(3);
+    EXPECT_EQ(3U, v.back());
+
+    v.push_back(7);
+    EXPECT_EQ(7U, v.back());
+
+    v.pop_back();
+    EXPECT_EQ(3U, v.back());
+
+    v.back() = 11;
+    EXPECT_EQ(11U, v.back());
+    EXPECT_EQ(11U, v[v.size() - 1]);
+}
+
+TEST(StackVecBack, GivenStackStorageWhenGettingBackOnConstStackVecThenLastElementIsReturned) {
+    using VecType = StackVec<uint32_t, 5>;
+    VecType v;
+    v.push_back(3);
+    v.push_back(7);
+
+    const VecType &constRef = v;
+    EXPECT_EQ(7U, constRef.back());
+    EXPECT_EQ(&v.back(), &constRef.back());
+}
+
+TEST(StackVecBack, GivenDynamicStorageWhenGettingBackThenLastElementIsReturned) {
+    using Type = uint32_t;
+    StackVec<Type, 1> v;
+    v.push_back(3);
+    v.push_back(7);
+    v.push_back(11);
+    EXPECT_EQ(11U, v.back());
+
+    v.pop_back();
+    EXPECT_EQ(7U, v.back());
+
+    v.back() = 13;
+    EXPECT_EQ(13U, v.back());
+    EXPECT_EQ(13U, v[v.size() - 1]);
+}
+
+TEST(StackVecBack, GivenDynamicStorageWhenGettingBackOnConstStackVecThenLastElementIsReturned) {
+    using VecType = StackVec<uint32_t, 1>;
+    VecType v;
+    v.push_back(3);
+    v.push_back(7);
+    v.push_back(11);
+
+    const VecType &constRef = v;
+    EXPECT_EQ(11U, constRef.back());
+    EXPECT_EQ(&v.back(), &constRef.back());
 }
 
 TEST(StackVec, WhenReservingThenCapacityIncreasesAndSizeDoesNot) {

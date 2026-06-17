@@ -14,6 +14,7 @@ namespace NEO {
 
 template <PRODUCT_FAMILY productFamily>
 struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
+    using ProductHelper::applyLimitGrfSupported;
     using ProductHelper::getDefaultLocalMemoryAccessMode;
     std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() const override;
     bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override;
