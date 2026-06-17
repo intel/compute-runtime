@@ -54,11 +54,12 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isHighPriority() const { return engineUsage == EngineUsage::highPriority; }
     bool isInternalEngine() const { return engineUsage == EngineUsage::internal; }
     bool isCooperativeEngine() const { return engineUsage == EngineUsage::cooperative; }
+    bool isPowerHint() const { return engineUsage == EngineUsage::powerHint; }
     bool isRootDevice() const { return rootDevice; }
     virtual bool isDirectSubmissionSupported() const { return directSubmissionSupported; }
     bool isDefaultContext() const { return defaultContext; }
     void setDefaultContextIfApplicable(const aub_stream::EngineType &defaultType) {
-        if (this->engineType == defaultType && !isLowPriority() && !isInternalEngine()) {
+        if (this->engineType == defaultType && !isLowPriority() && !isInternalEngine() && !isPowerHint()) {
             setDefaultContext(true);
         }
     }

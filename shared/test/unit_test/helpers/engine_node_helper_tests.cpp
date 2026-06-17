@@ -8,8 +8,10 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -21,6 +23,7 @@ TEST(EngineNodeHelperTest, givenValidEngineUsageWhenGettingStringRepresentationT
     EXPECT_EQ(std::string{"LowPriority"}, EngineHelpers::engineUsageToString(EngineUsage::lowPriority));
     EXPECT_EQ(std::string{"HighPriority"}, EngineHelpers::engineUsageToString(EngineUsage::highPriority));
     EXPECT_EQ(std::string{"Cooperative"}, EngineHelpers::engineUsageToString(EngineUsage::cooperative));
+    EXPECT_EQ(std::string{"PowerHint"}, EngineHelpers::engineUsageToString(EngineUsage::powerHint));
 }
 
 TEST(EngineNodeHelperTest, givenInValidEngineUsageWhenGettingStringRepresentationThenReturnUnknown) {
@@ -197,4 +200,32 @@ TEST(EngineNodeHelperTest, givenAllEnginesWhenCheckingEngineIsComputeCapableThen
     for (size_t i = 0; i < numEngines; i++) {
         EXPECT_EQ(engines[i].isCompute, EngineHelpers::isComputeEngine(engines[i].engineType));
     }
+}
+
+TEST(EngineNodeHelperTest, givenWddmDriverModelWhenIsPowerHintEngineSupportedThenReturnTrue) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    rootDeviceEnvironment.osInterface.reset(new OSInterface());
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<MockDriverModelWDDM>());
+
+    EXPECT_TRUE(EngineHelpers::isPowerHintEngineSupported(rootDeviceEnvironment));
+}
+
+TEST(EngineNodeHelperTest, givenDrmDriverModelWhenIsPowerHintEngineSupportedThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    rootDeviceEnvironment.osInterface.reset(new OSInterface());
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<MockDriverModelDRM>());
+
+    EXPECT_FALSE(EngineHelpers::isPowerHintEngineSupported(rootDeviceEnvironment));
+}
+
+TEST(EngineNodeHelperTest, givenNoOsInterfaceWhenIsPowerHintEngineSupportedThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.osInterface.get());
+    EXPECT_FALSE(EngineHelpers::isPowerHintEngineSupported(rootDeviceEnvironment));
 }

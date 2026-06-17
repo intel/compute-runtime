@@ -4611,6 +4611,101 @@ HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceW
     EXPECT_EQ(1u, csr->getOsContext().getDeviceBitfield().count());
 }
 
+struct DevicePowerHintCsrFixture : public DeviceFixture {
+    void setUp() {
+        DeviceFixture::setUp();
+        const auto &hwInfo = neoDevice->getHardwareInfo();
+        auto defaultEngineType = NEO::getChosenEngineType(hwInfo);
+        neoDevice->createEngine({defaultEngineType, NEO::EngineUsage::powerHint});
+        if (hwInfo.capabilityTable.blitterOperationsSupported) {
+            const auto &productHelper = neoDevice->getProductHelper();
+            auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
+            neoDevice->createEngine({defaultCopyEngine, NEO::EngineUsage::powerHint});
+            powerHintBcsCreated = true;
+        }
+    }
+    bool powerHintBcsCreated = false;
+};
+using DevicePowerHintCsrTest = Test<DevicePowerHintCsrFixture>;
+
+TEST_F(DevicePowerHintCsrTest, givenDeviceWhenGettingCsrForPowerHintThenDedicatedPowerHintEngineIsReturned) {
+    NEO::CommandStreamReceiver *csr = nullptr;
+    auto ret = device->getCsrForPowerHint(&csr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_NE(nullptr, csr);
+    EXPECT_TRUE(csr->getOsContext().isPowerHint());
+    EXPECT_EQ(EngineUsage::powerHint, csr->getOsContext().getEngineUsage());
+}
+
+TEST_F(DevicePowerHintCsrTest, givenDeviceWhenGettingCsrForPowerHintForCopyOnlyThenDedicatedBcsPowerHintEngineIsReturnedWhenAvailable) {
+    NEO::CommandStreamReceiver *csr = nullptr;
+    auto ret = device->getCsrForPowerHint(&csr, true);
+    if (powerHintBcsCreated) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+        ASSERT_NE(nullptr, csr);
+        EXPECT_EQ(EngineUsage::powerHint, csr->getOsContext().getEngineUsage());
+        EXPECT_TRUE(NEO::EngineHelpers::isBcs(csr->getOsContext().getEngineType()));
+    } else {
+        EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
+        EXPECT_EQ(nullptr, csr);
+    }
+}
+
+TEST_F(DevicePowerHintCsrTest, givenPowerHintMaxParameterWhenGettingCsrForOrdinalAndIndexThenPowerHintEngineIsReturned) {
+    NEO::CommandStreamReceiver *csr = nullptr;
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false, NEO::OsContext::getUmdPowerHintMax());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_NE(nullptr, csr);
+    EXPECT_EQ(EngineUsage::powerHint, csr->getOsContext().getEngineUsage());
+}
+
+TEST_F(DevicePowerHintCsrTest, givenPowerHintZeroParameterWhenGettingCsrForOrdinalAndIndexThenRegularEngineIsReturnedNotPowerHintEngine) {
+    NEO::CommandStreamReceiver *csr = nullptr;
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_NE(nullptr, csr);
+    EXPECT_NE(EngineUsage::powerHint, csr->getOsContext().getEngineUsage());
+}
+
+TEST_F(DevicePowerHintCsrTest, givenPowerHintBelowMaxWhenGettingCsrForOrdinalAndIndexThenRegularEngineIsReturned) {
+    NEO::CommandStreamReceiver *csr = nullptr;
+    uint8_t intermediateHint = NEO::OsContext::getUmdPowerHintMax() - 1u;
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false, intermediateHint);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_NE(nullptr, csr);
+    EXPECT_NE(EngineUsage::powerHint, csr->getOsContext().getEngineUsage());
+}
+
+TEST_F(DevicePowerHintCsrTest, givenPowerHintMaxWithCopyOrdinalWhenGettingCsrThenPowerHintBcsOrRegularEngineIsReturned) {
+    auto copyOrdinalOpt = device->tryGetCopyEngineOrdinal();
+    if (!copyOrdinalOpt.has_value()) {
+        return;
+    }
+    NEO::CommandStreamReceiver *csr = nullptr;
+    auto ret = device->getCsrForOrdinalAndIndex(&csr, copyOrdinalOpt.value(), 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
+                                                std::nullopt, false, NEO::OsContext::getUmdPowerHintMax());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_NE(nullptr, csr);
+}
+
+TEST_F(DevicePowerHintCsrTest, givenCreateImmediateWithCsrWrapperWhenPowerHintIsZeroThenWrapperDelegatesCorrectly) {
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = 0;
+    desc.index = 0;
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
+    ASSERT_NE(nullptr, csr);
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::createImmediate(
+        neoDevice->getHardwareInfo().platform.eProductFamily,
+        device, &desc, false, NEO::EngineGroupType::renderCompute, csr, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, commandList.get());
+}
+
 HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceWhenGettingHighPriorityCsrForCopyEngineThenSubDeviceHpBcsIsReturned, IsAtLeastXeCore) {
 
     NEO::CommandStreamReceiver *csr = nullptr;

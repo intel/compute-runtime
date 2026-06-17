@@ -27,6 +27,7 @@ enum class EngineUsage : uint32_t {
     highPriority,
     internal,
     cooperative,
+    powerHint,
 
     engineUsageCount,
 };
@@ -75,6 +76,8 @@ inline constexpr size_t d2hCopyEngineMask = 0b010100000;
 bool linkCopyEnginesSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield);
 
 aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, std::atomic<uint32_t> &selectorCopyEngine);
+
+bool isPowerHintEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment);
 
 }; // namespace EngineHelpers
 } // namespace NEO

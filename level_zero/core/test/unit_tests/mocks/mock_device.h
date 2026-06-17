@@ -49,8 +49,8 @@ struct MockDevice : public Device {
 
     ADDMETHOD_NOBASE(canAccessPeer, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hPeerDevice, ze_bool_t *value));
     ADDMETHOD_NOBASE(createCommandList, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList));
-    ADDMETHOD_NOBASE(createCommandListImmediate, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_queue_desc_t *desc, ze_command_list_handle_t *commandList));
-    ADDMETHOD_NOBASE(createCommandQueue, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_queue_desc_t *desc, ze_command_queue_handle_t *commandQueue));
+    ADDMETHOD_NOBASE(createCommandListImmediate, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_queue_desc_t *desc, ze_command_list_handle_t *commandList, uint8_t powerHint));
+    ADDMETHOD_NOBASE(createCommandQueue, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_queue_desc_t *desc, ze_command_queue_handle_t *commandQueue, uint8_t powerHint));
     ADDMETHOD_NOBASE(createImage, ze_result_t, ZE_RESULT_SUCCESS, (const ze_image_desc_t *desc, ze_image_handle_t *phImage));
     ADDMETHOD_NOBASE(createModule, ze_result_t, ZE_RESULT_SUCCESS, (const ze_module_desc_t *desc, ze_module_handle_t *module, ze_module_build_log_handle_t *buildLog, ModuleType type));
     ADDMETHOD_NOBASE(createSampler, ze_result_t, ZE_RESULT_SUCCESS, (const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler));
@@ -97,7 +97,7 @@ struct MockDevice : public Device {
     ADDMETHOD_NOBASE(allocateMemoryFromHostPtr, NEO::GraphicsAllocation *, nullptr, (const void *buffer, size_t size, bool hostCopyAllowed));
     ADDMETHOD_NOBASE_VOIDRETURN(setSysmanHandle, (SysmanDevice *));
     ADDMETHOD_NOBASE(getSysmanHandle, SysmanDevice *, nullptr, ());
-    ADDMETHOD_NOBASE(getCsrForOrdinalAndIndex, ze_result_t, ZE_RESULT_SUCCESS, (NEO::CommandStreamReceiver * *csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt));
+    ADDMETHOD_NOBASE(getCsrForOrdinalAndIndex, ze_result_t, ZE_RESULT_SUCCESS, (NEO::CommandStreamReceiver * *csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt, uint8_t powerHint));
     ADDMETHOD_NOBASE(getCsrForLowPriority, ze_result_t, ZE_RESULT_SUCCESS, (NEO::CommandStreamReceiver * *csr, bool copyOnly));
     ADDMETHOD_NOBASE(getDebugProperties, ze_result_t, ZE_RESULT_SUCCESS, (zet_device_debug_properties_t * properties));
     ADDMETHOD_NOBASE(getDebugSession, DebugSession *, nullptr, (const zet_debug_config_t &config));

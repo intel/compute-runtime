@@ -50,6 +50,11 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
     engines.push_back({defaultEngine, EngineUsage::lowPriority});
     engines.push_back({defaultEngine, EngineUsage::internal});
 
+    const bool isPowerHintEngineSupported = NEO::EngineHelpers::isPowerHintEngineSupported(rootDeviceEnvironment);
+    if (isPowerHintEngineSupported) {
+        engines.push_back({defaultEngine, EngineUsage::powerHint});
+    }
+
     if (hwInfo.capabilityTable.blitterOperationsSupported) {
         if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
             engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular});  // Main copy engine
@@ -64,6 +69,15 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
                 if (i == internalIndex) {
                     engines.push_back({engineType, EngineUsage::internal});
                 }
+            }
+        }
+
+        if (isPowerHintEngineSupported) {
+            const auto &productHelper = rootDeviceEnvironment.getProductHelper();
+            auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
+            auto defaultCopyBcsIndex = NEO::EngineHelpers::getBcsIndex(defaultCopyEngine);
+            if (defaultCopyBcsIndex < hwInfo.featureTable.ftrBcsInfo.size() && hwInfo.featureTable.ftrBcsInfo.test(defaultCopyBcsIndex)) {
+                engines.push_back({defaultCopyEngine, EngineUsage::powerHint});
             }
         }
     }

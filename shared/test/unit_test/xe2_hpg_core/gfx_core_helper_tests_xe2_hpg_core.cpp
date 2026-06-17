@@ -20,6 +20,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
@@ -935,4 +936,30 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, whenIsWalkerPostSyncSkipEnabled
 
     debugManager.flags.EnableWalkerPostSyncSkip.set(0);
     EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+}
+
+using GfxCoreHelperTestsXe2HpgCoreWithEnginesCheck = GfxCoreHelperTestWithEnginesCheck;
+
+XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCoreWithEnginesCheck, givenWddmWhenGetEnginesCalledThenPowerHintEnginesAreCreated) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 1;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    device->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
+    device->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<MockDriverModelWDDM>());
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto &productHelper = device->getProductHelper();
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
+
+    for (const auto &engine : engines) {
+        countEngine(engine.first, engine.second);
+    }
+
+    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::powerHint));
+    EXPECT_EQ(1u, getEngineCount(productHelper.getDefaultCopyEngine(), EngineUsage::powerHint));
 }

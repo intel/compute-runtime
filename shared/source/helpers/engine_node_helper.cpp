@@ -10,8 +10,10 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_interface.h"
 
 namespace NEO::EngineHelpers {
 
@@ -27,6 +29,8 @@ std::string engineUsageToString(EngineUsage usage) {
         return "Internal";
     case EngineUsage::cooperative:
         return "Cooperative";
+    case EngineUsage::powerHint:
+        return "PowerHint";
     default:
         return "Unknown";
     }
@@ -246,6 +250,12 @@ EngineGroupType engineTypeToEngineGroupType(aub_stream::EngineType engineType) {
         return EngineGroupType::copy;
     }
     return EngineGroupType::linkedCopy;
+}
+
+bool isPowerHintEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return rootDeviceEnvironment.osInterface &&
+           rootDeviceEnvironment.osInterface->getDriverModel() &&
+           rootDeviceEnvironment.osInterface->getDriverModel()->getDriverModelType() == DriverModelType::wddm;
 }
 
 } // namespace NEO::EngineHelpers

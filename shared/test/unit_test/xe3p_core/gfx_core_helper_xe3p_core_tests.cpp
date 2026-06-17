@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -1124,4 +1125,30 @@ XE3P_CORETEST_F(CompilerProductHelperTestsXe3pCore, givenHeaplessModeWhenApplyEx
         NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, compilerProductHelper, heaplessMode);
         EXPECT_TRUE(hasSubstr(internalOptions, enable64bitAddressing));
     }
+}
+
+using GfxCoreHelperTestsXe3pCoreWithEnginesCheck = GfxCoreHelperTestWithEnginesCheck;
+
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenWddmWhenGetEnginesCalledThenPowerHintEnginesAreCreated) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    device->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
+    device->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<MockDriverModelWDDM>());
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto &productHelper = device->getProductHelper();
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
+
+    for (const auto &engine : engines) {
+        countEngine(engine.first, engine.second);
+    }
+
+    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::powerHint));
+    EXPECT_EQ(1u, getEngineCount(productHelper.getDefaultCopyEngine(), EngineUsage::powerHint));
 }

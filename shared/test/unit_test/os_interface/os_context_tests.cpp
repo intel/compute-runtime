@@ -70,6 +70,41 @@ TEST(OSContext, givenCooperativeEngineWhenIsCooperativeEngineIsCalledThenReturnT
     delete pOsContext;
 }
 
+TEST(OSContext, givenPowerHintEngineWhenIsPowerHintCalledThenReturnTrueAndOtherUsageGettersReturnFalse) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    engineDescriptor.engineTypeUsage.second = EngineUsage::powerHint;
+    auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
+    EXPECT_TRUE(pOsContext->isPowerHint());
+    EXPECT_FALSE(pOsContext->isRegular());
+    EXPECT_FALSE(pOsContext->isLowPriority());
+    EXPECT_FALSE(pOsContext->isInternalEngine());
+    EXPECT_FALSE(pOsContext->isCooperativeEngine());
+    delete pOsContext;
+}
+
+TEST(OSContext, givenPowerHintEngineWhenConstructedThenUmdPowerHintValueIsSetToMax) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    engineDescriptor.engineTypeUsage.second = EngineUsage::powerHint;
+    auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
+    EXPECT_EQ(OsContext::getUmdPowerHintMax(), pOsContext->getUmdPowerHintValue());
+    delete pOsContext;
+}
+
+TEST(OSContext, givenNonPowerHintEngineWhenConstructedThenUmdPowerHintValueRemainsDefault) {
+    auto pOsContext = OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
+    EXPECT_NE(OsContext::getUmdPowerHintMax(), pOsContext->getUmdPowerHintValue());
+    delete pOsContext;
+}
+
+TEST(OSContext, givenPowerHintEngineWhenSetDefaultContextIfApplicableCalledWithMatchingEngineTypeThenContextIsNotMarkedDefault) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    engineDescriptor.engineTypeUsage.second = EngineUsage::powerHint;
+    auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
+    pOsContext->setDefaultContextIfApplicable(engineDescriptor.engineTypeUsage.first);
+    EXPECT_FALSE(pOsContext->isDefaultContext());
+    delete pOsContext;
+}
+
 TEST(OSContext, givenReinitializeContextWhenContextIsInitThenContextIsStillIinitializedAfter) {
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
     auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
