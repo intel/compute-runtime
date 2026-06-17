@@ -417,10 +417,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(idd, *args.device, hwInfo, threadDimsVec, threadGroupCount,
                                                             kernelDescriptor.kernelMetadata.requiredThreadGroupDispatchSize, kernelDescriptor.kernelAttributes.numGrfRequired, threadsPerThreadGroup, walkerCmd);
     PRINT_STRING(debugManager.flags.PrintKernelDispatchParameters.get(), stdout,
-                 "kernel, %s, grfCount, %d, simdSize, %d, tilesCount, %d, implicitScaling, %s, threadGroupCount, %d, numberOfThreadsInGpgpuThreadGroup, %d, threadGroupDimensions, %d, %d, %d, threadGroupDispatchSize enum, %d\n",
+                 "kernel, %s, grfCount, %d, simdSize, %d, barrierCount, %d, tilesCount, %d, implicitScaling, %s, threadGroupCount, %d, numberOfThreadsInGpgpuThreadGroup, %d, threadGroupDimensions, %d, %d, %d, threadGroupDispatchSize enum, %d\n",
                  kernelDescriptor.kernelMetadata.kernelName.c_str(),
                  kernelDescriptor.kernelAttributes.numGrfRequired,
                  kernelDescriptor.kernelAttributes.simdSize,
+                 kernelDescriptor.kernelAttributes.barrierCount,
                  args.device->getNumSubDevices(),
                  ImplicitScalingHelper::isImplicitScalingEnabled(args.device->getDeviceBitfield(), true) ? "Yes" : "no",
                  threadGroupCount,
@@ -430,7 +431,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                  walkerCmd.getThreadGroupIdZDimension(),
                  idd.getThreadGroupDispatchSize());
 
-    EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup,
+    EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, kernelDescriptor.kernelAttributes.barrierCount,
                                                            args.dispatchInterface->getSlmTotalSizePerThreadGroup(),
                                                            args.dispatchInterface->getSlmPolicy());
 

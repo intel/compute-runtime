@@ -32,6 +32,7 @@ void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> va
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;
     uint32_t localWorkGroupsPerDssCounts[] = {1, 2, 4};
+    uint8_t barrierCount = 1;
 
     auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
 
@@ -53,6 +54,7 @@ void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> va
                 NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd,
                                                                                 rootDeviceEnvironment,
                                                                                 threadsPerThreadGroup,
+                                                                                barrierCount,
                                                                                 slmTotalSizePerThreadGroup,
                                                                                 slmPolicy);
 

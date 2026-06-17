@@ -163,7 +163,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
                                                 sizeCrossThreadData, sizePerThreadData, device.getRootDeviceEnvironment());
 
     EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&interfaceDescriptor, device.getRootDeviceEnvironment(),
-                                                              threadsPerThreadGroup, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
+                                                              threadsPerThreadGroup, kernelDescriptor.kernelAttributes.barrierCount, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
 
     if constexpr (heaplessModeEnabled == false) {
         interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));

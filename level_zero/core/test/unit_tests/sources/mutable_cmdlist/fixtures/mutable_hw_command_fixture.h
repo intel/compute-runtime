@@ -59,6 +59,7 @@ struct MutableHwCommandFixture : public DeviceFixture {
             totalWorkGroupSize,
             slmTotalSizePerThreadGroup,
             0,
+            0,
             1,
             NEO::RequiredPartitionDim::none,
             false,

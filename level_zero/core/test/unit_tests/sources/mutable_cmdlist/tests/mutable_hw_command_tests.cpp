@@ -509,12 +509,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto walkerArgs = createMutableWalkerSpecificFieldsArguments();
     walkerArgs.isSlmKernel = true;
     walkerArgs.updateSlm = true;
+    walkerArgs.barrierCount = 1;
 
     fillWalkerFields<WalkerType>(controlWalkerBuffer);
 
     NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&controlIdd,
                                                                     neoDevice->getRootDeviceEnvironment(),
                                                                     walkerArgs.threadsPerThreadGroup,
+                                                                    walkerArgs.barrierCount,
                                                                     walkerArgs.slmTotalSizePerThreadGroup,
                                                                     static_cast<NEO::SlmPolicy>(walkerArgs.slmPolicy));
 
