@@ -334,11 +334,10 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
             this->heapfullCbEventWithProfiling = !signaled;
         } else {
             const uint64_t *hostAddress = ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset);
-            const auto waitPkgThresholdForEventHostSync = EventHostSynchronize::getWaitPkgThreshold(*csrs[0]);
             for (uint32_t i = 0; i < inOrderExecHelper.getEventData()->hostPartitions; i++) {
                 if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>(), timeSinceWait,
                                                                                NEO::WaitUtils::counterValueForEventHostSync,
-                                                                               waitPkgThresholdForEventHostSync)) {
+                                                                               NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds)) {
                     signaled = false;
                     break;
                 }
@@ -469,7 +468,6 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
     assignKernelEventCompletionData(getHostAddress());
     uint32_t queryVal = Event::STATE_CLEARED;
     uint32_t packets = 0;
-    const auto waitPkgThresholdForEventHostSync = EventHostSynchronize::getWaitPkgThreshold(*csrs[0]);
 
     for (uint32_t i = 0; i < this->kernelCount; i++) {
         uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
@@ -483,7 +481,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
                 std::not_equal_to<TagSizeT>(),
                 timeSinceWait,
                 NEO::WaitUtils::counterValueForEventHostSync,
-                waitPkgThresholdForEventHostSync);
+                NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
             if (!ready) {
                 return ZE_RESULT_NOT_READY;
             }
@@ -502,7 +500,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
                     std::not_equal_to<TagSizeT>(),
                     timeSinceWait,
                     NEO::WaitUtils::counterValueForEventHostSync,
-                    waitPkgThresholdForEventHostSync);
+                    NEO::WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds);
                 if (!ready) {
                     return ZE_RESULT_NOT_READY;
                 }

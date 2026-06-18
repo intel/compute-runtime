@@ -39,7 +39,7 @@ HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenDirectSubmissionLightWhe
     EXPECT_EQ(WaitUtils::waitpkgCounterValue, WaitUtils::defaultCounterValueForUllsLight);
     EXPECT_EQ(WaitUtils::counterValueForEventHostSync, WaitUtils::defaultCounterValueForEventHostSync);
     EXPECT_EQ(WaitUtils::waitPkgThresholdInMicroSeconds, WaitUtils::defaultWaitPkgThresholdForUllsLightInMicroSeconds);
-    EXPECT_EQ(WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds, WaitUtils::defaultWaitPkgThresholdForWddmEventHostSyncInMicroSeconds);
+    EXPECT_EQ(WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds, WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds);
 }
 
 HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenWaitpkgParamsSetByDebugVariablesAndDirectSubmissionLightWhenInitThenUseTpauseWaitpkg, IsXeLpg) {
