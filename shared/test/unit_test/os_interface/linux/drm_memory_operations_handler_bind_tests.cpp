@@ -1126,6 +1126,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
 
         if (debugFlag == 0 || !closSupported || debugFlag == -1) {
             auto expectedIndex = productHelper.overridePatIndex(false, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), allocation.getAllocationType());
+            expectedIndex = productHelper.overrideSystemMemoryPatIndex(expectedIndex);
 
             EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 

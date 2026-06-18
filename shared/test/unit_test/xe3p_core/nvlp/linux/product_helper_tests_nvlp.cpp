@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/gmm_helper/cache_settings_helper.h"
-#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/xe3p_core/hw_cmds_nvlp.h"
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"
@@ -14,8 +13,6 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
-#include "shared/test/common/os_interface/linux/xe/mock_drm_xe.h"
-#include "shared/test/common/os_interface/linux/xe/mock_ioctl_helper_xe.h"
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
 
 #include "per_product_test_definitions.h"
@@ -103,42 +100,12 @@ NVLPTEST_F(NvlProductHelperLinux, givenProductHelperWhenOverrideSystemMemoryPatI
     EXPECT_EQ(19u, productHelper->overrideSystemMemoryPatIndex(patIndex));
 }
 
-NVLPTEST_F(NvlProductHelperLinux, givenCacheableSystemMemoryWhenGetPatIndexThenDoNotOverridePat) {
+NVLPTEST_F(NvlProductHelperLinux, givenSystemMemoryWhenGetPatIndexThenReturnOverriddenPat19) {
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     drm->vmBindPatIndexProgrammingSupported = true;
     bool isSystemMem = true;
     auto patIndex = drm->getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMem, false);
-    EXPECT_NE(19u, patIndex);
-}
-
-NVLPTEST_F(NvlProductHelperLinux, givenMapUserptrWhenVmBindCalledThenOverridePatIndexToPat19) {
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-
-    auto drmXe = DrmMockXe::create(getRootDeviceEnvironment());
-    auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drmXe->getIoctlHelper());
-    ASSERT_NE(nullptr, ioctlHelper);
-
-    constexpr uint64_t userptr = 0x1234000;
-    BindInfo bindInfo{};
-    bindInfo.userptr = userptr;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-
-    MockIoctlHelperXe::UserFenceExtension userFence{};
-    userFence.tag = userFence.tagValue;
-    userFence.addr = 0x1;
-
-    VmBindParams vmBindParams{};
-    vmBindParams.userFence = castToUint64(&userFence);
-    vmBindParams.userptr = userptr;
-    vmBindParams.patIndex = 5u;
-
-    EXPECT_EQ(0, ioctlHelper->vmBind(vmBindParams));
-
-    ASSERT_EQ(1u, drmXe->vmBindInputs.size());
-    EXPECT_EQ(DRM_XE_VM_BIND_OP_MAP_USERPTR, static_cast<int>(drmXe->vmBindInputs[0].bind.op));
-    EXPECT_EQ(0u, drmXe->vmBindInputs[0].bind.obj);
-    EXPECT_EQ(userptr, drmXe->vmBindInputs[0].bind.obj_offset);
-    EXPECT_EQ(19u, drmXe->vmBindInputs[0].bind.pat_index);
+    EXPECT_EQ(19u, patIndex);
 }
 
 NVLPTEST_F(NvlProductHelperLinux, givenUncachedSystemMemoryAllocationTypeWhenGetPatIndexThenDoNotOverridePat) {

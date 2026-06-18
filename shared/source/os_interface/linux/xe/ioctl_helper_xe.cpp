@@ -1705,11 +1705,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
     bind.bind.range = vmBindParams.length;
     bind.bind.obj_offset = vmBindParams.offset;
     if (isBind) {
-        auto patIndex = vmBindParams.patIndex;
-        if (userptr) {
-            patIndex = drm.getRootDeviceEnvironment().getProductHelper().overrideSystemMemoryPatIndex(patIndex);
-        }
-        bind.bind.pat_index = static_cast<uint16_t>(patIndex);
+        bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
     } else {
         GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
         bool compressed = false;
