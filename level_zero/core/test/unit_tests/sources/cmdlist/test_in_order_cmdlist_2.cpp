@@ -308,6 +308,33 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenCopyEngineNotRe
     EXPECT_EQ(20u, copyCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenLatestFlushIsDualCopyOffloadButCopyOffloadNotInDualStreamModeWhenHostSynchronizeThenWaitOnMainQueueWithoutDereferencingCopyOffloadCsr, IsAtLeastXeCore) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->forceDisableInOrderWaits();
+
+    // Without dual-stream copy offload the copy-offload queue and CSR are never created.
+    ASSERT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_FALSE(immCmdList->isDualStreamCopyOffloadOperation(immCmdList->isCopyOffloadEnabled()));
+
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+
+    mainCsr->callBaseWaitForCompletionWithTimeout = false;
+    mainCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+
+    immCmdList->cmdQImmediate->setTaskCount(10u);
+
+    // latestFlushIsDualCopyOffload without dual-stream copy offload must not select the copy-offload wait path,
+    // otherwise the null copy-offload CSR would be dereferenced.
+    immCmdList->latestFlushIsDualCopyOffload = true;
+
+    mainCsr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, false));
+
+    EXPECT_EQ(1u, mainCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(10u, mainCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenDontProgramBcsMmioBase, IsAtLeastXeCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
