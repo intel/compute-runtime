@@ -425,3 +425,8 @@ TEST(EuDebugInterfacePrelimTest, givenValidDrmSyncHostWhenConvertingToInterfaceT
     EXPECT_EQ(0x200u, event.execQueueHandle);
     EXPECT_EQ(0x300u, event.lrcHandle);
 }
+
+TEST(EuDebugInterfacePrelimTest, whenCheckingIfisExecQueuePageFaultEnableSupportedThenCorrectValueIsReturned) {
+    EuDebugInterfacePrelim euDebugInterface{};
+    EXPECT_TRUE(euDebugInterface.isExecQueuePageFaultEnableSupported());
+}

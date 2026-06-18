@@ -13,7 +13,6 @@ class EuDebugInterfacePrelim : public EuDebugInterface {
     static constexpr const char *sysFsXeEuDebugFile = "/device/prelim_enable_eudebug";
     uint32_t getParamValue(EuDebugParam param) const override;
     bool isExecQueuePageFaultEnableSupported() override;
-    uint32_t getAdditionalParamValue(EuDebugParam param) const;
     EuDebugInterfaceType getInterfaceType() const override;
 
     std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> toEuDebugEventEuAttention(const void *drmType) override;
