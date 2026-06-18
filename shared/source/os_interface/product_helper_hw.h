@@ -68,6 +68,7 @@ class ProductHelperHw : public ProductHelper {
     bool isStorageInfoAdjustmentRequired() const override;
     bool isBlitterForImagesSupported() const override;
     bool isPageFaultSupported() const override;
+    bool isEuDebugPageFaultSupported() const override;
     bool isL1PolicyMissmatchCheckNeeded() const override;
     bool blitEnqueuePreferred(bool isWriteToImageFromBuffer) const override;
     bool isKmdMigrationSupported() const override;

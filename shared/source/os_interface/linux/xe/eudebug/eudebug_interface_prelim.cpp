@@ -91,6 +91,8 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
         return PRELIM_WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA;
     case EuDebugParam::vmBindOpExtensionsAttachDebug:
         return PRELIM_XE_VM_BIND_OP_EXTENSIONS_ATTACH_DEBUG;
+    case EuDebugParam::eventTypeVmBindOpDebugData:
+        return 0;
     case EuDebugParam::vmBindOpExtensionsAddDebugData:
         return 0;
     case EuDebugParam::vmBindOpExtensionsRemoveDebugData:
@@ -105,10 +107,14 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
         return 0;
     case EuDebugParam::vmBindOpExtensionDebugDataName:
         return 0;
-    default:
-        return getAdditionalParamValue(param);
+    case EuDebugParam::execQueueSetPropertyValuePageFaultEnable:
+        return PRELIM_DRM_XE_EXEC_QUEUE_EUDEBUG_FLAG_PAGEFAULT_ENABLE;
     }
     return 0;
+}
+
+bool EuDebugInterfacePrelim::isExecQueuePageFaultEnableSupported() {
+    return true;
 }
 
 EuDebugInterfaceType EuDebugInterfacePrelim::getInterfaceType() const {

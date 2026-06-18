@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,6 +63,10 @@ CRITEST_F(CriProductHelperLinux, givenProductHelperAndEnableRecoverablePageFault
     EXPECT_FALSE(productHelper->isPageFaultSupported());
     debugManager.flags.EnableRecoverablePageFaults.set(1);
     EXPECT_TRUE(productHelper->isPageFaultSupported());
+}
+
+CRITEST_F(CriProductHelperLinux, givenProductHelperWhenAskedIsEuDebugPageFaultSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isEuDebugPageFaultSupported());
 }
 
 CRITEST_F(CriProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnCorrectValue) {

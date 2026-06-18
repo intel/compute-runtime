@@ -452,6 +452,11 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPageFaultIsSupportedThe
     EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfEuDebugPageFaultIsSupportedThenReturnFalse) {
+
+    EXPECT_FALSE(productHelper->isEuDebugPageFaultSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupportedThenReturnFalse) {
 
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());

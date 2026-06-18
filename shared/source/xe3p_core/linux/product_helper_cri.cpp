@@ -41,6 +41,11 @@ bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isEuDebugPageFaultSupported() const {
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isVmBindResourceDecompressionSupported() const {
     return true;
 }

@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/xe/xe_config_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -68,19 +69,39 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetEudebugExtPropertyThen
     EXPECT_EQ(xeIoctlHelper->getEudebugExtProperty(), static_cast<int>(EuDebugParam::execQueueSetPropertyEuDebug));
 }
 
-TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetEudebugExtPropertyValueThenCorrectValueReturned) {
+TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetEudebugExtPropertyValueThenPageFaultEnableIsGatedByProductHelperAndInterface) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
-    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto drm = DrmMockXeDebug::create(rootDeviceEnvironment);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
-    uint64_t expectedValue = 0;
+
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    auto pMockProductHelper = mockProductHelper.get();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
     auto mockEuDebugInterface = static_cast<NEO::MockEuDebugInterface *>(xeIoctlHelper->euDebugInterface.get());
+
+    const auto enableValue = static_cast<uint64_t>(EuDebugParam::execQueueSetPropertyValueEnable);
+    const auto pageFaultValue = static_cast<uint64_t>(EuDebugParam::execQueueSetPropertyValuePageFaultEnable);
+
+    // Page fault is enabled only when both the product helper and the eudebug interface support it.
+    pMockProductHelper->isEuDebugPageFaultSupportedResult = true;
     mockEuDebugInterface->pageFaultEnableSupported = true;
-    expectedValue = static_cast<uint64_t>(EuDebugParam::execQueueSetPropertyValueEnable) | static_cast<uint64_t>(EuDebugParam::execQueueSetPropertyValuePageFaultEnable);
-    EXPECT_EQ(xeIoctlHelper->getEudebugExtPropertyValue(), expectedValue);
+    EXPECT_EQ(enableValue | pageFaultValue, xeIoctlHelper->getEudebugExtPropertyValue());
+
+    pMockProductHelper->isEuDebugPageFaultSupportedResult = false;
+    mockEuDebugInterface->pageFaultEnableSupported = true;
+    EXPECT_EQ(enableValue, xeIoctlHelper->getEudebugExtPropertyValue());
+
+    pMockProductHelper->isEuDebugPageFaultSupportedResult = true;
     mockEuDebugInterface->pageFaultEnableSupported = false;
-    expectedValue = static_cast<uint64_t>(EuDebugParam::execQueueSetPropertyValueEnable);
-    EXPECT_EQ(xeIoctlHelper->getEudebugExtPropertyValue(), expectedValue);
+    EXPECT_EQ(enableValue, xeIoctlHelper->getEudebugExtPropertyValue());
+
+    pMockProductHelper->isEuDebugPageFaultSupportedResult = false;
+    mockEuDebugInterface->pageFaultEnableSupported = false;
+    EXPECT_EQ(enableValue, xeIoctlHelper->getEudebugExtPropertyValue());
 }
 
 using IoctlHelperXeTestFixture = ::testing::Test;

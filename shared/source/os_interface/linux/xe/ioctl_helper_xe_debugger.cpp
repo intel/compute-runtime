@@ -6,10 +6,12 @@
  */
 
 #include "shared/source/debugger/linux/debugger_xe.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/source/os_interface/linux/xe/xe_log_helper.h"
 #include "shared/source/os_interface/linux/xe/xedrm.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include <algorithm>
 #include <optional>
@@ -61,7 +63,8 @@ int IoctlHelperXe::getEudebugExtProperty() {
 
 uint64_t IoctlHelperXe::getEudebugExtPropertyValue() {
     uint64_t val = euDebugInterface->getParamValue(EuDebugParam::execQueueSetPropertyValueEnable);
-    if (euDebugInterface->isExecQueuePageFaultEnableSupported()) {
+    const auto &productHelper = drm.getRootDeviceEnvironment().getProductHelper();
+    if (productHelper.isEuDebugPageFaultSupported() && euDebugInterface->isExecQueuePageFaultEnableSupported()) {
         val |= euDebugInterface->getParamValue(EuDebugParam::execQueueSetPropertyValuePageFaultEnable);
     }
     return val;

@@ -133,6 +133,7 @@ class ProductHelper {
     virtual bool isStorageInfoAdjustmentRequired() const = 0;
     virtual bool isBlitterForImagesSupported() const = 0;
     virtual bool isPageFaultSupported() const = 0;
+    virtual bool isEuDebugPageFaultSupported() const = 0;
     virtual bool isKmdMigrationSupported() const = 0;
     virtual bool isDeferBackingEnabled() const = 0;
     virtual bool isL1PolicyMissmatchCheckNeeded() const = 0;
