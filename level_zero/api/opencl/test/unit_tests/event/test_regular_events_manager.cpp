@@ -22,6 +22,7 @@ struct WhiteBoxRegularEventsManager : public RegularEventsManager {
     using RegularEventsManager::RegularEventsManager;
     size_t hostVisibleFreeCount() const { return this->hostVisibleGroup.freeEvents.size(); }
     size_t timestampFreeCount() const { return this->timestampGroup.freeEvents.size(); }
+    size_t hostVisiblePoolCount() const { return this->hostVisibleGroup.pools.size(); }
 };
 
 using RegularEventsManagerTests = Test<OclFixture>;
@@ -95,6 +96,17 @@ TEST_F(RegularEventsManagerTests, givenTimestampEventReturnedCompletedThenReused
     EXPECT_EQ(0u, manager.timestampFreeCount());
 
     manager.returnEvent(secondEvent, true);
+}
+
+TEST_F(RegularEventsManagerTests, givenEventPoolCreationFailsWhenObtainingEventThenNullptrReturnedAndNoPoolIsStored) {
+    WhiteBoxRegularEventsManager manager(context->toHandle(), {nullptr});
+
+    auto event = manager.obtainEvent(false);
+    EXPECT_EQ(nullptr, event);
+    EXPECT_EQ(0u, manager.hostVisibleFreeCount());
+    EXPECT_EQ(0u, manager.hostVisiblePoolCount());
+
+    EXPECT_EQ(nullptr, manager.obtainEvent(false));
 }
 
 } // namespace ult

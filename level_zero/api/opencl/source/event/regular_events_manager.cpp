@@ -33,8 +33,10 @@ ze_event_handle_t RegularEventsManager::obtainEvent(bool timestamp) {
     if (!group.freeEvents.empty()) {
         auto event = group.freeEvents.back();
         group.freeEvents.pop_back();
-        zeEventHostReset(event);
-        return event;
+        if (ZE_RESULT_SUCCESS == zeEventHostReset(event)) {
+            return event;
+        }
+        zeEventDestroy(event);
     }
 
     return this->createEvent(group, timestamp);
@@ -57,15 +59,24 @@ ze_event_handle_t RegularEventsManager::createEvent(EventPoolGroup &group, bool 
             poolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
         }
         ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, poolFlags, eventCountInPool};
-        zeEventPoolCreate(this->contextHandle, &eventPoolDesc, static_cast<uint32_t>(this->devices.size()), this->devices.data(), &group.pools.emplace_back());
+        ze_event_pool_handle_t pool{};
+        auto poolResult = zeEventPoolCreate(this->contextHandle, &eventPoolDesc, static_cast<uint32_t>(this->devices.size()), this->devices.data(), &pool);
+        if (ZE_RESULT_SUCCESS != poolResult) [[unlikely]] {
+            return nullptr;
+        }
+        group.pools.push_back(pool);
         group.createdFromLatestPool = 0u;
     }
 
     ze_event_handle_t event{};
-    ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, group.createdFromLatestPool++,
+    ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, group.createdFromLatestPool,
                               ZE_EVENT_SCOPE_FLAG_HOST | ZE_EVENT_SCOPE_FLAG_DEVICE,
                               ZE_EVENT_SCOPE_FLAG_HOST | ZE_EVENT_SCOPE_FLAG_DEVICE};
-    zeEventCreate(group.pools.back(), &eventDesc, &event);
+    auto eventResult = zeEventCreate(group.pools.back(), &eventDesc, &event);
+    if (ZE_RESULT_SUCCESS != eventResult) [[unlikely]] {
+        return nullptr;
+    }
+    group.createdFromLatestPool++;
 
     return event;
 }
