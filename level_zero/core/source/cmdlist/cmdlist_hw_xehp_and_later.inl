@@ -394,6 +394,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .isHeaplessModeEnabled = this->heaplessModeEnabled,
         .immediateScratchAddressPatching = !this->scratchAddressPatchingEnabled,
         .makeCommandView = launchParams.makeKernelCommandView,
+        .kernelUsesRayTracing = kernelImp->usesRayTracing(),
     };
     setAdditionalDispatchKernelArgsFromLaunchParams(dispatchKernelArgs, launchParams);
     setAdditionalDispatchKernelArgsFromKernel(dispatchKernelArgs, kernel);

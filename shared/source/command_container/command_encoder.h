@@ -156,6 +156,7 @@ struct EncodeDispatchKernelArgs {
     bool makeCommandView = false;
     bool isFlushL3AfterPostSyncForExternalAllocationRequired = false;
     bool isFlushL3AfterPostSyncForHostUsmRequired = false;
+    bool kernelUsesRayTracing = false;
 };
 
 struct EncodeStoreMMIOParams {
@@ -187,6 +188,7 @@ struct EncodeWalkerArgs {
     bool requiredSystemFence = false;
     bool hasSample = false;
     bool l0DebuggerEnabled = false;
+    bool kernelUsesRayTracing = false;
 };
 
 template <class T>

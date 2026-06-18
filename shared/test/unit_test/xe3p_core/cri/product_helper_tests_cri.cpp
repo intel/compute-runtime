@@ -220,6 +220,10 @@ CRITEST_F(CriProductHelper, givenAtLeastXe3pCoreWhenGetL1CachePolicyThenReturnWB
     EXPECT_EQ(productHelper->getL1CachePolicy(true), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
 }
 
+CRITEST_F(CriProductHelper, givenProductHelperWhenCallingIsRayTracingWalkerAdjustmentRequiredThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isRayTracingWalkerAdjustmentRequired());
+}
+
 CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingIsLEOSupportedThenReturnTrue) {
     EXPECT_TRUE(productHelper->isLEOSupported());
 }

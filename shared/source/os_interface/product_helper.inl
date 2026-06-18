@@ -1137,6 +1137,11 @@ bool ProductHelperHw<gfxProduct>::isFrontEndControllerEnabled() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isRayTracingWalkerAdjustmentRequired() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
     return false;
 }

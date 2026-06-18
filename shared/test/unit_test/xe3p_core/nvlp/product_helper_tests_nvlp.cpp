@@ -131,3 +131,7 @@ NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCac
     allocationData.type = AllocationType::buffer;
     EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
 }
+
+NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCallingIsRayTracingWalkerAdjustmentRequiredThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isRayTracingWalkerAdjustmentRequired());
+}

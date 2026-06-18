@@ -146,6 +146,31 @@ uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwIn
 }
 
 template <>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
+
+    auto maxNumberOfThreads = walkerArgs.maxFrontEndThreads;
+    maxNumberOfThreads = std::max(64U, maxNumberOfThreads);
+    if (debugManager.flags.MaximumNumberOfThreads.get() != -1) {
+        maxNumberOfThreads = static_cast<uint32_t>(debugManager.flags.MaximumNumberOfThreads.get());
+    }
+    walkerCmd.setMaximumNumberOfThreads(maxNumberOfThreads);
+
+    if (walkerArgs.hasSample) {
+        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_MORTON_WALK);
+        walkerCmd.setThreadGroupBatchSize(WalkerType::THREAD_GROUP_BATCH_SIZE::THREAD_GROUP_BATCH_SIZE_TG_BATCH_4);
+    }
+
+    if (walkerArgs.requiredDispatchWalkOrder == NEO::RequiredDispatchWalkOrder::x) {
+        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK);
+    } else if (walkerArgs.requiredDispatchWalkOrder == NEO::RequiredDispatchWalkOrder::y) {
+        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK);
+    } else {
+        UNRECOVERABLE_IF(walkerArgs.requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none);
+    }
+}
+
+template <>
 template <typename WalkerType, typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::overrideDefaultValues(WalkerType &walkerCmd, InterfaceDescriptorType &interfaceDescriptor) {
     using DYNAMIC_PREF_SLM_INCREASE = InterfaceDescriptorType::DYNAMIC_PREF_SLM_INCREASE;
