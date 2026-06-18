@@ -607,3 +607,23 @@ HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenGeneralBaseAddressSetTh
     auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*itorSbaCmd);
     EXPECT_EQ(indirectHeapBaseAddressProperties, sbaCmd->getGeneralStateBaseAddress());
 }
+
+HWTEST2_F(CommandEncodeStatesTest, WhenEncodingRssThenProgramDefaultL1CachePolicy, IsAtLeastXeCore) {
+    auto rssCmd = FamilyType::cmdInitRenderSurfaceState;
+
+    auto l1CacheControl = getHelper<ProductHelper>().getL1CachePolicy(false);
+
+    NEO::EncodeSurfaceStateArgs args;
+    args.outMemory = &rssCmd;
+    args.graphicsAddress = 0x152000;
+    args.size = 0x1000;
+    args.mocs = pDevice->getGmmHelper()->getL3EnabledMOCS();
+    args.numAvailableDevices = pDevice->getNumGenericSubDevices();
+    args.allocation = nullptr;
+    args.gmmHelper = pDevice->getGmmHelper();
+    args.areMultipleSubDevicesInContext = false;
+
+    EncodeSurfaceState<FamilyType>::encodeBuffer(args);
+
+    EXPECT_EQ(static_cast<uint32_t>(l1CacheControl), rssCmd.getL1CacheControlCachePolicy());
+}
