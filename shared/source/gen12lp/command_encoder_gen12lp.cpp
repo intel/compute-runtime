@@ -100,8 +100,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     idd.setNumberOfThreadsInGpgpuThreadGroup(numThreadsPerThreadGroup);
 
     EncodeDispatchKernel<Family>::programBarrierEnable(idd,
-                                                       kernelDescriptor,
-                                                       hwInfo);
+                                                       kernelDescriptor);
 
     EncodeDispatchKernel<Family>::encodeSlmSizePerThreadGroup(&idd, args.device->getRootDeviceEnvironment(), args.dispatchInterface->getSlmTotalSizePerThreadGroup(), false);
 
@@ -424,8 +423,7 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WalkerType &walkerCmd,
 template <typename Family>
 template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor,
-                                                        const KernelDescriptor &kernelDescriptor,
-                                                        const HardwareInfo &hwInfo) {
+                                                        const KernelDescriptor &kernelDescriptor) {
     interfaceDescriptor.setBarrierEnable(kernelDescriptor.kernelAttributes.barrierCount);
 }
 

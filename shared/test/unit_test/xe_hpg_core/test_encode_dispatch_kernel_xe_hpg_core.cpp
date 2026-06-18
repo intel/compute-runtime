@@ -30,7 +30,7 @@ HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenVariousValuesWhenCallingSetBarr
     KernelDescriptor kd = {};
     for (auto barrierCount : barrierCounts) {
         kd.kernelAttributes.barrierCount = barrierCount;
-        EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd, *defaultHwInfo);
+        EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd);
 
         EXPECT_EQ(barrierCount, idd.getNumberOfBarriers());
     }

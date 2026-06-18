@@ -182,8 +182,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerThreadGroup(&interfaceDescriptor, device.getRootDeviceEnvironment(), slmTotalSizePerThreadGroup, heaplessModeEnabled);
 
     EncodeDispatchKernel<GfxFamily>::programBarrierEnable(interfaceDescriptor,
-                                                          kernelDescriptor,
-                                                          hardwareInfo);
+                                                          kernelDescriptor);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
 

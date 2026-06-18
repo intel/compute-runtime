@@ -1313,18 +1313,17 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, InterfaceDescriptorDataTests, givenVariousValuesW
     using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
     MockDevice device;
-    auto hwInfo = device.getHardwareInfo();
     KernelDescriptor kd = {};
     kd.kernelAttributes.barrierCount = 0;
-    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd, hwInfo);
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd);
     EXPECT_FALSE(idd.getBarrierEnable());
 
     kd.kernelAttributes.barrierCount = 1;
-    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd, hwInfo);
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd);
     EXPECT_TRUE(idd.getBarrierEnable());
 
     kd.kernelAttributes.barrierCount = 2;
-    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd, hwInfo);
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd);
     EXPECT_TRUE(idd.getBarrierEnable());
 }
 

@@ -63,7 +63,6 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousValuesWhenCallingSetBa
 
     auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
     MockDevice device;
-    auto hwInfo = device.getHardwareInfo();
 
     struct BarrierCountToBarrierNumEnum {
         uint32_t barrierCount;
@@ -80,7 +79,7 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousValuesWhenCallingSetBa
     KernelDescriptor kd = {};
     for (auto &[barrierCount, numBarriersEnum] : barriers) {
         kd.kernelAttributes.barrierCount = barrierCount;
-        EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd, hwInfo);
+        EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd);
         EXPECT_EQ(numBarriersEnum, idd.getNumberOfBarriers());
     }
 }

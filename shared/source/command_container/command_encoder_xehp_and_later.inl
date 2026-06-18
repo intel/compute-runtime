@@ -117,8 +117,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     idd.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
 
     EncodeDispatchKernel<Family>::programBarrierEnable(idd,
-                                                       kernelDescriptor,
-                                                       hwInfo);
+                                                       kernelDescriptor);
 
     EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, args.defaultPipelinedThreadArbitrationPolicy);
 

@@ -273,7 +273,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     static bool inlineDataProgrammingRequired(const KernelDescriptor &kernelDesc);
 
     template <typename InterfaceDescriptorType>
-    static void programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor, const KernelDescriptor &kernelDescriptor, const HardwareInfo &hwInfo);
+    static void programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor, const KernelDescriptor &kernelDescriptor);
 
     template <typename WalkerType, typename InterfaceDescriptorType>
     static void encodeThreadGroupDispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo,

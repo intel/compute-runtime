@@ -43,8 +43,7 @@ inline void EncodeAtomic<Family>::setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t
 template <typename Family>
 template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor,
-                                                        const KernelDescriptor &kernelDescriptor,
-                                                        const HardwareInfo &hwInfo) {
+                                                        const KernelDescriptor &kernelDescriptor) {
     using BARRIERS = typename InterfaceDescriptorType::NUMBER_OF_BARRIERS;
     static const LookupArray<uint32_t, BARRIERS, 8> barrierLookupArray({{{0, BARRIERS::NUMBER_OF_BARRIERS_NONE},
                                                                          {1, BARRIERS::NUMBER_OF_BARRIERS_B1},
