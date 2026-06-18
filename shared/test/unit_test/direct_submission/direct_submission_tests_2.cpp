@@ -181,19 +181,188 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrSetWhenUnbloc
     EXPECT_EQ(*directSubmission.pciBarrierPtr, 0u);
 }
 
-HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToFalseWhenCreatingDirectSubmissionThenDontEnableMiMemFenceProgramming) {
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMemoryFenceOverPciBarrierActiveWhenUnblockGpuThenPciBarrierIsNotWritten) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    uint32_t pciBarrierMock = 0x1234u;
+    directSubmission.pciBarrierPtr = &pciBarrierMock;
+    EXPECT_TRUE(directSubmission.initialize(false));
+
+    std::promise<GraphicsAllocation *> blockingPromise;
+    directSubmission.asyncNewRingBufferAllocation = blockingPromise.get_future();
+
+    // First submission still emits PCI barrier, memory fence was not programmed
+    directSubmission.updateMemoryFenceOverPciBarrier();
+    directSubmission.unblockGpu();
+    EXPECT_TRUE(directSubmission.memoryFenceOverPciBarrier);
+    EXPECT_EQ(*directSubmission.pciBarrierPtr, 0x0u);
+    *directSubmission.pciBarrierPtr = 0x1234u;
+
+    directSubmission.updateMemoryFenceOverPciBarrier();
+    directSubmission.unblockGpu();
+    EXPECT_TRUE(directSubmission.memoryFenceOverPciBarrier);
+    EXPECT_EQ(*directSubmission.pciBarrierPtr, 0x1234u);
+
+    blockingPromise.set_value(directSubmission.ringBuffers[0].ringBuffer);
+    directSubmission.asyncNewRingBufferAllocation.get();
+}
+
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMemoryFenceOverPciBarrierActiveWhenDispatchingSemaphoreSectionThenAdditionalSynchronizationIsEmitted) {
+    if (!miMemFenceSupported) {
+        GTEST_SKIP();
+    }
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(directSubmission.initialize(false));
+    uint32_t pciBarrierMock = 0u;
+    directSubmission.pciBarrierPtr = &pciBarrierMock;
+    directSubmission.miMemFenceRequired = true;
+    directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
+
+    directSubmission.memoryFenceOverPciBarrier = false;
+    size_t sizeWithout = directSubmission.getSizeSemaphoreSection(false);
+
+    directSubmission.memoryFenceOverPciBarrier = true;
+    size_t sizeWith = directSubmission.getSizeSemaphoreSection(false);
+    EXPECT_GT(sizeWith, sizeWithout);
+
+    size_t usedBefore = directSubmission.ringCommandStream.getUsed();
+    directSubmission.dispatchSemaphoreSection(1u);
+    size_t emittedSize = directSubmission.ringCommandStream.getUsed() - usedBefore;
+    EXPECT_EQ(sizeWith, emittedSize);
+}
+
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrAndAsyncRingBufferInFlightWhenDispatchCommandBufferThenMemoryFenceOverPciBarrierIsSelected) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    FlushStampTracker flushStamp(true);
+    uint32_t pciBarrierMock = 0u;
+    directSubmission.pciBarrierPtr = &pciBarrierMock;
+    directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
+    EXPECT_TRUE(directSubmission.initialize(false));
+
+    std::promise<GraphicsAllocation *> blockingPromise;
+    directSubmission.asyncNewRingBufferAllocation = blockingPromise.get_future();
+    ASSERT_TRUE(directSubmission.asyncNewRingBufferAllocation.valid());
+    ASSERT_EQ(std::future_status::timeout, directSubmission.asyncNewRingBufferAllocation.wait_for(std::chrono::microseconds(0)));
+
+    EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+    EXPECT_TRUE(directSubmission.memoryFenceOverPciBarrier);
+
+    blockingPromise.set_value(directSubmission.ringBuffers[0].ringBuffer);
+    auto fetched = directSubmission.asyncNewRingBufferAllocation.get();
+    EXPECT_EQ(fetched, directSubmission.ringBuffers[0].ringBuffer);
+}
+
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrAndAsyncRingBufferReadyWhenDispatchCommandBufferThenMemoryFenceOverPciBarrierIsDisabled) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    FlushStampTracker flushStamp(true);
+    uint32_t pciBarrierMock = 0u;
+    directSubmission.pciBarrierPtr = &pciBarrierMock;
+    directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
+    EXPECT_TRUE(directSubmission.initialize(false));
+
+    std::promise<GraphicsAllocation *> readyPromise;
+    readyPromise.set_value(directSubmission.ringBuffers[0].ringBuffer);
+    directSubmission.asyncNewRingBufferAllocation = readyPromise.get_future();
+    ASSERT_NE(std::future_status::timeout, directSubmission.asyncNewRingBufferAllocation.wait_for(std::chrono::microseconds(0)));
+
+    EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+    EXPECT_FALSE(directSubmission.memoryFenceOverPciBarrier);
+    directSubmission.asyncNewRingBufferAllocation.get();
+}
+
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagForcingMemoryFenceOverPciBarrierWhenNoPciBarrierThenStillForcedTrue) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    debugManager.flags.DirectSubmissionMemoryFenceOverPciBarrier.set(1);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    FlushStampTracker flushStamp(true);
+    ASSERT_EQ(nullptr, directSubmission.pciBarrierPtr);
+    directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
+    EXPECT_TRUE(directSubmission.initialize(false));
 
-    EXPECT_FALSE(directSubmission.miMemFenceRequired);
-    EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
+    EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+    EXPECT_TRUE(directSubmission.memoryFenceOverPciBarrier);
+}
 
-    EXPECT_TRUE(directSubmission.initialize(true));
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenStaleMemoryFenceOverPciBarrierAndAsyncInFlightWhenStopRingBufferThenPciBarrierSkipped) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    uint32_t pciBarrierMock = 0x1234u;
+    directSubmission.pciBarrierPtr = &pciBarrierMock;
+    directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
+    EXPECT_TRUE(directSubmission.initialize(false));
+    directSubmission.ringStart = true;
+    directSubmission.memoryFenceOverPciBarrier = false;
 
-    EXPECT_FALSE(directSubmission.miMemFenceRequired);
-    EXPECT_EQ(directSubmission.systemMemoryFenceAddressSet, directSubmission.globalFenceAllocation != nullptr);
+    std::promise<GraphicsAllocation *> blockingPromise;
+    directSubmission.asyncNewRingBufferAllocation = blockingPromise.get_future();
+
+    EXPECT_TRUE(directSubmission.stopRingBuffer(false));
+    EXPECT_TRUE(directSubmission.memoryFenceOverPciBarrier);
+    EXPECT_EQ(*directSubmission.pciBarrierPtr, pciBarrierMock);
+
+    blockingPromise.set_value(directSubmission.ringBuffers[0].ringBuffer);
+    directSubmission.asyncNewRingBufferAllocation.get();
+}
+
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenStaleMemoryFenceOverPciBarrierAndAsyncReadyWhenStopRingBufferThenPciBarrierNotWritten) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    uint32_t pciBarrierMock = 0x1234u;
+    directSubmission.pciBarrierPtr = &pciBarrierMock;
+    directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
+    EXPECT_TRUE(directSubmission.initialize(false));
+    directSubmission.ringStart = true;
+
+    directSubmission.memoryFenceOverPciBarrier = true;
+    ASSERT_FALSE(directSubmission.asyncNewRingBufferAllocation.valid());
+    EXPECT_TRUE(directSubmission.stopRingBuffer(false));
+    EXPECT_FALSE(directSubmission.memoryFenceOverPciBarrier);
+    EXPECT_EQ(*directSubmission.pciBarrierPtr, 0x1234u);
+}
+
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenOverflowingQueueWorkCountAndAsyncInFlightWhenDispatchCommandBufferThenMemoryFenceOverPciBarrierIsAppliedDuringOverflowHandling) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    FlushStampTracker flushStamp(true);
+    uint32_t pciBarrierMock = 0x1234u;
+    directSubmission.pciBarrierPtr = &pciBarrierMock;
+    directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
+    EXPECT_TRUE(directSubmission.initialize(false));
+    ASSERT_FALSE(directSubmission.memoryFenceOverPciBarrier);
+
+    std::promise<GraphicsAllocation *> blockingPromise;
+    directSubmission.asyncNewRingBufferAllocation = blockingPromise.get_future();
+
+    directSubmission.currentQueueWorkCount = std::numeric_limits<uint32_t>::max() - 3u;
+    EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+    EXPECT_TRUE(directSubmission.memoryFenceOverPciBarrier);
+    EXPECT_EQ(*directSubmission.pciBarrierPtr, pciBarrierMock);
+
+    blockingPromise.set_value(directSubmission.ringBuffers[0].ringBuffer);
+    directSubmission.asyncNewRingBufferAllocation.get();
+}
+
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenAsyncRingBufferBecomesInFlightBetweenSubmissionsWhenUnblockingThenReleasedSectionIsProtected) {
+    if (!miMemFenceSupported) {
+        GTEST_SKIP();
+    }
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    FlushStampTracker flushStamp(true);
+    uint32_t pciBarrierMock = 0u;
+    directSubmission.pciBarrierPtr = &pciBarrierMock;
+    directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
+    EXPECT_TRUE(directSubmission.initialize(false));
+    ASSERT_TRUE(directSubmission.miMemFenceRequired);
+    EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+    EXPECT_FALSE(directSubmission.memoryFenceOverPciBarrier);
+
+    std::promise<GraphicsAllocation *> blockingPromise;
+    directSubmission.asyncNewRingBufferAllocation = blockingPromise.get_future();
+    pciBarrierMock = 0x1234u;
+
+    EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+    EXPECT_TRUE(directSubmission.memoryFenceOverPciBarrier);
+    EXPECT_EQ(0u, *directSubmission.pciBarrierPtr);
+
+    blockingPromise.set_value(directSubmission.ringBuffers[0].ringBuffer);
+    directSubmission.asyncNewRingBufferAllocation.get();
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenNoGlobalFenceAllocationWhenInitializeThenDoNotProgramGlobalFence) {

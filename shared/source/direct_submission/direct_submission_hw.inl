@@ -204,10 +204,20 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::updateMemoryFenceOverPciBarrier() {
+    this->isPreviousMemoryFenceProgrammed = this->memoryFenceOverPciBarrier;
+    this->memoryFenceOverPciBarrier = this->pciBarrierPtr &&
+                                      this->asyncNewRingBufferAllocation.valid() &&
+                                      this->asyncNewRingBufferAllocation.wait_for(std::chrono::microseconds(0)) == std::future_status::timeout;
+    if (debugManager.flags.DirectSubmissionMemoryFenceOverPciBarrier.get() != -1) {
+        this->memoryFenceOverPciBarrier = !!debugManager.flags.DirectSubmissionMemoryFenceOverPciBarrier.get();
+    }
+}
+
+template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
     SemaphoreFenceHelper fence(*this);
-
-    if (this->pciBarrierPtr) {
+    if (this->pciBarrierPtr && !this->isPreviousMemoryFenceProgrammed) {
         *this->pciBarrierPtr = 0u;
     }
 
@@ -267,6 +277,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer(bool blocking) {
         return true;
     }
 
+    this->updateMemoryFenceOverPciBarrier();
+
     if (this->relaxedOrderingEnabled && this->relaxedOrderingSchedulerRequired) {
         dispatchRelaxedOrderingQueueStall();
     }
@@ -308,7 +320,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
                                                               COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, this->isSwitchOnUnsuccessful, this->useSemaphore64bCmd, nullptr);
     }
 
-    if (miMemFenceRequired) {
+    if (miMemFenceRequired && (!this->pciBarrierPtr || this->memoryFenceOverPciBarrier)) {
         MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDirectSubmission(ringCommandStream, this->gpuVaForAdditionalSynchronizationWA, NEO::FenceType::acquire, rootDeviceEnvironment);
     }
 
@@ -326,7 +338,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection
         semaphoreSize += 2 * getSizeDisablePrefetcher();
     }
 
-    if (miMemFenceRequired) {
+    if (miMemFenceRequired && (!this->pciBarrierPtr || this->memoryFenceOverPciBarrier)) {
         semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(rootDeviceEnvironment);
     }
 
@@ -567,9 +579,12 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::handleSemaphoreDataOverflow() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) {
+    this->updateMemoryFenceOverPciBarrier();
+
     // Handle overflow earlier (uint32_max - 3), in case of additional ring starts/stops
     if ((currentQueueWorkCount + 1) >= (std::numeric_limits<uint32_t>::max() - 3)) {
         handleSemaphoreDataOverflow();
+        this->updateMemoryFenceOverPciBarrier();
     }
 
     this->handleRingRestartForUllsLightResidency(batchBuffer.allocationsForResidency);

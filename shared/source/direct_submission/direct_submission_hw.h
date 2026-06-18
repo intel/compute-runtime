@@ -201,6 +201,7 @@ class DirectSubmissionHw {
     void updateRelaxedOrderingQueueSize(uint32_t newSize);
     uint32_t getInitialSemaphoreValue() const;
     void handleSemaphoreDataOverflow();
+    void updateMemoryFenceOverPciBarrier();
 
     virtual void makeGlobalFenceAlwaysResident() {};
 
@@ -272,5 +273,7 @@ class DirectSubmissionHw {
     bool relaxedOrderingSchedulerRequired = false;
     bool isSwitchOnUnsuccessful = false;
     bool useSemaphore64bCmd = false;
+    bool memoryFenceOverPciBarrier = false;
+    bool isPreviousMemoryFenceProgrammed = false;
 };
 } // namespace NEO

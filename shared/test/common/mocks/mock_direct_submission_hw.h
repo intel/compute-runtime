@@ -50,11 +50,14 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeSystemMemoryFenceAddress;
     using BaseClass::getTagAddressValueForRingSwitch;
     using BaseClass::globalFenceAllocation;
+    using BaseClass::gpuVaForAdditionalSynchronizationWA;
+    using BaseClass::handleSemaphoreDataOverflow;
     using BaseClass::hwInfo;
     using BaseClass::immWritePostSyncOffset;
     using BaseClass::isDisablePrefetcherRequired;
     using BaseClass::lastSubmittedThrottle;
     using BaseClass::maxRingBufferCount;
+    using BaseClass::memoryFenceOverPciBarrier;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContext;
     using BaseClass::partitionConfigSet;
@@ -81,6 +84,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::switchRingBuffersNeeded;
     using BaseClass::systemMemoryFenceAddressSet;
     using BaseClass::unblockGpu;
+    using BaseClass::updateMemoryFenceOverPciBarrier;
     using BaseClass::workPartitionAllocation;
     using typename BaseClass::RingBufferUse;
 

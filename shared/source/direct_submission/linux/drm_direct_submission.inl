@@ -65,9 +65,6 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
         }
     }
     PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Using PCI barrier ptr: %p\n", this->pciBarrierPtr);
-    if (this->pciBarrierPtr) {
-        this->miMemFenceRequired = false;
-    }
 
     if (this->partitionedMode) {
         this->workPartitionAllocation = inputParams.workPartitionAllocation;
