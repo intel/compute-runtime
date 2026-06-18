@@ -37,7 +37,7 @@ struct L0ToClResultMapper {
                                                                  {ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, CL_OUT_OF_HOST_MEMORY},
                                                                  {ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, CL_OUT_OF_RESOURCES},
                                                                  {ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, CL_BUILD_PROGRAM_FAILURE},
-                                                                 {ZE_RESULT_ERROR_MODULE_LINK_FAILURE, CL_LINKER_NOT_AVAILABLE},
+                                                                 {ZE_RESULT_ERROR_MODULE_LINK_FAILURE, CL_LINK_PROGRAM_FAILURE},
                                                                  {ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET, CL_DEVICE_NOT_AVAILABLE},
                                                                  {ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE, CL_DEVICE_NOT_AVAILABLE},
                                                                  {ZE_RESULT_ERROR_INVALID_NATIVE_BINARY, CL_INVALID_BINARY},

@@ -874,13 +874,79 @@ std::pair<const void *, size_t> ModuleImp::getKernelHeapPointerAndSize(const std
     }
 }
 
+ze_result_t ModuleImp::buildFromSpirVProgramExt(const ze_module_desc_t *desc, const ze_module_program_exp_desc_t *moduleProgExt) {
+    std::string buildOptions;
+    std::string internalBuildOptions;
+    this->builtFromSpirv = true;
+    std::vector<const char *> inputSpirVs;
+    std::vector<uint32_t> inputModuleSizes;
+    std::vector<const ze_module_constants_t *> specConstants;
+    const ze_module_constants_t *firstSpecConstants = nullptr;
+    std::vector<const char *> inputLlvmBcs;
+    std::vector<uint32_t> inputLlvmBcSizes;
+    this->createBuildOptions(desc->pBuildFlags, buildOptions, internalBuildOptions);
+    this->isLlvmBitcode = NEO::CompilerOptions::contains(buildOptions, NEO::CompilerOptions::createLibrary);
+
+    inputSpirVs.reserve(moduleProgExt->count);
+    inputModuleSizes.reserve(moduleProgExt->count);
+    for (uint32_t i = 0; i < static_cast<uint32_t>(moduleProgExt->count); i++) {
+        std::string tmpBuildOptions;
+        std::string tmpInternalBuildOptions;
+        inputSpirVs.push_back(reinterpret_cast<const char *>(moduleProgExt->pInputModules[i]));
+        uint32_t inputSize = static_cast<uint32_t>(moduleProgExt->inputSizes[i]);
+        inputModuleSizes.push_back(inputSize);
+        if (moduleProgExt->pConstants) {
+            specConstants.push_back(moduleProgExt->pConstants[i]);
+            if (i == 0) {
+                firstSpecConstants = specConstants[0];
+            }
+        }
+        if (moduleProgExt->pBuildFlags) {
+            this->createBuildOptions(moduleProgExt->pBuildFlags[i], tmpBuildOptions, tmpInternalBuildOptions);
+            buildOptions = buildOptions + tmpBuildOptions;
+            internalBuildOptions = internalBuildOptions + tmpInternalBuildOptions;
+        }
+    }
+    auto llvmProgExt = L0::PNextRange(desc->pNext).get<ze_module_program_llvmbc_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_LLVMBC_EXT_DESC);
+    if (llvmProgExt) {
+        for (uint32_t i = 0; i < static_cast<uint32_t>(llvmProgExt->count); i++) {
+            inputLlvmBcs.push_back(reinterpret_cast<const char *>(llvmProgExt->pInputModules[i]));
+            uint32_t inputSize = static_cast<uint32_t>(llvmProgExt->inputSizes[i]);
+            inputLlvmBcSizes.push_back(inputSize);
+        }
+    }
+    // precompiled is left at its default false here: every dispatch below recompiles from IR.
+    if (inputLlvmBcs.size() > 0) {
+        // internal path for linking with llvm bcs
+        return this->translationUnit->staticLinkSpirVAndLlvmBc(std::move(inputSpirVs),
+                                                               std::move(inputModuleSizes),
+                                                               buildOptions.c_str(),
+                                                               internalBuildOptions.c_str(),
+                                                               std::move(specConstants),
+                                                               std::move(inputLlvmBcs),
+                                                               std::move(inputLlvmBcSizes));
+    } else if (inputSpirVs.size() > 1 || this->isLlvmBitcode) {
+        return this->translationUnit->staticLinkSpirV(std::move(inputSpirVs),
+                                                      std::move(inputModuleSizes),
+                                                      buildOptions.c_str(),
+                                                      internalBuildOptions.c_str(),
+                                                      std::move(specConstants));
+    } else {
+        // If the user passed in only 1 SPIRV, then fallback to standard build
+        return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(moduleProgExt->pInputModules[0]),
+                                                     inputModuleSizes[0],
+                                                     buildOptions.c_str(),
+                                                     internalBuildOptions.c_str(),
+                                                     firstSpecConstants);
+    }
+}
+
 inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
     std::string buildOptions;
     std::string internalBuildOptions;
 
     auto extensions = L0::PNextRange(desc->pNext);
     auto moduleProgExt = extensions.get<ze_module_program_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC);
-    auto llvmProgExt = extensions.get<ze_module_program_llvmbc_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_LLVMBC_EXT_DESC);
     auto headersProgExt = extensions.get<ze_module_program_headers_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_HEADERS_EXT_DESC);
     for (auto &ext : extensions) {
         if (ext.stype != ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC &&
@@ -890,69 +956,7 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
         }
     }
     if (moduleProgExt && (desc->format == ZE_MODULE_FORMAT_IL_SPIRV)) {
-        this->builtFromSpirv = true;
-        std::vector<const char *> inputSpirVs;
-        std::vector<uint32_t> inputModuleSizes;
-        std::vector<const ze_module_constants_t *> specConstants;
-        const ze_module_constants_t *firstSpecConstants = nullptr;
-        std::vector<const char *> inputLlvmBcs;
-        std::vector<uint32_t> inputLlvmBcSizes;
-        this->createBuildOptions(desc->pBuildFlags, buildOptions, internalBuildOptions);
-        this->isLlvmBitcode = NEO::CompilerOptions::contains(buildOptions, NEO::CompilerOptions::createLibrary);
-
-        inputSpirVs.reserve(moduleProgExt->count);
-        inputModuleSizes.reserve(moduleProgExt->count);
-        for (uint32_t i = 0; i < static_cast<uint32_t>(moduleProgExt->count); i++) {
-            std::string tmpBuildOptions;
-            std::string tmpInternalBuildOptions;
-            inputSpirVs.push_back(reinterpret_cast<const char *>(moduleProgExt->pInputModules[i]));
-            uint32_t inputSize = static_cast<uint32_t>(moduleProgExt->inputSizes[i]);
-            inputModuleSizes.push_back(inputSize);
-            if (moduleProgExt->pConstants) {
-                specConstants.push_back(moduleProgExt->pConstants[i]);
-                if (i == 0) {
-                    firstSpecConstants = specConstants[0];
-                }
-            }
-            if (moduleProgExt->pBuildFlags) {
-                this->createBuildOptions(moduleProgExt->pBuildFlags[i], tmpBuildOptions, tmpInternalBuildOptions);
-                buildOptions = buildOptions + tmpBuildOptions;
-                internalBuildOptions = internalBuildOptions + tmpInternalBuildOptions;
-            }
-        }
-        if (llvmProgExt) {
-            for (uint32_t i = 0; i < static_cast<uint32_t>(llvmProgExt->count); i++) {
-                inputLlvmBcs.push_back(reinterpret_cast<const char *>(llvmProgExt->pInputModules[i]));
-                uint32_t inputSize = static_cast<uint32_t>(llvmProgExt->inputSizes[i]);
-                inputLlvmBcSizes.push_back(inputSize);
-            }
-        }
-        if (inputLlvmBcs.size() > 0) {
-            // internal path for linking with llvm bcs
-            this->precompiled = false;
-            return this->translationUnit->staticLinkSpirVAndLlvmBc(std::move(inputSpirVs),
-                                                                   std::move(inputModuleSizes),
-                                                                   buildOptions.c_str(),
-                                                                   internalBuildOptions.c_str(),
-                                                                   std::move(specConstants),
-                                                                   std::move(inputLlvmBcs),
-                                                                   std::move(inputLlvmBcSizes));
-        } else if (inputSpirVs.size() > 1 || this->isLlvmBitcode) {
-            this->precompiled = false;
-            return this->translationUnit->staticLinkSpirV(std::move(inputSpirVs),
-                                                          std::move(inputModuleSizes),
-                                                          buildOptions.c_str(),
-                                                          internalBuildOptions.c_str(),
-                                                          std::move(specConstants));
-        } else {
-            // If the user passed in only 1 SPIRV, then fallback to standard build
-            this->precompiled = false;
-            return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(moduleProgExt->pInputModules[0]),
-                                                         inputModuleSizes[0],
-                                                         buildOptions.c_str(),
-                                                         internalBuildOptions.c_str(),
-                                                         firstSpecConstants);
-        }
+        return this->buildFromSpirVProgramExt(desc, moduleProgExt);
     } else {
         std::string buildFlagsInput{desc->pBuildFlags != nullptr ? desc->pBuildFlags : ""};
         if (!this->verifyBuildOptions(buildFlagsInput)) {
@@ -981,14 +985,12 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
             return this->translationUnit->createFromNativeBinary(reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize, internalBuildOptions.c_str());
         } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
             this->builtFromSpirv = true;
-            this->precompiled = false;
             return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
                                                          static_cast<uint32_t>(desc->inputSize),
                                                          buildOptions.c_str(),
                                                          internalBuildOptions.c_str(),
                                                          desc->pConstants);
         } else if (desc->format == ZE_MODULE_FORMAT_OCLC) {
-            this->precompiled = false;
             this->isLlvmBitcode = NEO::CompilerOptions::contains(buildOptions, NEO::CompilerOptions::createLibrary);
             if (headersProgExt) {
                 auto inputHeaders = std::span<const char *>(headersProgExt->headerSources, headersProgExt->count);
@@ -1009,7 +1011,6 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
                                                           buildOptions.c_str(),
                                                           internalBuildOptions.c_str());
         } else {
-            this->precompiled = false;
             this->isFunctionSymbolExportEnabled = true;
             this->isGlobalSymbolExportEnabled = true;
             return this->translationUnit->buildExt(desc->format,

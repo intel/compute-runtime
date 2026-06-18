@@ -36,6 +36,11 @@ TEST(L0ToClResultMapperTests, givenModuleBuildFailureWhenMapResultThenReturnsCLB
     EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, result);
 }
 
+TEST(L0ToClResultMapperTests, givenModuleLinkFailureWhenMapResultThenReturnsCLLinkProgramFailure) {
+    cl_int result = L0ToClResultMapper(ZE_RESULT_ERROR_MODULE_LINK_FAILURE);
+    EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, result);
+}
+
 TEST(L0ToClResultMapperTests, givenInvalidKernelNameWhenMapResultThenReturnsCLInvalidKernelName) {
     cl_int result = L0ToClResultMapper(ZE_RESULT_ERROR_INVALID_KERNEL_NAME);
     EXPECT_EQ(CL_INVALID_KERNEL_NAME, result);

@@ -68,7 +68,7 @@ cl_program CL_API_CALL clCreateProgramWithBinary(cl_context context,
     auto pProgram = new NEO::LEO::Program(pContext);
     if (CL_SUCCESS == status) {
         for (cl_uint i = 0; i < numDevices; ++i) {
-            auto deviceStatus = pProgram->createFromBinary(deviceList[i], lengths[i], binaries[i]);
+            auto deviceStatus = pProgram->createFromBinaryOrIl(deviceList[i], lengths[i], binaries[i]);
             if (binaryStatus) {
                 binaryStatus[i] = deviceStatus;
             }
@@ -102,7 +102,7 @@ cl_program CL_API_CALL clCreateProgramWithIL(cl_context context,
 
     auto pProgram = new NEO::LEO::Program(pContext);
     if (CL_SUCCESS == status) {
-        status = pProgram->createFromBinary(pContext->getClDevice(), length, reinterpret_cast<const uint8_t *>(il));
+        status = pProgram->createFromBinaryOrIl(pContext->getClDevice(), length, reinterpret_cast<const uint8_t *>(il));
     }
 
     ErrorCodeHelper(errcodeRet, status);
@@ -158,25 +158,8 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
     if (!NEO::LEO::Program::isValidCallback(funcNotify, userData)) [[unlikely]] {
         return CL_INVALID_VALUE;
     }
-    if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::binary) [[unlikely]] {
-        pProgram->invokeCallback(funcNotify, userData);
-        return CL_SUCCESS;
-    }
 
-    cl_int retVal = CL_INVALID_OPERATION;
-    pProgram->setBuildStatus(CL_BUILD_ERROR);
-    if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::source) {
-        retVal = pProgram->buildFromSource(options);
-    } else if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::il) {
-        retVal = pProgram->buildFromIL(options);
-    }
-    if (retVal != CL_SUCCESS) [[unlikely]] {
-        pProgram->invokeCallback(funcNotify, userData);
-        return retVal;
-    }
-    pProgram->setBuildStatus(CL_BUILD_SUCCESS);
-    pProgram->invokeCallback(funcNotify, userData);
-    return retVal;
+    return pProgram->build(options, funcNotify, userData);
 }
 
 cl_int CL_API_CALL clCompileProgram(cl_program program,
@@ -197,24 +180,7 @@ cl_int CL_API_CALL clCompileProgram(cl_program program,
         return CL_INVALID_VALUE;
     }
 
-    if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::binary) [[unlikely]] {
-        pProgram->invokeCallback(funcNotify, userData);
-        return CL_SUCCESS;
-    }
-
-    cl_int retVal = CL_INVALID_OPERATION;
-    pProgram->setBuildStatus(CL_BUILD_ERROR);
-    if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::source) {
-        retVal = pProgram->compileFromSourceWithHeaders(options, numInputHeaders, inputHeaders, headerIncludeNames);
-    } else if (pProgram->getCreatedFrom() == NEO::LEO::Program::CreatedFrom::il) {
-        // An IL program is already a compiled object - no-op, keep the binary type set at creation.
-        retVal = CL_SUCCESS;
-    }
-    if (CL_SUCCESS == retVal) {
-        pProgram->setBuildStatus(CL_BUILD_SUCCESS);
-    }
-    pProgram->invokeCallback(funcNotify, userData);
-    return retVal;
+    return pProgram->compile(options, numInputHeaders, inputHeaders, headerIncludeNames, funcNotify, userData);
 }
 
 cl_program CL_API_CALL clLinkProgram(cl_context context,

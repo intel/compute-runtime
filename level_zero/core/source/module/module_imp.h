@@ -222,6 +222,7 @@ struct ModuleImp : public Module {
   protected:
     FORCE_NOINLINE void dumpKernelInfoToAubComments();
     MOCKABLE_VIRTUAL ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice);
+    ze_result_t buildFromSpirVProgramExt(const ze_module_desc_t *desc, const ze_module_program_exp_desc_t *moduleProgExt);
     bool shouldBuildBeFailed(NEO::Device *neoDevice);
     ze_result_t allocateKernelImmutableData(size_t kernelsCount);
     ze_result_t initializeKernelImmutableData();

@@ -67,6 +67,7 @@ struct MockEmptyContext : public Context {
 
 struct WhiteBoxProgram : public Program {
     using Program::buildModulesForContextDevices;
+    using Program::mapModuleBuildResult;
     using Program::moduleHandles;
     using Program::Program;
     using Program::programBinaryType;
@@ -229,6 +230,29 @@ TEST(CreateProgramTests, givenNullStringsWhenCreateProgramWithSourceThenReturnsC
     EXPECT_EQ(CL_INVALID_VALUE, errcode);
 }
 
+TEST(CreateProgramTests, givenNullContextWhenCreateProgramWithBinaryThenReturnsInvalidContextAndReleasableProgram) {
+    // On a null/invalid context the entry point still returns a program object (ICD behavior);
+    // it must be constructed without a context and survive release without dereferencing null.
+    cl_int errcode = CL_SUCCESS;
+    cl_int binaryStatus = CL_SUCCESS;
+    const size_t length = sizeof(spirvBlob);
+    const unsigned char *binary = reinterpret_cast<const unsigned char *>(spirvBlob);
+    cl_device_id deviceList[] = {nullptr};
+    auto program = clCreateProgramWithBinary(nullptr, 1, deviceList, &length, &binary, &binaryStatus, &errcode);
+    EXPECT_EQ(CL_INVALID_CONTEXT, errcode);
+    EXPECT_EQ(CL_INVALID_CONTEXT, binaryStatus);
+    ASSERT_NE(nullptr, program);
+    EXPECT_EQ(CL_SUCCESS, clReleaseProgram(program));
+}
+
+TEST(CreateProgramTests, givenNullContextWhenCreateProgramWithILThenReturnsInvalidContextAndReleasableProgram) {
+    cl_int errcode = CL_SUCCESS;
+    auto program = clCreateProgramWithIL(nullptr, spirvBlob, sizeof(spirvBlob), &errcode);
+    EXPECT_EQ(CL_INVALID_CONTEXT, errcode);
+    ASSERT_NE(nullptr, program);
+    EXPECT_EQ(CL_SUCCESS, clReleaseProgram(program));
+}
+
 TEST(ProgramRebuildTests, givenProgramWithExistingModuleWhenBuildModulesForContextDevicesThenPriorModuleIsReleasedAndMapCleared) {
     // A rebuild must start from scratch: any module from a previous build is torn down
     // and the map cleared, rather than the stale module being silently reused.
@@ -240,7 +264,7 @@ TEST(ProgramRebuildTests, givenProgramWithExistingModuleWhenBuildModulesForConte
 
     ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     // Context exposes no devices, so the rebuild loop creates nothing - only the reset runs.
-    auto result = program.buildModulesForContextDevices(moduleDescription);
+    auto result = program.buildModulesForContextDevices(moduleDescription, CL_BUILD_PROGRAM_FAILURE);
 
     EXPECT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(1u, staleModule.destroyCalled);
@@ -258,6 +282,42 @@ TEST(ProgramRebuildTests, givenSourceCompileWhenIrCaptureFailsThenBinaryTypeStay
     auto result = program.compileFromSourceWithHeaders(nullptr, 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_INVALID_OPERATION, result);
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), program.programBinaryType);
+}
+
+TEST(ProgramBuildResultTests, givenModuleBuildFailureWhenMapModuleBuildResultThenReturnsApiSpecificCode) {
+    // clBuildProgram / clCompileProgram both surface a build failure, but with their own CL code.
+    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, WhiteBoxProgram::mapModuleBuildResult(ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, CL_BUILD_PROGRAM_FAILURE));
+    EXPECT_EQ(CL_COMPILE_PROGRAM_FAILURE, WhiteBoxProgram::mapModuleBuildResult(ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, CL_COMPILE_PROGRAM_FAILURE));
+}
+
+TEST(ProgramBuildResultTests, givenModuleLinkFailureWhenMapModuleBuildResultThenReturnsLinkFailureCode) {
+    EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, WhiteBoxProgram::mapModuleBuildResult(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, CL_LINK_PROGRAM_FAILURE));
+}
+
+TEST(ProgramBuildResultTests, givenLinkContextBuildFailureWhenMapModuleBuildResultThenStillReportsLinkFailure) {
+    // During clLinkProgram a build-side failure (e.g. spec-constant processing) is still a link failure.
+    EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, WhiteBoxProgram::mapModuleBuildResult(ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, CL_LINK_PROGRAM_FAILURE));
+}
+
+TEST(ProgramBuildResultTests, givenNonBuildErrorWhenMapModuleBuildResultThenUsesGenericMapping) {
+    // Errors unrelated to the module build keep their generic ze->cl mapping, ignoring the build code.
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, WhiteBoxProgram::mapModuleBuildResult(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, CL_BUILD_PROGRAM_FAILURE));
+    EXPECT_EQ(CL_SUCCESS, WhiteBoxProgram::mapModuleBuildResult(ZE_RESULT_SUCCESS, CL_BUILD_PROGRAM_FAILURE));
+}
+
+TEST(ProgramRebuildTests, givenBuildModulesForContextDevicesWhenItSucceedsThenItDoesNotOwnBinaryType) {
+    // The build loop only manages module/build-log handles; setting the binary type is the
+    // caller's responsibility, so a successful loop must leave the type untouched (NONE here).
+    MockEmptyContext context;
+    WhiteBoxProgram program(&context);
+    ASSERT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), program.programBinaryType);
+
+    ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    // Zero-device context: the loop creates nothing and returns success without touching the type.
+    auto result = program.buildModulesForContextDevices(moduleDescription, CL_BUILD_PROGRAM_FAILURE);
+
+    EXPECT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), program.programBinaryType);
 }
 

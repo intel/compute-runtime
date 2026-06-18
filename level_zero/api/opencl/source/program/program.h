@@ -67,7 +67,7 @@ class Program : public BaseObject<_cl_program> {
     cl_int getBuildInfo(cl_device_id device, cl_program_build_info paramName,
                         size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet);
 
-    cl_int createFromBinary(cl_device_id device, size_t length, const unsigned char *binary);
+    cl_int createFromBinaryOrIl(cl_device_id device, size_t length, const unsigned char *binary);
     cl_int buildFromSource(const char *options);
     cl_int compileFromSourceWithHeaders(const char *options, cl_uint numInputHeaders,
                                         const cl_program *inputHeaders, const char **headerIncludeNames);
@@ -95,9 +95,29 @@ class Program : public BaseObject<_cl_program> {
     static bool isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
     void invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
 
+    // clBuildProgram / clCompileProgram: dispatch on createdFrom, drive the CL_BUILD_ERROR ->
+    // CL_BUILD_SUCCESS transition, and invoke the notify callback once.
+    cl_int build(const char *options,
+                 void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
+    cl_int compile(const char *options, cl_uint numInputHeaders,
+                   const cl_program *inputHeaders, const char **headerIncludeNames,
+                   void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
+
   protected:
-    cl_int buildModulesForContextDevices(ze_module_desc_t &moduleDescription);
+    // buildFailureCode is the CL error this build action reports when L0 fails the module build/link
+    // (clBuildProgram/clCompileProgram/clLinkProgram each have a distinct one); other L0 errors map
+    // through the generic L0ToClResultMapper.
+    cl_int buildModulesForContextDevices(ze_module_desc_t &moduleDescription, cl_int buildFailureCode);
+    static cl_int mapModuleBuildResult(ze_result_t ret, cl_int buildFailureCode);
     cl_int populateIrBinaryFromModule(bool isSpirv);
+    // Reads the per-device program binary (native gen binary for EXECUTABLE, IR otherwise).
+    // outSize always receives the size; when outBinary is non-null the bytes are copied out.
+    cl_int getDeviceBinary(uint32_t rootDeviceIndex, size_t *outSize, unsigned char *outBinary);
+    // Fills the L0 module spec-constant descriptor from specConstantsValues into caller-owned
+    // storage (which must outlive the build). Caller must hold specializationConstantsMutex.
+    bool populateModuleConstants(ze_module_constants_t &moduleConstants,
+                                 std::vector<uint32_t> &constantsIds,
+                                 std::vector<const void *> &constantsValuesPtrs);
     void resetModules();
 
     specConstValuesMap specConstantsValues;
