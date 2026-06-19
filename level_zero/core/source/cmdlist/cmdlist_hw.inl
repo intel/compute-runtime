@@ -3464,11 +3464,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
             bool crossEngineDependency = (latestFlushIsDualCopyOffload != dualStreamCopyOffloadOperation);
             auto resolveDependenciesViaPipeControls = !crossEngineDependency && !copyOnlyWait && implicitDependency && (this->dcFlushSupport || (!this->heaplessModeEnabled && this->latestOperationHasHeapfullCbEventWithProfiling));
 
-            if (resolveDependenciesViaPipeControls && this->isImmediateType()) {
-                resolveDependenciesViaPipeControls = this->isPostSyncSkippedOnLatestInOrderOperation ||
-                                                     (this->cmdQImmediate->getTaskCount() == this->getCsr(false)->peekTaskCount());
-            }
-
             if (NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
                 resolveDependenciesViaPipeControls = NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get();
             }

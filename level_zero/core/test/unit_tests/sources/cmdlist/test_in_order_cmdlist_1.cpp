@@ -1158,47 +1158,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderCmdListWhenSubmitt
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInterleavedCsrSubmissionWhenResolvingInOrderDependencyThenUseSemaphoreInsteadOfPipeControl) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(-1);
-
-    uint32_t counterOffset = 64;
-
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-    immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
-
-    if (!immCmdList->dcFlushSupport) {
-        GTEST_SKIP();
-    }
-
-    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
-
-    int client1, client2;
-    ultCsr->registerClient(&client1);
-    ultCsr->registerClient(&client2);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    ASSERT_FALSE(immCmdList->isPostSyncSkippedOnLatestInOrderOperation);
-
-    auto offset = cmdStream->getUsed();
-
-    ultCsr->taskCount = immCmdList->cmdQImmediate->getTaskCount() + 1;
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdStream->getCpuBase(), offset),
-        cmdStream->getUsed() - offset));
-
-    auto semaphoreItor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), semaphoreItor);
-
-    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
-}
-
 HWTEST_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCalledThenCreatePeerAllocation) {
     NEO::UltDeviceFactory deviceFactory{2, 0};
 
@@ -2669,33 +2628,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenDispatchin
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(immCmdList->isWalkerPostSyncSkipEnabled ? 0u : 2u, immCmdList->inOrderExecInfo->getCounterValue());
     EXPECT_EQ(2u, ultCsr->makeResidentAllocations[immCmdList->inOrderExecInfo->getDeviceCounterAllocation()]);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenMultipleCsrClientsWhenDispatchingInOrderThenDontSkipWalkerPostSync) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableWalkerPostSyncSkip.set(1);
-
-    auto singleClientCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-    ASSERT_TRUE(singleClientCmdList->isWalkerPostSyncSkipEnabled);
-
-    singleClientCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-
-    EXPECT_EQ(0u, singleClientCmdList->inOrderExecInfo->getCounterValue());
-    EXPECT_TRUE(singleClientCmdList->isPostSyncSkippedOnLatestInOrderOperation);
-
-    auto multiClientCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-    ASSERT_TRUE(multiClientCmdList->isWalkerPostSyncSkipEnabled);
-
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(multiClientCmdList->getCsr(false));
-    int client1, client2;
-    ultCsr->registerClient(&client1);
-    ultCsr->registerClient(&client2);
-    ASSERT_GE(ultCsr->getNumClients(), 2u);
-
-    multiClientCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-
-    EXPECT_EQ(1u, multiClientCmdList->inOrderExecInfo->getCounterValue());
-    EXPECT_FALSE(multiClientCmdList->isPostSyncSkippedOnLatestInOrderOperation);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenAddingRelaxedOrderingEventsThenConfigureRegistersFirst) {
@@ -4771,9 +4703,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     itor = find<MI_SEMAPHORE_WAIT *>(++itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList2->getCsr(false));
-    const bool walkerPostSyncSkipped = immCmdList2->isWalkerPostSyncSkipEnabled && ultCsr->getNumClients() < 2u;
-    EXPECT_EQ(walkerPostSyncSkipped ? 2u : 3u, events[2]->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(immCmdList2->isWalkerPostSyncSkipEnabled ? 2u : 3u, events[2]->getInOrderExecBaseSignalValue());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAndTimestampEventThenSignalSyncAllocation) {
