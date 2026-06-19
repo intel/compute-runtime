@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,8 @@ struct BaseHandle {
     ze_handle_t baseHandle{
         .pCore = &L0::globalDriverDispatch.core,
         .pTools = &L0::globalDriverDispatch.tools,
-        .pSysman = &L0::globalDriverDispatch.sysman
+        .pSysman = &L0::globalDriverDispatch.sysman,
+        .pRuntime = &L0::globalDriverDispatch.runtime
 
     };
 };
@@ -58,7 +59,8 @@ struct BaseHandleWithLoaderTranslation {
     ze_handle_t baseHandle{
         .pCore = &L0::globalDriverDispatch.core,
         .pTools = &L0::globalDriverDispatch.tools,
-        .pSysman = &L0::globalDriverDispatch.sysman
+        .pSysman = &L0::globalDriverDispatch.sysman,
+        .pRuntime = &L0::globalDriverDispatch.runtime
 
     };
     uint64_t objMagic = objMagicValue;
