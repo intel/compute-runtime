@@ -50,6 +50,9 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryFill(
     if (false == Math::isPow2(patternSize)) {
         return ZE_RESULT_ERROR_INVALID_SIZE;
     }
+    if (size % patternSize != 0) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
 
     CmdListMemoryCopyParams memoryCopyParams = {};
     return cmdList->appendMemoryFill(ptr, pattern, patternSize, size, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
