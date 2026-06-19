@@ -3424,8 +3424,7 @@ HWTEST2_F(ContextTest, WhenCreatingImageThenSuccessIsReturned, IsAtMostProductDG
 }
 
 HWTEST_F(ContextTest, givenBindlessModeDisabledWhenMakeImageResidentAndEvictThenImageImplicitArgsAllocationIsNotMadeResidentAndEvicted) {
-    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper() ||
-        !device->getNEODevice()->getDeviceInfo().imageSupport) {
+    if (!device->getNEODevice()->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
 
@@ -3479,8 +3478,7 @@ HWTEST_F(ContextTest, givenBindlessModeDisabledWhenMakeImageResidentAndEvictThen
 }
 
 HWTEST_F(ContextTest, givenBindlessImageWhenMakeImageResidentAndEvictThenImageImplicitArgsAllocationIsMadeResidentAndEvicted) {
-    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper() ||
-        !device->getNEODevice()->getDeviceInfo().imageSupport) {
+    if (!device->getNEODevice()->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
 
@@ -3542,8 +3540,7 @@ HWTEST_F(ContextTest, givenBindlessImageWhenMakeImageResidentAndEvictThenImageIm
 }
 
 TEST_F(ContextTest, givenImageWhenEvictImageWithoutMakeResidentThenSuccessReturned) {
-    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper() ||
-        !device->getNEODevice()->getDeviceInfo().imageSupport) {
+    if (!device->getNEODevice()->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
 

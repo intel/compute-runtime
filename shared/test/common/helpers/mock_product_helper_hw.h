@@ -25,7 +25,7 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const override;
     uint32_t getL1CachePolicy(bool isDebuggerActive) const override;
     bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
-    const SupportedNumGrfs getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
+    const SupportedNumGrfs getSupportedNumGrfs(const ReleaseHelper &releaseHelper) const override;
     aub_stream::EngineType getDefaultCopyEngine() const override;
     bool isBufferPoolAllocatorSupported() const override;
     bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const override { return enableAdditionalBlitProperties; }

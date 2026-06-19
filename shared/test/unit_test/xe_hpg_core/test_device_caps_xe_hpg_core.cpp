@@ -72,7 +72,8 @@ XE_HPG_CORETEST_F(XeHpgCoreDeviceCaps, GivenVariousValuesWhenComputeSlmSizeIsCal
         {7, 64 * MemoryConstants::kiloByte}};
 
     auto hardwareInfo = *defaultHwInfo;
+    const auto &releaseHelper = pDevice->getReleaseHelper();
     for (auto &testInput : computeSlmValuesXeHpgTestsInput) {
-        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hardwareInfo, testInput.slmSize, nullptr));
+        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hardwareInfo, testInput.slmSize, releaseHelper));
     }
 }

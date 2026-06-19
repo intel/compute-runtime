@@ -191,7 +191,7 @@ TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensio
     mockReleaseHelperVal->bFloat16Support = true;
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     rootDeviceEnvironment.releaseHelper.reset(mockReleaseHelperVal.release());
-    if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()->isBFloat16ConversionSupported()) {
+    if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper().isBFloat16ConversionSupported()) {
         additionalExtensions.emplace_back(ZE_BFLOAT16_CONVERSIONS_EXT_NAME, ZE_BFLOAT16_CONVERSIONS_EXT_VERSION_CURRENT);
     }
 

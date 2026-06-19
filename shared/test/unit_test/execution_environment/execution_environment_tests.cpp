@@ -232,13 +232,11 @@ TEST(RootDeviceEnvironment, givenDefaultHardwareInfoWhenPrepareDeviceEnvironment
     rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
     rootDeviceEnvironment->setRcsExposure();
     auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
-    auto releaseHelper = rootDeviceEnvironment->getReleaseHelper();
+    const auto &releaseHelper = rootDeviceEnvironment->getReleaseHelper();
 
-    if (releaseHelper) {
-        bool shouldRcsBeDisabled = releaseHelper->isRcsExposureDisabled();
-        bool isRcsDisabled = hwInfo->featureTable.flags.ftrRcsNode;
-        EXPECT_NE(shouldRcsBeDisabled, isRcsDisabled);
-    }
+    bool shouldRcsBeDisabled = releaseHelper.isRcsExposureDisabled();
+    bool isRcsDisabled = hwInfo->featureTable.flags.ftrRcsNode;
+    EXPECT_NE(shouldRcsBeDisabled, isRcsDisabled);
 }
 
 TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRcsWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsTrue) {

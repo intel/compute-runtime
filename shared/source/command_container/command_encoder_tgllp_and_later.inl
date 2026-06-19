@@ -17,9 +17,9 @@ template <typename Family>
 size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvironment &rootDeviceEnvironment, bool hasSharedHandles, bool isRcs) {
     size_t size = 0;
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {

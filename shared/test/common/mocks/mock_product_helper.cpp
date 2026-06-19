@@ -364,11 +364,8 @@ uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getUncachedL1CachePolicy() {
 }
 
 template <>
-const SupportedNumGrfs ProductHelperHw<IGFX_UNKNOWN>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->getSupportedNumGrfs();
-    }
-    return {};
+const SupportedNumGrfs ProductHelperHw<IGFX_UNKNOWN>::getSupportedNumGrfs(const ReleaseHelper &releaseHelper) const {
+    return releaseHelper.getSupportedNumGrfs();
 }
 
 template <>

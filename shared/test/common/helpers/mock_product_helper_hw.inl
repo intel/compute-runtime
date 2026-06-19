@@ -79,11 +79,8 @@ bool MockProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
 }
 
 template <>
-const SupportedNumGrfs MockProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->getSupportedNumGrfs();
-    }
-    return {128u};
+const SupportedNumGrfs MockProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper &releaseHelper) const {
+    return releaseHelper.getSupportedNumGrfs();
 }
 
 template <>

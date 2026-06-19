@@ -578,7 +578,7 @@ XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenSurfaceStateWhenAuxParamsForMCSCCS
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper.get());
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }
 

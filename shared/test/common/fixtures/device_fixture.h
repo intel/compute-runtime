@@ -32,7 +32,7 @@ struct DeviceFixture {
     template <typename HelperType>
     HelperType &getHelper() const;
 
-    const ReleaseHelper *getReleaseHelper();
+    const ReleaseHelper &getReleaseHelper();
 
     NEO::BuiltIn::AddressingMode defaultBuiltInMode;
 };

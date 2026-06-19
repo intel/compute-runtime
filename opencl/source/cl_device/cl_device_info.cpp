@@ -373,8 +373,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     case CL_DEVICE_BFLOAT16_FP_ATOMIC_CAPABILITIES_EXT: {
         uint32_t caps32Bit = 0u;
-        auto releaseHelper = this->getDevice().getReleaseHelper();
-        releaseHelper->getKernelCapabilitiesExtra(caps32Bit);
+        const auto &releaseHelper = this->getDevice().getReleaseHelper();
+        releaseHelper.getKernelCapabilitiesExtra(caps32Bit);
         param.bitfield = caps32Bit;
         src = &param.bitfield;
         srcSize = retSize = sizeof(cl_device_atomic_capabilities);

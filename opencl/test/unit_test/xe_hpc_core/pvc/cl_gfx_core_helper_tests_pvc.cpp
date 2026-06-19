@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ PVCTEST_F(ClGfxCoreHelperTestsPvcXt, givenRelease1261WhenAskingForDeviceFeatures
     EXPECT_EQ(static_cast<cl_device_feature_capabilities_intel>(CL_DEVICE_FEATURE_FLAG_DP4A_INTEL), clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(*rootEnv));
 
     auto &compilerHelper = getHelper<CompilerProductHelper>();
-    std::string extensions = compilerHelper.getDeviceExtensions(*deviceHwInfo, rootEnv->releaseHelper.get());
+    std::string extensions = compilerHelper.getDeviceExtensions(*deviceHwInfo, *rootEnv->releaseHelper);
 
     EXPECT_EQ(std::string::npos, extensions.find("cl_intel_subgroup_matrix_multiply_accumulate"));
     EXPECT_EQ(std::string::npos, extensions.find("cl_intel_subgroup_split_matrix_multiply_accumulate"));

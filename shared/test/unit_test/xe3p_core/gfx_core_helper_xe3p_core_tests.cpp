@@ -90,10 +90,10 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenGetGpgpuEnginesThenReturnTwoCccs
 
         auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-        auto releaseHelper = device->getReleaseHelper();
+        const auto &releaseHelper = device->getReleaseHelper();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
 
-        bool cccsEnabled = !releaseHelper->isRcsExposureDisabled() || debugFlag;
+        bool cccsEnabled = !releaseHelper.isRcsExposureDisabled() || debugFlag;
 
         EXPECT_EQ(cccsEnabled ? numEnginesWithCccs : numEnginesWithoutCccs, device->allEngines.size());
 

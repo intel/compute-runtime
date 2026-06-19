@@ -94,7 +94,7 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenGrfSizeWhenProgrammingIddThenSe
 
 XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenProductHelperWithInvalidGrfNumbersWhenProgrammingIddThenErrorIsThrown) {
     struct ProductHelperWithInvalidGrfNumbers : public NEO::ProductHelperHw<IGFX_UNKNOWN> {
-        const SupportedNumGrfs getSupportedNumGrfs(const NEO::ReleaseHelper *releaseHelper) const override {
+        const SupportedNumGrfs getSupportedNumGrfs(const NEO::ReleaseHelper &releaseHelper) const override {
             return invalidGrfs;
         }
         SupportedNumGrfs invalidGrfs = {127u, 255u};

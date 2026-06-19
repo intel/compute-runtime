@@ -63,7 +63,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
 
     aubManager = aubCenter->getAubManager();
 
-    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
+    const auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
     if (!aubCenter->getPhysicalAddressAllocator()) {
         aubCenter->initPhysicalAddressAllocator(this->createPhysicalAddressAllocator(&this->peekHwInfo(), releaseHelper));
     }

@@ -70,20 +70,21 @@ HWTEST2_F(Gen12LpDeviceCaps, givenTglLpWhenCheckSupportCacheFlushAfterWalkerThen
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
     const auto &hwInfo = pDevice->getHardwareInfo();
+    const auto &releaseHelper = pDevice->getReleaseHelper();
 
-    EXPECT_EQ(0u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 0, nullptr));
-    EXPECT_EQ(1u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1, nullptr));
-    EXPECT_EQ(1u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1024, nullptr));
-    EXPECT_EQ(2u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1025, nullptr));
-    EXPECT_EQ(2u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 2048, nullptr));
-    EXPECT_EQ(3u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 2049, nullptr));
-    EXPECT_EQ(3u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 4096, nullptr));
-    EXPECT_EQ(4u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 4097, nullptr));
-    EXPECT_EQ(4u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 8192, nullptr));
-    EXPECT_EQ(5u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 8193, nullptr));
-    EXPECT_EQ(5u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 16384, nullptr));
-    EXPECT_EQ(6u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 16385, nullptr));
-    EXPECT_EQ(6u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 32768, nullptr));
-    EXPECT_EQ(7u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 32769, nullptr));
-    EXPECT_EQ(7u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 65536, nullptr));
+    EXPECT_EQ(0u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 0, releaseHelper));
+    EXPECT_EQ(1u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1, releaseHelper));
+    EXPECT_EQ(1u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1024, releaseHelper));
+    EXPECT_EQ(2u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1025, releaseHelper));
+    EXPECT_EQ(2u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 2048, releaseHelper));
+    EXPECT_EQ(3u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 2049, releaseHelper));
+    EXPECT_EQ(3u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 4096, releaseHelper));
+    EXPECT_EQ(4u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 4097, releaseHelper));
+    EXPECT_EQ(4u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 8192, releaseHelper));
+    EXPECT_EQ(5u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 8193, releaseHelper));
+    EXPECT_EQ(5u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 16384, releaseHelper));
+    EXPECT_EQ(6u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 16385, releaseHelper));
+    EXPECT_EQ(6u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 32768, releaseHelper));
+    EXPECT_EQ(7u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 32769, releaseHelper));
+    EXPECT_EQ(7u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 65536, releaseHelper));
 }

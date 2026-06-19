@@ -22,11 +22,11 @@ namespace NEO {
 StackVec<const char *, 4> validL0Prefixes;
 StackVec<NEO::DebugVarPrefix, 4> validL0PrefixTypes;
 
-bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper) {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper &releaseHelper) {
     if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
         return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
     }
-    return releaseHelper->isGlobalBindlessAllocatorEnabled();
+    return releaseHelper.isGlobalBindlessAllocatorEnabled();
 }
 
 bool ApiSpecificConfig::getBindlessMode(const Device &device) {
@@ -39,11 +39,11 @@ bool ApiSpecificConfig::getBindlessMode(const Device &device) {
     }
 
     auto ailHelper = device.getAilConfigurationHelper();
-    auto releaseHelper = device.getReleaseHelper();
+    const auto &releaseHelper = device.getReleaseHelper();
     if (ailHelper && ailHelper->disableBindlessAddressing()) {
         return false;
     } else {
-        return !releaseHelper->isBindlessAddressingDisabled();
+        return !releaseHelper.isBindlessAddressingDisabled();
     }
 }
 

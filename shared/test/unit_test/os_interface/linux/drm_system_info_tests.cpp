@@ -121,14 +121,14 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
     int ret = drm.setupHardwareInfo(0, false);
     ASSERT_EQ(ret, 0);
 
-    auto *releaseHelper = drm.getRootDeviceEnvironment().getReleaseHelper();
+    const auto *releaseHelper = &drm.getRootDeviceEnvironment().getReleaseHelper();
 
     class ReleaseHelperExpose : public ReleaseHelper {
       public:
         using ReleaseHelper::hardwareIpVersion;
     };
 
-    ReleaseHelperExpose *exposedReleaseHelper = static_cast<ReleaseHelperExpose *>(releaseHelper);
+    const ReleaseHelperExpose *exposedReleaseHelper = static_cast<const ReleaseHelperExpose *>(releaseHelper);
     EXPECT_EQ(12u, exposedReleaseHelper->hardwareIpVersion.architecture);
     EXPECT_EQ(55u, exposedReleaseHelper->hardwareIpVersion.release);
 }

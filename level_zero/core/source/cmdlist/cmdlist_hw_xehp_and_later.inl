@@ -524,13 +524,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         kernelWithAssertAppended = true;
     }
 
-    auto releaseHelper = neoDevice->getReleaseHelper();
+    const auto &releaseHelper = neoDevice->getReleaseHelper();
     bool kernelContainsStatefulAccess = kernelImp->checkKernelContainsStatefulAccess();
     bool kernelUsesRayTracing = kernelImp->usesRayTracing();
     bool useStateCacheInvalidationWithoutCsStall = kernelContainsStatefulAccess &&
                                                    !kernelUsesRayTracing &&
-                                                   releaseHelper->isStateCacheInvalidationWaRequired(this->isImmediateType(),
-                                                                                                     kernelDescriptor.kernelAttributes.usesImageOrSamplerState());
+                                                   releaseHelper.isStateCacheInvalidationWaRequired(this->isImmediateType(),
+                                                                                                    kernelDescriptor.kernelAttributes.usesImageOrSamplerState());
 
     if (useStateCacheInvalidationWithoutCsStall) {
         NEO::PipeControlArgs args{};

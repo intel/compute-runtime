@@ -204,7 +204,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     const GfxCoreHelper &getGfxCoreHelper() const;
     const ProductHelper &getProductHelper() const;
     const CompilerProductHelper &getCompilerProductHelper() const;
-    MOCKABLE_VIRTUAL ReleaseHelper *getReleaseHelper() const;
+    MOCKABLE_VIRTUAL const ReleaseHelper &getReleaseHelper() const;
     MOCKABLE_VIRTUAL AILConfiguration *getAilConfigurationHelper() const;
     ISAPoolAllocator &getIsaPoolAllocator() {
         return *isaPoolAllocator;

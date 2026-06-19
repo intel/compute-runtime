@@ -22,7 +22,7 @@ class AubHelper : public NonCopyableAndNonMovableClass {
   public:
     static bool isOneTimeAubWritableAllocationType(const AllocationType &type);
     static uint64_t getPTEntryBits(uint64_t pdEntryBits);
-    static uint64_t getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const ReleaseHelper *releaseHelper);
+    static uint64_t getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const ReleaseHelper &releaseHelper);
     static aub_stream::MMIOList getAdditionalMmioList();
     static void setTbxConfiguration();
 

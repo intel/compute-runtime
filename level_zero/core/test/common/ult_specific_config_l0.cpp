@@ -97,7 +97,7 @@ void populateApiSpecificVirtualFileList(const NEO::HardwareInfo &hwInfo) {
 
     auto productHelper = NEO::ProductHelper::create(hwInfo.platform.eProductFamily);
     auto releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
-    const auto supportedGrfSizes = productHelper->getSupportedNumGrfs(releaseHelper.get());
+    const auto supportedGrfSizes = productHelper->getSupportedNumGrfs(*releaseHelper);
     for (const auto grfSize : supportedGrfSizes) {
         loadApiSpecificKernel("grf_" + std::to_string(grfSize) + "_kernel_variable_register_per_thread");
     }

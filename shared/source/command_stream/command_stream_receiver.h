@@ -489,7 +489,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     const GfxCoreHelper &getGfxCoreHelper() const;
     const ProductHelper &getProductHelper() const;
-    const ReleaseHelper *getReleaseHelper() const;
+    const ReleaseHelper &getReleaseHelper() const;
 
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
     MOCKABLE_VIRTUAL bool checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const;

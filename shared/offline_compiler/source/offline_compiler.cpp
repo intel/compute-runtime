@@ -130,7 +130,7 @@ std::vector<NameVersionPair> OfflineCompiler::getExtensions(ConstStringRef produ
     if (nullptr == compiler) {
         return {};
     }
-    auto extensionsStr = compiler->compilerProductHelper->getDeviceExtensions(compiler->hwInfo, compiler->releaseHelper.get());
+    auto extensionsStr = compiler->compilerProductHelper->getDeviceExtensions(compiler->hwInfo, *compiler->releaseHelper);
     auto extensions = NEO::CompilerOptions::tokenize(extensionsStr, ' ');
     ret.reserve(extensions.size());
     for (const auto &ext : extensions) {
@@ -177,7 +177,7 @@ std::vector<NameVersionPair> OfflineCompiler::getOpenCLCFeatures(ConstStringRef 
     }
 
     OpenClCFeaturesContainer availableFeatures;
-    NEO::getOpenclCFeaturesList(compiler->getHardwareInfo(), availableFeatures, *compiler->compilerProductHelper, compiler->releaseHelper.get());
+    NEO::getOpenclCFeaturesList(compiler->getHardwareInfo(), availableFeatures, *compiler->compilerProductHelper, *compiler->releaseHelper);
 
     std::vector<NameVersionPair> allSupportedFeatures;
     for (auto &feature : availableFeatures) {

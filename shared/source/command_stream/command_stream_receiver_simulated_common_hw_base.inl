@@ -107,7 +107,7 @@ CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulate
                                                                                           uint32_t rootDeviceIndex,
                                                                                           const DeviceBitfield deviceBitfield)
     : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield),
-      releaseHelper(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper()) {
+      releaseHelper(&executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper()) {
     this->useNewResourceImplicitFlush = false;
     this->useGpuIdleImplicitFlush = false;
     const auto &capabilityTable = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable;

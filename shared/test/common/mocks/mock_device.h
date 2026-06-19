@@ -176,7 +176,7 @@ class MockDevice : public RootDevice {
 
     void finalizeRayTracing();
 
-    ReleaseHelper *getReleaseHelper() const override;
+    const ReleaseHelper &getReleaseHelper() const override;
     AILConfiguration *getAilConfigurationHelper() const override;
 
     void setRTDispatchGlobalsForceAllocation() {

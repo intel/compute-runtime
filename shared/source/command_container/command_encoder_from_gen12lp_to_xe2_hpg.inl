@@ -18,8 +18,8 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
     bool hasSharedHandles, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, rootDeviceEnvironment, isRcs);
-    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {

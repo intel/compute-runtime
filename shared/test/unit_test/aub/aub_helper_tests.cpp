@@ -66,13 +66,13 @@ TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsSetThenGetMemBankSizeReturnsCorre
 
     sysInfo.MultiTileArchInfo.IsValid = true;
     sysInfo.MultiTileArchInfo.TileCount = 1;
-    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, releaseHelper.get()));
+    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, *releaseHelper));
 
     sysInfo.MultiTileArchInfo.TileCount = 2;
-    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, releaseHelper.get()));
+    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, *releaseHelper));
 
     sysInfo.MultiTileArchInfo.TileCount = 4;
-    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, releaseHelper.get()));
+    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, *releaseHelper));
 }
 
 TEST(AubHelper, givenAllocationTypeWhenAskingIfOneTimeWritableThenReturnCorrectResult) {
@@ -136,11 +136,11 @@ HWTEST_F(AubHelperTest, WhenHBMSizePerTileInGigabytesIsNotSetThenGetMemBankSizeR
 
     sysInfo.MultiTileArchInfo.IsValid = true;
     sysInfo.MultiTileArchInfo.TileCount = 1;
-    EXPECT_EQ(32 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, releaseHelper.get()));
+    EXPECT_EQ(32 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, *releaseHelper));
 
     sysInfo.MultiTileArchInfo.TileCount = 2;
-    EXPECT_EQ(16 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, releaseHelper.get()));
+    EXPECT_EQ(16 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, *releaseHelper));
 
     sysInfo.MultiTileArchInfo.TileCount = 4;
-    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, releaseHelper.get()));
+    EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, *releaseHelper));
 }

@@ -3903,9 +3903,9 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
             auto pcItors = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
             ASSERT_NE(pcItors.size(), 0u);
             auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.back());
-            auto releaseHelper = device->getNEODevice()->getReleaseHelper();
-            if (releaseHelper->isStateCacheInvalidationWaRequired(immCmdList->isImmediateType(),
-                                                                  kernel->getKernelDescriptor().kernelAttributes.usesImageOrSamplerState())) {
+            const auto &releaseHelper = device->getNEODevice()->getReleaseHelper();
+            if (releaseHelper.isStateCacheInvalidationWaRequired(immCmdList->isImmediateType(),
+                                                                 kernel->getKernelDescriptor().kernelAttributes.usesImageOrSamplerState())) {
                 pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.front());
             }
 

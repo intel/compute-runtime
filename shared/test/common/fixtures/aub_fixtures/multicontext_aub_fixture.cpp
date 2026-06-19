@@ -158,8 +158,8 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
 }
 
 bool MulticontextAubFixture::isMemoryCompressed(CommandStreamReceiver *csr, void *gfxAddress) {
-    auto releaseHelper = csr->getReleaseHelper();
-    if (!releaseHelper || !releaseHelper->getFtrXe2Compression()) {
+    const auto &releaseHelper = csr->getReleaseHelper();
+    if (!releaseHelper.getFtrXe2Compression()) {
         return false;
     }
     auto svmAllocs = svmAllocsManager->getSVMAlloc(gfxAddress);

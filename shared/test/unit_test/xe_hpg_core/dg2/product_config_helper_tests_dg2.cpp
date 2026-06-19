@@ -327,24 +327,6 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2G12WhenAskingForSBAWaThenReturnSuccess) 
     }
 }
 
-DG2TEST_F(ProductHelperTestDg2, givenInvalidArchitectureInIpVersionWhenRefreshReleaseHelperThenNullptrIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.ipVersion.value = AOT::DG2_G10_A0;
-    hwInfo.ipVersion.architecture = 0;
-
-    refreshReleaseHelper(&hwInfo);
-    EXPECT_EQ(releaseHelper, nullptr);
-}
-
-DG2TEST_F(ProductHelperTestDg2, givenInvalidReleaseInIpVersionWhenRefreshReleaseHelperThenNullptrIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.ipVersion.value = AOT::DG2_G10_A0;
-    hwInfo.ipVersion.release = 15;
-
-    refreshReleaseHelper(&hwInfo);
-    EXPECT_EQ(releaseHelper, nullptr);
-}
-
 DG2TEST_F(ProductHelperTestDg2, givenDg2WhenIsBlitterForImagesSupportedIsCalledThenTrueIsReturned) {
 
     EXPECT_TRUE(productHelper->isBlitterForImagesSupported());

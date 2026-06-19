@@ -50,7 +50,7 @@ ProductHelperTest::ProductHelperTest() {
     executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     productHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     compilerProductHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
-    releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
+    releaseHelper = &executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
 }
 
 ProductHelperTest::~ProductHelperTest() = default;
@@ -335,7 +335,6 @@ struct PlatformsWithReleaseHelper {
 };
 
 HWTEST2_F(ProductHelperTest, whenPlatformsSupportsReleaseHelperThenRevIdFromSteppingsAreNotAvailable, PlatformsWithReleaseHelper) {
-    ASSERT_NE(nullptr, releaseHelper);
     for (uint32_t testValue = 0; testValue < 0x10; testValue++) {
         EXPECT_EQ(CommonConstants::invalidStepping, productHelper->getHwRevIdFromStepping(testValue, pInHwInfo));
         pInHwInfo.platform.usRevId = testValue;
@@ -1044,12 +1043,7 @@ HWTEST_F(ProductHelperTest, givenGmmUsageTypeWhenCallingGetGmmResourceUsageOverr
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCorrectValueIsReturned) {
-    if (releaseHelper) {
-        EXPECT_EQ(releaseHelper->getSupportedNumGrfs(), productHelper->getSupportedNumGrfs(releaseHelper));
-    } else {
-        const SupportedNumGrfs expectedValues{128u};
-        EXPECT_EQ(expectedValues, productHelper->getSupportedNumGrfs(releaseHelper));
-    }
+    EXPECT_EQ(releaseHelper->getSupportedNumGrfs(), productHelper->getSupportedNumGrfs(*releaseHelper));
 }
 
 HWTEST2_F(ProductHelperTest, givenLimitNumGrfsSupportedAndReleaseHelperWhenGettingSupportedNumGrfsThenReturnLimitedValue, PlatformsWithReleaseHelper) {
@@ -1057,13 +1051,13 @@ HWTEST2_F(ProductHelperTest, givenLimitNumGrfsSupportedAndReleaseHelperWhenGetti
 
     {
         debugManager.flags.LimitNumGrfsSupported.set(128u);
-        auto grfs = productHelper->getSupportedNumGrfs(releaseHelper);
+        auto grfs = productHelper->getSupportedNumGrfs(*releaseHelper);
         EXPECT_FALSE(grfs.empty());
         EXPECT_LE(*(grfs.end() - 1), 128u);
     }
     {
         debugManager.flags.LimitNumGrfsSupported.set(256u);
-        auto grfs = productHelper->getSupportedNumGrfs(releaseHelper);
+        auto grfs = productHelper->getSupportedNumGrfs(*releaseHelper);
         EXPECT_FALSE(grfs.empty());
         EXPECT_LE(*(grfs.end() - 1), 256u);
     }

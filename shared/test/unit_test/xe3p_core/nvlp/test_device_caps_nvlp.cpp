@@ -42,7 +42,7 @@ NVLPTEST_F(NvlDeviceIdTest, givenSlmSizeAndHeaplessWhenEncodingThenReturnCorrect
     };
 
     const auto &hwInfo = pDevice->getHardwareInfo();
-    auto releaseHelper = pDevice->getReleaseHelper();
+    const auto &releaseHelper = pDevice->getReleaseHelper();
 
     ComputeSlmTestInput computeSlmValuesXe3pAndLaterTestsInput[] = {
         {static_cast<uint32_t>(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K), 0 * MemoryConstants::kiloByte},

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,8 +44,8 @@ bool UnitTestHelperWithHeap<Family>::getComputeDispatchAllWalkerFromFrontEndComm
 
 template <>
 void UnitTestHelper<Family>::verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator) {
-    const auto releaseHelper = rootDeviceEnvironment->getReleaseHelper();
-    if (releaseHelper->isDummyBlitWaRequired()) {
+    const auto &releaseHelper = rootDeviceEnvironment->getReleaseHelper();
+    if (releaseHelper.isDummyBlitWaRequired()) {
         auto dummyBltCmd = genCmdCast<typename Family::MEM_SET *>(*(cmdIterator++));
         EXPECT_NE(nullptr, dummyBltCmd);
 

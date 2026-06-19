@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ template <>
 uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto maxThreadsPerEuCount = 1u;
 
-    const auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
 
     if (grfCount <= 96u) {
         maxThreadsPerEuCount = 10;
@@ -27,7 +27,7 @@ uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareIn
         maxThreadsPerEuCount = 4;
     }
 
-    maxThreadsPerEuCount = releaseHelper->adjustMaxThreadsPerEuCount(maxThreadsPerEuCount, grfCount);
+    maxThreadsPerEuCount = releaseHelper.adjustMaxThreadsPerEuCount(maxThreadsPerEuCount, grfCount);
 
     return std::min(hwInfo.gtSystemInfo.ThreadCount, maxThreadsPerEuCount * hwInfo.gtSystemInfo.EUCount);
 }

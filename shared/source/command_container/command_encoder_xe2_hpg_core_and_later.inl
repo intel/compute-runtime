@@ -28,7 +28,7 @@ uint32_t EncodeDispatchKernel<Family>::getThreadCountPerSubslice(const HardwareI
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::alignPreferredSlmSize(uint32_t slmSize) {
+uint32_t EncodeDispatchKernel<Family>::alignPreferredSlmSize(uint32_t slmSize, [[maybe_unused]] const ReleaseHelper &releaseHelper) {
     return slmSize;
 }
 
@@ -40,7 +40,7 @@ void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorT
     const uint32_t threadsPerDssCount = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
     const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
 
-    slmTotalSizePerThreadGroup = EncodeDispatchKernel<Family>::alignPreferredSlmSize(slmTotalSizePerThreadGroup);
+    slmTotalSizePerThreadGroup = EncodeDispatchKernel<Family>::alignPreferredSlmSize(slmTotalSizePerThreadGroup, rootDeviceEnvironment.getReleaseHelper());
 
     uint32_t slmSize = 0u;
 
@@ -57,8 +57,8 @@ void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorT
     uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment);
     slmSize = std::min(slmSize, static_cast<uint32_t>(availableSlmSizePerSubslice * MemoryConstants::kiloByte));
 
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    const auto &sizeToPreferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &sizeToPreferredSlmValueArray = releaseHelper.getSizeToPreferredSlmValue();
 
     uint32_t programmableIdPreferredSlmSize = 0;
     for (auto &range : sizeToPreferredSlmValueArray) {

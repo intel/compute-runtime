@@ -697,7 +697,7 @@ TEST(MemoryManagerTest, givenOsAgnosticMemoryManagerWhenGetLocalMemoryIsCalledTh
     MockMemoryManager memoryManager(false, false, executionEnvironment);
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+    const auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
 
     auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
     uint32_t deviceMask = static_cast<uint32_t>(maxNBitValue(subDevicesCount));

@@ -542,8 +542,8 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
     ioctlHelper->setupIpVersion();
     rootDeviceEnvironment.initReleaseHelper();
 
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    deviceDescriptor->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    deviceDescriptor->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, &releaseHelper);
     this->adjustSharedSystemMemCapabilities();
 
     querySystemInfo();

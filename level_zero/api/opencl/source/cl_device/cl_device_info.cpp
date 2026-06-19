@@ -295,8 +295,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     }
     case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
-        auto releaseHelper = getDevice().getRootDeviceEnvironment().getReleaseHelper();
-        if (releaseHelper->isMatrixMultiplyAccumulateSupported()) {
+        const auto &releaseHelper = getDevice().getRootDeviceEnvironment().getReleaseHelper();
+        if (releaseHelper.isMatrixMultiplyAccumulateSupported()) {
             param.bitfield = CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
         } else {
             param.bitfield = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;

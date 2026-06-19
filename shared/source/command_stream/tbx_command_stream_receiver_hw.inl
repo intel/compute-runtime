@@ -54,7 +54,7 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
 
     forceSkipResourceCleanupRequired = true;
 
-    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
+    const auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
     physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(&this->peekHwInfo(), releaseHelper));
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(this->localMemoryEnabled, "", this->getType());
     auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();

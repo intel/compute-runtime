@@ -148,7 +148,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
 
 template <>
 bool MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return rootDeviceEnvironment.getReleaseHelper()->isPipeControlPriorToPipelineSelectWaRequired();
+    return rootDeviceEnvironment.getReleaseHelper().isPipeControlPriorToPipelineSelectWaRequired();
 }
 
 template <>

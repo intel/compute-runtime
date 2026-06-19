@@ -934,7 +934,7 @@ void CommandStreamReceiver::createHostFunctionStreamer(HostFunctionAllocator *al
     UNRECOVERABLE_IF(chunk.cpuPtr == nullptr);
     auto hostFunctionIdAddress = chunk.cpuPtr;
 
-    auto useSemaphore64bCmd = getReleaseHelper()->isAvailableSemaphore64(peekHwInfo());
+    auto useSemaphore64bCmd = getReleaseHelper().isAvailableSemaphore64(peekHwInfo());
 
     auto dcFlushRequired = this->getDcFlushSupport();
     this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this,
@@ -1509,7 +1509,7 @@ const ProductHelper &CommandStreamReceiver::getProductHelper() const {
     return peekRootDeviceEnvironment().getHelper<ProductHelper>();
 }
 
-const ReleaseHelper *CommandStreamReceiver::getReleaseHelper() const {
+const ReleaseHelper &CommandStreamReceiver::getReleaseHelper() const {
     return peekRootDeviceEnvironment().getReleaseHelper();
 }
 

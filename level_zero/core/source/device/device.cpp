@@ -763,7 +763,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
     auto &compilerProductHelper = this->neoDevice->getCompilerProductHelper();
     const auto &deviceInfo = this->getDeviceInfo();
     const auto &productHelper = this->getProductHelper();
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
     std::string ilVersion = deviceInfo.ilVersion;
     size_t majorVersionPos = ilVersion.find('_');
@@ -814,7 +814,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES) {
             ze_float_atomic_ext_properties_t *floatProperties =
                 reinterpret_cast<ze_float_atomic_ext_properties_t *>(extendedProperties);
-            releaseHelper->getKernelFp16AtomicCapabilities(floatProperties->fp16Flags);
+            releaseHelper.getKernelFp16AtomicCapabilities(floatProperties->fp16Flags);
             compilerProductHelper.getKernelFp32AtomicCapabilities(floatProperties->fp32Flags);
             compilerProductHelper.getKernelFp64AtomicCapabilities(floatProperties->fp64Flags);
             static_assert(ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE == FpAtomicExtFlags::globalLoadStore, "Mismatch between internal and API - specific capabilities.");
@@ -845,7 +845,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
             ze_device_raytracing_ext_properties_t *rtProperties =
                 reinterpret_cast<ze_device_raytracing_ext_properties_t *>(extendedProperties);
 
-            if (releaseHelper->isRayTracingSupported()) {
+            if (releaseHelper.isRayTracingSupported()) {
                 rtProperties->flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_RAYQUERY;
                 rtProperties->maxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
 
@@ -864,8 +864,8 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
             dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
 
             auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
-            auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-            if (releaseHelper->isDotProductAccumulateSystolicSupported()) {
+            const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+            if (releaseHelper.isDotProductAccumulateSystolicSupported()) {
                 dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
             }
         } else if (static_cast<uint32_t>(extendedProperties->stype) == ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP) {
@@ -884,7 +884,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
             }
         } else if (static_cast<uint32_t>(extendedProperties->stype) == ZEX_STRUCTURE_TYPE_BFLOAT16_ATOMIC_EXT_PROPERTIES) {
             zex_bfloat16_atomic_ext_properties_t *properties = reinterpret_cast<zex_bfloat16_atomic_ext_properties_t *>(extendedProperties);
-            releaseHelper->getKernelCapabilitiesExtra(properties->bfloat16Flags);
+            releaseHelper.getKernelCapabilitiesExtra(properties->bfloat16Flags);
         }
 
         pNext = const_cast<void *>(extendedProperties->pNext);
@@ -928,7 +928,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
     const auto &l0GfxCoreHelper = this->getL0GfxCoreHelper();
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
     pDeviceProperties->type = ZE_DEVICE_TYPE_GPU;
 
@@ -1047,7 +1047,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormatExp();
                 rtasProperties->rtasBufferAlignment = 128;
 
-                if (releaseHelper->isRayTracingSupported()) {
+                if (releaseHelper.isRayTracingSupported()) {
                     ze_result_t result = this->getDriverHandle()->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXP_INVALID;
@@ -1059,7 +1059,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormatExt();
                 rtasProperties->rtasBufferAlignment = 128;
 
-                if (releaseHelper->isRayTracingSupported()) {
+                if (releaseHelper.isRayTracingSupported()) {
                     ze_result_t result = this->getDriverHandle()->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXT_INVALID;

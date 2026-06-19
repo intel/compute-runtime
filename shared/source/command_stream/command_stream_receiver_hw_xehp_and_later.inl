@@ -115,11 +115,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(Lin
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
     auto &hwInfo = peekHwInfo();
-    auto *releaseHelper = getReleaseHelper();
+    const auto &releaseHelper = getReleaseHelper();
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
     args.dcFlushEnable = this->dcFlushSupport;
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired && debuggingEnabled) {

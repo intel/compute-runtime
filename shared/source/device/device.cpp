@@ -1170,7 +1170,7 @@ const CompilerProductHelper &Device::getCompilerProductHelper() const {
     return getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
 }
 
-ReleaseHelper *Device::getReleaseHelper() const {
+const ReleaseHelper &Device::getReleaseHelper() const {
     return getRootDeviceEnvironment().getReleaseHelper();
 }
 
@@ -1282,18 +1282,18 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         }
 
         auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(*this);
-        auto releaseHelper = getReleaseHelper();
+        const auto &releaseHelper = getReleaseHelper();
 
         RTDispatchGlobals dispatchGlobals = {
             .rtMemBasePtr = rtStackAllocation->getGpuAddress() + rtStackSize,
             .callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr),
-            .stackSizePerRay = releaseHelper->getStackSizePerRay(),
+            .stackSizePerRay = releaseHelper.getStackSizePerRay(),
             .numDSSRTStacks = rtStacksPerDss,
             .maxBVHLevels = maxBvhLevels,
             .flags = RayTracingHelper::depthTestLessEqualFlag,
         };
 
-        releaseHelper->adjustRTDispatchGlobals(dispatchGlobals, rtStacksPerDss, maxBvhLevels);
+        releaseHelper.adjustRTDispatchGlobals(dispatchGlobals, rtStacksPerDss, maxBvhLevels);
 
         MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(this->getRootDeviceEnvironment(), *dispatchGlobalsArrayAllocation),
                                                          *this,
@@ -1522,8 +1522,8 @@ bool Device::canAccessPeer(Device *peerDevice) {
 
 void Device::initializePeerAccessForDevices(const std::vector<NEO::Device *> &devices) {
     for (auto &device : devices) {
-        auto releaseHelper = device->getReleaseHelper();
-        if (!releaseHelper->shouldQueryPeerAccess()) {
+        const auto &releaseHelper = device->getReleaseHelper();
+        if (!releaseHelper.shouldQueryPeerAccess()) {
             continue;
         }
 

@@ -146,7 +146,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
 
     storageInfo.localOnlyRequired = getLocalOnlyRequired(properties.allocationType,
                                                          rootDeviceEnv->getProductHelper(),
-                                                         rootDeviceEnv->getReleaseHelper(),
+                                                         &rootDeviceEnv->getReleaseHelper(),
                                                          properties.flags.preferCompressed);
 
     storageInfo.needsToBeZeroedAtInit = [](NEO::AllocationType allocType) {

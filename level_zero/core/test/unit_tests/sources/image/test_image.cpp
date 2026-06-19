@@ -414,9 +414,6 @@ HWTEST_F(ImageCreate, givenDepthSwizzleFormatWhenImageInitializeThenCorrectSwizz
 }
 
 HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArgsAreCorrectlyStoredInNewSeparateAllocation) {
-    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()) {
-        GTEST_SKIP();
-    }
 
     auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
                                                      neoDevice->getNumGenericSubDevices() > 1);
@@ -502,9 +499,6 @@ HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArgs
 }
 
 HWTEST_F(ImageCreate, givenBindlessModeDisabledAndNoBindlessHeapsHelperWhenImageInitializeThenImageImplicitArgsAllocationAndSurfaceStateAreNotCreated) {
-    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()) {
-        GTEST_SKIP();
-    }
 
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.UseBindlessMode.set(0);
@@ -3289,9 +3283,6 @@ HWTEST_F(ImageCreate, givenImageWhenEncodeImplicitArgsSurfaceStateCalledThenSurf
 }
 
 HWTEST_F(ImageCreate, givenBindlessModeAndBindlessHeapsHelperWhenImageInitializedThenImplicitArgsAllocatedAndSurfaceStateCopied) {
-    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()) {
-        GTEST_SKIP();
-    }
 
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.UseBindlessMode.set(1);
@@ -3321,9 +3312,6 @@ HWTEST_F(ImageCreate, givenBindlessModeAndBindlessHeapsHelperWhenImageInitialize
     EXPECT_EQ(baseAddr, implicitArgsAlloc->getGpuAddress());
 }
 HWTEST_F(ImageCreate, givenNonBindlessImageAndBindlessHeapsHelperPresentWhenImageInitializedThenImplicitArgsAllocatedOnDemandInInitialize) {
-    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()) {
-        GTEST_SKIP();
-    }
 
     auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
                                                      neoDevice->getNumGenericSubDevices() > 1);

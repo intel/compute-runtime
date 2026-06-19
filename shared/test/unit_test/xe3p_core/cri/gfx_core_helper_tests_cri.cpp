@@ -235,10 +235,10 @@ CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTw
 
         auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-        auto releaseHelper = device->getReleaseHelper();
+        const auto &releaseHelper = device->getReleaseHelper();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
 
-        bool cccsEnabled = !releaseHelper->isRcsExposureDisabled() || debugFlag;
+        bool cccsEnabled = !releaseHelper.isRcsExposureDisabled() || debugFlag;
 
         if (cccsEnabled) {
             EXPECT_EQ(numEnginesWithCccs, device->allEngines.size());

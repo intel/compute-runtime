@@ -404,7 +404,7 @@ void CommandStreamReceiverHw<GfxFamily>::programHeaplessStateProlog(Device &devi
         }
     }
 
-    if (getReleaseHelper()->isRayTracingSupported()) {
+    if (getReleaseHelper().isRayTracingSupported()) {
         device.initializeRTMemoryBackedBuffer();
     }
 

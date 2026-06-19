@@ -49,7 +49,7 @@ bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithBufferStatefulAcce
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const {
+std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper &releaseHelper) const {
     std::string extensions = "cl_khr_byte_addressable_store "
                              "cl_khr_device_uuid "
                              "cl_khr_fp16 "
@@ -136,7 +136,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_media_block_io ";
     }
 
-    if (releaseHelper->isBFloat16ConversionSupported()) {
+    if (releaseHelper.isBFloat16ConversionSupported()) {
         extensions += "cl_intel_bfloat16_conversions ";
     }
 
@@ -148,7 +148,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_subgroup_local_block_io ";
     }
 
-    if (releaseHelper->isMatrixMultiplyAccumulateSupported()) {
+    if (releaseHelper.isMatrixMultiplyAccumulateSupported()) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
     }
 
@@ -156,7 +156,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate_tf32 ";
     }
 
-    if (releaseHelper->isSplitMatrixMultiplyAccumulateSupported()) {
+    if (releaseHelper.isSplitMatrixMultiplyAccumulateSupported()) {
         extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
     }
 

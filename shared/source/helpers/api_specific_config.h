@@ -21,7 +21,7 @@ struct RootDeviceEnvironment;
 struct ApiSpecificConfig {
     enum ApiType { OCL,
                    L0 };
-    static bool getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper);
+    static bool getGlobalBindlessHeapConfiguration(const ReleaseHelper &releaseHelper);
     static bool getBindlessMode(const Device &device);
     static bool isDeviceAllocationCacheEnabled();
     static bool isHostAllocationCacheEnabled();

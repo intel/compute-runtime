@@ -101,9 +101,9 @@ void OsContextLinux::isOpenVinoLoaded() {
 bool OsContextLinux::isDirectSubmissionSupported() const {
     auto &rootDeviceEnvironment = this->getDrm().getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    const auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
 
-    return (this->getDrm().isVmBindAvailable() || (this->ovLoaded && releaseHelper && releaseHelper->isDirectSubmissionLightSupported())) && productHelper.isDirectSubmissionSupported();
+    return (this->getDrm().isVmBindAvailable() || (this->ovLoaded && releaseHelper.isDirectSubmissionLightSupported())) && productHelper.isDirectSubmissionSupported();
 }
 
 Drm &OsContextLinux::getDrm() const {

@@ -752,8 +752,7 @@ TEST_F(SetKernelArg, givenDisableSystemPointerKernelArgumentIsEnabledWhenBufferA
 
 HWTEST2_F(SetKernelArg, givenBindlessImageAndKernelFromNativeWhenSetArgImageCalledThenResidencyContainerHasSingleImplicitArgAllocation, ImageSupport) {
     auto neoDevice = device->getNEODevice();
-    if (!neoDevice->getRootDeviceEnvironment().getReleaseHelper() ||
-        !neoDevice->getDeviceInfo().imageSupport) {
+    if (!neoDevice->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
 

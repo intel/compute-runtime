@@ -64,7 +64,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenSurfaceStateForGen12LpAndAuxSurfaceMo
 
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
     releaseHelper->isAuxSurfaceModeOverrideRequiredResult = false;
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper.get());
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
 
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
 }
@@ -75,7 +75,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenSurfaceStateForGen12LpAndAuxSurfaceMo
 
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
     releaseHelper->isAuxSurfaceModeOverrideRequiredResult = true;
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper.get());
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
 
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }

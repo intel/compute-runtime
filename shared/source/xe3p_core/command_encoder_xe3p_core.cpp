@@ -131,20 +131,18 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 }
 
 template <>
-uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
-    DEBUG_BREAK_IF(!releaseHelper);
-    return releaseHelper->alignSlmSizePerThreadGroup(slmSize);
+uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, const ReleaseHelper &releaseHelper) {
+    return releaseHelper.alignSlmSizePerThreadGroup(slmSize);
 }
 
 template <>
-uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper) {
+uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, const ReleaseHelper &releaseHelper) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     if (slmSize == 0u) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K;
     }
-    DEBUG_BREAK_IF(!releaseHelper);
-    return releaseHelper->computeSlmValues(slmSize);
+    return releaseHelper.computeSlmValues(slmSize);
 }
 
 template <>

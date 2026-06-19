@@ -178,8 +178,8 @@ struct TimestampPacketHelper {
                 cacheFlushTimestampPacketGpuAddress, 0, rootDeviceEnvironment, args);
         }
 
-        auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-        const bool useSemaphore64bCmd = releaseHelper->isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+        const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+        const bool useSemaphore64bCmd = releaseHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
 
         for (auto &node : container.peekNodes()) {
             TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node, useSemaphore64bCmd);

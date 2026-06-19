@@ -106,7 +106,7 @@ void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::st
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     UNRECOVERABLE_IF(!compilerProductHelper);
     auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, releaseHelper.get());
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *releaseHelper);
 
     if (requiresAdditionalExtensions(options)) {
         extensionsList += "cl_khr_3d_image_writes ";
@@ -117,7 +117,7 @@ void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::st
     }
     OpenClCFeaturesContainer openclCFeatures;
     if (requiresOpenClCFeatures(options)) {
-        getOpenclCFeaturesList(hwInfo, openclCFeatures, *compilerProductHelper.get(), releaseHelper.get());
+        getOpenclCFeaturesList(hwInfo, openclCFeatures, *compilerProductHelper.get(), *releaseHelper);
     }
 
     auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);

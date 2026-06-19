@@ -168,10 +168,8 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
     bool isBfloat16Supported = false;
     bool isBindlessHeapsSupported = false;
     for (const auto device : devices) {
-        if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()) {
-            if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()->isBFloat16ConversionSupported()) {
-                isBfloat16Supported = true;
-            }
+        if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper().isBFloat16ConversionSupported()) {
+            isBfloat16Supported = true;
         }
         if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {
             isBindlessHeapsSupported = true;

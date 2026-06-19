@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -183,7 +183,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
         for (auto i = 0u; i < expectedDevices; i++) {
             hwInfo = exeEnv.rootDeviceEnvironments[i]->getHardwareInfo();
             auto &productHelper = exeEnv.rootDeviceEnvironments[i]->getProductHelper();
-            auto releaseHelper = exeEnv.rootDeviceEnvironments[i]->getReleaseHelper();
+            const auto &releaseHelper = exeEnv.rootDeviceEnvironments[i]->getReleaseHelper();
             switch (csrType) {
             case CommandStreamReceiverType::hardware:
             case CommandStreamReceiverType::hardwareWithAub:
@@ -214,7 +214,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
                 hwInfoFromTable.featureTable = {};
                 hwInfoFromTable.workaroundTable = {};
                 hwInfoFromTable.gtSystemInfo = {};
-                hardwareInfoSetup[hwInfoFromTable.platform.eProductFamily](&hwInfoFromTable, true, 0x0, releaseHelper);
+                hardwareInfoSetup[hwInfoFromTable.platform.eProductFamily](&hwInfoFromTable, true, 0x0, &releaseHelper);
 
                 productHelper.configureHardwareCustom(&hwInfoFromTable, nullptr);
                 EXPECT_EQ(0, memcmp(&hwInfoFromTable.platform, &hwInfo->platform, sizeof(PLATFORM)));
@@ -270,7 +270,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
             hwInfo = exeEnv.rootDeviceEnvironments[i]->getHardwareInfo();
             auto &productHelper = exeEnv.rootDeviceEnvironments[i]->getProductHelper();
             auto &compilerProductHelper = exeEnv.rootDeviceEnvironments[i]->getHelper<CompilerProductHelper>();
-            auto releaseHelper = exeEnv.rootDeviceEnvironments[i]->getReleaseHelper();
+            const auto &releaseHelper = exeEnv.rootDeviceEnvironments[i]->getReleaseHelper();
 
             switch (csrType) {
             case CommandStreamReceiverType::hardware:
@@ -289,7 +289,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
                 expectedHwInfo.featureTable = {};
                 expectedHwInfo.workaroundTable = {};
                 expectedHwInfo.gtSystemInfo = {};
-                hardwareInfoSetup[expectedHwInfo.platform.eProductFamily](&expectedHwInfo, true, 0x0, releaseHelper);
+                hardwareInfoSetup[expectedHwInfo.platform.eProductFamily](&expectedHwInfo, true, 0x0, &releaseHelper);
                 productHelper.configureHardwareCustom(&expectedHwInfo, nullptr);
 
                 compilerProductHelper.setProductConfigForHwInfo(expectedHwInfo, deviceAot.aotConfig);
@@ -366,7 +366,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
         for (auto i = 0u; i < expectedDevices; i++) {
             hwInfo = exeEnv.rootDeviceEnvironments[i]->getHardwareInfo();
             auto &productHelper = exeEnv.rootDeviceEnvironments[i]->getProductHelper();
-            auto releaseHelper = exeEnv.rootDeviceEnvironments[i]->getReleaseHelper();
+            const auto &releaseHelper = exeEnv.rootDeviceEnvironments[i]->getReleaseHelper();
 
             switch (csrType) {
             case CommandStreamReceiverType::hardware:
@@ -394,7 +394,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
                 baseHwInfo.featureTable = {};
                 baseHwInfo.workaroundTable = {};
                 baseHwInfo.gtSystemInfo = {};
-                hardwareInfoSetup[baseHwInfo.platform.eProductFamily](&baseHwInfo, true, 0x0, releaseHelper);
+                hardwareInfoSetup[baseHwInfo.platform.eProductFamily](&baseHwInfo, true, 0x0, &releaseHelper);
 
                 productHelper.configureHardwareCustom(&baseHwInfo, nullptr);
                 EXPECT_EQ(0, memcmp(&baseHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));

@@ -37,7 +37,7 @@ HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPWhenGettingDpSupportThenReturn
     ze_result_t res = device->getKernelProperties(&deviceModProps);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto expDpas = this->neoDevice->getReleaseHelper()->isDotProductAccumulateSystolicSupported();
+    auto expDpas = this->neoDevice->getReleaseHelper().isDotProductAccumulateSystolicSupported();
 
     bool dp4a = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
     bool dpas = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;

@@ -195,9 +195,9 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
 
     imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
 
-    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    const auto &releaseHelper = pClDevice->getDevice().getReleaseHelper();
     auto expectedMode = AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
-    if (releaseHelper->isAuxSurfaceModeOverrideRequired()) {
+    if (releaseHelper.isAuxSurfaceModeOverrideRequired()) {
         expectedMode = AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E;
     }
 
@@ -232,7 +232,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetAuxParamsForMultisamp
 
     imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
 
-    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    const auto &releaseHelper = pClDevice->getDevice().getReleaseHelper();
     RENDER_SURFACE_STATE expectedSS = {};
     EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&expectedSS, releaseHelper);
 
@@ -262,7 +262,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithUnifiedMcsWhenSetAuxParamsForMul
 
     imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
 
-    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    const auto &releaseHelper = pClDevice->getDevice().getReleaseHelper();
     RENDER_SURFACE_STATE expectedSS = {};
     EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&expectedSS, releaseHelper);
     EXPECT_NE(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
@@ -368,10 +368,10 @@ HWTEST2_F(ImageClearColorFixture, givenSurfaceStateWhenAuxParamsForMCSCCSAreSetT
     this->setUpImpl<FamilyType>();
     auto surfaceState = this->getSurfaceState<FamilyType>();
 
-    auto releaseHelper = context.getDevice(0)->getRootDeviceEnvironment().getReleaseHelper();
+    const auto &releaseHelper = context.getDevice(0)->getRootDeviceEnvironment().getReleaseHelper();
     EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper);
 
-    auto expectedAuxMode = releaseHelper && releaseHelper->isAuxSurfaceModeOverrideRequired() ? EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E : EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
+    auto expectedAuxMode = releaseHelper.isAuxSurfaceModeOverrideRequired() ? EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E : EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
 
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedAuxMode);
 }

@@ -61,9 +61,8 @@ HelperType &DeviceFixture::getHelper() const {
     return helper;
 }
 
-const ReleaseHelper *DeviceFixture::getReleaseHelper() {
-    const auto *releaseHelper = this->pDevice->getRootDeviceEnvironment().getReleaseHelper();
-    return releaseHelper;
+const ReleaseHelper &DeviceFixture::getReleaseHelper() {
+    return this->pDevice->getRootDeviceEnvironment().getReleaseHelper();
 }
 
 template ProductHelper &DeviceFixture::getHelper<ProductHelper>() const;

@@ -87,14 +87,14 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     ASSERT_TRUE(success);
-    auto *releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+    const auto *releaseHelper = &executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
 
     class ReleaseHelperExpose : public ReleaseHelper {
       public:
         using ReleaseHelper::hardwareIpVersion;
     };
 
-    ReleaseHelperExpose *exposedReleaseHelper = static_cast<ReleaseHelperExpose *>(releaseHelper);
+    const ReleaseHelperExpose *exposedReleaseHelper = static_cast<const ReleaseHelperExpose *>(releaseHelper);
     EXPECT_EQ(config, exposedReleaseHelper->hardwareIpVersion.value);
 }
 
@@ -141,8 +141,8 @@ TEST_F(DeviceFactoryTests, givenDisabledRcsWhenPrepareDeviceEnvironmentsCalledTh
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     ASSERT_TRUE(success);
 
-    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
-    EXPECT_NE(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrRcsNode, releaseHelper->isRcsExposureDisabled());
+    const auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+    EXPECT_NE(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrRcsNode, releaseHelper.isRcsExposureDisabled());
 }
 
 TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesSucceedsForAtLeastOneDeviceThenSuccessIsReturned) {

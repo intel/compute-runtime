@@ -21,7 +21,7 @@ void ImageHw<Family>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceS
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     if (getMcsAllocation() || getIsUnifiedMcsSurface()) {
         auto mcsGmm = getMcsAllocation() ? getMcsAllocation()->getDefaultGmm() : getMultiGraphicsAllocation().getDefaultGraphicsAllocation()->getDefaultGmm();
-        auto *releaseHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
+        const auto &releaseHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
         EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);
         surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
         surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());

@@ -88,7 +88,7 @@ void ClDevice::initializeCaps() {
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
     deviceExtensions.append(compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper));
@@ -138,7 +138,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.halfFpAtomicCapabilities = 0;
     uint32_t fp16Caps = 0u;
     uint32_t fp32Caps = 0u;
-    releaseHelper->getKernelFp16AtomicCapabilities(fp16Caps);
+    releaseHelper.getKernelFp16AtomicCapabilities(fp16Caps);
     compilerProductHelper.getKernelFp32AtomicCapabilities(fp32Caps);
     deviceInfo.halfFpAtomicCapabilities = fp16Caps;
     deviceInfo.singleFpAtomicCapabilities = fp32Caps;

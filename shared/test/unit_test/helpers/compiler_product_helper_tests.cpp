@@ -225,7 +225,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenCachePolicyWithoutCorrespondingBuil
 TEST_F(CompilerProductHelperFixture, givenHwInfoWithIndependentForwardProgressThenReportsClKhrSubgroupExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto *releaseHelper = getReleaseHelper();
+    const auto &releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsIndependentForwardProgress = true;
     auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
@@ -239,7 +239,7 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithIndependentForwardProgressTh
 TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClExtFloatAtomicsExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto *releaseHelper = getReleaseHelper();
+    const auto &releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
     auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
@@ -247,7 +247,7 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClExtFloatAtomicsExte
 
 TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClKhrExternalMemoryExtension) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto *releaseHelper = getReleaseHelper();
+    const auto &releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
 
     auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);

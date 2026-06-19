@@ -62,7 +62,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
 
     aub_stream::AubManager *aubManager = nullptr;
     std::unique_ptr<HardwareContextController> hardwareContextController;
-    ReleaseHelper *releaseHelper = nullptr;
+    const ReleaseHelper *releaseHelper = nullptr;
     bool pollForCompletionEnabled = true;
 
     struct EngineInfo {

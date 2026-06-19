@@ -283,7 +283,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    auto releaseHelper = neoDevice->getReleaseHelper();
+    const auto &releaseHelper = neoDevice->getReleaseHelper();
     auto &l0GfxCoreHelper = device->getL0GfxCoreHelper();
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
@@ -319,8 +319,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->systemMemoryFenceInPostSyncRequired = productHelper.isGlobalFenceInPostSyncRequired(hwInfo);
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo, this->l3FlushAfterPostSyncEnabled);
     this->useAdditionalBlitProperties = productHelper.useAdditionalBlitProperties();
-    this->isPostImageWriteFlushRequired = releaseHelper->isPostImageWriteFlushRequired();
-    this->isPreImageReadFlushRequired = releaseHelper->isPreImageReadFlushRequired();
+    this->isPostImageWriteFlushRequired = releaseHelper.isPostImageWriteFlushRequired();
+    this->isPreImageReadFlushRequired = releaseHelper.isPreImageReadFlushRequired();
     this->shouldRegisterEnqueuedWalkerWithProfiling = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
     this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->dcFlushSupport);
     this->statelessBuiltinsEnabled = compilerProductHelper.isForceToStatelessRequired();

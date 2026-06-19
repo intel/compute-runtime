@@ -474,8 +474,8 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
                 pImplicitArgsRelocationAddresses[static_cast<uint32_t>(segId)].push_back(std::pair<void *, RelocationInfo::Type>(relocAddress, relocation.type));
             } else if (relocation.symbolName == surfaceStateSizeRelocationSymbolName) {
                 UNRECOVERABLE_IF(!pDevice);
-                [[maybe_unused]] const auto releaseHelper = pDevice->getReleaseHelper();
-                DEBUG_BREAK_IF(!(releaseHelper && releaseHelper->isReducedSurfaceStateSupported()));
+                [[maybe_unused]] const auto &releaseHelper = pDevice->getReleaseHelper();
+                DEBUG_BREAK_IF(!(releaseHelper.isReducedSurfaceStateSupported()));
                 const auto surfaceStateSize = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize());
                 auto patchSize = relocation.type == RelocationInfo::Type::address ? 8 : 4;
                 patchWithRequiredSize(relocAddress, patchSize, surfaceStateSize);
@@ -717,12 +717,12 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
 
 void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments, const KernelDescriptorsT &kernelDescriptors) {
     UNRECOVERABLE_IF(!pDevice);
-    auto releaseHelper = pDevice->getReleaseHelper();
+    const auto &releaseHelper = pDevice->getReleaseHelper();
 
     int vecIndex = static_cast<int>(outUnresolvedExternals.size() - 1u);
     for (; vecIndex >= 0; --vecIndex) {
         if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == subDeviceID) {
-            if (releaseHelper->isResolvingSubDeviceIDNeeded()) {
+            if (releaseHelper.isResolvingSubDeviceIDNeeded()) {
                 RelocatedSymbol<SymbolInfo> symbol;
                 symbol.gpuAddress = static_cast<uintptr_t>(pDevice->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress());
                 auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
@@ -750,7 +750,7 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
         } else if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == surfaceStateSizeRelocationSymbolName) {
             auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
                                           static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
-            DEBUG_BREAK_IF(!(releaseHelper && releaseHelper->isReducedSurfaceStateSupported()));
+            DEBUG_BREAK_IF(!(releaseHelper.isReducedSurfaceStateSupported()));
             const auto surfaceStateSize = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize());
             auto patchSize = outUnresolvedExternals[vecIndex].unresolvedRelocation.type == RelocationInfo::Type::address ? 8 : 4;
             patchWithRequiredSize(relocAddress, patchSize, surfaceStateSize);

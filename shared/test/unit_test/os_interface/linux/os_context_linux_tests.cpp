@@ -225,5 +225,5 @@ TEST(OSContextLinux, givenOVLoadedWhenCheckForDirectSubmissionSupportThenProperV
     auto directSubmissionSupported = osContext.isDirectSubmissionSupported();
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
-    EXPECT_EQ(directSubmissionSupported, productHelper.isDirectSubmissionSupported() && executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper()->isDirectSubmissionLightSupported());
+    EXPECT_EQ(directSubmissionSupported, productHelper.isDirectSubmissionSupported() && executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper().isDirectSubmissionLightSupported());
 }

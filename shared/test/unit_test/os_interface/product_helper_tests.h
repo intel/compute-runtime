@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,6 @@ struct ProductHelperTest : public ::testing::Test {
     HardwareInfo outHwInfo{};
     ProductHelper *productHelper = nullptr;
     CompilerProductHelper *compilerProductHelper = nullptr;
-    ReleaseHelper *releaseHelper = nullptr;
+    const ReleaseHelper *releaseHelper = nullptr;
     PLATFORM *testPlatform = nullptr;
 };

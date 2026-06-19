@@ -1264,9 +1264,9 @@ HWTEST_F(DeviceTest, whenPassingRaytracingExpStructToGetPropertiesThenProperties
     EXPECT_NE(37u, rayTracingProperties.maxBVHLevels);
 
     unsigned int expectedMaxBVHLevels = 0;
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper.isRayTracingSupported()) {
         expectedMaxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
     }
 
@@ -1292,8 +1292,8 @@ HWTEST_F(DeviceTest, givenSetMaxBVHLevelsWhenPassingRaytracingExpStructToGetProp
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(ZE_DEVICE_RAYTRACING_EXT_FLAG_FORCE_UINT32, rayTracingProperties.flags);
 
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
-    if (releaseHelper->isRayTracingSupported()) {
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    if (releaseHelper.isRayTracingSupported()) {
         EXPECT_EQ(7u, rayTracingProperties.maxBVHLevels);
     } else {
         EXPECT_EQ(0u, rayTracingProperties.maxBVHLevels);
@@ -5680,9 +5680,9 @@ HWTEST_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesThenCor
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper.isRayTracingSupported()) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5705,17 +5705,17 @@ HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper.isRayTracingSupported()) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
     }
 }
 
 HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned) {
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (!releaseHelper->isRayTracingSupported()) {
+    if (!releaseHelper.isRayTracingSupported()) {
         GTEST_SKIP();
     }
     MockOsLibrary::libraryLoaded = false;
@@ -5739,9 +5739,9 @@ HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThenC
 }
 
 HWTEST_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned) {
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (!releaseHelper->isRayTracingSupported()) {
+    if (!releaseHelper.isRayTracingSupported()) {
         GTEST_SKIP();
     }
     MockOsLibrary::libraryLoaded = false;
@@ -5783,9 +5783,9 @@ HWTEST_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesExtThen
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper.isRayTracingSupported()) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5808,17 +5808,17 @@ HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesExt
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (releaseHelper->isRayTracingSupported()) {
+    if (releaseHelper.isRayTracingSupported()) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
     }
 }
 
 HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASPropertiesExtThenCorrectPropertiesIsReturned) {
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (!releaseHelper->isRayTracingSupported()) {
+    if (!releaseHelper.isRayTracingSupported()) {
         GTEST_SKIP();
     }
     MockOsLibrary::libraryLoaded = false;
@@ -5842,9 +5842,9 @@ HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASPropertiesExtThe
 }
 
 HWTEST_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesExtThenCorrectPropertiesIsReturned) {
-    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (!releaseHelper->isRayTracingSupported()) {
+    if (!releaseHelper.isRayTracingSupported()) {
         GTEST_SKIP();
     }
     MockOsLibrary::libraryLoaded = false;

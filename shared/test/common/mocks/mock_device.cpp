@@ -194,9 +194,9 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     return executionEnvironment;
 }
 
-ReleaseHelper *MockDevice::getReleaseHelper() const {
+const ReleaseHelper &MockDevice::getReleaseHelper() const {
     if (mockReleaseHelper) {
-        return mockReleaseHelper;
+        return *mockReleaseHelper;
     }
     return Device::getReleaseHelper();
 }

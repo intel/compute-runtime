@@ -52,9 +52,9 @@ class RayTracingHelper : public NonCopyableAndNonMovableClass {
     }
 
     static uint32_t getNumRtStacksPerDss(const Device &device) {
-        auto releaseHelper = device.getReleaseHelper();
+        const auto &releaseHelper = device.getReleaseHelper();
 
-        if (releaseHelper->isNumRtStacksPerDssFixedValue()) {
+        if (releaseHelper.isNumRtStacksPerDssFixedValue()) {
             return fixedSizeOfRtStacksPerDss;
         }
 

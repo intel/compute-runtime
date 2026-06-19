@@ -26,8 +26,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithoutShare
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     setUpImpl<FamilyType>();
 
-    auto *releaseHelper = device->getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &releaseHelper = device->getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -57,9 +57,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto *releaseHelper = device->getReleaseHelper();
+    const auto &releaseHelper = device->getReleaseHelper();
 
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     overrideComputeModeRequest<FamilyType>(false, false, true);
@@ -99,8 +99,8 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCompute
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto *releaseHelper = device->getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &releaseHelper = device->getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -149,8 +149,8 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyWithSharedHandlesWhenComputeMod
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto *releaseHelper = device->getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &releaseHelper = device->getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
@@ -237,8 +237,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeCmdSizeWhe
     overrideComputeModeRequest<FamilyType>(false, false, false, false, 128u);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
-    auto *releaseHelper = device->getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &releaseHelper = device->getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdSize = sizeof(STATE_COMPUTE_MODE);
@@ -262,8 +262,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeCh
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto *releaseHelper = device->getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &releaseHelper = device->getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -324,8 +324,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto *releaseHelper = device->getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &releaseHelper = device->getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -358,8 +358,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto *releaseHelper = device->getReleaseHelper();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &releaseHelper = device->getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -399,9 +399,8 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto *releaseHelper = device->getReleaseHelper();
-    EXPECT_NE(nullptr, releaseHelper);
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &releaseHelper = device->getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -450,9 +449,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto *releaseHelper = device->getReleaseHelper();
-    EXPECT_NE(nullptr, releaseHelper);
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &releaseHelper = device->getReleaseHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);

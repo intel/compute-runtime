@@ -618,7 +618,7 @@ XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenSurfaceStateAndAuxSurfaceMod
     releaseHelper->isAuxSurfaceModeOverrideRequiredResult = false;
     auto originalAuxMode = surfaceState.getAuxiliarySurfaceMode();
 
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper.get());
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), originalAuxMode);
 }
 
@@ -627,7 +627,7 @@ XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenSurfaceStateAndAuxSurfaceMod
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
     releaseHelper->isAuxSurfaceModeOverrideRequiredResult = true;
 
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper.get());
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
 
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }

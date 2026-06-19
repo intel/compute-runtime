@@ -77,9 +77,8 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
     auto maskBits = stateComputeMode.getMaskBits();
 
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    DEBUG_BREAK_IF(!releaseHelper);
-    bool ignoreIsDirty = releaseHelper->isProgramAllStateComputeCommandFieldsWARequired();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    bool ignoreIsDirty = releaseHelper.isProgramAllStateComputeCommandFieldsWARequired();
 
     if (properties.zPassAsyncComputeThreadLimit.isDirty ||
         (ignoreIsDirty && (properties.zPassAsyncComputeThreadLimit.value != -1))) {
@@ -125,7 +124,7 @@ void EncodeSurfaceState<Family>::appendParamsForImageFromBuffer(R_SURFACE_STATE 
 template <>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (rootDeviceEnvironment.getReleaseHelper()->isAdjustWalkOrderAvailable()) {
+    if (rootDeviceEnvironment.getReleaseHelper().isAdjustWalkOrderAvailable()) {
         if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::linearWalk) {
             walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK);
         } else if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::yOrderWalk) {
@@ -135,7 +134,7 @@ void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32
 }
 
 template <>
-uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
+uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] const ReleaseHelper &releaseHelper) {
     if (slmSize == 0u) {
         return 0u;
     }
@@ -146,7 +145,7 @@ uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSi
 }
 
 template <>
-uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper) {
+uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, [[maybe_unused]] const ReleaseHelper &releaseHelper) {
     auto slmValue = std::max(slmSize, 1024u);
     slmValue = Math::nextPowerOfTwo(slmValue);
     slmValue = Math::getMinLsbSet(slmValue);

@@ -885,9 +885,9 @@ template <typename Family>
 inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
                                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs) {
 
-    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     if (isExtendedWARequired) {
         args.textureCacheInvalidationEnable = true;
@@ -967,7 +967,7 @@ void EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(Walk
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
+uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] const ReleaseHelper &releaseHelper) {
     static constexpr uint32_t alignedSlmSizes[] = {
         0u,
         1u * MemoryConstants::kiloByte,
@@ -994,7 +994,7 @@ uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSi
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper) {
+uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, [[maybe_unused]] const ReleaseHelper &releaseHelper) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     if (slmSize == 0u) {
@@ -1040,7 +1040,7 @@ template <typename Family>
 template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::encodeSlmSizePerThreadGroup(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
 
     uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment);
     auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, availableSlmSizePerSubslice);

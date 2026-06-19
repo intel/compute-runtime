@@ -56,11 +56,11 @@ uint64_t AubHelper::getPTEntryBits(uint64_t pdEntryBits) {
     return pdEntryBits;
 }
 
-uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const ReleaseHelper *releaseHelper) {
+uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const ReleaseHelper &releaseHelper) {
     if (debugManager.flags.HBMSizePerTileInGigabytes.get() > 0) {
         return debugManager.flags.HBMSizePerTileInGigabytes.get() * MemoryConstants::gigaByte;
     }
-    return releaseHelper->getTotalMemBankSize() / GfxCoreHelper::getSubDevicesCount(pHwInfo);
+    return releaseHelper.getTotalMemBankSize() / GfxCoreHelper::getSubDevicesCount(pHwInfo);
 }
 
 } // namespace NEO

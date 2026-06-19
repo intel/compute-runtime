@@ -160,7 +160,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhys
 
     auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo(), pDevice->getReleaseHelper()));
     auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator.get());
-    auto expectedBankSize = pDevice->getReleaseHelper()->getTotalMemBankSize();
+    auto expectedBankSize = pDevice->getReleaseHelper().getTotalMemBankSize();
 
     EXPECT_EQ(expectedBankSize, allocator->getBankSize());
     EXPECT_EQ(1u, allocator->getNumberOfBanks());
@@ -175,7 +175,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhys
 
     auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo(), pDevice->getReleaseHelper()));
     auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator.get());
-    auto expectedBankSize = pDevice->getReleaseHelper()->getTotalMemBankSize() / 4;
+    auto expectedBankSize = pDevice->getReleaseHelper().getTotalMemBankSize() / 4;
 
     EXPECT_EQ(expectedBankSize, allocator->getBankSize());
     EXPECT_EQ(4u, allocator->getNumberOfBanks());

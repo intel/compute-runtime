@@ -834,8 +834,8 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     EXPECT_TRUE(csr.isMadeResident(csr.getTagAllocation()));
     EXPECT_EQ(expectedCalled, csr.makeSurfacePackNonResidentCalled);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    if (releaseHelper->isDummyBlitWaRequired()) {
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    if (releaseHelper.isDummyBlitWaRequired()) {
         residentAllocationsNum++;
         EXPECT_TRUE(csr.isMadeResident(rootDeviceEnvironment.getDummyAllocation()));
     }
@@ -899,8 +899,8 @@ HWTEST_F(BcsTests, givenFenceAllocationIsRequiredWhenBlitDispatchedThenMakeAllAl
     EXPECT_TRUE(bcsCsr->isMadeResident(bcsCsr->getTagAllocation()));
     EXPECT_TRUE(bcsCsr->isMadeResident(bcsCsr->globalFenceAllocation));
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    if (releaseHelper->isDummyBlitWaRequired()) {
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    if (releaseHelper.isDummyBlitWaRequired()) {
         EXPECT_TRUE(bcsCsr->isMadeResident(rootDeviceEnvironment.getDummyAllocation()));
         residentAllocationsNum++;
     }

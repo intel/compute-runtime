@@ -20,8 +20,8 @@ inline cl_command_queue_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getAddi
 template <typename GfxFamily>
 cl_device_feature_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const {
 
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    if (releaseHelper->isMatrixMultiplyAccumulateSupported()) {
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    if (releaseHelper.isMatrixMultiplyAccumulateSupported()) {
         return CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
     }
     return CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;

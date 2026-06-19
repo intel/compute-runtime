@@ -6224,8 +6224,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWit
     properties.flags.preferCompressed = true;
     auto storageInfo = memoryManager.createStorageInfoFromProperties(properties);
 
-    const auto *releaseHelper{executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper()};
-    EXPECT_EQ(storageInfo.localOnlyRequired, (!releaseHelper || releaseHelper->isLocalOnlyAllowed()));
+    const auto &releaseHelper{executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper()};
+    EXPECT_EQ(storageInfo.localOnlyRequired, (releaseHelper.isLocalOnlyAllowed()));
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnAllocationInLocalMemoryThenReturnNullPtr) {

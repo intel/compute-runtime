@@ -95,8 +95,8 @@ HWTEST_F(IOQWithTwoWalkers, GivenStateCacheInvalidationWaIsRequiredWhenTwoKernel
         }
     }
 
-    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
-    if (releaseHelper->isStateCacheInvalidationWaRequired(false, false)) {
+    const auto &releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    if (releaseHelper.isStateCacheInvalidationWaRequired(false, false)) {
         EXPECT_TRUE(foundStateCacheInvalidation);
     } else {
         EXPECT_FALSE(foundStateCacheInvalidation);

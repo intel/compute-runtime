@@ -26,7 +26,7 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
     if (debugManager.flags.UseAubStream.get()) {
         auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
         auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
-        auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+        const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
         auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo, releaseHelper);
         CommandStreamReceiverType type = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), csrType);
 

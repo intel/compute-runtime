@@ -34,9 +34,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ClGfxCoreHelperTestXeHpAndLater, givenCLImageFormat
 
 HWTEST2_F(ClGfxCoreHelperTestXeHpAndLater, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue, IsAtLeastXeCore) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    auto releaseHelper = pDevice->getReleaseHelper();
+    const auto &releaseHelper = pDevice->getReleaseHelper();
 
-    if (!releaseHelper->isMatrixMultiplyAccumulateSupported()) {
+    if (!releaseHelper.isMatrixMultiplyAccumulateSupported()) {
         cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
         EXPECT_EQ(expectedCapabilities, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(getRootDeviceEnvironment()));
     } else {

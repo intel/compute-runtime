@@ -299,7 +299,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         const bool unifiedMcs = this->getIsUnifiedMcsSurface();
         if (mcsAlloc != nullptr || unifiedMcs) {
             auto mcsGmm = mcsAlloc ? mcsAlloc->getDefaultGmm() : gmm;
-            auto *releaseHelper = device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper();
+            const auto &releaseHelper = device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper();
             NEO::EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);
             surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
             surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());

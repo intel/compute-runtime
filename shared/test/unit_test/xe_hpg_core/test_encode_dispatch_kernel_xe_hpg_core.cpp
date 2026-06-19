@@ -69,9 +69,9 @@ XE_HPG_CORETEST_F(EncodeKernelXeHpgCoreTest, givenRequiredWorkGroupOrderWhenCall
     DefaultWalkerType walkerCmd{};
     uint32_t yOrder = 2u;
 
-    auto releaseHelper = getReleaseHelper();
+    const auto &releaseHelper = getReleaseHelper();
     auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
-    auto isExpectedNewWalkOrderApplied = releaseHelper->isAdjustWalkOrderAvailable();
+    auto isExpectedNewWalkOrderApplied = releaseHelper.isAdjustWalkOrderAvailable();
 
     EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[yOrder], HwWalkOrderHelper::yOrderWalk);
 
@@ -101,9 +101,9 @@ XE_HPG_CORETEST_F(EncodeKernelXeHpgCoreTest, givenRequiredWorkGroupOrderWhenCall
     uint32_t numWorkGroups[3] = {1, 1, 1};
     uint32_t workGroupSizes[3] = {1, 1, 1};
 
-    auto releaseHelper = getReleaseHelper();
+    const auto &releaseHelper = getReleaseHelper();
 
-    auto isExpectedNewWalkOrderApplied = releaseHelper->isAdjustWalkOrderAvailable();
+    auto isExpectedNewWalkOrderApplied = releaseHelper.isAdjustWalkOrderAvailable();
     auto dispatchWalkOrderBeforeAdjust = walkerCmd.getDispatchWalkOrder();
     auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
 

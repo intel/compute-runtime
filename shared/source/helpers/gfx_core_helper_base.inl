@@ -370,7 +370,7 @@ template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
         MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(&cmd);
@@ -378,7 +378,7 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffe
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
 
         MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, NEO::FenceType::release, rootDeviceEnvironment);
-    } else if (postSyncMode == PostSyncMode::timestamp && releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp()) {
+    } else if (postSyncMode == PostSyncMode::timestamp && releaseHelper.programmAdditionalStallPriorToBarrierWithTimestamp()) {
         PipeControlArgs additionalArgs = {};
         additionalArgs.csStallOnly = true;
 
@@ -427,11 +427,11 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOp
 template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
     size_t size = 0;
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         size = getSizeForSingleBarrier() +
                getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
-    } else if (postSyncMode == PostSyncMode::timestamp && releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp()) {
+    } else if (postSyncMode == PostSyncMode::timestamp && releaseHelper.programmAdditionalStallPriorToBarrierWithTimestamp()) {
         size = getSizeForStallingBarrier();
     }
     return size;
@@ -462,7 +462,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSizePerThreadGroup(uint32_t slmSize, ReleaseHelper *releaseHelper) const {
+uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSizePerThreadGroup(uint32_t slmSize, const ReleaseHelper &releaseHelper) const {
     return EncodeDispatchKernel<GfxFamily>::alignSlmSizePerThreadGroup(slmSize, releaseHelper);
 }
 

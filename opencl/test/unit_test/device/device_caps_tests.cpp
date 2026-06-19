@@ -74,7 +74,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
         }
 
         auto &hwInfo = clDevice.getHardwareInfo();
-        auto releaseHelper = clDevice.getDevice().getReleaseHelper();
+        const auto &releaseHelper = clDevice.getDevice().getReleaseHelper();
         auto openclCFeatureIterator = clDevice.getDeviceInfo().openclCFeatures.begin();
 
         EXPECT_STREQ("__opencl_c_int64", openclCFeatureIterator->name);
@@ -110,8 +110,8 @@ struct DeviceGetCapsTest : public ::testing::Test {
         EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit", (++openclCFeatureIterator)->name);
         EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit_packed", (++openclCFeatureIterator)->name);
 
-        uint32_t fp16AdditionalCaps = releaseHelper->getAdditionalFp16Caps();
-        uint32_t fpExtraAdditionalCaps = releaseHelper->getAdditionalExtraCaps();
+        uint32_t fp16AdditionalCaps = releaseHelper.getAdditionalFp16Caps();
+        uint32_t fpExtraAdditionalCaps = releaseHelper.getAdditionalExtraCaps();
 
         if (isValueSet(fp16AdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
             EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_add", (++openclCFeatureIterator)->name);

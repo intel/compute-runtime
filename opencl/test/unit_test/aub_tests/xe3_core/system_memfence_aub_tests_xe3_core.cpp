@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,8 +133,8 @@ class SystemMemFenceWithBlitterXe3Core : public MulticontextOclAubFixture,
         if (!productHelper.obtainBlitterPreference(*defaultHwInfo.get())) {
             GTEST_SKIP();
         }
-        auto releaseHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
-        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, releaseHelper->getFtrXe2Compression());
+        const auto &releaseHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, releaseHelper.getFtrXe2Compression());
     }
     void TearDown() override {
         MulticontextOclAubFixture::tearDown();
@@ -155,7 +155,7 @@ XE3_CORETEST_F(SystemMemFenceWithBlitterXe3Core, givenSystemMemFenceWhenGenerate
     retVal = clEnqueueMemcpyINTEL(commandQueues[0][0].get(), true, deviceMemAlloc, buffer.data(), bufferSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    if (!tileDevices[0]->getDevice().getReleaseHelper()->getFtrXe2Compression()) {
+    if (!tileDevices[0]->getDevice().getReleaseHelper().getFtrXe2Compression()) {
         expectMemory<FamilyType>(deviceMemAlloc, buffer.data(), bufferSize, 0, 0);
     }
 

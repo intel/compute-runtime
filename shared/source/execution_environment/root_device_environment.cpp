@@ -241,9 +241,9 @@ void RootDeviceEnvironment::initAilConfigurationHelper() {
     }
 }
 
-ReleaseHelper *RootDeviceEnvironment::getReleaseHelper() const {
+const ReleaseHelper &RootDeviceEnvironment::getReleaseHelper() const {
     UNRECOVERABLE_IF(releaseHelper == nullptr);
-    return releaseHelper.get();
+    return *releaseHelper;
 }
 
 AILConfiguration *RootDeviceEnvironment::getAILConfigurationHelper() const {

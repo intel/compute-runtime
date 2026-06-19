@@ -27,7 +27,7 @@ namespace Extensions {
 inline constexpr const char *const sharingFormatQuery = "cl_intel_sharing_format_query ";
 }
 
-void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures, const CompilerProductHelper &compilerProductHelper, const ReleaseHelper *releaseHelper);
+void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures, const CompilerProductHelper &compilerProductHelper, const ReleaseHelper &releaseHelper);
 std::string convertEnabledExtensionsToCompilerInternalOptions(const char *deviceExtensions,
                                                               OpenClCFeaturesContainer &openclCFeatures);
 

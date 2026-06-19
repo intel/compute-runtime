@@ -452,7 +452,7 @@ void EncodeDispatchKernel<Family>::encodeSlmSizePerThreadGroup(InterfaceDescript
     auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, availableSlmSizePerSubslice);
     slmTotalSizePerThreadGroup = std::min(slmTotalSizePerThreadGroup, static_cast<uint32_t>(maxProgrammableSlmSizeKb * MemoryConstants::kiloByte));
 
-    auto programmableIDSLMSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, slmTotalSizePerThreadGroup, nullptr);
+    auto programmableIDSLMSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, slmTotalSizePerThreadGroup, rootDeviceEnvironment.getReleaseHelper());
 
     if (debugManager.flags.OverrideSlmAllocationSize.get() != -1) {
         programmableIDSLMSize = static_cast<uint32_t>(debugManager.flags.OverrideSlmAllocationSize.get());
@@ -644,7 +644,7 @@ void EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(Walk
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] ReleaseHelper *releaseHelper) {
+uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSize, [[maybe_unused]] const ReleaseHelper &releaseHelper) {
     if (slmSize == 0u) {
         return 0u;
     }
@@ -655,7 +655,7 @@ uint32_t EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(uint32_t slmSi
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper) {
+uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, [[maybe_unused]] const ReleaseHelper &releaseHelper) {
     auto value = std::max(slmSize, 1024u);
     value = Math::nextPowerOfTwo(value);
     value = Math::getMinLsbSet(value);

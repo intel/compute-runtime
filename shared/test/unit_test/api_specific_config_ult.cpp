@@ -26,7 +26,7 @@ StackVec<NEO::DebugVarPrefix, 4> validUltL0PrefixTypes = {DebugVarPrefix::neoL0,
 StackVec<const char *, 4> validUltOclPrefixes = {"NEO_OCL_", "NEO_", ""};
 StackVec<NEO::DebugVarPrefix, 4> validUltOclPrefixTypes = {DebugVarPrefix::neoOcl, DebugVarPrefix::neo, DebugVarPrefix::none};
 
-bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper) {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper &releaseHelper) {
     if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
         return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
     }

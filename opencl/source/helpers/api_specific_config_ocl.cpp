@@ -19,7 +19,7 @@ namespace NEO {
 StackVec<const char *, 4> validClPrefixes;
 StackVec<NEO::DebugVarPrefix, 4> validClPrefixTypes;
 
-bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper) {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper &releaseHelper) {
     return false;
 }
 

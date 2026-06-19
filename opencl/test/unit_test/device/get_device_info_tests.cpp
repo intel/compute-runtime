@@ -1147,8 +1147,8 @@ struct DeviceAttributeQueryTest : public ::testing::Test {
 
 TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFromReleaseHelperIsReturnedOrNone) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto releaseHelper = device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getReleaseHelper();
-    uint32_t extraKernelCapabilities = releaseHelper->getAdditionalExtraCaps();
+    const auto &releaseHelper = device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getReleaseHelper();
+    uint32_t extraKernelCapabilities = releaseHelper.getAdditionalExtraCaps();
     uint64_t value = 0u;
     size_t retSize = 0u;
 

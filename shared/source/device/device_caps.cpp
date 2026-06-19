@@ -43,7 +43,7 @@ void Device::initializeCaps() {
 
     auto &productHelper = this->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
     auto &gfxCoreHelper = this->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
-    auto releaseHelper = this->getRootDeviceEnvironment().getReleaseHelper();
+    const auto &releaseHelper = this->getRootDeviceEnvironment().getReleaseHelper();
 
     deviceInfo.vendorId = 0x8086;
     deviceInfo.maxReadImageArgs = 128;
@@ -130,7 +130,7 @@ void Device::initializeCaps() {
     }
     deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
 
-    deviceInfo.threadsPerEUConfigs = releaseHelper->getThreadsPerEUConfigs(deviceInfo.numThreadsPerEU);
+    deviceInfo.threadsPerEUConfigs = releaseHelper.getThreadsPerEUConfigs(deviceInfo.numThreadsPerEU);
     auto maxWS = productHelper.getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) * simdSizeUsed;
 
     maxWS = Math::prevPowerOfTwo(maxWS);
@@ -168,7 +168,7 @@ void Device::initializeCaps() {
         deviceInfo.maxParameterSize = maxParameterSizeFromIgc;
     }
 
-    deviceInfo.semaphore64bCmdSupport = releaseHelper->isAvailableSemaphore64(hwInfo);
+    deviceInfo.semaphore64bCmdSupport = releaseHelper.isAvailableSemaphore64(hwInfo);
 }
 
 } // namespace NEO

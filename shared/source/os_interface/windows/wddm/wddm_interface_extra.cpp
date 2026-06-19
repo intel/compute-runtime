@@ -28,7 +28,7 @@ bool WddmInterface32::createNativeFence(MonitoredFence &monitorFence, bool useFo
     auto privateData = reinterpret_cast<CREATENATIVEFENCE_PVTDATA *>(&createNativeFenceObject.PrivateDriverData);
     privateData->UseForWalkerInterrupt = useForWalkerInterrupt;
     privateData->UseHw64bToken = debugManager.flags.WddmUseHw64bToken.get() &&
-                                 rootDeviceEnvironment.getReleaseHelper()->isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+                                 rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
 
     status = wddm.getGdi()->createNativeFence(&createNativeFenceObject);
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);

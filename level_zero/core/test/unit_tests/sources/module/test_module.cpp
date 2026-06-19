@@ -129,8 +129,8 @@ TEST_F(ModuleTest, GivenBfloat16AtomicPropertiesWhenGetKernelPropertiesIsCalledT
     ze_device_module_properties_t properties{};
     properties.pNext = &bfloat16Properties;
 
-    auto releaseHelper = device->getNEODevice()->getReleaseHelper();
-    uint32_t extraCaps = (releaseHelper) ? releaseHelper->getAdditionalExtraCaps() : 0u;
+    const auto &releaseHelper = device->getNEODevice()->getReleaseHelper();
+    uint32_t extraCaps = releaseHelper.getAdditionalExtraCaps();
 
     ze_result_t result = device->getKernelProperties(&properties);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);

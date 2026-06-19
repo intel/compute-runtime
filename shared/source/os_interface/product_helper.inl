@@ -850,8 +850,8 @@ uint64_t ProductHelperHw<gfxProduct>::overrideSystemMemoryPatIndex(uint64_t patI
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-const SupportedNumGrfs ProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
-    auto grfs = releaseHelper->getSupportedNumGrfs();
+const SupportedNumGrfs ProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper &releaseHelper) const {
+    auto grfs = releaseHelper.getSupportedNumGrfs();
     applyLimitGrfSupported(grfs);
     return grfs;
 }

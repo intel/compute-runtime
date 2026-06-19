@@ -2097,9 +2097,9 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
         }
     }
 
-    auto releaseHelper = device->getNEODevice()->getReleaseHelper();
-    bool waRequired = releaseHelper->isStateCacheInvalidationWaRequired(commandList->isImmediateType(),
-                                                                        mockKernelImmData->kernelDescriptor->kernelAttributes.usesImageOrSamplerState());
+    const auto &releaseHelper = device->getNEODevice()->getReleaseHelper();
+    bool waRequired = releaseHelper.isStateCacheInvalidationWaRequired(commandList->isImmediateType(),
+                                                                       mockKernelImmData->kernelDescriptor->kernelAttributes.usesImageOrSamplerState());
     if (waRequired) {
         ASSERT_NE(nullptr, stateCacheInvalidationPipeControl);
         EXPECT_FALSE(stateCacheInvalidationPipeControl->getCommandStreamerStallEnable());

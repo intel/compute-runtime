@@ -29,10 +29,9 @@ struct XeLpgProductHelperTests : public ::Test<DeviceFixture> {
         ::Test<DeviceFixture>::SetUp();
         productHelper = &pDevice->getProductHelper();
         gfxCoreHelper = &pDevice->getGfxCoreHelper();
-        ASSERT_NE(nullptr, pDevice->getReleaseHelper());
-        releaseHelper = pDevice->getReleaseHelper();
+        releaseHelper = &pDevice->getReleaseHelper();
     }
-    ReleaseHelper *releaseHelper = nullptr;
+    const ReleaseHelper *releaseHelper = nullptr;
     const ProductHelper *productHelper = nullptr;
     const GfxCoreHelper *gfxCoreHelper = nullptr;
 };
