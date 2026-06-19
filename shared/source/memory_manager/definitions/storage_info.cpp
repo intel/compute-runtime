@@ -13,6 +13,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -40,6 +41,8 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     const auto *rootDeviceEnv{executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex].get()};
 
     const auto deviceCount = GfxCoreHelper::getSubDevicesCount(rootDeviceEnv->getHardwareInfo());
+    const auto &multiTileArchInfo = rootDeviceEnv->getHardwareInfo()->gtSystemInfo.MultiTileArchInfo;
+    const bool isMultiTilePlatform = multiTileArchInfo.IsValid && multiTileArchInfo.TileCount > 1;
     const auto leastOccupiedBank = getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);
     const auto subDevicesMask = rootDeviceEnv->deviceAffinityMask.getGenericSubDevicesMask().to_ulong();
 
@@ -62,7 +65,10 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     case AllocationType::kernelIsa:
     case AllocationType::kernelIsaInternal:
     case AllocationType::debugModuleArea: {
-        auto placeAllocOnMultiTile = (properties.subDevicesBitfield.count() != 1);
+        // Tile-instanced only on real multi-tile HW (>1 physical tile, each with its own local-memory
+        // bank). Forcing sub-devices on single-tile HW yields logical sub-devices with no per-tile
+        // banks, so a single allocation is correct.
+        const bool placeAllocOnMultiTile = (properties.subDevicesBitfield.count() > 1) && isMultiTilePlatform;
         if (placeAllocOnMultiTile) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.tileInstanced = true;
@@ -80,7 +86,9 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     case AllocationType::debugSbaTrackingBuffer:
         storageInfo.cloningOfPageTables = false;
 
-        if (properties.subDevicesBitfield.count() == 1) {
+        // Tile-instanced only on real multi-tile HW; otherwise a single tile holds it and its page
+        // tables are visible to that tile only.
+        if (properties.subDevicesBitfield.count() == 1 || !isMultiTilePlatform) {
             storageInfo.pageTablesVisibility = preferredTile;
         } else {
             storageInfo.tileInstanced = true;
@@ -144,6 +152,15 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         break;
     }
 
+    // tile-instancing of program/per-context debugger surfaces must follow physical tiles, not logical sub-devices
+    DEBUG_BREAK_IF(storageInfo.tileInstanced && !isMultiTilePlatform &&
+                   (properties.allocationType == AllocationType::constantSurface ||
+                    properties.allocationType == AllocationType::kernelIsa ||
+                    properties.allocationType == AllocationType::kernelIsaInternal ||
+                    properties.allocationType == AllocationType::debugModuleArea ||
+                    properties.allocationType == AllocationType::privateSurface ||
+                    properties.allocationType == AllocationType::debugSbaTrackingBuffer));
+
     storageInfo.localOnlyRequired = getLocalOnlyRequired(properties.allocationType,
                                                          rootDeviceEnv->getProductHelper(),
                                                          &rootDeviceEnv->getReleaseHelper(),
@@ -189,7 +206,9 @@ uint32_t StorageInfo::getNumBanks() const {
 DeviceBitfield MemoryManager::computeStorageInfoMemoryBanks(const AllocationProperties &properties, DeviceBitfield preferredBank, DeviceBitfield allBanks) {
     auto forcedMultiStoragePlacement = debugManager.flags.OverrideMultiStoragePlacement.get();
     auto subDevicesCount = properties.subDevicesBitfield.count();
-    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo());
+    const auto *hwInfo = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo();
+    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
+    const bool isMultiTilePlatform = hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid && hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount > 1;
 
     DeviceBitfield memoryBanks{preferredBank};
 
@@ -198,7 +217,8 @@ DeviceBitfield MemoryManager::computeStorageInfoMemoryBanks(const AllocationProp
     case AllocationType::kernelIsa:
     case AllocationType::kernelIsaInternal:
     case AllocationType::debugModuleArea:
-        memoryBanks = (subDevicesCount == 1 ? preferredBank : allBanks);
+        // Spread across all banks only on real multi-tile hardware.
+        memoryBanks = (subDevicesCount == 1 || !isMultiTilePlatform) ? preferredBank : allBanks;
         break;
     case AllocationType::debugContextSaveArea:
     case AllocationType::workPartitionSurface:
@@ -206,7 +226,8 @@ DeviceBitfield MemoryManager::computeStorageInfoMemoryBanks(const AllocationProp
         break;
     case AllocationType::privateSurface:
     case AllocationType::debugSbaTrackingBuffer:
-        memoryBanks = (subDevicesCount == 1 ? preferredBank : allBanks);
+        // Spread across all banks only on real multi-tile hardware.
+        memoryBanks = (subDevicesCount == 1 || !isMultiTilePlatform) ? preferredBank : allBanks;
         break;
     case AllocationType::commandBuffer:
     case AllocationType::internalHeap:

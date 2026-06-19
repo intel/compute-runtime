@@ -32,6 +32,15 @@ struct MultiDeviceStorageInfoTest : public ::testing::Test {
         debugManager.flags.EnableLocalMemory.set(true);
         memoryManager = static_cast<MockMemoryManager *>(factory.rootDevices[0]->getMemoryManager());
     }
+
+    // control whether the platform reports real multi-tile architecture (>1 physical
+    // tile). tileInstanced placement of kernelIsa/constantSurface/privateSurface is gated on this.
+    void setMultiTilePlatform(uint32_t tileCount) {
+        auto *hwInfo = factory.rootDevices[0]->getRootDeviceEnvironment().getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = tileCount > 1;
+        hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
+        hwInfo->gtSystemInfo.MultiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(tileCount));
+    }
     const uint32_t numDevices = 4u;
     const DeviceBitfield allTilesMask{maxNBitValue(4u)};
     const uint32_t tileIndex = 2u;
@@ -132,6 +141,7 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForPrivateSurfaceWithO
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForPrivateSurfaceThenAllMemoryBanksAreOnAndPageTableClonningIsNotRequired) {
+    setMultiTilePlatform(numDevices);
     AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::privateSurface, false, false, allTilesMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
@@ -139,6 +149,63 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForPrivateSurfaceThenA
     EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
     EXPECT_TRUE(storageInfo.tileInstanced);
     EXPECT_EQ(4u, storageInfo.getNumBanks());
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenMultiTilePlatformWhenCreatingStorageInfoForProgramSurfacesWithMultipleTilesThenTheyAreTileInstancedAcrossAllBanks) {
+    setMultiTilePlatform(numDevices);
+    AllocationType allocTypes[] = {AllocationType::kernelIsa, AllocationType::kernelIsaInternal, AllocationType::constantSurface};
+    for (auto allocType : allocTypes) {
+        AllocationProperties properties{mockRootDeviceIndex, false, 0u, allocType, false, false, allTilesMask};
+        auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+        EXPECT_TRUE(storageInfo.tileInstanced);
+        EXPECT_FALSE(storageInfo.cloningOfPageTables);
+        EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
+    }
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenSingleTilePlatformWithForcedSubDevicesWhenCreatingStorageInfoForProgramSurfacesThenSingleTilePlacementIsUsed) {
+    // Forcing sub-devices on a single-tile platform must not tile-instance these.
+    setMultiTilePlatform(1u);
+    AllocationType allocTypes[] = {AllocationType::kernelIsa, AllocationType::kernelIsaInternal, AllocationType::constantSurface};
+    for (auto allocType : allocTypes) {
+        AllocationProperties properties{mockRootDeviceIndex, false, 0u, allocType, false, false, allTilesMask};
+        auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+        EXPECT_FALSE(storageInfo.tileInstanced);
+        EXPECT_TRUE(storageInfo.cloningOfPageTables);
+        EXPECT_EQ(1u, storageInfo.getNumBanks());
+    }
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenSingleTilePlatformWithForcedSubDevicesWhenCreatingStorageInfoForPrivateSurfaceThenSingleTilePlacementIsUsed) {
+    setMultiTilePlatform(1u);
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::privateSurface, false, false, allTilesMask};
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_FALSE(storageInfo.tileInstanced);
+    EXPECT_EQ(1u, storageInfo.getNumBanks());
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenSingleTilePlatformWithForcedSubDevicesWhenCreatingStorageInfoForDebuggerSurfacesThenSingleTilePlacementIsUsed) {
+    // Debugger surfaces follow the same rule as program surfaces: forcing sub-devices on a single-tile platform must not tile-instance them.
+    setMultiTilePlatform(1u);
+    AllocationType allocTypes[] = {AllocationType::debugModuleArea, AllocationType::debugSbaTrackingBuffer};
+    for (auto allocType : allocTypes) {
+        AllocationProperties properties{mockRootDeviceIndex, false, 0u, allocType, false, false, allTilesMask};
+        auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+        EXPECT_FALSE(storageInfo.tileInstanced);
+        EXPECT_EQ(1u, storageInfo.getNumBanks());
+    }
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenMultiTilePlatformWhenCreatingStorageInfoForDebuggerSurfacesWithMultipleTilesThenTheyAreTileInstancedAcrossAllBanks) {
+    // On real multi-tile HW debugger surfaces are tile-instanced: each physical tile gets its own copy.
+    setMultiTilePlatform(numDevices);
+    AllocationType allocTypes[] = {AllocationType::debugModuleArea, AllocationType::debugSbaTrackingBuffer};
+    for (auto allocType : allocTypes) {
+        AllocationProperties properties{mockRootDeviceIndex, false, 0u, allocType, false, false, allTilesMask};
+        auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+        EXPECT_TRUE(storageInfo.tileInstanced);
+        EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
+    }
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForInternalHeapThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {

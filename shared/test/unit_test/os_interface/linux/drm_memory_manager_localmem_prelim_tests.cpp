@@ -3876,6 +3876,11 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWhenMemsetMul
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMoreThanOneSubDevicesWhenAllocatingDebugSbaTrackingBufferWithGpuVaThenAllTilesAreHandled) {
+    // device creation resets MultiTileArchInfo; redeclare to exercise the real multi-tile path
+    auto hwInfo = mock->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = 1;
+    hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 4;
+
     // Configure mock to use mock behavior for createBufferObjectInMemoryRegion
     memoryManager->createBufferObjectInMemoryRegionCallBase = false;
 

@@ -121,6 +121,11 @@ TEST(Debugger, givenTileAttachAndDebuggingEnabledInExecEnvWhenAllocatingIsaThenM
 
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
+    // kernelIsa is tile-instanced across banks only on real multi-tile hardware. Tile-attach
+    // debugging is a multi-tile scenario, so mark the platform as having 2 physical tiles.
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 2;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0b11;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
@@ -502,6 +507,13 @@ HWTEST2_F(L0DebuggerMultiSubDeviceTest, givenMultiSubDevicesWhenSbaTrackingBuffe
     auto executionEnvironment = new NEO::ExecutionEnvironment;
     auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     auto neoDevice = devices[0].get();
+
+    // Tile-attach with multiple sub-devices is a real multi-tile scenario (separate per-context
+    // storage exists only with physical tiles), so mark the platform as multi-tile.
+    auto *mutableHwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    mutableHwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = true;
+    mutableHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = numSubDevices;
+    mutableHwInfo->gtSystemInfo.MultiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(numSubDevices));
 
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
     debugger->initialize();
