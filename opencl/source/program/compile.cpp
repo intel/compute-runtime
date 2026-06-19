@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,6 +117,10 @@ cl_int Program::compile(
 
         appendAdditionalExtensions(extensions, options, internalOptions);
         CompilerOptions::concatenateAppend(internalOptions, extensions);
+
+        if (!this->getIsBuiltIn() && debugManager.flags.EnableDivergentBarrierHandling.get()) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableDivergentBarriers);
+        }
 
         if (!this->getIsBuiltIn() && NEO::debugManager.flags.InjectInternalBuildOptions.get() != "unk") {
             NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::debugManager.flags.InjectInternalBuildOptions.get());

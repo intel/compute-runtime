@@ -2817,6 +2817,58 @@ TEST_F(ProgramTests, GivenAilWithHandleDivergentBarriersSetFalseOptionsWhenCompi
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::enableDivergentBarriers)) << cip->buildInternalOptions;
 }
 
+TEST_F(ProgramTests, GivenEnabledDivergentBarrierWhenBuildingProgramThenInternalOptionIsAdded) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDivergentBarrierHandling.set(true);
+
+    auto compilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pDevice = pContext->getDevice(0);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(compilerInterface);
+    auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
+    program->sourceCode = "__kernel mock() {}";
+    program->createdFrom = Program::CreatedFrom::source;
+
+    cl_int retVal = program->build(program->getDevices(), "");
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(CompilerOptions::contains(compilerInterface->buildInternalOptions, CompilerOptions::enableDivergentBarriers));
+}
+
+TEST_F(ProgramTests, GivenEnabledDivergentBarrierWhenCompilingProgramThenInternalOptionIsAdded) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDivergentBarrierHandling.set(true);
+
+    auto compilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pDevice = pContext->getDevice(0);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(compilerInterface);
+    auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
+    program->sourceCode = "__kernel mock() {}";
+    program->createdFrom = Program::CreatedFrom::source;
+
+    cl_int retVal = program->compile(program->getDevices(), nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(CompilerOptions::contains(compilerInterface->buildInternalOptions, CompilerOptions::enableDivergentBarriers));
+}
+
+TEST_F(ProgramTests, GivenEnabledDivergentBarrierWhenBuildingBuiltInProgramThenInternalOptionIsNotAdded) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDivergentBarrierHandling.set(true);
+
+    auto compilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pDevice = pContext->getDevice(0);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(compilerInterface);
+    auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
+    program->sourceCode = "__kernel mock() {}";
+    program->createdFrom = Program::CreatedFrom::source;
+    program->isBuiltIn = true;
+
+    cl_int retVal = program->build(program->getDevices(), "");
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(CompilerOptions::contains(compilerInterface->buildInternalOptions, CompilerOptions::enableDivergentBarriers));
+}
+
 TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenCompilingProgramThenInternalOptionsWereAppended) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.InjectInternalBuildOptions.set("-abc");

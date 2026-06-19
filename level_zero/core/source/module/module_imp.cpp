@@ -909,6 +909,9 @@ ze_result_t ModuleImp::buildFromSpirVProgramExt(const ze_module_desc_t *desc, co
             inputLlvmBcSizes.push_back(inputSize);
         }
     }
+    if (type == ModuleType::user && NEO::debugManager.flags.EnableDivergentBarrierHandling.get()) {
+        NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::enableDivergentBarriers);
+    }
     // precompiled is left at its default false here: every dispatch below recompiles from IR.
     if (inputLlvmBcs.size() > 0) {
         // internal path for linking with llvm bcs
@@ -968,6 +971,10 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
 
             if (NEO::debugManager.flags.InjectApiBuildOptions.get() != "unk") {
                 NEO::CompilerOptions::concatenateAppend(buildOptions, NEO::debugManager.flags.InjectApiBuildOptions.get());
+            }
+
+            if (NEO::debugManager.flags.EnableDivergentBarrierHandling.get()) {
+                NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::enableDivergentBarriers);
             }
         }
 

@@ -1330,6 +1330,28 @@ TEST_F(ModuleStaticLinkTests, givenSingleModuleProvidedForSpirVStaticLinkAndBuil
     runSprivLinkBuildWithOneModule();
 }
 
+TEST_F(ModuleStaticLinkTests, givenEnabledDivergentBarrierWhenStaticLinkingSpirVModulesThenInternalOptionIsAdded) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDivergentBarrierHandling.set(true);
+
+    MockCompilerInterface *compilerInterface = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(compilerInterface);
+    mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
+
+    loadModules(testMultiple);
+
+    setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV, testMultiple);
+
+    auto module = new Module(device, nullptr, ModuleType::user);
+    module->translationUnit.reset(mockTranslationUnit);
+    ze_result_t result = module->initialize(&combinedModuleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(NEO::CompilerOptions::contains(compilerInterface->inputInternalOptions, NEO::CompilerOptions::enableDivergentBarriers));
+    module->destroy();
+}
+
 struct ModuleLlvmBcStaticLinkFixture : public ModuleStaticLinkFixture {
     void setUp() {
         ModuleStaticLinkFixture::setUp();
@@ -5069,6 +5091,50 @@ TEST_F(ModuleTest, GivenInjectInternalBuildOptionsWhenBuildingBuiltinModuleThenI
 
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, "-abc"));
 };
+
+TEST_F(ModuleTest, GivenEnabledDivergentBarrierWhenBuildingUserModuleThenInternalOptionIsAdded) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDivergentBarrierHandling.set(true);
+
+    auto compilerInterface = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(compilerInterface);
+
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::user));
+    ASSERT_NE(nullptr, module.get());
+    module->initialize(&moduleDesc, device->getNEODevice());
+
+    EXPECT_TRUE(CompilerOptions::contains(compilerInterface->buildInternalOptions, CompilerOptions::enableDivergentBarriers));
+}
+
+TEST_F(ModuleTest, GivenEnabledDivergentBarrierWhenBuildingBuiltinModuleThenInternalOptionIsNotAdded) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDivergentBarrierHandling.set(true);
+
+    auto compilerInterface = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(compilerInterface);
+
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::builtin));
+    ASSERT_NE(nullptr, module.get());
+    module->initialize(&moduleDesc, device->getNEODevice());
+
+    EXPECT_FALSE(CompilerOptions::contains(compilerInterface->buildInternalOptions, CompilerOptions::enableDivergentBarriers));
+}
 
 TEST_F(ModuleTest, whenContainsStatefulAccessIsCalledThenResultIsCorrect) {
     class MyModuleImpl : public ModuleImp {

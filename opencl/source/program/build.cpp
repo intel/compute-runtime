@@ -90,7 +90,11 @@ cl_int Program::build(
             CompilerOptions::concatenateAppend(internalOptions, extensions);
 
             auto ailHelper = defaultDevice.getRootDeviceEnvironment().getAILConfigurationHelper();
-            if (ailHelper && ailHelper->handleDivergentBarriers()) {
+            bool shouldEnableDivergentBarriers = (ailHelper && ailHelper->handleDivergentBarriers());
+            if (!this->getIsBuiltIn() && debugManager.flags.EnableDivergentBarrierHandling.get()) {
+                shouldEnableDivergentBarriers = true;
+            }
+            if (shouldEnableDivergentBarriers) {
                 CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableDivergentBarriers);
             }
 
