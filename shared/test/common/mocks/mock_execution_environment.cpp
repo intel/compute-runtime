@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ MockExecutionEnvironment::MockExecutionEnvironment(const HardwareInfo *hwInfo) :
 MockExecutionEnvironment::MockExecutionEnvironment(const HardwareInfo *hwInfo, bool useMockAubCenter, uint32_t numRootDevices) {
     prepareRootDeviceEnvironments(numRootDevices);
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
-        auto rootDeviceEnvironment = new MockRootDeviceEnvironment(*this);
+        auto rootDeviceEnvironment = new MockRootDeviceEnvironment(*this, rootDeviceIndex);
         rootDeviceEnvironment->useMockAubCenter = useMockAubCenter;
         rootDeviceEnvironments[rootDeviceIndex].reset(rootDeviceEnvironment);
 

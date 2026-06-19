@@ -43,7 +43,7 @@
 
 namespace NEO {
 
-RootDeviceEnvironment::RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment) {
+RootDeviceEnvironment::RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment, uint32_t index) : executionEnvironment(executionEnvironment), index(index) {
     hwInfo = std::make_unique<HardwareInfo>();
 
     if (debugManager.flags.EnableSWTags.get()) {
@@ -52,6 +52,10 @@ RootDeviceEnvironment::RootDeviceEnvironment(ExecutionEnvironment &executionEnvi
 }
 
 RootDeviceEnvironment::~RootDeviceEnvironment() = default;
+
+uint32_t RootDeviceEnvironment::getRootDeviceIndex() const {
+    return this->index;
+}
 
 void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (!aubCenter) {

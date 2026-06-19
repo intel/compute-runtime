@@ -47,7 +47,7 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
 
         aub_stream::injectMMIOListLegacy(extraMmioList);
 
-        AubHelper::setTbxConfiguration();
+        AubHelper::setTbxConfiguration(rootDeviceEnvironment.getRootDeviceIndex());
         aub_stream::setAubStreamCaller(aub_stream::caller::neo);
 
         aub_stream::AubManagerOptions options{};

@@ -54,11 +54,13 @@ struct RootDeviceEnvironment : NonCopyableClass {
     std::unique_ptr<HardwareInfo> hwInfo;
 
   public:
-    RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment);
+    RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment, uint32_t index);
+    RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment) : RootDeviceEnvironment(executionEnvironment, 0) {}
     MOCKABLE_VIRTUAL ~RootDeviceEnvironment();
 
     MOCKABLE_VIRTUAL const HardwareInfo *getHardwareInfo() const;
     HardwareInfo *getMutableHardwareInfo() const;
+    uint32_t getRootDeviceIndex() const;
     void setHwInfoAndInitHelpers(const HardwareInfo *hwInfo);
     void setHwInfo(const HardwareInfo *hwInfo);
     bool isFullRangeSvm() const;
@@ -153,6 +155,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     bool exposeSingleDevice = false;
     std::once_flag isDummyAllocationInitialized;
     std::unique_ptr<AllocationProperties> dummyBlitProperties;
+    const uint32_t index;
 
   private:
     std::mutex mtx;

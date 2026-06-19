@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,6 +56,24 @@ TEST(AubCenter, GivenUseAubStreamAndTbxServerPortDebugVariableSetWhenAubCenterIs
 
     MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
     EXPECT_EQ(port, aub_stream_stubs::tbxServerPort);
+}
+
+TEST(AubCenter, GivenCreateMultipleRootDevicesWhenAubCenterIsCreatedForSecondRootDeviceThenTbxServerPortIsIncremented) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseAubStream.set(true);
+    debugManager.flags.CreateMultipleRootDevices.set(2);
+
+    VariableBackup<uint16_t> backup(&aub_stream_stubs::tbxServerPort);
+
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 2u};
+
+    MockAubCenter aubCenter0(*executionEnvironment.rootDeviceEnvironments[0], false, "", CommandStreamReceiverType::tbx);
+    auto firstPort = aub_stream_stubs::tbxServerPort;
+
+    MockAubCenter aubCenter1(*executionEnvironment.rootDeviceEnvironments[1], false, "", CommandStreamReceiverType::tbx);
+    auto secondPort = aub_stream_stubs::tbxServerPort;
+
+    EXPECT_EQ(static_cast<uint16_t>(firstPort + 1), secondPort);
 }
 
 TEST(AubCenter, GivenUseAubStreamAndTbxFrontdoorModeDebugVariableSetWhenAubCenterIsCreatedThenFrontdoorModeIsModified) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -168,7 +168,7 @@ void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices
     }
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         if (!rootDeviceEnvironments[rootDeviceIndex]) {
-            rootDeviceEnvironments[rootDeviceIndex] = std::make_unique<RootDeviceEnvironment>(*this);
+            rootDeviceEnvironments[rootDeviceIndex] = std::make_unique<RootDeviceEnvironment>(*this, rootDeviceIndex);
         }
     }
 }
@@ -185,7 +185,7 @@ void ExecutionEnvironment::prepareForCleanup() const {
 }
 
 void ExecutionEnvironment::prepareRootDeviceEnvironment(const uint32_t rootDeviceIndexForReInit) {
-    rootDeviceEnvironments[rootDeviceIndexForReInit] = std::make_unique<RootDeviceEnvironment>(*this);
+    rootDeviceEnvironments[rootDeviceIndexForReInit] = std::make_unique<RootDeviceEnvironment>(*this, rootDeviceIndexForReInit);
 }
 
 int ExecutionEnvironment::setErrorDescription(const std::string &str) {

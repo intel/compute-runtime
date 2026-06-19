@@ -24,7 +24,7 @@ class AubHelper : public NonCopyableAndNonMovableClass {
     static uint64_t getPTEntryBits(uint64_t pdEntryBits);
     static uint64_t getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const ReleaseHelper &releaseHelper);
     static aub_stream::MMIOList getAdditionalMmioList();
-    static void setTbxConfiguration();
+    static void setTbxConfiguration(uint32_t rootDeviceIndex);
 
     static aub_stream::MMIOList splitMMIORegisters(const std::string &registers, char delimiter);
 };

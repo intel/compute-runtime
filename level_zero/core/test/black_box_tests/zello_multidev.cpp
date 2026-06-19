@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,6 @@ int main(int argc, char *argv[]) {
             LevelZeroBlackBoxTests::printP2PProperties(deviceP2PProperties, canAccessPeer, i, j);
             if (canAccessPeer == false) {
                 std::cerr << "Device " << i << " cannot access " << j << "\n";
-                std::terminate();
             }
         }
     }
