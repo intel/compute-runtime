@@ -357,7 +357,7 @@ DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeInitialPollMicroseconds, 500
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizePollMicroseconds, 750, "Power/CPU efficiency mode for zeEventHostSynchronize: poll phase duration in microseconds after initial active polling")
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeSleepMicroseconds, 50, "Power/CPU efficiency mode for zeEventHostSynchronize: sleep phase duration in microseconds after initial active polling")
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds, 20000, "Power/CPU efficiency mode for zeEventHostSynchronize: minimum finite timeout eligible for wait strategy, also used as final active polling window before deadline")
-DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeKmdWaitInitialPollMicroseconds, 4000, "Initial active polling duration before zeEventHostSynchronize may use KMD wait for cache-flush-required host synchronization")
+DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeKmdWaitInitialPollMicroseconds, 12000, "Initial active polling duration before zeEventHostSynchronize may use KMD wait for cache-flush-required host synchronization")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(std::string, ForceLoggingDirectory, std::string("unk"), "Force directory for debug logs")

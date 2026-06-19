@@ -2249,7 +2249,7 @@ TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhen
     EXPECT_EQ(750, NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.get());
     EXPECT_EQ(50, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
     EXPECT_EQ(20000, NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.get());
-    EXPECT_EQ(4000, NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get());
+    EXPECT_EQ(12000, NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get());
 }
 
 HWTEST_F(EventSynchronizeTest, GivenWaitControllerWhenStrategiesAndInputsAreChangedThenExpectedWaitActionsAreReturned) {
