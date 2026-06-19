@@ -107,8 +107,8 @@ TEST_F(ReleaseHelperNvlPTests, whenIsPostImageWriteFlushRequiredCalledThenFalseR
     }
 }
 
-TEST_F(ReleaseHelperNvlPTests, whenIsPreImageReadFlushRequiredCalledThenFalseReturned) {
-    whenIsPreImageReadFlushRequiredCalledThenFalseReturned();
+TEST_F(ReleaseHelperNvlPTests, whenIsPreImageReadFlushRequiredCalledThenTrueReturned) {
+    whenIsPreImageReadFlushRequiredCalledThenTrueReturned();
 }
 
 TEST_F(ReleaseHelperNvlPTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {

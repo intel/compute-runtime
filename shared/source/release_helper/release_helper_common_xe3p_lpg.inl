@@ -101,4 +101,9 @@ bool ReleaseHelperHw<release>::isAvailableSemaphore64Base() const {
     return static_cast<bool>(hardwareIpVersion.value != AOT::NVL_P_A0);
 }
 
+template <>
+bool ReleaseHelperHw<release>::isPreImageReadFlushRequired() const {
+    return true;
+}
+
 } // namespace NEO
