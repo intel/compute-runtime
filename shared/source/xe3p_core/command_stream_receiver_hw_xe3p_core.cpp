@@ -309,7 +309,7 @@ size_t BlitCommandsHelper<Family>::getProfilingMmioCmdsSize() {
 
 template <>
 template <typename CommandType>
-void BlitCommandsHelper<Family>::applyAdditionalBlitProperties(const BlitProperties &blitProperties, CommandType &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last) {
+void BlitCommandsHelper<Family>::applyAdditionalBlitProperties(const BlitProperties &blitProperties, CommandType &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool isLast, bool isFirst) {
 }
 
 template <>
@@ -322,9 +322,9 @@ template void BlitCommandsHelper<Family>::appendColorDepth<typename Family::XY_B
 template void BlitCommandsHelper<Family>::appendColorDepth<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd);
 template void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
 
-template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last);
-template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last);
-template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_COLOR_BLT>(const BlitProperties &blitProperties, typename Family::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last);
+template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool isLast, bool isFirst);
+template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool isLast, bool isFirst);
+template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_COLOR_BLT>(const BlitProperties &blitProperties, typename Family::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool isLast, bool isFirst);
 
 const Family::COMPUTE_WALKER_2 Family::cmdInitGpgpuWalker2 = Family::COMPUTE_WALKER_2::sInit();
 const Family::COMPUTE_WALKER Family::cmdInitGpgpuWalker = Family::COMPUTE_WALKER::sInit();

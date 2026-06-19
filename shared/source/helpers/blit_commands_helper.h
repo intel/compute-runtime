@@ -112,6 +112,6 @@ struct BlitCommandsHelper {
     static size_t getWaCmdsSize(const BlitPropertiesContainer &blitPropertiesContainer);
 
     template <typename CommandType>
-    static void applyAdditionalBlitProperties(const BlitProperties &blitProperties, CommandType &cmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last);
+    static void applyAdditionalBlitProperties(const BlitProperties &blitProperties, CommandType &cmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool isLast, bool isFirst);
 };
 } // namespace NEO
