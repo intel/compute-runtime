@@ -1086,6 +1086,8 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_USABLEMEM_SIZE_EXT_PROPERTIES) {
                 ze_device_usablemem_size_ext_properties_t *usableMemProperties = reinterpret_cast<ze_device_usablemem_size_ext_properties_t *>(extendedProperties);
                 usableMemProperties->currUsableMemSize = this->neoDevice->getUsableMemorySize();
+            } else if (static_cast<uint32_t>(extendedProperties->stype) == ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES) {
+                getReadonlyMemoryExtProperties(extendedProperties);
             }
             getAdditionalExtProperties(extendedProperties);
             extendedProperties = static_cast<ze_base_properties_t *>(extendedProperties->pNext);
@@ -2265,6 +2267,21 @@ void Device::getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties
     properties->numExecutionEnginesPerXeCore = gtSysInfo.MaxEuPerSubSlice;
     properties->maxNumHwThreadsPerExecutionEngine = getNEODevice()->getDeviceInfo().numThreadsPerEU;
     properties->maxNumLanesPerHwThread = CommonConstants::maximalSimdSize;
+}
+
+void Device::getReadonlyMemoryExtProperties(ze_base_properties_t *extendedProperties) {
+    auto *roProperties = reinterpret_cast<ze_device_readonly_memory_ext_properties_t *>(extendedProperties);
+    auto capability = ZE_DEVICE_READONLY_MEMORY_CAPABILITY_NONE;
+    auto *osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+    if (osInterface) {
+        auto *driverModel = osInterface->getDriverModel();
+        if (driverModel->getDriverModelType() == NEO::DriverModelType::wddm) {
+            capability = ZE_DEVICE_READONLY_MEMORY_CAPABILITY_HINT;
+        } else if (driverModel->isVmBindSupported()) {
+            capability = ZE_DEVICE_READONLY_MEMORY_CAPABILITY_ENFORCED;
+        }
+    }
+    roProperties->readonlyCapability = capability;
 }
 
 uint32_t Device::getAggregatedCopyOffloadIncrementValue() {

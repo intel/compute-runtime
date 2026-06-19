@@ -255,6 +255,10 @@ int Drm::queryGttSize(uint64_t &gttSizeOutput, bool alignUpToFullRange) {
     return ret;
 }
 
+bool Drm::isVmBindSupported() {
+    return isVmBindAvailable();
+}
+
 bool Drm::isGpuHangDetected(OsContext &osContext) {
     bool ret = checkResetStatus(osContext);
     auto threshold = getGpuFaultCheckThreshold();

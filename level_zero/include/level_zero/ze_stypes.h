@@ -50,6 +50,25 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030031)
 #define ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030032)
 
+#ifndef ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES
+#define ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00020030)
+#endif
+
+#ifndef ZE_DEVICE_READONLY_MEMORY_CAPABILITY_NONE
+typedef enum _ze_device_readonly_memory_capability_t {
+    ZE_DEVICE_READONLY_MEMORY_CAPABILITY_NONE = 0,
+    ZE_DEVICE_READONLY_MEMORY_CAPABILITY_HINT = 1,
+    ZE_DEVICE_READONLY_MEMORY_CAPABILITY_ENFORCED = 2,
+    ZE_DEVICE_READONLY_MEMORY_CAPABILITY_FORCE_UINT32 = 0x7fffffff
+} ze_device_readonly_memory_capability_t;
+
+typedef struct _ze_device_readonly_memory_ext_properties_t {
+    ze_structure_type_ext_t stype;
+    void *pNext;
+    ze_device_readonly_memory_capability_t readonlyCapability;
+} ze_device_readonly_memory_ext_properties_t;
+#endif
+
 // Metric structure types
 #define ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP static_cast<zet_structure_type_ext_t>(0x00010006)
 #define ZET_INTEL_STRUCTURE_TYPE_METRIC_HW_BUFFER_SIZE_EXP_DESC static_cast<zet_structure_type_ext_t>(0x00010007)

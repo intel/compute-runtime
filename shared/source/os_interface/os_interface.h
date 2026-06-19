@@ -105,6 +105,10 @@ class DriverModel : public NonCopyableClass {
         return false;
     }
 
+    virtual bool isVmBindSupported() {
+        return false;
+    }
+
     const TopologyMap &getTopologyMap() {
         return topologyMap;
     };

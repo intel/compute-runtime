@@ -134,6 +134,7 @@ class Drm : public DriverModel {
 
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
     bool isGpuHangDetected(OsContext &osContext) override;
+    bool isVmBindSupported() override;
     MOCKABLE_VIRTUAL bool checkResetStatus(OsContext &osContext);
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }

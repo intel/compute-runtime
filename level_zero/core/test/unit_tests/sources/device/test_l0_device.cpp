@@ -5599,6 +5599,67 @@ TEST_F(DeviceTest, givenDeviceWhenQueryingUsableMemSizePropertiesThenPNextChainI
     EXPECT_LE(usableMemProps.currUsableMemSize, totalMemory);
 }
 
+TEST_F(DeviceTest, givenDeviceWithNoOsInterfaceWhenQueryingReadonlyMemoryCapabilityThenReturnsNone) {
+    ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_readonly_memory_ext_properties_t roProps = {};
+    roProps.stype = static_cast<ze_structure_type_ext_t>(ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES);
+    roProps.readonlyCapability = ZE_DEVICE_READONLY_MEMORY_CAPABILITY_ENFORCED;
+
+    devProps.pNext = &roProps;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(ZE_DEVICE_READONLY_MEMORY_CAPABILITY_NONE, roProps.readonlyCapability);
+}
+
+TEST_F(DeviceTest, givenDeviceWithWddmOsInterfaceWhenQueryingReadonlyMemoryCapabilityThenReturnsHint) {
+    auto *pOsInterface = new NEO::OSInterface;
+    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(pOsInterface);
+    pOsInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_readonly_memory_ext_properties_t roProps = {};
+    roProps.stype = static_cast<ze_structure_type_ext_t>(ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES);
+
+    devProps.pNext = &roProps;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(ZE_DEVICE_READONLY_MEMORY_CAPABILITY_HINT, roProps.readonlyCapability);
+}
+
+TEST_F(DeviceTest, givenDeviceWithVmBindAvailableWhenQueryingReadonlyMemoryCapabilityThenReturnsEnforced) {
+    struct MockDriverModelWithVmBind : public NEO::MockDriverModelDRM {
+        bool isVmBindSupported() override { return true; }
+    };
+
+    auto *pOsInterface = new NEO::OSInterface;
+    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(pOsInterface);
+    pOsInterface->setDriverModel(std::make_unique<MockDriverModelWithVmBind>());
+
+    ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_readonly_memory_ext_properties_t roProps = {};
+    roProps.stype = static_cast<ze_structure_type_ext_t>(ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES);
+
+    devProps.pNext = &roProps;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(ZE_DEVICE_READONLY_MEMORY_CAPABILITY_ENFORCED, roProps.readonlyCapability);
+}
+
+TEST_F(DeviceTest, givenDeviceWithNoVmBindWhenQueryingReadonlyMemoryCapabilityThenReturnsNone) {
+    auto *pOsInterface = new NEO::OSInterface;
+    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(pOsInterface);
+    pOsInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+
+    ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_readonly_memory_ext_properties_t roProps = {};
+    roProps.stype = static_cast<ze_structure_type_ext_t>(ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES);
+
+    devProps.pNext = &roProps;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(ZE_DEVICE_READONLY_MEMORY_CAPABILITY_NONE, roProps.readonlyCapability);
+}
+
 struct RTASDeviceTest : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
