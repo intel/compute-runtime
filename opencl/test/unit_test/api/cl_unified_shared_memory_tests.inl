@@ -1436,7 +1436,13 @@ TEST_F(ClUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMa
     }
 }
 
-using MultiRootDeviceClUnifiedSharedMemoryTests = MultiRootDeviceFixture;
+struct MultiRootDeviceClUnifiedSharedMemoryTests : public MultiRootDeviceFixture {
+    void SetUp() override {
+        debugManager.flags.ExperimentalEnableSharedAllocationCache.set(0);
+        MultiRootDeviceFixture::SetUp();
+    }
+    DebugManagerStateRestore restorer;
+};
 
 TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalledInMultiRootDeviceEnvironmentThenItAllocatesHostUnifiedMemoryAllocations) {
     DebugManagerStateRestore restorer;

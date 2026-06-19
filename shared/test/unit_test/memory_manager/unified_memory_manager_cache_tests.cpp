@@ -1218,6 +1218,7 @@ TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCall
     DebugManagerStateRestore restore;
     debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
     debugManager.flags.ExperimentalEnableHostAllocationCache.set(0);
+    debugManager.flags.ExperimentalEnableSharedAllocationCache.set(0);
     auto device = deviceFactory->rootDevices[0];
     auto memoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
     memoryManager->usmReuseInfo.init(0u, UsmReuseInfo::notLimited);
@@ -1269,6 +1270,7 @@ TEST_F(SvmDeviceAllocationCacheTest, givenDirectSubmissionLightWhenTrimOldInCach
     DebugManagerStateRestore restore;
     debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
     debugManager.flags.ExperimentalEnableHostAllocationCache.set(0);
+    debugManager.flags.ExperimentalEnableSharedAllocationCache.set(0);
     auto device = deviceFactory->rootDevices[0];
     auto memoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
     memoryManager->usmReuseInfo.init(0u, UsmReuseInfo::notLimited);
@@ -1309,6 +1311,7 @@ TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCall
     DebugManagerStateRestore restore;
     debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
     debugManager.flags.ExperimentalEnableHostAllocationCache.set(0);
+    debugManager.flags.ExperimentalEnableSharedAllocationCache.set(0);
     auto device = deviceFactory->rootDevices[0];
     auto memoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
     memoryManager->usmReuseInfo.init(0u, UsmReuseInfo::notLimited);

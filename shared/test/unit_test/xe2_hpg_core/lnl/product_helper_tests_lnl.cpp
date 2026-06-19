@@ -127,6 +127,10 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmAllocationR
     EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
 }
 
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsSharedUsmAllocationReuseSupportedThenCorrectValueIsReturned) {
+    EXPECT_TRUE(productHelper->isSharedUsmAllocationReuseSupported());
+}
+
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }

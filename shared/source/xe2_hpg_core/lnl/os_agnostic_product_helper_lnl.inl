@@ -54,4 +54,9 @@ bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
     return false;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isSharedUsmAllocationReuseSupported() const {
+    return true;
+}
+
 } // namespace NEO

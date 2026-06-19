@@ -75,6 +75,17 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingInitializeInternalEngi
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }
 
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsSharedUsmAllocationReuseSupportedThenReturnsTrue) {
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_TRUE(productHelper->isSharedUsmAllocationReuseSupported());
+    }
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_TRUE(productHelper->isSharedUsmAllocationReuseSupported());
+    }
+}
+
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);

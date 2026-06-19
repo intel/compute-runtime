@@ -178,6 +178,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     void setUpImpl() {
         platformsImpl->clear();
         MemoryManagementFixture::setUp();
+        debugManager.flags.ExperimentalEnableSharedAllocationCache.set(0);
         constructPlatform();
         pPlatform = platform();
         auto executionEnvironment = pPlatform->peekExecutionEnvironment();
