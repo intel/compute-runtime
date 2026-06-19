@@ -1601,7 +1601,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerformingC
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, returnValue);
 }
 
-HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenObtainAllocDataWithLargerSizeWithinPageBoundaryThenCachedAllocationReused) {
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenObtainAllocDataWithLargerSizeWithinPageBoundaryThenOverlapFlagSetAndCachedAllocationNotReused) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
@@ -1620,10 +1620,10 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenOb
     CpuMemCopyInfo memCopyInfo(dstBuffer, srcBuffer, requestedSize);
     cmdList.obtainAllocData(memCopyInfo, false);
 
-    EXPECT_TRUE(memCopyInfo.srcIsImportedHostPtr);
-    EXPECT_TRUE(memCopyInfo.dstIsImportedHostPtr);
-    EXPECT_NE(nullptr, memCopyInfo.srcAllocInfo.cachedHostAlloc);
-    EXPECT_NE(nullptr, memCopyInfo.dstAllocInfo.cachedHostAlloc);
+    EXPECT_TRUE(memCopyInfo.srcIsPartialOverlapNonUsmHostPtr);
+    EXPECT_TRUE(memCopyInfo.dstIsPartialOverlapNonUsmHostPtr);
+    EXPECT_EQ(nullptr, memCopyInfo.srcAllocInfo.cachedHostAlloc);
+    EXPECT_EQ(nullptr, memCopyInfo.dstAllocInfo.cachedHostAlloc);
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenObtainAllocDataWithLargerSizeExceedingPageBoundaryThenOverlapFlagSetAndCachedAllocationNotReused) {

@@ -97,11 +97,7 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
     auto *curr = head;
     while (curr != nullptr) {
         bool typeMatch = (req->allocationType == curr->getAllocationType());
-        auto availableSize = curr->getUnderlyingBufferSize();
-        if (typeMatch && curr->getAllocationType() == NEO::AllocationType::externalHostPtr) {
-            availableSize = alignSizeWholePage(curr->getUnderlyingBuffer(), curr->getUnderlyingBufferSize()) - static_cast<size_t>(curr->getAllocationOffset());
-        }
-        bool sizeMatch = (availableSize >= req->requiredMinimalSize);
+        bool sizeMatch = (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize);
         bool memMatch = (curr->storageInfo.systemMemoryForced == req->forceSystemMemoryFlag);
 
         if (typeMatch && memMatch) {
@@ -126,7 +122,8 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
                 bool detectPartialOverlap = (req->nonUsmHostPtrPartialOverlapFound != nullptr && curr->getAllocationType() == NEO::AllocationType::externalHostPtr && this->allocationUsage == TEMPORARY_ALLOCATION);
                 if (detectPartialOverlap) {
                     auto importedStartPtr = curr->getUnderlyingBuffer();
-                    auto importedEndPtr = ptrOffset(importedStartPtr, availableSize);
+                    auto pageAlignedSize = alignSizeWholePage(importedStartPtr, curr->getUnderlyingBufferSize()) - static_cast<size_t>(curr->getAllocationOffset());
+                    auto importedEndPtr = ptrOffset(importedStartPtr, pageAlignedSize);
                     auto requiredStartPtr = req->requiredPtr;
                     auto requiredEndPtr = ptrOffset(requiredStartPtr, req->requiredMinimalSize);
                     if (importedStartPtr <= requiredEndPtr && importedEndPtr >= requiredStartPtr) {

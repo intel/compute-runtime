@@ -579,3 +579,42 @@ TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenImportedStartPt
     EXPECT_TRUE(nonUsmHostPtrPartialOverlapFound);
     EXPECT_EQ(nullptr, result);
 }
+
+TEST_F(InternalAllocationStorageTest, givenExternalHostPtrAllocationWhenObtainedWithoutOverlapDetectionAndRequestedSizeExceedsUnderlyingSizeThenAllocationNotReused) {
+    constexpr size_t underlyingSize = 256u;
+    constexpr size_t requestedSize = 2048u;
+    void *hostPtr = reinterpret_cast<void *>(MemoryConstants::pageSize);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, underlyingSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    allocation->setSize(underlyingSize);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    auto result = storage->obtainTemporaryAllocationWithPtr(requestedSize, hostPtr, AllocationType::externalHostPtr, nullptr);
+
+    EXPECT_EQ(nullptr, result);
+    EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
+}
+
+TEST_F(InternalAllocationStorageTest, givenExternalHostPtrAllocationWhenObtainedWithoutOverlapDetectionAndRequestedSizeFitsUnderlyingSizeThenAllocationReused) {
+    constexpr size_t underlyingSize = 2048u;
+    constexpr size_t requestedSize = 256u;
+    void *hostPtr = reinterpret_cast<void *>(MemoryConstants::pageSize);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, underlyingSize, AllocationType::externalHostPtr, mockDeviceBitfield});
+    allocation->setAllocationType(AllocationType::externalHostPtr);
+    allocation->setSize(underlyingSize);
+    auto mockAllocation = static_cast<MockGraphicsAllocation *>(allocation);
+    mockAllocation->cpuPtr = hostPtr;
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    auto result = storage->obtainTemporaryAllocationWithPtr(requestedSize, hostPtr, AllocationType::externalHostPtr, nullptr);
+
+    EXPECT_EQ(allocation, result.get());
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+    memoryManager->freeGraphicsMemory(result.release());
+}
