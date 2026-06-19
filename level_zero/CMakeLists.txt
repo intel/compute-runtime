@@ -80,6 +80,18 @@ if(BUILD_WITH_L0)
     endif()
   endif()
 
+  if(UNIX)
+    # Tracefs library interface
+    find_path(LIBTRACEFS_INCLUDE_DIR tracefs/tracefs.h)
+    if(LIBTRACEFS_INCLUDE_DIR)
+      message(STATUS "libtracefs headers directory: ${LIBTRACEFS_INCLUDE_DIR}")
+      include_directories(SYSTEM ${LIBTRACEFS_INCLUDE_DIR})
+      set(LIBTRACEFS_FOUND TRUE)
+    else()
+      message(STATUS "libtracefs headers not available. Building without")
+    endif()
+  endif()
+
   if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
   endif()
