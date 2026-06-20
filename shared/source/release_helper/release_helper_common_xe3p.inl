@@ -10,19 +10,13 @@
 
 namespace NEO {
 template <>
-void ReleaseHelperHw<release>::adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, uint32_t rtStacksPerDss, uint32_t maxBvhLevels) const {
+void ReleaseHelperHw<release>::adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, uint32_t rtStacksPerDss) const {
 
     constexpr uint32_t maxNumDSSRTStacks = 2048u;
     constexpr uint32_t maxSyncNumDSSRTStacks = 4096u;
 
     rtDispatchGlobals.numDSSRTStacks = std::min(rtStacksPerDss, maxNumDSSRTStacks);
     rtDispatchGlobals.syncNumDSSRTStacks = std::min(rtStacksPerDss, maxSyncNumDSSRTStacks);
-    rtDispatchGlobals.flags = RayTracingHelper::depthTestLessEqualFlag;
-
-    if (maxBvhLevels >= 8) {
-        maxBvhLevels = 0;
-    }
-    rtDispatchGlobals.maxBVHLevels = maxBvhLevels;
 }
 
 template <>

@@ -47,7 +47,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isPostImageWriteFlushRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isPreImageReadFlushRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(adjustMaxThreadsPerEuCount, uint32_t, 8u, (uint32_t maxThreadsPerEuCount, uint32_t grfCount));
-    ADDMETHOD_CONST_NOBASE_VOIDRETURN(adjustRTDispatchGlobals, (RTDispatchGlobals & rtDispatchGlobals, uint32_t rtStacksPerDss, uint32_t maxBvhLevels));
+    ADDMETHOD_CONST_NOBASE_VOIDRETURN(adjustRTDispatchGlobals, (RTDispatchGlobals & rtDispatchGlobals, uint32_t rtStacksPerDss));
     ADDMETHOD_CONST_NOBASE(shouldQueryPeerAccess, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isSingleDispatchRequiredForMultiCCS, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isStateCacheInvalidationWaRequired, bool, false, (bool isImmediateCmdList, bool kernelUsesImageOrSampler));
