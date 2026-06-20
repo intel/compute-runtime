@@ -43,12 +43,9 @@ void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceCont
             }
 
             auto device = &metricDeviceContext.getDevice();
-            uint32_t subDeviceCount = device->numSubDevices;
-            std::vector<ze_device_handle_t> subDevices(subDeviceCount);
-            device->getSubDevices(&subDeviceCount, subDevices.data());
 
-            for (auto &subDeviceHandle : subDevices) {
-                auto neoSubDevice = static_cast<NEO::SubDevice *>(Device::fromHandle(subDeviceHandle)->getNEODevice());
+            for (uint32_t i = 0; i < device->numSubDevices; i++) {
+                auto neoSubDevice = static_cast<NEO::SubDevice *>(device->subDevices[i]->getNEODevice());
                 uint32_t subDeviceIndex = neoSubDevice->getSubDeviceIndex();
 
                 std::string scopeName = std::string(computeScopeNamePrefix) + std::to_string(subDeviceIndex);

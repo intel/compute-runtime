@@ -596,6 +596,25 @@ HWTEST_F(MetricScopesMultiDeviceFixture, GivenRootDeviceThatDoesNOTSupportsMetri
     l0GfxCoreHelperBackup.release();
 }
 
+HWTEST_F(MetricScopesMultiDeviceFixture, GivenExposeSingleDeviceModeWhenGettingMetricScopesThenComputeScopesStillMatchHwSubDevices) {
+    rootDevice->getNEODevice()->getRootDeviceEnvironmentRef().setExposeSingleDeviceMode(true);
+
+    MockL0GfxCoreHelperNOTSupportMetricsAggregation<FamilyType> mockL0GfxCoreHelper;
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper));
+    rootDevice->getNEODevice()->getRootDeviceEnvironmentRef().apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+
+    uint32_t metricScopesCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
+                                                            rootDevice->toHandle(),
+                                                            &metricScopesCount,
+                                                            nullptr));
+    // One compute scope per physical sub-device, independent of the exposure mode.
+    EXPECT_EQ(metricScopesCount, numSubDevices);
+
+    rootDevice->getNEODevice()->getRootDeviceEnvironmentRef().apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+    l0GfxCoreHelperBackup.release();
+}
+
 template <typename GfxFamily>
 struct MockL0GfxCoreHelperSupportMetricsAggregation : L0::L0GfxCoreHelperHw<GfxFamily> {
     bool supportMetricsAggregation() const override { return true; }
