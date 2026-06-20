@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2018-2021 Intel Corporation
+Copyright (C) 2018-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -32,7 +32,7 @@ intention to offer that option.
 
 ### Does NEO support Windows Subsystem for Linux (WSL)?
 
-See [WSL.md](https://github.com/intel/compute-runtime/blob/master/WSL.md).
+See [WSL.md](https://github.com/intel/compute-runtime/blob/master/documentation/WSL.md).
 
 ### Why is the feature set different in latest Windows driver vs. latest NEO on github?
 

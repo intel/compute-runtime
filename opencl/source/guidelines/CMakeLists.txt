@@ -1,11 +1,11 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(RUNTIME_CODING_GUIDELINES
-    ${NEO_SOURCE_DIR}/GUIDELINES.md
+    ${NEO_SOURCE_DIR}/documentation/GUIDELINES.md
 )
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_CODING_GUIDELINES})
 set_property(GLOBAL PROPERTY RUNTIME_CODING_GUIDELINES ${RUNTIME_CODING_GUIDELINES})

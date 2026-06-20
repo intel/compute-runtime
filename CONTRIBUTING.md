@@ -17,9 +17,9 @@ When adding new code, please also add corresponding unit level tests (ULT). Adde
 all the decision points introduced by the commit and should fail if executed without the code changes.
 Make sure it builds and passes _all_ ULT tests. For details about what compilers
 and build configurations we expect, refer to instructions for
-[building](https://github.com/intel/compute-runtime/blob/master/BUILD.md) the driver.
+[building](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD.md) the driver.
 Make sure you adhere to our
-[coding standard](https://github.com/intel/compute-runtime/blob/master/GUIDELINES.md);
+[coding standard](https://github.com/intel/compute-runtime/blob/master/documentation/GUIDELINES.md);
 this will be verified by clang-format and clang-tidy
 (tool configuration is already included in NEO repository).
 For every file you modify, make sure the copyright header year range is up to date.

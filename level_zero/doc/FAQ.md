@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2022 Intel Corporation
+Copyright (C) 2022-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 # Frequently asked questions (Level Zero)
 
 For general questions,
-see the [main FAQ](https://github.com/intel/compute-runtime/blob/master/FAQ.md).
+see the [main FAQ](https://github.com/intel/compute-runtime/blob/master/documentation/FAQ.md).
 
 ## Feature: l0_cache
 

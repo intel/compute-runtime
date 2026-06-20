@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2020-2023 Intel Corporation
+Copyright (C) 2020-2026 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 # Frequently asked questions (OpenCL)
 
 For general questions,
-see the [main FAQ](https://github.com/intel/compute-runtime/blob/master/FAQ.md).
+see the [main FAQ](https://github.com/intel/compute-runtime/blob/master/documentation/FAQ.md).
 
 ## OpenCL version
 

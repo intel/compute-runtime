@@ -15,9 +15,9 @@ This guide explains how to submit issues using the structured GitHub Issue Templ
 
 ## Before You Submit
 
-- **Search existing issues** in the [Issues tab](../../issues) to avoid duplicates.
+- **Search existing issues** in the [Issues tab](../../../issues) to avoid duplicates.
 - **Use the latest driver version** before reporting a bug - check [releases](https://github.com/intel/compute-runtime/releases).
-- **Check the [FAQ](https://github.com/intel/compute-runtime/blob/master/FAQ.md) and [programmers-guide](https://github.com/intel/compute-runtime/tree/master/programmers-guide)** for questions that may already be answered.
+- **Check the [FAQ](https://github.com/intel/compute-runtime/blob/master/documentation/FAQ.md) and [programmers-guide](https://github.com/intel/compute-runtime/tree/master/programmers-guide)** for questions that may already be answered.
 
 ---
 

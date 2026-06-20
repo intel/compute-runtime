@@ -12,7 +12,7 @@ body:
         > [!IMPORTANT]
         > Fields marked with asterisk (*) are required.
         > Please search existing issues to avoid duplicates.
-        > For submission guidelines, see the [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/ISSUE_SUBMISSION_GUIDE.md).
+        > For submission guidelines, see the [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/documentation/ISSUE_SUBMISSION_GUIDE.md).
         
         > [!NOTE]
         > Issue titles will be updated by project maintainers to include an internal tracking number.

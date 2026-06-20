@@ -8,12 +8,12 @@ SPDX-License-Identifier: MIT
 
 # Building Level Zero
 
-These instructions have been tested on Ubuntu* and complement those existing for NEO in the top-level BUILD.md file.
+These instructions have been tested on Ubuntu* and complement those existing for NEO in the documentation/BUILD.md file.
 
 1. Install/build Level Zero dependencies
 
 To use Fabric related APIs, please build and/or install [libnl-3.7.0](https://www.linuxfromscratch.org/blfs/view/svn/basicnet/libnl.html).
-If installing to a local folder, `-DLIBGENL_INCLUDE_DIR=<local install folder path>/libnl/include/libnl3/` could be passed to the cmake line of NEO build(Please refer top-level BUILD.md).
+If installing to a local folder, `-DLIBGENL_INCLUDE_DIR=<local install folder path>/libnl/include/libnl3/` could be passed to the cmake line of NEO build(Please refer documentation/BUILD.md).
 
 To use Sysman events API, please build and/or install libudev-dev 
 
@@ -31,7 +31,7 @@ Build will generate ze_loader library and symlinks, as well as those for ze_vali
 
 Install Level Zero package from [https://github.com/intel/compute-runtime/releases](https://github.com/intel/compute-runtime/releases).
 
-Alternatively, follow instructions in top-level BUILD.md file to build NEO. Level Zero is built by default.
+Alternatively, follow instructions in documentation/BUILD.md file to build NEO. Level Zero is built by default.
 
 When built, ze_intel_gpu library and symlinks are generated.
 

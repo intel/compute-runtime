@@ -11,7 +11,7 @@ body:
       value: |
         > [!IMPORTANT]
         > For general questions, please check existing documentation and issues first.
-        > For submission guidelines, see the [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/ISSUE_SUBMISSION_GUIDE.md).
+        > For submission guidelines, see the [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/documentation/ISSUE_SUBMISSION_GUIDE.md).
         
         > [!NOTE]
         > Issue titles will be updated by project maintainers to include an internal tracking number.
@@ -26,7 +26,7 @@ body:
       options:
         - label: I have searched existing issues and discussions for similar questions
           required: false
-        - label: I have checked the documentation and [FAQ](https://github.com/intel/compute-runtime/blob/master/FAQ.md) / [programmers-guide](https://github.com/intel/compute-runtime/tree/master/programmers-guide)
+        - label: I have checked the documentation and [FAQ](https://github.com/intel/compute-runtime/blob/master/documentation/FAQ.md) / [programmers-guide](https://github.com/intel/compute-runtime/tree/master/programmers-guide)
           required: false
           
   - type: markdown

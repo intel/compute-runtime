@@ -55,7 +55,7 @@ _Debug parameters, environmental variables, and internal data structures are con
 
 ## Support for legacy platforms
 
-Support for Gen8, Gen9 and Gen11 devices is delivered via packages with legacy1 suffix, more details [here](LEGACY_PLATFORMS.md)
+Support for Gen8, Gen9 and Gen11 devices is delivered via packages with legacy1 suffix, more details [here](documentation/LEGACY_PLATFORMS.md)
 
 ## Legacy Platforms
 
@@ -135,8 +135,8 @@ for more details.
 * [Architecture Overview](https://github.com/intel/compute-runtime/blob/master/ARCHITECTURE.md)
 * [Contribution guidelines](https://github.com/intel/compute-runtime/blob/master/CONTRIBUTING.md)
 * [Programmers Guide](https://github.com/intel/compute-runtime/blob/master/programmers-guide/PROGRAMMERS_GUIDE.md)
-* [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/ISSUE_SUBMISSION_GUIDE.md)
-* [Frequently Asked Questions](https://github.com/intel/compute-runtime/blob/master/FAQ.md)
+* [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/documentation/ISSUE_SUBMISSION_GUIDE.md)
+* [Frequently Asked Questions](https://github.com/intel/compute-runtime/blob/master/documentation/FAQ.md)
 
 ### Level Zero specific
 * [oneAPI Level Zero specification](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/index.html)

@@ -47,7 +47,7 @@ lint:
       gpl:
       todo:
         exclude:
-          - GUIDELINES.md
+          - documentation/GUIDELINES.md
 
   allowed_includes:
     excluded:
