@@ -146,7 +146,7 @@ void usage() {
                  "\n  -H,   --health                                                                                  selectively run device health EXP API black box test"
                  "\n        [--set-health <ok|warning|critical|failed>]                                               optionally set device health status (requires root)"
                  "\n"
-                 "\n  All L0 Syman APIs that set values require root privileged execution"
+                 "\n  All L0 Sysman APIs that set values require root privileged execution"
                  "\n"
                  "\n";
 }
