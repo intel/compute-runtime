@@ -252,18 +252,15 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenReadWriteImageIsCalledThenH
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage2.get(), CL_FALSE, origin, region);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-    {
-        auto storedAllocations = csr.getTemporaryAllocations().peekAllocations();
-        ASSERT_FALSE(storedAllocations.empty());
-        EXPECT_EQ(storedAllocations.front()->getUnderlyingBufferSize(), imageSize);
-    }
+    auto temporaryAllocation1 = csr.getTemporaryAllocations().peekHead();
+    ASSERT_NE(nullptr, temporaryAllocation1);
+    EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, dstImage2.get(), CL_FALSE, origin, region);
-    {
-        auto storedAllocations = csr.getTemporaryAllocations().peekAllocations();
-        ASSERT_GE(storedAllocations.size(), 2u);
-        EXPECT_EQ(storedAllocations[1]->getUnderlyingBufferSize(), imageSize);
-    }
+    auto temporaryAllocation2 = temporaryAllocation1->next;
+
+    ASSERT_NE(nullptr, temporaryAllocation2);
+    EXPECT_EQ(temporaryAllocation2->getUnderlyingBufferSize(), imageSize);
 }
 
 HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenWriteImageIsCalledThenRowPitchIsSetToSlicePitch) {
@@ -309,18 +306,15 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage2DarrayWhenReadWriteImageIsCalledThenH
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage.get(), CL_FALSE, origin, region);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-    {
-        auto storedAllocations = csr.getTemporaryAllocations().peekAllocations();
-        ASSERT_FALSE(storedAllocations.empty());
-        EXPECT_EQ(storedAllocations.front()->getUnderlyingBufferSize(), imageSize);
-    }
+
+    auto temporaryAllocation1 = csr.getTemporaryAllocations().peekHead();
+    ASSERT_NE(nullptr, temporaryAllocation1);
+    EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, dstImage.get(), CL_FALSE, origin, region);
-    {
-        auto storedAllocations = csr.getTemporaryAllocations().peekAllocations();
-        ASSERT_GE(storedAllocations.size(), 2u);
-        EXPECT_EQ(storedAllocations[1]->getUnderlyingBufferSize(), imageSize);
-    }
+    auto temporaryAllocation2 = temporaryAllocation1->next;
+    ASSERT_NE(nullptr, temporaryAllocation2);
+    EXPECT_EQ(temporaryAllocation2->getUnderlyingBufferSize(), imageSize);
 }
 
 HWTEST_F(EnqueueWriteImageTest, GivenImage1DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWritten) {

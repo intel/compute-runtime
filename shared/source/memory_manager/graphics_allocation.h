@@ -17,8 +17,8 @@
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/residency.h"
+#include "shared/source/utilities/idlist.h"
 
-#include <atomic>
 #include <vector>
 
 namespace NEO {
@@ -61,7 +61,7 @@ struct SurfaceStateInHeapInfo {
     size_t ssSize;
 };
 
-class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
+class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAndNonMovableClass {
   public:
     enum UsmInitialPlacement {
         DEFAULT,
@@ -75,7 +75,7 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
     constexpr static TaskCountType objectNotUsed = std::numeric_limits<TaskCountType>::max();
     constexpr static TaskCountType objectAlwaysResident = std::numeric_limits<TaskCountType>::max() - 1;
 
-    virtual ~GraphicsAllocation();
+    ~GraphicsAllocation() override;
 
     GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn,
                        uint64_t canonizedGpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool pool, size_t maxOsContextCount);

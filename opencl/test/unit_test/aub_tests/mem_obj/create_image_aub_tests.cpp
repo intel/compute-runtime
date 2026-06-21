@@ -132,15 +132,9 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
                                      readMemory.get(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    {
-        auto storedAllocations = pCommandStreamReceiver->getTemporaryAllocations().peekAllocations();
-        allocation = nullptr;
-        for (auto *candidate : storedAllocations) {
-            if (candidate->getUnderlyingBuffer() == readMemory.get()) {
-                allocation = candidate;
-                break;
-            }
-        }
+    allocation = pCommandStreamReceiver->getTemporaryAllocations().peekHead();
+    while (allocation && allocation->getUnderlyingBuffer() != readMemory.get()) {
+        allocation = allocation->next;
     }
 
     auto destGpuAddress = reinterpret_cast<uint32_t *>(allocation->getGpuAddress());
@@ -221,15 +215,9 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
                                      readMemory.get(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    {
-        auto storedAllocations = pCommandStreamReceiver->getTemporaryAllocations().peekAllocations();
-        allocation = nullptr;
-        for (auto *candidate : storedAllocations) {
-            if (candidate->getUnderlyingBuffer() == readMemory.get()) {
-                allocation = candidate;
-                break;
-            }
-        }
+    allocation = pCommandStreamReceiver->getTemporaryAllocations().peekHead();
+    while (allocation && allocation->getUnderlyingBuffer() != readMemory.get()) {
+        allocation = allocation->next;
     }
 
     auto destGpuAddress = reinterpret_cast<uint32_t *>(allocation->getGpuAddress());
