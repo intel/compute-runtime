@@ -889,7 +889,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3pAndLater, givenHeaplessModeWhenAppend
     context->freeMem(alloc);
 }
 
-HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenNormalPriorityCommandListWhenAppendWaitOnEventThenSwitchOnParse, IsAtLeastXe3pCore) {
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenNormalPriorityCommandListWhenAppendWaitOnEventThenSwitchOnUnsuccessful, IsAtLeastXe3pCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto prodCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto consCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -907,7 +907,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenNormalPriorityCommandListWhe
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED);
+    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
 }
 
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenHighPriorityCommandListWhenAppendWaitOnEventThenSwitchOnUnsuccessful, IsAtLeastXe3pCore) {
@@ -932,7 +932,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenHighPriorityCommandListWhenA
     EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
 }
 
-HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndNormalPriorityCommandListWhenAppendWaitOnEventThenSwitchOnParse, IsAtLeastXe3pCore) {
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndNormalPriorityCommandListWhenAppendWaitOnEventThenSwitchOnUnsuccessful, IsAtLeastXe3pCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto prodCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto consCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -951,7 +951,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndNormalPriorit
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED);
+    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
 }
 
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndHighPriorityCommandListWhenAppendWaitOnEventThenSwitchOnUnsuccessful, IsAtLeastXe3pCore) {

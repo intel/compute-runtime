@@ -508,15 +508,9 @@ void Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
             engineTypeUsage.second = EngineUsage::highPriority;
         }
         this->createSecondaryEngine(primaryEngine.commandStreamReceiver, engineTypeUsage);
-        if (regularContextCount == 0) {
-            this->secondaryCsrs.back()->getOsContext().setExclusivelyHpContext();
-        }
     }
 
     UNRECOVERABLE_IF(primaryEngine.osContext->isPartOfContextGroup() == false);
-    if (regularContextCount == 0) {
-        primaryEngine.osContext->setExclusivelyHpContext();
-    }
 }
 
 void Device::allocateDebugSurface(size_t debugSurfaceSize) {
