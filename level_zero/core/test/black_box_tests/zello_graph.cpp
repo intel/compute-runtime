@@ -899,6 +899,7 @@ bool testExternalGraphCbEventsMultiExecution(GraphApi &graphApi,
     SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
 
     std::vector<int64_t> eventSyncTimings(executionCount);
+    std::vector<int64_t> commandListSyncTimings(executionCount);
 
     // Dispatch physicalGraph and wait on cb event
     for (uint32_t i = 0; i < executionCount; ++i) {
@@ -909,6 +910,10 @@ bool testExternalGraphCbEventsMultiExecution(GraphApi &graphApi,
         auto endTime = std::chrono::high_resolution_clock::now();
         eventSyncTimings[i] = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
 
+        SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+        auto cmdListEndTime = std::chrono::high_resolution_clock::now();
+        commandListSyncTimings[i] = std::chrono::duration_cast<std::chrono::microseconds>(cmdListEndTime - startTime).count();
+
         // verify data
         if (aubMode == false) {
             validRet = LevelZeroBlackBoxTests::validateToValue(expectedValues[i], buffer, elemCount);
@@ -918,9 +923,9 @@ bool testExternalGraphCbEventsMultiExecution(GraphApi &graphApi,
     // Final sync to ensure all operations are done
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
     // Display event sync timings
-    std::cout << "Event host synchronize timings (us):" << std::endl;
+    std::cout << "Event and command list host synchronize timings (us):" << std::endl;
     for (uint32_t i = 0; i < executionCount; ++i) {
-        std::cout << "  Iteration " << i << ": " << eventSyncTimings[i] << " us" << std::endl;
+        std::cout << "  Iteration " << i << ": event: " << eventSyncTimings[i] << " command list: " << commandListSyncTimings[i] << " us" << std::endl;
     }
 
     dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
