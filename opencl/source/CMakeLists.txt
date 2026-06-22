@@ -150,17 +150,6 @@ if(${GENERATE_EXECUTABLE})
     set_property(GLOBAL APPEND PROPERTY NEO_OCL_COMPONENTS_LIST "opencl")
   endif()
 
-  if(NOT DISABLED_GTPIN_SUPPORT)
-    macro(macro_for_each_core_type)
-      foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
-        if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${CORE_TYPE_LOWER}/gtpin_setup_${CORE_TYPE_LOWER}.cpp)
-          target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${CORE_TYPE_LOWER}/gtpin_setup_${CORE_TYPE_LOWER}.cpp)
-        endif()
-      endforeach()
-    endmacro()
-    apply_macro_for_each_core_type("SUPPORTED")
-  endif()
-
   add_subdirectory(dll)
 
   target_link_libraries(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${NEO_STATIC_LIB_NAME} ${NEO_SHARED_LIB} ${NEO_STATIC_LIB_NAME} ${NEO_SHARED_LIB} ${NEO_EXTRA_LIBS})

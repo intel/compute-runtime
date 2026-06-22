@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -31,11 +31,6 @@ macro(macro_for_each_core_type)
 
     if(EXISTS ${COREX_PREFIX}/enable_family_full_ocl_${CORE_TYPE_LOWER}.cpp)
       list(APPEND ${CORE_TYPE}_SRC_LINK_BASE ${COREX_PREFIX}/enable_family_full_ocl_${CORE_TYPE_LOWER}.cpp)
-    endif()
-    if(NOT DISABLED_GTPIN_SUPPORT)
-      if(EXISTS ${COREX_PREFIX}/gtpin_setup_${CORE_TYPE_LOWER}.cpp)
-        list(APPEND ${CORE_TYPE}_SRC_LINK_BASE ${COREX_PREFIX}/gtpin_setup_${CORE_TYPE_LOWER}.cpp)
-      endif()
     endif()
 
     list(APPEND RUNTIME_SRCS_COREX_ALL_BASE ${RUNTIME_SRCS_${CORE_TYPE}_H_BASE})

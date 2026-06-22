@@ -1,14 +1,8 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
-
-if(NOT DISABLED_GTPIN_SUPPORT)
-  set(GTPIN_INIT_FILE "${NEO_SOURCE_DIR}/opencl/source/gtpin/gtpin_init.cpp")
-else()
-  set(GTPIN_INIT_FILE "")
-endif()
 
 set(RUNTIME_SRCS_DLL_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
@@ -27,7 +21,6 @@ set(RUNTIME_SRCS_DLL_BASE
     ${NEO_SOURCE_DIR}/opencl/source/dll/debug_manager.cpp
     ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
 
-    ${GTPIN_INIT_FILE}
     ${HW_SRC_LINK}
     ${EXPORTS_FILENAME}
     $<TARGET_OBJECTS:neo_shared_dlls_precompiled_objects>

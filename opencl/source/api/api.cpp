@@ -31,7 +31,6 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/global_teardown/global_platform_teardown.h"
-#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
@@ -430,7 +429,6 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
                                                                      size_t, void *),
                                        void *userData,
                                        cl_int *errcodeRet) {
-    gtPinTryNotifyInit();
     TRACING_ENTER(ClCreateContext, &properties, &numDevices, &devices, &funcNotify, &userData, &errcodeRet);
 
     cl_int retVal = CL_SUCCESS;
@@ -489,7 +487,6 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
                                                                              size_t, void *),
                                                void *userData,
                                                cl_int *errcodeRet) {
-    gtPinTryNotifyInit();
     TRACING_ENTER(ClCreateContextFromType, &properties, &deviceType, &funcNotify, &userData, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -1840,7 +1837,6 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
-    gtpinNotifyKernelCreate(kernel);
     TRACING_EXIT(ClCreateKernel, &kernel);
     return kernel;
 }
@@ -1890,7 +1886,6 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                     TRACING_EXIT(ClCreateKernelsInProgram, &retVal);
                     return retVal;
                 }
-                gtpinNotifyKernelCreate(kernels[i]);
             }
         }
 
@@ -3637,11 +3632,6 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
         return retVal;
-    }
-
-    TakeOwnershipWrapper<MultiDeviceKernel> kernelOwnership(*pMultiDeviceKernel, gtpinIsGTPinInitialized());
-    if (gtpinIsGTPinInitialized()) {
-        gtpinNotifyKernelSubmit(kernel, pCommandQueue);
     }
 
     retVal = pCommandQueue->enqueueKernel(
@@ -5967,9 +5957,6 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
-    if (clonedMultiDeviceKernel != nullptr) {
-        gtpinNotifyKernelCreate(clonedMultiDeviceKernel);
-    }
 
     TRACING_EXIT(ClCloneKernel, &clonedMultiDeviceKernel);
     return clonedMultiDeviceKernel;
@@ -6335,11 +6322,6 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
 
     if (pKernel->usesSyncBuffer()) {
         device.getDevice().allocateSyncBufferHandler();
-    }
-
-    TakeOwnershipWrapper<MultiDeviceKernel> kernelOwnership(*pMultiDeviceKernel, gtpinIsGTPinInitialized());
-    if (gtpinIsGTPinInitialized()) {
-        gtpinNotifyKernelSubmit(kernel, pCommandQueue);
     }
 
     retVal = pCommandQueue->enqueueKernel(

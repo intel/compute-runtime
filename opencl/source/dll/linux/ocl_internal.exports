@@ -81,7 +81,6 @@ OPENCL_1.0 {
       clSetKernelArg;
       clUnloadCompiler;
       clWaitForEvents;
-      GTPin_Init;
   local: *;
 };
 

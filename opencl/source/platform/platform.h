@@ -51,7 +51,6 @@ class Platform : public BaseObject<_cl_platform_id> {
 
     MOCKABLE_VIRTUAL bool initialize(std::vector<std::unique_ptr<Device>> devices);
     bool isInitialized();
-    void tryNotifyGtpinInit();
 
     size_t getNumDevices() const;
     ClDevice **getClDevices();
@@ -83,7 +82,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     ClDeviceVector clDevices;
     ExecutionEnvironment &executionEnvironment;
     std::once_flag initializeExtensionsWithVersionOnce;
-    std::once_flag oclInitGTPinOnce;
     SVMAllocsManager *svmAllocsManager = nullptr;
     StagingBufferManager *stagingBufferManager = nullptr;
     int32_t activeContextCount = 0;
