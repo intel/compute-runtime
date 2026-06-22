@@ -188,6 +188,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
         }
         this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, *streamForDispatch);
         this->programRequiredCacheFlushes(ctx, *streamForDispatch);
+        this->getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(*streamForDispatch);
     }
 
     this->retrivePatchPreambleSpace(ctx, *streamForDispatch);

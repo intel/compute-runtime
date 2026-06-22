@@ -17,6 +17,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
@@ -1059,6 +1060,51 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandL
         }
     }
     EXPECT_TRUE(tagFound);
+}
+
+HWTEST2_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndHeaplessModeWhenExecutingCommandListThenHeapAddressesAreInsertedAndMadeResident, IsHeaplessRequired) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using Parse = typename FamilyType::Parse;
+
+    ASSERT_TRUE(commandQueue->heaplessModeEnabled);
+
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    csr->storeMakeResidentAllocations = true;
+    auto tagsManager = neoDevice->getRootDeviceEnvironment().tagsManager.get();
+    auto bxmlHeapAllocation = tagsManager->getBXMLHeapAllocation();
+    auto swTagHeapAllocation = tagsManager->getSWTagHeapAllocation();
+
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto result = commandQueue->executeCommandLists(1, commandLists, nullptr, internalOptions);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList,
+                                          ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore),
+                                          usedSpaceAfter - usedSpaceBefore));
+
+    auto sdis = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+
+    bool bxmlHeapAddressFound = false;
+    bool swTagHeapAddressFound = false;
+    for (auto &sdi : sdis) {
+        auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(*sdi);
+        if (storeDataImm->getAddress() == bxmlHeapAllocation->getGpuAddress()) {
+            bxmlHeapAddressFound = true;
+        } else if (storeDataImm->getAddress() == swTagHeapAllocation->getGpuAddress()) {
+            swTagHeapAddressFound = true;
+        }
+    }
+
+    EXPECT_TRUE(bxmlHeapAddressFound);
+    EXPECT_TRUE(swTagHeapAddressFound);
+
+    EXPECT_TRUE(csr->isMadeResident(bxmlHeapAllocation));
+    EXPECT_TRUE(csr->isMadeResident(swTagHeapAllocation));
 }
 
 template <typename GfxFamily>
