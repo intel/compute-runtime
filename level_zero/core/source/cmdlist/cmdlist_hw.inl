@@ -3465,6 +3465,14 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
             bool crossEngineDependency = (latestFlushIsDualCopyOffload != dualStreamCopyOffloadOperation);
             auto resolveDependenciesViaPipeControls = !crossEngineDependency && !copyOnlyWait && implicitDependency && (this->dcFlushSupport || (!this->heaplessModeEnabled && this->latestOperationHasHeapfullCbEventWithProfiling));
 
+            if (resolveDependenciesViaPipeControls && this->isImmediateType()) {
+                // Disable IOQ barrier if different cmd list submitted workload between previous and current submission.
+                // Do it only if previous submission signaled IOQ counter.
+                const bool noInterleavingSinceLastSubmit = (this->cmdQImmediate->getTaskCount() == this->getCsr(false)->peekTaskCount());
+                resolveDependenciesViaPipeControls = this->isPostSyncSkippedOnLatestInOrderOperation || noInterleavingSinceLastSubmit ||
+                                                     (!this->heaplessModeEnabled && this->latestOperationHasHeapfullCbEventWithProfiling);
+            }
+
             if (NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
                 resolveDependenciesViaPipeControls = NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get();
             }
