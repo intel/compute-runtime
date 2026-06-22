@@ -866,6 +866,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
             UNRECOVERABLE_IF(0 == nextArg.requiredSlmAlignment);
             slmOffset = alignUp<uint32_t>(slmOffset, nextArg.requiredSlmAlignment);
             NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(), nextArg.slmOffset, slmOffset);
+            privateState.slmArgOffsetValues[argIndex] = slmOffset;
 
             slmOffset += static_cast<uint32_t>(privateState.slmArgSizes[argIndex]);
             ++argIndex;

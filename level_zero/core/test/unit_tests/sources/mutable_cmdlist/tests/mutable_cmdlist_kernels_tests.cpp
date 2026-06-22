@@ -1871,6 +1871,50 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
+            givenKernelWithTwoSlmArgumentsSetInReverseOrderWhenCapturedThenSlmOffsetsAreComputedCorrectly) {
+
+    resizeKernelArg(2);
+    prepareKernelArg(0, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+    prepareKernelArg(1, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+
+    uint32_t slmSize1 = 512;
+    uint32_t slmSize2 = 256;
+
+    auto result = kernel->setArgBuffer(1, slmSize2, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = kernel->setArgBuffer(0, slmSize1, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = kernel2->setArgBuffer(0, slmSize1, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = kernel2->setArgBuffer(1, slmSize2, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto kernelSlmBufferVariables = getVariableList(commandId, L0::MCL::VariableType::slmBuffer, kernel.get());
+    ASSERT_EQ(2u, kernelSlmBufferVariables.size());
+
+    auto kernel1SlmBufferVariable1 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
+    EXPECT_EQ(slmSize1, kernel1SlmBufferVariable1->desc.slmValue.slmSize);
+    EXPECT_EQ(0u, kernel1SlmBufferVariable1->desc.slmValue.slmOffsetValue);
+
+    auto kernel1SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[1]);
+    EXPECT_EQ(slmSize2, kernel1SlmBufferVariable2->desc.slmValue.slmSize);
+    EXPECT_EQ(slmSize1, kernel1SlmBufferVariable2->desc.slmValue.slmOffsetValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
             givenTwoKernelsWhenKernelBufferSetAsArgumentIsFreedThenBufferIsNotUsed) {
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
