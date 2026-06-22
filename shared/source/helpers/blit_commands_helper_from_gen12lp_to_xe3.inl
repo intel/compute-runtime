@@ -13,7 +13,7 @@ namespace NEO {
 template <typename GfxFamily>
 template <typename CommandType>
 void BlitCommandsHelper<GfxFamily>::applyAdditionalBlitProperties(const BlitProperties &blitProperties,
-                                                                  CommandType &cmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool isLast, bool isFirst) {
+                                                                  CommandType &cmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last) {
 }
 
 template <typename GfxFamily>
@@ -83,7 +83,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(co
         appendBlitFillCommand(blitProperties, tmpCmd);
 
         if (hasAdditionalBlitProperties && (firstCommand || lastCommand)) {
-            applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand, firstCommand);
+            applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
             firstCommand = false;
         }
         auto cmd = linearStream.getSpaceForCmd<XY_COLOR_BLT>();

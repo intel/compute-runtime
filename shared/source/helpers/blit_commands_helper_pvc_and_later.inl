@@ -92,7 +92,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(con
         tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
 
         if (useAdditionalBlitProperties && (firstCommand || lastCommand)) {
-            applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand, firstCommand);
+            applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
             firstCommand = false;
         }
         appendBlitMemSetCommand(blitProperties, &tmpCmd);
