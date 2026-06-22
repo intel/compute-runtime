@@ -9,6 +9,7 @@
 
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
+#include "shared/source/helpers/cache_policy_option_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -65,12 +66,7 @@ bool checkAndReplaceL1CachePolicy(std::string &buildOptions, NEO::Zebin::ZeInfo:
     if (currentCachePolicy) {
         auto currentCachePolicyIter = buildOptions.find(currentCachePolicy);
         if (currentCachePolicyIter == std::string::npos) {
-            constexpr const char *cachePolicyPrefix = "-cl-store-cache-default=";
-
-            auto cachePolicyIter = buildOptions.find(cachePolicyPrefix);
-            if (cachePolicyIter != std::string::npos) {
-                buildOptions.replace(cachePolicyIter, strlen(currentCachePolicy), currentCachePolicy);
-            }
+            CachePolicyOptionHelper::replaceCachePolicy(buildOptions, currentCachePolicy);
             return true;
         }
     }
