@@ -47,6 +47,7 @@
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/directory.h"
@@ -1569,6 +1570,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     }
 
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     GmmResourceUsageType usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper, getHardwareInfo());
     auto isUncachedType = CacheSettingsHelper::isUncachedType(usageType);
 
@@ -1601,7 +1603,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     patIndex = productHelper.overridePatIndex(isUncachedType, patIndex, allocationType);
 
     if (isSystemMemory && cacheable) {
-        patIndex = productHelper.overrideSystemMemoryPatIndex(patIndex);
+        patIndex = releaseHelper.overrideSystemMemoryPatIndex(patIndex);
     }
 
     UNRECOVERABLE_IF(patIndex == static_cast<uint64_t>(GMM_PAT_ERROR));

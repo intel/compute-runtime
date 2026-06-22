@@ -238,3 +238,17 @@ TEST_F(ReleaseHelperNvlPTests, whenIsAvailableSemaphore64CalledThenCorrectValueR
         }
     }
 }
+
+TEST_F(ReleaseHelperNvlPTests, whenOverrideSystemMemoryPatIndexIsCalledThenPatIndexIsOverriddenForNvlPA0Revision) {
+    ipVersion.value = static_cast<uint32_t>(AOT::NVL_P_A0);
+    releaseHelper = ReleaseHelper::create(ipVersion);
+
+    uint32_t patIndex = 3u;
+    EXPECT_EQ(19u, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+
+    ipVersion.value = static_cast<uint32_t>(AOT::NVL_P_B0);
+    releaseHelper = ReleaseHelper::create(ipVersion);
+
+    EXPECT_NE(19u, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+    EXPECT_EQ(patIndex, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+}

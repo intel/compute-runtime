@@ -94,25 +94,3 @@ NVLPTEST_F(NvlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
 }
-
-NVLPTEST_F(NvlProductHelperLinux, givenProductHelperWhenOverrideSystemMemoryPatIndexThenReturnPat19) {
-    uint64_t patIndex = 0u;
-    EXPECT_EQ(19u, productHelper->overrideSystemMemoryPatIndex(patIndex));
-}
-
-NVLPTEST_F(NvlProductHelperLinux, givenSystemMemoryWhenGetPatIndexThenReturnOverriddenPat19) {
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    drm->vmBindPatIndexProgrammingSupported = true;
-    bool isSystemMem = true;
-    auto patIndex = drm->getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMem, false);
-    EXPECT_EQ(19u, patIndex);
-}
-
-NVLPTEST_F(NvlProductHelperLinux, givenUncachedSystemMemoryAllocationTypeWhenGetPatIndexThenDoNotOverridePat) {
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    drm->vmBindPatIndexProgrammingSupported = true;
-    bool isSystemMem = true;
-    AllocationType allocationType = AllocationType::tagBuffer; // uncached
-    auto patIndex = drm->getPatIndex(nullptr, allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMem, false);
-    EXPECT_NE(19u, patIndex);
-}

@@ -16,4 +16,13 @@ constexpr auto release = ReleaseType::release3510;
 #include "shared/source/release_helper/release_helper_common_xe3p_lpg.inl"
 #include "shared/source/release_helper/release_helper_preferred_slm_xe3p_igpu_192k.inl"
 
+template <>
+uint64_t NEO::ReleaseHelperHw<NEO::release>::overrideSystemMemoryPatIndex(uint64_t patIndex) const {
+    if (this->hardwareIpVersion.value == static_cast<uint32_t>(AOT::NVL_P_A0)) {
+        return 19u;
+    }
+
+    return patIndex;
+}
+
 template class NEO::ReleaseHelperHw<NEO::release>;

@@ -86,6 +86,7 @@ class ReleaseHelper {
     bool isAvailableSemaphore64(const HardwareInfo &hwInfo) const;
     virtual bool isLatePreemptionStartSupportedHelper() const = 0;
     virtual bool isReducedSurfaceStateSupported() const = 0;
+    virtual uint64_t overrideSystemMemoryPatIndex(uint64_t patIndex) const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -142,6 +143,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isAvailableSemaphore64Base() const override;
     bool isLatePreemptionStartSupportedHelper() const override;
     bool isReducedSurfaceStateSupported() const override;
+    uint64_t overrideSystemMemoryPatIndex(uint64_t patIndex) const override;
 };
 
 template <uint32_t architecture>

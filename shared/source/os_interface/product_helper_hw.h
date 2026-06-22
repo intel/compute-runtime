@@ -172,7 +172,6 @@ class ProductHelperHw : public ProductHelper {
     bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
     bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const override;
     uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const override;
-    uint64_t overrideSystemMemoryPatIndex(uint64_t patIndex) const override;
     const SupportedNumGrfs getSupportedNumGrfs(const ReleaseHelper &releaseHelper) const override;
     aub_stream::EngineType getDefaultCopyEngine() const override;
     void adjustEngineGroupType(EngineGroupType &engineGroupType) const override;

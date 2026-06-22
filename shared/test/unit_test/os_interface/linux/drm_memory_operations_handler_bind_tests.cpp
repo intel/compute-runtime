@@ -1090,6 +1090,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
     csr->setupContext(*osContext);
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto &releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
 
     bool closSupported = (productHelper.getNumCacheRegions() > 0);
     bool patIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
@@ -1126,7 +1127,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
 
         if (debugFlag == 0 || !closSupported || debugFlag == -1) {
             auto expectedIndex = productHelper.overridePatIndex(false, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), allocation.getAllocationType());
-            expectedIndex = productHelper.overrideSystemMemoryPatIndex(expectedIndex);
+            expectedIndex = releaseHelper.overrideSystemMemoryPatIndex(expectedIndex);
 
             EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 

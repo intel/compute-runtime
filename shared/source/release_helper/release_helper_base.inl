@@ -232,4 +232,9 @@ bool ReleaseHelperHw<releaseType>::isReducedSurfaceStateSupported() const {
     return false;
 }
 
+template <ReleaseType releaseType>
+uint64_t ReleaseHelperHw<releaseType>::overrideSystemMemoryPatIndex(uint64_t patIndex) const {
+    return patIndex;
+}
+
 } // namespace NEO

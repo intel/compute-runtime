@@ -46,10 +46,5 @@ bool ProductHelperHw<gfxProduct>::areSecondaryContextsSupported() const {
     return true;
 }
 
-template <>
-uint64_t ProductHelperHw<gfxProduct>::overrideSystemMemoryPatIndex(uint64_t patIndex) const {
-    return 19u;
-}
-
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

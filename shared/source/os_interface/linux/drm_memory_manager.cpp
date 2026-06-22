@@ -761,6 +761,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     }
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex].get();
     auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+    auto &releaseHelper = rootDeviceEnvironment->getReleaseHelper();
     auto alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
     auto alignedSize = alignSizeWholePage(allocationData.hostPtr, allocationData.size);
     auto realAllocationSize = alignedSize;
@@ -780,7 +781,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
 
     auto usageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, productHelper);
     auto patIndex = rootDeviceEnvironment->getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, false, true);
-    patIndex = static_cast<uint32_t>(productHelper.overrideSystemMemoryPatIndex(patIndex));
+    patIndex = static_cast<uint32_t>(releaseHelper.overrideSystemMemoryPatIndex(patIndex));
 
     auto bos = createBufferObjectsForNonSvmHostPtr(realAllocationSize, alignedPtr, gpuVirtualAddress, allocationData, rootDeviceIndex, patIndex, alignedSize);
     if (bos.empty()) {
