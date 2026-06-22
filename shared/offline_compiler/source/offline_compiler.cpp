@@ -1755,8 +1755,8 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                             Example: 0: 32505859
 %s
 Examples :
-  Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
-    ocloc -file source_file.cl -device skl
+  Compile file to Intel Compute GPU device binary (out = source_file_xe3_lpg.bin)
+    ocloc -file source_file.cl -device ptl-h
 )OCLOC_HELP",
                       getSupportedDevices(argHelper).c_str(),
                       getDeprecatedDevices(argHelper).c_str(),

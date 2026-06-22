@@ -76,20 +76,20 @@ Commands:
 Default command (when none provided) is 'compile'.
 
 Examples:
-  Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
-    ocloc -file source_file.cl -device skl
+  Compile file to Intel Compute GPU device binary (out = source_file_xe3_lpg.bin)
+    ocloc -file source_file.cl -device ptl-h
 
   Link two SPIR-V files.
     ocloc link -file sample1.spv -file sample2.spv -out_format LLVM_BC -out samples_merged.llvm_bc
 
   Disassemble Intel Compute GPU device binary
-    ocloc disasm -file source_file_Gen9core.bin
+    ocloc disasm -file source_file_xe3_lpg.bin
 
   Assemble to Intel Compute GPU device binary (after above disasm)
     ocloc asm -out reassembled.bin
 
   Validate Intel Compute GPU device binary
-    ocloc validate -file source_file_Gen9core.bin
+    ocloc validate -file source_file_xe3_lpg.bin
 
   Extract driver version
     ocloc query OCL_DRIVER_VERSION
