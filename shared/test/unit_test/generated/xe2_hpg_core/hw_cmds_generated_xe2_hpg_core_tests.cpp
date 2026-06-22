@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -708,6 +708,17 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenRenderSurfaceStateWhenInitCalled
     EXPECT_EQ(0x0u, cmd.TheStructure.AuxiliarySurfaceModeIsnotAux_Append.ProceduralTexture);
 }
 
+XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenRenderSurfaceStateWhenInitCalledThenEnableSamplerRouteToLscIsSetToTrue) {
+    using RENDER_SURFACE_STATE = NEO::Xe2HpgCoreFamily::RENDER_SURFACE_STATE;
+    RENDER_SURFACE_STATE cmd;
+
+    cmd.init();
+
+    EXPECT_EQ(0x0u, cmd.getResourceMinLod());
+    EXPECT_EQ(true, cmd.getEnableSamplerRouteToLsc());
+    EXPECT_THROW(cmd.setEnableSamplerRouteToLsc(0x0u), std::exception);
+}
+
 XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenRenderSurfaceStateWhenSetterUsedThenGetterReturnsValidValue) { // patched
     using RENDER_SURFACE_STATE = NEO::Xe2HpgCoreFamily::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE cmd;
@@ -728,10 +739,9 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenRenderSurfaceStateWhenSetterUsed
     cmd.setRenderCacheReadWriteMode(RENDER_SURFACE_STATE::RENDER_CACHE_READ_WRITE_MODE_READ_WRITE_CACHE);
     EXPECT_EQ(RENDER_SURFACE_STATE::RENDER_CACHE_READ_WRITE_MODE_READ_WRITE_CACHE, cmd.getRenderCacheReadWriteMode());
 
-    cmd.setEnableSamplerRouteToLsc(0x0u);
-    EXPECT_EQ(0x0u, cmd.getEnableSamplerRouteToLsc());
     cmd.setEnableSamplerRouteToLsc(0x1u);
     EXPECT_EQ(0x1u, cmd.getEnableSamplerRouteToLsc());
+    EXPECT_THROW(cmd.setEnableSamplerRouteToLsc(0x0u), std::exception);
 
     cmd.setVerticalLineStrideOffset(0x0u);
     EXPECT_EQ(0x0u, cmd.getVerticalLineStrideOffset());
