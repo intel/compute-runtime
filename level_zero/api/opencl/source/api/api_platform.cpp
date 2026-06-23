@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/product_helper.h"
+
 #include "level_zero/api/opencl/source/api/additional_extensions.h"
 #include "level_zero/api/opencl/source/api/api.h"
 #include "level_zero/api/opencl/source/helpers/base_object.h"
@@ -24,7 +27,15 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         return CL_INVALID_VALUE;
     }
 
-    if (NEO::debugManager.flags.EnableLEO.get() != 1) {
+    auto enableLEOFlag = NEO::debugManager.flags.EnableLEO.get();
+    if (enableLEOFlag == 0) {
+        if (numPlatforms) {
+            *numPlatforms = 0;
+        }
+        return CL_SUCCESS;
+    }
+
+    if (!NEO::LEO::platformsImpl) {
         if (numPlatforms) {
             *numPlatforms = 0;
         }
@@ -49,10 +60,32 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         }
     }
 
-    if (numPlatforms) {
-        *numPlatforms = static_cast<cl_uint>(NEO::LEO::platformsImpl->size());
+    if (enableLEOFlag != 1 && NEO::LEO::platformsImpl) {
+        bool leoEnabledForAnyDevice = false;
+        for (const auto &platform : *NEO::LEO::platformsImpl) {
+            for (const auto &device : platform->getDevices()) {
+                auto &productHelper = device->getDevice().getRootDeviceEnvironment().getProductHelper();
+                if (productHelper.isLEOSupported()) {
+                    leoEnabledForAnyDevice = true;
+                    break;
+                }
+            }
+            if (leoEnabledForAnyDevice) {
+                break;
+            }
+        }
+        if (!leoEnabledForAnyDevice) {
+            if (numPlatforms) {
+                *numPlatforms = 0;
+            }
+            return CL_SUCCESS;
+        }
     }
-    if (platforms) {
+
+    if (numPlatforms) {
+        *numPlatforms = NEO::LEO::platformsImpl ? static_cast<cl_uint>(NEO::LEO::platformsImpl->size()) : 0u;
+    }
+    if (platforms && NEO::LEO::platformsImpl) {
         auto numPlatformsToReturn = std::min(static_cast<cl_uint>(NEO::LEO::platformsImpl->size()), numEntries);
         for (cl_uint i = 0; i < numPlatformsToReturn; ++i) {
             platforms[i] = (*NEO::LEO::platformsImpl)[i].get();

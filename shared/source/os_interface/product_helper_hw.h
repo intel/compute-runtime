@@ -223,6 +223,7 @@ class ProductHelperHw : public ProductHelper {
     std::optional<uint8_t> getBcsCompressionFormat() const override;
     bool isProgramAdditionalEngineMMIORequired(const HardwareInfo &hwInfo) const override;
     bool isFrontEndControllerEnabled() const override;
+    bool isLEOSupported() const override;
 
     ~ProductHelperHw() override = default;
 

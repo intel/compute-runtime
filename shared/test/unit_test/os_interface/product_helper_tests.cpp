@@ -1390,3 +1390,7 @@ HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenRetur
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsMemSetExtendedPayloadSupportedThenFalseReturned, IsAtMostXe3pCore) {
     EXPECT_FALSE(productHelper->isMemSetExtendedPayloadSupported());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalseReturned) {
+    EXPECT_FALSE(productHelper->isLEOSupported());
+}

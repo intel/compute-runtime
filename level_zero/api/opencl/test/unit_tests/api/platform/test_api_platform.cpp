@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/platform/platform.h"
@@ -28,6 +29,7 @@ TEST(GetPlatformIDsTests, givenNonZeroNumEntriesAndBothOutputsNullThenReturnsCLI
 }
 
 TEST(GetPlatformIDsTests, givenBothOutputsNullAndZeroNumEntriesThenReturnsSuccess) {
+    VariableBackup<decltype(platformsImpl)> platformsImplBackup{&platformsImpl, nullptr};
     auto retVal = clGetPlatformIDs(0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }

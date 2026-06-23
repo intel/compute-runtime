@@ -12,8 +12,18 @@
 
 namespace NEO {
 
+static void loadL0Library();
+
 bool isLEOEnabled() {
-    return debugManager.flags.EnableLEO.get() == 1;
+    auto flag = debugManager.flags.EnableLEO.get();
+    if (flag == 0) {
+        return false;
+    }
+    loadL0Library();
+    if (flag == 1) {
+        return true;
+    }
+    return l0ForwardingState && l0ForwardingState->hasPlatforms;
 }
 
 L0ForwardingState *l0ForwardingState = nullptr;
@@ -55,11 +65,20 @@ static void loadL0Library() {
         l0ForwardingState->clGetCLObjectInfoINTELFunc = reinterpret_cast<pfnClGetCLObjectInfoINTEL>(l0ForwardingState->library->getProcAddress("clGetCLObjectInfoINTEL"));
         l0ForwardingState->clGetCLEventInfoINTELFunc = reinterpret_cast<pfnClGetCLEventInfoINTEL>(l0ForwardingState->library->getProcAddress("clGetCLEventInfoINTEL"));
         l0ForwardingState->clReleaseGlSharedEventINTELFunc = reinterpret_cast<pfnClReleaseGlSharedEventINTEL>(l0ForwardingState->library->getProcAddress("clReleaseGlSharedEventINTEL"));
+
+        if (l0ForwardingState->clGetPlatformIDsFunc) {
+            cl_uint numPlatforms = 0u;
+            l0ForwardingState->clGetPlatformIDsFunc(0, nullptr, &numPlatforms);
+            l0ForwardingState->hasPlatforms = (numPlatforms > 0u);
+        }
+
+        if (!l0ForwardingState->hasPlatforms && debugManager.flags.EnableLEO.get() == -1 && debugManager.flags.SetCommandStreamReceiver.get() <= 0) {
+            l0ForwardingState->library.reset();
+        }
     }
 }
 
 cl_int forwardClGetPlatformIDs(cl_uint numEntries, cl_platform_id *platforms, cl_uint *numPlatforms) {
-    loadL0Library();
     if (l0ForwardingState && l0ForwardingState->clGetPlatformIDsFunc) [[likely]] {
         return l0ForwardingState->clGetPlatformIDsFunc(numEntries, platforms, numPlatforms);
     }
@@ -70,7 +89,6 @@ cl_int forwardClGetPlatformIDs(cl_uint numEntries, cl_platform_id *platforms, cl
 }
 
 cl_int forwardClGetPlatformInfo(cl_platform_id platform, cl_platform_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) {
-    loadL0Library();
     if (l0ForwardingState && l0ForwardingState->clGetPlatformInfoFunc) [[likely]] {
         return l0ForwardingState->clGetPlatformInfoFunc(platform, paramName, paramValueSize, paramValue, paramValueSizeRet);
     }
@@ -78,7 +96,6 @@ cl_int forwardClGetPlatformInfo(cl_platform_id platform, cl_platform_info paramN
 }
 
 cl_int forwardClGetDeviceIDs(cl_platform_id platform, cl_device_type deviceType, cl_uint numEntries, cl_device_id *devices, cl_uint *numDevices) {
-    loadL0Library();
     if (l0ForwardingState && l0ForwardingState->clGetDeviceIDsFunc) [[likely]] {
         return l0ForwardingState->clGetDeviceIDsFunc(platform, deviceType, numEntries, devices, numDevices);
     }
@@ -86,7 +103,6 @@ cl_int forwardClGetDeviceIDs(cl_platform_id platform, cl_device_type deviceType,
 }
 
 void *forwardClGetExtensionFunctionAddress(const char *funcName) {
-    loadL0Library();
     if (l0ForwardingState && l0ForwardingState->clGetExtensionFunctionAddressFunc) [[likely]] {
         return l0ForwardingState->clGetExtensionFunctionAddressFunc(funcName);
     }
@@ -94,7 +110,6 @@ void *forwardClGetExtensionFunctionAddress(const char *funcName) {
 }
 
 cl_int forwardClEnqueueMarkerWithSyncObjectINTEL(cl_command_queue commandQueue, cl_event *event, cl_context *context) {
-    loadL0Library();
     if (l0ForwardingState && l0ForwardingState->clEnqueueMarkerWithSyncObjectINTELFunc) [[likely]] {
         return l0ForwardingState->clEnqueueMarkerWithSyncObjectINTELFunc(commandQueue, event, context);
     }
@@ -102,7 +117,6 @@ cl_int forwardClEnqueueMarkerWithSyncObjectINTEL(cl_command_queue commandQueue, 
 }
 
 cl_int forwardClGetCLObjectInfoINTEL(cl_mem memObj, void *pResourceInfo) {
-    loadL0Library();
     if (l0ForwardingState && l0ForwardingState->clGetCLObjectInfoINTELFunc) [[likely]] {
         return l0ForwardingState->clGetCLObjectInfoINTELFunc(memObj, pResourceInfo);
     }
@@ -110,7 +124,6 @@ cl_int forwardClGetCLObjectInfoINTEL(cl_mem memObj, void *pResourceInfo) {
 }
 
 cl_int forwardClGetCLEventInfoINTEL(cl_event event, void **pSyncInfoHandleRet, cl_context *pClContextRet) {
-    loadL0Library();
     if (l0ForwardingState && l0ForwardingState->clGetCLEventInfoINTELFunc) [[likely]] {
         return l0ForwardingState->clGetCLEventInfoINTELFunc(event, pSyncInfoHandleRet, pClContextRet);
     }
@@ -118,7 +131,6 @@ cl_int forwardClGetCLEventInfoINTEL(cl_event event, void **pSyncInfoHandleRet, c
 }
 
 cl_int forwardClReleaseGlSharedEventINTEL(cl_event event) {
-    loadL0Library();
     if (l0ForwardingState && l0ForwardingState->clReleaseGlSharedEventINTELFunc) [[likely]] {
         return l0ForwardingState->clReleaseGlSharedEventINTELFunc(event);
     }

@@ -292,6 +292,7 @@ class ProductHelper {
     virtual std::optional<uint8_t> getBcsCompressionFormat() const = 0;
     virtual bool isProgramAdditionalEngineMMIORequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isFrontEndControllerEnabled() const = 0;
+    virtual bool isLEOSupported() const = 0;
 
     virtual ~ProductHelper() = default;
 

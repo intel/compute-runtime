@@ -36,6 +36,7 @@ using pfnClReleaseGlSharedEventINTEL = cl_int(CL_API_CALL *)(cl_event);
 struct L0ForwardingState {
     std::mutex mutex;
     bool loaded = false;
+    bool hasPlatforms = false;
     std::unique_ptr<OsLibrary> library;
     decltype(&clGetPlatformIDs) clGetPlatformIDsFunc = nullptr;
     decltype(&clGetPlatformInfo) clGetPlatformInfoFunc = nullptr;
