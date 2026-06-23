@@ -303,6 +303,11 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         retVal = CL_INVALID_OPERATION;
         break;
     case CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL:
+        if (nullptr == paramValue ||
+            sizeof(cl_execution_info_kernel_type_intel) != paramValueSize) [[unlikely]] {
+            return CL_INVALID_VALUE;
+        }
+        retVal = pKernel->setKernelExecutionType(*reinterpret_cast<const cl_execution_info_kernel_type_intel *>(paramValue));
         break;
     default:
         retVal = CL_INVALID_VALUE;

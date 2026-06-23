@@ -998,6 +998,11 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return CL_INVALID_KERNEL_ARGS;
     }
 
+    if (pKernel->getExecutionType() != NEO::KernelExecutionType::defaultType ||
+        pKernel->getL0Object()->getKernelDescriptor().kernelAttributes.flags.usesSyncBuffer) [[unlikely]] {
+        return CL_INVALID_KERNEL;
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
     auto cmdlistHandle = pCommandQueue->getL0Handle();
     auto lock = pCommandQueue->takeOwnership();
@@ -1537,6 +1542,12 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
         return CL_INVALID_VALUE;
     }
 
+    const bool isConcurrent = pKernel->getExecutionType() == NEO::KernelExecutionType::concurrent;
+
+    if (pKernel->getL0Object()->getKernelDescriptor().kernelAttributes.flags.usesSyncBuffer && !isConcurrent) [[unlikely]] {
+        return CL_INVALID_KERNEL;
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
     auto cmdlistHandle = pCommandQueue->getL0Handle();
     auto lock = pCommandQueue->takeOwnership();
@@ -1578,13 +1589,31 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
         return L0ToClResultMapper(ret);
     }
 
+    if (isConcurrent) {
+        const size_t resolvedLws[3] = {lws[0], lws[1], lws[2]};
+        size_t maximalNumberOfWorkgroupsAllowed = 0;
+        auto countRet = pKernel->getMaxConcurrentWorkGroupCount(workDim, resolvedLws, &maximalNumberOfWorkgroupsAllowed);
+        if (countRet != CL_SUCCESS) [[unlikely]] {
+            return countRet;
+        }
+        size_t requestedNumberOfWorkgroups = 1;
+        for (cl_uint i = 0; i < workDim; i++) {
+            requestedNumberOfWorkgroups *= workgroupCount[i];
+        }
+        if (requestedNumberOfWorkgroups > maximalNumberOfWorkgroupsAllowed) [[unlikely]] {
+            return CL_INVALID_VALUE;
+        }
+    }
+
     const auto queueRootDeviceIndex = pCommandQueue->getDevice()->getRootDeviceIndex();
     const bool outOfOrder = pCommandQueue->isOutOfOrder();
     for (const auto &[argIndex, pImage] : pKernel->getImageArgs()) {
         pImage->migrateTo(cmdlistHandle, queueRootDeviceIndex, outOfOrder, static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     }
 
-    ret = zeCommandListAppendLaunchCooperativeKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data());
+    ret = isConcurrent
+              ? zeCommandListAppendLaunchCooperativeKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data())
+              : zeCommandListAppendLaunchKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data());
     return L0ToClResultMapper(ret);
 }
 

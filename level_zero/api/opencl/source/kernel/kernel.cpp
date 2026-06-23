@@ -28,7 +28,7 @@ Kernel::Kernel(std::map<uint32_t, ze_kernel_handle_t> kernelHandles, Program *pr
     program->incRefInternal();
 }
 
-Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), program(sourceKernel->program) {
+Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), program(sourceKernel->program), executionType(sourceKernel->executionType) {
     for (const auto &[rootDeviceIndex, kernelHandle] : sourceKernel->kernelHandles) {
         this->kernelHandles[rootDeviceIndex] = static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle))->makeDependentClone().release();
     }
@@ -451,6 +451,20 @@ ze_scheduling_hint_exp_flags_t Kernel::schedulingHintToL0(uint32_t arbitrationPo
     case CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_OLDEST_FIRST_INTEL:
         return ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST;
     }
+}
+
+cl_int Kernel::setKernelExecutionType(cl_execution_info_kernel_type_intel type) {
+    switch (type) {
+    case CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL:
+        this->executionType = NEO::KernelExecutionType::defaultType;
+        break;
+    case CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL:
+        this->executionType = NEO::KernelExecutionType::concurrent;
+        break;
+    default:
+        return CL_INVALID_VALUE;
+    }
+    return CL_SUCCESS;
 }
 
 cl_int Kernel::getMaxConcurrentWorkGroupCount(cl_uint workDim, const size_t *localWorkSize, size_t *suggestedWorkGroupCount) {

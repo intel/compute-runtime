@@ -325,6 +325,46 @@ TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenValidInputWhenGetKernelSugge
     EXPECT_EQ(1u, suggestedLocalWorkSize[0]);
 }
 
+TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenConcurrentTypeWhenSetKernelExecInfoKernelTypeThenExecutionTypeIsStored) {
+    cl_execution_info_kernel_type_intel type = CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL;
+
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL, sizeof(type), &type);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(NEO::KernelExecutionType::concurrent, kernel->getExecutionType());
+}
+
+TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenDefaultTypeWhenSetKernelExecInfoKernelTypeThenExecutionTypeIsStored) {
+    cl_execution_info_kernel_type_intel type = CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL;
+
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL, sizeof(type), &type);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(NEO::KernelExecutionType::defaultType, kernel->getExecutionType());
+}
+
+TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenInvalidTypeWhenSetKernelExecInfoKernelTypeThenReturnsCLInvalidValue) {
+    cl_execution_info_kernel_type_intel type = CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL + 0xff;
+
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL, sizeof(type), &type);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenInvalidParamValueSizeWhenSetKernelExecInfoKernelTypeThenReturnsCLInvalidValue) {
+    cl_execution_info_kernel_type_intel type = CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL;
+
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL, sizeof(type) - 1, &type);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenNullParamValueWhenSetKernelExecInfoKernelTypeThenReturnsCLInvalidValue) {
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL, sizeof(cl_execution_info_kernel_type_intel), nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
 TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenNullCommandQueueWhenGetKernelSuggestedLocalWorkSizeINTELThenReturnsCLInvalidCommandQueue) {
     size_t globalWorkSize[3] = {1, 1, 1};
     size_t suggestedLocalWorkSize[3] = {};

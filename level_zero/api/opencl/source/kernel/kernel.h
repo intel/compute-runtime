@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/kernel/kernel_execution_type.h"
+
 #include "level_zero/api/opencl/source/api/cl_types.h"
 #include "level_zero/api/opencl/source/helpers/base_object.h"
 #include "level_zero/api/opencl/source/program/program.h"
@@ -62,6 +64,8 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     cl_int setIndirectAccess(cl_kernel_exec_info flag, cl_bool val);
     cl_int setThreadArbitrationPolicy(uint32_t flag);
+    cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel type);
+    NEO::KernelExecutionType getExecutionType() const { return this->executionType; }
 
     cl_int setArgumentValue(uint32_t argIndex, size_t argSize, const void *argValue);
 
@@ -85,6 +89,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::map<uint32_t, ze_kernel_handle_t> kernelHandles{};
     std::map<uint32_t, Image *> imageArgs{};
     Program *program = nullptr;
+    NEO::KernelExecutionType executionType = NEO::KernelExecutionType::defaultType;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Kernel>);
