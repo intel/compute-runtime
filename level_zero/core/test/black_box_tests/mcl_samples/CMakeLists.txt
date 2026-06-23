@@ -40,7 +40,7 @@ foreach(TEST_NAME ${TEST_TARGETS})
                         VS_DEBUGGER_WORKING_DIRECTORY "${TargetDir}"
   )
 
-  target_link_libraries(${TEST_NAME} PUBLIC ${L0_BB_LINK_TARGET})
+  target_link_libraries(${TEST_NAME} PUBLIC ${L0_LOADER_LIBRARY})
 
   target_link_libraries(${TEST_NAME} PUBLIC ocloc_lib)
 

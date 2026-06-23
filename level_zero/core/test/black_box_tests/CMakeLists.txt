@@ -37,14 +37,6 @@ target_include_directories(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC
 
 set_target_properties(${L0_BLACK_BOX_TEST_SHARED_LIB} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
 
-if("${EXTERNAL_L0_LOADER_PATH}" STREQUAL "")
-  set(L0_BB_LINK_TARGET ${TARGET_NAME_L0})
-  message(STATUS "Linking black box tests against driver library")
-else()
-  set(L0_BB_LINK_TARGET ${EXTERNAL_L0_LOADER_PATH})
-  message(STATUS "Linking black box tests against external ${EXTERNAL_L0_LOADER_PATH}")
-endif()
-
 set(TEST_TARGETS
     zello_arg_slm
     zello_atomic_inc
@@ -135,7 +127,17 @@ foreach(TEST_NAME ${TEST_TARGETS})
                         VS_DEBUGGER_WORKING_DIRECTORY "${TargetDir}"
   )
 
-  target_link_libraries(${TEST_NAME} PUBLIC ${L0_BB_LINK_TARGET})
+  target_link_libraries(${TEST_NAME} PUBLIC ${L0_LOADER_LIBRARY})
+
+  if(${TEST_NAME} STREQUAL "zello_opencl_interop")
+    find_package(OpenCL QUIET)
+    if(OpenCL_FOUND)
+      target_link_libraries(${TEST_NAME} PUBLIC ${OpenCL_LIBRARIES})
+    else()
+      message(STATUS "OpenCL not found, skipping zello_opencl_interop")
+      set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    endif()
+  endif()
 
   set_target_properties(${TEST_NAME} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
 

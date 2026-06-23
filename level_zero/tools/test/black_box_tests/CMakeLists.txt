@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,12 +24,7 @@ if(UNIX)
                                ${NEO_SOURCE_DIR}/level_zero/include
     )
 
-    if(BUILD_LEVEL_ZERO_LOADER)
-      add_dependencies(${TEST_NAME} ze_loader)
-      target_link_libraries(${TEST_NAME} ${NEO_BINARY_DIR}/lib/libze_loader.so pthread)
-    else()
-      target_link_libraries(${TEST_NAME} PUBLIC ${TARGET_NAME_L0} pthread)
-    endif()
+    target_link_libraries(${TEST_NAME} PUBLIC ${L0_LOADER_LIBRARY} pthread)
     set_target_properties(${TEST_NAME} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
   endforeach()
 endif()
@@ -53,12 +48,7 @@ if(WIN32)
                                ${NEO_SOURCE_DIR}/level_zero/include
     )
 
-    if(BUILD_LEVEL_ZERO_LOADER)
-      add_dependencies(${TEST_NAME} ze_loader)
-      target_link_libraries(${TEST_NAME} ${NEO_BINARY_DIR}/lib/libze_loader.dll)
-    else()
-      target_link_libraries(${TEST_NAME} PUBLIC ${TARGET_NAME_L0})
-    endif()
+    target_link_libraries(${TEST_NAME} PUBLIC ${L0_LOADER_LIBRARY})
     set_target_properties(${TEST_NAME} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
   endforeach()
 endif()

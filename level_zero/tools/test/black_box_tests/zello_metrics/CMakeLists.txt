@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,12 +24,7 @@ target_sources(${ZELLO_METRICS_TARGET}
 
 add_subdirectories()
 
-if(BUILD_LEVEL_ZERO_LOADER)
-  add_dependencies(${ZELLO_METRICS_TARGET} ze_loader)
-  target_link_libraries(${ZELLO_METRICS_TARGET} ${NEO_BINARY_DIR}/lib/libze_loader.so)
-else()
-  target_link_libraries(${ZELLO_METRICS_TARGET} PUBLIC ${TARGET_NAME_L0})
-endif()
+target_link_libraries(${ZELLO_METRICS_TARGET} PUBLIC ${L0_LOADER_LIBRARY})
 if(UNIX)
   target_link_libraries(${ZELLO_METRICS_TARGET} PUBLIC pthread)
 endif()
