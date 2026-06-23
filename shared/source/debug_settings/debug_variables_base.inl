@@ -227,7 +227,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceExtendedUSMBufferSize, -1, "-1: default, 0:
 DECLARE_DEBUG_VARIABLE(int32_t, ForceExtendedKernelIsaSize, -1, "-1: default, 0: disabled, >=1: Forces extended kernel isa size by specified pageSize number")
 DECLARE_DEBUG_VARIABLE(int32_t, FillBufferTailWithPattern, 0, "Fill extended buffer tail with pattern when ForceExtendedBufferSize is enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSimdMessageSizeInWalker, -1, "-1: default, >=0 Program given value in Walker command for SIMD size")
-DECLARE_DEBUG_VARIABLE(bool, EnableCpuIntrinsicsMemcpy, false, "Use CPU intrinsics memcpy for L0 in zeAppendMemoryCopy")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableCpuStreamMemcpy, -1, "-1: default, 0: disable, 1: enable, Use CPU stream memcpy for L0 in zeAppendMemoryCopy")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableRecoverablePageFaults, -1, "-1: default - ignore, 0: disable, 1: enable recoverable page faults on all VMs (on faultable hardware)")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableImplicitMigrationOnFaultableHardware, -1, "-1: default - ignore, 0: disable, 1: enable implicit migration on faultable hardware (for all allocations)")
 DECLARE_DEBUG_VARIABLE(int32_t, UseDrmVirtualEnginesForCcs, -1, "-1: default, 0: disable, 1: enable,  Combine all CCS nodes to single VE (per context)")

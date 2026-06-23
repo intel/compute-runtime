@@ -1583,7 +1583,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         signalEvent->setGpuStartTimestamp();
     }
 
-    if (NEO::debugManager.flags.EnableCpuIntrinsicsMemcpy.get()) {
+    if (NEO::debugManager.flags.EnableCpuStreamMemcpy.get() != 0) {
         NEO::streamCopy(cpuMemcpyDstPtr, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
     } else {
         memcpy_s(cpuMemcpyDstPtr, cpuMemCopyInfo.size, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
