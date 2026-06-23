@@ -168,7 +168,14 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
 
 class UsmMemAllocPoolsFacade : NEO::NonCopyableAndNonMovableClass {
   public:
-    bool initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager);
+    using CustomCleanupFn = UsmMemAllocPool::CustomCleanupFn;
+    struct InitParams {
+        CustomCleanupFn customCleanup{};
+        bool trackResidency{false};
+        bool compressedHint{false};
+    };
+    static bool poolingEnabled(InternalMemoryType memoryType, bool enabledByDefault);
+    bool initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager, const InitParams &initParams);
     bool isInitialized() const;
     void cleanup();
     void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
@@ -176,6 +183,8 @@ class UsmMemAllocPoolsFacade : NEO::NonCopyableAndNonMovableClass {
     size_t getPooledAllocationSize(const void *ptr);
     void *getPooledAllocationBasePtr(const void *ptr);
     UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
+    UsmMemAllocPool *getPool() const { return pool.get(); }
+    UsmMemAllocPoolsManager *getPoolManager() const { return poolManager.get(); }
 
   protected:
     std::unique_ptr<UsmMemAllocPool> pool;

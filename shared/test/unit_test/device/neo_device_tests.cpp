@@ -2842,7 +2842,7 @@ TEST(Device, givenDeviceWhenGettingMicrosecondResolutionThenCorrectValueReturned
 TEST(Device, givenDeviceWhenCallingUsmAllocationPoolMethodsThenCorrectValueReturned) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
-    EXPECT_EQ(nullptr, device->getUsmMemAllocPool());
+    EXPECT_EQ(nullptr, device->getDeviceUsmMemAllocPoolFacade().getPool());
     device->cleanupUsmAllocationPool();
 
     auto poolInfo = PoolInfo::getPoolInfos(device->getGfxCoreHelper())[0];
@@ -2851,10 +2851,11 @@ TEST(Device, givenDeviceWhenCallingUsmAllocationPoolMethodsThenCorrectValueRetur
     void *poolStartPtr = addrToPtr(0xBEEF);
     void *poolEndPtr = addrToPtr(0xBEEF + poolInfo.poolSize - 1);
     void *pastPoolEndPtr = addrToPtr(0xBEEF + poolInfo.poolSize);
+    auto &mockFacade = static_cast<MockUsmMemAllocPoolsFacade &>(device->getDeviceUsmMemAllocPoolFacade());
     {
         auto *usmAllocPool = new MockUsmMemAllocPool;
-        device->resetUsmAllocationPool(usmAllocPool);
-        EXPECT_EQ(usmAllocPool, device->getUsmMemAllocPool());
+        mockFacade.pool.reset(usmAllocPool);
+        EXPECT_EQ(usmAllocPool, device->getDeviceUsmMemAllocPoolFacade().getPool());
         usmAllocPool->pool = poolStartPtr;
         usmAllocPool->poolEnd = pastPoolEndPtr;
         usmAllocPool->poolInfo = poolInfo;
@@ -2866,17 +2867,16 @@ TEST(Device, givenDeviceWhenCallingUsmAllocationPoolMethodsThenCorrectValueRetur
 
         EXPECT_EQ(0u, usmAllocPool->cleanupCalled);
         device->cleanupUsmAllocationPool();
-        EXPECT_EQ(1u, usmAllocPool->cleanupCalled);
-        device->resetUsmAllocationPool(nullptr);
+        EXPECT_EQ(nullptr, device->getDeviceUsmMemAllocPoolFacade().getPool());
     }
 
     {
-        EXPECT_EQ(nullptr, device->getUsmMemAllocPoolsManager());
+        EXPECT_EQ(nullptr, device->getDeviceUsmMemAllocPoolFacade().getPoolManager());
         RootDeviceIndicesContainer rootDeviceIndices = {device->getRootDeviceIndex()};
         std::map<uint32_t, DeviceBitfield> deviceBitfields{{device->getRootDeviceIndex(), device->getDeviceBitfield()}};
         MockUsmMemAllocPoolsManager *usmAllocPoolManager = new MockUsmMemAllocPoolsManager(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, device.get());
-        device->resetUsmAllocationPoolManager(usmAllocPoolManager);
-        EXPECT_EQ(usmAllocPoolManager, device->getUsmMemAllocPoolsManager());
+        mockFacade.poolManager.reset(usmAllocPoolManager);
+        EXPECT_EQ(usmAllocPoolManager, device->getDeviceUsmMemAllocPoolFacade().getPoolManager());
         usmAllocPoolManager->canAddPoolCallBase = true;
         EXPECT_TRUE(usmAllocPoolManager->canAddPool(PoolInfo::getPoolInfos(device->getGfxCoreHelper())[0]));
 

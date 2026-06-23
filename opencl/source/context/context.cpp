@@ -535,18 +535,12 @@ void Context::initializeDeviceUsmAllocationPool() {
     }
 
     auto &productHelper = getDevices()[0]->getProductHelper();
-    bool usmDeviceAllocPoolingEnabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
-                                        productHelper.isDeviceUsmPoolAllocatorSupported() &&
-                                        DeviceFactory::isHwModeSelected();
-
-    if (debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
-        usmDeviceAllocPoolingEnabled = debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
-    }
+    const bool usmDeviceAllocPoolingEnabled = UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::deviceUnifiedMemory,
+                                                                                     ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
+                                                                                         productHelper.isDeviceUsmPoolAllocatorSupported() &&
+                                                                                         DeviceFactory::isHwModeSelected());
     if (usmDeviceAllocPoolingEnabled) {
-        auto subDeviceBitfields = getDeviceBitfields();
-        auto &neoDevice = devices[0]->getDevice();
-        subDeviceBitfields[neoDevice.getRootDeviceIndex()] = neoDevice.getDeviceBitfield();
-        this->usmDeviceMemAllocPoolsManager.initialize(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, &this->devices[0]->getDevice(), svmMemoryManager);
+        this->usmDeviceMemAllocPoolsManager.initialize(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, &this->devices[0]->getDevice(), svmMemoryManager, {});
     }
     this->usmPoolInitialized = true;
 }

@@ -362,14 +362,40 @@ UsmMemAllocPool *UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr
     return nullptr;
 }
 
-bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager) {
+bool UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType memoryType, bool enabledByDefault) {
+    int32_t poolFlag = -1;
+    switch (memoryType) {
+    case InternalMemoryType::deviceUnifiedMemory:
+        poolFlag = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get();
+        break;
+    case InternalMemoryType::hostUnifiedMemory:
+        poolFlag = NEO::debugManager.flags.EnableHostUsmAllocationPool.get();
+        break;
+    default:
+        DEBUG_BREAK_IF(true);
+        return false;
+    }
+    if (poolFlag != -1) {
+        return poolFlag > 0;
+    }
+    return enabledByDefault;
+}
+
+bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager, const InitParams &initParams) {
     bool poolManagerEnabled = true;
     if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
         poolManagerEnabled = NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != 0;
     }
 
     if (poolManagerEnabled) {
-        this->poolManager = std::make_unique<UsmMemAllocPoolsManager>(memoryType, rootDeviceIndices, subdeviceBitfields, device);
+        auto managerDevice = memoryType == InternalMemoryType::deviceUnifiedMemory ? device : nullptr;
+        this->poolManager = std::make_unique<UsmMemAllocPoolsManager>(memoryType, rootDeviceIndices, subdeviceBitfields, managerDevice);
+        if (initParams.customCleanup) {
+            this->poolManager->setCustomCleanup(initParams.customCleanup);
+        }
+        if (initParams.trackResidency) {
+            this->poolManager->enableResidencyTracking();
+        }
         return this->poolManager->initialize(svmMemoryManager);
     } else {
         this->pool = std::make_unique<UsmMemAllocPool>();
@@ -383,6 +409,13 @@ bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const Roo
         }
         if (memoryType == InternalMemoryType::deviceUnifiedMemory) {
             memoryProperties.device = device;
+            memoryProperties.allocationFlags.flags.compressedHint = initParams.compressedHint;
+        }
+        if (initParams.customCleanup) {
+            this->pool->setCustomCleanup(initParams.customCleanup);
+        }
+        if (initParams.trackResidency) {
+            this->pool->enableResidencyTracking();
         }
         return this->pool->initialize(svmMemoryManager, memoryProperties, usmPoolParams.poolSize, usmPoolParams.minServicedSize, usmPoolParams.maxServicedSize);
     }

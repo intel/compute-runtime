@@ -235,7 +235,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, mockUsmPool->pool);
     mockUsmPool->poolEnd = ptrOffset(mockUsmPool->pool, poolSize);
-    device->getNEODevice()->resetUsmAllocationPool(mockUsmPool);
+    static_cast<MockUsmMemAllocPoolsFacade &>(device->getNEODevice()->getDeviceUsmMemAllocPoolFacade()).pool.reset(mockUsmPool);
 
     size_t size = 10;
     void *ptr = ptrOffset(mockUsmPool->pool, poolSize - size);
@@ -268,7 +268,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto poolPtr = mockUsmPool->pool;
-    device->getNEODevice()->resetUsmAllocationPool(nullptr);
+    static_cast<MockUsmMemAllocPoolsFacade &>(device->getNEODevice()->getDeviceUsmMemAllocPoolFacade()).pool.reset(nullptr);
     result = context->freeMem(poolPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
@@ -4595,7 +4595,6 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         // cleanup pool before restoring svm manager
         for (auto device : driverHandle->devices) {
             device->getNEODevice()->cleanupUsmAllocationPool();
-            device->getNEODevice()->resetUsmAllocationPool(nullptr);
         }
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
@@ -6442,7 +6441,6 @@ struct MemAllocMultiSubDeviceTests : public ::testing::Test {
         // cleanup pool before restoring svm manager
         for (auto device : driverHandle->devices) {
             device->getNEODevice()->cleanupUsmAllocationPool();
-            device->getNEODevice()->resetUsmAllocationPool(nullptr);
         }
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
@@ -7006,7 +7004,7 @@ TEST_F(AllocUsmPoolMemoryTest, givenChunkDeviceMemoryWhenCallingMapDeviceMemToHo
 
     auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     auto gpuAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
-    auto expectedPtrAddress = ptrOffset(gpuAllocation->getLockedPtr(), allocData->device->getUsmMemAllocPoolsManager()->getOffsetInPool(ptr));
+    auto expectedPtrAddress = ptrOffset(gpuAllocation->getLockedPtr(), allocData->device->getDeviceUsmMemAllocPoolFacade().getPoolManager()->getOffsetInPool(ptr));
     EXPECT_EQ(expectedPtrAddress, cpuPtr);
 
     result = context->freeMem(ptr);

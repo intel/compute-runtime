@@ -870,7 +870,7 @@ class UnifiedMemoryPoolingFacadeTest : public SVMMemoryAllocatorFixture<true, 1u
         poolMemoryProperties = std::make_unique<UnifiedMemoryProperties>(poolMemoryType, MemoryConstants::preferredAlignment, rootDeviceIndices, deviceBitfields);
         poolMemoryProperties->device = poolMemoryType == InternalMemoryType::deviceUnifiedMemory ? device : nullptr;
 
-        mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get());
+        mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get(), {});
     }
     void TearDown() override {
         mockUsmMemAllocPoolsFacade.cleanup();
@@ -955,7 +955,7 @@ TEST_P(UnifiedMemoryPoolingFacadeTest, givenNoDebugFlagsWhenInitializingPoolsFac
 
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUsmAllocationPoolManager.set(-1);
-    mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get());
+    mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get(), {});
 
     EXPECT_TRUE(mockUsmMemAllocPoolsFacade.isInitialized());
     EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.poolManager);
@@ -971,11 +971,82 @@ TEST_P(UnifiedMemoryPoolingFacadeTest, givenPoolManagerDisabledAndCustomPoolSize
     debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
     debugManager.flags.EnableHostUsmAllocationPool.set(2);
 
-    mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get());
+    mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get(), {});
 
     if (poolMemoryType == InternalMemoryType::deviceUnifiedMemory) {
         EXPECT_EQ(1 * MemoryConstants::megaByte, mockUsmMemAllocPoolsFacade.pool->getPoolSize());
     } else {
         EXPECT_EQ(2 * MemoryConstants::megaByte, mockUsmMemAllocPoolsFacade.pool->getPoolSize());
     }
+}
+
+TEST_P(UnifiedMemoryPoolingFacadeTest, givenHostMemoryTypeWhenInitializingPoolManagerThenManagerIsCreatedWithNullDevice) {
+    if (!isPoolManagerEnabled) {
+        GTEST_SKIP();
+    }
+    auto mockManager = reinterpret_cast<MockUsmMemAllocPoolsManager *>(mockUsmMemAllocPoolsFacade.poolManager.get());
+    ASSERT_NE(nullptr, mockManager);
+    if (poolMemoryType == InternalMemoryType::deviceUnifiedMemory) {
+        EXPECT_EQ(device, mockManager->device);
+    } else {
+        EXPECT_EQ(nullptr, mockManager->device);
+    }
+}
+
+TEST_P(UnifiedMemoryPoolingFacadeTest, givenInitParamsWithResidencyTrackingWhenInitializingThenTrackingIsEnabledOnPool) {
+    mockUsmMemAllocPoolsFacade.cleanup();
+    mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get(), {nullptr, true, false});
+
+    if (isPoolManagerEnabled) {
+        EXPECT_TRUE(reinterpret_cast<MockUsmMemAllocPoolsManager *>(mockUsmMemAllocPoolsFacade.poolManager.get())->trackResidency);
+    } else {
+        EXPECT_TRUE(reinterpret_cast<MockUsmMemAllocPool *>(mockUsmMemAllocPoolsFacade.pool.get())->trackResidency);
+    }
+}
+
+TEST_P(UnifiedMemoryPoolingFacadeTest, givenInitParamsWithCustomCleanupWhenInitializingThenCleanupIsSetOnPool) {
+    mockUsmMemAllocPoolsFacade.cleanup();
+    UsmMemAllocPool::CustomCleanupFn cleanupFn = [](const void *) {};
+    mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get(), {cleanupFn, false, false});
+
+    if (isPoolManagerEnabled) {
+        EXPECT_TRUE(static_cast<bool>(reinterpret_cast<MockUsmMemAllocPoolsManager *>(mockUsmMemAllocPoolsFacade.poolManager.get())->customCleanup));
+    } else {
+        EXPECT_TRUE(static_cast<bool>(reinterpret_cast<MockUsmMemAllocPool *>(mockUsmMemAllocPoolsFacade.pool.get())->customCleanup));
+    }
+}
+
+TEST(UnifiedMemoryPoolingFacade, givenPoolingEnabledWhenDebugFlagSetThenOverrideAppliesPerMemoryType) {
+    DebugManagerStateRestore restorer;
+
+    // device: flag unset -> base value passes through unchanged
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(-1);
+    EXPECT_TRUE(UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::deviceUnifiedMemory, true));
+    EXPECT_FALSE(UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::deviceUnifiedMemory, false));
+
+    // device: flag forces the result regardless of base
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+    EXPECT_TRUE(UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::deviceUnifiedMemory, false));
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    EXPECT_FALSE(UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::deviceUnifiedMemory, true));
+
+    // host reads the host flag, independent of the device flag (device flag forced off here)
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    debugManager.flags.EnableHostUsmAllocationPool.set(-1);
+    EXPECT_TRUE(UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::hostUnifiedMemory, true));
+    EXPECT_FALSE(UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::hostUnifiedMemory, false));
+
+    debugManager.flags.EnableHostUsmAllocationPool.set(1);
+    EXPECT_TRUE(UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::hostUnifiedMemory, false));
+    debugManager.flags.EnableHostUsmAllocationPool.set(0);
+    EXPECT_FALSE(UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::hostUnifiedMemory, true));
+}
+
+TEST(UnifiedMemoryPoolingFacade, givenUnsupportedMemoryTypeWhenQueryingPoolingEnabledThenPoolingIsDisabledRegardlessOfBaseValue) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+    debugManager.flags.EnableHostUsmAllocationPool.set(1);
+
+    EXPECT_FALSE(UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::sharedUnifiedMemory, true));
+    EXPECT_FALSE(UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::sharedUnifiedMemory, false));
 }

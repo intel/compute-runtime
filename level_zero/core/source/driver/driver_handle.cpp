@@ -227,12 +227,7 @@ DriverHandle::~DriverHandle() {
     if (memoryManager != nullptr) {
         if (this->svmAllocsManager) {
             this->svmAllocsManager->cleanupUSMAllocCaches();
-            if (this->usmHostMemAllocPool) {
-                this->usmHostMemAllocPool->cleanup();
-            }
-            if (this->usmHostMemAllocPoolManager) {
-                this->usmHostMemAllocPoolManager->cleanup();
-            }
+            this->usmHostMemAllocPoolFacade.cleanup();
         }
     }
 
@@ -403,10 +398,6 @@ void DriverHandle::initDeviceUsmAllocPoolOnce() {
 }
 
 void DriverHandle::initHostUsmAllocPool(bool multiDevice) {
-    bool useUsmPoolManager = true;
-    if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
-        useUsmPoolManager = !!NEO::debugManager.flags.EnableUsmAllocationPoolManager.get();
-    }
     auto usmHostAllocPoolingEnabled = NEO::ApiSpecificConfig::isHostUsmPoolingEnabled();
     for (auto device : this->devices) {
         usmHostAllocPoolingEnabled &= device->getNEODevice()->getProductHelper().isHostUsmPoolAllocatorSupported() &&
@@ -414,51 +405,25 @@ void DriverHandle::initHostUsmAllocPool(bool multiDevice) {
                                       NEO::DeviceFactory::isHwModeSelected() &&
                                       !multiDevice;
     }
-    auto poolParams = NEO::UsmPoolParams::getUsmPoolParams(this->devices[0]->getNEODevice()->getGfxCoreHelper());
-    if (NEO::debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
-        usmHostAllocPoolingEnabled = NEO::debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
-        poolParams.poolSize = NEO::debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;
-    }
+    usmHostAllocPoolingEnabled = NEO::UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::hostUnifiedMemory, usmHostAllocPoolingEnabled);
     if (usmHostAllocPoolingEnabled) {
-        if (useUsmPoolManager) {
-            usmHostMemAllocPoolManager.reset(new NEO::UsmMemAllocPoolsManager(InternalMemoryType::hostUnifiedMemory, rootDeviceIndices, deviceBitfields, nullptr));
-            usmHostMemAllocPoolManager->setCustomCleanup(getPoolCleanupFn());
-            usmHostMemAllocPoolManager->initialize(this->svmAllocsManager);
-        } else {
-            NEO::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
-                                                          rootDeviceIndices, deviceBitfields);
-            usmHostMemAllocPool.reset(new NEO::UsmMemAllocPool);
-            usmHostMemAllocPool->setCustomCleanup(getPoolCleanupFn());
-            usmHostMemAllocPool->initialize(svmAllocsManager, memoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
-        }
+        this->usmHostMemAllocPoolFacade.initialize(InternalMemoryType::hostUnifiedMemory, rootDeviceIndices, deviceBitfields,
+                                                   this->devices[0]->getNEODevice(), this->svmAllocsManager,
+                                                   {getPoolCleanupFn(), false, false});
     }
 }
 
 void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice) {
-    bool useUsmPoolManager = true;
-    if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
-        useUsmPoolManager = !!NEO::debugManager.flags.EnableUsmAllocationPoolManager.get();
-    }
     auto &hwInfo = device.getHardwareInfo();
     auto &l0GfxCoreHelper = device.getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     const bool compressionEnabledByDefault = l0GfxCoreHelper.usmCompressionSupported(hwInfo) && l0GfxCoreHelper.forceDefaultUsmCompressionSupport();
-    NEO::UnifiedMemoryProperties poolMemoryProperties(InternalMemoryType::deviceUnifiedMemory,
-                                                      MemoryConstants::pageSize2M,
-                                                      rootDeviceIndices,
-                                                      deviceBitfields);
-    poolMemoryProperties.device = &device;
-    poolMemoryProperties.allocationFlags.flags.compressedHint = compressionEnabledByDefault;
 
-    bool enabled = NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
-                   device.getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
-                   nullptr == device.getL0Debugger() &&
-                   NEO::DeviceFactory::isHwModeSelected() &&
-                   !multiDevice;
-    auto poolParams = NEO::UsmPoolParams::getUsmPoolParams(device.getGfxCoreHelper());
-    if (NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
-        enabled = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
-        poolParams.poolSize = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
-    }
+    const bool enabled = NEO::UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::deviceUnifiedMemory,
+                                                                     NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
+                                                                         device.getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
+                                                                         nullptr == device.getL0Debugger() &&
+                                                                         NEO::DeviceFactory::isHwModeSelected() &&
+                                                                         !multiDevice);
 
     bool trackResidency = true;
     if (NEO::debugManager.flags.EnableUsmPoolResidencyTracking.get() != -1) {
@@ -466,21 +431,9 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
     }
 
     if (enabled) {
-        if (useUsmPoolManager) {
-            device.resetUsmAllocationPoolManager(new NEO::UsmMemAllocPoolsManager(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, &device));
-            device.getUsmMemAllocPoolsManager()->setCustomCleanup(getPoolCleanupFn());
-            if (trackResidency) {
-                device.getUsmMemAllocPoolsManager()->enableResidencyTracking();
-            }
-            device.getUsmMemAllocPoolsManager()->initialize(this->svmAllocsManager);
-        } else {
-            device.resetUsmAllocationPool(new NEO::UsmMemAllocPool);
-            device.getUsmMemAllocPool()->setCustomCleanup(getPoolCleanupFn());
-            if (trackResidency) {
-                device.getUsmMemAllocPool()->enableResidencyTracking();
-            }
-            device.getUsmMemAllocPool()->initialize(this->svmAllocsManager, poolMemoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
-        }
+        device.getDeviceUsmMemAllocPoolFacade().initialize(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields,
+                                                           &device, this->svmAllocsManager,
+                                                           {getPoolCleanupFn(), trackResidency, compressionEnabledByDefault});
     }
 }
 
@@ -495,12 +448,7 @@ void DriverHandle::initUsmPooling() {
 }
 
 NEO::UsmMemAllocPool *DriverHandle::getHostUsmPoolOwningPtr(const void *ptr) {
-    if (usmHostMemAllocPoolManager) {
-        return usmHostMemAllocPoolManager->getPoolContainingAlloc(ptr);
-    } else if (usmHostMemAllocPool && usmHostMemAllocPool->isInPool(ptr)) {
-        return usmHostMemAllocPool.get();
-    }
-    return nullptr;
+    return usmHostMemAllocPoolFacade.getPoolContainingAlloc(ptr);
 }
 
 void DriverHandle::setupDevicesToExpose() {

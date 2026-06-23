@@ -94,7 +94,6 @@ class MockDevice : public RootDevice {
     using Device::rtMemoryBackedBuffer;
     using Device::secondaryCsrs;
     using Device::secondaryEngines;
-    using Device::usmMemAllocPool;
     using Device::uuid;
     using RootDevice::createEngines;
     using RootDevice::defaultEngineIndex;

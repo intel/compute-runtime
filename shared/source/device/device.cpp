@@ -56,7 +56,8 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
       deviceTimestampPoolAllocator(this),
       globalSurfacePoolAllocator(this),
       constantSurfacePoolAllocator(this),
-      commandBufferPoolAllocator(this) {
+      commandBufferPoolAllocator(this),
+      deviceUsmMemAllocPoolFacade(std::make_unique<UsmMemAllocPoolsFacade>()) {
     this->executionEnvironment->incRefInternal();
     this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
     debugger = this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->debugger.get();
@@ -90,8 +91,8 @@ Device::~Device() {
     deviceTimestampPoolAllocator.releasePools();
     globalSurfacePoolAllocator.releasePools();
     constantSurfacePoolAllocator.releasePools();
-    if (deviceUsmMemAllocPoolsManager) {
-        deviceUsmMemAllocPoolsManager->cleanup();
+    if (deviceUsmMemAllocPoolFacade) {
+        deviceUsmMemAllocPoolFacade->cleanup();
     }
     if (usmConstantSurfaceAllocPool) {
         usmConstantSurfaceAllocPool->cleanup();
@@ -297,20 +298,9 @@ bool Device::shouldLimitAllocationsReuse() const {
     return getMemoryManager()->getUsedLocalMemorySize(getRootDeviceIndex()) >= this->usmReuseInfo.getLimitAllocationsReuseThreshold();
 }
 
-void Device::resetUsmAllocationPool(UsmMemAllocPool *usmMemAllocPool) {
-    this->usmMemAllocPool.reset(usmMemAllocPool);
-}
-
-void Device::resetUsmAllocationPoolManager(UsmMemAllocPoolsManager *usmMemAllocPoolManager) {
-    this->deviceUsmMemAllocPoolsManager.reset(usmMemAllocPoolManager);
-}
-
 void Device::cleanupUsmAllocationPool() {
-    if (usmMemAllocPool) {
-        usmMemAllocPool->cleanup();
-    }
-    if (deviceUsmMemAllocPoolsManager) {
-        deviceUsmMemAllocPoolsManager->cleanup();
+    if (deviceUsmMemAllocPoolFacade) {
+        deviceUsmMemAllocPoolFacade->cleanup();
     }
 }
 
@@ -894,14 +884,12 @@ void Device::allocateSyncBufferHandler() {
     }
 }
 
+UsmMemAllocPoolsFacade &Device::getDeviceUsmMemAllocPoolFacade() {
+    return *deviceUsmMemAllocPoolFacade;
+}
+
 UsmMemAllocPool *Device::getUsmPoolOwningPtr(const void *ptr) {
-    if (getUsmMemAllocPool() &&
-        getUsmMemAllocPool()->isInPool(ptr)) {
-        return getUsmMemAllocPool();
-    } else if (getUsmMemAllocPoolsManager()) {
-        return getUsmMemAllocPoolsManager()->getPoolContainingAlloc(ptr);
-    }
-    return nullptr;
+    return deviceUsmMemAllocPoolFacade->getPoolContainingAlloc(ptr);
 }
 
 uint64_t Device::getGlobalMemorySize(uint32_t deviceBitfield) const {

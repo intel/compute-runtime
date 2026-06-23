@@ -186,8 +186,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
-    std::unique_ptr<NEO::UsmMemAllocPool> usmHostMemAllocPool;
-    std::unique_ptr<NEO::UsmMemAllocPoolsManager> usmHostMemAllocPoolManager;
+    NEO::UsmMemAllocPoolsFacade usmHostMemAllocPoolFacade;
     ze_context_handle_t defaultContext = nullptr;
     std::unique_ptr<NEO::StagingBufferManager> stagingBufferManager;
 

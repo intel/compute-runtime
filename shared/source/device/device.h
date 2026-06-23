@@ -44,8 +44,8 @@ class ReleaseHelper;
 class SipExternalLib;
 class SubDevice;
 class SyncBufferHandler;
-class UsmMemAllocPoolsManager;
 class UsmMemAllocPool;
+class UsmMemAllocPoolsFacade;
 enum class EngineGroupType : uint32_t;
 struct PhysicalDevicePciBusInfo;
 
@@ -227,12 +227,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     CommandBufferPoolAllocator &getCommandBufferPoolAllocator() {
         return commandBufferPoolAllocator;
     }
-    UsmMemAllocPoolsManager *getUsmMemAllocPoolsManager() {
-        return deviceUsmMemAllocPoolsManager.get();
-    }
-    UsmMemAllocPool *getUsmMemAllocPool() {
-        return usmMemAllocPool.get();
-    }
+    UsmMemAllocPoolsFacade &getDeviceUsmMemAllocPoolFacade();
     UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr);
     UsmMemAllocPool *getUsmConstantSurfaceAllocPool() {
         return usmConstantSurfaceAllocPool.get();
@@ -287,8 +282,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     UsmReuseInfo usmReuseInfo;
     UsmReuseInfo sharedUsmReuseInfo;
 
-    void resetUsmAllocationPool(UsmMemAllocPool *usmMemAllocPool);
-    void resetUsmAllocationPoolManager(UsmMemAllocPoolsManager *usmMemAllocPoolManager);
     void cleanupUsmAllocationPool();
 
     void resetUsmConstantSurfaceAllocPool(UsmMemAllocPool *usmMemAllocPool);
@@ -391,8 +384,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     GlobalSurfacePoolAllocator globalSurfacePoolAllocator;
     ConstantSurfacePoolAllocator constantSurfacePoolAllocator;
     CommandBufferPoolAllocator commandBufferPoolAllocator;
-    std::unique_ptr<UsmMemAllocPoolsManager> deviceUsmMemAllocPoolsManager;
-    std::unique_ptr<UsmMemAllocPool> usmMemAllocPool;
+    std::unique_ptr<UsmMemAllocPoolsFacade> deviceUsmMemAllocPoolFacade;
     std::unique_ptr<UsmMemAllocPool> usmConstantSurfaceAllocPool;
     std::unique_ptr<UsmMemAllocPool> usmGlobalSurfaceAllocPool;
 

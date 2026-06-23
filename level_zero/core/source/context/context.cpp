@@ -196,16 +196,9 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
     if (false == lookupTable.exportMemory) {
         if (size <= NEO::PoolInfo::getHostMaxPoolableSize()) {
             this->driverHandle->initHostUsmAllocPoolOnce();
-            if (this->driverHandle->usmHostMemAllocPoolManager) {
-                if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPoolManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
-                    *ptr = usmPtrFromPool;
-                    return ZE_RESULT_SUCCESS;
-                }
-            } else if (this->driverHandle->usmHostMemAllocPool) {
-                if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPool->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
-                    *ptr = usmPtrFromPool;
-                    return ZE_RESULT_SUCCESS;
-                }
+            if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPoolFacade.createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
+                *ptr = usmPtrFromPool;
+                return ZE_RESULT_SUCCESS;
             }
         }
     }
@@ -363,16 +356,9 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
     if (false == lookupTable.exportMemory) {
         if (size <= NEO::PoolInfo::getMaxPoolableSize(neoDevice->getGfxCoreHelper())) {
             this->driverHandle->initDeviceUsmAllocPoolOnce();
-            if (neoDevice->getUsmMemAllocPoolsManager()) {
-                if (auto usmPtrFromPool = neoDevice->getUsmMemAllocPoolsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
-                    *ptr = usmPtrFromPool;
-                    return ZE_RESULT_SUCCESS;
-                }
-            } else if (neoDevice->getUsmMemAllocPool()) {
-                if (auto usmPtrFromPool = neoDevice->getUsmMemAllocPool()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
-                    *ptr = usmPtrFromPool;
-                    return ZE_RESULT_SUCCESS;
-                }
+            if (auto usmPtrFromPool = neoDevice->getDeviceUsmMemAllocPoolFacade().createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
+                *ptr = usmPtrFromPool;
+                return ZE_RESULT_SUCCESS;
             }
         }
     }
@@ -546,13 +532,12 @@ NEO::UsmMemAllocPool *Context::getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllo
 
 bool Context::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, bool blocking) {
     if (usmPool) {
-        if (svmData->device && svmData->device->getUsmMemAllocPoolsManager()) {
-            return svmData->device->getUsmMemAllocPoolsManager()->freeSVMAlloc(ptr, blocking);
+        [[maybe_unused]] bool status = false;
+        if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType) {
+            status = driverHandle->usmHostMemAllocPoolFacade.freeSVMAlloc(ptr, blocking);
+        } else {
+            status = svmData->device->getDeviceUsmMemAllocPoolFacade().freeSVMAlloc(ptr, blocking);
         }
-        if (!svmData->device && driverHandle->usmHostMemAllocPoolManager) {
-            return driverHandle->usmHostMemAllocPoolManager->freeSVMAlloc(ptr, blocking);
-        }
-        [[maybe_unused]] auto status = usmPool->freeSVMAlloc(ptr, blocking);
         DEBUG_BREAK_IF(false == status);
         return true;
     }

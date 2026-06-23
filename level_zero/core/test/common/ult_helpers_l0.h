@@ -17,17 +17,9 @@ namespace L0 {
 namespace ult {
 struct L0UltHelper {
     static void cleanupUsmAllocPoolsAndReuse(DriverHandle *driverHandle) {
-        if (driverHandle->usmHostMemAllocPool) {
-            driverHandle->usmHostMemAllocPool->cleanup();
-            driverHandle->usmHostMemAllocPool.reset(nullptr);
-        }
-        if (driverHandle->usmHostMemAllocPoolManager) {
-            driverHandle->usmHostMemAllocPoolManager->cleanup();
-            driverHandle->usmHostMemAllocPoolManager.reset(nullptr);
-        }
+        driverHandle->usmHostMemAllocPoolFacade.cleanup();
         for (auto device : driverHandle->devices) {
             device->getNEODevice()->cleanupUsmAllocationPool();
-            device->getNEODevice()->resetUsmAllocationPool(nullptr);
         }
         driverHandle->svmAllocsManager->cleanupUSMAllocCaches();
     }

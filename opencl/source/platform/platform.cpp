@@ -305,10 +305,7 @@ void Platform::initializeHostUsmAllocationPool() {
     for (auto &device : this->clDevices) {
         usmHostAllocPoolingEnabled &= device->getProductHelper().isHostUsmPoolAllocatorSupported() && DeviceFactory::isHwModeSelected();
     }
-
-    if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
-        usmHostAllocPoolingEnabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
-    }
+    usmHostAllocPoolingEnabled = UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::hostUnifiedMemory, usmHostAllocPoolingEnabled);
     if (usmHostAllocPoolingEnabled) {
         for (auto &device : this->clDevices) {
             rootDeviceIndices.pushUnique(device->getRootDeviceIndex());
@@ -327,7 +324,7 @@ void Platform::initializeHostUsmAllocationPool() {
         UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
                                                  rootDeviceIndices, deviceBitfields);
         auto &device = this->clDevices[0]->getDevice();
-        this->usmHostMemAllocPoolsManager.initialize(InternalMemoryType::hostUnifiedMemory, rootDeviceIndices, deviceBitfields, &device, svmMemoryManager);
+        this->usmHostMemAllocPoolsManager.initialize(InternalMemoryType::hostUnifiedMemory, rootDeviceIndices, deviceBitfields, &device, svmMemoryManager, {});
     }
     this->usmPoolInitialized = true;
 }
