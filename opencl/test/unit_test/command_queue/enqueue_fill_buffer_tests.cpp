@@ -444,16 +444,16 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeCopied) 
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
     ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
-    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
+    GraphicsAllocation *allocation = nullptr;
 
-    while (allocation != nullptr) {
-        if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
-            (allocation->getUnderlyingBuffer() != nullptr) &&
-            (*(static_cast<float *>(allocation->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
-            (pCmdQ->taskCount == allocation->getTaskCount(csr.getOsContext().getContextId()))) {
+    for (auto *candidate : csr.getAllocationsForReuse().peekAllocations()) {
+        if ((candidate->getUnderlyingBufferSize() >= sizeof(float)) &&
+            (candidate->getUnderlyingBuffer() != nullptr) &&
+            (*(static_cast<float *>(candidate->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
+            (pCmdQ->taskCount == candidate->getTaskCount(csr.getOsContext().getContextId()))) {
+            allocation = candidate;
             break;
         }
-        allocation = allocation->next;
     }
 
     ASSERT_NE(nullptr, allocation);
@@ -465,16 +465,16 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeAligned)
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
-    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
+    GraphicsAllocation *allocation = nullptr;
 
-    while (allocation != nullptr) {
-        if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
-            (allocation->getUnderlyingBuffer() != nullptr) &&
-            (*(static_cast<float *>(allocation->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
-            (pCmdQ->taskCount == allocation->getTaskCount(csr.getOsContext().getContextId()))) {
+    for (auto *candidate : csr.getAllocationsForReuse().peekAllocations()) {
+        if ((candidate->getUnderlyingBufferSize() >= sizeof(float)) &&
+            (candidate->getUnderlyingBuffer() != nullptr) &&
+            (*(static_cast<float *>(candidate->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
+            (pCmdQ->taskCount == candidate->getTaskCount(csr.getOsContext().getContextId()))) {
+            allocation = candidate;
             break;
         }
-        allocation = allocation->next;
     }
 
     ASSERT_NE(nullptr, allocation);

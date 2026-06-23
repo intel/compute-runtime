@@ -14,7 +14,6 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/utilities/containers_tests_helpers.h"
 
 struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
                                        public ::testing::Test {
@@ -58,14 +57,21 @@ TEST_F(InternalAllocationStorageTest, whenCleanAllocationListThenRemoveOnlyCompl
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation2));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
-    EXPECT_EQ(-1, verifyDListOrder(csr->getTemporaryAllocations().peekHead(), allocation, allocation2, allocation3));
+    auto storedAllocationsBeforeCleanup = csr->getTemporaryAllocations().peekAllocations();
+    ASSERT_EQ(3u, storedAllocationsBeforeCleanup.size());
+    EXPECT_EQ(allocation, storedAllocationsBeforeCleanup[0]);
+    EXPECT_EQ(allocation2, storedAllocationsBeforeCleanup[1]);
+    EXPECT_EQ(allocation3, storedAllocationsBeforeCleanup[2]);
 
     // now remove element form the middle
     storage->cleanAllocationList(6, TEMPORARY_ALLOCATION);
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation));
     EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation2));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
-    EXPECT_EQ(-1, verifyDListOrder(csr->getTemporaryAllocations().peekHead(), allocation, allocation3));
+    auto storedAllocationsAfterMiddleRemoved = csr->getTemporaryAllocations().peekAllocations();
+    ASSERT_EQ(2u, storedAllocationsAfterMiddleRemoved.size());
+    EXPECT_EQ(allocation, storedAllocationsAfterMiddleRemoved[0]);
+    EXPECT_EQ(allocation3, storedAllocationsAfterMiddleRemoved[1]);
 
     // now remove head
     storage->cleanAllocationList(11, TEMPORARY_ALLOCATION);
@@ -169,7 +175,7 @@ HWTEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableA
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromMidlleOfReusableListThenItIsDetachedFromLinkedList) {
+TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromMiddleOfReusableListThenItIsDetachedFromAllocationsList) {
     auto &reusableAllocations = csr->getAllocationsForReuse();
     EXPECT_TRUE(reusableAllocations.peekIsEmpty());
 
@@ -178,45 +184,43 @@ TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromMidlleOfReusableLi
     auto allocation3 = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, 1, AllocationType::buffer, mockDeviceBitfield});
 
     EXPECT_TRUE(reusableAllocations.peekIsEmpty());
-    EXPECT_EQ(nullptr, allocation2->next);
-    EXPECT_EQ(nullptr, allocation2->prev);
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation));
     EXPECT_FALSE(reusableAllocations.peekContains(*allocation2));
     EXPECT_FALSE(reusableAllocations.peekContains(*allocation3));
-    EXPECT_EQ(nullptr, allocation2->next);
-    EXPECT_EQ(nullptr, allocation2->prev);
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation2), REUSABLE_ALLOCATION);
 
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation));
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation2));
     EXPECT_FALSE(reusableAllocations.peekContains(*allocation3));
-    EXPECT_EQ(nullptr, allocation2->next);
-    EXPECT_EQ(allocation, allocation2->prev);
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation3), REUSABLE_ALLOCATION);
 
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation));
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation2));
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation3));
-    EXPECT_EQ(allocation3, allocation2->next);
-    EXPECT_EQ(allocation, allocation2->prev);
+
+    auto storedSnapshot = reusableAllocations.peekAllocations();
+    ASSERT_EQ(3u, storedSnapshot.size());
+    EXPECT_EQ(allocation, storedSnapshot[0]);
+    EXPECT_EQ(allocation2, storedSnapshot[1]);
+    EXPECT_EQ(allocation3, storedSnapshot[2]);
 
     auto reusableAllocation = storage->obtainReusableAllocation(10000, AllocationType::buffer).release();
     EXPECT_EQ(reusableAllocation, allocation2);
-    EXPECT_EQ(nullptr, allocation2->next);
-    EXPECT_EQ(nullptr, allocation2->prev);
-
-    EXPECT_EQ(nullptr, reusableAllocation->next);
-    EXPECT_EQ(nullptr, reusableAllocation->prev);
 
     EXPECT_FALSE(reusableAllocations.peekContains(*reusableAllocation));
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation));
     EXPECT_FALSE(reusableAllocations.peekContains(*allocation2));
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation3));
+
+    auto storedSnapshotAfterDetach = reusableAllocations.peekAllocations();
+    ASSERT_EQ(2u, storedSnapshotAfterDetach.size());
+    EXPECT_EQ(allocation, storedSnapshotAfterDetach[0]);
+    EXPECT_EQ(allocation3, storedSnapshotAfterDetach[1]);
 
     memoryManager->freeGraphicsMemory(allocation2);
     allocation->updateTaskCount(0u, csr->getOsContext().getContextId());
@@ -371,6 +375,40 @@ TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenTaskCountMetsEx
     storage->cleanAllocationList(expectedTaskCount, TEMPORARY_ALLOCATION);
     EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
     allocation->setHostPtrTaskCountAssignment(0);
+}
+
+TEST_F(InternalAllocationStorageTest, givenReusableAllocationWithHostPtrTaskCountAssignmentWhenCleanAllocationListThenAllocIsNotRemoved) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    uint32_t expectedTaskCount = 10u;
+    *csr->getTagAddress() = expectedTaskCount;
+    allocation->updateTaskCount(expectedTaskCount, csr->getOsContext().getContextId());
+    allocation->setHostPtrTaskCountAssignment(1);
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    storage->cleanAllocationList(expectedTaskCount, REUSABLE_ALLOCATION);
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
+    allocation->setHostPtrTaskCountAssignment(0);
+}
+
+TEST_F(InternalAllocationStorageTest, givenTemporaryAllocationWithHostPtrTaskCountAssignmentWhenCleanAllocationListWithCleanHostPtrAssignedThenAllocIsRemoved) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    uint32_t expectedTaskCount = 10u;
+    *csr->getTagAddress() = expectedTaskCount;
+    allocation->updateTaskCount(expectedTaskCount, csr->getOsContext().getContextId());
+    allocation->setHostPtrTaskCountAssignment(1);
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+    storage->cleanAllocationList(expectedTaskCount, TEMPORARY_ALLOCATION, true);
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+}
+
+TEST_F(InternalAllocationStorageTest, givenReusableAllocationWithHostPtrTaskCountAssignmentWhenCleanAllocationListWithCleanHostPtrAssignedThenAllocIsRemoved) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    uint32_t expectedTaskCount = 10u;
+    *csr->getTagAddress() = expectedTaskCount;
+    allocation->updateTaskCount(expectedTaskCount, csr->getOsContext().getContextId());
+    allocation->setHostPtrTaskCountAssignment(1);
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    storage->cleanAllocationList(expectedTaskCount, REUSABLE_ALLOCATION, true);
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 }
 
 TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenDetectingOverlapWithExternalHostPtrThenOverlapIsDetected) {

@@ -261,9 +261,12 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImageWhenReadingTh
         event);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    allocation = pCmdQ->getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != destMemory) {
-        allocation = allocation->next;
+    allocation = nullptr;
+    for (auto *candidate : pCmdQ->getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekAllocations()) {
+        if (candidate->getUnderlyingBuffer() == destMemory) {
+            allocation = candidate;
+            break;
+        }
     }
     auto pDestGpuAddress = reinterpret_cast<void *>(allocation->getGpuAddress());
 

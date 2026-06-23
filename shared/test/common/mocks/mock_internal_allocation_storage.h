@@ -13,12 +13,13 @@ namespace NEO {
 class MockInternalAllocationStorage : public InternalAllocationStorage {
   public:
     using InternalAllocationStorage::allocationLists;
+    using InternalAllocationStorage::cleanAllocationList;
     using InternalAllocationStorage::InternalAllocationStorage;
-    void cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage) override {
+    void cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage, bool cleanHostPtrAssigned) override {
         cleanAllocationsCalled++;
         lastCleanAllocationsTaskCount = waitTaskCount;
         lastCleanAllocationUsage = allocationUsage;
-        InternalAllocationStorage::cleanAllocationList(waitTaskCount, allocationUsage);
+        InternalAllocationStorage::cleanAllocationList(waitTaskCount, allocationUsage, cleanHostPtrAssigned);
         if (doUpdateCompletion) {
             *commandStreamReceiver.getTagAddress() = valueToUpdateCompletion;
             doUpdateCompletion = false;

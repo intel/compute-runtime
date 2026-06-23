@@ -7,6 +7,7 @@
 target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/alignment_selector_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/allocations_list_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_allocation_deletion_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/gfx_partition_tests.cpp

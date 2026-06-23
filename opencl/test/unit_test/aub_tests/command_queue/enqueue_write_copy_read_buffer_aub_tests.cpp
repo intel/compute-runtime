@@ -122,9 +122,12 @@ void AubWriteCopyReadBuffer::runTest() {
 
     pCmdQ->flush();
 
-    GraphicsAllocation *allocation = csr->getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != hostPtrMemory) {
-        allocation = allocation->next;
+    GraphicsAllocation *allocation = nullptr;
+    for (auto *candidate : csr->getTemporaryAllocations().peekAllocations()) {
+        if (candidate->getUnderlyingBuffer() == hostPtrMemory) {
+            allocation = candidate;
+            break;
+        }
     }
 
     expectMemory<FamilyType>(AUBFixture::getGpuPointer(allocation), srcMemoryToWrite, bufferSize);

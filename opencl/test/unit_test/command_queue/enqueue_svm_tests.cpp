@@ -513,9 +513,9 @@ HWTEST_F(EnqueueSvmTest, givenSrcHostPtrWhenEnqueueSVMMemcpyThenEnqueuWriteBuffe
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
 
-    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
-    EXPECT_EQ(0u, tempAlloc->countSuccessors());
-    EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
+    auto storedTempAllocations = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekAllocations();
+    ASSERT_EQ(1u, storedTempAllocations.size());
+    EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(storedTempAllocations[0]->getGpuAddress()));
 
     auto srcAddress = myCmdQ.kernelParams.srcPtr;
     auto srcOffset = myCmdQ.kernelParams.srcOffset.x;
@@ -547,10 +547,9 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrWhenEnqueueSVMMemcpyThenEnqueuReadBuffer
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_READ_BUFFER));
-    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
-
-    EXPECT_EQ(0u, tempAlloc->countSuccessors());
-    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
+    auto storedTempAllocations = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekAllocations();
+    ASSERT_EQ(1u, storedTempAllocations.size());
+    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(storedTempAllocations[0]->getGpuAddress()));
 
     auto srcAddress = myCmdQ.kernelParams.srcPtr;
     auto srcOffset = myCmdQ.kernelParams.srcOffset.x;
@@ -629,10 +628,10 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueNonBlockingSVMMe
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
 
-    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
-    EXPECT_EQ(1u, tempAlloc->countSuccessors());
-    EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
-    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(tempAlloc->next->getGpuAddress()));
+    auto storedTempAllocations = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekAllocations();
+    ASSERT_EQ(2u, storedTempAllocations.size());
+    EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(storedTempAllocations[0]->getGpuAddress()));
+    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(storedTempAllocations[1]->getGpuAddress()));
 
     auto srcAddress = myCmdQ.kernelParams.srcPtr;
     auto srcOffset = myCmdQ.kernelParams.srcOffset.x;
