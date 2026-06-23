@@ -243,7 +243,7 @@ inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(Pa
     auto &hostFunctionStreamer = queue.csr->getHostFunctionStreamer();
 
     if (patchPreambleEnabled) {
-        auto size = NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(memorySynchronizationRequired, queue.csr->getDcFlushSupport());
+        auto size = NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(patchElem.memorySynchronizationRequired, queue.csr->getDcFlushSupport());
         auto cmdStorage = allocateAlignedMemory(size, sizeof(uint32_t));
         void *cmdBuffer = static_cast<void *>(cmdStorage.get());
 
@@ -251,7 +251,7 @@ inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(Pa
                                                                   cmdBuffer,
                                                                   hostFunctionStreamer,
                                                                   std::move(hostFunction),
-                                                                  memorySynchronizationRequired);
+                                                                  patchElem.memorySynchronizationRequired);
 
         NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, patchElem.gpuAddress, cmdBuffer, size);
     } else {
@@ -259,7 +259,7 @@ inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(Pa
                                                                   patchElem.cmdBufferSpace,
                                                                   hostFunctionStreamer,
                                                                   std::move(hostFunction),
-                                                                  memorySynchronizationRequired);
+                                                                  patchElem.memorySynchronizationRequired);
     }
 
     hostFunctionsCounter++;

@@ -90,8 +90,7 @@ void HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(LinearS
 }
 
 template <typename GfxFamily>
-bool HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired() {
-    bool memorySynchronizationRequired = true;
+bool HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired(bool memorySynchronizationRequired) {
     if (NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() != -1) {
         memorySynchronizationRequired = NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.get() == 1;
     }

@@ -729,18 +729,22 @@ HWTEST_F(HostFunctionTests, whenIsMemorySynchronizationRequiredForHostFunctionIs
 
     struct TestParam {
         int32_t debugKey;
+        bool useMemorySynchronization;
         bool expected;
     };
 
     TestParam testParams[] = {
-        {-1, true},
-        {0, false},
-        {1, true}};
+        {-1, false, false},
+        {-1, true, true},
+        {0, false, false},
+        {0, true, false},
+        {1, false, true},
+        {1, true, true}};
 
-    for (auto &[debugKey, expected] : testParams) {
+    for (auto &[debugKey, useMemorySynchronization, expected] : testParams) {
         debugManager.flags.UseMemorySynchronizationForHostFunction.set(debugKey);
 
-        bool result = HostFunctionHelper<FamilyType>::isMemorySynchronizationRequired();
+        bool result = HostFunctionHelper<FamilyType>::isMemorySynchronizationRequired(useMemorySynchronization);
         EXPECT_EQ(expected, result);
     }
 }

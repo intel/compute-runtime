@@ -66,6 +66,7 @@ struct PatchHostFunctionId {
     uint64_t gpuAddress = 0;
     uint64_t callbackAddress = 0;
     uint64_t userDataAddress = 0;
+    bool memorySynchronizationRequired = true;
 };
 
 struct PatchHostFunctionWait {

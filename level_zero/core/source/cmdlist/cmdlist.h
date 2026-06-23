@@ -555,8 +555,12 @@ struct CommandList : _ze_command_list_handle_t {
         return frontEndPatchListCount;
     }
 
-    uint32_t getHostFunctionPatchListCount() const {
-        return hostFunctionPatchListCount;
+    uint32_t getHostFunctionWithMemorySynchronizationCount() const {
+        return hostFunctionWithMemorySynchronizationCount;
+    }
+
+    uint32_t getHostFunctionWithoutMemorySynchronizationCount() const {
+        return hostFunctionWithoutMemorySynchronizationCount;
     }
 
     size_t getTotalNoopSpace() const {
@@ -654,9 +658,10 @@ struct CommandList : _ze_command_list_handle_t {
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 
     virtual void dispatchHostFunction(ze_host_function_callback_t pHostFunction,
-                                      void *pUserData) = 0;
+                                      void *pUserData,
+                                      bool memorySynchronizationRequired) = 0;
 
-    virtual void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) = 0;
+    virtual void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction, bool memorySynchronizationRequired) = 0;
 
     static void NEO_HOST_FUNCTION_CALLBACK semaphoreWaitHostFunction(void *data) {
         DEBUG_BREAK_IF(data == nullptr);
@@ -780,7 +785,8 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t maxLocalSubRegionSize = 0;
     uint32_t frontEndPatchListCount = 0;
     uint32_t activeScratchPatchElements = 0;
-    uint32_t hostFunctionPatchListCount = 0;
+    uint32_t hostFunctionWithMemorySynchronizationCount = 0;
+    uint32_t hostFunctionWithoutMemorySynchronizationCount = 0;
     uint32_t syncDispatchQueueId = std::numeric_limits<uint32_t>::max();
 
     bool isSyncModeQueue = false;

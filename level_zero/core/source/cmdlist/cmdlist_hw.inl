@@ -2034,7 +2034,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(
 
     appendEventForProfiling(signalEvent, nullptr, beforeWalker, skipBarrierForEndProfiling, skipAddingWaitEventsToResidency, copyQueue);
 
-    dispatchHostFunction(pHostFunction, pUserData);
+    dispatchHostFunction(pHostFunction, pUserData, parameters.memorySynchronizationRequired);
 
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, skipBarrierForEndProfiling, skipAddingWaitEventsToResidency, copyQueue);
 
@@ -2062,7 +2062,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
     ze_host_function_callback_t pHostFunction,
-    void *pUserData) {
+    void *pUserData,
+    bool memorySynchronizationRequired) {
 
     uint64_t userHostFunctionAddress = reinterpret_cast<uint64_t>(pHostFunction);
     uint64_t userDataAddress = reinterpret_cast<uint64_t>(pUserData);
@@ -2078,27 +2079,30 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
         auto &streamer = csr->getHostFunctionStreamer();
         auto *allocation = streamer.getHostFunctionIdAllocation();
         this->commandContainer.addToResidencyContainer(allocation);
-        bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired();
         NEO::HostFunctionHelper<GfxFamily>::programHostFunction(*this->commandContainer.getCommandStream(),
                                                                 streamer,
                                                                 std::move(hostFunction),
-                                                                memorySynchronizationRequired);
+                                                                NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired(memorySynchronizationRequired));
         csr->signalHostFunctionWorker(1u);
     } else {
-        addHostFunctionToPatchCommands(hostFunction);
+        addHostFunctionToPatchCommands(hostFunction, memorySynchronizationRequired);
     }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) {
-
-    this->hostFunctionPatchListCount++;
+void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction, bool memorySynchronizationRequired) {
 
     auto additionalSize = 1 + this->partitionCount;
     commandsToPatch.reserve(commandsToPatch.size() + additionalSize);
 
-    bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired();
-    auto size = NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(memorySynchronizationRequired, dcFlushSupport);
+    bool useMemorySynchronization = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired(memorySynchronizationRequired);
+    if (useMemorySynchronization) {
+        this->hostFunctionWithMemorySynchronizationCount++;
+    } else {
+        this->hostFunctionWithoutMemorySynchronizationCount++;
+    }
+
+    auto size = NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(useMemorySynchronization, dcFlushSupport);
 
     auto gpuAddressInCmdStream = commandContainer.getCommandStream()->getCurrentGpuAddressPosition();
     auto cpuBufferCmd = commandContainer.getCommandStream()->getSpace(size);
@@ -2108,6 +2112,7 @@ void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const 
         .gpuAddress = gpuAddressInCmdStream,
         .callbackAddress = hostFunction.hostFunctionAddress,
         .userDataAddress = hostFunction.userDataAddress,
+        .memorySynchronizationRequired = useMemorySynchronization,
     });
 
     for (auto partitionId = 0u; partitionId < this->partitionCount; partitionId++) {

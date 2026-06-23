@@ -1235,7 +1235,7 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
                 .userDataAddress = pUserData1,
             };
 
-            commandList->addHostFunctionToPatchCommands(hostFunction1);
+            commandList->addHostFunctionToPatchCommands(hostFunction1, true);
 
             auto index = 0u;
 
@@ -1254,7 +1254,7 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
                 .userDataAddress = pUserData2,
             };
 
-            commandList->addHostFunctionToPatchCommands(hostFunction2);
+            commandList->addHostFunctionToPatchCommands(hostFunction2, true);
 
             auto *cmdToProgrammHostFunctionId2 = std::get<PatchHostFunctionId>(commandList->commandsToPatch[index++]).cmdBufferSpace;
             auto *miWait2 = reinterpret_cast<MI_SEMAPHORE_WAIT *>(std::get<PatchHostFunctionWait>(commandList->commandsToPatch[index++]).cmdBufferSpace);

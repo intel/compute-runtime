@@ -876,17 +876,21 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleHostFuncti
     if (ctx.patchPreambleEnabled) {
 
         bool dcFlushRequired = csr->getDcFlushSupport();
-        bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired();
 
-        uint32_t hostFunctionsCount = commandList->getHostFunctionPatchListCount();
+        uint32_t withMemorySyncCount = commandList->getHostFunctionWithMemorySynchronizationCount();
+        uint32_t withoutMemorySyncCount = commandList->getHostFunctionWithoutMemorySynchronizationCount();
+        uint32_t hostFunctionsCount = withMemorySyncCount + withoutMemorySyncCount;
+
         if (hostFunctionsCount > 0) {
-            auto sizeToEncodeId = NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(memorySynchronizationRequired, dcFlushRequired);
             auto semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
-            auto encodedHostFunctionIdCmdSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeToEncodeId);
             auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(semaphoreSize);
 
-            auto encodedHostFuncCmdSize = encodedHostFunctionIdCmdSize + (this->partitionCount * encodedMiSemaphoreSize);
-            encodeSize = encodedHostFuncCmdSize * hostFunctionsCount;
+            auto encodedIdSizeWithMemorySync = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(true, dcFlushRequired));
+            auto encodedIdSizeWithoutMemorySync = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(NEO::HostFunctionHelper<GfxFamily>::getSizeForHostFunctionIdProgramming(false, dcFlushRequired));
+
+            encodeSize = (encodedIdSizeWithMemorySync * withMemorySyncCount) +
+                         (encodedIdSizeWithoutMemorySync * withoutMemorySyncCount) +
+                         (this->partitionCount * encodedMiSemaphoreSize * hostFunctionsCount);
             ctx.bufferSpaceForPatchPreamble += encodeSize;
         }
     }
@@ -2114,7 +2118,6 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                                                   bool patchPreambleEnabled,
                                                   void **patchPreambleBuffer) {
     uint32_t hostFunctionsCounter = 0;
-    bool memorySynchronizationRequired = NEO::HostFunctionHelper<GfxFamily>::isMemorySynchronizationRequired();
 
     auto commandsToPatch = commandList.getCommandsToPatch();
 
@@ -2124,8 +2127,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                                           scratchAddress,
                                           patchPreambleBuffer,
                                           patchNewScratchController,
-                                          patchPreambleEnabled,
-                                          memorySynchronizationRequired},
+                                          patchPreambleEnabled},
                    command);
     }
 

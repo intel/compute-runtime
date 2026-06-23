@@ -63,7 +63,8 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
 
     this->frontEndPatchListCount = 0;
     this->activeScratchPatchElements = 0;
-    this->hostFunctionPatchListCount = 0;
+    this->hostFunctionWithMemorySynchronizationCount = 0;
+    this->hostFunctionWithoutMemorySynchronizationCount = 0;
 }
 
 } // namespace L0

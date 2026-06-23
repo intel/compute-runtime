@@ -228,7 +228,6 @@ struct CommandQueueHw : public CommandQueue {
         void **patchPreambleBuffer;
         bool patchNewScratchController;
         bool patchPreambleEnabled;
-        bool memorySynchronizationRequired;
 
         void operator()(PatchInvalidPatchType &patchElem) {
             UNRECOVERABLE_IF(true);

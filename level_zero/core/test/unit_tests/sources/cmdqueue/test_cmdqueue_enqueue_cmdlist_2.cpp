@@ -1718,6 +1718,57 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     commandList->destroy();
 }
 
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenHostFunctionsRequireDifferentMemorySynchronizationThenEstimatedSizeIsCorect, IsAtLeastXeCore) {
+    DebugManagerStateRestore restorer;
+    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, hardwareInfo->platform.eRenderCoreFamily);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    CommandListExecutionContext ctx{};
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    returnValue = mockCmdQHw->initialize(false, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ctx.patchPreambleEnabled = true;
+    mockCmdQHw->setPatchingPreamble(true);
+
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+
+    uint64_t hostFunctionAddress = 0xABCDEF00;
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(hostFunctionAddress);
+    uint64_t hostFunctionUserData = 0x12345678;
+
+    CmdListHostFunctionParameters paramsWithSync{};
+    paramsWithSync.memorySynchronizationRequired = true;
+    commandList->appendHostFunction(pHostFunction, &hostFunctionUserData, nullptr, nullptr, 0, nullptr, paramsWithSync);
+
+    CmdListHostFunctionParameters paramsWithoutSync{};
+    paramsWithoutSync.memorySynchronizationRequired = false;
+    commandList->appendHostFunction(pHostFunction, &hostFunctionUserData, nullptr, nullptr, 0, nullptr, paramsWithoutSync);
+    commandList->close();
+
+    EXPECT_EQ(1u, commandList->getHostFunctionWithMemorySynchronizationCount());
+    EXPECT_EQ(1u, commandList->getHostFunctionWithoutMemorySynchronizationCount());
+
+    auto dcFlushRequired = mockCmdQHw->getCsr()->getDcFlushSupport();
+    auto semaphoreSize = NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
+    auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(semaphoreSize);
+    auto encodedIdSizeWithSync = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(NEO::HostFunctionHelper<FamilyType>::getSizeForHostFunctionIdProgramming(true, dcFlushRequired));
+    auto encodedIdSizeWithoutSync = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(NEO::HostFunctionHelper<FamilyType>::getSizeForHostFunctionIdProgramming(false, dcFlushRequired));
+
+    size_t expectedSize = encodedIdSizeWithSync + encodedIdSizeWithoutSync + (2 * encodedMiSemaphoreSize);
+
+    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+
+    commandList->destroy();
+}
+
 HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequiredPatchPreambleWhenAppendHostFunctionWasCalledThenCmdsWerePatchedCorrectly, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;

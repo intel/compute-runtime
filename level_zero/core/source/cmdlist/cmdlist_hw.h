@@ -270,8 +270,9 @@ struct CommandListCoreFamily : public CommandList {
   protected:
     void setupEventParamsForInOrderBarrierSkip(ze_event_handle_t hSignalEvent);
     void dispatchHostFunction(ze_host_function_callback_t pHostFunction,
-                              void *pUserData) override;
-    void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) override;
+                              void *pUserData,
+                              bool memorySynchronizationRequired) override;
+    void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction, bool memorySynchronizationRequired) override;
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(uintptr_t dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
                                                               uint64_t dstOffset, uintptr_t srcPtr,

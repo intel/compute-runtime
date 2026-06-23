@@ -164,7 +164,7 @@ inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(Pa
                                                               patchElem.cmdBufferSpace,
                                                               queue.csr->getHostFunctionStreamer(),
                                                               std::move(hostFunction),
-                                                              memorySynchronizationRequired);
+                                                              patchElem.memorySynchronizationRequired);
 
     hostFunctionsCounter++;
 }

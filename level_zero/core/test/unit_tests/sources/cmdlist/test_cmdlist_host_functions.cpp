@@ -171,7 +171,7 @@ HWTEST_F(HostFunctionTests, givenRegularCmdListWhenDispatchHostFunctionIsCalledT
 
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
-    commandList->dispatchHostFunction(pHostFunction, pUserData);
+    commandList->dispatchHostFunction(pHostFunction, pUserData, true);
 
     ASSERT_EQ(2u, commandList->commandsToPatch.size());
 
@@ -187,6 +187,106 @@ HWTEST_F(HostFunctionTests, givenRegularCmdListWhenDispatchHostFunctionIsCalledT
         auto *hostFunctionWaitToPatch = std::get_if<PatchHostFunctionWait>(&commandList->commandsToPatch[1]);
         ASSERT_NE(nullptr, hostFunctionWaitToPatch);
     }
+}
+
+HWTEST_F(HostFunctionTests, givenMemorySynchronizationRequiredParameterWhenAppendHostFunctionThenValueIsPropagatedToDispatchHostFunction) {
+    using BaseClass = WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
+    struct MyCmdList : public BaseClass {
+        void dispatchHostFunction(ze_host_function_callback_t pHostFunction, void *pUserData, bool memorySynchronizationRequired) override {
+            capturedMemorySynchronizationRequired = memorySynchronizationRequired;
+            dispatchHostFunctionCalled++;
+        }
+        bool capturedMemorySynchronizationRequired = false;
+        uint32_t dispatchHostFunctionCalled = 0;
+    };
+
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
+    void *pUserData = reinterpret_cast<void *>(0xd'0000);
+
+    for (bool memorySynchronizationRequired : ::testing::Bool()) {
+        MyCmdList commandList;
+        commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+        CmdListHostFunctionParameters parameters{};
+        parameters.memorySynchronizationRequired = memorySynchronizationRequired;
+
+        auto result = commandList.appendHostFunction(pHostFunction, pUserData, nullptr, nullptr, 0, nullptr, parameters);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        EXPECT_EQ(1u, commandList.dispatchHostFunctionCalled);
+        EXPECT_EQ(memorySynchronizationRequired, commandList.capturedMemorySynchronizationRequired);
+    }
+}
+
+HWTEST_F(HostFunctionTests, givenRegularCmdListWhenDispatchHostFunctionThenMemorySynchronizationRequiredIsPropagatedToAddHostFunctionToPatchCommands) {
+    using BaseClass = WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
+    struct MyCmdList : public BaseClass {
+        void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction, bool memorySynchronizationRequired) override {
+            capturedMemorySynchronizationRequired = memorySynchronizationRequired;
+            addHostFunctionToPatchCommandsCalled++;
+        }
+        bool capturedMemorySynchronizationRequired = false;
+        uint32_t addHostFunctionToPatchCommandsCalled = 0;
+    };
+
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
+    void *pUserData = reinterpret_cast<void *>(0xd'0000);
+
+    for (bool memorySynchronizationRequired : ::testing::Bool()) {
+        MyCmdList commandList;
+        commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+        commandList.dispatchHostFunction(pHostFunction, pUserData, memorySynchronizationRequired);
+
+        EXPECT_EQ(1u, commandList.addHostFunctionToPatchCommandsCalled);
+        EXPECT_EQ(memorySynchronizationRequired, commandList.capturedMemorySynchronizationRequired);
+    }
+}
+
+HWTEST_F(HostFunctionTests, givenRegularCmdListWithHostFunctionsRequiringDifferentMemorySynchronizationThenEachPatchEntryStoresItsOwnValue) {
+    DebugManagerStateRestore restorer;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::ult::CommandList> commandList(
+        CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
+    void *pUserData = reinterpret_cast<void *>(0xd'0000);
+
+    commandList->dispatchHostFunction(pHostFunction, pUserData, true);
+    commandList->dispatchHostFunction(pHostFunction, pUserData, false);
+
+    std::vector<PatchHostFunctionId *> hostFunctionIds;
+    for (auto &command : commandList->commandsToPatch) {
+        if (auto *patchHostFunctionId = std::get_if<PatchHostFunctionId>(&command)) {
+            hostFunctionIds.push_back(patchHostFunctionId);
+        }
+    }
+
+    ASSERT_EQ(2u, hostFunctionIds.size());
+    EXPECT_TRUE(hostFunctionIds[0]->memorySynchronizationRequired);
+    EXPECT_FALSE(hostFunctionIds[1]->memorySynchronizationRequired);
+}
+
+HWTEST_F(HostFunctionTests, givenRegularCmdListWhenAddingHostFunctionsThenWithAndWithoutMemorySynchronizationCountsAreTracked) {
+    DebugManagerStateRestore restorer;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::ult::CommandList> commandList(
+        CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
+    void *pUserData = reinterpret_cast<void *>(0xd'0000);
+
+    EXPECT_EQ(0u, commandList->getHostFunctionWithMemorySynchronizationCount());
+    EXPECT_EQ(0u, commandList->getHostFunctionWithoutMemorySynchronizationCount());
+
+    commandList->dispatchHostFunction(pHostFunction, pUserData, true);
+    commandList->dispatchHostFunction(pHostFunction, pUserData, false);
+    commandList->dispatchHostFunction(pHostFunction, pUserData, true);
+
+    EXPECT_EQ(2u, commandList->getHostFunctionWithMemorySynchronizationCount());
+    EXPECT_EQ(1u, commandList->getHostFunctionWithoutMemorySynchronizationCount());
 }
 
 using HostFunctionTestsSynchronizedDispatch = InOrderCmdListFixture;
@@ -250,7 +350,7 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     auto *cmdStream = commandList->commandContainer.getCommandStream();
     auto offset = cmdStream->getUsed();
 
-    commandList->dispatchHostFunction(pHostFunction, pUserData);
+    commandList->dispatchHostFunction(pHostFunction, pUserData, true);
 
     //  different csr
     auto csr = commandList->getCsr(false);
@@ -330,7 +430,7 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
     auto *cmdStream = commandList->commandContainer.getCommandStream();
     auto offset = cmdStream->getUsed();
 
-    commandList->dispatchHostFunction(pHostFunction, pUserData);
+    commandList->dispatchHostFunction(pHostFunction, pUserData, true);
 
     //  different csr
     auto csr = commandList->getCsr(false);
