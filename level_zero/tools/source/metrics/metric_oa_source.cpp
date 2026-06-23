@@ -115,9 +115,7 @@ bool OaMetricSourceImp::canDisable() {
 }
 
 ze_result_t OaMetricSourceImp::initMetricScopes(MetricDeviceContext &metricDeviceContext) {
-    if (!metricDeviceContext.isComputeMetricScopesInitialized()) {
-        initComputeMetricScopes(metricDeviceContext);
-    }
+    initComputeMetricScopes(metricDeviceContext);
     return ZE_RESULT_SUCCESS;
 }
 

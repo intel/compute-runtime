@@ -825,6 +825,28 @@ TEST_F(MetricScopesMultiDeviceFixture, WhenAttemptingToDeleteANoneExistingMetric
     EXPECT_EQ(metricScopesCount2, metricScopesCount - 1);
 }
 
+TEST_F(MetricScopesMultiDeviceFixture, WhenAddingAnAlreadyExistingMetricScopeThenIdOfExistingScopeIsReturnedAndNoNewScopeIsCreated) {
+
+    uint32_t metricScopesCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockRootDeviceContext->metricScopesGet(context->toHandle(), &metricScopesCount, nullptr));
+    EXPECT_GT(metricScopesCount, 0U);
+    std::vector<zet_intel_metric_scope_exp_handle_t> hMetricScopes(metricScopesCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockRootDeviceContext->metricScopesGet(context->toHandle(), &metricScopesCount, hMetricScopes.data()));
+
+    zet_intel_metric_scope_properties_exp_t properties{};
+    properties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    properties.pNext = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(hMetricScopes[0], &properties));
+
+    // Adding a scope whose name already exists should return the existing scope's id without creating a new scope.
+    uint32_t returnedId = mockRootDeviceContext->addMetricScope(properties.name, "DUMMY_DESCRIPTION", 0);
+    EXPECT_EQ(returnedId, properties.iD);
+
+    uint32_t metricScopesCountAfter = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockRootDeviceContext->metricScopesGet(context->toHandle(), &metricScopesCountAfter, nullptr));
+    EXPECT_EQ(metricScopesCountAfter, metricScopesCount);
+}
+
 TEST_F(MetricScopesMultiDeviceFixture, WhenSubDeviceQueriesComputeScopeIdFromRootDeviceResultDependsOnWhetherRootDeviceSupportsMetricsAggregation) {
 
     uint32_t scopeId = mockSubMetricSource->getRootDevMetricComputeScopeIdForSubDevice(*mockSubDeviceContext);

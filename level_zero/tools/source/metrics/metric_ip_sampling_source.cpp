@@ -315,9 +315,7 @@ bool IpSamplingMetricSourceImp::canDisable() {
 }
 
 ze_result_t IpSamplingMetricSourceImp::initMetricScopes(MetricDeviceContext &metricDeviceContext) {
-    if (!metricDeviceContext.isComputeMetricScopesInitialized()) {
-        initComputeMetricScopes(metricDeviceContext);
-    }
+    initComputeMetricScopes(metricDeviceContext);
     return ZE_RESULT_SUCCESS;
 }
 

@@ -237,6 +237,7 @@ class MetricDeviceContext {
 
     std::map<uint32_t, std::unique_ptr<MetricSource>> metricSources;
     bool multiDeviceCapable = false;
+    bool computeMetricScopesInitialized = false;
 
   private:
     bool enable();
@@ -251,7 +252,6 @@ class MetricDeviceContext {
     std::mutex enableMetricsMutex;
     std::vector<std::unique_ptr<MetricScopeImp>> metricScopes{};
     bool metricScopesInitialized = false;
-    bool computeMetricScopesInitialized = false;
 };
 
 struct Metric : _zet_metric_handle_t {

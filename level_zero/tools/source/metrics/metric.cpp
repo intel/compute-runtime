@@ -34,34 +34,36 @@ void MetricSource::getMetricGroupSourceIdProperty(zet_base_properties_t *propert
 
 void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceContext) {
 
-    if (metricDeviceContext.isMultiDeviceCapable()) {
-        // When supported, aggregated scope should be first (ID 0)
-        auto &l0GfxCoreHelper = metricDeviceContext.getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-        if (l0GfxCoreHelper.supportMetricsAggregation()) {
-            metricDeviceContext.addMetricScope(aggregatedScopeName, aggregatedScopeDescription, 0);
-        }
+    if (!metricDeviceContext.isComputeMetricScopesInitialized()) {
+        if (metricDeviceContext.isMultiDeviceCapable()) {
+            // When supported, aggregated scope should be first (ID 0)
+            auto &l0GfxCoreHelper = metricDeviceContext.getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+            if (l0GfxCoreHelper.supportMetricsAggregation()) {
+                metricDeviceContext.addMetricScope(aggregatedScopeName, aggregatedScopeDescription, 0);
+            }
 
-        auto device = &metricDeviceContext.getDevice();
-        uint32_t subDeviceCount = device->numSubDevices;
-        std::vector<ze_device_handle_t> subDevices(subDeviceCount);
-        device->getSubDevices(&subDeviceCount, subDevices.data());
+            auto device = &metricDeviceContext.getDevice();
+            uint32_t subDeviceCount = device->numSubDevices;
+            std::vector<ze_device_handle_t> subDevices(subDeviceCount);
+            device->getSubDevices(&subDeviceCount, subDevices.data());
 
-        for (auto &subDeviceHandle : subDevices) {
-            auto neoSubDevice = static_cast<NEO::SubDevice *>(Device::fromHandle(subDeviceHandle)->getNEODevice());
-            uint32_t subDeviceIndex = neoSubDevice->getSubDeviceIndex();
+            for (auto &subDeviceHandle : subDevices) {
+                auto neoSubDevice = static_cast<NEO::SubDevice *>(Device::fromHandle(subDeviceHandle)->getNEODevice());
+                uint32_t subDeviceIndex = neoSubDevice->getSubDeviceIndex();
 
+                std::string scopeName = std::string(computeScopeNamePrefix) + std::to_string(subDeviceIndex);
+                std::string scopeDesc = std::string(computeScopeDescriptionPrefix) + std::to_string(subDeviceIndex);
+                metricDeviceContext.addMetricScope(scopeName, scopeDesc, subDeviceIndex);
+            }
+        } else {
+            auto subDeviceIndex = metricDeviceContext.getSubDeviceIndex();
             std::string scopeName = std::string(computeScopeNamePrefix) + std::to_string(subDeviceIndex);
             std::string scopeDesc = std::string(computeScopeDescriptionPrefix) + std::to_string(subDeviceIndex);
             metricDeviceContext.addMetricScope(scopeName, scopeDesc, subDeviceIndex);
         }
-    } else {
-        auto subDeviceIndex = metricDeviceContext.getSubDeviceIndex();
-        std::string scopeName = std::string(computeScopeNamePrefix) + std::to_string(subDeviceIndex);
-        std::string scopeDesc = std::string(computeScopeDescriptionPrefix) + std::to_string(subDeviceIndex);
-        metricDeviceContext.addMetricScope(scopeName, scopeDesc, subDeviceIndex);
-    }
 
-    metricDeviceContext.setComputeMetricScopeInitialized();
+        metricDeviceContext.setComputeMetricScopeInitialized();
+    }
 }
 
 uint32_t MetricSource::getRootDevMetricComputeScopeIdForSubDevice(MetricDeviceContext &metricDeviceContext) {
