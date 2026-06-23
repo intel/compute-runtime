@@ -365,7 +365,7 @@ template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::checkForAdditionalBTAndSetBTPointer(IndirectHeap &ssh, const Kernel &kernel) {
     size_t dstBindingTablePointer{0u};
     const auto &kernelInfo = kernel.getKernelInfo();
-    if (0u == kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries) {
+    if (false == isGTPinInitialized && 0u == kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries) {
         dstBindingTablePointer = 0u;
     } else {
         dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh,

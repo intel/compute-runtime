@@ -21,6 +21,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/enqueue_common.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_preemption_helper.h"
 #include "opencl/source/helpers/enqueue_properties.h"
 #include "opencl/source/helpers/task_information.inl"
@@ -86,6 +87,8 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
     );
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
+
+    gtpinNotifyPreFlushTask(&commandQueue);
 
     completionStamp = commandStreamReceiver.flushTask(queueCommandStream,
                                                       offset,
@@ -242,6 +245,8 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
+    gtpinNotifyPreFlushTask(&commandQueue);
+
     if (kernel->requiresMemoryMigration()) {
         for (auto &arg : kernel->getMemObjectsToMigrate()) {
             MigrationController::handleMigration(commandQueue.getContext(), commandStreamReceiver, arg.second);
@@ -271,6 +276,10 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         }
     }
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::gpuKernel);
+
+    if (gtpinIsGTPinInitialized()) {
+        gtpinNotifyFlushTask(completionStamp.taskCount);
+    }
 
     if (printfHandler) {
         const auto waitStatus = commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
@@ -405,6 +414,8 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         }
         makeTimestampPacketsResident(commandStreamReceiver);
     }
+
+    gtpinNotifyPreFlushTask(&commandQueue);
 
     completionStamp = commandStreamReceiver.flushTask(*kernelOperation->commandStream,
                                                       0,

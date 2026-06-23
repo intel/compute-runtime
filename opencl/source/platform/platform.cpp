@@ -19,10 +19,13 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/usm_pool_params.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/pin/pin.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/platform/platform_info.h"
 #include "opencl/source/sharings/sharing_factory.h"
@@ -52,6 +55,7 @@ Platform::~Platform() {
     if (isInitialized()) {
         delete svmAllocsManager;
     }
+    gtpinNotifyPlatformShutdown();
     executionEnvironment.decRefInternal();
 }
 
@@ -194,6 +198,17 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
     DEBUG_BREAK_IF(debugManager.flags.CreateMultipleSubDevices.get() > 1 && !this->clDevices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
     state = StateInited;
     return true;
+}
+
+void Platform::tryNotifyGtpinInit() {
+    auto notifyGTPin = []() {
+        EnvironmentVariableReader envReader;
+        if (envReader.getSetting("ZET_ENABLE_PROGRAM_INSTRUMENTATION", false)) {
+            const std::string gtpinFuncName{"OpenGTPinOCL"};
+            PinContext::init(gtpinFuncName);
+        }
+    };
+    std::call_once(this->oclInitGTPinOnce, notifyGTPin);
 }
 
 void Platform::fillGlobalDispatchTable() {

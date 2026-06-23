@@ -13,6 +13,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/program/program.h"
 
 namespace NEO {
@@ -117,6 +118,7 @@ cl_int Program::link(
         inputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(clLinkInput.data()), clLinkInput.size());
         inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
         inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
+        inputArgs.gtPinInput = gtpinGetIgcInit();
 
         if (!isCreateLibrary) {
             for (const auto &device : deviceVector) {

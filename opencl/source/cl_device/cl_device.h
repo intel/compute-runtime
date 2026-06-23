@@ -42,6 +42,7 @@ struct RootDeviceEnvironment;
 struct SelectorCopyEngine;
 class GfxCoreHelper;
 class ProductHelper;
+class GTPinGfxCoreHelper;
 class CompilerProductHelper;
 namespace BuiltIn {
 class DispatchInfoBuilder;
@@ -130,7 +131,9 @@ class ClDevice : public BaseObject<_cl_device_id> {
     const GfxCoreHelper &getGfxCoreHelper() const;
     const ProductHelper &getProductHelper() const;
     const CompilerProductHelper &getCompilerProductHelper() const;
+    const GTPinGfxCoreHelper &getGTPinGfxCoreHelper() const;
 
+    std::unique_ptr<GTPinGfxCoreHelper> gtpinGfxCoreHelper;
     cl_version getExtensionVersion(std::string name);
 
     using BuilderT = std::pair<std::unique_ptr<BuiltIn::DispatchInfoBuilder>, std::once_flag>;
@@ -144,6 +147,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     void initializeSpirvQueries();
     void initializeOsSpecificCaps();
     void initializeMaxPoolCount();
+    void initGTPinHelper();
     void setupFp64Flags();
     const std::string getClDeviceName() const;
 

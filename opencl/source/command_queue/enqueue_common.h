@@ -28,6 +28,7 @@
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_blit_properties.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_preemption_helper.h"
@@ -968,6 +969,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         dispatchFlags.epilogueRequired = true;
     }
 
+    if (gtpinIsGTPinInitialized()) {
+        gtpinNotifyPreFlushTask(this);
+    }
+
     if (enqueueProperties.blitPropertiesContainer->size() > 0) {
         auto bcsCsr = getBcsForAuxTranslation();
         const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, getDevice());
@@ -997,6 +1002,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     if (isHandlingBarrier) {
         clearLastBcsPackets();
         setStallingCommandsOnNextFlush(false);
+    }
+
+    if (gtpinIsGTPinInitialized()) {
+        gtpinNotifyFlushTask(completionStamp.taskCount);
     }
 
     return completionStamp;

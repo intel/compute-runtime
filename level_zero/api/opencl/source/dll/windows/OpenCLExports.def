@@ -130,6 +130,7 @@ clRetainAcceleratorINTEL
 clReleaseAcceleratorINTEL
 clSetPerformanceConfigurationINTEL
 
+;GTPin_Init
 clEnqueueMarkerWithSyncObjectINTEL
 clGetCLObjectInfoINTEL
 clGetCLEventInfoINTEL

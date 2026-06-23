@@ -47,6 +47,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -581,6 +582,26 @@ TEST_F(ProgramFromBinaryIsaPoolingTest, givenDisabledIsaAllocationPoolWhenBuildi
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
 
+TEST_F(ProgramFromBinaryIsaPoolingTest, givenEnabled2MBLocalMemAlignmentGTPinInitializedWhenBuildingProgramThenIsaAllocationPoolIsNotUsed) {
+    defaultIsaPooling();
+
+    pProgram->callBaseDebugNotify = false;
+
+    auto mockProductHelper = new MockProductHelper;
+    pDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    isGTPinInitialized = true;
+    pProgram->build(pProgram->getDevices(), nullptr);
+    isGTPinInitialized = false;
+
+    auto kernelInfo = pProgram->getKernelInfo(size_t(0), rootDeviceIndex);
+
+    EXPECT_EQ(nullptr, pProgram->getKernelsIsaParentAllocation(rootDeviceIndex));
+    EXPECT_NE(nullptr, kernelInfo->kernelAllocation);
+    EXPECT_FALSE(pDevice->getIsaPoolAllocator().isPoolBuffer(kernelInfo->getIsaGraphicsAllocation()));
+}
+
 TEST_F(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreed) {
     pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
@@ -836,6 +857,15 @@ TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAndL0DebuggerPresentWh
     pDevice->setDebugger(nullptr);
 }
 
+TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAndGTPinInitializedWhenCheckingIsaPoolingThenReturnFalse) {
+    debugManager.flags.EnableIsaAllocationPool.set(-1);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    isGTPinInitialized = true;
+    EXPECT_FALSE(pProgram->isIsaPoolingEnabled(*pDevice));
+    isGTPinInitialized = false;
+}
+
 TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAndKernelBinaryReuseEnabledWhenCheckingIsaPoolingThenReturnFalse) {
     debugManager.flags.EnableIsaAllocationPool.set(-1);
     debugManager.flags.ReuseKernelBinaries.set(1);
@@ -848,6 +878,8 @@ TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAndAllConditionsMetWhe
     debugManager.flags.EnableIsaAllocationPool.set(-1);
     debugManager.flags.ReuseKernelBinaries.set(0);
     mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    isGTPinInitialized = false;
 
     EXPECT_TRUE(pProgram->isIsaPoolingEnabled(*pDevice));
 }
@@ -3423,6 +3455,43 @@ TEST_F(ProgramMultiRootDeviceTests, WhenProgramIsCreatedThenBuildInfosVectorIsPr
 
         EXPECT_EQ(3u, program->buildInfos.size());
     }
+}
+
+class MockCompilerInterfaceWithGtpinParam : public CompilerInterface {
+  public:
+    TranslationErrorCode link(
+        const NEO::Device &device,
+        const TranslationInput &input,
+        TranslationOutput &output) override {
+        gtpinInfoPassed = input.gtPinInput;
+        return CompilerInterface::link(device, input, output);
+    }
+    void *gtpinInfoPassed;
+};
+
+TEST_F(ProgramBinTest, GivenSourceKernelWhenLinkingProgramThenGtpinInitInfoIsPassed) {
+    MockZebinWrapper zebin{*defaultHwInfo};
+    zebin.setAsMockCompilerReturnedBinary();
+    void *pIgcInitPtr = reinterpret_cast<void *>(0x1234);
+    gtpinSetIgcInit(pIgcInitPtr);
+    const char *sourceCode = "__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
+    pProgram = Program::create<MockProgram>(
+        pContext,
+        1,
+        &sourceCode,
+        &knownSourceSize,
+        retVal);
+    std::unique_ptr<MockCompilerInterfaceWithGtpinParam> mockCompilerInterface(new MockCompilerInterfaceWithGtpinParam);
+
+    retVal = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompilerInterface.get());
+
+    cl_program programToLink = pProgram;
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &programToLink);
+
+    EXPECT_EQ(pIgcInitPtr, mockCompilerInterface->gtpinInfoPassed);
+    mockCompilerInterface.release();
 }
 
 TEST(ProgramReplaceDeviceBinary, GivenBinaryZebinThenUseAsPackedBinaryContainer) {

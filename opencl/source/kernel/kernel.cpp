@@ -44,6 +44,7 @@
 #include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/dispatch_info.h"
@@ -1338,6 +1339,8 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
         commandStreamReceiver.makeResident(*kernelIsaAllocation);
     }
 
+    gtpinNotifyMakeResident(this, &commandStreamReceiver);
+
     if (getHasIndirectAccess() && (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
                                    unifiedMemoryControls.indirectHostAllocationsAllowed ||
                                    unifiedMemoryControls.indirectSharedAllocationsAllowed)) {
@@ -1402,6 +1405,8 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
         GeneralSurface *surface = new GeneralSurface(kernelIsaAllocation);
         dst.push_back(surface);
     }
+
+    gtpinNotifyUpdateResidencyList(this, &dst);
 }
 
 void Kernel::getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &allocationsInfo) const {
